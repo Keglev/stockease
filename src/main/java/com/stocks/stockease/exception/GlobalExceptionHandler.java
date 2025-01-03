@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.stocks.stockease.dto.ApiResponse;
 
+import jakarta.persistence.EntityNotFoundException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -21,6 +23,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<String>> handleNoSuchElementException(NoSuchElementException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(false, "Resource not found: " + ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ApiResponse<String>> handleEntityNotFoundException(EntityNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "Entity not found: " + ex.getMessage(), null));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -47,8 +55,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
-    public ResponseEntity<String> handleBadCredentialsException(org.springframework.security.authentication.BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password.");
+    public ResponseEntity<ApiResponse<String>> handleBadCredentialsException(
+            org.springframework.security.authentication.BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiResponse<>(false, "Invalid username or password", null));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

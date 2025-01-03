@@ -23,7 +23,6 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/products")
@@ -69,22 +68,6 @@ public class ProductController {
         return ResponseEntity.ok(savedProduct);
     }
 
-    // Update an existing product
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateProduct(@PathVariable Long id, @Valid @RequestBody Product productDetails) {
-        return productRepository.findById(id)
-                .<ResponseEntity<?>>map(product -> {
-                    product.setName(productDetails.getName());
-                    product.setQuantity(productDetails.getQuantity());
-                    product.setPrice(productDetails.getPrice());
-                    Product updatedProduct = productRepository.save(product);
-                    return ResponseEntity.ok(updatedProduct);
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Unable to update. Product with ID " + id + " was not found.")));
-    }
-
     // Delete a product
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -97,8 +80,7 @@ public class ProductController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Product with ID " + id + " has been successfully deleted.", null));
     }
 
-
-
+    // Get products with low stock
     @GetMapping("/low-stock")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<?> getLowStockProducts() {
@@ -109,6 +91,7 @@ public class ProductController {
         return ResponseEntity.ok(lowStockProducts);
     }
 
+    // Search products by name
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<?> searchProductsByName(@RequestParam String name) {
@@ -120,32 +103,113 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
+    // Update product quantity
     @PutMapping("/{id}/quantity")
-    public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable Long id, @RequestBody Map<String, Integer> request) {
+    public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> request) {
         try {
-            int newQuantity = request.get("quantity");
-
-            if (newQuantity < 0) {
-            throw new IllegalArgumentException("Quantity cannot be negative.");
+            if (request == null || !request.containsKey("quantity") || request.get("quantity") == null) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Quantity field is missing or null.", null));
             }
-
+    
+            Object quantityObj = request.get("quantity");
+            if (!(quantityObj instanceof Integer)) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Quantity must be a valid integer.", null));
+            }
+    
+            int newQuantity = (int) quantityObj;
+            if (newQuantity < 0) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Quantity cannot be negative.", null));
+            }
+    
             Product product = productRepository.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-
+    
             product.setQuantity(newQuantity);
             Product updatedProduct = productRepository.save(product);
-
+    
             return ResponseEntity.ok(new ApiResponse<>(true, "Quantity updated successfully", updatedProduct));
         } catch (EntityNotFoundException ex) {
             log.error("Product not found for ID: " + id, ex);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, "Product not found", null));
-        } catch (IllegalArgumentException ex) {
-            log.error("Invalid quantity value provided for product with ID: " + id, ex);
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, "Invalid quantity value", null));
+                    .body(new ApiResponse<>(false, "Product not found.", null));
         } catch (Exception ex) {
-            log.error("An unexpected error occurred while updating quantity for product with ID: " + id, ex);
+            log.error("Unexpected error occurred while updating quantity for product with ID: " + id, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred. Please try again later.", null));
+        }
+    }
+    
+
+    // Update product price
+    @PutMapping("/{id}/price")
+    public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> request) {
+        try {
+            if (request == null || !request.containsKey("price") || request.get("price") == null) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Price field is missing or null.", null));
+            }
+    
+            Object priceObj = request.get("price");
+            if (!(priceObj instanceof Number)) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Price must be a valid number.", null));
+            }
+    
+            double newPrice = ((Number) priceObj).doubleValue();
+            if (newPrice <= 0) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Price must be greater than 0.", null));
+            }
+    
+            Product product = productRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+    
+            product.setPrice(newPrice);
+            Product updatedProduct = productRepository.save(product);
+    
+            return ResponseEntity.ok(new ApiResponse<>(true, "Price updated successfully", updatedProduct));
+        } catch (EntityNotFoundException ex) {
+            log.error("Product not found for ID: " + id, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(false, "Product not found.", null));
+        } catch (Exception ex) {
+            log.error("Unexpected error occurred while updating price for product with ID: " + id, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "An unexpected error occurred. Please try again later.", null));
+        }
+    }
+    
+
+    // Update product name
+    @PutMapping("/{id}/name")
+    public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            if (!request.containsKey("name") || request.get("name").isBlank()) {
+                throw new IllegalArgumentException("Name is required and cannot be empty.");
+            }
+
+            String newName = request.get("name");
+
+            Product product = productRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+
+            product.setName(newName);
+            Product updatedProduct = productRepository.save(product);
+
+            return ResponseEntity.ok(new ApiResponse<>(true, "Name updated successfully", updatedProduct));
+        } catch (EntityNotFoundException ex) {
+            log.error("Product not found for ID: " + id, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(false, ex.getMessage(), null));
+        } catch (IllegalArgumentException ex) {
+            log.error("Invalid name provided for product with ID: " + id, ex);
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, ex.getMessage(), null));
+        } catch (Exception ex) {
+            log.error("Unexpected error occurred while updating name for product with ID: " + id, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "An unexpected error occurred. Please try again later.", null));
         }

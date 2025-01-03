@@ -39,6 +39,8 @@ public class DataSeeder {
             productRepository.save(new Product("Product 1", 10, 50.0));
             productRepository.save(new Product("Product 2", 5, 30.0));
             productRepository.save(new Product("Product 3", 3, 20.0));
+            productRepository.save(new Product("Product 4", 3, 10.0));
+            productRepository.save(new Product("Product 5", 20, 40.0));
         }
     }
 }
