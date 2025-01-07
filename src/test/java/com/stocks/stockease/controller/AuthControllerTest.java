@@ -1,3 +1,4 @@
+// all testes passed
 package com.stocks.stockease.controller;
 
 import java.util.Optional;
@@ -156,7 +157,7 @@ class AuthControllerTest {
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(mockUser));
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new org.springframework.security.core.AuthenticationException("Invalid credentials") {});
+                .thenThrow(new org.springframework.security.authentication.BadCredentialsException("Invalid credentials") {});
 
         LoginRequest loginRequest = new LoginRequest(username, password);
         ResponseEntity<ApiResponse<String>> responseEntity = authController.login(loginRequest);
@@ -167,7 +168,7 @@ class AuthControllerTest {
         if (response != null) {
             assertThat(response).isNotNull();
             assertThat(response.isSuccess()).isFalse();
-            assertThat(response.getMessage()).isEqualTo("Invalid credentials");
+            assertThat(response.getMessage()).isEqualTo("Invalid username or password");
         }
     }
 

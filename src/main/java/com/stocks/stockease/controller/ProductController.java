@@ -1,3 +1,4 @@
+
 package com.stocks.stockease.controller;
 
 import java.util.List;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,7 +42,8 @@ public class ProductController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<Product> getAllProducts() {
-        return productRepository.findAllOrderById();
+        List<Product> products = productRepository.findAllOrderById();
+        return products;
     }
 
     // Get a single product by ID
@@ -56,28 +59,59 @@ public class ProductController {
     // Create a new product
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createProduct(@RequestBody Product product) {
-        // Validate required fields
-        if (product.getName() == null || product.getName().isBlank() ||
-            product.getQuantity() == null || product.getPrice() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Incomplete update. Please fill in all required fields."));
-        }
+    public ResponseEntity<?> createProduct(@RequestBody(required = false) Product product) {
+        log.debug("Received request to create product: {}", product);
+        try {
+            if (product == null || product.getName() == null || product.getName().isBlank() ||
+                product.getQuantity() == null || product.getPrice() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Incomplete update. Please fill in all required fields."));
+            }
     
-        Product savedProduct = productRepository.save(product);
-        return ResponseEntity.ok(savedProduct);
+            if (product.getQuantity() < 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Quantity cannot be negative."));
+            }
+    
+            if (product.getPrice() <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Price must be greater than 0."));
+            }
+    
+            Product savedProduct = productRepository.save(product);
+            return ResponseEntity.ok(savedProduct);
+    
+        } catch (Exception ex) {
+            log.error("Unexpected error occurred: ", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "An unexpected error occurred. Please try again later."));
+        }
     }
-
     // Delete a product
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable Long id) {
+        log.info("Entering deleteProduct method with ID: {}", id);
+
+        // Validate ID presence and format
+        if (id == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(false, "ID must be provided in the request.", null));
+        }
+        // Log authentication details for debugging
+        log.info("Current Authentication: {}", SecurityContextHolder.getContext().getAuthentication());
+        log.info("Authorities: {}", SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+        // Check if the product exists
         if (!productRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(false, "Cannot delete. Product with ID " + id + " does not exist.", null));
         }
+
         productRepository.deleteById(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Product with ID " + id + " has been successfully deleted.", null));
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Product with ID " + id + " has been successfully deleted.", null)
+        );
     }
 
     // Get products with low stock
@@ -105,6 +139,7 @@ public class ProductController {
 
     // Update product quantity
     @PutMapping("/{id}/quantity")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> request) {
         try {
             if (request == null || !request.containsKey("quantity") || request.get("quantity") == null) {
@@ -145,6 +180,7 @@ public class ProductController {
 
     // Update product price
     @PutMapping("/{id}/price")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> request) {
         try {
             if (request == null || !request.containsKey("price") || request.get("price") == null) {
@@ -185,6 +221,7 @@ public class ProductController {
 
     // Update product name
     @PutMapping("/{id}/name")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
             if (!request.containsKey("name") || request.get("name").isBlank()) {

@@ -6,6 +6,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -58,8 +60,11 @@ public class SecurityConfig {
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(customAuthenticationEntryPoint)
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    System.out.println("Access Denied Handler triggered for user: " + request.getUserPrincipal());
+                    System.out.println("Roles: " + request.isUserInRole("ADMIN"));
+                    response.setStatus(HttpStatus.FORBIDDEN.value());
                     response.setContentType("application/json");
+                    System.out.println("Access Denied: Roles - " + request.getUserPrincipal());
                     response.getWriter().write("{\"error\": \"You are not authorized to perform this action.\"}");
                 })
             )

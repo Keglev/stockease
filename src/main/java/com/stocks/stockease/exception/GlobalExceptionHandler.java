@@ -50,8 +50,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(io.jsonwebtoken.JwtException.class)
-    public ResponseEntity<String> handleJwtException(io.jsonwebtoken.JwtException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token.");
+    public ResponseEntity<ApiResponse<String>> handleJwtException(io.jsonwebtoken.JwtException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiResponse<>(false, "Invalid or expired token.", null));
     }
 
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
@@ -71,5 +72,16 @@ public class GlobalExceptionHandler {
                                         FieldError::getDefaultMessage
                                         ));
         return ResponseEntity.badRequest().body(Map.of("errors", errors));
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<String>> handleHttpMessageNotReadableException(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        String message = "Invalid or missing request body. Please check your input.";
+        if (ex.getMessage() != null && ex.getMessage().contains("Cannot deserialize")) {
+            message = "Invalid request format or data type.";
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(false, message, null));
     }
 }
