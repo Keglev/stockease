@@ -251,4 +251,18 @@ public class ProductController {
                     .body(new ApiResponse<>(false, "An unexpected error occurred. Please try again later.", null));
         }
     }
+
+    // Get total stock value
+    @GetMapping("/total-stock-value")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<ApiResponse<Double>> getTotalStockValue() {
+        try {
+            double totalStockValue = productRepository.calculateTotalStockValue();
+            return ResponseEntity.ok(new ApiResponse<>(true, "Total stock value fetched successfully", totalStockValue));
+        } catch (Exception ex) {
+            log.error("Error calculating total stock value:", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Failed to fetch total stock value.", null));
+        }
+    }
 }

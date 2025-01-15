@@ -118,4 +118,36 @@ public class ProductControllerTest {
                 .andExpect(jsonPath("$.message")
                 .value("No products found matching the name: nonexistent")); 
     }
+    // Test total stock value
+    @ParameterizedTest
+    @CsvSource({
+        "adminUser, ADMIN",
+        "regularUser, USER"
+    })
+    void testTotalStockValueWithProducts(String username, String role) throws Exception {
+        when(productRepository.calculateTotalStockValue()).thenReturn(500.0);
+
+        mockMvc.perform(get("/api/products/total-stock-value")
+                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(500.0))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Total stock value fetched successfully"));
+    }
+    // Test total stock value empty
+    @ParameterizedTest
+    @CsvSource({
+        "adminUser, ADMIN",
+        "regularUser, USER"
+    })
+    void testTotalStockValueWithNoProducts(String username, String role) throws Exception {
+        when(productRepository.calculateTotalStockValue()).thenReturn(0.0);
+
+        mockMvc.perform(get("/api/products/total-stock-value")
+                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(0.0))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Total stock value fetched successfully"));
+    }
 }

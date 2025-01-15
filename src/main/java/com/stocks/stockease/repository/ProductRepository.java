@@ -15,6 +15,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p ORDER BY p.id ASC")
     List<Product> findAllOrderById();
 
+    @Query("SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p")
+    double calculateTotalStockValue();
+
     List<Product> findByNameContainingIgnoreCase(String name);
 
 }
