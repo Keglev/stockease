@@ -1,5 +1,6 @@
 package com.stocks.stockease.exception;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -7,14 +8,17 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.stocks.stockease.dto.ApiResponse;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -63,15 +67,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = ex.getBindingResult()
-                                        .getFieldErrors()
-                                        .stream()
-                                        .collect(Collectors.toMap(
-                                        FieldError::getField,
-                                        FieldError::getDefaultMessage
-                                        ));
-        return ResponseEntity.badRequest().body(Map.of("errors", errors));
+                .getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
+        return ResponseEntity.badRequest()
+                .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors));
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
@@ -84,4 +86,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(false, message, null));
     }
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
+        Map<String, String> errors = new HashMap<>();
+
+        if (ex.getCause() instanceof ConstraintViolationException constraintViolationException) {
+            // Collect errors from ConstraintViolationException
+            constraintViolationException.getConstraintViolations().forEach(violation -> 
+                errors.put(violation.getPropertyPath().toString(), violation.getMessage())
+            );
+        } else if (ex.getCause() instanceof BindException bindException) {
+           // Collect errors from BindException
+           bindException.getBindingResult().getFieldErrors().forEach(fieldError -> 
+                errors.put(fieldError.getField(), fieldError.getDefaultMessage())
+           );
+        } else {
+           // Default case: No specific validation details available
+           errors.put("Unknown", "Unable to extract detailed validation error.");
+        }
+
+       // Return response with collected errors
+       return ResponseEntity.badRequest()
+           .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors));
+    }
+
 }

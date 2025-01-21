@@ -7,6 +7,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +24,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.dto.ApiResponse;
+import com.stocks.stockease.dto.PaginatedResponse;
 import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 
 @RestController
 @RequestMapping("/api/products")
@@ -47,12 +51,16 @@ public class ProductController {
         List<Product> products = productRepository.findAllOrderById();
         return products;
     }
-
+    // Get all products and organize the results in pages
     @GetMapping("/paged")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-        public ResponseEntity<ApiResponse<Page<Product>>> getPagedProducts(Pageable pageable) {
-            Page<Product> products = productRepository.findAll(pageable);
-            return ResponseEntity.ok(new ApiResponse<>(true, "Paged products fetched successfully", products));
+    public ResponseEntity<ApiResponse<PaginatedResponse<Product>>> getPagedProducts(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Positive int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> products = productRepository.findAll(pageable);
+        PaginatedResponse<Product> response = new PaginatedResponse<>(products);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Paged products fetched successfully", response));
     }
 
     // Get a single product by ID

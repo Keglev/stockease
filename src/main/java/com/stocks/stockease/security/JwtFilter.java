@@ -1,5 +1,6 @@
 package com.stocks.stockease.security;
 
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,10 +19,10 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal( 
-        jakarta.servlet.http.HttpServletRequest request,
-        jakarta.servlet.http.HttpServletResponse response,
-        jakarta.servlet.FilterChain filterChain
+    protected void doFilterInternal(
+        @NonNull jakarta.servlet.http.HttpServletRequest request,
+        @NonNull jakarta.servlet.http.HttpServletResponse response,
+        @NonNull jakarta.servlet.FilterChain filterChain
     ) throws java.io.IOException, jakarta.servlet.ServletException {
 
         String authHeader = request.getHeader("Authorization");
