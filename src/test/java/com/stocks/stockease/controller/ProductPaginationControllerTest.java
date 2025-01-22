@@ -32,6 +32,10 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
+/**
+ * Test class for verifying pagination functionality in {@link ProductController}.
+ * This class includes tests for valid, empty, and invalid pagination requests.
+ */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 @Import(TestConfig.class)
@@ -47,18 +51,27 @@ public class ProductPaginationControllerTest {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * Sets up mock data and behaviors before each test.
+     */
     @BeforeEach
     void setUp() {
+        // Mock JWT behavior
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
 
+        // Generate mock products
         List<Product> products = IntStream.range(1, 21) // Generate 20 products
                 .mapToObj(i -> new Product("Product " + i, i, i * 10.0))
                 .collect(Collectors.toList());
-            Page<Product> productPage = new PageImpl<>(products.subList(0, 10), PageRequest.of(0, 10), products.size());
-            Mockito.when(productRepository.findAll(Mockito.any(Pageable.class))).thenReturn(productPage);
+
+        Page<Product> productPage = new PageImpl<>(products.subList(0, 10), PageRequest.of(0, 10), products.size());
+        Mockito.when(productRepository.findAll(Mockito.any(Pageable.class))).thenReturn(productPage);
     }
 
+    /**
+     * Tests fetching paged products with valid roles.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -76,7 +89,10 @@ public class ProductPaginationControllerTest {
             .andExpect(jsonPath("$.data.totalElements").value(20))
             .andExpect(jsonPath("$.data.totalPages").value(2));
     }
-    
+
+    /**
+     * Tests fetching an empty page of products.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -94,6 +110,9 @@ public class ProductPaginationControllerTest {
             .andExpect(jsonPath("$.data.content").isEmpty());
     }
 
+    /**
+     * Tests fetching products with invalid pagination parameters.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -110,4 +129,3 @@ public class ProductPaginationControllerTest {
             .andExpect(jsonPath("$.data.Unknown").value("Unable to extract detailed validation error.")); // Adjust expectation based on actual error message
     }
 }
-

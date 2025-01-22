@@ -20,6 +20,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+/**
+ * Security configuration for the StockEase application.
+ * This class configures authentication, authorization, and CORS settings.
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -27,36 +31,61 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
-    // Single constructor to ensure both dependencies are injected properly
+    /**
+     * Constructor for injecting dependencies.
+     * 
+     * @param jwtFilter the JWT filter for token validation
+     * @param customAuthenticationEntryPoint the entry point for unauthorized requests
+     */
     public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.jwtFilter = jwtFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
     }
 
+    /**
+     * Configures the password encoder bean.
+     * 
+     * @return a BCryptPasswordEncoder instance
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Configures the authentication manager bean.
+     * 
+     * @param config the authentication configuration
+     * @return the authentication manager
+     * @throws Exception if an error occurs while creating the manager
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * Configures the security filter chain.
+     * 
+     * @param http the HttpSecurity object for configuring security
+     * @return the configured SecurityFilterChain
+     * @throws Exception if an error occurs during configuration
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Add CORS configuration
             .authorizeHttpRequests(auth -> auth
-            // Public endpoint for login
+                // Public endpoint for login
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
-                  // Admin-specific permissions
+                // Admin-specific permissions
                 .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/products/**").hasAnyRole("ADMIN", "USER")
                 .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
-                 // User-specific permissions
+
+                // User-specific permissions
                 .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("ADMIN", "USER")
                 .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole("ADMIN", "USER")
 
@@ -67,10 +96,8 @@ public class SecurityConfig {
                 .authenticationEntryPoint(customAuthenticationEntryPoint)
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                     System.out.println("Access Denied Handler triggered for user: " + request.getUserPrincipal());
-                    System.out.println("Roles: " + request.isUserInRole("ADMIN"));
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                     response.setContentType("application/json");
-                    System.out.println("Access Denied: Roles - " + request.getUserPrincipal());
                     response.getWriter().write("{\"error\": \"You are not authorized to perform this action.\"}");
                 })
             )
@@ -79,8 +106,11 @@ public class SecurityConfig {
 
         return http.build();
     }
-     /**
-     * Define the CORS configuration.
+
+    /**
+     * Configures a CORS filter bean.
+     * 
+     * @return a CorsFilter instance
      */
     @Bean
     public CorsFilter corsFilter() {
@@ -89,6 +119,11 @@ public class SecurityConfig {
         return new CorsFilter(source);
     }
 
+    /**
+     * Defines the CORS configuration.
+     * 
+     * @return the configured CORS settings
+     */
     private CorsConfiguration corsConfiguration() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Allow frontend origin
@@ -99,7 +134,9 @@ public class SecurityConfig {
     }
 
     /**
-     * Define the same CORS configuration for SecurityChain.
+     * Configures the CORS settings for the security filter chain.
+     * 
+     * @return the source of CORS configurations
      */
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

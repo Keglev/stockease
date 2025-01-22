@@ -1,4 +1,3 @@
-// all testes passed
 package com.stocks.stockease.controller;
 
 import java.util.Optional;
@@ -21,6 +20,10 @@ import com.stocks.stockease.model.User;
 import com.stocks.stockease.repository.UserRepository;
 import com.stocks.stockease.security.JwtUtil;
 
+/**
+ * Test class for {@link AuthController}.
+ * This class contains unit tests for verifying the behavior of the login functionality.
+ */
 class AuthControllerTest {
 
     @Mock
@@ -35,15 +38,19 @@ class AuthControllerTest {
     @InjectMocks
     private AuthController authController;
 
+    /**
+     * Sets up the test environment by initializing mocks.
+     */
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this); // Initialize mocks
+        MockitoAnnotations.openMocks(this);
     }
 
+    /**
+     * Tests successful login for a regular user.
+     */
     @Test
     void testLoginSuccess() {
-
-        // Mock data
         String username = "testuser";
         String password = "testpassword";
         String role = "ROLE_USER";
@@ -51,22 +58,17 @@ class AuthControllerTest {
 
         User mockUser = new User(1L, username, password, role);
 
-        // Mocking dependencies
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(mockUser));
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(jwtUtil.generateToken(username, role)).thenReturn(token);
 
-        // Login request
         LoginRequest loginRequest = new LoginRequest(username, password);
 
-        // Call the controller and capture response
         ResponseEntity<ApiResponse<String>> responseEntity = authController.login(loginRequest);
 
-        // Assertions
-        assertThat(responseEntity).isNotNull(); // Check response entity is not null
+        assertThat(responseEntity).isNotNull();
         ApiResponse<String> response = responseEntity.getBody();
 
-        // Further assertions after null checks
         if (response != null) {
             assertThat(response.isSuccess()).isTrue();
             assertThat(response.getMessage()).isEqualTo("Login successful");
@@ -74,9 +76,11 @@ class AuthControllerTest {
         }
     }
 
+    /**
+     * Tests successful login for an admin user.
+     */
     @Test
     void testAdminLoginSuccess() {
-        // Mock data
         String username = "adminuser";
         String password = "adminpassword";
         String role = "ROLE_ADMIN";
@@ -84,29 +88,26 @@ class AuthControllerTest {
 
         User mockAdmin = new User(1L, username, password, role);
 
-        // Mocking dependencies
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(mockAdmin));
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(jwtUtil.generateToken(username, role)).thenReturn(token);
 
-        // Login request
         LoginRequest loginRequest = new LoginRequest(username, password);
 
-        // Call the controller and capture response
         ResponseEntity<ApiResponse<String>> responseEntity = authController.login(loginRequest);
 
-          // Assertions
-          assertThat(responseEntity).isNotNull(); // Check response entity is not null
-          ApiResponse<String> response = responseEntity.getBody();
-  
-          // Further assertions after null checks
-          if (response != null) {
-              assertThat(response.isSuccess()).isTrue();
-              assertThat(response.getMessage()).isEqualTo("Login successful");
-            }
+        assertThat(responseEntity).isNotNull();
+        ApiResponse<String> response = responseEntity.getBody();
+
+        if (response != null) {
+            assertThat(response.isSuccess()).isTrue();
+            assertThat(response.getMessage()).isEqualTo("Login successful");
+        }
     }
 
-    // Test Login with blank username
+    /**
+     * Tests login with a blank username.
+     */
     @Test
     void testLoginBlankUsername() {
         LoginRequest loginRequest = new LoginRequest("", "password");
@@ -116,7 +117,9 @@ class AuthControllerTest {
         assertThat(responseEntity.getStatusCode().value()).isEqualTo(400);
     }
 
-    // Test Login with blank password
+    /**
+     * Tests login with a blank password.
+     */
     @Test
     void testLoginBlankPassword() {
         LoginRequest loginRequest = new LoginRequest("testuser", "");
@@ -126,7 +129,9 @@ class AuthControllerTest {
         assertThat(responseEntity.getStatusCode().value()).isEqualTo(400);
     }
 
-    // Test Login with Invalid Username
+    /**
+     * Tests login with an invalid username.
+     */
     @Test
     void testLoginInvalidUsername() {
         String username = "wronguser";
@@ -141,13 +146,14 @@ class AuthControllerTest {
         ApiResponse<String> response = responseEntity.getBody();
 
         if (response != null) {
-            assertThat(response).isNotNull();
             assertThat(response.isSuccess()).isFalse();
             assertThat(response.getMessage()).isEqualTo("User not found");
         }
     }
 
-    // Test Login with Invalid Password
+    /**
+     * Tests login with an invalid password.
+     */
     @Test
     void testLoginInvalidPassword() {
         String username = "testuser";
@@ -166,13 +172,14 @@ class AuthControllerTest {
         ApiResponse<String> response = responseEntity.getBody();
 
         if (response != null) {
-            assertThat(response).isNotNull();
             assertThat(response.isSuccess()).isFalse();
             assertThat(response.getMessage()).isEqualTo("Invalid username or password");
         }
     }
 
-    // Test Login with Server Error
+    /**
+     * Tests login when the server encounters an unexpected error.
+     */
     @Test
     void testServerError() {
         String username = "testuser";
@@ -188,18 +195,19 @@ class AuthControllerTest {
         ApiResponse<String> response = responseEntity.getBody();
 
         if (response != null) {
-            assertThat(response).isNotNull();
             assertThat(response.isSuccess()).isFalse();
             assertThat(response.getMessage()).isEqualTo("An unexpected error occurred");
         }
     }
 
+    /**
+     * Tests login with invalid credentials for both username and password.
+     */
     @Test
     void testLoginInvalidCredentials() {
         String username = "wronguser";
         String password = "wrongpassword";
 
-        // Simulate BadCredentialsException for invalid credentials
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
             .thenThrow(new org.springframework.security.authentication.BadCredentialsException("Invalid credentials"));
 
@@ -211,7 +219,6 @@ class AuthControllerTest {
         ApiResponse<String> response = responseEntity.getBody();
 
         if (response != null) {
-            assertThat(response).isNotNull();
             assertThat(response.isSuccess()).isFalse();
             assertThat(response.getMessage()).isEqualTo("Invalid username or password");
         }

@@ -23,6 +23,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.repository.ProductRepository;
 
+/**
+ * Test class for product deletion functionality in {@link ProductController}.
+ * This class verifies various scenarios for deleting products, including valid,
+ * invalid, and unauthorized requests.
+ */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 @Import(TestConfig.class) // Ensure security beans are imported
@@ -34,11 +39,17 @@ public class ProductDeleteControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    /**
+     * Sets up mocks before each test.
+     */
     @BeforeEach
     void setUpMocks() {
         Mockito.when(productRepository.existsById(1L)).thenReturn(true);
     }
 
+    /**
+     * Tests successful deletion of a product by an admin user.
+     */
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testDeleteProductAsAdmin() throws Exception {
@@ -51,6 +62,9 @@ public class ProductDeleteControllerTest {
         Mockito.verify(productRepository, Mockito.times(1)).deleteById(1L);
     }
 
+    /**
+     * Tests deletion of a nonexistent product.
+     */
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testDeleteNonexistentProduct() throws Exception {
@@ -65,19 +79,23 @@ public class ProductDeleteControllerTest {
         Mockito.verify(productRepository, Mockito.never()).deleteById(Mockito.anyLong());
     }
 
+    /**
+     * Tests unauthorized product deletion by a regular user.
+     */
     @Test
     void testDeleteProductAsRegularUser() throws Exception {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-    securityContext.setAuthentication(
-        new UsernamePasswordAuthenticationToken(
-            "regularUser",
-            "password",
-            AuthorityUtils.createAuthorityList("ROLE_USER")
-        )
-    );
-    SecurityContextHolder.setContext(securityContext);
-            mockMvc.perform(delete("/api/products/1"))
-                .andExpect(status().isForbidden()) // 403 Forbidden expected
-                .andExpect(jsonPath("$.error").doesNotExist()); // No specific error message in response
+        securityContext.setAuthentication(
+            new UsernamePasswordAuthenticationToken(
+                "regularUser",
+                "password",
+                AuthorityUtils.createAuthorityList("ROLE_USER")
+            )
+        );
+        SecurityContextHolder.setContext(securityContext);
+
+        mockMvc.perform(delete("/api/products/1"))
+            .andExpect(status().isForbidden()) // 403 Forbidden expected
+            .andExpect(jsonPath("$.error").doesNotExist()); // No specific error message in response
     }
 }

@@ -1,4 +1,3 @@
-// all Tests sucessfull passed
 package com.stocks.stockease.controller;
 
 import java.util.Optional;
@@ -28,6 +27,10 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
+/**
+ * Test class for verifying product update functionality in {@link ProductController}.
+ * This class covers scenarios for updating quantity, price, and name with various roles.
+ */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 @Import(TestConfig.class) // Use TestConfig to handle authorization
@@ -42,8 +45,10 @@ public class ProductUpdateControllerTest {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * Sets up mocks and prepares the environment for each test.
+     */
     @BeforeEach
-    @SuppressWarnings("unused")
     void setUpJwtMock() {
         // Mock JwtUtil behavior for consistent authorization
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
@@ -51,6 +56,9 @@ public class ProductUpdateControllerTest {
         Mockito.reset(productRepository); // Reset repository mock to avoid interference between tests
     }
 
+    /**
+     * Tests updating the quantity of a product with valid roles.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -75,6 +83,9 @@ public class ProductUpdateControllerTest {
             .andExpect(jsonPath("$.data.quantity").value(50));
     }
 
+    /**
+     * Tests updating the price of a product with valid roles.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -98,6 +109,9 @@ public class ProductUpdateControllerTest {
             .andExpect(jsonPath("$.message").value("Price updated successfully"));
     }
 
+    /**
+     * Tests updating the name of a product with special characters.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",

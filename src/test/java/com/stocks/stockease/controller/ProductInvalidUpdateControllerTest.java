@@ -1,5 +1,3 @@
-// All tests passed
-
 package com.stocks.stockease.controller;
 
 import java.util.Optional;
@@ -29,6 +27,11 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
+/**
+ * Test class for invalid update scenarios in {@link ProductController}.
+ * This class verifies various error conditions during product updates,
+ * such as missing fields, invalid data types, and unauthorized requests.
+ */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 @Import(TestConfig.class) // Use TestConfig to handle authorization
@@ -36,7 +39,7 @@ public class ProductInvalidUpdateControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-    
+
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -45,8 +48,10 @@ public class ProductInvalidUpdateControllerTest {
 
     private Product product1;
 
+    /**
+     * Sets up mocks and initializes common test data before each test.
+     */
     @BeforeEach
-    @SuppressWarnings("unused")
     void setUpJwtMock() {
         // Mock JwtUtil behavior for consistent authorization
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
@@ -57,6 +62,9 @@ public class ProductInvalidUpdateControllerTest {
         Mockito.reset(productRepository); // Reset repository mock to avoid interference between tests
     }
 
+    /**
+     * Tests updating quantity with a missing field.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -78,6 +86,9 @@ public class ProductInvalidUpdateControllerTest {
             .andExpect(jsonPath("$.message").value("Quantity field is missing or null."));
     }
 
+    /**
+     * Tests updating quantity with an invalid data type.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -98,7 +109,9 @@ public class ProductInvalidUpdateControllerTest {
             .andExpect(jsonPath("$.message").value("Quantity must be a valid integer."));
     }
 
-
+    /**
+     * Tests updating price with a negative value.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -106,9 +119,9 @@ public class ProductInvalidUpdateControllerTest {
     })
     void testUpdatePriceNegativeValue(String username, String role) throws Exception {
 
-          // Mock repository behavior
-          when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
-          when(productRepository.save(any(Product.class))).thenReturn(product1);
+        // Mock repository behavior
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
+        when(productRepository.save(any(Product.class))).thenReturn(product1);
 
         // Perform the PUT request
         mockMvc.perform(put("/api/products/1/price")
@@ -120,6 +133,9 @@ public class ProductInvalidUpdateControllerTest {
             .andExpect(jsonPath("$.message").value("Price must be greater than 0."));
     }
 
+    /**
+     * Tests updating price with an invalid data type.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -140,6 +156,9 @@ public class ProductInvalidUpdateControllerTest {
             .andExpect(jsonPath("$.message").value("Price must be a valid number."));
     }
 
+    /**
+     * Tests updating price with a value of zero.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -160,7 +179,9 @@ public class ProductInvalidUpdateControllerTest {
             .andExpect(jsonPath("$.message").value("Price must be greater than 0."));
     }
 
-
+    /**
+     * Tests updating product name with whitespace-only content.
+     */
     @ParameterizedTest
     @CsvSource({
     "adminUser, ADMIN",
@@ -181,6 +202,9 @@ public class ProductInvalidUpdateControllerTest {
             .andExpect(jsonPath("$.message").value("Name is required and cannot be empty."));
     }
 
+    /**
+     * Tests updating a nonexistent product.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -201,6 +225,9 @@ public class ProductInvalidUpdateControllerTest {
             .andExpect(jsonPath("$.message").value("Product not found."));
     }
 
+    /**
+     * Tests updating a product without a CSRF token.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",

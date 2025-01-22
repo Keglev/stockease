@@ -1,4 +1,3 @@
-// All tests pass
 package com.stocks.stockease.controller;
 
 import java.util.Arrays;
@@ -24,6 +23,10 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
+/**
+ * Test class for {@link ProductController}.
+ * This class contains parameterized tests for verifying the behavior of the product-related endpoints.
+ */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 public class ProductControllerTest {
@@ -37,13 +40,19 @@ public class ProductControllerTest {
     @MockitoBean
     private JwtUtil jwtUtil;
 
-     @BeforeEach
+    /**
+     * Resets the mocked dependencies and sets up common behaviors before each test.
+     */
+    @BeforeEach
     void resetMocks() {
         Mockito.reset(productRepository, jwtUtil);
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
     }
 
+    /**
+     * Tests the "low-stock products" endpoint with various roles.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -58,14 +67,16 @@ public class ProductControllerTest {
 
         when(productRepository.findByQuantityLessThan(5)).thenReturn(Arrays.asList(product1, product2));
 
-        // Perform GET request and validate response
         mockMvc.perform(get("/api/products/low-stock")
                 .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Low Stock Product 1"))
                 .andExpect(jsonPath("$[1].name").value("Low Stock Product 2"));
     }
-    // Test Low Stock Products Empty
+
+    /**
+     * Tests the "low-stock products" endpoint with no low-stock products.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -74,13 +85,15 @@ public class ProductControllerTest {
     void testLowStockProductsEmptyWithRoles(String username, String role) throws Exception {
         when(productRepository.findByQuantityLessThan(5)).thenReturn(List.of());
 
-        // Perform GET request and validate response
         mockMvc.perform(get("/api/products/low-stock")
                 .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("All products are sufficiently stocked."));
     }
-    // Test Search Products
+
+    /**
+     * Tests the "search products" endpoint with matching products.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -93,14 +106,16 @@ public class ProductControllerTest {
         when(productRepository.findByNameContainingIgnoreCase("searchable"))
             .thenReturn(List.of(product));
 
-          // Perform GET request and validate response
         mockMvc.perform(get("/api/products/search")
                 .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
                 .param("name", "searchable"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Searchable Product"));
     }
-    // Test Search Products Empty
+
+    /**
+     * Tests the "search products" endpoint with no matching products.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -110,15 +125,16 @@ public class ProductControllerTest {
         when(productRepository.findByNameContainingIgnoreCase("nonexistent"))
             .thenReturn(List.of());
 
-        // Perform GET request and validate response
         mockMvc.perform(get("/api/products/search")
                 .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
                 .param("name", "nonexistent"))
                 .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.message")
-                .value("No products found matching the name: nonexistent")); 
+                .andExpect(jsonPath("$.message").value("No products found matching the name: nonexistent"));
     }
-    // Test total stock value
+
+    /**
+     * Tests the "total stock value" endpoint with products present.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
@@ -134,7 +150,10 @@ public class ProductControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Total stock value fetched successfully"));
     }
-    // Test total stock value empty
+
+    /**
+     * Tests the "total stock value" endpoint with no products.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",

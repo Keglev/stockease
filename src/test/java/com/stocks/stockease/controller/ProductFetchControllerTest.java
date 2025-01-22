@@ -1,4 +1,3 @@
-// All tests passed successfully. 
 package com.stocks.stockease.controller;
 
 import java.util.Arrays;
@@ -30,11 +29,15 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
+/**
+ * Test class for fetching product functionality in {@link ProductController}.
+ * This class verifies various scenarios, including fetching all products,
+ * fetching a product by ID, and handling not-found cases.
+ */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 @Import(TestConfig.class) // Import the reusable TestConfig
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-
 public class ProductFetchControllerTest {
 
     @MockitoBean // Mock the repository
@@ -43,38 +46,44 @@ public class ProductFetchControllerTest {
     @Autowired // Inject MockMvc for request simulation
     private MockMvc mockMvc;
 
-     @Autowired
+    @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * Sets up mock data and behavior before each test.
+     */
     @BeforeEach
     void setUp() {
-        // Correct constructor or setters to set up mock products
+        // Mock products
         Product product1 = new Product("Product 1", 10, 100.0);
         product1.setId(1L);
         product1.setTotalValue(1000.0); // Mock total value
-       
+
         Product product2 = new Product("Product 2", 5, 50.0);
         product2.setId(2L);
         product2.setTotalValue(250.0); // Mock total value
 
         when(productRepository.findAllOrderById()).thenReturn(Arrays.asList(product1, product2));
-
     }
 
+    /**
+     * Verifies that the test context and beans are properly loaded.
+     */
     @Test
     void contextLoads() {
         assertNotNull(productRepository);
         assertNotNull(mockMvc);
     }
 
-
+    /**
+     * Tests fetching all products with different roles.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
         "regularUser, USER"
     })
     void testGetAllProductsWithRoles(String username, String role) throws Exception {
-
         // Mock JwtUtil behavior
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
@@ -91,18 +100,20 @@ public class ProductFetchControllerTest {
             .andExpect(jsonPath("$[1].totalValue").value(250.0));
     }
 
+    /**
+     * Tests fetching a product by ID with different roles.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
         "regularUser, USER"
     })
     void testGetProductByIdWithRoles(String username, String role) throws Exception {
-
         // Mock JwtUtil behavior
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
 
-          // Prepare mock data
+        // Prepare mock data
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
         product.setTotalValue(10 * 100.0);
@@ -110,7 +121,7 @@ public class ProductFetchControllerTest {
         // Mock repository behavior
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-         // Perform GET request and validate response
+        // Perform GET request and validate response
         mockMvc.perform(get("/api/products/1")
                 .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
             .andExpect(status().isOk())
@@ -118,13 +129,15 @@ public class ProductFetchControllerTest {
             .andExpect(jsonPath("$.data.totalValue").value(1000.0));
     }
 
+    /**
+     * Tests fetching a product by a nonexistent ID with different roles.
+     */
     @ParameterizedTest
     @CsvSource({
         "adminUser, ADMIN",
         "regularUser, USER"
     })
     void testGetProductByIdNotFoundWithRoles(String username, String role) throws Exception {
-
         // Mock JwtUtil behavior
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
