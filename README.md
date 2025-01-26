@@ -13,7 +13,7 @@ Welcome to the backend of StockEase, a portfolio project for managing stock-rela
 ## API Documentation
 The API documentation describes all available endpoints, including their request and response examples.
 
-👉 **[View Full API Documentation](docs/api.md)**
+👉 **[View Full API Documentation](src/main/docs/api.md)**
 
 ## Getting Started
 1. Clone this repository.
