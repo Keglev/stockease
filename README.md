@@ -1,22 +1,23 @@
+
 # StockEase Backend
 
-The backend of the StockEase application, built with Spring Boot, provides a RESTful API to manage products and users.
+Welcome to the backend of StockEase, a portfolio project for managing stock-related data. The backend is built with Spring Boot and integrates with a PostgreSQL database.
 
 ## Features
-- **API Endpoints:** Well-defined endpoints for products and users.
-- **Error Handling:** GlobalExceptionHandler for standardized error responses.
-- **Internationalization:** Supports error messages in English and German.
-- **API Documentation:** Integrated Swagger UI for interactive documentation.
+- User authentication with JWT
+- Role-based access control (Admin and User)
+- CRUD operations for products
+- Paginated product fetching
+- Total stock value calculation
+
+## API Documentation
+The API documentation describes all available endpoints, including their request and response examples.
+
+👉 **[View Full API Documentation](docs/api.md)**
 
 ## Getting Started
-
-### Prerequisites
-- Java 17 or later
-- Maven 3.x
-- PostgreSQL or any preferred database
-
-### Installation
-1. Clone the repository:
+1. Clone this repository.
+2. Set up your `.env` or `application.properties` file with database credentials.
+3. Run the application using:
    ```bash
-   git clone https://github.com/your-username/stockease-backend.git
-   cd stockease-backend
+   mvn spring-boot:run
