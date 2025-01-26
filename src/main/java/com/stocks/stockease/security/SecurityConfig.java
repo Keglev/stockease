@@ -77,6 +77,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Add CORS configuration
             .authorizeHttpRequests(auth -> auth
+
                 // Public endpoint for login
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 

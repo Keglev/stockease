@@ -19,7 +19,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     /**
      * Constructor for injecting dependencies.
-     * 
+     *
      * @param jwtUtil the utility class for JWT operations
      * @param userDetailsService the service to load user details from the database
      */
@@ -30,13 +30,15 @@ public class JwtFilter extends OncePerRequestFilter {
 
     /**
      * Filters incoming requests to validate JWT tokens and set the authentication context.
-     * 
+     * * Swagger UI and OpenAPI documentation endpoints are bypassed for authentication.
+     *
      * @param request the HTTP request
      * @param response the HTTP response
      * @param filterChain the filter chain to pass the request and response to the next filter
      * @throws java.io.IOException if an input/output error occurs during request processing
      * @throws jakarta.servlet.ServletException if an error occurs during request processing
      */
+
     @Override
     protected void doFilterInternal(
         @NonNull jakarta.servlet.http.HttpServletRequest request,
@@ -44,6 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
         @NonNull jakarta.servlet.FilterChain filterChain
     ) throws java.io.IOException, jakarta.servlet.ServletException {
 
+        // Extract the Authorization header
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

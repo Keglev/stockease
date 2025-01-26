@@ -27,8 +27,6 @@ import com.stocks.stockease.dto.PaginatedResponse;
 import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -39,7 +37,6 @@ import jakarta.validation.constraints.Positive;
  */
 @RestController
 @RequestMapping("/api/products")
-@Tag(name = "Products", description = "Endpoints for managing products")
 public class ProductController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
@@ -52,26 +49,24 @@ public class ProductController {
 
     /**
      * Fetch all products.
-     * 
+     *
      * @return a list of all products
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Fetch all products", description = "Retrieves a list of all available products.")
     public List<Product> getAllProducts() {
         return productRepository.findAllOrderById();
     }
 
     /**
      * Fetch paginated products.
-     * 
+     *
      * @param page the page number (0-based)
      * @param size the number of items per page
      * @return a paginated response of products
      */
     @GetMapping("/paged")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Fetch paginated products", description = "Retrieves products with pagination support.")
     public ResponseEntity<ApiResponse<PaginatedResponse<Product>>> getPagedProducts(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Positive int size) {
@@ -89,7 +84,6 @@ public class ProductController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Fetch product by ID", description = "Retrieves details of a specific product by its ID.")
     public ResponseEntity<ApiResponse<Product>> getProductById(@PathVariable Long id) {
         return productRepository.findById(id)
                 .map(product -> ResponseEntity.ok(new ApiResponse<>(true, "Product fetched successfully", product)))
@@ -99,13 +93,12 @@ public class ProductController {
 
     /**
      * Create a new product.
-     * 
+     *
      * @param product the product details to create
      * @return the created product
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create a new product", description = "Adds a new product to the database.")
     public ResponseEntity<?> createProduct(@RequestBody(required = false) Product product) {
         log.debug("Received request to create product: {}", product);
         try {
@@ -137,13 +130,12 @@ public class ProductController {
 
     /**
      * Delete a product by ID.
-     * 
+     *
      * @param id the product ID to delete
      * @return a confirmation message
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Delete product", description = "Deletes a product by its ID.")
     public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable Long id) {
         log.info("Entering deleteProduct method with ID: {}", id);
 
@@ -166,12 +158,11 @@ public class ProductController {
 
     /**
      * Fetch products with low stock.
-     * 
+     *
      * @return a list of products with stock less than 5
      */
     @GetMapping("/low-stock")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Fetch low-stock products", description = "Retrieves products with stock below a threshold of 5.")
     public ResponseEntity<?> getLowStockProducts() {
         List<Product> lowStockProducts = productRepository.findByQuantityLessThan(5);
         if (lowStockProducts.isEmpty()) {
@@ -182,13 +173,12 @@ public class ProductController {
 
     /**
      * Search products by name.
-     * 
+     *
      * @param name the name to search for
      * @return a list of matching products
      */
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Search products by name", description = "Searches for products whose names contain the provided string.")
     public ResponseEntity<?> searchProductsByName(@RequestParam String name) {
         List<Product> products = productRepository.findByNameContainingIgnoreCase(name);
         if (products.isEmpty()) {
@@ -200,14 +190,13 @@ public class ProductController {
 
     /**
      * Update the quantity of a product.
-     * 
+     *
      * @param id the product ID
      * @param request the request containing the new quantity
      * @return the updated product
      */
     @PutMapping("/{id}/quantity")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Update product quantity", description = "Updates the quantity of a product by its ID.")
     public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> request) {
         try {
             if (request == null || !request.containsKey("quantity") || request.get("quantity") == null) {
@@ -247,14 +236,13 @@ public class ProductController {
 
     /**
      * Update the price of a product.
-     * 
+     *
      * @param id the product ID
      * @param request the request containing the new price
      * @return the updated product
      */
     @PutMapping("/{id}/price")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Update product price", description = "Updates the price of a product by its ID.")
     public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> request) {
         try {
             if (request == null || !request.containsKey("price") || request.get("price") == null) {
@@ -294,14 +282,13 @@ public class ProductController {
 
     /**
      * Update the name of a product.
-     * 
+     *
      * @param id the product ID
      * @param request the request containing the new name
      * @return the updated product
      */
     @PutMapping("/{id}/name")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Update product name", description = "Updates the name of a product by its ID.")
     public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
             if (!request.containsKey("name") || request.get("name").isBlank()) {
@@ -334,12 +321,11 @@ public class ProductController {
 
     /**
      * Calculate the total stock value.
-     * 
+     *
      * @return the total stock value
      */
     @GetMapping("/total-stock-value")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @Operation(summary = "Get total stock value", description = "Calculates and retrieves the total stock value of all products.")
     public ResponseEntity<ApiResponse<Double>> getTotalStockValue() {
         try {
             double totalStockValue = productRepository.calculateTotalStockValue();

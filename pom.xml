@@ -136,15 +136,7 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-		<!--Springdoc OpenAPI Dependencies-->
-		<dependency>
-    		<groupId>org.springdoc</groupId>
-    		<artifactId>springdoc-openapi-ui</artifactId>
-    		<version>1.7.0</version>
-		</dependency>
 	</dependencies>
-
 	<build>
 		<plugins>
 			 <!-- Maven Compiler Plugin -->

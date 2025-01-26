@@ -17,8 +17,6 @@ import com.stocks.stockease.model.User;
 import com.stocks.stockease.repository.UserRepository;
 import com.stocks.stockease.security.JwtUtil;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 /**
@@ -27,7 +25,6 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication", description = "Endpoints for user authentication")
 public class AuthController {
 
     @Autowired
@@ -46,10 +43,6 @@ public class AuthController {
      * @return a ResponseEntity containing the API response with a JWT token if authentication is successful
      */
     @PostMapping("/login")
-    @Operation(
-        summary = "User Login",
-        description = "Authenticates the user with provided credentials and returns a JWT token."
-    )
     public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             // Validate request payload
