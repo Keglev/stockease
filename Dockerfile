@@ -25,11 +25,11 @@ ARG JAR_FILE=target/*.jar
 
 # Copy the JAR file to the container
 RUN ls -la target  # Debugging: Check if JAR is built
-RUN cp target/*.jar app.jar || (echo "JAR file not found!" && exit 1)
+RUN cp target/stockease-0.0.1-SNAPSHOT.jar /app/app.jar
 
 # Expose port 8081 (since your app runs on this port)
 EXPOSE 8081
 
 # Run the application specifying the correct port
-CMD ["java", "-jar", "stockease-0.0.1-SNAPSHOT.jar", "--server.port=8081"]
+CMD ["java", "-jar", "app.jar", "--server.port=8081"]
 
