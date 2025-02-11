@@ -22,13 +22,13 @@ StockEase is a backend service for managing stock-related data efficiently. Buil
 - ✅ **Total Stock Value Calculation** 💰
 - ✅ **Industry-Standard Testing with Mockito** 🧪
 
-## 🖼️ Screenshots
+# Screenshots
 Here are some screenshots from Postman showing some API answers:
 
 ### Example API Response in Postman:
 
 ### Adding a Product
-<img src="./src/assets/imgs/AddProduct.png" alt="Adding Product" width="600" height="300"/>
+<img src="./src/assets/imgs/project-image.png" alt="Adding Product" width="600" height="300"/>
 
 ### Updating Product Quantity
 
