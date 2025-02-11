@@ -17,8 +17,15 @@ RUN ./mvnw dependency:resolve
 # Copy the source code into the container
 COPY src ./src
 
-# Build the application
+# Build the application (ensure JAR is generated in target/)
 RUN ./mvnw clean package -DskipTests
+
+# Set an explicit variable for the jar file
+ARG JAR_FILE=target/*.jar
+
+# Copy the JAR file to the container
+RUN ls -la target  # Debugging: Check if JAR is built
+RUN cp ${JAR_FILE} app.jar
 
 # Expose port 8081 (since your app runs on this port)
 EXPOSE 8081
