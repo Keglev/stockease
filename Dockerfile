@@ -25,7 +25,7 @@ ARG JAR_FILE=target/*.jar
 
 # Copy the JAR file to the container
 RUN ls -la target  # Debugging: Check if JAR is built
-RUN cp ${JAR_FILE} app.jar
+RUN cp target/*.jar app.jar || (echo "JAR file not found!" && exit 1)
 
 # Expose port 8081 (since your app runs on this port)
 EXPOSE 8081
