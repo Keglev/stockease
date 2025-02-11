@@ -1,6 +1,6 @@
 # StockEase Backend
 
-## 📌 About
+## About
 StockEase is a backend service for managing stock-related data efficiently. Built with **Spring Boot** and integrated with **PostgreSQL**, this project showcases authentication, role-based access control, and CRUD operations for products. It is designed as a portfolio project to demonstrate backend development skills.
 
 ## 📖 Table of Contents
@@ -23,10 +23,20 @@ StockEase is a backend service for managing stock-related data efficiently. Buil
 - ✅ **Industry-Standard Testing with Mockito** 🧪
 
 ## 🖼️ Screenshots
-You can add API response screenshots from **Postman** or other API testing tools.
+Here are some screenshots from Postman showing some API answers:
 
 ### Example API Response in Postman:
-![Postman Example](https://via.placeholder.com/800x400?text=Postman+API+Call)
+
+### Adding a Product
+<img src="./src/assets/imgs/AddProduct.png" alt="Adding Product" width="600" height="300"/>
+
+### Updating Product Quantity
+
+<img src="./src/assets/imgs/updateQuantity.png" alt="Update Quantity" width="600" height="300"/>
+
+### Example of a missing input from the user.
+
+<img src="./src/assets/imgs/Missingquantity.png" alt="Missing quantity" width="600" height="300"/>
 
 ## 🛠️ Installation
 ### **1. Clone the Repository**
