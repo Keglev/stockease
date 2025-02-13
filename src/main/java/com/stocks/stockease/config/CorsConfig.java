@@ -22,8 +22,10 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**") // Allow all endpoints to be accessed
-                .allowedOrigins("http://localhost:5173") // Allow requests from the specified frontend origin
-                .allowedMethods("*") // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+                .allowedOrigins(
+                    "https://stockease-frontend.onrender.com", // Allow deployed frontend
+                    "http://localhost:5173") // Allow requests from the specified frontend origin
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow only necessary methods
                 .allowedHeaders("*") // Allow all headers in the requests
                 .allowCredentials(true); // Enable sending cookies or HTTP authentication headers
     }
