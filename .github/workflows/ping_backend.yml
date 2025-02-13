@@ -1,0 +1,15 @@
+name: Keep Backend Alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"  # Runs every 10 minutes
+
+jobs:
+  keep_alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send POST request to login
+        run: |
+          curl -X POST "https://stockease-0uii.onrender.com/api/auth/login" \
+          -H "Content-Type: application/json" \
+          -d '{"username":"user", "password":"user123"}'
