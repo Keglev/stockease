@@ -73,19 +73,19 @@ This portfolio backend is designed to:
 - `mvn package` - Builds the application.
 
 ## ⚙️ Technologies
-- **Spring Boot** (Backend Framework)
-- **Spring Security** (Authentication & Authorization)
-- **PostgreSQL** (Database)
-- **JWT (JSON Web Token)** (Authentication Mechanism)
-- **Mockito** (Unit Testing Framework)
-- **Jakarta Persistence API (JPA)** (Object-Relational Mapping)
+- *Spring Boot (Backend Framework)
+- *Spring Security (Authentication & Authorization)
+- *PostgreSQL (Database)
+- *JWT (JSON Web Token) (Authentication Mechanism)
+- *Mockito (Unit Testing Framework)
+- *Jakarta Persistence API (JPA) (Object-Relational Mapping)
 - **Jakarta Validation API** (Data Validation)
 - **Hibernate Core** (ORM Implementation)
 - **Hibernate Validator** (Validation Support)
 - **Lombok** (Simplifies Java Code)
 - **Spring Boot DevTools** (Enhances Development Workflow)
 - **Jakarta Servlet API** (HTTP Request Handling)
-- **REST API** (For API-based Communication)
+- *REST API (For API-based Communication)
 - **Maven** (Build Tool)
 
 ## 🔗 API Integration
