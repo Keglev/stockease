@@ -2,14 +2,15 @@ name: Keep Backend Alive
 
 on:
   schedule:
-    - cron: "*/10 * * * *"  # Runs every 10 minutes
+    - cron: '*/10 * * * *'  # Runs every 10 minutes
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
-  keep_alive:
+  ping_backend:
     runs-on: ubuntu-latest
     steps:
-      - name: Send POST request to login
+      - name: Send POST request to keep backend alive
         run: |
-          curl -X POST "https://stockease-0uii.onrender.com/api/auth/login" \
+          curl -X POST https://stockease-0uii.onrender.com/api/auth/login \
           -H "Content-Type: application/json" \
-          -d '{"username":"user", "password":"user123"}'
+          -d '{"username": "user", "password": "user123"}'
