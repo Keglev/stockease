@@ -78,6 +78,9 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Add CORS configuration
             .authorizeHttpRequests(auth -> auth
 
+                // Allow public access to health check
+                .requestMatchers("/api/health").permitAll()
+
                 // Public endpoint for login
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
