@@ -72,7 +72,7 @@ This portfolio backend is designed to:
 - `mvn test` - Runs unit tests with **Mockito**.
 - `mvn package` - Builds the application.
 
-## ⚙️ Technologies
+##  Technologies ⚙️
 - *Spring Boot (Backend Framework)
 - *Spring Security (Authentication & Authorization)
 - *PostgreSQL (Database)
