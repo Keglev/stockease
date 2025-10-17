@@ -1,7 +1,7 @@
 # StockEase Backend
 
 ## About
-StockEase is a backend service for managing stock-related data efficiently. Built with **Spring Boot** and integrated with **PostgreSQL**, this project showcases authentication, role-based access control, and CRUD operations for products. It is designed as a portfolio project to demonstrate backend development skills.
+StockEase is a backend service for managing stock-related data efficiently. Built with **Spring Boot** and integrated with **PostgreSQL**, this project showcases authentication, role-based access control, and CRUD operations for products. 
 
 ## 📖 Table of Contents
 - [📌 About](#-about)
