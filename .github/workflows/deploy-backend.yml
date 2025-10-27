@@ -1,0 +1,45 @@
+name: Migrate and Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  migrate-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      # These should be configured as repository secrets
+      NEON_JDBC_URL: ${{ secrets.NEON_JDBC_URL }}
+      NEON_USER: ${{ secrets.NEON_USER }}
+      NEON_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+      KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Flyway migrations (Docker)
+        # Uses the Flyway Docker image to run migrations from the repo against Neon
+        run: |
+          echo "Running Flyway migrations against Neon"
+          docker run --rm -v ${{ github.workspace }}/src/main/resources/db/migration:/flyway/sql \
+            flyway/flyway \
+            -url="${{ env.NEON_JDBC_URL }}" \
+            -user="${{ env.NEON_USER }}" -password="${{ env.NEON_PASSWORD }}" \
+            -locations=filesystem:/flyway/sql migrate
+
+      - name: Build backend JAR
+        working-directory: .
+        run: |
+          ./mvnw -DskipTests package
+
+      - name: Build & push Docker image (placeholder)
+        run: |
+          echo "Build/push image step goes here (configure registry & credentials)."
+
+      - name: Deploy to Koyeb (placeholder)
+        run: |
+          echo "Deploy to Koyeb: use KOYEB_API_KEY secret and Koyeb API or CLI to update service."
