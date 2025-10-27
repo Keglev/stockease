@@ -80,6 +80,8 @@ public class SecurityConfig {
 
                 // Allow public access to health check
                 .requestMatchers("/api/health").permitAll()
+                // Allow actuator health for external health probes
+                .requestMatchers("/actuator/health").permitAll()
 
                 // Public endpoint for login
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
