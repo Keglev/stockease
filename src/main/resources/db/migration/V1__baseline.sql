@@ -1,0 +1,2 @@
+-- Flyway baseline marker for existing schema
+-- If you already have schema created (e.g., via Hibernate or manual setup), keep this file empty.

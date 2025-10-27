@@ -1,6 +1,7 @@
 package com.stocks.stockease.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import jakarta.annotation.PostConstruct;
  * has baseline data for functionality during development or testing.
  */
 @Component
+@Profile("!prod")
 public class DataSeeder {
 
     private final ProductRepository productRepository;
