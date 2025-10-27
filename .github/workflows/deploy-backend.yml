@@ -31,6 +31,10 @@ jobs:
             -user="${{ env.NEON_USER }}" -password="${{ env.NEON_PASSWORD }}" \
             -locations=filesystem:/flyway/sql migrate
 
+      - name: Make mvnw executable
+        run: |
+          chmod +x ./mvnw
+
       - name: Build backend JAR
         working-directory: .
         run: |
