@@ -24,7 +24,8 @@ public class HealthController {
     public ResponseEntity<String> healthCheck() {
         // Check if the database is responding
         try (Connection connection = dataSource.getConnection()) {
-            if (connection.isValid(2)) {
+            // Wait up to 10 seconds for the database to respond (helps when DB is waking)
+            if (connection.isValid(10)) {
                 return ResponseEntity.ok("Database is connected and API is running.");
             }
         } catch (SQLException e) {
