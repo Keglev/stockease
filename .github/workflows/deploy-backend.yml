@@ -33,6 +33,7 @@ jobs:
             -locations=filesystem:/flyway/sql migrate
 
       - name: Make mvnw executable
+        working-directory: ./backend
         run: |
           chmod +x ./mvnw
 
