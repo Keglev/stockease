@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  packages: write
 
 jobs:
   migrate-and-deploy:
@@ -40,10 +41,45 @@ jobs:
         run: |
           ./mvnw -DskipTests package
 
-      - name: Build & push Docker image (placeholder)
+      - name: Build & push Docker image
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/stockease:${{ github.sha }}
         run: |
-          echo "Build/push image step goes here (configure registry & credentials)."
+          echo "Building Docker image: $IMAGE"
+          # Build using the backend Dockerfile (context is repo root)
+          docker build -f ./backend/Dockerfile -t "$IMAGE" ./backend
+          echo "Logging in to GHCR"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          echo "Pushing image to GHCR"
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-      - name: Deploy to Koyeb (placeholder)
+      - name: Install Koyeb CLI
         run: |
-          echo "Deploy to Koyeb: use KOYEB_API_KEY secret and Koyeb API or CLI to update service."
+          curl -fsSL https://cli.koyeb.com/install.sh | sudo bash
+
+      - name: Login to Koyeb
+        env:
+          KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+        run: |
+          koyeb login --api-key "${KOYEB_API_KEY}"
+
+      - name: Inject image into Koyeb manifest and deploy
+        run: |
+          # The workflow built and pushed an image into GHCR and set IMAGE in the environment
+          echo "Preparing deployment manifest with image: $IMAGE"
+          python3 - <<PY
+import os, yaml
+img = os.environ.get('IMAGE')
+f = 'koyeb.yaml'
+data = None
+with open(f) as fh:
+    data = yaml.safe_load(fh)
+# Inject image at service level for the first service
+if data and 'services' in data and len(data['services'])>0:
+    data['services'][0]['image'] = img
+with open('deploy-koyeb.yaml','w') as out:
+    yaml.safe_dump(data, out)
+print('Wrote deploy-koyeb.yaml')
+PY
+          koyeb deploy -f ./deploy-koyeb.yaml

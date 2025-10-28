@@ -1,0 +1,28 @@
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "health,info"
+
+management.health:
+  db:
+    enabled: false   # don't ping the DB for liveness
+  diskspace:
+    enabled: true
+
+# Hikari tuning (same defaults as properties version)
+spring:
+  datasource:
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 5
+      idle-timeout: 120000
+      connection-timeout: 10000
+      max-lifetime: 1800000
+
+# Keep the actuator show-details for prod diagnostics if needed
+management.endpoint.health.show-details: "always"

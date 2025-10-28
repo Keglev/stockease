@@ -1,0 +1,12 @@
+services:
+  - name: stockease
+    ports:
+      - internal_port: 8081
+        protocol: http
+        public: true
+        http_healthcheck:
+          path: /actuator/health/liveness
+          interval: 30
+          timeout: 3
+          grace_period: 20
+          restart_limit: 3
