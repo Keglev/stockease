@@ -15,8 +15,8 @@ jobs:
     env:
       # These should be configured as repository secrets
       NEON_JDBC_URL: ${{ secrets.NEON_JDBC_URL }}
-      NEON_USER: ${{ secrets.NEON_USER }}
-      NEON_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+      SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
       KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
     steps:
       - name: Checkout repository
@@ -29,7 +29,7 @@ jobs:
           docker run --rm -v ${{ github.workspace }}/src/main/resources/db/migration:/flyway/sql \
             flyway/flyway \
             -url="${{ env.NEON_JDBC_URL }}" \
-            -user="${{ env.NEON_USER }}" -password="${{ env.NEON_PASSWORD }}" \
+            -user="${{ env.SPRING_DATASOURCE_USERNAME }}" -password="${{ env.SPRING_DATASOURCE_PASSWORD }}" \
             -locations=filesystem:/flyway/sql migrate
 
       - name: Make mvnw executable
@@ -68,18 +68,7 @@ jobs:
         run: |
           # The workflow built and pushed an image into GHCR and set IMAGE in the environment
           echo "Preparing deployment manifest with image: $IMAGE"
-          python3 - <<PY
-import os, yaml
-img = os.environ.get('IMAGE')
-f = 'koyeb.yaml'
-data = None
-with open(f) as fh:
-    data = yaml.safe_load(fh)
-# Inject image at service level for the first service
-if data and 'services' in data and len(data['services'])>0:
-    data['services'][0]['image'] = img
-with open('deploy-koyeb.yaml','w') as out:
-    yaml.safe_dump(data, out)
-print('Wrote deploy-koyeb.yaml')
-PY
-          koyeb deploy -f ./deploy-koyeb.yaml
+          # Use mikefarah/yq (docker image) to set the image field in-place
+          docker run --rm -v "$PWD":"$PWD" -w "$PWD" mikefarah/yq yq eval '.services[0].image = strenv(IMAGE)' -i koyeb.yaml
+          cat koyeb.yaml
+          koyeb deploy -f ./koyeb.yaml
