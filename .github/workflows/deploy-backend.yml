@@ -46,13 +46,6 @@ jobs:
             -user="${{ env.SPRING_DATASOURCE_USERNAME }}" -password="${{ env.SPRING_DATASOURCE_PASSWORD }}" \
             -locations=filesystem:/flyway/sql migrate
 
-      - name: Debug backend workspace contents
-        run: |
-          echo "Listing contents of $GITHUB_WORKSPACE and $GITHUB_WORKSPACE/backend"
-          ls -la "$GITHUB_WORKSPACE" || true
-          echo "-- backend dir --"
-          ls -la "$GITHUB_WORKSPACE/backend" || true
-
       - name: Make mvnw executable
         run: |
           echo "Making mvnw executable at $BACKEND_DIR/mvnw"
