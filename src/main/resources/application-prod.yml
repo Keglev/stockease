@@ -29,15 +29,15 @@ spring:
       idle-timeout: 120000        # 2 min; allows pool to drain so Neon can sleep
       connection-timeout: 10000
       max-lifetime: 1800000       # 30 min
-
-  jpa:
-    hibernate:
-      ddl-auto: validate          # never let Hibernate mutate prod schema
-
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true     # if DB already has tables / older versions
     clean-disabled: true          # safety in prod
+    
+# ---- Additional settings ----
+  jpa:
+    hibernate:
+      ddl-auto: validate          # validate schema on startup
 
 # (show-details is set above under management.endpoint.health.show-details)
