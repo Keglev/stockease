@@ -77,23 +77,34 @@ jobs:
           docker push "$IMAGE"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-      - name: Install Koyeb CLI
+      - name: Install Koyeb CLI (robust)
+        shell: bash
         run: |
-          # Install Koyeb CLI with retries (network/DNS can be transient on runners)
-          set -e
-          for i in 1 2 3 4 5; do
-            echo "Attempt $i: installing koyeb CLI..."
-            if curl -fsSL https://cli.koyeb.com/install.sh | sudo bash; then
-              echo "koyeb CLI installed"
-              break
-            else
-              echo "koyeb install attempt $i failed, retrying in 5s..."
-              sleep 5
+          set -euo pipefail
+
+          # try official installer, with retries + curl retries
+          for i in {1..5}; do
+            echo "Attempt $i: installing Koyeb CLI via install.sh ..."
+            if curl --retry 5 --retry-delay 3 --retry-all-errors -fsSL https://cli.koyeb.com/install.sh | sudo bash; then
+              if command -v koyeb >/dev/null 2>&1; then
+                echo "Koyeb CLI installed via script"
+                koyeb version || true
+                break
+              fi
             fi
+            echo "Install attempt $i failed; retrying in 5s..."
+            sleep 5
           done
-          if ! command -v koyeb >/dev/null 2>&1; then
-            echo "koyeb: command not found after install attempts"
-            exit 1
+
+          if command -v koyeb >/dev/null 2>&1; then
+            echo "koyeb is available"
+          else
+            echo "Falling back to static tarball install"
+            KOYEB_VERSION="v4.4.0"
+            curl -fsSL "https://github.com/koyeb/koyeb-cli/releases/download/${KOYEB_VERSION}/koyeb_linux_amd64.tar.gz" -o /tmp/koyeb.tgz
+            sudo tar -C /usr/local/bin -xzf /tmp/koyeb.tgz koyeb
+            chmod +x /usr/local/bin/koyeb
+            koyeb version
           fi
 
       - name: Login to Koyeb
