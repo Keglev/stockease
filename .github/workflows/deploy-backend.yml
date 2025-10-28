@@ -34,18 +34,22 @@ jobs:
             exit 1
           fi
 
-      - name: Run Flyway migrations (Docker)
-        # Uses the Flyway Docker image to run migrations from the repo against Neon
-        run: |
-          docker run --rm -v "$BACKEND_DIR/src/main/resources/db/migration":/flyway/sql \
-            flyway/flyway \
-            -url="${{ env.NEON_JDBC_URL }}" \
-            -user="${{ env.SPRING_DATASOURCE_USERNAME }}" -password="${{ env.SPRING_DATASOURCE_PASSWORD }}" \
-            -locations=filesystem:/flyway/sql migrate
-
       - name: Make mvnw executable
         run: |
           chmod +x "$BACKEND_DIR/mvnw"
+
+      - name: Run Flyway migrations (Maven)
+        # Use the Maven Flyway plugin so Java-based migrations on the classpath (e.g. V3__seed_data.java)
+        # are compiled and executed. This avoids relying on filesystem-only SQL migrations.
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: |
+          echo "Running Flyway via Maven against: $NEON_JDBC_URL"
+          # Run the Flyway Maven goal; Maven will download the plugin if needed.
+          "$BACKEND_DIR/mvnw" -DskipTests \
+            -Dflyway.url="$NEON_JDBC_URL" \
+            -Dflyway.user="$SPRING_DATASOURCE_USERNAME" \
+            -Dflyway.password="$SPRING_DATASOURCE_PASSWORD" \
+            flyway:migrate
 
       - name: Build backend JAR
         working-directory: ${{ env.BACKEND_DIR }}
