@@ -38,24 +38,17 @@ jobs:
         run: |
           chmod +x "$BACKEND_DIR/mvnw"
 
-      - name: Build backend JAR
+      - name: Build backend and run Flyway migrations
         working-directory: ${{ env.BACKEND_DIR }}
         run: |
-          echo "Building backend (compile/package) so Java-based Flyway migrations are available on the classpath"
-          "$BACKEND_DIR/mvnw" -DskipTests package
-
-      - name: Run Flyway migrations (Maven)
-        # Use the Maven Flyway plugin so Java-based migrations on the classpath (e.g. V3__seed_data.java)
-        # are compiled and executed. This avoids relying on filesystem-only SQL migrations.
-        working-directory: ${{ env.BACKEND_DIR }}
-        run: |
-          echo "Running Flyway via Maven against: $NEON_JDBC_URL"
-          # Run the Flyway Maven goal; Maven will download the plugin if needed.
+          echo "Building backend and running Flyway (package then flyway:migrate in a single Maven invocation)"
+          # Run package and then flyway:migrate in the same Maven process so Java-based migrations
+          # compiled during package are visible to the Flyway plugin on the classpath.
           "$BACKEND_DIR/mvnw" -DskipTests \
             -Dflyway.url="$NEON_JDBC_URL" \
             -Dflyway.user="$SPRING_DATASOURCE_USERNAME" \
             -Dflyway.password="$SPRING_DATASOURCE_PASSWORD" \
-            flyway:migrate
+            package flyway:migrate
 
       - name: Build & push Docker image
         run: |
