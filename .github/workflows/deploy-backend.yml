@@ -79,7 +79,22 @@ jobs:
 
       - name: Install Koyeb CLI
         run: |
-          curl -fsSL https://cli.koyeb.com/install.sh | sudo bash
+          # Install Koyeb CLI with retries (network/DNS can be transient on runners)
+          set -e
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i: installing koyeb CLI..."
+            if curl -fsSL https://cli.koyeb.com/install.sh | sudo bash; then
+              echo "koyeb CLI installed"
+              break
+            else
+              echo "koyeb install attempt $i failed, retrying in 5s..."
+              sleep 5
+            fi
+          done
+          if ! command -v koyeb >/dev/null 2>&1; then
+            echo "koyeb: command not found after install attempts"
+            exit 1
+          fi
 
       - name: Login to Koyeb
         env:
