@@ -30,6 +30,9 @@ public class V3__seed_data extends BaseJavaMigration {
     seedProductIfNotExists(connection, "Gamma Tool", 3, 20.0);
     seedProductIfNotExists(connection, "Delta Device", 3, 10.0);
     seedProductIfNotExists(connection, "Epsilon Accessory", 20, 40.0);
+    seedProductIfNotExists(connection, "Zeta Instrument", 7, 60.0);
+    seedProductIfNotExists(connection, "Eta Apparatus", 15, 25.0);
+    seedProductIfNotExists(connection, "Theta Machine", 4, 80.0);
     }
 
     private void seedUser(Connection connection, String username, String hashedPassword, String role) throws Exception {
