@@ -23,7 +23,7 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**") // Allow all endpoints to be accessed
                 .allowedOrigins(
-                    "https://stockease-frontend.onrender.com", // Allow deployed frontend
+                    "https://stockeasefrontend.vercel.app/", // Allow deployed frontend
                     "http://localhost:5173") // Allow requests from the specified frontend origin
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow only necessary methods
                 .allowedHeaders("*") // Allow all headers in the requests

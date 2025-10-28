@@ -134,7 +134,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",  // Allow local development origin
-            "https://stockease-frontend.onrender.com" // Allow deployed frontend
+            "https://stockeasefrontend.vercel.app/" // Allow deployed frontend
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Allow methods
         config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type")); // Allow headers
