@@ -79,25 +79,12 @@ jobs:
       - name: Deploy to Koyeb via API (no CLI)
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
-          KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
+          KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }} # put this in repo secrets
           IMAGE: ${{ env.IMAGE }}
         run: |
-          set -euo pipefail
-          payload=$(jq -n --arg img "$IMAGE" '{image:$img, strategy:"ROLLING"}')
-          # Use the Koyeb API host (keep API host unchanged)
-          DEPLOY_URL="https://api.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deploy"
-          # For debugging: write payload and url to temporary files (do not include API key)
-          echo "$payload" > /tmp/koyeb_payload.json
-          echo "$DEPLOY_URL" > /tmp/koyeb_deploy_url.txt
-          HTTP_CODE=$(curl -sS -o /tmp/koyeb_resp_body -w "%{http_code}" -X POST \
+          test -n "$IMAGE" || { echo "IMAGE not set"; exit 1; }
+          curl -sS -X POST \
             -H "Authorization: Bearer $KOYEB_API_KEY" \
             -H "Content-Type: application/json" \
-            "$DEPLOY_URL" \
-            -d @/tmp/koyeb_payload.json)
-          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-            echo "Koyeb deploy accepted (HTTP $HTTP_CODE)"
-          else
-            echo "Koyeb deploy failed (HTTP $HTTP_CODE)" >&2
-            cat /tmp/koyeb_resp_body >&2
-            exit 1
-          fi
+            "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deploy" \
+            -d "$(jq -n --arg img "$IMAGE" '{image:$img, strategy:"ROLLING"}')"
