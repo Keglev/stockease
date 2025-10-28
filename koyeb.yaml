@@ -7,6 +7,6 @@ services:
         http_healthcheck:
           path: /actuator/health/liveness
           interval: 30
-          timeout: 3
-          grace_period: 20
-          restart_limit: 3
+          timeout: 10    # allow DB validation and Neon cold-starts up to 10s
+          grace_period: 120 # give the instance extra time to become ready on first start
+          restart_limit: 5 # tolerate a few more restarts during cold starts
