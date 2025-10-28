@@ -42,9 +42,10 @@ jobs:
           ./mvnw -DskipTests package
 
       - name: Build & push Docker image
-        env:
-          IMAGE: ghcr.io/${{ github.repository_owner }}/stockease:${{ github.sha }}
         run: |
+          # Ensure repository owner is lowercased (GHCR requires lowercase repository names)
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE=ghcr.io/${OWNER_LOWER}/stockease:${{ github.sha }}
           echo "Building Docker image: $IMAGE"
           # Build using the backend Dockerfile (context is repo root)
           docker build -f ./backend/Dockerfile -t "$IMAGE" ./backend
