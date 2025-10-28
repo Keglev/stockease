@@ -26,7 +26,7 @@ jobs:
         # Uses the Flyway Docker image to run migrations from the repo against Neon
         run: |
           echo "Running Flyway migrations against Neon"
-          docker run --rm -v ${{ github.workspace }}/src/main/resources/db/migration:/flyway/sql \
+          docker run --rm -v ${{ github.workspace }}/backend/src/main/resources/db/migration:/flyway/sql \
             flyway/flyway \
             -url="${{ env.NEON_JDBC_URL }}" \
             -user="${{ env.SPRING_DATASOURCE_USERNAME }}" -password="${{ env.SPRING_DATASOURCE_PASSWORD }}" \
@@ -37,7 +37,7 @@ jobs:
           chmod +x ./mvnw
 
       - name: Build backend JAR
-        working-directory: .
+        working-directory: ./backend
         run: |
           ./mvnw -DskipTests package
 
@@ -47,8 +47,8 @@ jobs:
           OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           IMAGE=ghcr.io/${OWNER_LOWER}/stockease:${{ github.sha }}
           echo "Building Docker image: $IMAGE"
-          # Build using the backend Dockerfile (context is repo root)
-          docker build -f ./backend/Dockerfile -t "$IMAGE" ./backend
+          # Build using the backend Dockerfile (use absolute workspace path to avoid relative path issues)
+          docker build -f "$GITHUB_WORKSPACE/backend/Dockerfile" -t "$IMAGE" "$GITHUB_WORKSPACE/backend"
           echo "Logging in to GHCR"
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           echo "Pushing image to GHCR"
@@ -70,6 +70,6 @@ jobs:
           # The workflow built and pushed an image into GHCR and set IMAGE in the environment
           echo "Preparing deployment manifest with image: $IMAGE"
           # Use mikefarah/yq (docker image) to set the image field in-place
-          docker run --rm -v "$PWD":"$PWD" -w "$PWD" mikefarah/yq yq eval '.services[0].image = strenv(IMAGE)' -i koyeb.yaml
-          cat koyeb.yaml
-          koyeb deploy -f ./koyeb.yaml
+          docker run --rm -v "$GITHUB_WORKSPACE":"$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" mikefarah/yq yq eval '.services[0].image = strenv(IMAGE)' -i backend/koyeb.yaml
+          cat backend/koyeb.yaml
+          koyeb deploy -f ./backend/koyeb.yaml
