@@ -67,57 +67,41 @@ jobs:
         run: |
           # Ensure repository owner is lowercased (GHCR requires lowercase repository names)
           OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE=ghcr.io/${OWNER_LOWER}/stockease:${{ github.sha }}
-          echo "Building Docker image: $IMAGE"
-          # Build using the backend Dockerfile (use detected BACKEND_DIR)
-          docker build -f "$BACKEND_DIR/Dockerfile" -t "$IMAGE" "$BACKEND_DIR"
+          IMAGE_BASE=ghcr.io/${OWNER_LOWER}/stockease
+          IMAGE_SHA=${IMAGE_BASE}:${{ github.sha }}
+          IMAGE_LATEST=${IMAGE_BASE}:latest
+          echo "Building Docker images: $IMAGE_SHA and $IMAGE_LATEST"
           echo "Logging in to GHCR"
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          echo "Pushing image to GHCR"
-          docker push "$IMAGE"
-          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          # Build and tag both SHA and latest
+          docker build -f "$BACKEND_DIR/Dockerfile" -t "$IMAGE_SHA" -t "$IMAGE_LATEST" "$BACKEND_DIR"
+          echo "Pushing images to GHCR"
+          docker push "$IMAGE_SHA"
+          docker push "$IMAGE_LATEST"
+          echo "IMAGE=$IMAGE_SHA" >> $GITHUB_ENV
 
-      - name: Install Koyeb CLI (robust)
-        shell: bash
+      - name: Install jq
         run: |
-          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y jq
 
-          # try official installer, with retries + curl retries
-          for i in {1..5}; do
-            echo "Attempt $i: installing Koyeb CLI via install.sh ..."
-            if curl --retry 5 --retry-delay 3 --retry-all-errors -fsSL https://cli.koyeb.com/install.sh | sudo bash; then
-              if command -v koyeb >/dev/null 2>&1; then
-                echo "Koyeb CLI installed via script"
-                koyeb version || true
-                break
-              fi
-            fi
-            echo "Install attempt $i failed; retrying in 5s..."
-            sleep 5
-          done
-
-          if command -v koyeb >/dev/null 2>&1; then
-            echo "koyeb is available"
-          else
-            echo "Falling back to static tarball install"
-            KOYEB_VERSION="v4.4.0"
-            curl -fsSL "https://github.com/koyeb/koyeb-cli/releases/download/${KOYEB_VERSION}/koyeb_linux_amd64.tar.gz" -o /tmp/koyeb.tgz
-            sudo tar -C /usr/local/bin -xzf /tmp/koyeb.tgz koyeb
-            chmod +x /usr/local/bin/koyeb
-            koyeb version
+      - name: Ensure image var is set
+        run: |
+          if [ -z "${IMAGE:-}" ]; then
+            echo "IMAGE not set"; exit 1
           fi
 
-      - name: Login to Koyeb
+      - name: Deploy to Koyeb via API (no CLI)
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+          KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
+          IMAGE: ${{ env.IMAGE }}
         run: |
-          koyeb login --api-key "${KOYEB_API_KEY}"
-
-      - name: Inject image into Koyeb manifest and deploy
-        run: |
-          # The workflow built and pushed an image into GHCR and set IMAGE in the environment
-          echo "Preparing deployment manifest with image: $IMAGE"
-          # Use mikefarah/yq (docker image) to set the image field in-place
-          docker run --rm -v "$GITHUB_WORKSPACE":"$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" mikefarah/yq yq eval '.services[0].image = strenv(IMAGE)' -i "$BACKEND_DIR/koyeb.yaml"
-          cat "$BACKEND_DIR/koyeb.yaml"
-          koyeb deploy -f "$BACKEND_DIR/koyeb.yaml"
+          set -euo pipefail
+          echo "Deploying service $KOYEB_SERVICE_ID with image $IMAGE"
+          # Build minimal JSON payload: { image: "...", strategy: "ROLLING" }
+          payload=$(jq -n --arg img "$IMAGE" '{image:$img, strategy:"ROLLING"}')
+          curl -sS -X POST \
+            -H "Authorization: Bearer $KOYEB_API_KEY" \
+            -H "Content-Type: application/json" \
+            "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deploy" \
+            -d "$payload" | jq -C '.'
