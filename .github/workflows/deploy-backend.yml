@@ -27,19 +27,16 @@ jobs:
           # Detect whether mvnw is at repo root or inside a backend subfolder and set BACKEND_DIR
           if [ -f "$GITHUB_WORKSPACE/mvnw" ]; then
             echo "BACKEND_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-            echo "Detected backend dir: $GITHUB_WORKSPACE"
           elif [ -f "$GITHUB_WORKSPACE/backend/mvnw" ]; then
             echo "BACKEND_DIR=$GITHUB_WORKSPACE/backend" >> $GITHUB_ENV
-            echo "Detected backend dir: $GITHUB_WORKSPACE/backend"
           else
-            echo "Could not find mvnw in workspace. Listing workspace for debugging:" && ls -la "$GITHUB_WORKSPACE"
+            echo "Could not find mvnw in workspace." >&2
             exit 1
           fi
 
       - name: Run Flyway migrations (Docker)
         # Uses the Flyway Docker image to run migrations from the repo against Neon
         run: |
-          echo "Running Flyway migrations against Neon (using BACKEND_DIR=$BACKEND_DIR)"
           docker run --rm -v "$BACKEND_DIR/src/main/resources/db/migration":/flyway/sql \
             flyway/flyway \
             -url="${{ env.NEON_JDBC_URL }}" \
@@ -48,7 +45,6 @@ jobs:
 
       - name: Make mvnw executable
         run: |
-          echo "Making mvnw executable at $BACKEND_DIR/mvnw"
           chmod +x "$BACKEND_DIR/mvnw"
 
       - name: Build backend JAR
@@ -63,12 +59,9 @@ jobs:
           IMAGE_BASE=ghcr.io/${OWNER_LOWER}/stockease
           IMAGE_SHA=${IMAGE_BASE}:${{ github.sha }}
           IMAGE_LATEST=${IMAGE_BASE}:latest
-          echo "Building Docker images: $IMAGE_SHA and $IMAGE_LATEST"
-          echo "Logging in to GHCR"
+          echo "Building and pushing images"
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          # Build and tag both SHA and latest
           docker build -f "$BACKEND_DIR/Dockerfile" -t "$IMAGE_SHA" -t "$IMAGE_LATEST" "$BACKEND_DIR"
-          echo "Pushing images to GHCR"
           docker push "$IMAGE_SHA"
           docker push "$IMAGE_LATEST"
           echo "IMAGE=$IMAGE_SHA" >> $GITHUB_ENV
@@ -80,7 +73,7 @@ jobs:
       - name: Ensure image var is set
         run: |
           if [ -z "${IMAGE:-}" ]; then
-            echo "IMAGE not set"; exit 1
+            echo "IMAGE not set" >&2; exit 1
           fi
 
       - name: Deploy to Koyeb via API (no CLI)
@@ -90,11 +83,16 @@ jobs:
           IMAGE: ${{ env.IMAGE }}
         run: |
           set -euo pipefail
-          echo "Deploying service $KOYEB_SERVICE_ID with image $IMAGE"
-          # Build minimal JSON payload: { image: "...", strategy: "ROLLING" }
           payload=$(jq -n --arg img "$IMAGE" '{image:$img, strategy:"ROLLING"}')
-          curl -sS -X POST \
+          HTTP_CODE=$(curl -sS -o /tmp/koyeb_resp_body -w "%{http_code}" -X POST \
             -H "Authorization: Bearer $KOYEB_API_KEY" \
             -H "Content-Type: application/json" \
             "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deploy" \
-            -d "$payload" | jq -C '.'
+            -d "$payload")
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "Koyeb deploy accepted (HTTP $HTTP_CODE)"
+          else
+            echo "Koyeb deploy failed (HTTP $HTTP_CODE)" >&2
+            cat /tmp/koyeb_resp_body >&2
+            exit 1
+          fi
