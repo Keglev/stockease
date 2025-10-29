@@ -92,7 +92,7 @@ This portfolio backend is designed to:
 ## Documentation
 
 ## 🔗 API Integration
-This backend provides a **REST API** for interacting with stock data. You can find the full API documentation here:
+This backend provides a **REST API** for interacting with stock data. You can find the full INDEX API documentation here:
 
 📌 **[Index API Documentation](src/main/docs/api.md)**
 
