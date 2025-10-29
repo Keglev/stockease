@@ -29,7 +29,7 @@ management.endpoint.health.group:
 # ---- DataSource & Hikari (keep Neon free to sleep) ----
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}           # set as Koyeb secret
+    url: ${SPRING_DATASOURCE_URL}           # set as Koyeb/GitHub secret
     username: ${SPRING_DATASOURCE_USERNAME} # set as Koyeb secret
     password: ${SPRING_DATASOURCE_PASSWORD} # set as Koyeb secret
     hikari:
