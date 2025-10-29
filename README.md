@@ -89,10 +89,12 @@ This portfolio backend is designed to:
 - **REST API** 
 - **Maven** (Build Tool)
 
+## Documentation
+
 ## 🔗 API Integration
 This backend provides a **REST API** for interacting with stock data. You can find the full API documentation here:
 
-📌 **[View Full API Documentation](src/main/docs/api.md)**
+📌 **[Index API Documentation](src/main/docs/api.md)**
 
 ## 🤝 Contributing
 Contributions are welcome! If you'd like to improve this project, feel free to:
