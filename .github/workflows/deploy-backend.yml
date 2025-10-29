@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # These should be configured as repository secrets
-      NEON_JDBC_URL: ${{ secrets.NEON_JDBC_URL }}
+      NEON_JDBC_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
       SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
       KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
@@ -45,7 +45,7 @@ jobs:
           # Run package and then flyway:migrate in the same Maven process so Java-based migrations
           # compiled during package are visible to the Flyway plugin on the classpath.
           "$BACKEND_DIR/mvnw" -DskipTests \
-            -Dflyway.url="$NEON_JDBC_URL" \
+            -Dflyway.url="$SPRING_DATASOURCE_URL" \
             -Dflyway.user="$SPRING_DATASOURCE_USERNAME" \
             -Dflyway.password="$SPRING_DATASOURCE_PASSWORD" \
             package flyway:migrate
