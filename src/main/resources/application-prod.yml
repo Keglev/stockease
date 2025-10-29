@@ -10,6 +10,13 @@ management:
         enabled: true          # exposes /actuator/health, /liveness, /readiness
       show-details: "when_authorized"   # or "never" if you prefer; avoid "always" in prod
 
+  # Explicitly enable the DB health contributor so readiness group can include it.
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+
 # Define health groups explicitly so liveness does NOT hit DB, but readiness DOES.
 management.endpoint.health.group:
   liveness:
@@ -34,7 +41,7 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true     # if DB already has tables / older versions
     clean-disabled: true          # safety in prod
-    
+
 # ---- Additional settings ----
   jpa:
     hibernate:
