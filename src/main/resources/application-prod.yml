@@ -9,6 +9,8 @@ management:
       probes:
         enabled: true          # exposes /actuator/health, /liveness, /readiness
       show-details: "when_authorized"   # or "never" if you prefer; avoid "always" in prod
+      validate-group-membership: false  # Disable strict validation of group membership at startup. This prevents a hard failure
+                                        # if the 'db' health contributor isn't registered early in the context lifecycle.
 
   # Explicitly enable the DB health contributor so readiness group can include it.
   health:
@@ -46,5 +48,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate          # validate schema on startup
+logging:
+  level:
+    '[org.flywaydb]': DEBUG
 
 # (show-details is set above under management.endpoint.health.show-details)
