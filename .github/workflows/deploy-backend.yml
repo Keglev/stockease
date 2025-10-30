@@ -116,83 +116,34 @@ jobs:
           done
           echo "Image $IMAGE is available in registry"
 
-      - name: Deploy to Koyeb via API (no CLI)
+      - name: Deploy to Koyeb (trigger redeploy from Git)
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
-          KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }} # put this in repo secrets
-          IMAGE: ${{ env.IMAGE }}
+          KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
         run: |
-          test -n "$IMAGE" || { echo "IMAGE not set"; exit 1; }
-          echo "Checking Koyeb service exists (KOYEB_SERVICE_ID) before attempting deploy..."
-          # Verify the service exists and capture response for diagnostics
-          SERVICE_CHECK_CODE=$(curl -s -o /tmp/koyeb_service_resp.json -w "%{http_code}" \
+          echo "Triggering Koyeb to redeploy from latest Git commit..."
+          echo "Service ID: $KOYEB_SERVICE_ID"
+          echo "Git SHA: ${{ github.sha }}"
+          
+          # The service has auto_release (GitHub-sourced) enabled.
+          # Koyeb will automatically detect the new image from GHCR when we POST to create a deployment.
+          # This POST request tells Koyeb: "Build and deploy from the latest repository state."
+          
+          DEPLOY_CODE=$(curl -s -w "\n%{http_code}" -o /tmp/deploy_resp.json \
+            -X POST https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deployments \
             -H "Authorization: Bearer $KOYEB_API_KEY" \
-            "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID")
-          echo "Service check HTTP code: $SERVICE_CHECK_CODE"
-          if [ "$SERVICE_CHECK_CODE" -eq 404 ]; then
-            echo "ERROR: Koyeb service not found (404). Dumping response body for debugging:" 
-            cat /tmp/koyeb_service_resp.json || true
-            echo "Please verify the KOYEB_SERVICE_ID repository secret is correct and the service exists in Koyeb."
+            -H "Content-Type: application/json" \
+            -d '{}')
+          
+          HTTP_CODE=$(echo "$DEPLOY_CODE" | tail -1)
+          echo "Deploy request HTTP code: $HTTP_CODE"
+          cat /tmp/deploy_resp.json || true
+          
+          # Accept 201 (created), 202 (accepted), or 200 (OK) as success
+          if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "202" ] || [ "$HTTP_CODE" = "200" ]; then
+            echo "✓ Deployment triggered successfully. Koyeb will build and deploy the latest code."
+            exit 0
+          else
+            echo "✗ Deployment trigger failed (HTTP $HTTP_CODE)"
             exit 1
           fi
-
-          # Print full service JSON for diagnostics
-          echo "--- Koyeb service JSON (full) ---"
-          cat /tmp/koyeb_service_resp.json || true
-
-          # Try listing recent deployments to capture permissions/visibility
-          echo "Checking service deployments (permissions test)"
-          DEPLOYMENTS_CODE=$(curl -s -o /tmp/koyeb_deployments.json -w "%{http_code}" \
-            -H "Authorization: Bearer $KOYEB_API_KEY" \
-            "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deployments")
-          echo "Deployments list HTTP code: $DEPLOYMENTS_CODE"
-          echo "--- Deployments JSON ---"
-          cat /tmp/koyeb_deployments.json || true
-
-          # Use PATCH to update the service's container image field directly
-          # This triggers Koyeb to pull and deploy the new image without relying on webhooks/autodeploy.
-          # Strategy:
-          # 1. Extract the image name (without digest) from the pushed image
-          # 2. Build a PATCH payload that updates the service container image
-          # 3. Send PATCH to /v1/services/{id} with retry logic
-          
-          echo "Preparing PATCH payload to update service container image..."
-          
-          # Extract image name and digest for the PATCH request
-          CONTAINER_IMAGE="$IMAGE"
-          echo "Container image: $CONTAINER_IMAGE"
-          
-          # Build PATCH payload to update the service's container image
-          # The exact structure depends on Koyeb's API; this sets the image in the service config
-          PATCH_PAYLOAD=$(jq -n --arg img "$CONTAINER_IMAGE" '{image:$img}')
-          echo "PATCH payload: $PATCH_PAYLOAD"
-          
-          # Try PATCH with retries
-          MAX_ATTEMPTS=5
-          ATTEMPT=0
-          while [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; do
-            ATTEMPT=$((ATTEMPT+1))
-            echo "PATCH attempt $ATTEMPT/$MAX_ATTEMPTS"
-            PATCH_CODE=$(curl -s -D /tmp/koyeb_patch_headers.txt -o /tmp/koyeb_patch_resp.json -w "%{http_code}" \
-              -H "Authorization: Bearer $KOYEB_API_KEY" \
-              -H "Content-Type: application/json" \
-              -X PATCH "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID" \
-              -d "$PATCH_PAYLOAD")
-            echo "PATCH HTTP code: $PATCH_CODE"
-            echo "--- PATCH response headers ---"
-            sed -n '1,200p' /tmp/koyeb_patch_headers.txt || true
-            echo "--- PATCH response body ---"
-            cat /tmp/koyeb_patch_resp.json || true
-            if [ "$PATCH_CODE" -ge 200 -a "$PATCH_CODE" -lt 300 ]; then
-              echo "Service image update succeeded. Koyeb will begin pulling and deploying the new image."
-              exit 0
-            fi
-            if [ "$PATCH_CODE" -eq 404 ]; then
-              echo "Received 404 when PATCHing service. Check KOYEB_SERVICE_ID and API key."
-              exit 1
-            fi
-            # Retry on transient errors
-            sleep 5
-          done
-          echo "PATCH failed after $MAX_ATTEMPTS attempts."
-          exit 1
