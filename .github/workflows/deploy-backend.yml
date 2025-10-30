@@ -1,149 +1,111 @@
-name: Migrate and Deploy Backend
+name: Deploy and Migrate Backend to Koyeb (Git Source)
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
-  packages: write
+
+env:
+  # Flip to 'true' if you want CI to run tests before redeploy.
+  RUN_TESTS: 'false'
 
 jobs:
-  migrate-and-deploy:
+  deploy-backend:
     runs-on: ubuntu-latest
-    env:
-      # These should be configured as repository secrets
-      SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
-      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
-      SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-      KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Detect backend directory
+      - name: Detect backend directory and Skip Flyway since will be done by Koyeb server
         run: |
-          # Detect whether mvnw is at repo root or inside a backend subfolder and set BACKEND_DIR
-          if [ -f "$GITHUB_WORKSPACE/mvnw" ]; then
+          if [ -f "$GITHUB_WORKSPACE/mvnw" ] && [ -f "$GITHUB_WORKSPACE/pom.xml" ]; then
             echo "BACKEND_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-          elif [ -f "$GITHUB_WORKSPACE/backend/mvnw" ]; then
+          elif [ -f "$GITHUB_WORKSPACE/backend/mvnw" ] && [ -f "$GITHUB_WORKSPACE/backend/pom.xml" ]; then
             echo "BACKEND_DIR=$GITHUB_WORKSPACE/backend" >> $GITHUB_ENV
           else
-            echo "Could not find mvnw in workspace." >&2
+            echo "❌ Could not find mvnw/pom.xml at repo root or /backend" >&2
+            exit 1
+          fi
+          echo "Detected BACKEND_DIR=$BACKEND_DIR"
+
+      - name: Ensure Dockerfile exists near backend
+        run: |
+          if [ -f "$BACKEND_DIR/Dockerfile" ]; then
+            echo "Found Dockerfile at $BACKEND_DIR/Dockerfile"
+          else
+            echo "❌ Dockerfile not found at $BACKEND_DIR/Dockerfile" >&2
+            echo "If your Dockerfile lives elsewhere, either move it next to mvnw/pom.xml"
+            echo "or update your Koyeb service (Git source) to point to the correct path."
             exit 1
           fi
 
-      - name: Make mvnw executable
-        run: |
-          chmod +x "$BACKEND_DIR/mvnw"
+      - name: Set up JDK 17 with Maven cache
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
 
-      - name: Build backend (skip Flyway in CI)
+      - name: Make mvnw executable
+        run: chmod +x "$BACKEND_DIR/mvnw"
+
+      # Optional: run tests. By default this step is skipped (RUN_TESTS='false').
+      - name: Run backend tests
+        if: env.RUN_TESTS == 'true'
         working-directory: ${{ env.BACKEND_DIR }}
         run: |
-          echo "Building backend JAR (Flyway will run at app startup on Koyeb with proper DB connection)"
-          "$BACKEND_DIR/mvnw" -DskipTests package
+          ./mvnw -B -ntp test
 
-      - name: Build & push Docker image
+      # Lightweight build to catch obvious compile errors before we ask Koyeb to build
+      # (Koyeb will still do its own Docker build on redeploy.)
+      - name: Verify build compiles (skip tests)
+        working-directory: ${{ env.BACKEND_DIR }}
         run: |
-          # Ensure repository owner is lowercased (GHCR requires lowercase repository names)
-          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_BASE=ghcr.io/${OWNER_LOWER}/stockease
-          IMAGE_SHA=${IMAGE_BASE}:${{ github.sha }}
-          IMAGE_LATEST=${IMAGE_BASE}:latest
-          echo "Building and pushing images"
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          docker build -f "$BACKEND_DIR/Dockerfile" -t "$IMAGE_SHA" -t "$IMAGE_LATEST" "$BACKEND_DIR"
-          docker push "$IMAGE_SHA"
-          docker push "$IMAGE_LATEST"
+          ./mvnw -B -ntp -DskipTests package
 
-          # Try to determine the image digest so we can deploy by digest (more robust)
-          IMAGE_DIGEST_FULL=""
-          # Inspect local image for RepoDigests (may be present after push)
-          if docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_SHA" >/dev/null 2>&1; then
-            IMAGE_DIGEST_FULL=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_SHA" 2>/dev/null || true)
-          fi
-
-          # Fallback to GHCR registry API to get Docker-Content-Digest header if inspect failed
-          if [ -z "$IMAGE_DIGEST_FULL" ]; then
-            echo "Local RepoDigests not available; querying GHCR for manifest digest"
-            REPO_PATH=$(echo "$IMAGE_SHA" | sed 's|ghcr.io/||' | sed 's/:.*//')
-            TAG=$(echo "$IMAGE_SHA" | awk -F: '{print $NF}')
-            # Use GitHub token to query GHCR registry manifest
-            DIGEST_HEADER=$(curl -sI -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://ghcr.io/v2/$REPO_PATH/manifests/$TAG" | tr -d '\r' | awk -F ': ' '/Docker-Content-Digest/ {print $2}')
-            if [ -n "$DIGEST_HEADER" ]; then
-              IMAGE_DIGEST_FULL="ghcr.io/$REPO_PATH@$DIGEST_HEADER"
-            fi
-          fi
-
-          if [ -n "$IMAGE_DIGEST_FULL" ]; then
-            echo "Determined image digest: $IMAGE_DIGEST_FULL"
-            # Use digest for deploy (preferred)
-            echo "IMAGE=$IMAGE_DIGEST_FULL" >> $GITHUB_ENV
-            echo "IMAGE_DIGEST=$IMAGE_DIGEST_FULL" >> $GITHUB_ENV
-          else
-            echo "Could not determine image digest; falling back to tag $IMAGE_SHA"
-            echo "IMAGE=$IMAGE_SHA" >> $GITHUB_ENV
-          fi
-
-      - name: Install jq
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Ensure image var is set
-        run: |
-          if [ -z "${IMAGE:-}" ]; then
-            echo "IMAGE not set" >&2; exit 1
-          fi
-
-      - name: Wait for image to be available in registry
-        env:
-          IMAGE: ${{ env.IMAGE }}
-        run: |
-          echo "Logging into GHCR to verify image availability"
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          MAX_ATTEMPTS=12
-          ATTEMPT=0
-          SLEEP=5
-          until docker pull "$IMAGE"; do
-            ATTEMPT=$((ATTEMPT+1))
-            if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
-              echo "Image $IMAGE not available in registry after $MAX_ATTEMPTS attempts"
-              exit 1
-            fi
-            echo "Image not available yet; retrying attempt $ATTEMPT/$MAX_ATTEMPTS after ${SLEEP}s"
-            sleep $SLEEP
-          done
-          echo "Image $IMAGE is available in registry"
-
-      - name: Deploy to Koyeb (trigger redeploy from Git)
+      - name: Trigger Koyeb redeploy (Git source)
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
           KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
         run: |
-          echo "Triggering Koyeb to redeploy from latest Git commit..."
-          echo "Service ID: $KOYEB_SERVICE_ID"
-          echo "Git SHA: ${{ github.sha }}"
-          
-          # The service has auto_release (GitHub-sourced) enabled.
-          # Koyeb will automatically detect the new image from GHCR when we POST to create a deployment.
-          # This POST request tells Koyeb: "Build and deploy from the latest repository state."
-          
-          DEPLOY_CODE=$(curl -s -w "\n%{http_code}" -o /tmp/deploy_resp.json \
-            -X POST https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deployments \
+          echo "Triggering redeploy on service $KOYEB_SERVICE_ID…"
+          RESP_CODE=$(curl -s -w "\n%{http_code}" -o /tmp/resp.json \
+            -X POST "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/redeploy" \
             -H "Authorization: Bearer $KOYEB_API_KEY" \
             -H "Content-Type: application/json" \
             -d '{}')
-          
-          HTTP_CODE=$(echo "$DEPLOY_CODE" | tail -1)
-          echo "Deploy request HTTP code: $HTTP_CODE"
-          cat /tmp/deploy_resp.json || true
-          
-          # Accept 201 (created), 202 (accepted), or 200 (OK) as success
-          if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "202" ] || [ "$HTTP_CODE" = "200" ]; then
-            echo "✓ Deployment triggered successfully. Koyeb will build and deploy the latest code."
-            exit 0
-          else
-            echo "✗ Deployment trigger failed (HTTP $HTTP_CODE)"
+          CODE=$(echo "$RESP_CODE" | tail -1)
+          echo "HTTP: $CODE"
+          echo "Response:"
+          cat /tmp/resp.json || true
+          if [ "$CODE" != "200" ] && [ "$CODE" != "201" ] && [ "$CODE" != "202" ]; then
+            echo "❌ Redeploy failed"
             exit 1
           fi
+
+      # Optional: wait for service to become healthy (polls service status)
+      - name: Wait for Koyeb service HEALTHY/READY (up to ~10 min)
+        env:
+          KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+          KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
+        run: |
+          sudo apt-get update -y && sudo apt-get install -y jq
+          ATTEMPTS=60
+          SLEEP=10
+          for i in $(seq 1 $ATTEMPTS); do
+            STATUS_JSON=$(curl -s -H "Authorization: Bearer $KOYEB_API_KEY" \
+              "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID")
+            STATUS=$(echo "$STATUS_JSON" | jq -r '.service?.status // "UNKNOWN"')
+            echo "[$i/$ATTEMPTS] Service status: $STATUS"
+            if [ "$STATUS" = "HEALTHY" ] || [ "$STATUS" = "READY" ]; then
+              echo "✅ Service is $STATUS"
+              exit 0
+            fi
+            sleep $SLEEP
+          done
+          echo "❌ Service did not reach HEALTHY/READY in time"
+          exit 1
