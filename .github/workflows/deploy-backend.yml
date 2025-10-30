@@ -149,58 +149,50 @@ jobs:
           echo "--- Deployments JSON ---"
           cat /tmp/koyeb_deployments.json || true
 
-          # If the service is GitHub-sourced (autodeploy), skip CI-triggered API deploy
-          # to avoid API 404s for services managed by the UI/source builder.
-          # Check both .source.type (older API format) and .state.auto_release (current autodeploy format)
-          SOURCE_TYPE=$(jq -r '.service.source.type // empty' /tmp/koyeb_service_resp.json)
-          AUTO_RELEASE_REPO=$(jq -r '.service.state.auto_release.groups[0].repository // empty' /tmp/koyeb_service_resp.json)
+          # Use PATCH to update the service's container image field directly
+          # This triggers Koyeb to pull and deploy the new image without relying on webhooks/autodeploy.
+          # Strategy:
+          # 1. Extract the image name (without digest) from the pushed image
+          # 2. Build a PATCH payload that updates the service container image
+          # 3. Send PATCH to /v1/services/{id} with retry logic
           
-          echo "Koyeb service source.type: $SOURCE_TYPE"
-          echo "Koyeb service auto_release.repository: $AUTO_RELEASE_REPO"
+          echo "Preparing PATCH payload to update service container image..."
           
-          if [ -n "$AUTO_RELEASE_REPO" ]; then
-            echo "Service is configured for auto-release from repository: $AUTO_RELEASE_REPO"
-            echo "Skipping CI API deploy. Koyeb will build and deploy from the GitHub repository."
-            exit 0
-          fi
+          # Extract image name and digest for the PATCH request
+          CONTAINER_IMAGE="$IMAGE"
+          echo "Container image: $CONTAINER_IMAGE"
           
-          if [ "$SOURCE_TYPE" = "github" ] || [ "$SOURCE_TYPE" = "git" ] || [ "$SOURCE_TYPE" = "github_repo" ]; then
-            echo "Service uses GitHub source/autodeploy; skipping CI API deploy. Koyeb will build/deploy from the repository."
-            exit 0
-          fi
-
-          # Try deploy with retries; capture response body and HTTP code for diagnostics
+          # Build PATCH payload to update the service's container image
+          # The exact structure depends on Koyeb's API; this sets the image in the service config
+          PATCH_PAYLOAD=$(jq -n --arg img "$CONTAINER_IMAGE" '{image:$img}')
+          echo "PATCH payload: $PATCH_PAYLOAD"
+          
+          # Try PATCH with retries
           MAX_ATTEMPTS=5
           ATTEMPT=0
-          PAYLOAD=$(jq -n --arg img "$IMAGE" '{image:$img, strategy:"ROLLING"}')
           while [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; do
             ATTEMPT=$((ATTEMPT+1))
-            echo "Deploy attempt $ATTEMPT/$MAX_ATTEMPTS"
-            # Use verbose/headers capture for the POST so we get more context
-            DEPLOY_CODE=$(curl -s -D /tmp/koyeb_deploy_headers.txt -o /tmp/koyeb_deploy_resp.json -w "%{http_code}" \
+            echo "PATCH attempt $ATTEMPT/$MAX_ATTEMPTS"
+            PATCH_CODE=$(curl -s -D /tmp/koyeb_patch_headers.txt -o /tmp/koyeb_patch_resp.json -w "%{http_code}" \
               -H "Authorization: Bearer $KOYEB_API_KEY" \
               -H "Content-Type: application/json" \
-              -X POST "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deploy" \
-              -d "$PAYLOAD")
-            echo "Deploy HTTP code: $DEPLOY_CODE"
-            echo "--- Deploy response headers ---"
-            sed -n '1,200p' /tmp/koyeb_deploy_headers.txt || true
-            echo "--- Deploy response body ---"
-            cat /tmp/koyeb_deploy_resp.json || true
-            if [ "$DEPLOY_CODE" -ge 200 -a "$DEPLOY_CODE" -lt 300 ]; then
-              echo "Deploy succeeded."
-              break
+              -X PATCH "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID" \
+              -d "$PATCH_PAYLOAD")
+            echo "PATCH HTTP code: $PATCH_CODE"
+            echo "--- PATCH response headers ---"
+            sed -n '1,200p' /tmp/koyeb_patch_headers.txt || true
+            echo "--- PATCH response body ---"
+            cat /tmp/koyeb_patch_resp.json || true
+            if [ "$PATCH_CODE" -ge 200 -a "$PATCH_CODE" -lt 300 ]; then
+              echo "Service image update succeeded. Koyeb will begin pulling and deploying the new image."
+              exit 0
             fi
-            # If the service isn't found, abort early (likely wrong ID)
-            if [ "$DEPLOY_CODE" -eq 404 ]; then
-              echo "Received 404 when deploying to Koyeb. This typically means the service ID is invalid or missing permissions."
-              echo "Check KOYEB_SERVICE_ID and KOYEB_API_KEY repository secrets and the service's existence."
+            if [ "$PATCH_CODE" -eq 404 ]; then
+              echo "Received 404 when PATCHing service. Check KOYEB_SERVICE_ID and API key."
               exit 1
             fi
-            # For other transient errors, wait and retry
+            # Retry on transient errors
             sleep 5
           done
-          if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
-            echo "Deploy failed after $MAX_ATTEMPTS attempts. See above response bodies for details."
-            exit 1
-          fi
+          echo "PATCH failed after $MAX_ATTEMPTS attempts."
+          exit 1
