@@ -1,5 +1,7 @@
 # StockEase Backend
 
+<!-- Last workflow trigger: 2025-10-30 09:45 UTC -->
+
 ## About
 StockEase is a backend service for managing stock-related data efficiently. Built with **Spring Boot** and integrated with **PostgreSQL**, this project showcases authentication, role-based access control, and CRUD operations for products. 
 
