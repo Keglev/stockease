@@ -56,7 +56,35 @@ jobs:
           docker build -f "$BACKEND_DIR/Dockerfile" -t "$IMAGE_SHA" -t "$IMAGE_LATEST" "$BACKEND_DIR"
           docker push "$IMAGE_SHA"
           docker push "$IMAGE_LATEST"
-          echo "IMAGE=$IMAGE_SHA" >> $GITHUB_ENV
+
+          # Try to determine the image digest so we can deploy by digest (more robust)
+          IMAGE_DIGEST_FULL=""
+          # Inspect local image for RepoDigests (may be present after push)
+          if docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_SHA" >/dev/null 2>&1; then
+            IMAGE_DIGEST_FULL=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_SHA" 2>/dev/null || true)
+          fi
+
+          # Fallback to GHCR registry API to get Docker-Content-Digest header if inspect failed
+          if [ -z "$IMAGE_DIGEST_FULL" ]; then
+            echo "Local RepoDigests not available; querying GHCR for manifest digest"
+            REPO_PATH=$(echo "$IMAGE_SHA" | sed 's|ghcr.io/||' | sed 's/:.*//')
+            TAG=$(echo "$IMAGE_SHA" | awk -F: '{print $NF}')
+            # Use GitHub token to query GHCR registry manifest
+            DIGEST_HEADER=$(curl -sI -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://ghcr.io/v2/$REPO_PATH/manifests/$TAG" | tr -d '\r' | awk -F ': ' '/Docker-Content-Digest/ {print $2}')
+            if [ -n "$DIGEST_HEADER" ]; then
+              IMAGE_DIGEST_FULL="ghcr.io/$REPO_PATH@$DIGEST_HEADER"
+            fi
+          fi
+
+          if [ -n "$IMAGE_DIGEST_FULL" ]; then
+            echo "Determined image digest: $IMAGE_DIGEST_FULL"
+            # Use digest for deploy (preferred)
+            echo "IMAGE=$IMAGE_DIGEST_FULL" >> $GITHUB_ENV
+            echo "IMAGE_DIGEST=$IMAGE_DIGEST_FULL" >> $GITHUB_ENV
+          else
+            echo "Could not determine image digest; falling back to tag $IMAGE_SHA"
+            echo "IMAGE=$IMAGE_SHA" >> $GITHUB_ENV
+          fi
 
       - name: Install jq
         run: |
@@ -68,6 +96,26 @@ jobs:
             echo "IMAGE not set" >&2; exit 1
           fi
 
+      - name: Wait for image to be available in registry
+        env:
+          IMAGE: ${{ env.IMAGE }}
+        run: |
+          echo "Logging into GHCR to verify image availability"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          MAX_ATTEMPTS=12
+          ATTEMPT=0
+          SLEEP=5
+          until docker pull "$IMAGE"; do
+            ATTEMPT=$((ATTEMPT+1))
+            if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+              echo "Image $IMAGE not available in registry after $MAX_ATTEMPTS attempts"
+              exit 1
+            fi
+            echo "Image not available yet; retrying attempt $ATTEMPT/$MAX_ATTEMPTS after ${SLEEP}s"
+            sleep $SLEEP
+          done
+          echo "Image $IMAGE is available in registry"
+
       - name: Deploy to Koyeb via API (no CLI)
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
@@ -75,8 +123,49 @@ jobs:
           IMAGE: ${{ env.IMAGE }}
         run: |
           test -n "$IMAGE" || { echo "IMAGE not set"; exit 1; }
-          curl -sS -X POST \
+          echo "Checking Koyeb service exists (KOYEB_SERVICE_ID) before attempting deploy..."
+          # Verify the service exists and capture response for diagnostics
+          SERVICE_CHECK_CODE=$(curl -s -o /tmp/koyeb_service_resp.json -w "%{http_code}" \
             -H "Authorization: Bearer $KOYEB_API_KEY" \
-            -H "Content-Type: application/json" \
-            "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deploy" \
-            -d "$(jq -n --arg img "$IMAGE" '{image:$img, strategy:"ROLLING"}')"
+            "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID")
+          echo "Service check HTTP code: $SERVICE_CHECK_CODE"
+          if [ "$SERVICE_CHECK_CODE" -eq 404 ]; then
+            echo "ERROR: Koyeb service not found (404). Dumping response body for debugging:" 
+            cat /tmp/koyeb_service_resp.json || true
+            echo "Please verify the KOYEB_SERVICE_ID repository secret is correct and the service exists in Koyeb."
+            exit 1
+          fi
+
+          # Try deploy with retries; capture response body and HTTP code for diagnostics
+          MAX_ATTEMPTS=5
+          ATTEMPT=0
+          PAYLOAD=$(jq -n --arg img "$IMAGE" '{image:$img, strategy:"ROLLING"}')
+          while [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; do
+            ATTEMPT=$((ATTEMPT+1))
+            echo "Deploy attempt $ATTEMPT/$MAX_ATTEMPTS"
+            DEPLOY_CODE=$(curl -s -o /tmp/koyeb_deploy_resp.json -w "%{http_code}" \
+              -H "Authorization: Bearer $KOYEB_API_KEY" \
+              -H "Content-Type: application/json" \
+              -X POST "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deploy" \
+              -d "$PAYLOAD")
+            echo "Deploy HTTP code: $DEPLOY_CODE"
+            if [ "$DEPLOY_CODE" -ge 200 -a "$DEPLOY_CODE" -lt 300 ]; then
+              echo "Deploy succeeded. Response body:"
+              cat /tmp/koyeb_deploy_resp.json || true
+              break
+            fi
+            echo "Deploy failed (HTTP $DEPLOY_CODE). Response body:" 
+            cat /tmp/koyeb_deploy_resp.json || true
+            # If the service isn't found, abort early (likely wrong ID)
+            if [ "$DEPLOY_CODE" -eq 404 ]; then
+              echo "Received 404 when deploying to Koyeb. This typically means the service ID is invalid or missing permissions."
+              echo "Check KOYEB_SERVICE_ID and KOYEB_API_KEY repository secrets and the service's existence."
+              exit 1
+            fi
+            # For other transient errors, wait and retry
+            sleep 5
+          done
+          if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+            echo "Deploy failed after $MAX_ATTEMPTS attempts. See above response bodies for details."
+            exit 1
+          fi
