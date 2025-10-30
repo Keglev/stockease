@@ -51,6 +51,7 @@ Create an `application.properties` file inside `src/main/resources/` and configu
 spring.datasource.url=jdbc:postgresql://DATABASE_HOST/DATABASE_NAME
 spring.datasource.username=YOUR_DB_USER
 spring.datasource.password=YOUR_DB_PASSWORD
+more on this later if you want to deploy a database in a different server
 ```
 Replace placeholders with actual values.
 
