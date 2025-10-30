@@ -44,8 +44,8 @@ public class FlywayConfiguration {
                 .baselineOnMigrate(true)
                 .cleanDisabled(true)
                 .outOfOrder(true)
-                .connectRetries(10)
-                .connectRetriesInterval(1)
+                .connectRetries(20)
+                .connectRetriesInterval(2)
                 .load();
 
         flyway.migrate();
