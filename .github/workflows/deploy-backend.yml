@@ -151,8 +151,19 @@ jobs:
 
           # If the service is GitHub-sourced (autodeploy), skip CI-triggered API deploy
           # to avoid API 404s for services managed by the UI/source builder.
-          SOURCE_TYPE=$(jq -r '.source.type // empty' /tmp/koyeb_service_resp.json)
+          # Check both .source.type (older API format) and .state.auto_release (current autodeploy format)
+          SOURCE_TYPE=$(jq -r '.service.source.type // empty' /tmp/koyeb_service_resp.json)
+          AUTO_RELEASE_REPO=$(jq -r '.service.state.auto_release.groups[0].repository // empty' /tmp/koyeb_service_resp.json)
+          
           echo "Koyeb service source.type: $SOURCE_TYPE"
+          echo "Koyeb service auto_release.repository: $AUTO_RELEASE_REPO"
+          
+          if [ -n "$AUTO_RELEASE_REPO" ]; then
+            echo "Service is configured for auto-release from repository: $AUTO_RELEASE_REPO"
+            echo "Skipping CI API deploy. Koyeb will build and deploy from the GitHub repository."
+            exit 0
+          fi
+          
           if [ "$SOURCE_TYPE" = "github" ] || [ "$SOURCE_TYPE" = "git" ] || [ "$SOURCE_TYPE" = "github_repo" ]; then
             echo "Service uses GitHub source/autodeploy; skipping CI API deploy. Koyeb will build/deploy from the repository."
             exit 0
