@@ -10,7 +10,7 @@ permissions:
 
 env:
   # Flip to 'true' if you want CI to run tests before redeploy.
-  RUN_TESTS: 'false'
+  RUN_TESTS: 'true'
 
 jobs:
   deploy-backend:

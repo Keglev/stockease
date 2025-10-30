@@ -36,9 +36,20 @@ public class V3__seed_data extends BaseJavaMigration {
     }
 
     private void seedUser(Connection connection, String username, String hashedPassword, String role) throws Exception {
-        // Use INSERT ... ON CONFLICT DO NOTHING if username unique constraint exists
-        String sql = "INSERT INTO app_user (username, password, role) VALUES (?, ?, ?) ON CONFLICT (username) DO NOTHING";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        // Make seeding DB-agnostic: first check for existence, then insert if missing.
+        // This avoids relying on DB-specific syntax like Postgres' ON CONFLICT.
+        String checkSql = "SELECT id FROM app_user WHERE username = ?";
+        try (PreparedStatement check = connection.prepareStatement(checkSql)) {
+            check.setString(1, username);
+            try (ResultSet rs = check.executeQuery()) {
+                if (rs.next()) {
+                    return; // user already exists
+                }
+            }
+        }
+
+        String insertSql = "INSERT INTO app_user (username, password, role) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
             ps.setString(1, username);
             ps.setString(2, hashedPassword);
             ps.setString(3, role);
