@@ -136,6 +136,19 @@ jobs:
             exit 1
           fi
 
+          # Print full service JSON for diagnostics
+          echo "--- Koyeb service JSON (full) ---"
+          cat /tmp/koyeb_service_resp.json || true
+
+          # Try listing recent deployments to capture permissions/visibility
+          echo "Checking service deployments (permissions test)"
+          DEPLOYMENTS_CODE=$(curl -s -o /tmp/koyeb_deployments.json -w "%{http_code}" \
+            -H "Authorization: Bearer $KOYEB_API_KEY" \
+            "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deployments")
+          echo "Deployments list HTTP code: $DEPLOYMENTS_CODE"
+          echo "--- Deployments JSON ---"
+          cat /tmp/koyeb_deployments.json || true
+
           # If the service is GitHub-sourced (autodeploy), skip CI-triggered API deploy
           # to avoid API 404s for services managed by the UI/source builder.
           SOURCE_TYPE=$(jq -r '.source.type // empty' /tmp/koyeb_service_resp.json)
@@ -152,19 +165,21 @@ jobs:
           while [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; do
             ATTEMPT=$((ATTEMPT+1))
             echo "Deploy attempt $ATTEMPT/$MAX_ATTEMPTS"
-            DEPLOY_CODE=$(curl -s -o /tmp/koyeb_deploy_resp.json -w "%{http_code}" \
+            # Use verbose/headers capture for the POST so we get more context
+            DEPLOY_CODE=$(curl -s -D /tmp/koyeb_deploy_headers.txt -o /tmp/koyeb_deploy_resp.json -w "%{http_code}" \
               -H "Authorization: Bearer $KOYEB_API_KEY" \
               -H "Content-Type: application/json" \
               -X POST "https://app.koyeb.com/v1/services/$KOYEB_SERVICE_ID/deploy" \
               -d "$PAYLOAD")
             echo "Deploy HTTP code: $DEPLOY_CODE"
+            echo "--- Deploy response headers ---"
+            sed -n '1,200p' /tmp/koyeb_deploy_headers.txt || true
+            echo "--- Deploy response body ---"
+            cat /tmp/koyeb_deploy_resp.json || true
             if [ "$DEPLOY_CODE" -ge 200 -a "$DEPLOY_CODE" -lt 300 ]; then
-              echo "Deploy succeeded. Response body:"
-              cat /tmp/koyeb_deploy_resp.json || true
+              echo "Deploy succeeded."
               break
             fi
-            echo "Deploy failed (HTTP $DEPLOY_CODE). Response body:" 
-            cat /tmp/koyeb_deploy_resp.json || true
             # If the service isn't found, abort early (likely wrong ID)
             if [ "$DEPLOY_CODE" -eq 404 ]; then
               echo "Received 404 when deploying to Koyeb. This typically means the service ID is invalid or missing permissions."
