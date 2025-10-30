@@ -38,17 +38,11 @@ jobs:
         run: |
           chmod +x "$BACKEND_DIR/mvnw"
 
-      - name: Build backend and run Flyway migrations
+      - name: Build backend (skip Flyway in CI)
         working-directory: ${{ env.BACKEND_DIR }}
         run: |
-          echo "Building backend and running Flyway (package then flyway:migrate in a single Maven invocation)"
-          # Run package and then flyway:migrate in the same Maven process so Java-based migrations
-          # compiled during package are visible to the Flyway plugin on the classpath.
-          "$BACKEND_DIR/mvnw" -DskipTests \
-            -Dflyway.url="$SPRING_DATASOURCE_URL" \
-            -Dflyway.user="$SPRING_DATASOURCE_USERNAME" \
-            -Dflyway.password="$SPRING_DATASOURCE_PASSWORD" \
-            package flyway:migrate
+          echo "Building backend JAR (Flyway will run at app startup on Koyeb with proper DB connection)"
+          "$BACKEND_DIR/mvnw" -DskipTests package
 
       - name: Build & push Docker image
         run: |
