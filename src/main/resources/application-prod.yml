@@ -26,8 +26,14 @@ management.endpoint.health.group:
   readiness:
     include: readinessState, db
 
-# ---- DataSource & Hikari (keep Neon free to sleep) ----
+# ---- Spring Boot Startup ----
 spring:
+  main:
+    lazy-initialization: false   # Allow normal initialization
+  jpa:
+    defer-datasource-initialization: true  # Defer JPA initialization until after Flyway completes
+    hibernate:
+      ddl-auto: validate          # validate schema on startup
   datasource:
     url: ${SPRING_DATASOURCE_URL}           # set as Koyeb/GitHub secret
     username: ${SPRING_DATASOURCE_USERNAME} # set as Koyeb secret
@@ -36,18 +42,20 @@ spring:
       minimum-idle: 0
       maximum-pool-size: 5
       idle-timeout: 120000        # 2 min; allows pool to drain so Neon can sleep
-      connection-timeout: 10000
+      connection-timeout: 30000   # 30 seconds (increased from 10s for Neon reliability)
       max-lifetime: 1800000       # 30 min
+      connection-test-query: "SELECT 1"  # Validate connections with a test query
   flyway:
     enabled: true
     locations: classpath:db/migration
-    baseline-on-migrate: true     # if DB already has tables / older versions
-    clean-disabled: true          # safety in prod
+    baseline-on-migrate: true
+    clean-disabled: true
+    out-of-order: true
+    connect-retries: 10         # Retry connection 10 times
+    connect-retries-interval: 5 # Wait 5 seconds between retries
+    fail-on-missing-locations: false  # Don't fail if migration dirs don't exist
 
 # ---- Additional settings ----
-  jpa:
-    hibernate:
-      ddl-auto: validate          # validate schema on startup
 logging:
   level:
     '[org.flywaydb]': DEBUG
