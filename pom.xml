@@ -182,6 +182,30 @@
 				<configuration>
 				</configuration>
 			</plugin>
+
+			<!-- Flyway Maven Plugin for DB migrations in CI -->
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>11.7.2</version>
+				<configuration>
+					<url>${flyway.url}</url>
+					<user>${flyway.user}</user>
+					<password>${flyway.password}</password>
+					<locations>
+						<location>classpath:db/migration</location>
+					</locations>
+					<baselineOnMigrate>true</baselineOnMigrate>
+					<cleanDisabled>true</cleanDisabled>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-database-postgresql</artifactId>
+						<version>11.7.2</version>
+					</dependency>
+				</dependencies>
+			</plugin>
 		</plugins>
 	</build>
 
