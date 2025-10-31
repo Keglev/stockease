@@ -1,0 +1,19 @@
+# Generated HTML & reports (committed to docs branch by CI)
+*.html
+*.pdf
+
+# JaCoCo coverage reports
+coverage/index.html
+coverage/**/*.html
+
+# Redoc generated files
+api/redoc/*.html
+
+# Build artifacts
+node_modules/
+dist/
+target/
+
+# Environment
+.env
+.env.local
