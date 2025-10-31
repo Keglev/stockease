@@ -30,9 +30,31 @@ import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
 /**
- * Test class for fetching product functionality in {@link ProductController}.
- * This class verifies various scenarios, including fetching all products,
- * fetching a product by ID, and handling not-found cases.
+ * Integration tests for GET /api/products/* endpoints (product fetching/querying).
+ * 
+ * System Under Test (SUT): ProductController.getAllProducts(), getProductById(Long id)
+ * → ResponseEntity<List<Product>> or ResponseEntity<ApiResponse<Product>>
+ * 
+ * Test framework: Spring Boot WebMvcTest (loads SecurityConfig, MockMvc)
+ * Authorization: SecurityMockMvcRequestPostProcessors.user() with roles
+ * Mock framework: Mockito (@MockitoBean ProductRepository)
+ * Context: @DirtiesContext clears Spring context between tests (isolation)
+ * 
+ * Test coverage (parameterized):
+ * 1. Fetch all products: Both ADMIN and USER roles allowed
+ * 2. Fetch product by ID: Both ADMIN and USER roles allowed
+ * 3. Not found: Fetch non-existent ID (404 Not Found)
+ * 
+ * Execution flow (Given-When-Then):
+ * - @BeforeEach: Setup mock products with ID, quantity, price, totalValue
+ * - @ParameterizedTest: Test with multiple role combinations
+ * - TestConfig: Provides SecurityFilterChain for authorization checks
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ * @see ProductController.getAllProducts()
+ * @see ProductController.getProductById()
  */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
@@ -50,8 +72,16 @@ public class ProductFetchControllerTest {
     private JwtUtil jwtUtil;
 
     /**
-     * Sets up mock data and behavior before each test.
+     * Lifecycle hook: Setup mock product data before each test.
+     * 
+     * Mock data:
+     * - Product 1: ID=1, name="Product 1", quantity=10, price=100.0, totalValue=1000.0
+     * - Product 2: ID=2, name="Product 2", quantity=5, price=50.0, totalValue=250.0
+     * - ProductRepository.findAllOrderById(): Returns list of both products
+     * 
+     * Execution: @BeforeEach runs BEFORE each @Test/@ParameterizedTest method
      */
+    @SuppressWarnings("unused") // Called by JUnit 5 @BeforeEach lifecycle
     @BeforeEach
     void setUp() {
         // Mock products
@@ -67,7 +97,13 @@ public class ProductFetchControllerTest {
     }
 
     /**
-     * Verifies that the test context and beans are properly loaded.
+     * Application context sanity check.
+     * 
+     * Given: Spring Boot WebMvcTest loads application context
+     * When: Test runs
+     * Then: ProductRepository and MockMvc beans are NOT null
+     * 
+     * Verifies: Configuration and auto-wiring successful
      */
     @Test
     void contextLoads() {
@@ -76,7 +112,15 @@ public class ProductFetchControllerTest {
     }
 
     /**
-     * Tests fetching all products with different roles.
+     * Given: Authenticated user (ADMIN or USER)
+     * When: GET /api/products (fetch all)
+     * Then: ResponseEntity(200 OK) with list of all products [Product 1, Product 2]
+     * 
+     * Test scenario (parameterized):
+     * - Test both ADMIN and USER roles (both can read products)
+     * - Mock JwtUtil.validateToken() returns true
+     * - Verify response contains product names and totalValues
+     * - Confirms read-access is unrestricted by role
      */
     @ParameterizedTest
     @CsvSource({
@@ -101,7 +145,15 @@ public class ProductFetchControllerTest {
     }
 
     /**
-     * Tests fetching a product by ID with different roles.
+     * Given: Authenticated user (ADMIN or USER) with valid product ID
+     * When: GET /api/products/{id}
+     * Then: ResponseEntity(200 OK) with product details (name, totalValue, etc.)
+     * 
+     * Test scenario (parameterized):
+     * - Test both ADMIN and USER roles (both can read specific product)
+     * - Mock ProductRepository.findById(1L) returns Product 1
+     * - Verify response contains product attributes in data wrapper
+     * - Confirms product lookup by ID works for all roles
      */
     @ParameterizedTest
     @CsvSource({
@@ -130,7 +182,15 @@ public class ProductFetchControllerTest {
     }
 
     /**
-     * Tests fetching a product by a nonexistent ID with different roles.
+     * Given: Authenticated user (ADMIN or USER) requesting non-existent product ID
+     * When: GET /api/products/{id} where id=999 (doesn't exist)
+     * Then: ResponseEntity(404 Not Found) with success=false, message about missing product
+     * 
+     * Test scenario (parameterized):
+     * - Mock ProductRepository.findById(999L) returns Optional.empty()
+     * - Verify response status 404 and appropriate error message
+     * - Confirm data field is empty/null
+     * - Validates 404 handling for both ADMIN and USER roles
      */
     @ParameterizedTest
     @CsvSource({

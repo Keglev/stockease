@@ -24,8 +24,30 @@ import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
 /**
- * Test class for {@link ProductController}.
- * This class contains parameterized tests for verifying the behavior of the product-related endpoints.
+ * Integration tests for various ProductController endpoints.
+ * 
+ * System Under Test (SUT): ProductController miscellaneous endpoints
+ * - getLowStockProducts() → Find products with quantity < 5
+ * - Potential additional business logic endpoints
+ * 
+ * Test framework: Spring Boot WebMvcTest (loads SecurityConfig, MockMvc)
+ * Authorization: SecurityMockMvcRequestPostProcessors.user() with roles
+ * Mock framework: Mockito (@MockitoBean ProductRepository, JwtUtil)
+ * 
+ * Test coverage:
+ * 1. Low-stock query: Find products with quantity < 5 (parameterized by role)
+ * 2. Empty result: No products with low stock
+ * 
+ * Execution flow (Given-When-Then):
+ * - @BeforeEach: Reset mocks, setup JWT validation
+ * - @ParameterizedTest: Test with ADMIN and USER roles
+ * - Business logic: productRepository.findByQuantityLessThan(5)
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ * @see ProductController
+ * @see ProductRepository.findByQuantityLessThan()
  */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
@@ -41,8 +63,19 @@ public class ProductControllerTest {
     private JwtUtil jwtUtil;
 
     /**
-     * Resets the mocked dependencies and sets up common behaviors before each test.
+     * Lifecycle hook: Reset all mocks and setup JWT validation before each test.
+     * 
+     * Mock reset:
+     * - ProductRepository: Clears all stubs from previous tests
+     * - JwtUtil: Clears all stubs from previous tests
+     * 
+     * Mock configuration:
+     * - JwtUtil.validateToken(): Always returns true
+     * - JwtUtil.extractUsername(): Returns "testUser"
+     * 
+     * Execution: @BeforeEach runs BEFORE each @ParameterizedTest method
      */
+    @SuppressWarnings("unused") // Called by JUnit 5 @BeforeEach lifecycle
     @BeforeEach
     void resetMocks() {
         Mockito.reset(productRepository, jwtUtil);
@@ -51,7 +84,15 @@ public class ProductControllerTest {
     }
 
     /**
-     * Tests the "low-stock products" endpoint with various roles.
+     * Given: Authenticated user (ADMIN or USER)
+     * When: GET /api/products/low-stock
+     * Then: ResponseEntity(200 OK) with list of products where quantity < 5
+     * 
+     * Test scenario (parameterized):
+     * - Mock ProductRepository.findByQuantityLessThan(5) returns 2 low-stock products
+     * - Product 1: qty=3, Product 2: qty=2 (both < 5 threshold)
+     * - Verify response contains names of both low-stock products
+     * - Confirms business logic for inventory alerts
      */
     @ParameterizedTest
     @CsvSource({
@@ -75,7 +116,14 @@ public class ProductControllerTest {
     }
 
     /**
-     * Tests the "low-stock products" endpoint with no low-stock products.
+     * Given: Authenticated user with no low-stock products in repository
+     * When: GET /api/products/low-stock
+     * Then: ResponseEntity(200 OK) with message "All products are sufficiently stocked"
+     * 
+     * Test scenario (parameterized):
+     * - Mock ProductRepository.findByQuantityLessThan(5) returns empty list
+     * - Verify response status 200 (no error) with custom message
+     * - Confirms graceful handling of empty result set
      */
     @ParameterizedTest
     @CsvSource({
@@ -92,7 +140,15 @@ public class ProductControllerTest {
     }
 
     /**
-     * Tests the "search products" endpoint with matching products.
+     * Given: Authenticated user searching for products by name substring
+     * When: GET /api/products/search?name=searchable
+     * Then: ResponseEntity(200 OK) with matching product "Searchable Product"
+     * 
+     * Test scenario (parameterized):
+     * - Mock ProductRepository.findByNameContainingIgnoreCase("searchable")
+     * - Case-insensitive search returns product regardless of case
+     * - Verify response contains matching product name
+     * - Confirms substring matching for product discovery
      */
     @ParameterizedTest
     @CsvSource({
@@ -114,7 +170,15 @@ public class ProductControllerTest {
     }
 
     /**
-     * Tests the "search products" endpoint with no matching products.
+     * Given: Authenticated user searching for non-existent product name
+     * When: GET /api/products/search?name=nonexistent
+     * Then: ResponseEntity(204 No Content) with message about no matches
+     * 
+     * Test scenario (parameterized):
+     * - Mock ProductRepository.findByNameContainingIgnoreCase("nonexistent") returns empty
+     * - Status 204 (No Content) indicates "search executed, no results"
+     * - Verify response message indicates no products found
+     * - Confirms graceful handling of empty search results
      */
     @ParameterizedTest
     @CsvSource({

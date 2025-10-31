@@ -528,6 +528,31 @@ Before production deployment:
 
 ---
 
+## Related Documentation
+
+### Main Architecture Topics
+- **[Architecture Overview](./overview.md)** - Business context and infrastructure decisions
+- **[Backend Architecture](./backend.md)** - Application structure being deployed
+- **[Service Layers](./layers.md)** - Layer-level considerations for deployment
+- **[Security Architecture](./security.md)** - Security requirements for production deployment
+
+### Architecture Decisions (ADRs)
+- **[Database Choice](./decisions/001-database-choice.md)** - PostgreSQL for production, H2 for testing
+- **[Validation Strategy](./decisions/002-validation-strategy.md)** - Validation in pre-production testing
+
+### Design Patterns & Practices
+- **[Security Patterns](./patterns/security-patterns.md)** - HTTPS/TLS, encryption, secure configuration
+- **[Repository Pattern](./patterns/repository-pattern.md)** - Database connection strategies for production
+
+### Deployment Details
+- **[CI/CD Pipeline](./deployment/ci-pipeline.md)** - GitHub Actions for automated deployments
+- **[Staging Configuration](./deployment/staging-config.md)** - Pre-production testing and verification
+
+### Related Frontend Docs
+- **[Frontend Architecture](./frontend.md)** - React deployment to Render
+
+---
+
 **Document Version**: 1.0  
 **Last Updated**: October 31, 2025  
 **Status**: Production Ready

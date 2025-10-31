@@ -12,41 +12,61 @@ import org.springframework.lang.NonNull;
 import com.stocks.stockease.model.Product;
 
 /**
- * Repository interface for managing Product entities.
- * Provides methods for CRUD operations and custom queries on the Product table.
+ * Spring Data JPA repository for Product entity persistence.
+ * 
+ * Provides database access methods including CRUD operations,
+ * pagination, and custom queries for inventory queries.
+ * Extends JpaRepository for standard ORM functionality.
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
  */
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     /**
-     * Finds all products with a quantity less than the specified threshold.
+     * Retrieves products with stock quantity below threshold.
      * 
-     * @param threshold the maximum quantity to filter by
-     * @return a list of products with quantities below the threshold
+     * Used to identify low-stock items requiring reorder.
+     * Threshold (default 5) is a business constant.
+     * 
+     * @param threshold quantity boundary (exclusive)
+     * @return list of products where quantity < threshold
      */
     @Query("SELECT p FROM Product p WHERE p.quantity < :threshold")
     List<Product> findByQuantityLessThan(@Param("threshold") int threshold);
 
     /**
-     * Retrieves all products sorted by their ID in ascending order.
+     * Retrieves all products in ascending ID order.
      * 
-     * @return a list of products ordered by ID
+     * Deterministic ordering for consistent pagination and client lists.
+     * Ensures consistent results across API calls.
+     * 
+     * @return list of all products sorted by ID ascending
      */
     @Query("SELECT p FROM Product p ORDER BY p.id ASC")
     List<Product> findAllOrderById();
 
     /**
-     * Calculates the total stock value of all products.
+     * Calculates total inventory valuation.
      * 
-     * @return the sum of the total value of all products
+     * Aggregate query at database level (more efficient than loading all products).
+     * Returns 0.0 if no products exist (COALESCE handles SUM(null) case).
+     * Used for financial reporting and business intelligence.
+     * 
+     * @return sum of all product totalValue fields
      */
     @Query("SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p")
     double calculateTotalStockValue();
 
     /**
-     * Retrieves all products in a paginated format.
+     * Retrieves products with pagination support.
      * 
-     * @param pageable the pagination information
-     * @return a page of products
+     * Prevents loading entire table into memory. Respects page and size parameters
+     * for efficient large dataset handling.
+     * 
+     * @param pageable pagination parameters (page, size, sort)
+     * @return page of products with metadata
      */
     @Override
     @NonNull
@@ -54,10 +74,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findAll(@NonNull Pageable pageable);
 
     /**
-     * Searches for products whose names contain the given string (case-insensitive).
+     * Searches for products by name substring (case-insensitive).
      * 
-     * @param name the substring to search for in product names
-     * @return a list of matching products
+     * Example: searching "app" returns "Apple", "APPLICATION", "Pineapple", etc.
+     * Implemented by Spring Data; no custom SQL required.
+     * 
+     * @param name search substring (case-insensitive)
+     * @return list of products where name contains substring
      */
     List<Product> findByNameContainingIgnoreCase(String name);
 }

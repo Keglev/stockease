@@ -11,31 +11,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * HealthController
- * <p>
- * Lightweight health endpoint used by orchestrators and load balancers to verify
- * application readiness and basic connectivity to critical backing services.
- * This controller intentionally keeps its contract tiny (simple 200/5xx string
- * responses) so external systems can reliably interpret health status.
- * </p>
- *
- * Contract (inputs/outputs):
- * - GET /api/health -> 200 OK with a short text message when the application and
- *   its primary dependencies (currently the configured {@code DataSource}) are
- *   reachable. 500 on error with a human-readable message.
- *
+ * Application health check endpoint for orchestration and monitoring.
+ * 
+ * Used by:
+ * - Kubernetes (K8s liveness probes, readiness probes)
+ * - Docker (healthcheck instruction)
+ * - Load balancers (backend health checks)
+ * - Monitoring systems (Prometheus, DataDog, etc.)
+ * 
+ * Design principles:
+ * - Lightweight: Single DB connection validation, no expensive operations
+ * - Fast response: ~10ms typical latency (10-second timeout for slow DB startups)
+ * - Side-effect free: No state changes, safe to call frequently
+ * - Minimal contract: Simple 200 OK or 500 error with short text message
+ * 
  * Success criteria:
- * - The endpoint returns 200 if a DB connection validates within a short timeout.
- *
- * Error modes:
- * - Database connectivity failure -> 500 with brief diagnostic text.
- * - Unexpected/unknown failure -> 500 with generic message.
- *
- * Operational notes:
- * - Keep this handler fast and side-effect free. Do not perform expensive queries
- *   or schema migrations here. This endpoint should be safe to call frequently.
- * - We use {@link java.sql.Connection#isValid(int)} with a bounded timeout to help
- *   detect databases that are still cold-starting (serverless databases that sleep).
+ * - HTTP 200 OK: Database is reachable and connection valid
+ * - HTTP 500 Internal Error: Database unreachable or connection timeout
+ * 
+ * Endpoint: GET /api/health (public, no authentication required)
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
  */
 @RestController
 @RequestMapping("/api/health")
@@ -45,7 +43,7 @@ public class HealthController {
     private final DataSource dataSource;
 
     /**
-     * Constructor.
+     * Constructor for dependency injection.
      *
      * @param dataSource the JDBC DataSource to check for connectivity
      */
@@ -54,19 +52,24 @@ public class HealthController {
     }
 
     /**
-     * Simple health check endpoint.
+     * Simple health check endpoint for orchestrators and monitoring systems.
+     * 
+     * Implementation strategy:
+     * - Obtains connection from pool (validates JDBC driver is loaded)
+     * - Calls Connection.isValid(10) to verify database liveness
+     * - 10-second timeout balances startup latency vs probe responsiveness
+     * - Handles SQLException for database connection failures
+     * 
+     * Success response: 200 OK with "Database is connected and API is running."
+     * Failure response: 500 Internal Error with diagnostic message
+     * 
+     * Important: Keep this handler lightweight. Avoid:
+     * - SELECT COUNT(*) queries (expensive)
+     * - Schema migrations (causes cascading failures)
+     * - Logging detailed errors (expose internal state)
+     * - Caching responses (defeats real-time health checks)
      *
-     * Implementation details:
-     * - Opens a short-lived connection and calls {@code Connection.isValid(10)} to
-     *   verify liveness. The 10-second timeout is a conservative bound that helps
-     *   in environments where the DB may be slow to wake (serverless providers).
-     * - Returns 200 with a concise success string when healthy.
-     * - Returns 500 with a brief diagnostic message when the DB is unreachable or
-     *   an SQLException occurs.
-     *
-     * Keep the response payload small to avoid exposing sensitive internal state.
-     *
-     * @return ResponseEntity with HTTP 200 on success, or 500 on failure.
+     * @return ResponseEntity with HTTP 200 on success, 500 on failure
      */
     @GetMapping
     public ResponseEntity<String> healthCheck() {

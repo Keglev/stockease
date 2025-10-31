@@ -33,8 +33,31 @@ import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
 /**
- * Test class for verifying pagination functionality in {@link ProductController}.
- * This class includes tests for valid, empty, and invalid pagination requests.
+ * Integration tests for GET /api/products/paged endpoint (paginated product queries).
+ * 
+ * System Under Test (SUT): ProductController.getProductsPaginated(Pageable)
+ * → ResponseEntity<ApiResponse<Page<Product>>> with pagination metadata
+ * 
+ * Test framework: Spring Boot WebMvcTest (loads SecurityConfig, MockMvc)
+ * Authorization: SecurityMockMvcRequestPostProcessors.user() with roles
+ * Mock framework: Mockito (@MockitoBean ProductRepository)
+ * Pagination: Spring Data Pageable with page/size parameters
+ * 
+ * Test coverage (parameterized):
+ * 1. Valid pagination: Fetch page 0 with size 10 → 20 total products, 2 pages
+ * 2. Empty page: Fetch page 1 where no data exists → empty content[]
+ * 3. Invalid parameters: Negative page/size → 400 Bad Request validation error
+ * 
+ * Execution flow (Given-When-Then):
+ * - @BeforeEach: Create 20 mock products, mock findAll(Pageable)
+ * - @ParameterizedTest: Test with ADMIN and USER roles
+ * - Response includes: content[], totalElements, totalPages, currentPage
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ * @see ProductController.getProductsPaginated()
+ * @see org.springframework.data.domain.Page (Spring Data pagination)
  */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
@@ -52,8 +75,17 @@ public class ProductPaginationControllerTest {
     private JwtUtil jwtUtil;
 
     /**
-     * Sets up mock data and behaviors before each test.
+     * Lifecycle hook: Setup mock products and pagination behavior before each test.
+     * 
+     * Mock data:
+     * - 20 products generated: "Product 1" through "Product 20"
+     * - Each with quantity=i, price=i*10.0 (Product 1: qty=1, price=10.0, etc.)
+     * - Page 0 (first 10): Products 1-10
+     * - Mock: ProductRepository.findAll(Pageable) returns paginated results
+     * 
+     * Execution: @BeforeEach runs BEFORE each @ParameterizedTest method
      */
+    @SuppressWarnings("unused") // Called by JUnit 5 @BeforeEach lifecycle
     @BeforeEach
     void setUp() {
         // Mock JWT behavior
@@ -70,7 +102,14 @@ public class ProductPaginationControllerTest {
     }
 
     /**
-     * Tests fetching paged products with valid roles.
+     * Given: Authenticated user (ADMIN or USER) requesting page 0, size 10
+     * When: GET /api/products/paged?page=0&size=10
+     * Then: ResponseEntity(200 OK) with 10 products, totalElements=20, totalPages=2
+     * 
+     * Test scenario (parameterized):
+     * - Mock returns first 10 products out of 20 total
+     * - Verify response includes content[], totalElements, totalPages
+     * - Confirms pagination metadata correct for offset-based slicing
      */
     @ParameterizedTest
     @CsvSource({
@@ -91,7 +130,14 @@ public class ProductPaginationControllerTest {
     }
 
     /**
-     * Tests fetching an empty page of products.
+     * Given: Authenticated user requesting page 1, size 10 (which has no data)
+     * When: GET /api/products/paged?page=1&size=10
+     * Then: ResponseEntity(200 OK) with empty content[], totalElements correctly set
+     * 
+     * Test scenario (parameterized):
+     * - Mock returns empty Page (no products on page 1)
+     * - Verify content[] is empty but response still succeeds (200 OK)
+     * - Confirms pagination handles empty pages gracefully
      */
     @ParameterizedTest
     @CsvSource({
@@ -111,7 +157,15 @@ public class ProductPaginationControllerTest {
     }
 
     /**
-     * Tests fetching products with invalid pagination parameters.
+     * Given: Authenticated user with NEGATIVE page=-1 or negative size=-10
+     * When: GET /api/products/paged?page=-1&size=-10
+     * Then: ResponseEntity(400 Bad Request) - @Min validation fails
+     * 
+     * Test scenario (parameterized):
+     * - Pageable uses @Min(0) annotations on page/size parameters
+     * - Spring validation framework rejects negative values
+     * - HandlerMethodValidationException caught and converted to 400
+     * - Confirms input validation prevents invalid pagination queries
      */
     @ParameterizedTest
     @CsvSource({

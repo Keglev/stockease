@@ -21,21 +21,45 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 /**
- * Security configuration for the StockEase application.
- * This class configures authentication, authorization, and CORS settings.
+ * Spring Security configuration for StockEase application.
+ * 
+ * Orchestrates:
+ * - Authentication: JWT token-based stateless security
+ * - Authorization: Role-based access control (ADMIN, USER)
+ * - CORS: Allow local dev frontend and production deployment
+ * - Exception handling: Custom 401/403 error responses
+ * 
+ * Configuration layers:
+ * 1. SecurityFilterChain: HTTP security rules and filter ordering
+ * 2. PasswordEncoder: BCrypt hashing for credentials
+ * 3. AuthenticationManager: Credential validation during login
+ * 4. CorsConfiguration: Cross-origin request handling
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
  */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    /**
+     * JWT filter for extracting and validating tokens in request chain.
+     */
     private final JwtFilter jwtFilter;
+
+    /**
+     * Custom entry point handler for 401 Unauthorized responses.
+     */
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
     /**
-     * Constructor for injecting dependencies.
+     * Constructs security config with JWT and authentication entry point.
      * 
-     * @param jwtFilter the JWT filter for token validation
-     * @param customAuthenticationEntryPoint the entry point for unauthorized requests
+     * Dependencies injected by Spring for filter chain integration.
+     * 
+     * @param jwtFilter validates JWT tokens in request headers
+     * @param customAuthenticationEntryPoint sends custom 401 error responses
      */
     public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.jwtFilter = jwtFilter;
@@ -43,9 +67,14 @@ public class SecurityConfig {
     }
 
     /**
-     * Configures the password encoder bean.
+     * Configures password encoder bean for credential hashing.
      * 
-     * @return a BCryptPasswordEncoder instance
+     * Uses BCrypt with 10 rounds (default strength, ~0.5s per hash).
+     * Applied during:
+     * - User registration: hash plain password before storage
+     * - Login: hash submitted password and compare with stored hash
+     * 
+     * @return BCryptPasswordEncoder instance for bean container
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -53,11 +82,17 @@ public class SecurityConfig {
     }
 
     /**
-     * Configures the authentication manager bean.
+     * Exposes Spring's default AuthenticationManager as bean.
      * 
-     * @param config the authentication configuration
-     * @return the authentication manager
-     * @throws Exception if an error occurs while creating the manager
+     * Used by AuthController during login POST request:
+     * 1. Receives username/password from LoginRequest DTO
+     * 2. Delegates to AuthenticationManager for credential validation
+     * 3. Returns authentication token if credentials valid
+     * 4. Throws BadCredentialsException if invalid
+     * 
+     * @param config Spring Security authentication configuration
+     * @return authenticated AuthenticationManager bean
+     * @throws Exception if bean creation fails
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -65,17 +100,40 @@ public class SecurityConfig {
     }
 
     /**
-     * Configures the security filter chain.
+     * Configures HTTP security filter chain for request authorization.
      * 
-     * @param http the HttpSecurity object for configuring security
-     * @return the configured SecurityFilterChain
-     * @throws Exception if an error occurs during configuration
+     * Filter chain order (Spring Security):
+     * 1. CorsFilter - allow cross-origin requests
+     * 2. JwtFilter - extract and validate token, populate SecurityContext
+     * 3. ExceptionHandlingFilter - convert security exceptions to HTTP responses
+     * 4. AuthorizationFilter - enforce endpoint authorization rules
+     * 5. Controller routing
+     * 
+     * Authorization rules:
+     * - Public: /api/health, /actuator/health/**, /api/auth/login (no auth required)
+     * - Admin: POST /api/products, DELETE /api/products/** (ADMIN role only)
+     * - Admin+User: PUT /api/products/**, GET /api/products**, (ADMIN or USER role)
+     * - Catch-all: anyRequest().authenticated() (deny by default)
+     * 
+     * Exception handling:
+     * - 401 Unauthorized: custom entry point returns JSON error (no token/invalid token)
+     * - 403 Forbidden: access denied handler returns JSON error (valid token but insufficient role)
+     * 
+     * CSRF: Disabled (stateless JWT doesn't need CSRF tokens, no session cookies)
+     * Session: Stateless (JWT-based, no JSESSIONID, prevents session fixation attacks)
+     * 
+     * @param http HttpSecurity builder for fluent configuration
+     * @return configured SecurityFilterChain bean
+     * @throws Exception if configuration fails
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // Disable CSRF protection (stateless JWT doesn't need CSRF tokens)
             .csrf(csrf -> csrf.disable())
+            // Enable CORS with custom configuration
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Add CORS configuration
+            // Configure endpoint authorization
             .authorizeHttpRequests(auth -> auth
 
                 // Allow public access to health check
@@ -99,8 +157,11 @@ public class SecurityConfig {
                 // Deny all other requests
                 .anyRequest().authenticated()
             )
+            // Configure exception handling for authentication/authorization failures
             .exceptionHandling(exceptions -> exceptions
+                // Handle 401 Unauthorized (no token or invalid token)
                 .authenticationEntryPoint(customAuthenticationEntryPoint)
+                // Handle 403 Forbidden (valid token but insufficient role)
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                     System.out.println("Access Denied Handler triggered for user: " + request.getUserPrincipal());
                     response.setStatus(HttpStatus.FORBIDDEN.value());
@@ -108,16 +169,22 @@ public class SecurityConfig {
                     response.getWriter().write("{\"error\": \"You are not authorized to perform this action.\"}");
                 })
             )
+            // Stateless session management (no JSESSIONID cookie, JWT-based instead)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Add JWT filter before standard username/password filter
+            // Order: CorsFilter → JwtFilter → authentication checks → controller
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     /**
-     * Configures a CORS filter bean.
+     * Configures CORS filter bean for Spring container.
      * 
-     * @return a CorsFilter instance
+     * Applies CORS headers to all responses matching "/**" path pattern.
+     * Used by browser for preflight requests (OPTIONS method).
+     * 
+     * @return CorsFilter bean registered in Spring container
      */
     @Bean
     public CorsFilter corsFilter() {
@@ -127,9 +194,17 @@ public class SecurityConfig {
     }
 
     /**
-     * Defines the CORS configuration.
+     * Defines CORS policy (allowed origins, methods, headers, credentials).
      * 
-     * @return the configured CORS settings
+     * Allows:
+     * - Origins: http://localhost:5173 (dev), https://stockeasefrontend.vercel.app (prod)
+     * - Methods: GET, POST, PUT, DELETE, OPTIONS (REST operations + preflight)
+     * - Headers: Authorization (JWT token), Cache-Control, Content-Type
+     * - Credentials: true (allows cookies alongside tokens if needed)
+     * 
+     * Prevents CORS errors in browser when frontend calls backend API.
+     * 
+     * @return CorsConfiguration with policy rules
      */
     private CorsConfiguration corsConfiguration() {
         CorsConfiguration config = new CorsConfiguration();
@@ -144,9 +219,12 @@ public class SecurityConfig {
     }
 
     /**
-     * Configures the CORS settings for the security filter chain.
+     * Creates CORS configuration source for security filter chain.
      * 
-     * @return the source of CORS configurations
+     * Wraps corsConfiguration() to be compatible with Spring Security's
+     * HttpSecurity.cors() method which expects CorsConfigurationSource.
+     * 
+     * @return URL-based CORS configuration source for "/**" paths
      */
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

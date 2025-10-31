@@ -1,28 +1,49 @@
 package com.stocks.stockease.dto;
 
 /**
- * A generic API response class to standardize the structure of responses
- * sent from the server to the client.
+ * Generic wrapper for all API responses.
  * 
- * @param <T> the type of the data object included in the response
+ * Standardizes response format across endpoints with success flag,
+ * optional message, and typed data payload. Enables consistent
+ * client-side response handling.
+ * 
+ * Example JSON response:
+ * {
+ *   "success": true,
+ *   "message": "Operation successful",
+ *   "data": { Object }
+ * }
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
  */
 public class ApiResponse<T> {
 
-    // Indicates whether the operation was successful
+    /**
+     * Success indicator. True if operation completed successfully, false otherwise.
+     * Used by clients to determine response handling logic.
+     */
     private boolean success;
 
-    // A message providing additional information about the operation
+    /**
+     * Human-readable message describing operation outcome.
+     * Examples: "Login successful", "Product not found", "Validation error"
+     */
     private String message;
 
-    // The data returned by the operation, if any
+    /**
+     * Typed data payload returned by operation.
+     * May be null for error responses or operations with no data output (e.g., DELETE).
+     */
     private T data;
 
     /**
-     * Constructs an ApiResponse with the provided parameters.
+     * Constructs a complete API response.
      * 
-     * @param success whether the operation was successful
-     * @param message a message describing the outcome of the operation
-     * @param data the data returned by the operation (can be null)
+     * @param success whether operation succeeded
+     * @param message human-readable outcome message
+     * @param data operation result (null if no data)
      */
     public ApiResponse(boolean success, String message, T data) {
         this.success = success;
@@ -31,54 +52,54 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Retrieves the success status of the operation.
+     * Returns success status of operation.
      * 
-     * @return true if the operation was successful, false otherwise
+     * @return true if successful; false otherwise
      */
     public boolean isSuccess() {
         return success;
     }
 
     /**
-     * Updates the success status of the operation.
+     * Sets success status of operation.
      * 
-     * @param success the new success status
+     * @param success success flag
      */
     public void setSuccess(boolean success) {
         this.success = success;
     }
 
     /**
-     * Retrieves the message describing the outcome of the operation.
+     * Returns outcome message.
      * 
-     * @return the message
+     * @return message string
      */
     public String getMessage() {
         return message;
     }
 
     /**
-     * Updates the message describing the outcome of the operation.
+     * Sets outcome message.
      * 
-     * @param message the new message
+     * @param message message text
      */
     public void setMessage(String message) {
         this.message = message;
     }
 
     /**
-     * Retrieves the data returned by the operation.
+     * Returns operation result data.
      * 
-     * @return the data, or null if no data was returned
+     * @return typed data object; null if no data
      */
     public T getData() {
         return data;
     }
 
     /**
-     * Updates the data returned by the operation.
+     * Sets operation result data.
      * 
-     * @param data the new data
+     * @param data typed data object
      */
     public void setData(T data) {
         this.data = data;

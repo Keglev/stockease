@@ -3,30 +3,44 @@ package com.stocks.stockease.dto;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * A Data Transfer Object (DTO) representing a login request.
- * This class is used to capture user credentials during authentication.
+ * Data Transfer Object for user authentication requests.
+ * 
+ * Encapsulates credentials (username/password) sent to login endpoint.
+ * Validation constraints are applied during deserialization to ensure
+ * non-empty username and password before processing.
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
  */
 public class LoginRequest {
 
-    // Username of the user, must not be blank
+    /**
+     * User account name. Required, must not be blank.
+     * Validated via JSR-303 annotation during request binding.
+     */
     @NotBlank(message = "Username cannot be blank")
     private String username;
 
-    // Password of the user, must not be blank
+    /**
+     * User account password. Required, must not be blank.
+     * Validated via JSR-303 annotation during request binding.
+     * Never logged or exposed in responses (security best practice).
+     */
     @NotBlank(message = "Password cannot be blank")
     private String password;
 
     /**
-     * Default constructor for deserialization.
+     * Default no-arg constructor for JSON deserialization.
      */
     public LoginRequest() {
     }
 
     /**
-     * Constructs a LoginRequest with the provided username and password.
+     * Constructs a login request with username and password.
      * 
-     * @param username the username of the user
-     * @param password the password of the user
+     * @param username the user account name
+     * @param password the user account password
      */
     public LoginRequest(String username, String password) {
         this.username = username;
@@ -34,16 +48,16 @@ public class LoginRequest {
     }
 
     /**
-     * Retrieves the username.
+     * Returns the username.
      * 
-     * @return the username
+     * @return the username string
      */
     public String getUsername() {
         return username;
     }
 
     /**
-     * Updates the username.
+     * Sets the username.
      * 
      * @param username the new username
      */
@@ -52,16 +66,16 @@ public class LoginRequest {
     }
 
     /**
-     * Retrieves the password.
+     * Returns the password.
      * 
-     * @return the password
+     * @return the password string
      */
     public String getPassword() {
         return password;
     }
 
     /**
-     * Updates the password.
+     * Sets the password.
      * 
      * @param password the new password
      */

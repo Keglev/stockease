@@ -529,6 +529,28 @@ Before production deployment:
 
 ---
 
+## Related Documentation
+
+### Main Architecture Topics
+- **[Architecture Overview](./overview.md)** - Overall system context and security decisions
+- **[Backend Architecture](./backend.md)** - Spring Security configuration in code
+- **[Service Layers](./layers.md)** - Authorization checks in Controller and Service layers
+- **[Deployment Architecture](./deployment.md)** - Infrastructure security and TLS/HTTPS setup
+
+### Architecture Decisions (ADRs)
+- **[Database Choice](./decisions/001-database-choice.md)** - Database-level security implications
+- **[Validation Strategy](./decisions/002-validation-strategy.md)** - Input validation as first line of defense
+
+### Design Patterns & Practices
+- **[Security Patterns](./patterns/security-patterns.md)** - JWT token generation, BCrypt hashing, CORS
+- **[Repository Pattern](./patterns/repository-pattern.md)** - Query-level security considerations
+
+### Infrastructure & Deployment
+- **[CI/CD Pipeline](./deployment/ci-pipeline.md)** - Secret management in GitHub Actions
+- **[Staging Configuration](./deployment/staging-config.md)** - Security testing environment
+
+---
+
 **Document Version**: 1.0  
 **Last Updated**: October 31, 2025  
 **Status**: Production Ready

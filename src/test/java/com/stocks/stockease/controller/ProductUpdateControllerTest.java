@@ -28,8 +28,31 @@ import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
 /**
- * Test class for verifying product update functionality in {@link ProductController}.
- * This class covers scenarios for updating quantity, price, and name with various roles.
+ * Integration tests for PUT /api/products/{id}/* endpoints (product updates).
+ * 
+ * System Under Test (SUT): ProductController.updateQuantity(), updatePrice(), updateName()
+ * → ResponseEntity<ApiResponse<Product>> (200 OK) or error response
+ * 
+ * Test framework: Spring Boot WebMvcTest (loads SecurityConfig, MockMvc)
+ * Authorization: SecurityMockMvcRequestPostProcessors.user() with roles
+ * Mock framework: Mockito (@MockitoBean ProductRepository)
+ * 
+ * Test coverage (parameterized):
+ * 1. Update quantity: Both ADMIN and USER roles allowed (shared endpoint)
+ * 2. Update price: Both ADMIN and USER roles allowed
+ * 3. Update name: Both ADMIN and USER roles allowed, including special characters
+ * 
+ * Execution flow (Given-When-Then):
+ * - @BeforeEach: Mock JWT validation, ProductRepository behavior
+ * - @ParameterizedTest: Run same test with multiple role combinations
+ * - TestConfig: Provides SecurityFilterChain for authorization checks
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ * @see ProductController.updateQuantity()
+ * @see ProductController.updatePrice()
+ * @see ProductController.updateName()
  */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
@@ -46,8 +69,16 @@ public class ProductUpdateControllerTest {
     private JwtUtil jwtUtil;
 
     /**
-     * Sets up mocks and prepares the environment for each test.
+     * Lifecycle hook: Setup JWT mocks before each test.
+     * 
+     * Mock configuration:
+     * - JwtUtil.validateToken(): Always returns true
+     * - JwtUtil.extractUsername(): Returns "testUser"
+     * - ProductRepository: Reset to clear stubs between tests
+     * 
+     * Execution: @BeforeEach runs BEFORE each @ParameterizedTest
      */
+    @SuppressWarnings("unused") // Called by JUnit 5 @BeforeEach lifecycle
     @BeforeEach
     void setUpJwtMock() {
         // Mock JwtUtil behavior for consistent authorization
@@ -57,7 +88,15 @@ public class ProductUpdateControllerTest {
     }
 
     /**
-     * Tests updating the quantity of a product with valid roles.
+     * Given: Authenticated user (ADMIN or USER) with valid product ID
+     * When: PUT /api/products/{id}/quantity with new quantity value
+     * Then: ResponseEntity(200 OK) with updated quantity in response body
+     * 
+     * Test scenario (parameterized):
+     * - Test both ADMIN and USER roles (both can update quantity)
+     * - Mock ProductRepository.findById() to return existing product
+     * - Mock ProductRepository.save() to persist update
+     * - Verify response contains updated quantity value
      */
     @ParameterizedTest
     @CsvSource({
@@ -84,7 +123,15 @@ public class ProductUpdateControllerTest {
     }
 
     /**
-     * Tests updating the price of a product with valid roles.
+     * Given: Authenticated user (ADMIN or USER) with valid product ID
+     * When: PUT /api/products/{id}/price with new price value
+     * Then: ResponseEntity(200 OK) with "Price updated successfully" message
+     * 
+     * Test scenario (parameterized):
+     * - Test both ADMIN and USER roles (both can update price)
+     * - Mock ProductRepository for lookup and persistence
+     * - Verify response includes success message
+     * - Price update recalculates total_value (qty × price)
      */
     @ParameterizedTest
     @CsvSource({
@@ -110,7 +157,15 @@ public class ProductUpdateControllerTest {
     }
 
     /**
-     * Tests updating the name of a product with special characters.
+     * Given: Authenticated user (ADMIN or USER) updating product name with special characters
+     * When: PUT /api/products/{id}/name with name containing !@#$%
+     * Then: ResponseEntity(200 OK) with updated name echoed in response
+     * 
+     * Test scenario (parameterized):
+     * - Verify special characters (!, @, #, $, %) preserved in name field
+     * - Test XSS protection: special chars should NOT be HTML-encoded on save
+     * - Mock repository persistence and retrieval
+     * - Confirm response mirrors back provided special characters
      */
     @ParameterizedTest
     @CsvSource({

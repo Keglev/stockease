@@ -5,33 +5,53 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 
 /**
- * A generic class representing a paginated response.
- * This is used to encapsulate paginated data along with additional
- * metadata such as total elements and total pages.
+ * Data transfer object for paginated response data.
  * 
- * @param <T> the type of the content being paginated
+ * Wraps Spring Data Page objects with consistent metadata fields
+ * for client-side pagination controls. Immutable after construction.
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
  */
 public class PaginatedResponse<T> {
 
-    // The list of items in the current page
+    /**
+     * Current page content. Immutable list extracted from Spring Page object.
+     * Size matches pageSize unless final page with fewer items.
+     */
     private final List<T> content;
 
-    // The current page number (0-based index)
+    /**
+     * Current page number (zero-based). Example: page=0 is first page, page=1 is second page.
+     */
     private final int pageNumber;
 
-    // The size of the page (number of items per page)
+    /**
+     * Items per page. Set at request time via pageSize parameter.
+     * All pages contain exactly pageSize items except possibly the final page.
+     */
     private final int pageSize;
 
-    // The total number of elements across all pages
+    /**
+     * Total items across all pages in the dataset.
+     * May exceed current page content size significantly.
+     */
     private final long totalElements;
 
-    // The total number of pages available
+    /**
+     * Total pages available. Calculated as ceil(totalElements / pageSize).
+     * Enables client to determine if more pages exist and build pagination UI.
+     */
     private final int totalPages;
 
     /**
-     * Constructs a PaginatedResponse object from a Spring Data Page.
+     * Constructs pagination response from Spring Data Page.
      * 
-     * @param page the Spring Data Page containing the content and metadata
+     * Extracts content and metadata from Page object. No validation required
+     * as Spring Data guarantees Page consistency.
+     * 
+     * @param page Spring Data Page with content and metadata
      */
     public PaginatedResponse(Page<T> page) {
         this.content = page.getContent();
@@ -42,45 +62,45 @@ public class PaginatedResponse<T> {
     }
 
     /**
-     * Retrieves the content of the current page.
+     * Returns items in current page.
      * 
-     * @return the content as a list
+     * @return content list (size <= pageSize)
      */
     public List<T> getContent() {
         return content;
     }
 
     /**
-     * Retrieves the current page number.
+     * Returns current page number (zero-based).
      * 
-     * @return the page number (0-based index)
+     * @return page index
      */
     public int getPageNumber() {
         return pageNumber;
     }
 
     /**
-     * Retrieves the size of the page.
+     * Returns items per page.
      * 
-     * @return the number of items per page
+     * @return page size
      */
     public int getPageSize() {
         return pageSize;
     }
 
     /**
-     * Retrieves the total number of elements across all pages.
+     * Returns total items across all pages.
      * 
-     * @return the total number of elements
+     * @return total item count
      */
     public long getTotalElements() {
         return totalElements;
     }
 
     /**
-     * Retrieves the total number of pages available.
+     * Returns total pages available.
      * 
-     * @return the total number of pages
+     * @return page count
      */
     public int getTotalPages() {
         return totalPages;

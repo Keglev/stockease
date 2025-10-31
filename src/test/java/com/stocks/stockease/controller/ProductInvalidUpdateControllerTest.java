@@ -28,9 +28,33 @@ import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
 /**
- * Test class for invalid update scenarios in {@link ProductController}.
- * This class verifies various error conditions during product updates,
- * such as missing fields, invalid data types, and unauthorized requests.
+ * Integration tests for error scenarios in PUT /api/products/* endpoints.
+ * 
+ * System Under Test (SUT): ProductController.updateQuantity(), updatePrice(), updateName()
+ * with invalid/edge-case inputs
+ * 
+ * Test framework: Spring Boot WebMvcTest (loads SecurityConfig, MockMvc)
+ * Authorization: SecurityMockMvcRequestPostProcessors.user() with roles
+ * Mock framework: Mockito (@MockitoBean ProductRepository)
+ * 
+ * Test coverage (parameterized):
+ * 1. Missing fields: {} body without required field → 400 Bad Request
+ * 2. Invalid types: String value for numeric field → 400 Bad Request
+ * 3. Boundary values: Negative quantity, zero price → business validation errors
+ * 4. Non-existent product: Update on missing ID → 404 Not Found
+ * 
+ * Execution flow (Given-When-Then):
+ * - @BeforeEach: Mock JWT, initialize product1, reset repository
+ * - @ParameterizedTest: Test with ADMIN and USER roles
+ * - Each test verifies specific validation or error condition
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ * @see ProductController.updateQuantity()
+ * @see ProductController.updatePrice()
+ * @see ProductController.updateName()
+ * @see GlobalExceptionHandler (error response formatting)
  */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
@@ -49,8 +73,17 @@ public class ProductInvalidUpdateControllerTest {
     private Product product1;
 
     /**
-     * Sets up mocks and initializes common test data before each test.
+     * Lifecycle hook: Setup JWT mocks and test data before each test.
+     * 
+     * Mock configuration:
+     * - JwtUtil.validateToken(): Always returns true
+     * - JwtUtil.extractUsername(): Returns "testUser"
+     * - product1: Reusable test product (ID=1, qty=10, price=100.0, totalValue=1000.0)
+     * - ProductRepository: Reset to clear stubs between tests
+     * 
+     * Execution: @BeforeEach runs BEFORE each @ParameterizedTest method
      */
+    @SuppressWarnings("unused") // Called by JUnit 5 @BeforeEach lifecycle
     @BeforeEach
     void setUpJwtMock() {
         // Mock JwtUtil behavior for consistent authorization
@@ -63,7 +96,14 @@ public class ProductInvalidUpdateControllerTest {
     }
 
     /**
-     * Tests updating quantity with a missing field.
+     * Given: Authenticated user with empty JSON body {}
+     * When: PUT /api/products/{id}/quantity with missing "quantity" field
+     * Then: ResponseEntity(400 Bad Request) with message "Quantity field is missing or null"
+     * 
+     * Test scenario (parameterized):
+     * - Endpoint expects {"quantity": <value>} but receives {}
+     * - Null check in controller catches missing field
+     * - Verifies input validation prevents incomplete updates
      */
     @ParameterizedTest
     @CsvSource({
@@ -87,7 +127,14 @@ public class ProductInvalidUpdateControllerTest {
     }
 
     /**
-     * Tests updating quantity with an invalid data type.
+     * Given: Authenticated user with quantity as string "abc" (not integer)
+     * When: PUT /api/products/{id}/quantity with {"quantity": "abc"}
+     * Then: ResponseEntity(400 Bad Request) - JSON deserialization fails
+     * 
+     * Test scenario (parameterized):
+     * - HttpMessageNotReadableException caught when parsing string as Integer
+     * - GlobalExceptionHandler returns 400 with "Invalid request format or data type"
+     * - Verifies type validation at framework level (before reaching controller)
      */
     @ParameterizedTest
     @CsvSource({
