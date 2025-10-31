@@ -3,6 +3,9 @@ name: Deploy and Migrate Backend to Koyeb (Git Source)
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions:
