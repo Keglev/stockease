@@ -80,6 +80,8 @@ on:
       - 'backend/docs/**'
       # Trigger on dependency changes (may affect OpenAPI generation)
       - 'backend/pom.xml'
+      # Trigger on workflow file changes (for testing/updates)
+      - '.github/workflows/docs-pipeline.yml'
   # Allow manual trigger from GitHub Actions UI for testing/emergency deployments
   workflow_dispatch:
 
