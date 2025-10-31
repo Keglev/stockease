@@ -30,6 +30,11 @@ StockEase follows a **classic N-tier layered architecture** with clear separatio
 - `HealthController` - System health check
 - `ExceptionHandler` - Global error handling
 
+**DTOs used by controllers**:
+- `LoginRequest` — { username: String, password: String } (validated with @NotBlank)
+- `ApiResponse<T>` — Generic response envelope: { success: boolean, message: String, data: T }
+- `PaginatedResponse<T>` — Wrapper for Spring Page with pagination metadata (pageNumber, pageSize, totalElements, totalPages)
+
 **Responsibilities**:
 ```
 Request → Validate Input → Call Service → Format Response → HTTP Status
@@ -83,9 +88,25 @@ public ResponseEntity<ProductDTO> createProduct(
 
 **Protected Endpoints**:
 - All `/api/products/*` endpoints require JWT token
-- `/api/auth/validate` requires JWT token
-- `/api/auth/register` is public (but rate-limited)
 - `/health` is public (no auth required)
+
+**Controller / Endpoint summary**
+
+| Controller | Key Endpoints | Auth Requirement |
+|------------|---------------|------------------|
+| `AuthController` | POST `/api/auth/login` | Public (permitAll)
+| `HealthController` | GET `/api/health` | Public
+| `ProductController` | GET `/api/products` | JWT (`ADMIN`,`USER`)
+| `ProductController` | GET `/api/products/paged` | JWT (`ADMIN`,`USER`)
+| `ProductController` | GET `/api/products/{id}` | JWT (`ADMIN`,`USER`)
+| `ProductController` | POST `/api/products` | JWT (`ADMIN`)
+| `ProductController` | PUT `/api/products/{id}/quantity` | JWT (`ADMIN`,`USER`)
+| `ProductController` | PUT `/api/products/{id}/price` | JWT (`ADMIN`,`USER`)
+| `ProductController` | PUT `/api/products/{id}/name` | JWT (`ADMIN`,`USER`)
+| `ProductController` | GET `/api/products/low-stock` | JWT (`ADMIN`,`USER`)
+| `ProductController` | GET `/api/products/search` | JWT (`ADMIN`,`USER`)
+| `ProductController` | DELETE `/api/products/{id}` | JWT (`ADMIN`)
+| `ProductController` | GET `/api/products/total-stock-value` | JWT (`ADMIN`,`USER`)
 
 ### 3. Business Logic Layer (Services)
 

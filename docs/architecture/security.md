@@ -113,6 +113,22 @@ HMACSHA256(
    ├── Status: 200 OK
    ├── Body: { "token": "eyJhbG...", "expiresIn": 86400 }
    └── Client stores token (localStorage / sessionStorage)
+
+### Login Sequence (simplified)
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant FE as Frontend
+  participant BE as Backend (Spring Boot)
+  U->>FE: Submit credentials (username/password)
+  FE->>BE: POST /api/auth/login (JSON body)
+  BE->>BE: Authenticate (AuthenticationManager)
+  BE->>BE: Lookup user (UserRepository)
+  BE->>BE: Generate JWT (JwtUtil)
+  BE-->>FE: 200 OK + { token }
+  FE-->>U: Store token; use for subsequent requests
+```
 ```
 
 **Token Usage in Requests**:
@@ -161,18 +177,37 @@ public enum Role {
 }
 ```
 
-**Authorization Rules**:
+**Authorization Rules (implemented)**:
 
 | Endpoint | Method | ADMIN | USER | Anonymous |
 |----------|--------|-------|------|-----------|
-| /api/products | GET | ✅ | ✅ | ❌ |
-| /api/products | POST | ✅ | ❌ | ❌ |
-| /api/products/{id} | PUT | ✅ | ❌ | ❌ |
-| /api/products/{id} | DELETE | ✅ | ❌ | ❌ |
-| /api/auth/register | POST | ✅ | ✅ | ✅ |
-| /api/auth/login | POST | ✅ | ✅ | ✅ |
-| /api/auth/validate | GET | ✅ | ✅ | ❌ |
-| /health | GET | ✅ | ✅ | ✅ |
+| `/api/health` | GET | ✅ | ✅ | ✅ |
+| `/api/auth/login` | POST | ❌ | ❌ | ✅ (public) |
+| `/api/products` | GET | ✅ | ✅ | ❌ |
+| `/api/products/paged` | GET | ✅ | ✅ | ❌ |
+| `/api/products/{id}` | GET | ✅ | ✅ | ❌ |
+| `/api/products` | POST | ✅ | ❌ | ❌ |
+| `/api/products/{id}/quantity` | PUT | ✅ | ✅ | ❌ |
+| `/api/products/{id}/price` | PUT | ✅ | ✅ | ❌ |
+| `/api/products/{id}/name` | PUT | ✅ | ✅ | ❌ |
+| `/api/products/low-stock` | GET | ✅ | ✅ | ❌ |
+| `/api/products/search` | GET | ✅ | ✅ | ❌ |
+| `/api/products/total-stock-value` | GET | ✅ | ✅ | ❌ |
+| `/api/products/{id}` | DELETE | ✅ | ❌ | ❌ |
+
+> Notes: The table above reflects the current `SecurityConfig` in code: login is permitted publicly (`/api/auth/login`), health is public, product create/delete are admin-only, and most read/update product endpoints allow ADMIN and USER.
+
+### API Map (quick reference)
+
+| Endpoint | Purpose | Auth |
+|---|---:|---|
+| `POST /api/auth/login` | Return JWT for valid credentials | Public (no token)
+| `GET /api/health` | Liveness/database connectivity | Public
+| `GET /api/products` | List products | JWT (ADMIN/USER)
+| `POST /api/products` | Create product | JWT (ADMIN)
+| `PUT /api/products/{id}/quantity` | Update product quantity | JWT (ADMIN/USER)
+| `DELETE /api/products/{id}` | Delete product | JWT (ADMIN)
+
 
 **Authorization Implementation**:
 ```java

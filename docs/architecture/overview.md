@@ -26,45 +26,27 @@ StockEase delivers:
 ## C4 Architecture Model
 
 ### Context Diagram (Level 1)
-```
-┌─────────────────────────────────────────────────────┐
-│                   StockEase System                  │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Frontend (Vue.js/TypeScript)                      │
-│         ↓ HTTPS                                    │
-│  Spring Boot Backend API                           │
-│         ↓ JDBC/Flyway                              │
-│  PostgreSQL Database (Neon)                        │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  User([Business User]) -->|uses| Frontend[Frontend (React/Vite)]
+  Frontend -->|HTTPS| API[(Spring Boot API)]
+  API -->|JDBC/Flyway| DB[(PostgreSQL / Neon)]
+  API -->|calls| External[(External Services: email, storage, 3rd-party APIs)]
 ```
 
 ### Container Diagram (Level 2)
-```
-┌──────────────────────────────────────────────────────────┐
-│              StockEase Backend Container                 │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│  API Endpoints                                          │
-│  ├── AuthController (POST /api/auth/login, register)   │
-│  ├── ProductController (GET /api/products)             │
-│  ├── HealthController (GET /health)                    │
-│  └── OpenAPI Endpoint (GET /v3/api-docs)              │
-│                                                          │
-│  Business Logic                                         │
-│  ├── AuthService (JWT generation, user validation)     │
-│  ├── ProductService (CRUD, filtering, pagination)      │
-│  └── HealthService (system status checks)              │
-│                                                          │
-│  Data Access                                            │
-│  ├── AuthRepository (Spring Data JPA)                  │
-│  ├── ProductRepository (Spring Data JPA)               │
-│  └── Flyway Migrations (Database schema)               │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
-         ↓ JDBC
-    PostgreSQL Database
+```mermaid
+flowchart TB
+  subgraph Backend [StockEase Backend - Spring Boot]
+    API[API Endpoints]
+    BIZ[Business Logic (Services)]
+    DATA[Data Access (Repositories, Flyway)]
+  end
+  API --> BIZ
+  BIZ --> DATA
+  DATA --> DB[(PostgreSQL / Neon)]
+  API -->|exposes| OpenAPI[/v3/api-docs]
+  API -->|health| Health[/api/health]
 ```
 
 ### Component Diagram (Level 3)
@@ -229,16 +211,20 @@ Product
 
 | Method | Endpoint | Authentication | Purpose |
 |--------|----------|-----------------|---------|
-| POST | `/api/auth/register` | None | Register new user |
-| POST | `/api/auth/login` | Basic Auth | Login and get JWT |
-| GET | `/api/auth/validate` | JWT Token | Validate token |
-| GET | `/api/products` | JWT Token | List all products (paginated) |
-| GET | `/api/products/{id}` | JWT Token | Get single product |
-| POST | `/api/products` | JWT Token (ADMIN) | Create product |
-| PUT | `/api/products/{id}` | JWT Token (ADMIN) | Update product |
-| DELETE | `/api/products/{id}` | JWT Token (ADMIN) | Delete product |
-| GET | `/health` | None | Health check |
-| GET | `/v3/api-docs` | None | OpenAPI specification |
+| POST | `/api/auth/login` | None (public) | Authenticate credentials and return JWT token |
+| GET | `/api/health` | None | Health check (DB connectivity probe) |
+| GET | `/api/products` | JWT (ADMIN, USER) | List all products (ordered)
+| GET | `/api/products/paged` | JWT (ADMIN, USER) | Paginated product list (query: page,size)
+| GET | `/api/products/{id}` | JWT (ADMIN, USER) | Get single product by ID
+| POST | `/api/products` | JWT (ADMIN) | Create product
+| PUT | `/api/products/{id}/quantity` | JWT (ADMIN, USER) | Update product quantity
+| PUT | `/api/products/{id}/price` | JWT (ADMIN, USER) | Update product price
+| PUT | `/api/products/{id}/name` | JWT (ADMIN, USER) | Update product name
+| GET | `/api/products/low-stock` | JWT (ADMIN, USER) | List products with quantity < 5
+| GET | `/api/products/search?name=...` | JWT (ADMIN, USER) | Search products by name
+| DELETE | `/api/products/{id}` | JWT (ADMIN) | Delete product by ID
+| GET | `/api/products/total-stock-value` | JWT (ADMIN, USER) | Aggregate total stock value
+| GET | `/v3/api-docs` | None | OpenAPI spec (used by ReDoc generation)
 
 ## Quality Attributes
 
@@ -249,7 +235,7 @@ Product
 | **Response Time** | <200ms | ✅ In-memory caching where needed |
 | **Scalability** | Horizontal | ✅ Stateless design, containerized |
 | **Security** | Enterprise | ✅ JWT + BCrypt + CORS |
-| **Documentation** | Auto-generated | ✅ OpenAPI + Redoc |
+| **Documentation** | Auto-generated | ✅ OpenAPI (springdoc) + ReDoc (CI) + JaCoCo |
 
 ## Monitoring & Observability
 
