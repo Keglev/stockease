@@ -776,42 +776,68 @@ server.compression.min-response-size=1024</code></pre>
     </footer>
 
     <script>
-        // Navigation Menu
+        // Calculate relative path to architecture root based on current location
+        function getArchRoot() {
+            const path = window.location.pathname;
+            const segments = path.split('/').filter(s => s);
+            
+            // Find how many levels deep we are from 'architecture' folder
+            const archIndex = segments.indexOf('architecture');
+            if (archIndex === -1) return './';
+            
+            const depth = segments.length - archIndex - 2; // -2 for architecture and filename
+            if (depth <= 0) return './';
+            
+            return '../'.repeat(depth);
+        }
+
+        // Navigation Menu (paths relative to architecture root)
         const navigation = {
             'API Documentation': [
-                { label: 'Overview', href: '../api-docs.html' },
+                { label: 'Overview', href: 'api-docs.html', isApiDoc: true },
             ],
             'Architecture': [
-                { label: 'Overview', href: './overview.html' },
-                { label: 'System Layers', href: './layers.html' },
-                { label: 'Backend Architecture', href: './backend.html' },
-                { label: 'Frontend Architecture', href: './frontend.html' },
-                { label: 'Security Architecture', href: './security.html' },
-                { label: 'Deployment Strategy', href: './deployment.html' },
+                { label: 'Overview', href: 'overview.html' },
+                { label: 'System Layers', href: 'layers.html' },
+                { label: 'Backend Architecture', href: 'backend.html' },
+                { label: 'Frontend Architecture', href: 'frontend.html' },
+                { label: 'Security Architecture', href: 'security.html' },
+                { label: 'Deployment Strategy', href: 'deployment.html' },
             ],
             'Design Decisions': [
-                { label: 'Index', href: './decisions/index.html' },
+                { label: 'Index', href: 'decisions/index.html' },
             ],
             'Components': [
-                { label: 'Index', href: './components/index.html' },
+                { label: 'Index', href: 'components/index.html' },
+                { label: 'Analytics Service', href: 'components/analytics-service.html' },
+                { label: 'Supplier Controller', href: 'components/supplier-controller.html' },
             ],
             'Patterns': [
-                { label: 'Index', href: './patterns/index.html' },
+                { label: 'Index', href: 'patterns/index.html' },
+                { label: 'Repository Pattern', href: 'patterns/repository-pattern.html' },
+                { label: 'Security Patterns', href: 'patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: './testing-architecture.html' },
-                { label: 'Security Tests', href: './testing/security-tests.html' },
-                { label: 'Test Pyramid', href: './testing/pyramid.html' },
-                { label: 'Test Strategy', href: './testing/strategy.html' },
+                { label: 'Architecture', href: 'testing-architecture.html' },
+                { label: 'Test Pyramid', href: 'testing/pyramid.html' },
+                { label: 'Strategy', href: 'testing/strategy.html' },
+                { label: 'Spring Slices', href: 'testing/spring-slices.html' },
+                { label: 'Test Data Fixtures', href: 'testing/test-data-fixtures.html' },
+                { label: 'Security Tests', href: 'testing/security-tests.html' },
+                { label: 'Naming Conventions', href: 'testing/naming-conventions.html' },
+                { label: 'Test Matrix', href: 'testing/matrix.html' },
+                { label: 'Coverage & Quality', href: 'testing/coverage-and-quality.html' },
+                { label: 'Controller Integration', href: 'testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests', href: 'testing/ci-pipeline-tests.html' },
             ],
             'Deployment': [
-                { label: 'CI/CD Pipeline', href: './deployment/ci-pipeline.html' },
-                { label: 'Docker Strategy', href: './deployment/docker-strategy.html' },
+                { label: 'CI/CD Pipeline', href: 'deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: 'deployment/docker-strategy.html' },
             ],
             'Reference': [
-                { label: 'Navigation Map', href: './NAVIGATION-MAP.html' },
-                { label: 'Cross References', href: './CROSS-REFERENCE.html' },
-                { label: 'Documentation Index', href: './DOCUMENTATION-INDEX.html' },
+                { label: 'Navigation Map', href: 'NAVIGATION-MAP.html' },
+                { label: 'Cross References', href: 'CROSS-REFERENCE.html' },
+                { label: 'Documentation Index', href: 'DOCUMENTATION-INDEX.html' },
             ],
         };
 
@@ -819,6 +845,8 @@ server.compression.min-response-size=1024</code></pre>
         function buildSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
+
+            const archRoot = getArchRoot();
 
             Object.entries(navigation).forEach(([section, links]) => {
                 const navSection = document.createElement('div');
@@ -833,12 +861,20 @@ server.compression.min-response-size=1024</code></pre>
                 links.forEach(link => {
                     const li = document.createElement('li');
                     const a = document.createElement('a');
-                    a.href = link.href;
+                    
+                    // For API docs, go up to docs root; otherwise use architecture root
+                    if (link.isApiDoc) {
+                        a.href = archRoot + '../' + link.href;
+                    } else {
+                        a.href = archRoot + link.href;
+                    }
+                    
                     a.textContent = link.label;
 
                     // Highlight current page
                     const currentPath = window.location.pathname;
-                    if (currentPath.includes(link.href.replace('./', '').replace('.html', ''))) {
+                    const linkPath = link.href.replace('.html', '');
+                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
                         a.className = 'active';
                     }
 
