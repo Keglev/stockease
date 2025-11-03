@@ -6,13 +6,13 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.gitignore'
+      - '.github/workflows/docs-pipeline.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  # Flip to 'true' if you want CI to run tests before redeploy.
   RUN_TESTS: 'true'
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Detect backend directory and Skip Flyway since will be done by Koyeb server
+      - name: Detect backend directory
         run: |
           if [ -f "$GITHUB_WORKSPACE/mvnw" ] && [ -f "$GITHUB_WORKSPACE/pom.xml" ]; then
             echo "BACKEND_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
@@ -41,8 +41,6 @@ jobs:
             echo "Found Dockerfile at $BACKEND_DIR/Dockerfile"
           else
             echo "❌ Dockerfile not found at $BACKEND_DIR/Dockerfile" >&2
-            echo "If your Dockerfile lives elsewhere, either move it next to mvnw/pom.xml"
-            echo "or update your Koyeb service (Git source) to point to the correct path."
             exit 1
           fi
 
@@ -56,19 +54,14 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x "$BACKEND_DIR/mvnw"
 
-      # Optional: run tests. By default this step is skipped (RUN_TESTS='false').
       - name: Run backend tests
         if: env.RUN_TESTS == 'true'
         working-directory: ${{ env.BACKEND_DIR }}
-        run: |
-          ./mvnw -B -ntp test
+        run: ./mvnw -B -ntp test
 
-      # Lightweight build to catch obvious compile errors before we ask Koyeb to build
-      # (Koyeb will still do its own Docker build on redeploy.)
       - name: Verify build compiles (skip tests)
         working-directory: ${{ env.BACKEND_DIR }}
-        run: |
-          ./mvnw -B -ntp -DskipTests package
+        run: ./mvnw -B -ntp -DskipTests verify
 
       - name: Trigger Koyeb redeploy (Git source)
         env:
@@ -90,7 +83,6 @@ jobs:
             exit 1
           fi
 
-      # Optional: wait for service to become healthy (polls service status)
       - name: Wait for Koyeb service HEALTHY/READY (up to ~10 min)
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}

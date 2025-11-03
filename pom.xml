@@ -47,7 +47,7 @@
 		<!-- SpringDoc OpenAPI UI (Swagger UI) for API documentation -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
 			<version>2.4.0</version>
 		</dependency>
 		<!-- Developer Tools -->
@@ -61,7 +61,7 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.7.4</version>
+			<version>42.7.8</version>
 			<scope>runtime</scope>
 		</dependency>
 		<!-- H2 Database (for docs generation profile) -->
@@ -188,36 +188,19 @@
 				<configuration>
 				</configuration>
 			</plugin>
-
-			<!-- SpringDoc OpenAPI Maven Plugin: Generate OpenAPI spec at build time -->
-			<!-- 
-			Purpose: Generate openapi.json without running the full app with database
-			Activation: mvn springdoc-openapi:generate (runs in prepare-package phase)
-			How it works:
-			  1. Forks a new JVM process with the 'docs' profile
-			  2. Spring Boot starts in minimal mode (H2, no security, lazy init)
-			  3. Plugin waits 40 seconds for beans to initialize
-			  4. Calls /v3/api-docs endpoint (provided by springdoc-openapi dependency)
-			  5. Saves JSON response to target/docs/openapi.json
-			  6. Forked process exits cleanly
-			Output: backend/target/docs/openapi.json (used by ReDoc in workflow)
-			Troubleshooting:
-			  - If timeout, increase waitTimeInSeconds
-			  - If endpoint returns 404, verify springdoc-openapi-starter-webmvc-ui dependency
-			  - If "server already running", check that previous plugin runs were killed
-			-->
+			<!-- SpringDoc OpenAPI Maven Plugin for generating OpenAPI spec -->
 			<plugin>
 				<groupId>org.springdoc</groupId>
 				<artifactId>springdoc-openapi-maven-plugin</artifactId>
-				<version>1.8</version>
+				<version>1.5.0</version>
 				<executions>
 					<execution>
 						<id>generate-openapi</id>
+						<phase>verify</phase>
 						<goals>
 							<goal>generate</goal>
 						</goals>
 						<!-- Runs after dependencies resolved, before package creation -->
-						<phase>prepare-package</phase>
 						<configuration>
 							<!-- Fork a new JVM process (avoids polluting main build) -->
 							<fork>true</fork>
@@ -231,6 +214,10 @@
 							<outputDir>${project.build.directory}/docs</outputDir>
 							<!-- Timeout for app startup (default 30s, increase if beans are slow) -->
 							<waitTimeInSeconds>40</waitTimeInSeconds>
+							<jvmArgs>
+          						<jvmArg>-Dspring.profiles.active=docs</jvmArg>
+          						<jvmArg>-Dserver.port=8080</jvmArg>
+        					</jvmArgs>
 						</configuration>
 					</execution>
 				</executions>
