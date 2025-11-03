@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<!-- Allow skipping OpenAPI generation (used by deploy-backend pipeline) -->
+    	<springdoc.skip>false</springdoc.skip>
 	</properties>
 	<dependencies>
 		<!-- Spring Boot Dependencies -->
@@ -187,40 +189,6 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 				</configuration>
-			</plugin>
-			<!-- SpringDoc OpenAPI Maven Plugin for generating OpenAPI spec -->
-			<plugin>
-				<groupId>org.springdoc</groupId>
-				<artifactId>springdoc-openapi-maven-plugin</artifactId>
-				<version>1.5</version>
-				<executions>
-					<execution>
-						<id>generate-openapi</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-						<!-- Runs after dependencies resolved, before package creation -->
-						<configuration>
-							<!-- Fork a new JVM process (avoids polluting main build) -->
-							<fork>true</fork>
-							<!-- Use the lightweight docs profile (H2, no security, etc.) -->
-							<profiles>docs</profiles>
-							<!-- Endpoint to scrape for OpenAPI spec -->
-							<apiDocsUrl>http://localhost:${server.port:8080}/v3/api-docs</apiDocsUrl>
-							<!-- Output filename -->
-							<outputFileName>openapi.json</outputFileName>
-							<!-- Output directory (used by workflow for ReDoc & gh-pages) -->
-							<outputDir>${project.build.directory}/docs</outputDir>
-							<!-- Timeout for app startup (default 30s, increase if beans are slow) -->
-							<waitTimeInSeconds>40</waitTimeInSeconds>
-							<jvmArgs>
-          						<jvmArg>-Dspring.profiles.active=docs</jvmArg>
-          						<jvmArg>-Dserver.port=8080</jvmArg>
-        					</jvmArgs>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 
 			<!-- Flyway Maven Plugin for DB migrations in CI -->

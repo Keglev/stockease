@@ -43,12 +43,25 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Build & generate OpenAPI (verify)
+      - name: Build & generate OpenAPI (manual java -jar + curl)
         working-directory: ${{ steps.where.outputs.dir }}
         run: |
           chmod +x ./mvnw
-          ./mvnw -B -ntp -DskipTests verify
-          test -f target/docs/openapi.json || (echo "❌ openapi.json missing" && exit 1)
+          ./mvnw -B -ntp -DskipTests clean package
+          mkdir -p target/docs
+          # Start app in background with docs profile
+          java -Dspring.profiles.active=docs -jar target/stockease-0.0.1-SNAPSHOT.jar > /tmp/app.log 2>&1 &
+          APP_PID=$!
+          echo "App started with PID $APP_PID"
+          # Wait for app to initialize
+          sleep 20
+          # Fetch OpenAPI spec
+          curl -s http://localhost:8080/v3/api-docs > target/docs/openapi.json
+          # Verify it was created
+          test -f target/docs/openapi.json || (echo "❌ openapi.json missing" && cat /tmp/app.log && exit 1)
+          # Kill app
+          kill $APP_PID 2>/dev/null || true
+          echo "✓ OpenAPI spec generated"
 
       - name: Generate ReDoc HTML
         run: |
