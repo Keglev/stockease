@@ -28,8 +28,6 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
-		<!-- Allow skipping OpenAPI generation (used by deploy-backend pipeline) -->
-    	<springdoc.skip>false</springdoc.skip>
 	</properties>
 	<dependencies>
 		<!-- Spring Boot Dependencies -->
@@ -45,12 +43,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-		<!-- SpringDoc OpenAPI UI (Swagger UI) for API documentation -->
-		<dependency>
-			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
-			<version>2.4.0</version>
 		</dependency>
 		<!-- Developer Tools -->
 		<dependency>

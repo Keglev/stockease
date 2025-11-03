@@ -1,0 +1,856 @@
+openapi: 3.0.3
+info:
+  title: StockEase API
+  version: 1.0.0
+  description: |
+    StockEase API provides comprehensive inventory management capabilities including product CRUD operations, 
+    JWT-based authentication, pagination, search, and stock analytics. All endpoints except login and health check 
+    require valid JWT authentication with USER or ADMIN roles.
+  contact:
+    name: Team StockEase
+    email: support@stockease.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development environment
+  - url: https://api.stockease.com
+    description: Production environment
+
+tags:
+  - name: Authentication
+    description: User authentication and JWT token management
+  - name: Products
+    description: Product inventory management, CRUD operations, pagination, and analytics
+  - name: Health
+    description: Application health check and database connectivity monitoring
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token for authentication. Obtained from /api/auth/login endpoint.
+        Include in Authorization header: "Authorization: Bearer <token>"
+        Tokens contain user role (ADMIN or USER) as claim.
+
+  schemas:
+    # Authentication DTOs
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: User account name (must not be blank)
+          example: admin
+        password:
+          type: string
+          minLength: 1
+          description: User account password (must not be blank)
+          example: password123
+      description: Credentials for user authentication
+
+    ApiResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Operation success indicator
+          example: true
+        message:
+          type: string
+          description: Human-readable outcome message
+          example: Login successful
+        data:
+          type: object
+          nullable: true
+          description: Operation result payload (null for error responses)
+      description: Standard wrapper for all API responses
+
+    ApiResponseString:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    # Product DTOs
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - quantity
+        - price
+        - totalValue
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique product identifier (auto-generated)
+          example: 1
+        name:
+          type: string
+          minLength: 1
+          description: Product name (unique in database)
+          example: Laptop
+        quantity:
+          type: integer
+          minimum: 0
+          description: Current stock quantity (cannot be negative)
+          example: 50
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Unit price (must be positive)
+          example: 999.99
+        totalValue:
+          type: number
+          format: double
+          description: Total inventory value (auto-calculated as quantity * price)
+          example: 49999.50
+      description: Product inventory item with stock and pricing information
+
+    ApiResponseProduct:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Product'
+
+    ProductList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Product'
+      description: List of products
+
+    ApiResponseProductList:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ProductList'
+
+    PaginatedResponse:
+      type: object
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - currentPage
+        - pageSize
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+          description: Products for current page
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of products across all pages
+          example: 100
+        totalPages:
+          type: integer
+          description: Total number of available pages
+          example: 10
+        currentPage:
+          type: integer
+          description: Zero-based current page number
+          example: 0
+        pageSize:
+          type: integer
+          description: Number of items per page
+          example: 10
+      description: Paginated product response with metadata
+
+    ApiResponsePaginated:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/PaginatedResponse'
+
+    # Error Responses
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message describing what went wrong
+          example: Incomplete update. Please fill in all required fields.
+
+    ApiResponseError:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Operation failed
+        data:
+          type: null
+
+paths:
+  /api/auth/login:
+    post:
+      summary: Authenticate user and generate JWT token
+      description: |
+        Validates user credentials against stored user records via Spring Security.
+        Upon successful authentication, issues a signed JWT token with embedded user role.
+        Token can be used for subsequent API requests requiring USER or ADMIN role authorization.
+      operationId: login
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: admin
+              password: password123
+      responses:
+        '200':
+          description: Authentication successful - JWT token returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+              example:
+                success: true
+                message: Login successful
+                data: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTcwMDAwMDAwMH0.signature
+        '400':
+          description: Invalid request - missing or blank username/password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+              example:
+                success: false
+                message: Username and password cannot be blank
+                data: null
+        '401':
+          description: Authentication failed - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+              example:
+                success: false
+                message: Bad credentials
+                data: null
+
+  /api/products:
+    get:
+      summary: Retrieve all products
+      description: |
+        Loads entire inventory without pagination. Returns all products sorted by ID.
+        Use /api/products/paged for large datasets to prevent memory issues.
+      operationId: getAllProducts
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved all products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductList'
+              example:
+                - id: 1
+                  name: Laptop
+                  quantity: 50
+                  price: 999.99
+                  totalValue: 49999.50
+                - id: 2
+                  name: Mouse
+                  quantity: 200
+                  price: 25.99
+                  totalValue: 5198.00
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+              example:
+                success: false
+                message: Unauthorized
+                data: null
+
+    post:
+      summary: Create a new product (ADMIN only)
+      description: |
+        Creates a new product with provided name, quantity, and price.
+        Validates all required fields and business rules:
+        - Name must be non-empty
+        - Quantity cannot be negative
+        - Price must be positive (> 0)
+        Automatically calculates totalValue = quantity * price
+      operationId: createProduct
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - quantity
+                - price
+              properties:
+                name:
+                  type: string
+                  example: New Laptop
+                quantity:
+                  type: integer
+                  minimum: 0
+                  example: 25
+                price:
+                  type: number
+                  format: double
+                  minimum: 0.01
+                  example: 1299.99
+      responses:
+        '200':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              example:
+                id: 3
+                name: New Laptop
+                quantity: 25
+                price: 1299.99
+                totalValue: 32499.75
+        '400':
+          description: Validation error - missing fields or invalid values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Incomplete update. Please fill in all required fields.
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '403':
+          description: Forbidden - insufficient permissions (requires ADMIN role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/products/{id}:
+    get:
+      summary: Retrieve a single product by ID
+      description: Returns product details if found, otherwise 404 error.
+      operationId: getProductById
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product identifier
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Product found and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+              example:
+                success: true
+                message: Product fetched successfully
+                data:
+                  id: 1
+                  name: Laptop
+                  quantity: 50
+                  price: 999.99
+                  totalValue: 49999.50
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+              example:
+                success: false
+                message: The product with ID 999 does not exist.
+                data: null
+
+    delete:
+      summary: Delete a product (ADMIN only)
+      description: |
+        Deletes a product by ID. Returns 404 if product not found.
+        Deletion checks product existence first to avoid orphaned references.
+      operationId: deleteProduct
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product identifier
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                message: Product with ID 1 has been successfully deleted.
+                data: null
+        '400':
+          description: Invalid request - ID missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+        '403':
+          description: Forbidden - insufficient permissions (requires ADMIN role)
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/products/paged:
+    get:
+      summary: Retrieve products with pagination
+      description: |
+        Returns paginated product list with metadata. Prevents loading entire table into memory.
+        Default page size is 10 items. Includes total count and page information for client-side pagination controls.
+      operationId: getPagedProducts
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Zero-based page number (default 0)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            example: 0
+        - name: size
+          in: query
+          required: false
+          description: Items per page (default 10, must be positive)
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: Paginated products returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePaginated'
+              example:
+                success: true
+                message: Paged products fetched successfully
+                data:
+                  content:
+                    - id: 1
+                      name: Laptop
+                      quantity: 50
+                      price: 999.99
+                      totalValue: 49999.50
+                    - id: 2
+                      name: Mouse
+                      quantity: 200
+                      price: 25.99
+                      totalValue: 5198.00
+                  totalElements: 100
+                  totalPages: 10
+                  currentPage: 0
+                  pageSize: 10
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+
+  /api/products/low-stock:
+    get:
+      summary: Get products with critically low stock
+      description: |
+        Returns products where quantity is below reorder threshold (5 items).
+        If all products adequately stocked, returns success message with empty list.
+      operationId: getLowStockProducts
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Low-stock products returned
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ProductList'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: All products are sufficiently stocked.
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+
+  /api/products/search:
+    get:
+      summary: Search products by name
+      description: |
+        Case-insensitive substring search. For example, searching "apple" returns products like
+        "Apple Juice", "APPLE", "Green Apple", etc.
+        Returns 204 NO_CONTENT if no matches found.
+      operationId: searchProductsByName
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Search term (substring, case-insensitive)
+          schema:
+            type: string
+            example: laptop
+      responses:
+        '200':
+          description: Matching products found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductList'
+              example:
+                - id: 1
+                  name: Laptop
+                  quantity: 50
+                  price: 999.99
+                  totalValue: 49999.50
+        '204':
+          description: No matching products found
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+
+  /api/products/{id}/quantity:
+    put:
+      summary: Update product quantity
+      description: |
+        Updates quantity for a specific product. Automatically recalculates total stock value.
+        Prevents negative quantities.
+      operationId: updateQuantity
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product identifier
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 0
+                  description: New quantity (cannot be negative)
+                  example: 75
+      responses:
+        '200':
+          description: Quantity updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+              example:
+                success: true
+                message: Quantity updated successfully
+                data:
+                  id: 1
+                  name: Laptop
+                  quantity: 75
+                  price: 999.99
+                  totalValue: 74999.25
+        '400':
+          description: Validation error - invalid quantity or missing field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+        '404':
+          description: Product not found
+
+  /api/products/{id}/price:
+    put:
+      summary: Update product price
+      description: |
+        Updates price for a specific product. Automatically recalculates total stock value.
+        Prevents zero or negative prices.
+      operationId: updatePrice
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product identifier
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - price
+              properties:
+                price:
+                  type: number
+                  format: double
+                  minimum: 0.01
+                  description: New price (must be positive)
+                  example: 1199.99
+      responses:
+        '200':
+          description: Price updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+              example:
+                success: true
+                message: Price updated successfully
+                data:
+                  id: 1
+                  name: Laptop
+                  quantity: 50
+                  price: 1199.99
+                  totalValue: 59999.50
+        '400':
+          description: Validation error - invalid price or missing field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+        '404':
+          description: Product not found
+
+  /api/products/{id}/name:
+    put:
+      summary: Update product name
+      description: |
+        Updates name for a specific product. Name must be non-empty.
+        Uniqueness constraint enforced at database level.
+      operationId: updateName
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product identifier
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  description: New product name (must not be empty)
+                  example: High-Performance Laptop
+      responses:
+        '200':
+          description: Name updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+              example:
+                success: true
+                message: Name updated successfully
+                data:
+                  id: 1
+                  name: High-Performance Laptop
+                  quantity: 50
+                  price: 999.99
+                  totalValue: 49999.50
+        '400':
+          description: Validation error - name empty or missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+        '404':
+          description: Product not found
+
+  /api/products/total-stock-value:
+    get:
+      summary: Calculate total inventory value
+      description: |
+        Computes sum of (quantity * price) for all products.
+        Useful for financial reporting and inventory valuation.
+        Database-optimized aggregation query.
+      operationId: getTotalStockValue
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Total stock value calculated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Total stock value fetched successfully
+                  data:
+                    type: number
+                    format: double
+                    example: 99999.99
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+        '500':
+          description: Server error calculating total stock value
+
+  /api/health:
+    get:
+      summary: Health check endpoint
+      description: |
+        Simple health check for orchestration and monitoring systems (Kubernetes, Docker, load balancers).
+        Validates database connectivity via lightweight JDBC connection test.
+        Returns 200 OK if database reachable; 500 error if unreachable.
+        No authentication required.
+        Used by:
+        - Kubernetes (liveness/readiness probes)
+        - Docker (healthcheck instruction)
+        - Load balancers (backend health verification)
+        - Monitoring systems (Prometheus, DataDog, etc.)
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Application and database healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Database is connected and API is running.
+        '500':
+          description: Application or database unhealthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Database is down: Connection refused
+
+security:
+  - BearerAuth: []
