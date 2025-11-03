@@ -464,24 +464,24 @@
                 Model</h2>
                 <h3 id="context-diagram-level-1">Context Diagram (Level
                 1)</h3>
-                <pre class="mermaid"><code>flowchart LR
-  User([Business User]) --&gt;|uses| Frontend[Frontend (React/Vite)]
+                <pre class="mermaid"><code>graph LR
+  User([Business User]) --&gt;|uses| Frontend[Frontend React/Vite]
   Frontend --&gt;|HTTPS| API[(Spring Boot API)]
-  API --&gt;|JDBC/Flyway| DB[(PostgreSQL / Neon)]
-  API --&gt;|calls| External[(External Services: email, storage, 3rd-party APIs)]</code></pre>
+  API --&gt;|JDBC/Flyway| DB[(PostgreSQL or Neon)]
+  API --&gt;|calls| External[(External Services)]</code></pre>
                 <h3 id="container-diagram-level-2">Container Diagram
                 (Level 2)</h3>
-                <pre class="mermaid"><code>flowchart TB
+                <pre class="mermaid"><code>graph TB
   subgraph Backend [StockEase Backend - Spring Boot]
     API[API Endpoints]
-    BIZ[Business Logic (Services)]
-    DATA[Data Access (Repositories, Flyway)]
+    BIZ[Business Logic Services]
+    DATA[Data Access Repositories Flyway]
   end
   API --&gt; BIZ
   BIZ --&gt; DATA
-  DATA --&gt; DB[(PostgreSQL / Neon)]
-  API --&gt;|exposes| OpenAPI[/v3/api-docs]
-  API --&gt;|health| Health[/api/health]</code></pre>
+  DATA --&gt; DB[(PostgreSQL or Neon)]
+  API --&gt;|exposes| OpenAPI[&quot;/v3/api-docs&quot;]
+  API --&gt;|health| Health[&quot;/api/health&quot;]</code></pre>
                 <h3 id="component-diagram-level-3">Component Diagram
                 (Level 3)</h3>
                 <h4 id="controllers-layer">1. Controllers Layer</h4>
