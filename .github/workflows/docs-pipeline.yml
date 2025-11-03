@@ -54,19 +54,27 @@ jobs:
           APP_PID=$!
           echo "App started with PID $APP_PID"
           # Wait for app to initialize
-          sleep 25
+          sleep 30
           # Check if app is still running
           if ! kill -0 $APP_PID 2>/dev/null; then
-            echo "❌ App crashed. Logs:"
+            echo "❌ App crashed. Full logs:"
             cat /tmp/app.log
             exit 1
           fi
+          # Show last 100 lines of app startup logs
+          echo "=== App startup logs (last 100 lines) ==="
+          tail -100 /tmp/app.log
+          echo "=== End logs ==="
           # Fetch OpenAPI spec (curl output goes to file, verbose to stderr)
           echo "Fetching http://localhost:8080/v3/api-docs"
+          curl -v http://localhost:8080/v3/api-docs 2>&1 | tee /tmp/curl.log
           curl -s http://localhost:8080/v3/api-docs > target/docs/openapi.json
           # Verify it was created and has content
           if [ ! -f target/docs/openapi.json ] || [ ! -s target/docs/openapi.json ]; then
-            echo "❌ openapi.json is empty or missing. App logs:"
+            echo "❌ openapi.json is empty or missing"
+            echo "=== Curl output: ==="
+            cat /tmp/curl.log
+            echo "=== App full logs: ==="
             cat /tmp/app.log
             exit 1
           fi
