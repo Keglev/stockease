@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004a99;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            color: var(--text);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-breadcrumb {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .nav-breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .nav-breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            padding: 2rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-section a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-section a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .nav-section a.active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .content {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        h4, h5, h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code */
+        code {
+            background-color: var(--bg-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        table tbody tr:hover {
+            background-color: #f0f6ff;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Alerts / Boxes */
+        .info-box, .warning-box, .success-box, .danger-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border-color: var(--info);
+            color: #004a87;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .danger-box {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        /* TOC */
+        nav.toc {
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        nav.toc li {
+            margin: 0.25rem 0;
+        }
+
+        nav.toc a {
+            font-size: 0.95rem;
+        }
+
+        nav.toc > ul > li > a {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text);
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                order: 2;
+            }
+
+            main {
+                order: 1;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-breadcrumb {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            header, aside, footer {
+                display: none;
+            }
+
+            .content {
+                box-shadow: none;
+                background: white;
+            }
+        }
+
+        /* Syntax Highlighting (basic) */
+        .hljs-keyword { color: #569cd6; }
+        .hljs-string { color: #ce9178; }
+        .hljs-number { color: #b5cea8; }
+        .hljs-attr { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1 id="coverage-quality">Coverage &amp; Quality</h1>
+                <p><strong>Purpose</strong>: Document JaCoCo coverage
+                configuration, thresholds, and quality metrics for
+                StockEase tests.</p>
+                <hr />
+                <h2 id="table-of-contents">Table of Contents</h2>
+                <ol type="1">
+                <li><a href="#jacoco-overview">JaCoCo Overview</a></li>
+                <li><a href="#coverage-thresholds">Coverage
+                Thresholds</a></li>
+                <li><a href="#coverage-matrix">Coverage Matrix</a></li>
+                <li><a href="#running-coverage-reports">Running Coverage
+                Reports</a></li>
+                <li><a href="#must-cover-classes">Must-Cover
+                Classes</a></li>
+                <li><a href="#quality-gates">Quality Gates</a></li>
+                <li><a href="#related-documentation">Related
+                Documentation</a></li>
+                </ol>
+                <hr />
+                <h2 id="jacoco-overview">JaCoCo Overview</h2>
+                <h3 id="what-is-jacoco">What is JaCoCo?</h3>
+                <p>JaCoCo (Java Code Coverage) measures which lines of
+                code are executed during tests.</p>
+                <pre><code>Production Code
+├── Line A: Executed ✅  
+├── Line B: Executed ✅  
+└── Line C: NOT executed ❌  
+
+Coverage = 2/3 = 66.7%</code></pre>
+                <h3 id="coverage-types">Coverage Types</h3>
+                <table>
+                <colgroup>
+                <col style="width: 23%" />
+                <col style="width: 42%" />
+                <col style="width: 34%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Type</th>
+                <th>Definition</th>
+                <th>Example</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><strong>Line Coverage</strong></td>
+                <td>% of lines executed</td>
+                <td>70 out of 100 lines = 70%</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Branch Coverage</strong></td>
+                <td>% of if/else paths taken</td>
+                <td>30 out of 50 branches = 60%</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Method Coverage</strong></td>
+                <td>% of methods called</td>
+                <td>45 out of 50 methods = 90%</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Class Coverage</strong></td>
+                <td>% of classes tested</td>
+                <td>8 out of 10 classes = 80%</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="current-jacoco-status-in-stockease">Current
+                JaCoCo Status in StockEase</h3>
+                <ul>
+                <li><strong>Status</strong>: Ready to configure (not yet
+                in pom.xml)</li>
+                <li><strong>Recommendation</strong>: Add to pom.xml
+                before first CI/CD build</li>
+                <li><strong>Target</strong>: 70% line, 60% branch for
+                controllers</li>
+                </ul>
+                <hr />
+                <h2 id="coverage-thresholds">Coverage Thresholds</h2>
+                <h3 id="recommended-thresholds-by-layer">Recommended
+                Thresholds by Layer</h3>
+                <table style="width:100%;">
+                <colgroup>
+                <col style="width: 36%" />
+                <col style="width: 20%" />
+                <col style="width: 26%" />
+                <col style="width: 16%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Component</th>
+                <th>Line</th>
+                <th>Branch</th>
+                <th>Why</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><strong>Controllers</strong></td>
+                <td>80%</td>
+                <td>70%</td>
+                <td>Critical path, test all paths</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Services</strong></td>
+                <td>75%</td>
+                <td>60%</td>
+                <td>Business logic, test main cases</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Utilities</strong></td>
+                <td>80%</td>
+                <td>75%</td>
+                <td>Reusable code, cover edge cases</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Repositories</strong></td>
+                <td>60%</td>
+                <td>50%</td>
+                <td>Usually mocked; <span class="citation"
+                data-cites="DataJpaTest">@DataJpaTest</span> coverage if
+                needed</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Entities</strong></td>
+                <td>40%</td>
+                <td>30%</td>
+                <td>Mostly getters/setters</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Config</strong></td>
+                <td>50%</td>
+                <td>40%</td>
+                <td>Usually tested indirectly</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="proposed-stockease-thresholds">Proposed
+                StockEase Thresholds</h3>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode xml"><code class="sourceCode xml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- pom.xml (to be added) --&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>&lt;<span class="kw">plugin</span>&gt;</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">groupId</span>&gt;org.jacoco&lt;/<span class="kw">groupId</span>&gt;</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">artifactId</span>&gt;jacoco-maven-plugin&lt;/<span class="kw">artifactId</span>&gt;</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">version</span>&gt;0.8.11&lt;/<span class="kw">version</span>&gt;</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">configuration</span>&gt;</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">rules</span>&gt;</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>            &lt;<span class="kw">rule</span>&gt;</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">element</span>&gt;BUNDLE&lt;/<span class="kw">element</span>&gt;</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">includes</span>&gt;</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                    &lt;<span class="kw">include</span>&gt;com.stocks.stockease.controller.*&lt;/<span class="kw">include</span>&gt;</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>                &lt;/<span class="kw">includes</span>&gt;</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">limits</span>&gt;</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>                    &lt;<span class="kw">limit</span>&gt;</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">counter</span>&gt;LINE&lt;/<span class="kw">counter</span>&gt;</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">value</span>&gt;COVEREDRATIO&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">minimum</span>&gt;0.70&lt;/<span class="kw">minimum</span>&gt;  <span class="co">&lt;!-- 70% --&gt;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>                    &lt;/<span class="kw">limit</span>&gt;</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>                    &lt;<span class="kw">limit</span>&gt;</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">counter</span>&gt;BRANCH&lt;/<span class="kw">counter</span>&gt;</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">value</span>&gt;COVEREDRATIO&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">minimum</span>&gt;0.60&lt;/<span class="kw">minimum</span>&gt;  <span class="co">&lt;!-- 60% --&gt;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>                    &lt;/<span class="kw">limit</span>&gt;</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>                &lt;/<span class="kw">limits</span>&gt;</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>            &lt;/<span class="kw">rule</span>&gt;</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        &lt;/<span class="kw">rules</span>&gt;</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">configuration</span>&gt;</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>&lt;/<span class="kw">plugin</span>&gt;</span></code></pre></div>
+                <hr />
+                <h2 id="coverage-matrix">Coverage Matrix</h2>
+                <h3 id="current-coverage-estimated">Current Coverage
+                (Estimated)</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Package</th>
+                <th>Classes</th>
+                <th>Tests</th>
+                <th>Coverage</th>
+                <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><strong>Controller</strong></td>
+                <td>2</td>
+                <td>8</td>
+                <td>~85%</td>
+                <td>✅ Good</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Security</strong></td>
+                <td>2</td>
+                <td>~7*</td>
+                <td>~75%</td>
+                <td>✅ Good</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Config</strong></td>
+                <td>1</td>
+                <td>1</td>
+                <td>~50%</td>
+                <td>🟡 Adequate</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Model</strong></td>
+                <td>2</td>
+                <td>0</td>
+                <td>~30%</td>
+                <td>❌ Low</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Repository</strong></td>
+                <td>1</td>
+                <td>0</td>
+                <td>~0%</td>
+                <td>❌ Low (Mocked)</td>
+                </tr>
+                <tr class="even">
+                <td><strong>TOTAL</strong></td>
+                <td><strong>8</strong></td>
+                <td><strong>9</strong></td>
+                <td><strong>~55%</strong></td>
+                <td>🟡 Acceptable</td>
+                </tr>
+                </tbody>
+                </table>
+                <p>*Security tests distributed across controller
+                tests</p>
+                <h3 id="coverage-by-feature">Coverage by Feature</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Feature</th>
+                <th>Component</th>
+                <th>Coverage</th>
+                <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><strong>Authentication</strong></td>
+                <td>AuthController, JwtUtil</td>
+                <td>85%</td>
+                <td>✅ Tested</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Product CRUD</strong></td>
+                <td>ProductController</td>
+                <td>90%</td>
+                <td>✅ Tested</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Authorization</strong></td>
+                <td>SecurityConfig, Filters</td>
+                <td>70%</td>
+                <td>✅ Tested</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Validation</strong></td>
+                <td>Controllers</td>
+                <td>60%</td>
+                <td>🟡 Partial</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Entities</strong></td>
+                <td>Product, User</td>
+                <td>30%</td>
+                <td>❌ Minimal</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Repositories</strong></td>
+                <td>ProductRepository</td>
+                <td>0%</td>
+                <td>❌ Mocked</td>
+                </tr>
+                </tbody>
+                </table>
+                <hr />
+                <h2 id="running-coverage-reports">Running Coverage
+                Reports</h2>
+                <h3 id="generate-coverage-report">Generate Coverage
+                Report</h3>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Option 1: Full test + coverage</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean test jacoco:report</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Option 2: Skip unit tests, only coverage</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean jacoco:report</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Option 3: With specific JDK</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> <span class="at">-DjavaHome</span><span class="op">=</span>/path/to/jdk17 clean test jacoco:report</span></code></pre></div>
+                <h3 id="view-html-report">View HTML Report</h3>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># After running above, open:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">open</span> backend/target/site/jacoco/index.html</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># On Windows:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="ex">start</span> backend<span class="dt">\t</span>arget<span class="dt">\s</span>ite<span class="dt">\j</span>acoco<span class="dt">\i</span>ndex.html</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Report shows:</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># - Overall coverage percentage</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># - Package breakdown</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># - Class coverage details</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># - Line-by-line code view (green/yellow/red)</span></span></code></pre></div>
+                <h3 id="report-structure">Report Structure</h3>
+                <pre><code>index.html                   ← Start here (overall stats)
+├── com.stocks.stockease.controller
+│   ├── AuthController.java.html
+│   └── ProductController.java.html
+├── com.stocks.stockease.security
+│   ├── JwtUtil.java.html
+│   └── SecurityConfig.java.html
+├── com.stocks.stockease.model
+│   ├── Product.java.html
+│   └── User.java.html
+└── [more packages...]</code></pre>
+                <h3 id="report-interpretation">Report
+                Interpretation</h3>
+                <pre><code>Line Coverage: 87% (261/300)
+├─ Green (261): Executed by tests ✅
+├─ Yellow (20): Partially executed (one branch missed)
+└─ Red (19): Not executed by tests ❌
+
+Branch Coverage: 72% (80/111)
+├─ All branches of if/else tested
+└─ Some edge cases not covered</code></pre>
+                <hr />
+                <h2 id="must-cover-classes">Must-Cover Classes</h2>
+                <h3 id="critical-path-100-coverage-target">Critical Path
+                (100% Coverage Target)</h3>
+                <p>These classes implement core business logic and must
+                be thoroughly tested:</p>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Class</th>
+                <th>File</th>
+                <th>Why Critical</th>
+                <th>Target</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>AuthController</code></td>
+                <td>controller/</td>
+                <td>Handles all auth flows</td>
+                <td>95%</td>
+                </tr>
+                <tr class="even">
+                <td><code>ProductController</code></td>
+                <td>controller/</td>
+                <td>Handles all product ops</td>
+                <td>95%</td>
+                </tr>
+                <tr class="odd">
+                <td><code>JwtUtil</code></td>
+                <td>security/</td>
+                <td>Token validation, generation</td>
+                <td>90%</td>
+                </tr>
+                <tr class="even">
+                <td><code>SecurityConfig</code></td>
+                <td>security/</td>
+                <td>Spring Security setup</td>
+                <td>80%</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="standard-path-70-80-coverage-target">Standard
+                Path (70-80% Coverage Target)</h3>
+                <p>Implement business logic but less critical:</p>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Class</th>
+                <th>File</th>
+                <th>Why</th>
+                <th>Target</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>UserRepository</code></td>
+                <td>repository/</td>
+                <td>Data access (mocked)</td>
+                <td>60%*</td>
+                </tr>
+                <tr class="even">
+                <td><code>ProductRepository</code></td>
+                <td>repository/</td>
+                <td>Data access (mocked)</td>
+                <td>60%*</td>
+                </tr>
+                <tr class="odd">
+                <td><code>AuthenticationManager</code></td>
+                <td>config/</td>
+                <td>Spring config</td>
+                <td>70%</td>
+                </tr>
+                </tbody>
+                </table>
+                <p>*Repository coverage through integration tests, not
+                unit tests</p>
+                <h3 id="optional-40-60-coverage-target">Optional (40-60%
+                Coverage Target)</h3>
+                <p>Helper classes, models, or less critical paths:</p>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Class</th>
+                <th>File</th>
+                <th>Why</th>
+                <th>Target</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>Product</code></td>
+                <td>model/</td>
+                <td>Entity (getters/setters)</td>
+                <td>50%</td>
+                </tr>
+                <tr class="even">
+                <td><code>User</code></td>
+                <td>model/</td>
+                <td>Entity (getters/setters)</td>
+                <td>50%</td>
+                </tr>
+                <tr class="odd">
+                <td><code>HealthController</code></td>
+                <td>controller/</td>
+                <td>Non-critical endpoint</td>
+                <td>60%</td>
+                </tr>
+                </tbody>
+                </table>
+                <hr />
+                <h2 id="quality-gates">Quality Gates</h2>
+                <h3 id="build-time-gates-cicd">Build-Time Gates
+                (CI/CD)</h3>
+                <div class="sourceCode" id="cb7"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In GitHub Actions (.github/workflows/ci-build.yml)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Run tests with coverage</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> mvn clean test jacoco:report</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Check coverage thresholds</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    # Fail if coverage &lt; 70% for controllers</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    mvn jacoco:check -Djacoco.minimum=0.70</span></code></pre></div>
+                <h3 id="coverage-based-decisions">Coverage-Based
+                Decisions</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Coverage</th>
+                <th>Decision</th>
+                <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><strong>&lt; 50%</strong></td>
+                <td>Critical</td>
+                <td>❌ Block merge, add tests</td>
+                </tr>
+                <tr class="even">
+                <td><strong>50-70%</strong></td>
+                <td>Warning</td>
+                <td>⚠️ Request review, optional tests</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>70-85%</strong></td>
+                <td>Good</td>
+                <td>✅ Approve, monitor drift</td>
+                </tr>
+                <tr class="even">
+                <td><strong>85%+</strong></td>
+                <td>Excellent</td>
+                <td>✅ Approve, consider diminishing returns</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="regression-prevention">Regression
+                Prevention</h3>
+                <div class="sourceCode" id="cb8"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare coverage to previous build</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> jacoco:report</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># If coverage decreased:</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># - Don&#39;t merge without explanation</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># - Add tests for new/changed code</span></span></code></pre></div>
+                <hr />
+                <h2 id="improving-coverage">Improving Coverage</h2>
+                <h3 id="step-1-identify-uncovered-code">Step 1: Identify
+                Uncovered Code</h3>
+                <div class="sourceCode" id="cb9"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># After running: mvn clean test jacoco:report</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Open: backend/target/site/jacoco/index.html</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Click on class → scroll to red lines</span></span></code></pre></div>
+                <h3 id="step-2-write-tests-for-uncovered-lines">Step 2:
+                Write Tests for Uncovered Lines</h3>
+                <div class="sourceCode" id="cb10"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ❌ Uncovered code</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>product<span class="op">.</span><span class="fu">getQuantity</span><span class="op">()</span> <span class="op">&lt;</span> <span class="dv">5</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// This branch never tested</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    log<span class="op">.</span><span class="fu">warn</span><span class="op">(</span><span class="st">&quot;Low stock warning&quot;</span><span class="op">);</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ Add test</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testLowStockWarning</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    Product product <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span><span class="st">&quot;Test&quot;</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="fl">100.0</span><span class="op">);</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products/1&quot;</span><span class="op">))</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Now warning branch is covered</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="step-3-run-verification">Step 3: Run
+                Verification</h3>
+                <div class="sourceCode" id="cb11"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean test jacoco:report</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Check index.html to confirm coverage improved</span></span></code></pre></div>
+                <h3
+                id="step-4-set-coverage-gate-prevent-regression">Step 4:
+                Set Coverage Gate (Prevent Regression)</h3>
+                <div class="sourceCode" id="cb12"><pre
+                class="sourceCode xml"><code class="sourceCode xml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- pom.xml --&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>&lt;<span class="kw">plugin</span>&gt;</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">groupId</span>&gt;org.jacoco&lt;/<span class="kw">groupId</span>&gt;</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">artifactId</span>&gt;jacoco-maven-plugin&lt;/<span class="kw">artifactId</span>&gt;</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">configuration</span>&gt;</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">rules</span>&gt;</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>            &lt;<span class="kw">rule</span>&gt;</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">element</span>&gt;BUNDLE&lt;/<span class="kw">element</span>&gt;</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">limits</span>&gt;</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>                    &lt;<span class="kw">limit</span>&gt;</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">counter</span>&gt;LINE&lt;/<span class="kw">counter</span>&gt;</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">value</span>&gt;COVEREDRATIO&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>                        &lt;<span class="kw">minimum</span>&gt;0.70&lt;/<span class="kw">minimum</span>&gt;</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>                    &lt;/<span class="kw">limit</span>&gt;</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>                &lt;/<span class="kw">limits</span>&gt;</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">excludes</span>&gt;</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>                    &lt;<span class="kw">exclude</span>&gt;**/config/AppConfig.class&lt;/<span class="kw">exclude</span>&gt;</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>                    &lt;<span class="kw">exclude</span>&gt;**/model/*.class&lt;/<span class="kw">exclude</span>&gt;</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>                &lt;/<span class="kw">excludes</span>&gt;</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>            &lt;/<span class="kw">rule</span>&gt;</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>        &lt;/<span class="kw">rules</span>&gt;</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">configuration</span>&gt;</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">executions</span>&gt;</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">execution</span>&gt;</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>            &lt;<span class="kw">goals</span>&gt;</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">goal</span>&gt;check&lt;/<span class="kw">goal</span>&gt;  <span class="co">&lt;!-- Fails build if threshold not met --&gt;</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>            &lt;/<span class="kw">goals</span>&gt;</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>        &lt;/<span class="kw">execution</span>&gt;</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">executions</span>&gt;</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>&lt;/<span class="kw">plugin</span>&gt;</span></code></pre></div>
+                <hr />
+                <h2 id="coverage-reports-in-cicd">Coverage Reports in
+                CI/CD</h2>
+                <h3 id="artifact-upload-github-actions">Artifact Upload
+                (GitHub Actions)</h3>
+                <div class="sourceCode" id="cb13"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># .github/workflows/ci-build.yml</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Upload coverage report</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-artifact@v3</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">if</span><span class="kw">:</span><span class="at"> always()</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> jacoco-report</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> backend/target/site/jacoco/</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Publish to GitHub Pages</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-pages-artifact@v2</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> backend/target/site/jacoco/</span></span></code></pre></div>
+                <h3 id="view-in-github-actions">View in GitHub
+                Actions</h3>
+                <ol type="1">
+                <li>Go to Actions → Recent build</li>
+                <li>Scroll to “Artifacts” section</li>
+                <li>Download <code>jacoco-report.zip</code></li>
+                <li>Extract and open <code>index.html</code> in
+                browser</li>
+                </ol>
+                <h3 id="publish-to-github-pages">Publish to GitHub
+                Pages</h3>
+                <div class="sourceCode" id="cb14"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># After merge to main, coverage report auto-publishes to:</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># https://keglev.github.io/stockease/coverage/</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Link in README.md:</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># [![Coverage](https://img.shields.io/badge/coverage-70%25-yellow)](https://keglev.github.io/stockease/coverage/)</span></span></code></pre></div>
+                <hr />
+                <h2 id="coverage-best-practices">Coverage Best
+                Practices</h2>
+                <h3 id="do">✅ Do</h3>
+                <ul>
+                <li>✅ Test happy path (main flow)</li>
+                <li>✅ Test error cases (exceptions)</li>
+                <li>✅ Test authorization checks</li>
+                <li>✅ Test boundary conditions (empty lists, null
+                values)</li>
+                <li>✅ Aim for 70%+ coverage on critical paths</li>
+                <li>✅ Use mutation testing to validate test
+                quality</li>
+                </ul>
+                <h3 id="dont">❌ Don’t</h3>
+                <ul>
+                <li>❌ Aim for 100% coverage (diminishing returns)</li>
+                <li>❌ Test generated code (getters/setters on
+                entities)</li>
+                <li>❌ Test Spring Framework code (security,
+                config)</li>
+                <li>❌ Write tests just to increase coverage (test
+                quality matters)</li>
+                <li>❌ Lower thresholds to pass build (fix code
+                instead)</li>
+                </ul>
+                <hr />
+                <h2 id="quality-metrics-dashboard-future">Quality
+                Metrics Dashboard (Future)</h2>
+                <h3 id="proposed-monitoring">Proposed Monitoring</h3>
+                <pre><code>Coverage Trends (Last 30 Days)
+
+Line Coverage:     70% → 72% ↑ (Good)
+Branch Coverage:   60% → 62% ↑ (Good)
+Test Count:        9  → 12 ↑ (Growing)
+Execution Time:    25s → 28s ↓ (Acceptable)
+
+Top Uncovered Code:
+1. Product.calculateDiscount() — 0% (unused feature)
+2. AuthService.refreshToken() — 0% (future)
+3. ValidationUtil.validateEmail() — 0% (imported, unused)</code></pre>
+                <hr />
+                <h2 id="related-documentation">Related
+                Documentation</h2>
+                <h3 id="testing-fundamentals">Testing Fundamentals</h3>
+                <ul>
+                <li><strong><a href="./strategy.md">Testing
+                Strategy</a></strong> — Coverage goals</li>
+                <li><strong><a href="./pyramid.md">Test
+                Pyramid</a></strong> — Distribution of test types</li>
+                <li><strong><a href="./ci-pipeline-tests.md">CI Pipeline
+                Tests</a></strong> — Coverage in CI/CD</li>
+                </ul>
+                <h3 id="implementation">Implementation</h3>
+                <ul>
+                <li><strong><a href="./spring-slices.md">Spring
+                Slices</a></strong> — How to write testable code</li>
+                <li><strong><a
+                href="./controller-integration.md">Controller
+                Integration Tests</a></strong> — HTTP test examples</li>
+                <li><strong><a href="./security-tests.md">Security
+                Tests</a></strong> — Authorization coverage</li>
+                </ul>
+                <h3 id="main-architecture">Main Architecture</h3>
+                <ul>
+                <li><strong><a href="../testing-architecture.md">Testing
+                Architecture</a></strong> — Entry point</li>
+                <li><strong><a href="../backend.md">Backend
+                Architecture</a></strong> — Code being measured</li>
+                <li><strong><a
+                href="../deployment.md">Deployment</a></strong> —
+                Publishing reports</li>
+                </ul>
+                <hr />
+                <p><strong>Last Updated</strong>: October 31, 2025<br />
+                <strong>Version</strong>: 1.0<br />
+                <strong>Status</strong>: ✅ Ready for implementation</p>
+                <p><a href="../testing-architecture.md">Back to Testing
+                Index</a></p>
+            </div>
+        </main>
+    </aside>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation Menu
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: '/stockease/api/' },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: './overview.html' },
+                { label: 'System Layers', href: './layers.html' },
+                { label: 'Backend Architecture', href: './backend.html' },
+                { label: 'Frontend Architecture', href: './frontend.html' },
+                { label: 'Security Architecture', href: './security.html' },
+                { label: 'Deployment Strategy', href: './deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: './decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: './components/index.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: './patterns/index.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: './testing-architecture.html' },
+                { label: 'Security Tests', href: './testing/security-tests.html' },
+                { label: 'Test Pyramid', href: './testing/pyramid.html' },
+                { label: 'Test Strategy', href: './testing/strategy.html' },
+            ],
+            'Deployment': [
+                { label: 'CI/CD Pipeline', href: './deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: './deployment/docker-strategy.html' },
+            ],
+            'Reference': [
+                { label: 'Navigation Map', href: './NAVIGATION-MAP.html' },
+                { label: 'Cross References', href: './CROSS-REFERENCE.html' },
+                { label: 'Documentation Index', href: './DOCUMENTATION-INDEX.html' },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = link.href;
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes(link.href.replace('./', '').replace('.html', ''))) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+</body>
+</html>

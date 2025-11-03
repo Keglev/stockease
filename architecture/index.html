@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004a99;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            color: var(--text);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-breadcrumb {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .nav-breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .nav-breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            padding: 2rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-section a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-section a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .nav-section a.active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .content {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        h4, h5, h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code */
+        code {
+            background-color: var(--bg-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        table tbody tr:hover {
+            background-color: #f0f6ff;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Alerts / Boxes */
+        .info-box, .warning-box, .success-box, .danger-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border-color: var(--info);
+            color: #004a87;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .danger-box {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        /* TOC */
+        nav.toc {
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        nav.toc li {
+            margin: 0.25rem 0;
+        }
+
+        nav.toc a {
+            font-size: 0.95rem;
+        }
+
+        nav.toc > ul > li > a {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text);
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                order: 2;
+            }
+
+            main {
+                order: 1;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-breadcrumb {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            header, aside, footer {
+                display: none;
+            }
+
+            .content {
+                box-shadow: none;
+                background: white;
+            }
+        }
+
+        /* Syntax Highlighting (basic) */
+        .hljs-keyword { color: #569cd6; }
+        .hljs-string { color: #ce9178; }
+        .hljs-number { color: #b5cea8; }
+        .hljs-attr { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1 id="stockease-architecture-documentation">StockEase
+                Architecture Documentation</h1>
+                <p>Welcome to the StockEase Architecture Documentation
+                Hub. This directory contains comprehensive documentation
+                about the system architecture, design decisions, and
+                implementation details.</p>
+                <h2 id="quick-navigation">Quick Navigation</h2>
+                <h3 id="overview-design">📋 Overview &amp; Design</h3>
+                <ul>
+                <li><strong><a
+                href="./overview.md">overview.md</a></strong> -
+                <strong>START HERE</strong> ⭐
+                <ul>
+                <li>Executive summary of the backend architecture</li>
+                <li>Business context and problem statement</li>
+                <li>C4 architecture model (Context, Container, Component
+                levels)</li>
+                <li>Technology stack with versions</li>
+                <li>Key design decisions and rationale</li>
+                <li>Data models and entity relationships</li>
+                <li>API endpoints overview</li>
+                <li>Quality attributes and metrics</li>
+                <li><strong>Primary source of truth for architecture
+                decisions</strong></li>
+                </ul></li>
+                </ul>
+                <h3 id="architecture-layers">🏗️ Architecture Layers</h3>
+                <ul>
+                <li><strong><a href="./layers.md">layers.md</a></strong>
+                <ul>
+                <li>Service layer architecture (Controllers, Services,
+                Repositories)</li>
+                <li>Data flow and request lifecycle</li>
+                <li>Component interaction patterns</li>
+                <li>Dependency injection configuration</li>
+                <li>Testing strategies per layer</li>
+                </ul></li>
+                </ul>
+                <h3 id="security-architecture">🔐 Security
+                Architecture</h3>
+                <ul>
+                <li><strong><a
+                href="./security.md">security.md</a></strong>
+                <ul>
+                <li>Authentication flow (JWT tokens)</li>
+                <li>Authorization and role-based access control
+                (RBAC)</li>
+                <li>Spring Security configuration</li>
+                <li>Password hashing and encryption</li>
+                <li>CORS configuration and origin restrictions</li>
+                <li>Best practices and threat mitigation</li>
+                </ul></li>
+                </ul>
+                <h3 id="deployment-architecture">🚀 Deployment
+                Architecture</h3>
+                <ul>
+                <li><strong><a
+                href="./deployment.md">deployment.md</a></strong>
+                <ul>
+                <li>Infrastructure setup (Koyeb, Neon PostgreSQL)</li>
+                <li>CI/CD pipeline and GitHub Actions</li>
+                <li>Database migrations (Flyway)</li>
+                <li>Environment configuration</li>
+                <li>Monitoring and observability strategies</li>
+                <li>Disaster recovery and high availability</li>
+                </ul></li>
+                </ul>
+                <h3 id="frontend-architecture">💻 Frontend
+                Architecture</h3>
+                <ul>
+                <li><strong><a
+                href="./frontend.md">frontend.md</a></strong>
+                <ul>
+                <li>React 18 with TypeScript</li>
+                <li>Component hierarchy and structure</li>
+                <li>State management (React Query, Context API, Local
+                Storage)</li>
+                <li>API integration and Axios configuration</li>
+                <li>i18n multi-language support</li>
+                <li>Dark mode and theme management</li>
+                <li>Responsive design with Tailwind CSS</li>
+                <li>Deployment to Render</li>
+                </ul></li>
+                </ul>
+                <h3 id="complete-system-overview">📊 Complete System
+                Overview</h3>
+                <ul>
+                <li><strong><a
+                href="./ARCHITECTURE.md">ARCHITECTURE.md</a></strong>
+                (Deprecated - refer to topic-specific docs above)
+                <ul>
+                <li>Comprehensive but superseded by topic-specific
+                documentation</li>
+                <li>Kept for reference only</li>
+                </ul></li>
+                </ul>
+                <hr />
+                <h2 id="document-organization">Document
+                Organization</h2>
+                <p>This documentation is organized by
+                <strong>concerns</strong> rather than by technology
+                layer:</p>
+                <pre><code>backend/docs/architecture/
+├── index.md                 (Navigation hub - you are here)
+├── overview.md              (Executive summary &amp; design decisions) ⭐ PRIMARY
+├── layers.md                (Backend service layers)
+├── security.md              (Authentication &amp; authorization)
+├── deployment.md            (Infrastructure &amp; CI/CD)
+└── frontend.md              (React/TypeScript frontend)</code></pre>
+                <h2 id="reading-path-for-different-roles">Reading Path
+                for Different Roles</h2>
+                <h3 id="project-managers-stakeholders">👔 Project
+                Managers / Stakeholders</h3>
+                <ol type="1">
+                <li>Start with <a href="./overview.md">overview.md</a> -
+                Business context section</li>
+                <li>Review Quality Attributes table</li>
+                <li>Check Future Enhancements for roadmap</li>
+                </ol>
+                <h3 id="backend-developers-new-to-project">👨‍💻 Backend
+                Developers (New to Project)</h3>
+                <ol type="1">
+                <li>Read <a href="./overview.md">overview.md</a> - Full
+                document for understanding</li>
+                <li>Study <a href="./layers.md">layers.md</a> -
+                Understand service architecture</li>
+                <li>Review <a href="./security.md">security.md</a> -
+                Authentication flows</li>
+                <li>Check <a href="./deployment.md">deployment.md</a> -
+                How to deploy locally</li>
+                </ol>
+                <h3 id="frontend-developers">🎨 Frontend Developers</h3>
+                <ol type="1">
+                <li>Read <a href="./overview.md">overview.md</a> -
+                Business context</li>
+                <li>Study <a href="./frontend.md">frontend.md</a> -
+                Component architecture</li>
+                <li>Review <a href="./security.md">security.md</a> - JWT
+                token handling</li>
+                <li>Check <a href="./deployment.md">deployment.md</a> -
+                Environment setup</li>
+                </ol>
+                <h3 id="devops-infrastructure-engineers">🔧 DevOps /
+                Infrastructure Engineers</h3>
+                <ol type="1">
+                <li>Review <a href="./overview.md">overview.md</a> -
+                Technology Stack section</li>
+                <li>Study <a href="./deployment.md">deployment.md</a> -
+                Complete infrastructure guide</li>
+                <li>Check <a href="./layers.md">layers.md</a> -
+                Application topology</li>
+                <li>Review <a href="./security.md">security.md</a> -
+                Security requirements</li>
+                </ol>
+                <h3 id="qa-testing-engineers">🧪 QA / Testing
+                Engineers</h3>
+                <ol type="1">
+                <li>Read <a href="./overview.md">overview.md</a> -
+                Quality Attributes</li>
+                <li>Study <a href="./layers.md">layers.md</a> - Testing
+                strategies per layer</li>
+                <li>Review <a href="./security.md">security.md</a> -
+                Security test scenarios</li>
+                <li>Check test coverage in CI/CD logs</li>
+                </ol>
+                <hr />
+                <h2 id="key-architecture-principles">Key Architecture
+                Principles</h2>
+                <h3 id="layered-architecture">1. <strong>Layered
+                Architecture</strong></h3>
+                <p>Clean separation between Controllers, Services, and
+                Repositories for maintainability and testability.</p>
+                <h3 id="stateless-design">2. <strong>Stateless
+                Design</strong></h3>
+                <p>JWT-based authentication enables horizontal scaling
+                without session management complexity.</p>
+                <h3 id="database-migrations-with-flyway">3.
+                <strong>Database Migrations with Flyway</strong></h3>
+                <p>Versioned database schema changes ensure reproducible
+                and safe deployments.</p>
+                <h3 id="spring-data-jpa">4. <strong>Spring Data
+                JPA</strong></h3>
+                <p>ORM abstraction reduces boilerplate and enables
+                database agnostic code.</p>
+                <h3 id="containerized-deployment">5.
+                <strong>Containerized Deployment</strong></h3>
+                <p>Docker containers ensure consistency across
+                development, testing, and production environments.</p>
+                <h3 id="test-driven-development">6. <strong>Test-Driven
+                Development</strong></h3>
+                <p>65+ unit and integration tests provide confidence in
+                code changes and enable safe refactoring.</p>
+                <hr />
+                <h2 id="technology-stack-at-a-glance">Technology Stack
+                at a Glance</h2>
+                <table>
+                <colgroup>
+                <col style="width: 25%" />
+                <col style="width: 40%" />
+                <col style="width: 33%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Layer</th>
+                <th>Technology</th>
+                <th>Purpose</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><strong>Backend Framework</strong></td>
+                <td>Spring Boot 3.5.7</td>
+                <td>REST API &amp; Core Framework</td>
+                </tr>
+                <tr class="even">
+                <td><strong>ORM</strong></td>
+                <td>Spring Data JPA</td>
+                <td>Database abstraction</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Security</strong></td>
+                <td>Spring Security + JWT</td>
+                <td>Authentication &amp; Authorization</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Database</strong></td>
+                <td>PostgreSQL 17.5</td>
+                <td>Production data store</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Frontend</strong></td>
+                <td>React 18 + TypeScript</td>
+                <td>Web UI</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Build</strong></td>
+                <td>Maven 3.9.x</td>
+                <td>Dependency &amp; Build Management</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Testing</strong></td>
+                <td>JUnit 5 + Mockito</td>
+                <td>Unit testing</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Deployment</strong></td>
+                <td>Docker + Koyeb</td>
+                <td>Containerized hosting</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>CI/CD</strong></td>
+                <td>GitHub Actions</td>
+                <td>Automated pipelines</td>
+                </tr>
+                </tbody>
+                </table>
+                <hr />
+                <h2 id="key-endpoints">Key Endpoints</h2>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Endpoint</th>
+                <th>Method</th>
+                <th>Auth</th>
+                <th>Purpose</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>/api/auth/login</code></td>
+                <td>POST</td>
+                <td>None</td>
+                <td>Authenticate and get JWT token</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/health</code></td>
+                <td>GET</td>
+                <td>None</td>
+                <td>Health check (DB connectivity)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products</code></td>
+                <td>GET</td>
+                <td>JWT</td>
+                <td>List all products</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/paged</code></td>
+                <td>GET</td>
+                <td>JWT</td>
+                <td>Paginated product list</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/{id}</code></td>
+                <td>GET</td>
+                <td>JWT</td>
+                <td>Get single product</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products</code></td>
+                <td>POST</td>
+                <td>JWT (Admin)</td>
+                <td>Create product</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/{id}</code></td>
+                <td>PUT</td>
+                <td>JWT (Admin)</td>
+                <td>Update product</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/{id}</code></td>
+                <td>DELETE</td>
+                <td>JWT (Admin)</td>
+                <td>Delete product</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/v3/api-docs</code></td>
+                <td>GET</td>
+                <td>None</td>
+                <td>OpenAPI specification</td>
+                </tr>
+                </tbody>
+                </table>
+                <p><strong>Full API documentation</strong>: See <a
+                href="./overview.md#api-endpoints-overview">overview.md
+                - API Endpoints Overview</a></p>
+                <hr />
+                <h2 id="quality-metrics">Quality Metrics</h2>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Metric</th>
+                <th>Target</th>
+                <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><strong>Test Coverage</strong></td>
+                <td>&gt;80%</td>
+                <td>✅ 65+ tests</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Availability</strong></td>
+                <td>99.9%</td>
+                <td>✅ Auto-scaling</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Response Time</strong></td>
+                <td>&lt;200ms</td>
+                <td>✅ 50-150ms avg</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Scalability</strong></td>
+                <td>Horizontal</td>
+                <td>✅ Stateless</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Security</strong></td>
+                <td>Enterprise</td>
+                <td>✅ JWT + BCrypt</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Docs</strong></td>
+                <td>Auto-generated</td>
+                <td>✅ OpenAPI + ReDoc</td>
+                </tr>
+                </tbody>
+                </table>
+                <hr />
+                <h2 id="getting-started">Getting Started</h2>
+                <h3 id="local-development-setup">Local Development
+                Setup</h3>
+                <p><strong>Backend:</strong></p>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean install              <span class="co"># Build &amp; run tests</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> spring-boot:run            <span class="co"># Start on :8081</span></span></code></pre></div>
+                <p><strong>Frontend:</strong></p>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> frontend</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install                    <span class="co"># Install dependencies</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run dev                    <span class="co"># Start on :5173</span></span></code></pre></div>
+                <p><strong>Database:</strong> - Option 1: Use local
+                PostgreSQL - Option 2: Use Neon dev branch (see <a
+                href="./deployment.md">deployment.md</a>)</p>
+                <h3 id="view-documentation-locally">View Documentation
+                Locally</h3>
+                <p>All documentation is written in Markdown and can be
+                viewed: 1. Directly in VS Code (Markdown preview) 2. On
+                GitHub (automatic rendering) 3. Via generated HTML on
+                GitHub Pages: https://Keglev.github.io/stockease/</p>
+                <hr />
+                <h2 id="documentation-maintenance">Documentation
+                Maintenance</h2>
+                <ul>
+                <li><strong>Last Updated</strong>: October 31, 2025</li>
+                <li><strong>Maintained By</strong>: Development
+                Team</li>
+                <li><strong>Review Cycle</strong>: Quarterly or when
+                major changes occur</li>
+                <li><strong>Source of Truth</strong>: <a
+                href="./overview.md">overview.md</a></li>
+                </ul>
+                <h3 id="contributing-to-docs">Contributing to Docs</h3>
+                <p>When making architectural changes: 1. Update the
+                relevant doc file (layers, security, deployment, etc.)
+                2. Update the overview.md summary 3. Create a PR with
+                docs changes 4. Request review from team leads</p>
+                <hr />
+                <h2 id="related-documentation">Related
+                Documentation</h2>
+                <ul>
+                <li><strong>Project README</strong>: <a
+                href="../../README.md">../../README.md</a></li>
+                <li><strong>Backend README</strong>: <a
+                href="../../README.md">../../README.md</a></li>
+                <li><strong>Frontend README</strong>: <a
+                href="../../../frontend/README.md">../../../frontend/README.md</a></li>
+                <li><strong>API Documentation</strong>: See
+                <code>/v3/api-docs</code> endpoint or visit
+                https://Keglev.github.io/stockease/</li>
+                </ul>
+                <hr />
+                <h2 id="questions-or-suggestions">Questions or
+                Suggestions?</h2>
+                <p>If you have questions about the architecture: 1.
+                Check the relevant documentation section above 2. Search
+                for existing GitHub issues 3. Open a new issue with the
+                <code>documentation</code> label 4. Reach out to the
+                development team</p>
+                <hr />
+                <p><strong>This is the navigation hub for StockEase
+                Architecture Documentation. Start with <a
+                href="./overview.md">overview.md</a> if you’re new to
+                the project.</strong></p>
+            </div>
+        </main>
+    </aside>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation Menu
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: '/stockease/api/' },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: './overview.html' },
+                { label: 'System Layers', href: './layers.html' },
+                { label: 'Backend Architecture', href: './backend.html' },
+                { label: 'Frontend Architecture', href: './frontend.html' },
+                { label: 'Security Architecture', href: './security.html' },
+                { label: 'Deployment Strategy', href: './deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: './decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: './components/index.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: './patterns/index.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: './testing-architecture.html' },
+                { label: 'Security Tests', href: './testing/security-tests.html' },
+                { label: 'Test Pyramid', href: './testing/pyramid.html' },
+                { label: 'Test Strategy', href: './testing/strategy.html' },
+            ],
+            'Deployment': [
+                { label: 'CI/CD Pipeline', href: './deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: './deployment/docker-strategy.html' },
+            ],
+            'Reference': [
+                { label: 'Navigation Map', href: './NAVIGATION-MAP.html' },
+                { label: 'Cross References', href: './CROSS-REFERENCE.html' },
+                { label: 'Documentation Index', href: './DOCUMENTATION-INDEX.html' },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = link.href;
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes(link.href.replace('./', '').replace('.html', ''))) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+</body>
+</html>

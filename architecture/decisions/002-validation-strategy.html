@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004a99;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            color: var(--text);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-breadcrumb {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .nav-breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .nav-breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            padding: 2rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-section a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-section a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .nav-section a.active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .content {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        h4, h5, h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code */
+        code {
+            background-color: var(--bg-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        table tbody tr:hover {
+            background-color: #f0f6ff;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Alerts / Boxes */
+        .info-box, .warning-box, .success-box, .danger-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border-color: var(--info);
+            color: #004a87;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .danger-box {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        /* TOC */
+        nav.toc {
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        nav.toc li {
+            margin: 0.25rem 0;
+        }
+
+        nav.toc a {
+            font-size: 0.95rem;
+        }
+
+        nav.toc > ul > li > a {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text);
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                order: 2;
+            }
+
+            main {
+                order: 1;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-breadcrumb {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            header, aside, footer {
+                display: none;
+            }
+
+            .content {
+                box-shadow: none;
+                background: white;
+            }
+        }
+
+        /* Syntax Highlighting (basic) */
+        .hljs-keyword { color: #569cd6; }
+        .hljs-string { color: #ce9178; }
+        .hljs-number { color: #b5cea8; }
+        .hljs-attr { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1
+                id="adr-002-validation-strategy---jsr-303-annotations-with-custom-validators">ADR
+                002: Validation Strategy - JSR-303 Annotations with
+                Custom Validators</h1>
+                <p><strong>Status</strong>: Accepted<br />
+                <strong>Date</strong>: October 31, 2025<br />
+                <strong>Authors</strong>: Architecture Team<br />
+                <strong>Stakeholders</strong>: Backend Team, Security
+                Team</p>
+                <h2 id="problem-statement">Problem Statement</h2>
+                <p>StockEase needs to validate user input across
+                multiple layers. We need to decide: 1. Where to perform
+                validation (client, API, business logic) 2. How to
+                validate (framework, custom code, third-party) 3. How to
+                handle validation errors 4. How to ensure
+                consistency</p>
+                <h3 id="validation-requirements">Validation
+                Requirements</h3>
+                <ul>
+                <li>✅ Prevent invalid data from entering system</li>
+                <li>✅ Consistent error responses</li>
+                <li>✅ Security validation (prevent injection)</li>
+                <li>✅ Business rule validation</li>
+                <li>✅ User-friendly error messages</li>
+                <li>✅ Fail-fast approach</li>
+                </ul>
+                <h2 id="decision">Decision</h2>
+                <p><strong>Validation Approach</strong>: Multi-layer
+                validation 1. <strong>API Layer</strong>: JSR-303 bean
+                validation with annotations 2. <strong>Service
+                Layer</strong>: Business rule validation 3.
+                <strong>Database Layer</strong>: Constraints and
+                triggers 4. <strong>Error Handling</strong>: Global
+                exception handler with standardized responses</p>
+                <h2 id="implementation-details">Implementation
+                Details</h2>
+                <h3 id="api-layer-validation-jsr-303">1. API Layer
+                Validation (JSR-303)</h3>
+                <div class="sourceCode" id="cb1"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> CreateProductRequest <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Name cannot be null&quot;</span><span class="op">)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Name cannot be blank&quot;</span><span class="op">)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Size</span><span class="op">(</span>min <span class="op">=</span> <span class="dv">3</span><span class="op">,</span> max <span class="op">=</span> <span class="dv">255</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Name must be 3-255 characters&quot;</span><span class="op">)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> name<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Price cannot be null&quot;</span><span class="op">)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DecimalMin</span><span class="op">(</span>value <span class="op">=</span> <span class="st">&quot;0.01&quot;</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Price must be &gt; 0&quot;</span><span class="op">)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DecimalMax</span><span class="op">(</span>value <span class="op">=</span> <span class="st">&quot;999999.99&quot;</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Price cannot exceed 999999.99&quot;</span><span class="op">)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">BigDecimal</span> price<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Pattern</span><span class="op">(</span>regexp <span class="op">=</span> <span class="st">&quot;^[A-Z0-9-]{3,50}$&quot;</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;SKU format invalid&quot;</span><span class="op">)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> sku<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p><strong>Advantages</strong>: - Declarative validation
+                - Automatic by Spring MVC - Consistent with Spring Boot
+                conventions - Easy to understand and maintain</p>
+                <p><strong>Execution</strong>:</p>
+                <pre><code>Request arrives → @Valid annotation triggers
+→ MethodArgumentNotValidException if invalid
+→ GlobalExceptionHandler catches and formats error
+→ 400 Bad Request with detailed error messages</code></pre>
+                <h3 id="service-layer-validation">2. Service Layer
+                Validation</h3>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Service</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductService <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ProductDTO <span class="fu">createProduct</span><span class="op">(</span>CreateProductRequest request<span class="op">,</span> <span class="bu">UUID</span> userId<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Database-level checks</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>productRepository<span class="op">.</span><span class="fu">existsBySku</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getSku</span><span class="op">()))</span> <span class="op">{</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">ValidationException</span><span class="op">(</span><span class="st">&quot;SKU already exists&quot;</span><span class="op">);</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Business rule checks</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>request<span class="op">.</span><span class="fu">getPrice</span><span class="op">().</span><span class="fu">compareTo</span><span class="op">(</span><span class="bu">BigDecimal</span><span class="op">.</span><span class="fu">ZERO</span><span class="op">)</span> <span class="op">&lt;=</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">ValidationException</span><span class="op">(</span><span class="st">&quot;Price must be positive&quot;</span><span class="op">);</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Authorization checks</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        User user <span class="op">=</span> userRepository<span class="op">.</span><span class="fu">findById</span><span class="op">(</span>userId<span class="op">)</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">orElseThrow</span><span class="op">(()</span> <span class="op">-&gt;</span> <span class="kw">new</span> <span class="fu">EntityNotFoundException</span><span class="op">(</span><span class="st">&quot;User not found&quot;</span><span class="op">));</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>user<span class="op">.</span><span class="fu">getRole</span><span class="op">().</span><span class="fu">equals</span><span class="op">(</span><span class="bu">Role</span><span class="op">.</span><span class="fu">ADMIN</span><span class="op">))</span> <span class="op">{</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="fu">AuthorizationException</span><span class="op">(</span><span class="st">&quot;Only admins can create products&quot;</span><span class="op">);</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Create and persist</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        Product product <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span>request<span class="op">);</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span>product<span class="op">);</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="database-layer-constraints">3. Database Layer
+                Constraints</h3>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode sql"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Table constraints</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ADD</span> <span class="kw">CONSTRAINT</span> uk_products_sku <span class="kw">UNIQUE</span>(sku);</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ADD</span> <span class="kw">CONSTRAINT</span> chk_price_positive <span class="kw">CHECK</span> (price <span class="op">&gt;</span> <span class="dv">0</span>);</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ADD</span> <span class="kw">CONSTRAINT</span> chk_quantity_positive <span class="kw">CHECK</span> (quantity <span class="op">&gt;=</span> <span class="dv">0</span>);</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">-- Foreign key constraints</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ADD</span> <span class="kw">CONSTRAINT</span> fk_products_created_by </span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">FOREIGN</span> <span class="kw">KEY</span> (created_by) <span class="kw">REFERENCES</span> users(<span class="kw">id</span>);</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- Non-null constraints</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ALTER</span> <span class="kw">COLUMN</span> name <span class="kw">SET</span> <span class="kw">NOT</span> <span class="kw">NULL</span>;</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ALTER</span> <span class="kw">COLUMN</span> price <span class="kw">SET</span> <span class="kw">NOT</span> <span class="kw">NULL</span>;</span></code></pre></div>
+                <h3 id="error-response-format">4. Error Response
+                Format</h3>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="dv">400</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;error&quot;</span><span class="fu">:</span> <span class="st">&quot;Validation Failed&quot;</span><span class="fu">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="st">&quot;Input validation failed. See details.&quot;</span><span class="fu">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;timestamp&quot;</span><span class="fu">:</span> <span class="st">&quot;2025-10-31T10:30:00Z&quot;</span><span class="fu">,</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;path&quot;</span><span class="fu">:</span> <span class="st">&quot;/api/products&quot;</span><span class="fu">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;field&quot;</span><span class="fu">:</span> <span class="st">&quot;name&quot;</span><span class="fu">,</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="st">&quot;Name must be 3-255 characters&quot;</span><span class="fu">,</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;rejectedValue&quot;</span><span class="fu">:</span> <span class="st">&quot;AB&quot;</span><span class="fu">,</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;code&quot;</span><span class="fu">:</span> <span class="st">&quot;Size&quot;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;field&quot;</span><span class="fu">:</span> <span class="st">&quot;price&quot;</span><span class="fu">,</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="st">&quot;Price must be &gt; 0&quot;</span><span class="fu">,</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;rejectedValue&quot;</span><span class="fu">:</span> <span class="st">&quot;-10&quot;</span><span class="fu">,</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;code&quot;</span><span class="fu">:</span> <span class="st">&quot;DecimalMin&quot;</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+                <h2 id="validation-rules-by-entity">Validation Rules by
+                Entity</h2>
+                <h3 id="user-entity">User Entity</h3>
+                <pre><code>Username:
+  - Required, not blank
+  - 3-50 characters
+  - Alphanumeric + underscore only
+  - Unique in database
+
+Password:
+  - Required
+  - Minimum 8 characters
+  - Must contain uppercase letter
+  - Must contain number
+  - Cannot be same as username
+
+Email:
+  - Required
+  - Valid email format
+  - Unique in database
+
+Role:
+  - Required
+  - Must be ADMIN or USER</code></pre>
+                <h3 id="product-entity">Product Entity</h3>
+                <pre><code>Name:
+  - Required, not blank
+  - 3-255 characters
+
+Description:
+  - Optional
+  - Max 2000 characters
+
+Price:
+  - Required
+  - Greater than 0
+  - Max 999,999.99
+
+Quantity:
+  - Required
+  - &gt;= 0
+  - Max 1,000,000
+
+SKU:
+  - Required, not blank
+  - 3-50 characters
+  - Alphanumeric + hyphens only
+  - Unique in database
+
+Category:
+  - Required, not blank
+  - 3-50 characters</code></pre>
+                <h2 id="validation-flow-diagram">Validation Flow
+                Diagram</h2>
+                <pre><code>Request with JSON Body
+  ↓
+Spring MVC deserializes to POJO
+  ↓
+@Valid annotation triggers validation
+  ↓
+JSR-303 validator checks annotations
+  ↓
+If violations found:
+  ├─→ MethodArgumentNotValidException
+  └─→ GlobalExceptionHandler
+      └─→ Format error response
+          └─→ 400 Bad Request
+  
+If validation passes:
+  ├─→ Controller method executes
+  ├─→ Service layer performs business validation
+  ├─→ If business validation fails:
+  │   └─→ Custom exception (ValidationException)
+  │       └─→ GlobalExceptionHandler
+  │           └─→ 400 Bad Request
+  └─→ If all validation passes:
+      └─→ Database constraints enforced
+          └─→ Data persisted</code></pre>
+                <h2 id="testing-strategy">Testing Strategy</h2>
+                <h3 id="unit-tests-for-validators">Unit Tests for
+                Validators</h3>
+                <div class="sourceCode" id="cb9"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">testNameValidation_TooShort</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    CreateProductRequest request <span class="op">=</span> <span class="kw">new</span> <span class="fu">CreateProductRequest</span><span class="op">();</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    request<span class="op">.</span><span class="fu">setName</span><span class="op">(</span><span class="st">&quot;AB&quot;</span><span class="op">);</span> <span class="co">// Less than 3 chars</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">Set</span><span class="op">&lt;</span>ConstraintViolation<span class="op">&lt;</span>CreateProductRequest<span class="op">&gt;&gt;</span> violations <span class="op">=</span> </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        validator<span class="op">.</span><span class="fu">validate</span><span class="op">(</span>request<span class="op">);</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertTrue</span><span class="op">(</span>violations<span class="op">.</span><span class="fu">size</span><span class="op">()</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertTrue</span><span class="op">(</span>violations<span class="op">.</span><span class="fu">iterator</span><span class="op">().</span><span class="fu">next</span><span class="op">()</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">getMessage</span><span class="op">()</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">contains</span><span class="op">(</span><span class="st">&quot;3-255 characters&quot;</span><span class="op">));</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="integration-tests">Integration Tests</h3>
+                <div class="sourceCode" id="cb10"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">testCreateProduct_InvalidPrice</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">header</span><span class="op">(</span><span class="st">&quot;Authorization&quot;</span><span class="op">,</span> <span class="st">&quot;Bearer &quot;</span> <span class="op">+</span> token<span class="op">)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">contentType</span><span class="op">(</span>MediaType<span class="op">.</span><span class="fu">APPLICATION_JSON</span><span class="op">)</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">content</span><span class="op">(</span><span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="st">            {</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="st">              &quot;name&quot;: &quot;Widget&quot;,</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="st">              &quot;price&quot;: -10,</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="st">              &quot;sku&quot;: &quot;WIDGET-001&quot;</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="st">            }</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="st">            &quot;&quot;&quot;</span><span class="op">))</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isBadRequest</span><span class="op">())</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">jsonPath</span><span class="op">(</span><span class="st">&quot;$.details[0].field&quot;</span><span class="op">).</span><span class="fu">value</span><span class="op">(</span><span class="st">&quot;price&quot;</span><span class="op">));</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h2 id="alternatives-considered">Alternatives
+                Considered</h2>
+                <h3 id="manual-validation-in-controllers">1. Manual
+                Validation in Controllers</h3>
+                <p><strong>Rejected because</strong>: - Boilerplate code
+                - Error-prone - Hard to maintain - Not reusable across
+                endpoints</p>
+                <h3 id="validation-at-daorepository-level">2. Validation
+                at DAO/Repository Level</h3>
+                <p><strong>Rejected because</strong>: - Too late in the
+                flow - API responses won’t be consistent - Performance
+                impact - Mixing concerns</p>
+                <h3 id="graphql-validation">3. GraphQL Validation</h3>
+                <p><strong>Rejected because</strong>: - Project uses
+                REST API - Overhead for current requirements - Team
+                expertise in REST validation - Simpler to implement with
+                JSR-303</p>
+                <h2 id="consequences">Consequences</h2>
+                <h3 id="positive">Positive</h3>
+                <ul>
+                <li>✅ Declarative, readable validation</li>
+                <li>✅ Consistent error responses</li>
+                <li>✅ Automatic by Spring</li>
+                <li>✅ Easy to add new rules</li>
+                <li>✅ Framework support for common patterns</li>
+                <li>✅ Good test coverage</li>
+                </ul>
+                <h3 id="negative">Negative</h3>
+                <ul>
+                <li>❌ Annotations can become verbose</li>
+                <li>❌ Custom validators require code</li>
+                <li>❌ Database constraints not always caught until
+                persist</li>
+                <li>❌ Complex validations hard to express in
+                annotations</li>
+                </ul>
+                <h2 id="mitigation-strategies">Mitigation
+                Strategies</h2>
+                <h3 id="for-complexity">For Complexity</h3>
+                <ul>
+                <li>Create custom validators for complex rules</li>
+                <li>Use <span class="citation"
+                data-cites="Validated">@Validated</span> at service
+                level</li>
+                <li>Document validation rules clearly</li>
+                <li>Keep validation rules simple</li>
+                </ul>
+                <h3 id="for-performance">For Performance</h3>
+                <ul>
+                <li>Validation is fast (&lt; 1ms typically)</li>
+                <li>Use database-level checks for unique
+                constraints</li>
+                <li>Cache validation metadata</li>
+                </ul>
+                <h2 id="related-decisions">Related Decisions</h2>
+                <ul>
+                <li>ADR 001: Database Choice (constraints at DB
+                level)</li>
+                <li>ADR 003: Error Handling Strategy</li>
+                </ul>
+                <h2 id="implementation-status">Implementation
+                Status</h2>
+                <ul>
+                <li>✅ JSR-303 validators in DTOs</li>
+                <li>✅ Global exception handler</li>
+                <li>✅ Standardized error responses</li>
+                <li>✅ 65+ tests with validation coverage</li>
+                <li>✅ Database constraints defined</li>
+                </ul>
+                <h2 id="security-considerations">Security
+                Considerations</h2>
+                <h3 id="input-sanitization">Input Sanitization</h3>
+                <div class="sourceCode" id="cb11"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Spring Data JPA prevents SQL injection</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">// Parameterized queries used automatically</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">// HTML/XML encoding</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="at">@RequestBody</span> CreateProductRequest request</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Spring automatically handles encoding</span></span></code></pre></div>
+                <h3 id="authorization-validation">Authorization
+                Validation</h3>
+                <div class="sourceCode" id="cb12"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Service</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductService <span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="bu">UUID</span> id<span class="op">,</span> <span class="bu">UUID</span> userId<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Authorization check in service</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span><span class="fu">isAdmin</span><span class="op">(</span>userId<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="fu">AuthorizationException</span><span class="op">(</span><span class="st">&quot;Unauthorized&quot;</span><span class="op">);</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Prevent privilege escalation</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h2 id="monitoring-debugging">Monitoring &amp;
+                Debugging</h2>
+                <h3 id="validation-metrics">Validation Metrics</h3>
+                <ul>
+                <li>Count of validation failures per endpoint</li>
+                <li>Most common validation errors</li>
+                <li>Validation performance</li>
+                </ul>
+                <h3 id="debugging-tips">Debugging Tips</h3>
+                <ul>
+                <li>Check error response <code>details</code> array</li>
+                <li>Verify constraint annotations match rules</li>
+                <li>Test each validator independently</li>
+                <li>Review database constraint violations</li>
+                </ul>
+                <hr />
+                <p><strong>Document Version</strong>: 1.0<br />
+                <strong>Last Updated</strong>: October 31, 2025<br />
+                <strong>Approval</strong>: ✅ Accepted</p>
+            </div>
+        </main>
+    </aside>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation Menu
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: '/stockease/api/' },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: './overview.html' },
+                { label: 'System Layers', href: './layers.html' },
+                { label: 'Backend Architecture', href: './backend.html' },
+                { label: 'Frontend Architecture', href: './frontend.html' },
+                { label: 'Security Architecture', href: './security.html' },
+                { label: 'Deployment Strategy', href: './deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: './decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: './components/index.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: './patterns/index.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: './testing-architecture.html' },
+                { label: 'Security Tests', href: './testing/security-tests.html' },
+                { label: 'Test Pyramid', href: './testing/pyramid.html' },
+                { label: 'Test Strategy', href: './testing/strategy.html' },
+            ],
+            'Deployment': [
+                { label: 'CI/CD Pipeline', href: './deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: './deployment/docker-strategy.html' },
+            ],
+            'Reference': [
+                { label: 'Navigation Map', href: './NAVIGATION-MAP.html' },
+                { label: 'Cross References', href: './CROSS-REFERENCE.html' },
+                { label: 'Documentation Index', href: './DOCUMENTATION-INDEX.html' },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = link.href;
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes(link.href.replace('./', '').replace('.html', ''))) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+</body>
+</html>

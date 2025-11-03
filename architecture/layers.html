@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004a99;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            color: var(--text);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-breadcrumb {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .nav-breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .nav-breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            padding: 2rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-section a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-section a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .nav-section a.active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .content {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        h4, h5, h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code */
+        code {
+            background-color: var(--bg-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        table tbody tr:hover {
+            background-color: #f0f6ff;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Alerts / Boxes */
+        .info-box, .warning-box, .success-box, .danger-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border-color: var(--info);
+            color: #004a87;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .danger-box {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        /* TOC */
+        nav.toc {
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        nav.toc li {
+            margin: 0.25rem 0;
+        }
+
+        nav.toc a {
+            font-size: 0.95rem;
+        }
+
+        nav.toc > ul > li > a {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text);
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                order: 2;
+            }
+
+            main {
+                order: 1;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-breadcrumb {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            header, aside, footer {
+                display: none;
+            }
+
+            .content {
+                box-shadow: none;
+                background: white;
+            }
+        }
+
+        /* Syntax Highlighting (basic) */
+        .hljs-keyword { color: #569cd6; }
+        .hljs-string { color: #ce9178; }
+        .hljs-number { color: #b5cea8; }
+        .hljs-attr { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1 id="service-layers-component-architecture">Service
+                Layers &amp; Component Architecture</h1>
+                <h2 id="layered-architecture">Layered Architecture</h2>
+                <p>StockEase follows a <strong>classic N-tier layered
+                architecture</strong> with clear separation of
+                concerns:</p>
+                <pre><code>┌─────────────────────────────────────────────┐
+│          REST Controllers (Endpoints)       │  ← HTTP Layer
+├─────────────────────────────────────────────┤
+│    Security Layer (JWT, Spring Security)    │  ← Cross-cutting Concern
+├─────────────────────────────────────────────┤
+│        Business Logic (Services)            │  ← Domain Layer
+├─────────────────────────────────────────────┤
+│   Data Access (Repositories, Entities)      │  ← Persistence Layer
+├─────────────────────────────────────────────┤
+│    Database (PostgreSQL / H2 for tests)     │  ← Data Layer
+└─────────────────────────────────────────────┘</code></pre>
+                <h2 id="layer-descriptions">Layer Descriptions</h2>
+                <h3 id="httppresentation-layer-controllers">1.
+                HTTP/Presentation Layer (Controllers)</h3>
+                <p><strong>Purpose</strong>: Handle HTTP
+                requests/responses, input validation, and routing</p>
+                <p><strong>Components</strong>: -
+                <code>AuthController</code> - Authentication endpoints -
+                <code>ProductController</code> - Product CRUD endpoints
+                - <code>HealthController</code> - System health check -
+                <code>ExceptionHandler</code> - Global error
+                handling</p>
+                <p><strong>DTOs used by controllers</strong>: -
+                <code>LoginRequest</code> — { username: String,
+                password: String } (validated with <span
+                class="citation" data-cites="NotBlank">@NotBlank</span>)
+                - <code>ApiResponse&lt;T&gt;</code> — Generic response
+                envelope: { success: boolean, message: String, data: T }
+                - <code>PaginatedResponse&lt;T&gt;</code> — Wrapper for
+                Spring Page with pagination metadata (pageNumber,
+                pageSize, totalElements, totalPages)</p>
+                <p><strong>Responsibilities</strong>:</p>
+                <pre><code>Request → Validate Input → Call Service → Format Response → HTTP Status</code></pre>
+                <p><strong>Example Flow</strong>:</p>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// POST /api/products</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">@PostMapping</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">createProduct</span><span class="op">(</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">,</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@RequestHeader</span><span class="op">(</span><span class="st">&quot;Authorization&quot;</span><span class="op">)</span> <span class="bu">String</span> token<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1. Controller validates request format</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2. Controller calls ProductService</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 3. Service validates business logic</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 4. Controller formats response</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 5. Returns HTTP 201 Created</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="security-layer-cross-cutting">2. Security Layer
+                (Cross-cutting)</h3>
+                <p><strong>Purpose</strong>: Enforce authentication and
+                authorization across all endpoints</p>
+                <p><strong>Components</strong>: -
+                <code>JwtProvider</code> - Generate and validate JWT
+                tokens - <code>SecurityConfig</code> - Spring Security
+                configuration - <code>AuthenticationFilter</code> -
+                Intercept and validate requests -
+                <code>PasswordEncoder</code> - BCrypt hashing</p>
+                <p><strong>Authentication Flow</strong>:</p>
+                <pre><code>1. User calls POST /api/auth/login with username:password
+   ↓
+2. Spring Security intercepts (HTTP Basic)
+   ↓
+3. UserDetailsService validates credentials
+   ↓
+4. JwtProvider generates token
+   ↓
+5. Token returned in response
+   ↓
+6. Client includes token in Authorization: Bearer {token} header
+   ↓
+7. On subsequent requests, JwtProvider validates token
+   ↓
+8. If valid → Request proceeds to Service Layer
+   If invalid → 401 Unauthorized returned</code></pre>
+                <p><strong>Protected Endpoints</strong>: - All
+                <code>/api/products/*</code> endpoints require JWT token
+                - <code>/health</code> is public (no auth required)</p>
+                <p><strong>Controller / Endpoint summary</strong></p>
+                <table>
+                <colgroup>
+                <col style="width: 26%" />
+                <col style="width: 33%" />
+                <col style="width: 40%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Controller</th>
+                <th>Key Endpoints</th>
+                <th>Auth Requirement</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>AuthController</code></td>
+                <td>POST <code>/api/auth/login</code></td>
+                <td>Public (permitAll)</td>
+                </tr>
+                <tr class="even">
+                <td><code>HealthController</code></td>
+                <td>GET <code>/api/health</code></td>
+                <td>Public</td>
+                </tr>
+                <tr class="odd">
+                <td><code>ProductController</code></td>
+                <td>GET <code>/api/products</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                <tr class="even">
+                <td><code>ProductController</code></td>
+                <td>GET <code>/api/products/paged</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>ProductController</code></td>
+                <td>GET <code>/api/products/{id}</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                <tr class="even">
+                <td><code>ProductController</code></td>
+                <td>POST <code>/api/products</code></td>
+                <td>JWT (<code>ADMIN</code>)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>ProductController</code></td>
+                <td>PUT <code>/api/products/{id}/quantity</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                <tr class="even">
+                <td><code>ProductController</code></td>
+                <td>PUT <code>/api/products/{id}/price</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>ProductController</code></td>
+                <td>PUT <code>/api/products/{id}/name</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                <tr class="even">
+                <td><code>ProductController</code></td>
+                <td>GET <code>/api/products/low-stock</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>ProductController</code></td>
+                <td>GET <code>/api/products/search</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                <tr class="even">
+                <td><code>ProductController</code></td>
+                <td>DELETE <code>/api/products/{id}</code></td>
+                <td>JWT (<code>ADMIN</code>)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>ProductController</code></td>
+                <td>GET
+                <code>/api/products/total-stock-value</code></td>
+                <td>JWT (<code>ADMIN</code>,<code>USER</code>)</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="business-logic-layer-services">3. Business Logic
+                Layer (Services)</h3>
+                <p><strong>Purpose</strong>: Implement business rules,
+                validation, and orchestration</p>
+                <p><strong>Components</strong>: -
+                <code>AuthService</code> - User authentication and
+                authorization - <code>ProductService</code> - Product
+                business logic - <code>HealthService</code> - System
+                status - Custom validators and processors</p>
+                <p><strong>AuthService Responsibilities</strong>:</p>
+                <pre><code>registerUser(username, password)
+  ├── Validate username (not empty, unique)
+  ├── Validate password (strength requirements)
+  ├── Hash password with BCrypt
+  ├── Create User entity
+  ├── Save to database
+  └── Return UserDTO
+
+authenticateUser(username, password)
+  ├── Find user by username
+  ├── Compare provided password with hashed password
+  ├── Generate JWT token (with role)
+  ├── Return token + user info
+  └── Throw exception if auth fails
+
+validateToken(token)
+  ├── Parse JWT signature
+  ├── Check expiration
+  ├── Extract user claims
+  └── Return user info or throw exception</code></pre>
+                <p><strong>ProductService Responsibilities</strong>:</p>
+                <pre><code>createProduct(request, userId, role)
+  ├── Validate request (name, price, quantity)
+  ├── Check authorization (ADMIN only)
+  ├── Check SKU uniqueness
+  ├── Create Product entity
+  ├── Set metadata (createdAt, createdBy)
+  ├── Save to database
+  └── Return ProductDTO
+
+getProducts(page, size, sort, filter)
+  ├── Build dynamic query from filters
+  ├── Apply pagination (page, size)
+  ├── Apply sorting (name, price, date)
+  ├── Execute query
+  ├── Map to DTOs
+  └── Return PageResponse
+
+updateProduct(id, request, userId, role)
+  ├── Find product by ID
+  ├── Check authorization (ADMIN only)
+  ├── Validate request fields
+  ├── Update product fields
+  ├── Set updatedAt timestamp
+  ├── Save to database
+  └── Return updated ProductDTO
+
+deleteProduct(id, userId, role)
+  ├── Find product by ID
+  ├── Check authorization (ADMIN only)
+  ├── Delete from database
+  └── Return success</code></pre>
+                <p><strong>Key Design Patterns</strong>: -
+                <strong>Dependency Injection</strong>: Spring injects
+                repositories into services -
+                <strong>Validation</strong>: Validate before database
+                calls - <strong>Error Handling</strong>: Throw
+                domain-specific exceptions - <strong>Transaction
+                Management</strong>: <code>@Transactional</code> for
+                data consistency</p>
+                <h3 id="data-access-layer-repositories-entities">4. Data
+                Access Layer (Repositories &amp; Entities)</h3>
+                <p><strong>Purpose</strong>: Abstract database
+                operations and provide query interface</p>
+                <p><strong>Components</strong>: - <code>User</code>
+                entity - JPA entity mapping to users table -
+                <code>Product</code> entity - JPA entity mapping to
+                products table - <code>AuthRepository</code> - Spring
+                Data JPA repository for User -
+                <code>ProductRepository</code> - Spring Data JPA
+                repository for Product</p>
+                <p><strong>Entity Example</strong>:</p>
+                <div class="sourceCode" id="cb7"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Entity</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Table</span><span class="op">(</span>name <span class="op">=</span> <span class="st">&quot;users&quot;</span><span class="op">)</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> User <span class="op">{</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Id</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@GeneratedValue</span><span class="op">(</span>strategy <span class="op">=</span> GenerationType<span class="op">.</span><span class="fu">UUID</span><span class="op">)</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">UUID</span> id<span class="op">;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>unique <span class="op">=</span> <span class="kw">true</span><span class="op">,</span> nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> username<span class="op">;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> password<span class="op">;</span> <span class="co">// BCrypt hashed</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Enumerated</span><span class="op">(</span>EnumType<span class="op">.</span><span class="fu">STRING</span><span class="op">)</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Role</span> role<span class="op">;</span> <span class="co">// ADMIN, USER</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">@CreationTimestamp</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> LocalDateTime createdAt<span class="op">;</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p><strong>Repository Interface</strong>:</p>
+                <div class="sourceCode" id="cb8"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> ProductRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>Product<span class="op">,</span> <span class="bu">UUID</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Spring Data generates SQL automatically</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findBySku</span><span class="op">(</span><span class="bu">String</span> sku<span class="op">);</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByCategory</span><span class="op">(</span><span class="bu">String</span> category<span class="op">);</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    Page<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAll</span><span class="op">(</span><span class="bu">Pageable</span> pageable<span class="op">);</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Custom query if needed</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.price &gt; ?1 AND p.quantity &gt; 0&quot;</span><span class="op">)</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAffordableInStock</span><span class="op">(</span><span class="bu">BigDecimal</span> maxPrice<span class="op">);</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p><strong>Database Operations</strong>:</p>
+                <pre><code>Java Service → Spring Data JPA → JDBC Driver → PostgreSQL/H2</code></pre>
+                <h3 id="database-layer-persistence">5. Database Layer
+                (Persistence)</h3>
+                <p><strong>Purpose</strong>: Store and retrieve data
+                reliably</p>
+                <p><strong>Production Database</strong>: -
+                <strong>PostgreSQL 17.5</strong> (Neon serverless) -
+                ACID compliance - Full-text search capabilities -
+                Connection pooling (HikariCP)</p>
+                <p><strong>Test Database</strong>: - <strong>H2</strong>
+                (in-memory) - Fast test execution - Data isolation per
+                test - No external dependencies</p>
+                <p><strong>Schema Management</strong>:</p>
+                <pre><code>Flyway Migrations → Database Versioning
+V1__init_schema.sql     ← Create tables
+V2__add_indexes.sql     ← Add performance optimizations
+V3__seed_data.sql       ← Populate test data</code></pre>
+                <h2 id="data-flow-diagram">Data Flow Diagram</h2>
+                <h3 id="create-product-flow">Create Product Flow</h3>
+                <pre><code>1. Frontend (Vue.js)
+   ├── User fills form (name, price, quantity)
+   ├── Sends POST /api/products with JWT token
+   └── Content-Type: application/json
+
+2. HTTP Layer (ProductController)
+   ├── Receives request
+   ├── Validates JSON structure
+   ├── Calls productService.createProduct(request, token)
+   └── Catches exceptions
+
+3. Security Layer
+   ├── Validates JWT token
+   ├── Extracts user ID and role
+   ├── Checks if user has ADMIN role
+   └── Returns 403 Forbidden if unauthorized
+
+4. Business Logic Layer (ProductService)
+   ├── Validates business rules:
+   │   ├── Name is not empty
+   │   ├── Price &gt; 0
+   │   ├── SKU is unique
+   │   └── Quantity &gt;= 0
+   ├── Creates Product entity
+   ├── Sets metadata (createdAt, createdBy)
+   ├── Calls productRepository.save(product)
+   └── Throws ValidationException if validation fails
+
+5. Data Access Layer (Spring Data JPA)
+   ├── Converts Product entity to SQL INSERT
+   ├── Executes: INSERT INTO products (name, price, sku, ...) VALUES (...)
+   └── Returns saved Product with generated ID
+
+6. Database Layer (PostgreSQL)
+   ├── Validates constraints (unique SKU, NOT NULL fields)
+   ├── Executes INSERT
+   ├── Triggers any cascade operations
+   └── Returns INSERTING succeeds or error
+
+7. Back through layers with response:
+   ├── JPA returns Product entity
+   ├── Service returns ProductDTO
+   ├── Controller formats HTTP response
+   ├── Returns HTTP 201 Created with Location header
+   └── Frontend receives response and updates UI
+
+Response JSON:
+{
+  &quot;id&quot;: &quot;550e8400-e29b-41d4-a716-446655440000&quot;,
+  &quot;name&quot;: &quot;Widget&quot;,
+  &quot;price&quot;: 29.99,
+  &quot;sku&quot;: &quot;WIDGET-001&quot;,
+  &quot;quantity&quot;: 100,
+  &quot;createdAt&quot;: &quot;2025-10-31T10:30:00Z&quot;
+}</code></pre>
+                <h3 id="get-products-with-filtering-flow">Get Products
+                with Filtering Flow</h3>
+                <pre><code>1. Frontend
+   ├── Sends: GET /api/products?page=0&amp;size=20&amp;sort=name,asc&amp;category=electronics
+
+2. ProductController
+   ├── Extracts query parameters
+   ├── Calls productService.getProducts(page, size, sort, category)
+
+3. ProductService
+   ├── Builds dynamic WHERE clause: category = &#39;electronics&#39;
+   ├── Creates PageRequest(0, 20, Sort.by(&quot;name&quot;).ascending())
+   ├── Calls productRepository.findAll(spec, pageRequest)
+
+4. Spring Data JPA
+   ├── Translates to SQL:
+   │   SELECT * FROM products
+   │   WHERE category = &#39;electronics&#39;
+   │   ORDER BY name ASC
+   │   LIMIT 20 OFFSET 0
+   │   
+   ├── Executes query
+
+5. Database
+   ├── Scans products table (uses index on category)
+   ├── Filters results
+   ├── Orders by name
+   ├── Returns limited result set
+
+6. Back through layers:
+   ├── JPA returns Page&lt;Product&gt;
+   ├── Service converts to Page&lt;ProductDTO&gt;
+   ├── Controller formats JSON response
+   └── Returns HTTP 200 OK with pagination metadata
+
+Response JSON:
+{
+  &quot;content&quot;: [
+    { &quot;id&quot;: &quot;...&quot;, &quot;name&quot;: &quot;...&quot;, &quot;category&quot;: &quot;electronics&quot; },
+    ...
+  ],
+  &quot;page&quot;: 0,
+  &quot;size&quot;: 20,
+  &quot;totalElements&quot;: 150,
+  &quot;totalPages&quot;: 8,
+  &quot;last&quot;: false
+}</code></pre>
+                <h2 id="component-dependencies">Component
+                Dependencies</h2>
+                <pre><code>AuthController
+  ├── depends on: AuthService
+  ├── depends on: JwtProvider
+  └── depends on: PasswordEncoder
+
+ProductController
+  ├── depends on: ProductService
+  ├── depends on: SecurityContext (JWT validation)
+  └── depends on: ExceptionHandler
+
+AuthService
+  ├── depends on: AuthRepository
+  ├── depends on: PasswordEncoder
+  ├── depends on: JwtProvider
+  └── depends on: UserRepository
+
+ProductService
+  ├── depends on: ProductRepository
+  ├── depends on: Custom validators
+  └── depends on: Mappers (Entity → DTO)
+
+AuthRepository
+  └── accesses: User entity (users table)
+
+ProductRepository
+  └── accesses: Product entity (products table)
+
+Security Configuration
+  ├── depends on: JwtProvider
+  ├── depends on: UserDetailsService
+  └── depends on: PasswordEncoder</code></pre>
+                <h2 id="transaction-boundaries">Transaction
+                Boundaries</h2>
+                <p><strong>Read Operations</strong> (No transaction
+                needed): - GET /api/products (read-only) - GET
+                /api/products/{id} (read-only) - GET /health
+                (read-only)</p>
+                <p><strong>Write Operations</strong> (<span
+                class="citation"
+                data-cites="Transactional">@Transactional</span>
+                required):</p>
+                <div class="sourceCode" id="cb14"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Transactional</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">createProduct</span><span class="op">(</span>CreateProductRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// </span><span class="re">BEGIN</span><span class="co"> TRANSACTION</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Multiple operations treated as atomic</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    Product product <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span>req<span class="op">);</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span>product<span class="op">);</span> <span class="co">// Can fail</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    auditLog<span class="op">.</span><span class="fu">log</span><span class="op">(</span><span class="st">&quot;Product created&quot;</span><span class="op">,</span> product<span class="op">.</span><span class="fu">getId</span><span class="op">());</span> <span class="co">// Can fail</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// COMMIT TRANSACTION (if all succeed)</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ROLLBACK TRANSACTION (if any operation fails)</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h2 id="error-handling-strategy">Error Handling
+                Strategy</h2>
+                <pre><code>Layer → Exception → Handler → Response
+
+Application Exception
+  ├── ValidationException (400 Bad Request)
+  ├── AuthenticationException (401 Unauthorized)
+  ├── AuthorizationException (403 Forbidden)
+  ├── EntityNotFoundException (404 Not Found)
+  └── InternalServerException (500 Internal Server Error)
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleValidation(ValidationException e) {
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse(e.getMessage(), &quot;VALIDATION_ERROR&quot;));
+    }
+}</code></pre>
+                <h2 id="performance-considerations">Performance
+                Considerations</h2>
+                <h3 id="database-indexing">Database Indexing</h3>
+                <div class="sourceCode" id="cb16"><pre
+                class="sourceCode sql"><code class="sourceCode sql"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Indexed for fast lookups</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> idx_products_sku <span class="kw">ON</span> products(sku);</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> idx_products_category <span class="kw">ON</span> products(<span class="kw">category</span>);</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> idx_users_username <span class="kw">ON</span> users(username);</span></code></pre></div>
+                <h3 id="query-optimization">Query Optimization</h3>
+                <ul>
+                <li>Use pagination for list endpoints (avoid loading
+                10k+ records)</li>
+                <li>Use lazy loading for relationships</li>
+                <li>Cache frequently accessed data</li>
+                <li>Use database-level filtering before returning to
+                application</li>
+                </ul>
+                <h3 id="connection-pooling">Connection Pooling</h3>
+                <ul>
+                <li>HikariCP manages database connections</li>
+                <li>Maximum pool size: 10 connections</li>
+                <li>Reduces connection overhead</li>
+                </ul>
+                <hr />
+                <h2 id="related-documentation">Related
+                Documentation</h2>
+                <h3 id="main-architecture-topics">Main Architecture
+                Topics</h3>
+                <ul>
+                <li><strong><a href="./overview.md">Architecture
+                Overview</a></strong> - Business context, technology
+                stack, design decisions</li>
+                <li><strong><a href="./backend.md">Backend
+                Architecture</a></strong> - Spring Boot components and
+                code organization</li>
+                <li><strong><a href="./security.md">Security
+                Architecture</a></strong> - Authentication and
+                authorization in each layer</li>
+                <li><strong><a href="./deployment.md">Deployment
+                Architecture</a></strong> - How layers are deployed to
+                production</li>
+                </ul>
+                <h3 id="architecture-decisions-adrs">Architecture
+                Decisions (ADRs)</h3>
+                <ul>
+                <li><strong><a
+                href="./decisions/001-database-choice.md">Database
+                Choice</a></strong> - Repository layer database
+                selection</li>
+                <li><strong><a
+                href="./decisions/002-validation-strategy.md">Validation
+                Strategy</a></strong> - Validation in Service layer</li>
+                </ul>
+                <h3 id="design-patterns-practices">Design Patterns &amp;
+                Practices</h3>
+                <ul>
+                <li><strong><a
+                href="./patterns/repository-pattern.md">Repository
+                Pattern</a></strong> - Repository layer implementation
+                details</li>
+                <li><strong><a
+                href="./patterns/security-patterns.md">Security
+                Patterns</a></strong> - Security filters in Controller
+                layer</li>
+                </ul>
+                <hr />
+                <p><strong>Document Version</strong>: 1.0<br />
+                <strong>Last Updated</strong>: October 31, 2025<br />
+                <strong>Status</strong>: Production</p>
+            </div>
+        </main>
+    </aside>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation Menu
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: '/stockease/api/' },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: './overview.html' },
+                { label: 'System Layers', href: './layers.html' },
+                { label: 'Backend Architecture', href: './backend.html' },
+                { label: 'Frontend Architecture', href: './frontend.html' },
+                { label: 'Security Architecture', href: './security.html' },
+                { label: 'Deployment Strategy', href: './deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: './decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: './components/index.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: './patterns/index.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: './testing-architecture.html' },
+                { label: 'Security Tests', href: './testing/security-tests.html' },
+                { label: 'Test Pyramid', href: './testing/pyramid.html' },
+                { label: 'Test Strategy', href: './testing/strategy.html' },
+            ],
+            'Deployment': [
+                { label: 'CI/CD Pipeline', href: './deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: './deployment/docker-strategy.html' },
+            ],
+            'Reference': [
+                { label: 'Navigation Map', href: './NAVIGATION-MAP.html' },
+                { label: 'Cross References', href: './CROSS-REFERENCE.html' },
+                { label: 'Documentation Index', href: './DOCUMENTATION-INDEX.html' },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = link.href;
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes(link.href.replace('./', '').replace('.html', ''))) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+</body>
+</html>

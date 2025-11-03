@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004a99;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            color: var(--text);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-breadcrumb {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .nav-breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .nav-breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            padding: 2rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-section a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-section a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .nav-section a.active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .content {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        h4, h5, h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code */
+        code {
+            background-color: var(--bg-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        table tbody tr:hover {
+            background-color: #f0f6ff;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Alerts / Boxes */
+        .info-box, .warning-box, .success-box, .danger-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border-color: var(--info);
+            color: #004a87;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .danger-box {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        /* TOC */
+        nav.toc {
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        nav.toc li {
+            margin: 0.25rem 0;
+        }
+
+        nav.toc a {
+            font-size: 0.95rem;
+        }
+
+        nav.toc > ul > li > a {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text);
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                order: 2;
+            }
+
+            main {
+                order: 1;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-breadcrumb {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            header, aside, footer {
+                display: none;
+            }
+
+            .content {
+                box-shadow: none;
+                background: white;
+            }
+        }
+
+        /* Syntax Highlighting (basic) */
+        .hljs-keyword { color: #569cd6; }
+        .hljs-string { color: #ce9178; }
+        .hljs-number { color: #b5cea8; }
+        .hljs-attr { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1 id="security-architecture">Security
+                Architecture</h1>
+                <h2 id="overview">Overview</h2>
+                <p>StockEase implements a <strong>defense-in-depth
+                security model</strong> with multiple layers of
+                protection:</p>
+                <pre><code>┌─────────────────────────────────────────┐
+│     HTTPS/TLS (Transport Security)      │
+├─────────────────────────────────────────┤
+│    CORS (Cross-Origin Resource Sharing) │
+├─────────────────────────────────────────┤
+│   HTTP Security Headers (Security)      │
+├─────────────────────────────────────────┤
+│    Authentication (JWT Tokens)          │
+├─────────────────────────────────────────┤
+│   Authorization (Role-Based Access)     │
+├─────────────────────────────────────────┤
+│     Input Validation &amp; Sanitization     │
+├─────────────────────────────────────────┤
+│      Password Hashing (BCrypt)          │
+├─────────────────────────────────────────┤
+│  Database Security (Parameterized SQL)  │
+└─────────────────────────────────────────┘</code></pre>
+                <h2 id="transport-security-httpstls">1. Transport
+                Security (HTTPS/TLS)</h2>
+                <h3 id="implementation">Implementation</h3>
+                <ul>
+                <li><strong>Protocol</strong>: HTTPS only (TLS
+                1.2+)</li>
+                <li><strong>Certificate</strong>: Managed by
+                Koyeb/CloudFlare</li>
+                <li><strong>Force HTTPS</strong>: All HTTP requests
+                redirected to HTTPS</li>
+                </ul>
+                <h3 id="configuration">Configuration</h3>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># application.properties</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">server.ssl.enabled=true</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">server.ssl.key-store-type=PKCS12</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Certificates managed by infrastructure</span></span></code></pre></div>
+                <h3 id="benefits">Benefits</h3>
+                <ul>
+                <li>Encrypts all data in transit</li>
+                <li>Prevents man-in-the-middle attacks</li>
+                <li>Protects credentials and tokens</li>
+                <li>Required for production APIs</li>
+                </ul>
+                <h2 id="authentication-authorization">2. Authentication
+                &amp; Authorization</h2>
+                <h3 id="jwt-json-web-tokens">JWT (JSON Web Tokens)</h3>
+                <p><strong>Purpose</strong>: Stateless, scalable
+                authentication</p>
+                <p><strong>Token Structure</strong>:</p>
+                <pre><code>Header.Payload.Signature
+
+Header:
+{
+  &quot;alg&quot;: &quot;HS256&quot;,
+  &quot;typ&quot;: &quot;JWT&quot;
+}
+
+Payload:
+{
+  &quot;sub&quot;: &quot;user-id-uuid&quot;,
+  &quot;username&quot;: &quot;john.doe&quot;,
+  &quot;role&quot;: &quot;ADMIN&quot;,
+  &quot;iat&quot;: 1701418200,
+  &quot;exp&quot;: 1701504600,
+  &quot;iss&quot;: &quot;stockease-backend&quot;,
+  &quot;aud&quot;: &quot;stockease-frontend&quot;
+}
+
+Signature:
+HMACSHA256(
+  base64UrlEncode(header) + &quot;.&quot; +
+  base64UrlEncode(payload),
+  secret_key
+)</code></pre>
+                <p><strong>Token Generation Flow</strong>:</p>
+                <pre><code>1. User calls POST /api/auth/login
+   ├── Headers: Content-Type: application/json
+   └── Body: { &quot;username&quot;: &quot;admin&quot;, &quot;password&quot;: &quot;admin123&quot; }
+
+2. AuthController receives request
+   ├── Calls AuthService.authenticate(username, password)
+   └── AuthService validates credentials
+
+3. Credential Validation
+   ├── Find user by username in database
+   ├── Compare provided password with BCrypt hash
+   ├── If match → proceed to token generation
+   ├── If no match → throw AuthenticationException (401)
+   └── If user not found → throw AuthenticationException (401)
+
+4. JWT Token Generation
+   ├── Create payload with:
+   │   ├── User ID (sub claim)
+   │   ├── Username
+   │   ├── Role (ADMIN / USER)
+   │   ├── Issue time (iat)
+   │   ├── Expiration time (exp = iat + 24 hours)
+   │   ├── Issuer (iss)
+   │   └── Audience (aud)
+   ├── Sign with secret key (HS256)
+   └── Encode as base64url string
+
+5. Response
+   ├── Status: 200 OK
+   ├── Body: { &quot;token&quot;: &quot;eyJhbG...&quot;, &quot;expiresIn&quot;: 86400 }
+   └── Client stores token (localStorage / sessionStorage)
+
+### Login Sequence (simplified)
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant FE as Frontend
+  participant BE as Backend (Spring Boot)
+  U-&gt;&gt;FE: Submit credentials (username/password)
+  FE-&gt;&gt;BE: POST /api/auth/login (JSON body)
+  BE-&gt;&gt;BE: Authenticate (AuthenticationManager)
+  BE-&gt;&gt;BE: Lookup user (UserRepository)
+  BE-&gt;&gt;BE: Generate JWT (JwtUtil)
+  BE--&gt;&gt;FE: 200 OK + { token }
+  FE--&gt;&gt;U: Store token; use for subsequent requests</code></pre>
+                <pre><code>
+**Token Usage in Requests**:</code></pre>
+                <p>Authorization: Bearer
+                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…</p>
+                <p>Every subsequent request must include this header</p>
+                <pre><code>
+**Token Validation Flow**:</code></pre>
+                <ol type="1">
+                <li><p>Request arrives at controller with JWT
+                token</p></li>
+                <li><p>SecurityFilter intercepts request ├── Extracts
+                token from Authorization header ├── Calls
+                JwtProvider.validateToken(token) └── Passes token to
+                validation logic</p></li>
+                <li><p>JWT Validation ├── Verify token format
+                (Header.Payload.Signature) ├── Verify signature using
+                secret key ├── Check expiration time (exp claim vs
+                current time) ├── Extract claims (user ID, role) ├── If
+                valid → create Authentication object ├── If
+                invalid/expired → throw JwtException (401) └── If
+                malformed → throw JwtException (401)</p></li>
+                <li><p>SecurityContext Set ├── Store Authentication in
+                SecurityContext ├── Make available to controller via
+                <span class="citation"
+                data-cites="AuthenticationPrincipal">@AuthenticationPrincipal</span>
+                └── Controller can access user info</p></li>
+                <li><p>Request Proceeds ├── SecurityFilter passes to
+                next filter ├── Request reaches ProductController └──
+                Can access authenticated user info</p></li>
+                </ol>
+                <pre><code>
+### Role-Based Access Control (RBAC)
+
+**Roles Defined**:
+```java
+public enum Role {
+    ADMIN,   // Full access: create, read, update, delete
+    USER     // Limited access: read only
+}</code></pre>
+                <p><strong>Authorization Rules
+                (implemented)</strong>:</p>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Endpoint</th>
+                <th>Method</th>
+                <th>ADMIN</th>
+                <th>USER</th>
+                <th>Anonymous</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>/api/health</code></td>
+                <td>GET</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>✅</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/auth/login</code></td>
+                <td>POST</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅ (public)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products</code></td>
+                <td>GET</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/paged</code></td>
+                <td>GET</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/{id}</code></td>
+                <td>GET</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products</code></td>
+                <td>POST</td>
+                <td>✅</td>
+                <td>❌</td>
+                <td>❌</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/{id}/quantity</code></td>
+                <td>PUT</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/{id}/price</code></td>
+                <td>PUT</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/{id}/name</code></td>
+                <td>PUT</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/low-stock</code></td>
+                <td>GET</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/search</code></td>
+                <td>GET</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/total-stock-value</code></td>
+                <td>GET</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>❌</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/{id}</code></td>
+                <td>DELETE</td>
+                <td>✅</td>
+                <td>❌</td>
+                <td>❌</td>
+                </tr>
+                </tbody>
+                </table>
+                <blockquote>
+                <p>Notes: The table above reflects the current
+                <code>SecurityConfig</code> in code: login is permitted
+                publicly (<code>/api/auth/login</code>), health is
+                public, product create/delete are admin-only, and most
+                read/update product endpoints allow ADMIN and USER.</p>
+                </blockquote>
+                <h3 id="api-map-quick-reference">API Map (quick
+                reference)</h3>
+                <table>
+                <colgroup>
+                <col style="width: 30%" />
+                <col style="width: 40%" />
+                <col style="width: 30%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Endpoint</th>
+                <th style="text-align: right;">Purpose</th>
+                <th>Auth</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>POST /api/auth/login</code></td>
+                <td style="text-align: right;">Return JWT for valid
+                credentials</td>
+                <td>Public (no token)</td>
+                </tr>
+                <tr class="even">
+                <td><code>GET /api/health</code></td>
+                <td style="text-align: right;">Liveness/database
+                connectivity</td>
+                <td>Public</td>
+                </tr>
+                <tr class="odd">
+                <td><code>GET /api/products</code></td>
+                <td style="text-align: right;">List products</td>
+                <td>JWT (ADMIN/USER)</td>
+                </tr>
+                <tr class="even">
+                <td><code>POST /api/products</code></td>
+                <td style="text-align: right;">Create product</td>
+                <td>JWT (ADMIN)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>PUT /api/products/{id}/quantity</code></td>
+                <td style="text-align: right;">Update product
+                quantity</td>
+                <td>JWT (ADMIN/USER)</td>
+                </tr>
+                <tr class="even">
+                <td><code>DELETE /api/products/{id}</code></td>
+                <td style="text-align: right;">Delete product</td>
+                <td>JWT (ADMIN)</td>
+                </tr>
+                </tbody>
+                </table>
+                <p><strong>Authorization Implementation</strong>:</p>
+                <div class="sourceCode" id="cb8"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">@PostMapping</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">createProduct</span><span class="op">(</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Only users with ADMIN role can reach here</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> productService<span class="op">.</span><span class="fu">create</span><span class="op">(</span>req<span class="op">);</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Or using method-level security:</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="at">@Service</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductService <span class="op">{</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Secured</span><span class="op">(</span><span class="st">&quot;ROLE_ADMIN&quot;</span><span class="op">)</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="bu">UUID</span> id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Only ADMIN can call this method</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h2 id="password-security">3. Password Security</h2>
+                <h3 id="bcrypt-hashing">BCrypt Hashing</h3>
+                <p><strong>Purpose</strong>: Store passwords securely,
+                never in plaintext</p>
+                <p><strong>BCrypt Properties</strong>: - <strong>One-way
+                hash</strong>: Cannot reverse to get original password -
+                <strong>Salt included</strong>: Each password has unique
+                salt (prevents rainbow tables) -
+                <strong>Adaptive</strong>: Slower algorithm resists
+                brute force - <strong>Configurable strength</strong>:
+                Cost factor 10-12 iterations</p>
+                <p><strong>Password Hashing Flow</strong>:</p>
+                <pre><code>1. User provides password: &quot;MySecurePass123!&quot;
+
+2. BCryptPasswordEncoder
+   ├── Generate random salt
+   ├── Apply BCrypt algorithm with salt
+   ├── Produce hash: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36CHhzPm
+   └── Store hash in database
+
+3. Password Verification (login)
+   ├── User provides password: &quot;MySecurePass123!&quot;
+   ├── Retrieve stored hash from database
+   ├── Apply BCrypt with provided password and stored salt
+   ├── Compare computed hash with stored hash
+   ├── If match → password correct (401 vs 200)
+   ├── If no match → authentication failed (401 Unauthorized)
+   └── Never store or log plaintext password</code></pre>
+                <p><strong>Configuration</strong>:</p>
+                <div class="sourceCode" id="cb10"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> SecurityConfig <span class="op">{</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> PasswordEncoder <span class="fu">passwordEncoder</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BCryptPasswordEncoder</span><span class="op">(</span><span class="dv">10</span><span class="op">);</span> <span class="co">// strength 10</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h2 id="api-security">4. API Security</h2>
+                <h3 id="cors-cross-origin-resource-sharing">CORS
+                (Cross-Origin Resource Sharing)</h3>
+                <p><strong>Purpose</strong>: Control which origins can
+                access the API</p>
+                <p><strong>Configuration</strong>:</p>
+                <div class="sourceCode" id="cb11"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> CorsConfig <span class="kw">implements</span> WebMvcConfigurer <span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Override</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">addCorsMappings</span><span class="op">(</span>CorsRegistry registry<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        registry<span class="op">.</span><span class="fu">addMapping</span><span class="op">(</span><span class="st">&quot;/api/**&quot;</span><span class="op">)</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">allowedOrigins</span><span class="op">(</span><span class="st">&quot;https://stockease.example.com&quot;</span><span class="op">)</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">allowedMethods</span><span class="op">(</span><span class="st">&quot;GET&quot;</span><span class="op">,</span> <span class="st">&quot;POST&quot;</span><span class="op">,</span> <span class="st">&quot;PUT&quot;</span><span class="op">,</span> <span class="st">&quot;DELETE&quot;</span><span class="op">,</span> <span class="st">&quot;OPTIONS&quot;</span><span class="op">)</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">allowedHeaders</span><span class="op">(</span><span class="st">&quot;Content-Type&quot;</span><span class="op">,</span> <span class="st">&quot;Authorization&quot;</span><span class="op">)</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">exposedHeaders</span><span class="op">(</span><span class="st">&quot;X-Total-Count&quot;</span><span class="op">,</span> <span class="st">&quot;X-Page-Count&quot;</span><span class="op">)</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">allowCredentials</span><span class="op">(</span><span class="kw">true</span><span class="op">)</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">maxAge</span><span class="op">(</span><span class="dv">3600</span><span class="op">);</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p><strong>Production Settings</strong>: - ✅ Specific
+                allowed origins (not <code>*</code>) - ✅ Limited HTTP
+                methods - ✅ Credentials allowed for same-site requests
+                - ✅ Limited max-age (3600 seconds)</p>
+                <h3 id="security-headers">Security Headers</h3>
+                <p><strong>Headers Set by Spring Security</strong>:</p>
+                <pre><code>Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Cache-Control: no-cache, no-store, must-revalidate</code></pre>
+                <p><strong>What They Prevent</strong>: -
+                <code>HSTS</code>: Forces HTTPS-only communication -
+                <code>X-Content-Type-Options: nosniff</code>: Prevents
+                MIME-type sniffing - <code>X-Frame-Options: DENY</code>:
+                Prevents clickjacking - <code>X-XSS-Protection</code>:
+                Enables browser XSS protection</p>
+                <h2 id="input-validation-sanitization">5. Input
+                Validation &amp; Sanitization</h2>
+                <h3 id="request-validation">Request Validation</h3>
+                <p><strong>Purpose</strong>: Prevent malformed data and
+                malicious inputs</p>
+                <p><strong>Validation Rules</strong>:</p>
+                <div class="sourceCode" id="cb13"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> CreateProductRequest <span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Name cannot be null&quot;</span><span class="op">)</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Name cannot be blank&quot;</span><span class="op">)</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Size</span><span class="op">(</span>min <span class="op">=</span> <span class="dv">3</span><span class="op">,</span> max <span class="op">=</span> <span class="dv">255</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Name must be 3-255 characters&quot;</span><span class="op">)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> name<span class="op">;</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Price cannot be null&quot;</span><span class="op">)</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DecimalMin</span><span class="op">(</span>value <span class="op">=</span> <span class="st">&quot;0.01&quot;</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Price must be &gt; 0&quot;</span><span class="op">)</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DecimalMax</span><span class="op">(</span>value <span class="op">=</span> <span class="st">&quot;999999.99&quot;</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Price cannot exceed 999999.99&quot;</span><span class="op">)</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">BigDecimal</span> price<span class="op">;</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Quantity cannot be null&quot;</span><span class="op">)</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Min</span><span class="op">(</span>value <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Quantity cannot be negative&quot;</span><span class="op">)</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Max</span><span class="op">(</span>value <span class="op">=</span> <span class="dv">1000000</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Quantity cannot exceed 1,000,000&quot;</span><span class="op">)</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Integer</span> quantity<span class="op">;</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;SKU is required&quot;</span><span class="op">)</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Pattern</span><span class="op">(</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>        regexp <span class="op">=</span> <span class="st">&quot;^[A-Z0-9-]{3,50}$&quot;</span><span class="op">,</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        message <span class="op">=</span> <span class="st">&quot;SKU must be 3-50 chars, alphanumeric and hyphens only&quot;</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">)</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> sku<span class="op">;</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p><strong>Validation Execution</strong>:</p>
+                <pre><code>1. Request arrives at @PostMapping
+2. @Valid annotation triggers validation
+3. CreateProductRequest deserialized and validated
+4. Validation fails → MethodArgumentNotValidException thrown
+5. GlobalExceptionHandler catches exception
+6. Returns 400 Bad Request with error details
+
+Response (if validation fails):
+{
+  &quot;status&quot;: 400,
+  &quot;error&quot;: &quot;Validation Failed&quot;,
+  &quot;message&quot;: &quot;Validation failed for argument &#39;request&#39;&quot;,
+  &quot;details&quot;: [
+    {
+      &quot;field&quot;: &quot;name&quot;,
+      &quot;message&quot;: &quot;Name must be 3-255 characters&quot;
+    },
+    {
+      &quot;field&quot;: &quot;price&quot;,
+      &quot;message&quot;: &quot;Price must be &gt; 0&quot;
+    }
+  ]
+}</code></pre>
+                <h3 id="sql-injection-prevention">SQL Injection
+                Prevention</h3>
+                <p><strong>Parameterized Queries</strong> (Spring Data
+                JPA):</p>
+                <div class="sourceCode" id="cb15"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ SAFE: Spring Data prevents SQL injection</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>productRepository<span class="op">.</span><span class="fu">findBySku</span><span class="op">(</span>userProvidedSku<span class="op">);</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ SAFE: Native query with parameters</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.sku = ?1&quot;</span><span class="op">)</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>Optional<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findBySku</span><span class="op">(</span><span class="bu">String</span> sku<span class="op">);</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">// ❌ DANGEROUS: String concatenation</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="bu">Query</span> q <span class="op">=</span> entityManager<span class="op">.</span><span class="fu">createNativeQuery</span><span class="op">(</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;SELECT * FROM products WHERE sku = &#39;&quot;</span> <span class="op">+</span> userInput <span class="op">+</span> <span class="st">&quot;&#39;&quot;</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">// This allows SQL injection!</span></span></code></pre></div>
+                <h2 id="database-security">6. Database Security</h2>
+                <h3 id="connection-security">Connection Security</h3>
+                <div class="sourceCode" id="cb16"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># application.properties</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="at">spring.datasource.url=jdbc:postgresql://host:5432/stockease?sslmode=require</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="at">spring.datasource.username=${DB_USER}</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="at">spring.datasource.password=${DB_PASSWORD}</span></span></code></pre></div>
+                <p><strong>Environment Variables</strong> (never
+                hardcoded): - <code>DB_USER</code>: Database username -
+                <code>DB_PASSWORD</code>: Database password -
+                <code>JWT_SECRET</code>: JWT signing key</p>
+                <h3 id="row-level-security-future">Row-Level Security
+                (Future)</h3>
+                <div class="sourceCode" id="cb17"><pre
+                class="sourceCode sql"><code class="sourceCode sql"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Example: Users can only see products they created</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ENABLE</span> <span class="kw">ROW</span> <span class="kw">LEVEL</span> SECURITY;</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> POLICY user_products <span class="kw">ON</span> products</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">USING</span> (created_by <span class="op">=</span> current_user_id());</span></code></pre></div>
+                <h2 id="audit-logging">7. Audit Logging</h2>
+                <p><strong>Logged Events</strong>:</p>
+                <pre><code>- User login attempt (success/failure)
+- User registration
+- Product creation (who, when)
+- Product modification (who, when)
+- Product deletion (who, when)
+- Authorization failures (403 errors)
+- API errors (500 errors)</code></pre>
+                <p><strong>Log Format</strong>:</p>
+                <pre><code>[2025-10-31 10:30:45] INFO  [AuthService] User &#39;john.doe&#39; logged in successfully
+[2025-10-31 10:31:12] INFO  [ProductService] Product &#39;Widget&#39; created by admin (ID: ...)
+[2025-10-31 10:32:00] WARN  [SecurityFilter] Unauthorized access attempt: invalid token
+[2025-10-31 10:33:15] ERROR [ProductService] Database error: connection timeout</code></pre>
+                <h2 id="security-best-practices-implemented">8. Security
+                Best Practices Implemented</h2>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Practice</th>
+                <th>Implementation</th>
+                <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>HTTPS/TLS</td>
+                <td>Koyeb managed certificates</td>
+                <td>✅</td>
+                </tr>
+                <tr class="even">
+                <td>JWT Tokens</td>
+                <td>HS256 signing with secret key</td>
+                <td>✅</td>
+                </tr>
+                <tr class="odd">
+                <td>Password Hashing</td>
+                <td>BCrypt with cost factor 10</td>
+                <td>✅</td>
+                </tr>
+                <tr class="even">
+                <td>RBAC</td>
+                <td>ADMIN/USER roles</td>
+                <td>✅</td>
+                </tr>
+                <tr class="odd">
+                <td>Input Validation</td>
+                <td><span class="citation"
+                data-cites="Valid">@Valid</span> + JSR-303
+                annotations</td>
+                <td>✅</td>
+                </tr>
+                <tr class="even">
+                <td>SQL Injection Prevention</td>
+                <td>Parameterized queries (JPA)</td>
+                <td>✅</td>
+                </tr>
+                <tr class="odd">
+                <td>CORS</td>
+                <td>Restricted to specific origins</td>
+                <td>✅</td>
+                </tr>
+                <tr class="even">
+                <td>Security Headers</td>
+                <td>HSTS, X-Frame-Options, etc.</td>
+                <td>✅</td>
+                </tr>
+                <tr class="odd">
+                <td>Audit Logging</td>
+                <td>Request logging in critical paths</td>
+                <td>✅</td>
+                </tr>
+                <tr class="even">
+                <td>Secrets Management</td>
+                <td>Environment variables, no hardcoding</td>
+                <td>✅</td>
+                </tr>
+                <tr class="odd">
+                <td>Rate Limiting</td>
+                <td>Per-endpoint rate limiting (future)</td>
+                <td>⏳</td>
+                </tr>
+                <tr class="even">
+                <td>API Key Management</td>
+                <td>Support for API keys (future)</td>
+                <td>⏳</td>
+                </tr>
+                </tbody>
+                </table>
+                <h2 id="default-credentials-developmenttesting">9.
+                Default Credentials (Development/Testing)</h2>
+                <p><strong>Purpose</strong>: Enable quick testing
+                without additional setup</p>
+                <p><strong>Admin User</strong>:</p>
+                <pre><code>Username: admin
+Password: admin123
+Role: ADMIN</code></pre>
+                <p><strong>Regular User</strong>:</p>
+                <pre><code>Username: user
+Password: user123
+Role: USER</code></pre>
+                <p>⚠️ <strong>WARNING</strong>: These credentials are
+                seeded via V3 migration for development only. In
+                production, create secure passwords and remove seed
+                data.</p>
+                <h2 id="security-testing">10. Security Testing</h2>
+                <h3 id="test-coverage">Test Coverage</h3>
+                <pre><code>- Authentication tests (valid/invalid credentials)
+- Authorization tests (ADMIN vs USER endpoints)
+- Password hashing verification
+- JWT token validation/expiration
+- CORS policy enforcement
+- Input validation edge cases
+- SQL injection attempts (should fail)</code></pre>
+                <h3 id="example-security-test">Example Security
+                Test</h3>
+                <div class="sourceCode" id="cb23"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">testUnauthorizedAccessToProductCreation</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// User role cannot create products</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">header</span><span class="op">(</span><span class="st">&quot;Authorization&quot;</span><span class="op">,</span> <span class="st">&quot;Bearer &quot;</span> <span class="op">+</span> userToken<span class="op">)</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">contentType</span><span class="op">(</span>MediaType<span class="op">.</span><span class="fu">APPLICATION_JSON</span><span class="op">)</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">content</span><span class="op">(</span>jsonRequest<span class="op">))</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isForbidden</span><span class="op">());</span> <span class="co">// 403</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">testInvalidTokenRejection</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">header</span><span class="op">(</span><span class="st">&quot;Authorization&quot;</span><span class="op">,</span> <span class="st">&quot;Bearer invalid-token&quot;</span><span class="op">))</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isUnauthorized</span><span class="op">());</span> <span class="co">// 401</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h2 id="deployment-security-checklist">11. Deployment
+                Security Checklist</h2>
+                <p>Before production deployment: - [ ] Change all
+                default credentials - [ ] Remove seed data (V3
+                migration) - [ ] Set strong JWT secret (32+ characters)
+                - [ ] Enable HTTPS/TLS - [ ] Configure CORS for
+                production domain only - [ ] Set up audit logging - [ ]
+                Enable database backups - [ ] Review security headers -
+                [ ] Perform security testing - [ ] Set up
+                monitoring/alerting - [ ] Document security policies - [
+                ] Conduct code review for security issues</p>
+                <hr />
+                <h2 id="related-documentation">Related
+                Documentation</h2>
+                <h3 id="main-architecture-topics">Main Architecture
+                Topics</h3>
+                <ul>
+                <li><strong><a href="./overview.md">Architecture
+                Overview</a></strong> - Overall system context and
+                security decisions</li>
+                <li><strong><a href="./backend.md">Backend
+                Architecture</a></strong> - Spring Security
+                configuration in code</li>
+                <li><strong><a href="./layers.md">Service
+                Layers</a></strong> - Authorization checks in Controller
+                and Service layers</li>
+                <li><strong><a href="./deployment.md">Deployment
+                Architecture</a></strong> - Infrastructure security and
+                TLS/HTTPS setup</li>
+                </ul>
+                <h3 id="architecture-decisions-adrs">Architecture
+                Decisions (ADRs)</h3>
+                <ul>
+                <li><strong><a
+                href="./decisions/001-database-choice.md">Database
+                Choice</a></strong> - Database-level security
+                implications</li>
+                <li><strong><a
+                href="./decisions/002-validation-strategy.md">Validation
+                Strategy</a></strong> - Input validation as first line
+                of defense</li>
+                </ul>
+                <h3 id="design-patterns-practices">Design Patterns &amp;
+                Practices</h3>
+                <ul>
+                <li><strong><a
+                href="./patterns/security-patterns.md">Security
+                Patterns</a></strong> - JWT token generation, BCrypt
+                hashing, CORS</li>
+                <li><strong><a
+                href="./patterns/repository-pattern.md">Repository
+                Pattern</a></strong> - Query-level security
+                considerations</li>
+                </ul>
+                <h3 id="infrastructure-deployment">Infrastructure &amp;
+                Deployment</h3>
+                <ul>
+                <li><strong><a href="./deployment/ci-pipeline.md">CI/CD
+                Pipeline</a></strong> - Secret management in GitHub
+                Actions</li>
+                <li><strong><a
+                href="./deployment/staging-config.md">Staging
+                Configuration</a></strong> - Security testing
+                environment</li>
+                </ul>
+                <hr />
+                <p><strong>Document Version</strong>: 1.0<br />
+                <strong>Last Updated</strong>: October 31, 2025<br />
+                <strong>Status</strong>: Production Ready</p>
+            </div>
+        </main>
+    </aside>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation Menu
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: '/stockease/api/' },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: './overview.html' },
+                { label: 'System Layers', href: './layers.html' },
+                { label: 'Backend Architecture', href: './backend.html' },
+                { label: 'Frontend Architecture', href: './frontend.html' },
+                { label: 'Security Architecture', href: './security.html' },
+                { label: 'Deployment Strategy', href: './deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: './decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: './components/index.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: './patterns/index.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: './testing-architecture.html' },
+                { label: 'Security Tests', href: './testing/security-tests.html' },
+                { label: 'Test Pyramid', href: './testing/pyramid.html' },
+                { label: 'Test Strategy', href: './testing/strategy.html' },
+            ],
+            'Deployment': [
+                { label: 'CI/CD Pipeline', href: './deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: './deployment/docker-strategy.html' },
+            ],
+            'Reference': [
+                { label: 'Navigation Map', href: './NAVIGATION-MAP.html' },
+                { label: 'Cross References', href: './CROSS-REFERENCE.html' },
+                { label: 'Documentation Index', href: './DOCUMENTATION-INDEX.html' },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = link.href;
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes(link.href.replace('./', '').replace('.html', ''))) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+</body>
+</html>

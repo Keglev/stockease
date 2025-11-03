@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004a99;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            color: var(--text);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-breadcrumb {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .nav-breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .nav-breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            padding: 2rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-section a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-section a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .nav-section a.active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .content {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        h4, h5, h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code */
+        code {
+            background-color: var(--bg-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        table tbody tr:hover {
+            background-color: #f0f6ff;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Alerts / Boxes */
+        .info-box, .warning-box, .success-box, .danger-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border-color: var(--info);
+            color: #004a87;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .danger-box {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        /* TOC */
+        nav.toc {
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        nav.toc li {
+            margin: 0.25rem 0;
+        }
+
+        nav.toc a {
+            font-size: 0.95rem;
+        }
+
+        nav.toc > ul > li > a {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text);
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                order: 2;
+            }
+
+            main {
+                order: 1;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-breadcrumb {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            header, aside, footer {
+                display: none;
+            }
+
+            .content {
+                box-shadow: none;
+                background: white;
+            }
+        }
+
+        /* Syntax Highlighting (basic) */
+        .hljs-keyword { color: #569cd6; }
+        .hljs-string { color: #ce9178; }
+        .hljs-number { color: #b5cea8; }
+        .hljs-attr { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1 id="components-architecture">Components
+                Architecture</h1>
+                <h2 id="overview">Overview</h2>
+                <p>The StockEase backend is composed of several key
+                components that interact to provide product inventory
+                management functionality. This section describes each
+                major component and its responsibilities.</p>
+                <h2 id="component-interactions">Component
+                Interactions</h2>
+                <pre><code>┌─────────────────────────────────────────────────────────┐
+│                   REST Clients                          │
+│         (Frontend, Mobile, Third-party APIs)            │
+└────────────────────────┬────────────────────────────────┘
+                         │ HTTP/HTTPS
+┌────────────────────────▼────────────────────────────────┐
+│              Spring Security Layer                      │
+│         (CORS, JWT, Authentication)                    │
+└────────────────────────┬────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────┐
+│              API Controllers                            │
+│  ├── AuthController (login, register, validate)       │
+│  ├── ProductController (CRUD, search, pagination)     │
+│  └── HealthController (system status)                 │
+└────────────────────────┬────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────┐
+│              Service Layer                             │
+│  ├── AuthService (authentication logic)               │
+│  ├── ProductService (business logic)                  │
+│  └── HealthService (health checks)                    │
+└────────────────────────┬────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────┐
+│              Repository Layer (JPA)                     │
+│  ├── UserRepository (User persistence)                │
+│  ├── ProductRepository (Product persistence)          │
+│  └── Custom queries and specifications                │
+└────────────────────────┬────────────────────────────────┘
+                         │ JDBC
+┌────────────────────────▼────────────────────────────────┐
+│              Database Layer                            │
+│  ├── PostgreSQL (production)                          │
+│  ├── H2 (testing)                                     │
+│  └── Flyway (migrations)                              │
+└─────────────────────────────────────────────────────────┘</code></pre>
+                <h2 id="authcontroller">AuthController</h2>
+                <p><strong>Location</strong>:
+                <code>src/main/java/com/stocks/stockease/controller/AuthController.java</code></p>
+                <p><strong>Responsibility</strong>: Handle
+                authentication endpoints</p>
+                <p><strong>Endpoints</strong>:</p>
+                <pre><code>POST /api/auth/register
+  Input: { username, email, password }
+  Output: { userId, username, role }
+  Status: 201 Created / 400 Bad Request
+
+POST /api/auth/login
+  Input: username + password (HTTP Basic)
+  Output: { token, userId, username, role }
+  Status: 200 OK / 401 Unauthorized
+
+GET /api/auth/validate
+  Input: JWT token in header
+  Output: { valid, userId, username, role }
+  Status: 200 OK / 401 Unauthorized</code></pre>
+                <p><strong>Integration</strong>:</p>
+                <pre><code>AuthController
+  ↓ calls
+AuthService
+  ↓ uses
+UserRepository
+  ↓ persists
+User Entity (users table)</code></pre>
+                <p><strong>Dependencies</strong>: -
+                <code>AuthService</code> - business logic -
+                <code>UserRepository</code> - data access -
+                <code>PasswordEncoder</code> - password hashing -
+                <code>JwtUtil</code> - token generation</p>
+                <p><strong>Error Handling</strong>: - Username already
+                exists → 400 Bad Request - Invalid credentials → 401
+                Unauthorized - Expired token → 401 Unauthorized -
+                Internal server error → 500 Internal Server Error</p>
+                <h2 id="productcontroller">ProductController</h2>
+                <p><strong>Location</strong>:
+                <code>src/main/java/com/stocks/stockease/controller/ProductController.java</code></p>
+                <p><strong>Responsibility</strong>: Handle product
+                management endpoints</p>
+                <p><strong>Endpoints</strong>:</p>
+                <pre><code>GET /api/products
+  Query: ?page=0&amp;size=20&amp;sort=name,asc&amp;category=electronics
+  Output: { content: [], page, size, totalElements, totalPages }
+  Auth: JWT required
+
+GET /api/products/{id}
+  Output: { id, name, description, price, quantity, sku, category, createdAt }
+  Auth: JWT required
+
+POST /api/products
+  Input: { name, description, price, quantity, sku, category }
+  Output: { id, name, ... }
+  Auth: JWT + ADMIN role required
+
+PUT /api/products/{id}
+  Input: { name, description, price, quantity, category }
+  Output: { id, name, ... (updated) }
+  Auth: JWT + ADMIN role required
+
+DELETE /api/products/{id}
+  Output: { message: &quot;Product deleted successfully&quot; }
+  Auth: JWT + ADMIN role required</code></pre>
+                <p><strong>Integration</strong>:</p>
+                <pre><code>ProductController
+  ↓ calls
+ProductService
+  ↓ uses
+ProductRepository
+  ↓ persists
+Product Entity (products table)</code></pre>
+                <p><strong>Dependencies</strong>: -
+                <code>ProductService</code> - business logic -
+                <code>ProductRepository</code> - data access -
+                <code>SecurityContext</code> - user authentication</p>
+                <p><strong>Error Handling</strong>: - Product not found
+                → 404 Not Found - Insufficient permissions → 403
+                Forbidden - Validation errors → 400 Bad Request - SKU
+                already exists → 400 Bad Request</p>
+                <h2 id="healthcontroller">HealthController</h2>
+                <p><strong>Location</strong>:
+                <code>src/main/java/com/stocks/stockease/controller/HealthController.java</code></p>
+                <p><strong>Responsibility</strong>: Provide system
+                health status</p>
+                <p><strong>Endpoints</strong>:</p>
+                <pre><code>GET /health
+  Output: { status, components: { db, diskSpace, ... } }
+  Auth: None required
+
+GET /health/liveness
+  Output: { status }
+  Auth: None required
+
+GET /health/readiness
+  Output: { status, components: { db, ... } }
+  Auth: None required</code></pre>
+                <p><strong>Used By</strong>: - Koyeb health checks -
+                Monitoring systems - Load balancers</p>
+                <h2 id="authservice">AuthService</h2>
+                <p><strong>Location</strong>:
+                <code>src/main/java/com/stocks/stockease/service/AuthService.java</code></p>
+                <p><strong>Responsibility</strong>: Authentication
+                business logic</p>
+                <p><strong>Methods</strong>:</p>
+                <div class="sourceCode" id="cb7"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> UserDTO <span class="fu">register</span><span class="op">(</span>RegisterRequest request<span class="op">)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Validate <span class="fu">input</span> <span class="op">(</span>username<span class="op">,</span> email<span class="op">,</span> password<span class="op">)</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Check username uniqueness</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Hash password with BCrypt</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Create User entity</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Save to database</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return UserDTO</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> LoginResponse <span class="fu">authenticate</span><span class="op">(</span><span class="bu">String</span> username<span class="op">,</span> <span class="bu">String</span> password<span class="op">)</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Find user by username</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Verify password</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Generate JWT token</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return token <span class="op">+</span> user info</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> UserDTO <span class="fu">validateToken</span><span class="op">(</span><span class="bu">String</span> token<span class="op">)</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Parse JWT token</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Verify signature</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Check expiration</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return user info</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">logout</span><span class="op">(</span><span class="bu">String</span> userId<span class="op">)</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Invalidate <span class="fu">token</span> <span class="op">(</span>future<span class="op">:</span> add to blacklist<span class="op">)</span></span></code></pre></div>
+                <p><strong>Validation Rules</strong>: - Username: 3-50
+                chars, alphanumeric + underscore - Email: valid email
+                format - Password: 8+ chars, mixed case + numbers -
+                Role: ADMIN or USER</p>
+                <p><strong>Transactions</strong>: -
+                <code>register()</code> - <span class="citation"
+                data-cites="Transactional">@Transactional</span> -
+                <code>authenticate()</code> - read-only -
+                <code>validateToken()</code> - read-only</p>
+                <h2 id="productservice">ProductService</h2>
+                <p><strong>Location</strong>:
+                <code>src/main/java/com/stocks/stockease/service/ProductService.java</code></p>
+                <p><strong>Responsibility</strong>: Product business
+                logic</p>
+                <p><strong>Methods</strong>:</p>
+                <div class="sourceCode" id="cb8"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> Page<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">getProducts</span><span class="op">(</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> page<span class="op">,</span> <span class="dt">int</span> size<span class="op">,</span> <span class="bu">String</span> sort<span class="op">,</span> <span class="bu">String</span> category<span class="op">)</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Build dynamic query with filters</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Apply pagination</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Execute query</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> <span class="bu">Map</span> to DTOs</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return PageResponse</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ProductDTO <span class="fu">getProductById</span><span class="op">(</span><span class="bu">UUID</span> id<span class="op">)</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Find product by ID</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return ProductDTO</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Throw EntityNotFoundException <span class="cf">if</span> not found</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ProductDTO <span class="fu">createProduct</span><span class="op">(</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    CreateProductRequest request<span class="op">,</span> <span class="bu">UUID</span> userId<span class="op">)</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Validate request</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Check <span class="fu">authorization</span> <span class="op">(</span>ADMIN only<span class="op">)</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Verify SKU uniqueness</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Create Product entity</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> <span class="bu">Set</span> <span class="fu">metadata</span> <span class="op">(</span>createdAt<span class="op">,</span> createdBy<span class="op">)</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Save to database</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return ProductDTO</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ProductDTO <span class="fu">updateProduct</span><span class="op">(</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    <span class="bu">UUID</span> id<span class="op">,</span> UpdateProductRequest request<span class="op">,</span> <span class="bu">UUID</span> userId<span class="op">)</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Find product by ID</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Validate request</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Check <span class="fu">authorization</span> <span class="op">(</span>ADMIN only<span class="op">)</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Update fields</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Save changes</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return updated ProductDTO</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="bu">UUID</span> id<span class="op">,</span> <span class="bu">UUID</span> userId<span class="op">)</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Find product by ID</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Check <span class="fu">authorization</span> <span class="op">(</span>ADMIN only<span class="op">)</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Delete from database</span></code></pre></div>
+                <p><strong>Validation Rules</strong>: - Name: 3-255
+                chars, not blank - Price: &gt; 0, max 999,999.99 -
+                Quantity: &gt;= 0, max 1,000,000 - SKU: 3-50 chars,
+                alphanumeric + hyphens, unique - Category: alphanumeric
+                + spaces</p>
+                <p><strong>Transactions</strong>: -
+                <code>createProduct()</code> - <span class="citation"
+                data-cites="Transactional">@Transactional</span> -
+                <code>updateProduct()</code> - <span class="citation"
+                data-cites="Transactional">@Transactional</span> -
+                <code>deleteProduct()</code> - <span class="citation"
+                data-cites="Transactional">@Transactional</span> -
+                <code>getProducts()</code> - read-only -
+                <code>getProductById()</code> - read-only</p>
+                <h2 id="healthservice">HealthService</h2>
+                <p><strong>Location</strong>:
+                <code>src/main/java/com/stocks/stockease/service/HealthService.java</code></p>
+                <p><strong>Responsibility</strong>: System health
+                checks</p>
+                <p><strong>Methods</strong>:</p>
+                <div class="sourceCode" id="cb9"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> HealthStatus <span class="fu">getHealth</span><span class="op">()</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Check database connectivity</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Check disk space</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Check memory usage</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return aggregated status</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">boolean</span> <span class="fu">isDatabaseHealthy</span><span class="op">()</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Execute test query<span class="op">:</span> SELECT <span class="dv">1</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return <span class="kw">true</span> <span class="cf">if</span> successful</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">-</span> Return <span class="kw">false</span> <span class="cf">if</span> connection fails</span></code></pre></div>
+                <p><strong>Health Components</strong>: - <code>db</code>
+                - Database connectivity - <code>diskSpace</code> -
+                Available disk space - <code>livenessState</code> -
+                Application running - <code>readinessState</code> -
+                Ready to accept requests</p>
+                <h2 id="repository-interfaces">Repository
+                Interfaces</h2>
+                <h3 id="userrepository">UserRepository</h3>
+                <div class="sourceCode" id="cb10"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> UserRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>User<span class="op">,</span> <span class="bu">UUID</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>User<span class="op">&gt;</span> <span class="fu">findByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>User<span class="op">&gt;</span> <span class="fu">findByEmail</span><span class="op">(</span><span class="bu">String</span> email<span class="op">);</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">boolean</span> <span class="fu">existsByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="productrepository">ProductRepository</h3>
+                <div class="sourceCode" id="cb11"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> ProductRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>Product<span class="op">,</span> <span class="bu">UUID</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findBySku</span><span class="op">(</span><span class="bu">String</span> sku<span class="op">);</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    Page<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByCategory</span><span class="op">(</span><span class="bu">String</span> category<span class="op">,</span> <span class="bu">Pageable</span> pageable<span class="op">);</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByCreatedBy</span><span class="op">(</span><span class="bu">UUID</span> userId<span class="op">);</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.price &gt; ?1 AND p.quantity &gt; 0&quot;</span><span class="op">)</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAffordableInStock</span><span class="op">(</span><span class="bu">BigDecimal</span> maxPrice<span class="op">);</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h2 id="exception-handling">Exception Handling</h2>
+                <p><strong>Custom Exceptions</strong>: -
+                <code>ValidationException</code> → 400 Bad Request -
+                <code>AuthenticationException</code> → 401 Unauthorized
+                - <code>AuthorizationException</code> → 403 Forbidden -
+                <code>EntityNotFoundException</code> → 404 Not Found -
+                <code>InternalServerException</code> → 500 Internal
+                Server Error</p>
+                <p><strong>Global Exception Handler</strong>: -
+                <code>@RestControllerAdvice</code> catches exceptions -
+                Formats error responses - Sets appropriate HTTP status
+                codes - Logs errors for debugging</p>
+                <h2 id="component-dependencies-graph">Component
+                Dependencies Graph</h2>
+                <pre><code>HealthController
+  └── HealthService
+      └── Database connection
+
+AuthController
+  └── AuthService
+      ├── UserRepository
+      ├── PasswordEncoder
+      └── JwtUtil
+
+ProductController
+  ├── ProductService
+  │   ├── ProductRepository
+  │   ├── UserRepository (authorization)
+  │   └── Validators
+  └── SecurityContext
+
+SecurityConfig
+  ├── JwtFilter
+  ├── PasswordEncoder (BCrypt)
+  └── CustomUserDetailsService</code></pre>
+                <hr />
+                <p><strong>Document Version</strong>: 1.0<br />
+                <strong>Last Updated</strong>: October 31, 2025<br />
+                <strong>Status</strong>: Production Ready</p>
+            </div>
+        </main>
+    </aside>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation Menu
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: '/stockease/api/' },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: './overview.html' },
+                { label: 'System Layers', href: './layers.html' },
+                { label: 'Backend Architecture', href: './backend.html' },
+                { label: 'Frontend Architecture', href: './frontend.html' },
+                { label: 'Security Architecture', href: './security.html' },
+                { label: 'Deployment Strategy', href: './deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: './decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: './components/index.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: './patterns/index.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: './testing-architecture.html' },
+                { label: 'Security Tests', href: './testing/security-tests.html' },
+                { label: 'Test Pyramid', href: './testing/pyramid.html' },
+                { label: 'Test Strategy', href: './testing/strategy.html' },
+            ],
+            'Deployment': [
+                { label: 'CI/CD Pipeline', href: './deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: './deployment/docker-strategy.html' },
+            ],
+            'Reference': [
+                { label: 'Navigation Map', href: './NAVIGATION-MAP.html' },
+                { label: 'Cross References', href: './CROSS-REFERENCE.html' },
+                { label: 'Documentation Index', href: './DOCUMENTATION-INDEX.html' },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = link.href;
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes(link.href.replace('./', '').replace('.html', ''))) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+</body>
+</html>
