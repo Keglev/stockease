@@ -61,7 +61,7 @@ jobs:
 
       - name: Verify build compiles (skip tests)
         working-directory: ${{ env.BACKEND_DIR }}
-        run: ./mvnw -B -ntp -DskipTests verify
+        run: ./mvnw -B -ntp -DskipTests -Dspringdoc.skip=true verify
 
       - name: Trigger Koyeb redeploy (Git source)
         env:
