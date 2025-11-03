@@ -61,9 +61,9 @@ jobs:
             cat /tmp/app.log
             exit 1
           fi
-          # Fetch OpenAPI spec with verbose output
+          # Fetch OpenAPI spec (curl output goes to file, verbose to stderr)
           echo "Fetching http://localhost:8080/v3/api-docs"
-          curl -v http://localhost:8080/v3/api-docs > target/docs/openapi.json 2>&1 | head -20
+          curl -s http://localhost:8080/v3/api-docs > target/docs/openapi.json
           # Verify it was created and has content
           if [ ! -f target/docs/openapi.json ] || [ ! -s target/docs/openapi.json ]; then
             echo "❌ openapi.json is empty or missing. App logs:"
