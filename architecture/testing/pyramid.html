@@ -409,6 +409,20 @@
             border: 1px solid var(--border);
         }
 
+        /* Handle both .mermaid and .language-mermaid classes (Pandoc compatibility) */
+        code.language-mermaid {
+            display: block;
+            background: transparent;
+            padding: 0;
+            margin: 2rem 0;
+        }
+
+        pre code.language-mermaid {
+            background: transparent;
+            padding: 0;
+            border: none;
+        }
+
         .mermaid svg {
             max-width: 100%;
             height: auto;
@@ -1242,6 +1256,16 @@ Estimated by Layers:
             theme: 'default',
             securityLevel: 'loose',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        });
+        
+        // Convert language-mermaid class to mermaid for compatibility with Pandoc output
+        document.querySelectorAll('code.language-mermaid').forEach(code => {
+            code.classList.remove('language-mermaid');
+            code.classList.add('mermaid');
+            // If wrapped in pre, mark pre as mermaid too
+            if (code.parentElement.tagName === 'PRE') {
+                code.parentElement.classList.add('mermaid-block');
+            }
         });
         
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
