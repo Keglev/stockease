@@ -1,6 +1,6 @@
 package com.stocks.stockease.controller;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,7 +32,7 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/api/auth")
-@ConditionalOnBean(UserRepository.class)
+@Profile("!docs")
 public class AuthController {
 
     /**

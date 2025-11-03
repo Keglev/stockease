@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,7 +46,7 @@ import jakarta.validation.constraints.Positive;
  */
 @RestController
 @RequestMapping("/api/products")
-@ConditionalOnBean(ProductRepository.class)
+@Profile("!docs")
 public class ProductController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
