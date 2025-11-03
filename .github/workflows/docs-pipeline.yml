@@ -139,6 +139,20 @@ jobs:
             done
           fi
 
+      - name: Fix Directory Links in Generated HTML
+        run: |
+          OUTPUT_DIR="${{ steps.where.outputs.dir }}/target/docs"
+          
+          # Find all generated HTML files and fix directory links
+          find "$OUTPUT_DIR" -type f -name "*.html" | while read html_file; do
+            # Fix links like href="path/to/directory/" to href="path/to/directory/index.html"
+            sed -i 's|href="\([^"]*\)/"|href="\1/index.html"|g' "$html_file"
+            sed -i "s|href='\([^']*\)/'|href='\1/index.html'|g" "$html_file"
+            echo "✓ Fixed directory links in: $(basename $html_file)"
+          done
+          
+          echo "✓ All directory links fixed in generated HTML files"
+
       - name: Create Navigation Index
         run: |
           PROJECT_DIR="${{ steps.where.outputs.dir }}"
