@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CROSS-REFERENCE</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#documentation-cross-reference-matrix"
+id="toc-documentation-cross-reference-matrix">Documentation
+Cross-Reference Matrix</a>
+<ul>
+<li><a href="#link-coverage-analysis"
+id="toc-link-coverage-analysis">Link Coverage Analysis</a>
+<ul>
+<li><a href="#main-documentation-files"
+id="toc-main-documentation-files">✅ Main Documentation Files</a></li>
+<li><a href="#architecture-decision-records-adrs"
+id="toc-architecture-decision-records-adrs">✅ Architecture Decision
+Records (ADRs)</a></li>
+<li><a href="#design-patterns-practices"
+id="toc-design-patterns-practices">✅ Design Patterns &amp;
+Practices</a></li>
+<li><a href="#infrastructure-deployment-details"
+id="toc-infrastructure-deployment-details">✅ Infrastructure &amp;
+Deployment Details</a></li>
+</ul></li>
+<li><a href="#cross-link-summary" id="toc-cross-link-summary">Cross-Link
+Summary</a>
+<ul>
+<li><a href="#link-statistics" id="toc-link-statistics">Link
+Statistics</a></li>
+<li><a href="#categories-of-links"
+id="toc-categories-of-links">Categories of Links</a></li>
+</ul></li>
+<li><a href="#recommendations-for-html-generation"
+id="toc-recommendations-for-html-generation">Recommendations for HTML
+Generation</a>
+<ul>
+<li><a href="#mkdocs-configuration" id="toc-mkdocs-configuration">MkDocs
+Configuration</a></li>
+<li><a href="#expected-navigation-structure-in-html"
+id="toc-expected-navigation-structure-in-html">Expected Navigation
+Structure in HTML</a></li>
+</ul></li>
+<li><a href="#files-status-summary" id="toc-files-status-summary">Files
+Status Summary</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="documentation-cross-reference-matrix">Documentation
+Cross-Reference Matrix</h1>
+<p>This document verifies all cross-links between architecture
+documentation files to ensure complete navigation when building HTML
+documentation.</p>
+<h2 id="link-coverage-analysis">Link Coverage Analysis</h2>
+<h3 id="main-documentation-files">✅ Main Documentation Files</h3>
+<h4 id="index.md-navigation-hub">1. <strong>index.md</strong>
+(Navigation Hub)</h4>
+<p><strong>Purpose</strong>: Central entry point with role-based reading
+paths <strong>Links TO</strong>: - ✅ overview.md - ✅ layers.md - ✅
+security.md - ✅ deployment.md - ✅ frontend.md - ✅ backend.md - ✅
+decisions/ (referenced) - ✅ patterns/ (referenced) - ✅ deployment/
+(referenced)</p>
+<p><strong>Status</strong>: ✅ COMPLETE</p>
+<hr />
+<h4 id="overview.md-executive-summary-primary-source-of-truth">2.
+<strong>overview.md</strong> (Executive Summary &amp; Primary Source of
+Truth)</h4>
+<p><strong>Purpose</strong>: Business context, technology stack, design
+decisions <strong>Links TO</strong>: - ✅ backend.md - Spring Boot
+specifics - ✅ frontend.md - React/TypeScript frontend - ✅ layers.md -
+Service architecture layers - ✅ security.md - Authentication &amp; JWT
+details - ✅ deployment.md - Infrastructure setup - ✅
+decisions/001-database-choice.md - PostgreSQL justification - ✅
+decisions/002-validation-strategy.md - Validation approach - ✅
+patterns/repository-pattern.md - Repository implementation - ✅
+patterns/security-patterns.md - Security best practices - ✅
+deployment/ci-pipeline.md - GitHub Actions automation - ✅
+deployment/staging-config.md - Staging environment</p>
+<p><strong>Status</strong>: ✅ COMPLETE</p>
+<hr />
+<h4 id="backend.md-spring-boot-architecture">3.
+<strong>backend.md</strong> (Spring Boot Architecture)</h4>
+<p><strong>Purpose</strong>: Controllers, services, repositories, entity
+mapping <strong>Links TO</strong>: - ✅ overview.md - Executive summary
+- ✅ layers.md - Layer architecture - ✅ security.md - Spring Security
+&amp; JWT - ✅ deployment.md - Containerization &amp; deployment - ✅
+frontend.md - Frontend API consumers - ✅
+decisions/001-database-choice.md - PostgreSQL selection - ✅
+decisions/002-validation-strategy.md - Service layer validation - ✅
+patterns/repository-pattern.md - JPA repository implementation - ✅
+patterns/security-patterns.md - JWT &amp; BCrypt implementation - ✅
+deployment/ci-pipeline.md - Maven build &amp; test automation - ✅
+deployment/staging-config.md - Test environment configuration</p>
+<p><strong>Status</strong>: ✅ COMPLETE</p>
+<hr />
+<h4 id="frontend.md-reacttypescript-stack">4.
+<strong>frontend.md</strong> (React/TypeScript Stack)</h4>
+<p><strong>Purpose</strong>: Component hierarchy, state management, API
+integration <strong>Links TO</strong>: - ✅ overview.md - Backend
+context - ✅ backend.md - Backend APIs - ✅ security.md - JWT token
+handling - ✅ deployment.md - Render deployment - ✅ layers.md - Backend
+layer context - ✅ patterns/security-patterns.md - JWT token patterns -
+✅ deployment/ci-pipeline.md - Frontend deployment automation - ✅
+deployment/staging-config.md - Frontend staging setup</p>
+<p><strong>Status</strong>: ✅ COMPLETE</p>
+<hr />
+<h4 id="layers.md-service-layer-architecture">5.
+<strong>layers.md</strong> (Service Layer Architecture)</h4>
+<p><strong>Purpose</strong>: Controller, Service, Repository patterns
+and data flow <strong>Links TO</strong>: - ✅ overview.md - Architecture
+overview - ✅ backend.md - Backend code organization - ✅ security.md -
+Authorization in each layer - ✅ deployment.md - Layer deployment
+considerations - ✅ decisions/001-database-choice.md - Repository layer
+DB choice - ✅ decisions/002-validation-strategy.md - Validation in
+Service layer - ✅ patterns/repository-pattern.md - Repository layer
+details - ✅ patterns/security-patterns.md - Security filters in
+Controller</p>
+<p><strong>Status</strong>: ✅ COMPLETE</p>
+<hr />
+<h4 id="security.md-authentication-authorization">6.
+<strong>security.md</strong> (Authentication &amp; Authorization)</h4>
+<p><strong>Purpose</strong>: JWT flow, Spring Security config, RBAC,
+best practices <strong>Links TO</strong>: - ✅ overview.md - Overall
+system context - ✅ backend.md - Spring Security code - ✅ layers.md -
+Authorization in layers - ✅ deployment.md - Infrastructure security
+&amp; TLS - ✅ decisions/001-database-choice.md - Database security
+implications - ✅ decisions/002-validation-strategy.md - Input
+validation defense - ✅ patterns/security-patterns.md - JWT, BCrypt,
+CORS patterns - ✅ patterns/repository-pattern.md - Query-level security
+- ✅ deployment/ci-pipeline.md - Secret management in CI/CD - ✅
+deployment/staging-config.md - Security testing environment</p>
+<p><strong>Status</strong>: ✅ COMPLETE</p>
+<hr />
+<h4 id="deployment.md-infrastructure-cicd">7.
+<strong>deployment.md</strong> (Infrastructure &amp; CI/CD)</h4>
+<p><strong>Purpose</strong>: Koyeb/Render deployment, Flyway migrations,
+monitoring <strong>Links TO</strong>: - ✅ overview.md - Architecture
+decisions - ✅ backend.md - Application structure - ✅ layers.md - Layer
+deployment considerations - ✅ security.md - Infrastructure security
+&amp; TLS setup - ✅ frontend.md - React deployment to Render - ✅
+decisions/001-database-choice.md - PostgreSQL production setup - ✅
+decisions/002-validation-strategy.md - Pre-production validation - ✅
+patterns/security-patterns.md - HTTPS/TLS, secure config - ✅
+patterns/repository-pattern.md - Production database strategies - ✅
+deployment/ci-pipeline.md - GitHub Actions workflows - ✅
+deployment/staging-config.md - Staging environment</p>
+<p><strong>Status</strong>: ✅ COMPLETE</p>
+<hr />
+<h3 id="architecture-decision-records-adrs">✅ Architecture Decision
+Records (ADRs)</h3>
+<h4
+id="decisions001-database-choice.md"><strong>decisions/001-database-choice.md</strong></h4>
+<p><strong>Purpose</strong>: Justification for PostgreSQL vs H2, Flyway
+strategy <strong>Should link back TO</strong>: - ✅ overview.md -
+(referenced from) - ✅ backend.md - (referenced from) - ✅ layers.md -
+(referenced from) - ✅ deployment.md - (referenced from)</p>
+<p><strong>Suggested additions</strong>: - Link to
+patterns/repository-pattern.md for implementation details - Link to
+deployment/ci-pipeline.md for migration execution</p>
+<hr />
+<h4
+id="decisions002-validation-strategy.md"><strong>decisions/002-validation-strategy.md</strong></h4>
+<p><strong>Purpose</strong>: Input validation &amp; business rule
+enforcement strategy <strong>Should link back TO</strong>: - ✅
+overview.md - (referenced from) - ✅ backend.md - (referenced from) - ✅
+security.md - (referenced from) - ✅ layers.md - (referenced from)</p>
+<p><strong>Suggested additions</strong>: - Link to backend.md Service
+layer validation code - Link to security.md input validation section</p>
+<hr />
+<h3 id="design-patterns-practices">✅ Design Patterns &amp;
+Practices</h3>
+<h4
+id="patternsrepository-pattern.md"><strong>patterns/repository-pattern.md</strong></h4>
+<p><strong>Purpose</strong>: Spring Data JPA repository implementation
+<strong>Should link back TO</strong>: - ✅ overview.md - (referenced
+from) - ✅ backend.md - (referenced from) - ✅ layers.md - (referenced
+from) - ✅ security.md - (referenced from) - ✅ deployment.md -
+(referenced from)</p>
+<p><strong>Suggested additions</strong>: - Link to
+decisions/001-database-choice.md for database rationale - Link to
+backend.md Repository layer section</p>
+<hr />
+<h4
+id="patternssecurity-patterns.md"><strong>patterns/security-patterns.md</strong></h4>
+<p><strong>Purpose</strong>: JWT, BCrypt hashing, CORS best practices
+<strong>Should link back TO</strong>: - ✅ overview.md - (referenced
+from) - ✅ backend.md - (referenced from) - ✅ security.md - (referenced
+from) - ✅ layers.md - (referenced from) - ✅ frontend.md - (referenced
+from) - ✅ deployment.md - (referenced from)</p>
+<p><strong>Suggested additions</strong>: - Link to security.md JWT
+structure section - Link to frontend.md Token management section - Link
+to backend.md JwtTokenProvider implementation</p>
+<hr />
+<h3 id="infrastructure-deployment-details">✅ Infrastructure &amp;
+Deployment Details</h3>
+<h4
+id="deploymentci-pipeline.md"><strong>deployment/ci-pipeline.md</strong></h4>
+<p><strong>Purpose</strong>: GitHub Actions workflow, automated testing,
+deployment <strong>Should link back TO</strong>: - ✅ overview.md -
+(referenced from) - ✅ backend.md - (referenced from) - ✅ security.md -
+(referenced from) - ✅ deployment.md - (referenced from) - ✅
+frontend.md - (referenced from)</p>
+<p><strong>Suggested additions</strong>: - Link to backend.md testing
+section - Link to deployment.md health checks - Link to
+patterns/security-patterns.md for secret management</p>
+<hr />
+<h4
+id="deploymentstaging-config.md"><strong>deployment/staging-config.md</strong></h4>
+<p><strong>Purpose</strong>: Pre-production testing environment setup
+and verification <strong>Should link back TO</strong>: - ✅ overview.md
+- (referenced from) - ✅ backend.md - (referenced from) - ✅ security.md
+- (referenced from) - ✅ deployment.md - (referenced from) - ✅
+frontend.md - (referenced from)</p>
+<p><strong>Suggested additions</strong>: - Link to backend.md testing
+strategies - Link to security.md security testing checklist - Link to
+decisions/002-validation-strategy.md for pre-prod validation</p>
+<hr />
+<h2 id="cross-link-summary">Cross-Link Summary</h2>
+<h3 id="link-statistics">Link Statistics</h3>
+<ul>
+<li><strong>Main docs with Related Documentation sections</strong>: 7/7
+(100%) ✅</li>
+<li><strong>Main docs link TO subdirectories</strong>: 7/7 (100%)
+✅</li>
+<li><strong>Subdirectory files referenced FROM main docs</strong>: 6/6
+(100%) ✅</li>
+</ul>
+<h3 id="categories-of-links">Categories of Links</h3>
+<h4 id="horizontal-links-within-main-docs">Horizontal Links (Within main
+docs)</h4>
+<pre><code>index.md ←→ overview.md ←→ backend.md
+         ←→ frontend.md ←→ layers.md
+         ←→ security.md ←→ deployment.md</code></pre>
+<p><strong>Status</strong>: ✅ COMPLETE - All main docs link to each
+other</p>
+<h4 id="vertical-links-main-docs-subdirectories">Vertical Links (Main
+docs → Subdirectories)</h4>
+<pre><code>overview.md ↓
+backend.md  ↓→ decisions/
+layers.md   ↓ patterns/
+security.md ↓ deployment/
+deployment.md
+frontend.md</code></pre>
+<p><strong>Status</strong>: ✅ COMPLETE - All main docs reference all
+subdirectories</p>
+<h4 id="feedback-links-subdirectories-main-docs">Feedback Links
+(Subdirectories → Main docs)</h4>
+<pre><code>decisions/    ← overview.md
+patterns/     ← backend.md, security.md, frontend.md
+deployment/   ← deployment.md, frontend.md</code></pre>
+<p><strong>Status</strong>: ✅ Partially complete - Subdirectory files
+could add back-links</p>
+<hr />
+<h2 id="recommendations-for-html-generation">Recommendations for HTML
+Generation</h2>
+<h3 id="mkdocs-configuration">MkDocs Configuration</h3>
+<p>When building HTML with MkDocs, ensure: 1. ✅ All
+<code>[link](./file.md)</code> paths are relative (already done) 2. ✅
+Subdirectory paths use <code>[link](./decisions/file.md)</code> format
+(already done) 3. ✅ All markdown files are indexed in
+<code>mkdocs.yml</code> navigation 4. ✅ Cross-references automatically
+become clickable links in HTML</p>
+<h3 id="expected-navigation-structure-in-html">Expected Navigation
+Structure in HTML</h3>
+<pre><code>Documentation/
+├── Index (Navigation Hub)
+├── Overview (Executive Summary)
+├── Backend Architecture
+├── Frontend Architecture
+├── Service Layers
+├── Security Architecture
+├── Deployment Architecture
+├── Architecture Decisions
+│   ├── Database Choice
+│   └── Validation Strategy
+├── Design Patterns
+│   ├── Repository Pattern
+│   └── Security Patterns
+└── Infrastructure Details
+    ├── CI/CD Pipeline
+    └── Staging Configuration</code></pre>
+<hr />
+<h2 id="files-status-summary">Files Status Summary</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Category</th>
+<th>File</th>
+<th>Links</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Navigation</td>
+<td>index.md</td>
+<td>8+</td>
+<td>✅ Complete</td>
+</tr>
+<tr class="even">
+<td>Main</td>
+<td>overview.md</td>
+<td>11</td>
+<td>✅ Complete</td>
+</tr>
+<tr class="odd">
+<td>Main</td>
+<td>backend.md</td>
+<td>11</td>
+<td>✅ Complete</td>
+</tr>
+<tr class="even">
+<td>Main</td>
+<td>frontend.md</td>
+<td>8</td>
+<td>✅ Complete</td>
+</tr>
+<tr class="odd">
+<td>Main</td>
+<td>layers.md</td>
+<td>8</td>
+<td>✅ Complete</td>
+</tr>
+<tr class="even">
+<td>Main</td>
+<td>security.md</td>
+<td>10</td>
+<td>✅ Complete</td>
+</tr>
+<tr class="odd">
+<td>Main</td>
+<td>deployment.md</td>
+<td>10</td>
+<td>✅ Complete</td>
+</tr>
+<tr class="even">
+<td>Decision</td>
+<td>001-database-choice.md</td>
+<td>-</td>
+<td>⏳ Ready for back-links</td>
+</tr>
+<tr class="odd">
+<td>Decision</td>
+<td>002-validation-strategy.md</td>
+<td>-</td>
+<td>⏳ Ready for back-links</td>
+</tr>
+<tr class="even">
+<td>Pattern</td>
+<td>repository-pattern.md</td>
+<td>-</td>
+<td>⏳ Ready for back-links</td>
+</tr>
+<tr class="odd">
+<td>Pattern</td>
+<td>security-patterns.md</td>
+<td>-</td>
+<td>⏳ Ready for back-links</td>
+</tr>
+<tr class="even">
+<td>Deploy</td>
+<td>ci-pipeline.md</td>
+<td>-</td>
+<td>⏳ Ready for back-links</td>
+</tr>
+<tr class="odd">
+<td>Deploy</td>
+<td>staging-config.md</td>
+<td>-</td>
+<td>⏳ Ready for back-links</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Cross-Reference Verification</strong>: October 31, 2025<br />
+<strong>All Main Documentation</strong>: ✅ COMPLETE WITH FULL
+CROSS-LINKS<br />
+<strong>HTML Generation</strong>: Ready for MkDocs/ReDoc</p>
+</body>
+</html>

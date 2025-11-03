@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>PHASE-3-DEPLOYMENT-GUIDE</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#phase-3-deployment-infrastructure-guide"
+id="toc-phase-3-deployment-infrastructure-guide">Phase 3: Deployment
+Infrastructure Guide</a>
+<ul>
+<li><a
+href="#cicd-pipeline-for-documentation-generation-and-github-pages-deployment"
+id="toc-cicd-pipeline-for-documentation-generation-and-github-pages-deployment">CI/CD
+Pipeline for Documentation Generation and GitHub Pages
+Deployment</a></li>
+<li><a href="#overview-5-core-tasks"
+id="toc-overview-5-core-tasks">Overview: 5 Core Tasks</a></li>
+<li><a href="#prerequisites" id="toc-prerequisites">Prerequisites</a>
+<ul>
+<li><a href="#installed-tools" id="toc-installed-tools">Installed
+Tools</a></li>
+<li><a href="#repository-configuration"
+id="toc-repository-configuration">Repository Configuration</a></li>
+</ul></li>
+<li><a href="#detailed-implementation-steps"
+id="toc-detailed-implementation-steps">Detailed Implementation Steps</a>
+<ul>
+<li><a href="#step-1-extract-openapi-specification-item-3.8"
+id="toc-step-1-extract-openapi-specification-item-3.8">Step 1: Extract
+OpenAPI Specification (Item 3.8)</a></li>
+<li><a href="#step-2-generate-redoc-html-item-3.9"
+id="toc-step-2-generate-redoc-html-item-3.9">Step 2: Generate Redoc HTML
+(Item 3.9)</a></li>
+<li><a href="#step-3-convert-markdown-to-html-item-3.10"
+id="toc-step-3-convert-markdown-to-html-item-3.10">Step 3: Convert
+Markdown to HTML (Item 3.10)</a></li>
+<li><a href="#step-4-deploy-to-github-pages-item-3.11"
+id="toc-step-4-deploy-to-github-pages-item-3.11">Step 4: Deploy to
+GitHub Pages (Item 3.11)</a></li>
+<li><a href="#step-5-create-documentation-source-branch-item-3.13"
+id="toc-step-5-create-documentation-source-branch-item-3.13">Step 5:
+Create Documentation Source Branch (Item 3.13)</a></li>
+</ul></li>
+<li><a href="#complete-github-actions-workflow"
+id="toc-complete-github-actions-workflow">Complete GitHub Actions
+Workflow</a></li>
+<li><a href="#configuration-github-pages-settings"
+id="toc-configuration-github-pages-settings">Configuration: GitHub Pages
+Settings</a>
+<ul>
+<li><a href="#enable-github-pages" id="toc-enable-github-pages">Enable
+GitHub Pages</a></li>
+<li><a href="#optional-custom-domain"
+id="toc-optional-custom-domain">Optional: Custom Domain</a></li>
+</ul></li>
+<li><a href="#testing-verification-phase-4"
+id="toc-testing-verification-phase-4">Testing &amp; Verification (Phase
+4)</a>
+<ul>
+<li><a href="#item-4.14-configure-github-pages"
+id="toc-item-4.14-configure-github-pages">Item 4.14: Configure GitHub
+Pages</a></li>
+<li><a href="#item-4.15-test-pipeline-end-to-end"
+id="toc-item-4.15-test-pipeline-end-to-end">Item 4.15: Test Pipeline
+End-to-End</a></li>
+<li><a href="#item-4.16-verify-links-work"
+id="toc-item-4.16-verify-links-work">Item 4.16: Verify Links
+Work</a></li>
+</ul></li>
+<li><a href="#troubleshooting"
+id="toc-troubleshooting">Troubleshooting</a>
+<ul>
+<li><a href="#openapi-spec-not-extracting"
+id="toc-openapi-spec-not-extracting">OpenAPI spec not
+extracting</a></li>
+<li><a href="#redoc-html-not-generating"
+id="toc-redoc-html-not-generating">Redoc HTML not generating</a></li>
+<li><a href="#markdown-conversion-failing"
+id="toc-markdown-conversion-failing">Markdown conversion
+failing</a></li>
+</ul></li>
+<li><a href="#success-criteria" id="toc-success-criteria">Success
+Criteria</a></li>
+<li><a href="#next-steps" id="toc-next-steps">Next Steps</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="phase-3-deployment-infrastructure-guide">Phase 3: Deployment
+Infrastructure Guide</h1>
+<h2
+id="cicd-pipeline-for-documentation-generation-and-github-pages-deployment">CI/CD
+Pipeline for Documentation Generation and GitHub Pages Deployment</h2>
+<p><strong>Goal</strong>: Automate OpenAPI documentation generation,
+convert markdown to HTML, and deploy to GitHub Pages.</p>
+<hr />
+<h2 id="overview-5-core-tasks">Overview: 5 Core Tasks</h2>
+<table>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 18%" />
+<col style="width: 39%" />
+<col style="width: 24%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Task</th>
+<th>Item</th>
+<th>Description</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>3.8</strong></td>
+<td>Extract OpenAPI</td>
+<td>Extract <code>/v3/api-docs</code> from running Spring Boot app →
+<code>openapi.json</code></td>
+<td>⏳</td>
+</tr>
+<tr class="even">
+<td><strong>3.9</strong></td>
+<td>Generate Redoc</td>
+<td>Convert <code>openapi.json</code> → Redoc HTML
+(<code>index.html</code>)</td>
+<td>⏳</td>
+</tr>
+<tr class="odd">
+<td><strong>3.10</strong></td>
+<td>Convert Markdown</td>
+<td>Convert all <code>.md</code> files → HTML with table of
+contents</td>
+<td>⏳</td>
+</tr>
+<tr class="even">
+<td><strong>3.11</strong></td>
+<td>Deploy to Pages</td>
+<td>Push generated HTML to <code>gh-pages</code> branch</td>
+<td>⏳</td>
+</tr>
+<tr class="odd">
+<td><strong>3.13</strong></td>
+<td>Create Docs Branch</td>
+<td>Create orphan <code>docs-source</code> branch with source files</td>
+<td>⏳</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="installed-tools">Installed Tools</h3>
+<ul>
+<li>✅ Java 17 (for Spring Boot compilation)</li>
+<li>✅ Maven 3.9.x (pom.xml configured)</li>
+<li>✅ SpringDoc OpenAPI 2.4.0 (in pom.xml)</li>
+<li>⏳ Node.js (for Redoc CLI + markdown tools)</li>
+<li>⏳ Pandoc (for markdown → HTML conversion)</li>
+</ul>
+<h3 id="repository-configuration">Repository Configuration</h3>
+<ul>
+<li>✅ Git configured with SSH or HTTPS</li>
+<li>✅ GitHub repository: <code>Keglev/stockease</code></li>
+<li>✅ Default branch: <code>main</code></li>
+<li>⏳ GitHub Pages enabled (Settings → Pages → Source:
+<code>gh-pages</code> branch)</li>
+</ul>
+<hr />
+<h2 id="detailed-implementation-steps">Detailed Implementation
+Steps</h2>
+<h3 id="step-1-extract-openapi-specification-item-3.8">Step 1: Extract
+OpenAPI Specification (Item 3.8)</h3>
+<h4 id="what-extract-json-specification-from-v3api-docs">What: Extract
+JSON specification from <code>/v3/api-docs</code></h4>
+<p><strong>Why</strong>: SpringDoc automatically exposes OpenAPI spec at
+<code>/v3/api-docs</code>. Redoc needs this JSON file to generate
+interactive API documentation.</p>
+<p><strong>How</strong>:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Option A: Local Testing</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean package <span class="at">-q</span> <span class="at">-DskipTests</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Start Spring Boot app in background</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> <span class="at">-jar</span> target/stockease-0.0.1-SNAPSHOT.jar <span class="kw">&amp;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="va">APP_PID</span><span class="op">=</span><span class="va">$!</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 10  <span class="co"># Wait for startup</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract OpenAPI spec</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://localhost:8080/v3/api-docs <span class="op">&gt;</span> target/docs/openapi.json</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify extraction</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> target/docs/openapi.json <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.info.title&#39;</span>  <span class="co"># Should show &quot;StockEase API&quot;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop app</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="bu">kill</span> <span class="va">$APP_PID</span></span></code></pre></div>
+<p><strong>GitHub Actions Implementation</strong> (see
+<code>.github/workflows/docs-pipeline.yml</code>): - Builds app with
+<code>mvn clean package</code> - Runs app in background - Waits 10
+seconds for Tomcat startup - Extracts spec with <code>curl</code> -
+Validates JSON format - Kills process</p>
+<p><strong>Output</strong>:
+<code>backend/target/docs/openapi.json</code></p>
+<hr />
+<h3 id="step-2-generate-redoc-html-item-3.9">Step 2: Generate Redoc HTML
+(Item 3.9)</h3>
+<h4 id="what-convert-openapi-json-interactive-html-documentation">What:
+Convert OpenAPI JSON → Interactive HTML documentation</h4>
+<p><strong>Why</strong>: Redoc provides: - Single-page interactive API
+reference - Search functionality - Request/Response examples -
+Authentication documentation</p>
+<p><strong>How</strong>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install Redoc CLI</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> redoc-cli</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate HTML from OpenAPI spec</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">redoc-cli</span> build backend/target/docs/openapi.json <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> backend/target/docs/api/index.html <span class="dt">\</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--title</span> <span class="st">&quot;StockEase API Documentation&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify output</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lah</span> backend/target/docs/api/index.html</span></code></pre></div>
+<p><strong>GitHub Actions Implementation</strong>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Generate Redoc HTML</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    npm install -g redoc-cli</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    redoc-cli build backend/target/docs/openapi.json \</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>      -o backend/target/docs/api/index.html \</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>      --title &quot;StockEase API Documentation&quot;</span></code></pre></div>
+<p><strong>Output</strong>:
+<code>backend/target/docs/api/index.html</code> (~2-3 MB single-page
+app)</p>
+<p><strong>Customize Redoc</strong>:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- Custom logo, colors, sidebar settings --&gt;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">redoc</span> <span class="er">spec-url</span><span class="ot">=</span><span class="st">&quot;/openapi.json&quot;</span><span class="dt">&gt;&lt;/</span><span class="kw">redoc</span><span class="dt">&gt;</span></span></code></pre></div>
+<hr />
+<h3 id="step-3-convert-markdown-to-html-item-3.10">Step 3: Convert
+Markdown to HTML (Item 3.10)</h3>
+<h4
+id="what-convert-all-documentation-.md-files-html-with-table-of-contents">What:
+Convert all documentation <code>.md</code> files → HTML with table of
+contents</h4>
+<p><strong>Why</strong>: - Consistent styling across all docs -
+Automatic table of contents generation - Searchable content on GitHub
+Pages</p>
+<p><strong>Files to Convert</strong>:</p>
+<pre><code>backend/docs/
+├── index.md                              → docs/index.html
+├── JAVADOC-GUIDE.md                      → docs/javadoc-guide.html
+├── JAVADOC-PROGRESS.md                   → docs/javadoc-progress.html
+└── architecture/
+    ├── index.md                          → docs/architecture/index.html
+    ├── backend.md                        → docs/architecture/backend.html
+    ├── frontend.md                       → docs/architecture/frontend.html
+    ├── deployment.md                     → docs/architecture/deployment.html
+    ├── security.md                       → docs/architecture/security.html
+    ├── overview.md                       → docs/architecture/overview.html
+    └── decisions/
+        ├── 001-database-choice.md        → docs/architecture/decisions/001.html
+        └── 002-validation-strategy.md    → docs/architecture/decisions/002.html</code></pre>
+<p><strong>How</strong>:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install tools</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install pandoc  <span class="co"># On Linux</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> markdown-it-cli</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert all .md files with table of contents</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> backend/docs <span class="at">-name</span> <span class="st">&quot;*.md&quot;</span> <span class="at">-type</span> f <span class="kw">|</span> <span class="cf">while</span> <span class="bu">read</span> <span class="va">md_file</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">dir_path</span><span class="op">=</span><span class="va">$(</span><span class="fu">dirname</span> <span class="st">&quot;</span><span class="va">$md_file</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="st">&#39;s|backend/docs|docs|&#39;</span><span class="va">)</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mkdir</span> <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$dir_path</span><span class="st">&quot;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="va">html_file</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${md_file</span><span class="op">%</span>.md<span class="va">}</span><span class="st">.html&quot;</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="va">html_file</span><span class="op">=</span><span class="va">$(</span><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$html_file</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="st">&#39;s|backend/docs|docs|&#39;</span><span class="va">)</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Generate HTML with TOC</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="ex">pandoc</span> <span class="st">&quot;</span><span class="va">$md_file</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">-f</span> markdown <span class="dt">\</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">-t</span> html <span class="dt">\</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">--toc</span> <span class="dt">\</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">--toc-depth</span><span class="op">=</span>3 <span class="dt">\</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">-s</span> <span class="dt">\</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">-c</span> /css/style.css <span class="dt">\</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">&quot;</span><span class="va">$html_file</span><span class="st">&quot;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<p><strong>GitHub Actions Implementation</strong>:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Convert Markdown to HTML</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    sudo apt-get update &amp;&amp; apt-get install -y pandoc</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    mkdir -p docs/generated</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    find backend/docs -name &quot;*.md&quot; -type f | while read md_file; do</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>      html_path=&quot;docs/generated/$(basename &quot;$md_file&quot; .md).html&quot;</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      pandoc &quot;$md_file&quot; -f markdown -t html --toc -s -o &quot;$html_path&quot;</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    done</span></code></pre></div>
+<p><strong>HTML Output Features</strong>: - Auto-generated table of
+contents from headers - Syntax highlighting for code blocks - Responsive
+mobile-friendly styling - Navigation breadcrumbs</p>
+<p><strong>Output Directory</strong>:
+<code>docs/generated/*.html</code></p>
+<hr />
+<h3 id="step-4-deploy-to-github-pages-item-3.11">Step 4: Deploy to
+GitHub Pages (Item 3.11)</h3>
+<h4 id="what-push-generated-html-to-gh-pages-branch">What: Push
+generated HTML to <code>gh-pages</code> branch</h4>
+<p><strong>Why</strong>: - GitHub automatically serves content from
+<code>gh-pages</code> branch - Free static hosting - No additional
+infrastructure needed</p>
+<p><strong>How</strong>:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># GitHub Pages automatically deploys from gh-pages branch</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use GitHub Actions peaceiris/actions-gh-pages@v3</span></span></code></pre></div>
+<p><strong>GitHub Actions Implementation</strong>:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Deploy to GitHub Pages</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> peaceiris/actions-gh-pages@v3</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">publish_dir</span><span class="kw">:</span><span class="at"> ./docs/generated</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">cname</span><span class="kw">:</span><span class="at"> stockease-docs.keglev.github.io</span><span class="co">  # Optional custom domain</span></span></code></pre></div>
+<p><strong>Workflow</strong>: 1. Action pushes
+<code>docs/generated/*</code> content to <code>gh-pages</code> branch 2.
+GitHub Pages detects change 3. Content available at:
+<code>https://keglev.github.io/stockease/</code></p>
+<p><strong>URL Structure</strong>: - API Docs:
+<code>https://keglev.github.io/stockease/api/</code> - Architecture:
+<code>https://keglev.github.io/stockease/docs/architecture/</code> -
+Getting Started:
+<code>https://keglev.github.io/stockease/docs/getting-started.html</code></p>
+<hr />
+<h3 id="step-5-create-documentation-source-branch-item-3.13">Step 5:
+Create Documentation Source Branch (Item 3.13)</h3>
+<h4
+id="what-create-docs-source-branch-with-source-.md-files-no-generated-files">What:
+Create <code>docs-source</code> branch with source <code>.md</code>
+files (no generated files)</h4>
+<p><strong>Why</strong>: - Version control for documentation sources -
+Separate from generated artifacts - Easy to track documentation
+changes</p>
+<p><strong>How</strong>:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create orphan branch (no history)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> checkout <span class="at">--orphan</span> docs-source</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove all files</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rm <span class="at">-rf</span> .</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy only source documentation</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> checkout HEAD <span class="at">--</span> backend/docs backend/src/main/docs <span class="pp">*</span>.md</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Commit and push</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> config user.email <span class="st">&quot;ci@github.com&quot;</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> config user.name <span class="st">&quot;GitHub CI&quot;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add <span class="at">-A</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">&quot;docs: Documentation sources (Item 3.13)&quot;</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin docs-source <span class="at">--force</span></span></code></pre></div>
+<p><strong>Branch Contents</strong>:</p>
+<pre><code>docs-source/
+├── backend/
+│   ├── docs/
+│   │   ├── index.md
+│   │   ├── architecture/
+│   │   └── ...
+│   └── src/main/docs/
+│       └── api.md
+├── frontend/
+│   ├── README.md
+│   └── docs/
+└── README.md</code></pre>
+<p><strong>GitHub Actions Implementation</strong>:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Create docs-source branch</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    git config user.email &quot;actions@github.com&quot;</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    git config user.name &quot;GitHub Actions&quot;</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    git checkout --orphan docs-source</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    git rm -rf .</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    git checkout HEAD -- backend/docs backend/src/main/docs</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    git add -A</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    git commit -m &quot;docs: Push documentation sources&quot;</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    git push origin docs-source --force</span></code></pre></div>
+<hr />
+<h2 id="complete-github-actions-workflow">Complete GitHub Actions
+Workflow</h2>
+<p><strong>File</strong>:
+<code>.github/workflows/docs-pipeline.yml</code></p>
+<p>Triggers: - ✅ On push to <code>main</code> branch - ✅ On changes to
+<code>backend/src/main/**</code>, <code>docs/**</code>,
+<code>backend/pom.xml</code> - ✅ Manual trigger via
+<code>workflow_dispatch</code></p>
+<p><strong>Jobs</strong>: 1. <strong>build-docs</strong> (ubuntu-latest)
+- Extract OpenAPI spec - Generate Redoc HTML - Convert markdown files -
+Deploy to GitHub Pages - Create docs-source branch</p>
+<hr />
+<h2 id="configuration-github-pages-settings">Configuration: GitHub Pages
+Settings</h2>
+<h3 id="enable-github-pages">Enable GitHub Pages</h3>
+<ol type="1">
+<li><strong>Repository Settings</strong> → <strong>Pages</strong></li>
+<li><strong>Build and deployment</strong>
+<ul>
+<li><strong>Source</strong>: <code>Deploy from a branch</code></li>
+<li><strong>Branch</strong>: Select <code>gh-pages</code> /
+<code>root</code></li>
+</ul></li>
+<li><strong>Save</strong></li>
+</ol>
+<h3 id="optional-custom-domain">Optional: Custom Domain</h3>
+<ol type="1">
+<li><p>Create <code>CNAME</code> file in docs root:</p>
+<pre><code>stockease-docs.example.com</code></pre></li>
+<li><p>Add DNS record:</p>
+<pre><code>CNAME stockease-docs.example.com keglev.github.io</code></pre></li>
+</ol>
+<hr />
+<h2 id="testing-verification-phase-4">Testing &amp; Verification (Phase
+4)</h2>
+<h3 id="item-4.14-configure-github-pages">Item 4.14: Configure GitHub
+Pages</h3>
+<p>✅ Enable Pages → Deploy from <code>gh-pages</code> branch</p>
+<h3 id="item-4.15-test-pipeline-end-to-end">Item 4.15: Test Pipeline
+End-to-End</h3>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Push changes and monitor workflow</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin main</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Watch: GitHub → Actions tab → docs-pipeline workflow</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify all steps complete successfully</span></span></code></pre></div>
+<h3 id="item-4.16-verify-links-work">Item 4.16: Verify Links Work</h3>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># After successful deployment</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-I</span> https://keglev.github.io/stockease/api/</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-I</span> https://keglev.github.io/stockease/docs/architecture/</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for 200 OK responses</span></span></code></pre></div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="openapi-spec-not-extracting">OpenAPI spec not extracting</h3>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check if app started</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-v</span> http://localhost:8080/actuator/health</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify SpringDoc is properly configured</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> http://localhost:8080/v3/api-docs <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.info&#39;</span></span></code></pre></div>
+<h3 id="redoc-html-not-generating">Redoc HTML not generating</h3>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check OpenAPI JSON is valid</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> backend/target/docs/openapi.json <span class="kw">|</span> <span class="ex">jq</span> .</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Install redoc-cli globally</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> redoc-cli</span></code></pre></div>
+<h3 id="markdown-conversion-failing">Markdown conversion failing</h3>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify pandoc installed</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pandoc</span> <span class="at">--version</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Test conversion manually</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="ex">pandoc</span> backend/docs/index.md <span class="at">-o</span> test.html <span class="at">--toc</span></span></code></pre></div>
+<hr />
+<h2 id="success-criteria">Success Criteria</h2>
+<p>✅ Phase 3 Complete When: - [ ] OpenAPI spec extracting to JSON (Item
+3.8) - [ ] Redoc HTML generating from spec (Item 3.9) - [ ] All markdown
+files converting to HTML (Item 3.10) - [ ] GitHub Pages serving
+documentation (Item 3.11) - [ ] Documentation source branch created
+(Item 3.13) - [ ] GitHub Actions workflow running successfully - [ ] No
+build/deployment errors in Actions tab</p>
+<p>✅ Phase 4 Complete When: - [ ] GitHub Pages configured (Item 4.14) -
+[ ] Workflow tested end-to-end (Item 4.15) - [ ] All links verified
+working (Item 4.16) - [ ] Documentation accessible at public URL</p>
+<hr />
+<h2 id="next-steps">Next Steps</h2>
+<ol type="1">
+<li><strong>Immediate</strong>: Set up GitHub Actions workflow
+(<code>.github/workflows/docs-pipeline.yml</code>)</li>
+<li><strong>Next</strong>: Configure GitHub Pages in repository
+settings</li>
+<li><strong>Then</strong>: Push changes to main branch and monitor
+workflow</li>
+<li><strong>Finally</strong>: Verify documentation deployed and links
+working</li>
+</ol>
+<p><strong>Estimated Time</strong>: 1-2 hours for complete setup and
+verification</p>
+</body>
+</html>
