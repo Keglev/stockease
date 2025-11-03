@@ -397,6 +397,22 @@
         .hljs-number { color: #b5cea8; }
         .hljs-attr { color: #9cdcfe; }
         .hljs-comment { color: #6a9955; font-style: italic; }
+
+        /* Mermaid diagram styling */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+            background-color: var(--bg-white);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -613,32 +629,32 @@
                 </ul>
                 <pre class="mermaid"><code>graph TD
     subgraph Auth[&quot;POST /api/auth/login&quot;]
-        A1[Success: Valid username/password → JWT token]
-        A2[Failure: Invalid credentials → 401]
-        A3[Failure: User not found → 401]
+        A1[Success - Valid username/password → JWT token]
+        A2[Failure - Invalid credentials → 401]
+        A3[Failure - User not found → 401]
     end
     
     subgraph Get[&quot;GET /api/products&quot;]
-        G1[Success: Admin/User → Product list]
-        G2[Authorization: Anonymous → 401]
-        G3[Pagination: Skip/limit parameters]
+        G1[Success - Admin/User → Product list]
+        G2[Authorization - Anonymous → 401]
+        G3[Pagination - Skip/limit parameters]
     end
     
     subgraph Post[&quot;POST /api/products&quot;]
-        P1[Success: Admin only → Created product]
-        P2[Failure: Non-admin → 403]
-        P3[Failure: Invalid data → 400]
+        P1[Success - Admin only → Created product]
+        P2[Failure - Non-admin → 403]
+        P3[Failure - Invalid data → 400]
     end
     
     subgraph Put[&quot;PUT /api/products/{id}&quot;]
-        U1[Success: Admin only → Updated product]
-        U2[Failure: Non-admin → 403]
-        U3[Failure: Invalid quantity → Validation error]
+        U1[Success - Admin only → Updated product]
+        U2[Failure - Non-admin → 403]
+        U3[Failure - Invalid quantity → Validation error]
     end
     
     subgraph Delete[&quot;DELETE /api/products/{id}&quot;]
-        D1[Success: Admin only → 204 No Content]
-        D2[Failure: Non-admin → 403]
+        D1[Success - Admin only → 204 No Content]
+        D2[Failure - Non-admin → 403]
     end
     
     style Auth fill:#e3f2fd
@@ -1217,6 +1233,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
             initTableOfContents();
+        });
+    </script>
+
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
     </script>
 </body>

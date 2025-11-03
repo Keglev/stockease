@@ -397,6 +397,22 @@
         .hljs-number { color: #b5cea8; }
         .hljs-attr { color: #9cdcfe; }
         .hljs-comment { color: #6a9955; font-style: italic; }
+
+        /* Mermaid diagram styling */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+            background-color: var(--bg-white);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -425,7 +441,7 @@
                 <h3 id="multi-stage-build-pipeline">Multi-Stage Build
                 Pipeline</h3>
                 <pre class="mermaid"><code>graph TD
-    subgraph Stage1[&quot;Stage 1: BUILD&lt;br/&gt;Base: maven:3.9.6-eclipse-temurin-17&quot;]
+    subgraph Stage1[&quot;Stage 1: BUILD - Base: maven:3.9.6-eclipse-temurin-17&quot;]
         B1[1. Copy Maven wrapper + pom.xml] --&gt; B2[2. Download dependencies]
         B2 --&gt; B3[3. Copy application source code]
         B3 --&gt; B4[4. Build JAR]
@@ -433,25 +449,25 @@
         B1 -.-&gt;|Enables| B1A[Dependency layer caching]
         B2 -.-&gt;|Cached unless| B2A[pom.xml changes]
         B3 -.-&gt;|Changes| B3A[frequently, runs last]
-        B4 -.-&gt;|Output| B4A[/workspace/target/stockease-0.0.1-SNAPSHOT.jar]
+        B4 -.-&gt;|Output| B4A[JAR artifact in workspace/target]
         
-        B4 --&gt; Result1[Result: ~1.2GB image&lt;br/&gt;JDK + Maven + build tools]
+        B4 --&gt; Result1[Result: ~1.2GB image - JDK + Maven + build tools]
     end
     
     Result1 --&gt;|Extract artifact only| Stage2
     
-    subgraph Stage2[&quot;Stage 2: RUNTIME&lt;br/&gt;Base: eclipse-temurin:17-jre-jammy&quot;]
-        R1[1. Copy JAR from build stage] --&gt; R2[2. Create non-root user app:app]
+    subgraph Stage2[&quot;Stage 2: RUNTIME - Base: eclipse-temurin:17-jre-jammy&quot;]
+        R1[1. Copy JAR from build stage] --&gt; R2[2. Create non-root user]
         R2 --&gt; R3[3. Set USER app]
         R3 --&gt; R4[4. Expose port 8081]
-        R4 --&gt; R5[5. ENTRYPOINT: java -jar /app/app.jar]
+        R4 --&gt; R5[5. Set ENTRYPOINT]
         
-        R1 -.-&gt;|Command| R1A[COPY --from=build /workspace/target/*.jar /app/app.jar]
+        R1 -.-&gt;|Command| R1A[COPY from build stage to /app/app.jar]
         R2 -.-&gt;|Security| R2A[Run with limited permissions]
         R3 -.-&gt;|Effect| R3A[All processes run as non-root]
         R4 -.-&gt;|Matches| R4A[Spring Boot server.port]
         
-        R5 --&gt; Result2[Result: ~250MB image&lt;br/&gt;JRE + application only]
+        R5 --&gt; Result2[Result: ~250MB image - JRE + application only]
     end
     
     style Stage1 fill:#e3f2fd
@@ -1038,6 +1054,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
             initTableOfContents();
+        });
+    </script>
+
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
     </script>
 </body>

@@ -397,6 +397,22 @@
         .hljs-number { color: #b5cea8; }
         .hljs-attr { color: #9cdcfe; }
         .hljs-comment { color: #6a9955; font-style: italic; }
+
+        /* Mermaid diagram styling */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+            background-color: var(--bg-white);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -456,20 +472,20 @@
                 Manual trigger (workflow_dispatch)</p>
                 <p><strong>Pipeline Stages</strong>:</p>
                 <pre class="mermaid"><code>graph TD
-    A[Stage 1: Checkout &amp; Setup] --&gt; B[Stage 2: Build]
-    B --&gt; C[Stage 3: Test]
-    C --&gt; D[Stage 4: Build Docker Image]
-    D --&gt; E[Stage 5: Push to Container Registry]
-    E --&gt; F[Stage 6: Deploy to Koyeb]
-    F --&gt; G[Stage 7: Verification]
+    A[Stage 1 - Checkout &amp; Setup] --&gt; B[Stage 2 - Build]
+    B --&gt; C[Stage 3 - Test]
+    C --&gt; D[Stage 4 - Build Docker Image]
+    D --&gt; E[Stage 5 - Push to Container Registry]
+    E --&gt; F[Stage 6 - Deploy to Koyeb]
+    F --&gt; G[Stage 7 - Verification]
     
     A --&gt;|Details| A1[&quot;- Checkout code from GitHub&lt;br/&gt;- Set up JDK 17&lt;br/&gt;- Cache Maven dependencies&lt;br/&gt;- Verify build environment&quot;]
     B --&gt;|Details| B1[&quot;- Run Maven clean package&lt;br/&gt;- Compile all Java source code&lt;br/&gt;- Skip tests in this stage&lt;br/&gt;- Generate JAR file&quot;]
     C --&gt;|Details| C1[&quot;- Run 65+ unit tests&lt;br/&gt;- Tests use H2 in-memory database&lt;br/&gt;- Generate coverage reports (JaCoCo)&lt;br/&gt;- Fail pipeline if tests don&#39;t pass&quot;]
-    D --&gt;|Details| D1[&quot;- Read Dockerfile from repository&lt;br/&gt;- Build image based on Dockerfile&lt;br/&gt;- Tag: ghcr.io/keglev/stockease:latest&lt;br/&gt;- Tag: ghcr.io/keglev/stockease:{commit-sha}&lt;br/&gt;- Generate SBOM&quot;]
-    E --&gt;|Details| E1[&quot;- Authenticate with GHCR&lt;br/&gt;- Push tagged images to GHCR&lt;br/&gt;- Make images available for deployment&lt;br/&gt;- Store in: ghcr.io/keglev/stockease:*&quot;]
+    D --&gt;|Details| D1[&quot;- Read Dockerfile from repository&lt;br/&gt;- Build image based on Dockerfile&lt;br/&gt;- Tag as ghcr.io/keglev/stockease latest&lt;br/&gt;- Tag as ghcr.io/keglev/stockease commit-sha&lt;br/&gt;- Generate SBOM&quot;]
+    E --&gt;|Details| E1[&quot;- Authenticate with GHCR&lt;br/&gt;- Push tagged images to GHCR&lt;br/&gt;- Make images available for deployment&lt;br/&gt;- Store in ghcr.io/keglev/stockease&quot;]
     F --&gt;|Details| F1[&quot;- Get Koyeb API token from secrets&lt;br/&gt;- Trigger Koyeb deployment&lt;br/&gt;- Pull latest image from GHCR&lt;br/&gt;- Perform blue-green deployment&lt;br/&gt;- Health checks (retry up to 5 times)&lt;br/&gt;- Rollback if health check fails&quot;]
-    G --&gt;|Details| G1[&quot;- Verify deployment status&lt;br/&gt;- Check health endpoint: /health&lt;br/&gt;- Log deployment results&lt;br/&gt;- Notify on success/failure&quot;]
+    G --&gt;|Details| G1[&quot;- Verify deployment status&lt;br/&gt;- Check health endpoint /health&lt;br/&gt;- Log deployment results&lt;br/&gt;- Notify on success/failure&quot;]
     
     style A fill:#e3f2fd
     style B fill:#e3f2fd
@@ -486,17 +502,17 @@
                 changes - Manual trigger</p>
                 <p><strong>Pipeline Stages</strong>:</p>
                 <pre class="mermaid"><code>graph TD
-    A[Stage 1: Extract OpenAPI Spec] --&gt; B[Stage 2: Generate Redoc HTML]
-    B --&gt; C[Stage 3: Convert Markdown to HTML]
-    C --&gt; D[Stage 4: Collect Coverage Reports]
-    D --&gt; E[Stage 5: Commit to Docs Branch]
-    E --&gt; F[Stage 6: Cleanup]
+    A[Stage 1 - Extract OpenAPI Spec] --&gt; B[Stage 2 - Generate Redoc HTML]
+    B --&gt; C[Stage 3 - Convert Markdown to HTML]
+    C --&gt; D[Stage 4 - Collect Coverage Reports]
+    D --&gt; E[Stage 5 - Commit to Docs Branch]
+    E --&gt; F[Stage 6 - Cleanup]
     
     A --&gt;|Details| A1[&quot;- Build backend application&lt;br/&gt;- Start Spring Boot server&lt;br/&gt;- Fetch OpenAPI spec from /v3/api-docs&lt;br/&gt;- Validate OpenAPI spec&lt;br/&gt;- Save to docs/api/openapi/openapi.json&quot;]
     B --&gt;|Details| B1[&quot;- Install Redoc CLI&lt;br/&gt;- Read OpenAPI spec&lt;br/&gt;- Generate interactive HTML documentation&lt;br/&gt;- Output to docs/api/redoc/index.html&lt;br/&gt;- Optimize for web&quot;]
     C --&gt;|Details| C1[&quot;- Install pandoc&lt;br/&gt;- For each .md file in docs/architecture/:&lt;br/&gt;  * Convert to HTML&lt;br/&gt;  * Apply styling&lt;br/&gt;  * Output to docs/architecture/*.html&lt;br/&gt;- Convert docs/index.md to docs/index.html&lt;br/&gt;- Generate table of contents&quot;]
     D --&gt;|Details| D1[&quot;- Run Maven test with JaCoCo&lt;br/&gt;- Generate coverage report&lt;br/&gt;- Copy to docs/coverage/&lt;br/&gt;- Generate index.html for coverage dashboard&lt;br/&gt;- Calculate coverage percentage&quot;]
-    E --&gt;|Details| E1[&quot;- Switch to docs branch&lt;br/&gt;- Remove old generated files&lt;br/&gt;- Copy all new HTML files&lt;br/&gt;- Commit: &#39;docs: auto-generated documentation&#39;&lt;br/&gt;- Push to origin/docs&lt;br/&gt;- GitHub Pages auto-publishes&quot;]
+    E --&gt;|Details| E1[&quot;- Switch to docs branch&lt;br/&gt;- Remove old generated files&lt;br/&gt;- Copy all new HTML files&lt;br/&gt;- Commit with auto-generated documentation&lt;br/&gt;- Push to origin/docs&lt;br/&gt;- GitHub Pages auto-publishes&quot;]
     F --&gt;|Details| F1[&quot;- Remove temporary files&lt;br/&gt;- Clean build artifacts&lt;br/&gt;- Log completion&quot;]
     
     style A fill:#e3f2fd
@@ -1104,6 +1120,17 @@ Connection Timeout: 30 seconds</code></pre>
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
             initTableOfContents();
+        });
+    </script>
+
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
     </script>
 </body>

@@ -397,6 +397,22 @@
         .hljs-number { color: #b5cea8; }
         .hljs-attr { color: #9cdcfe; }
         .hljs-comment { color: #6a9955; font-style: italic; }
+
+        /* Mermaid diagram styling */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+            background-color: var(--bg-white);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -484,11 +500,11 @@
                 <code>PasswordEncoder</code> - BCrypt hashing</p>
                 <p><strong>Authentication Flow</strong>:</p>
                 <pre class="mermaid"><code>graph TD
-    A[1. User calls POST /api/auth/login&lt;br/&gt;with username:password] --&gt; B[2. Spring Security intercepts&lt;br/&gt;HTTP Basic]
+    A[1. User calls POST /api/auth/login&lt;br/&gt;with username and password] --&gt; B[2. Spring Security intercepts&lt;br/&gt;HTTP Basic]
     B --&gt; C[3. UserDetailsService&lt;br/&gt;validates credentials]
     C --&gt; D[4. JwtProvider generates token]
     D --&gt; E[5. Token returned in response]
-    E --&gt; F[6. Client includes token in&lt;br/&gt;Authorization: Bearer header]
+    E --&gt; F[6. Client includes token in&lt;br/&gt;Authorization Bearer header]
     F --&gt; G[7. JwtProvider validates token&lt;br/&gt;on subsequent requests]
     
     G --&gt; H{Valid?}
@@ -1131,6 +1147,17 @@ public class GlobalExceptionHandler {
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
             initTableOfContents();
+        });
+    </script>
+
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
     </script>
 </body>

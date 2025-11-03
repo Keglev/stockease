@@ -397,6 +397,22 @@
         .hljs-number { color: #b5cea8; }
         .hljs-attr { color: #9cdcfe; }
         .hljs-comment { color: #6a9955; font-style: italic; }
+
+        /* Mermaid diagram styling */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+            background-color: var(--bg-white);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -445,18 +461,18 @@
                 <h3 id="how-jwt-works-in-stockease">How JWT Works in
                 StockEase</h3>
                 <pre class="mermaid"><code>graph TD
-    A[1. User submits credentials&lt;br/&gt;Username: testuser&lt;br/&gt;Password: testpassword] --&gt; B[2. POST /api/auth/login]
+    A[1. User submits credentials&lt;br/&gt;testuser / testpassword] --&gt; B[2. POST /api/auth/login]
     
     B --&gt; C[AuthController receives request]
     C --&gt; D[AuthenticationManager validates password]
     D --&gt; E[JwtUtil generates JWT token]
-    E --&gt; F[Response: JWT token data]
+    E --&gt; F[Response with JWT token data]
     
     F --&gt; G[3. Client stores JWT in&lt;br/&gt;Authorization header]
     G --&gt; H[4. Subsequent requests include JWT&lt;br/&gt;GET /api/products]
     
     H --&gt; I[JwtFilter validates token]
-    I --&gt; J[Extracts user, role]
+    I --&gt; J[Extracts user and role]
     J --&gt; K[Proceeds with request]
     
     K --&gt; L{Token valid?}
@@ -1173,6 +1189,17 @@ HMACSHA256(
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
             initTableOfContents();
+        });
+    </script>
+
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
     </script>
 </body>
