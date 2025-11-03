@@ -32,21 +32,21 @@ on:
 
 ```mermaid
 graph TD
-    A[1. Checkout Code<br/>Fetch repository from GitHub] --> B[2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies]
-    B --> C[3. Run Tests 65+ tests<br/>H2 database, ~1 minute]
+    A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies"]
+    B --> C["3. Run Tests 65+ tests<br/>H2 database, ~1 minute"]
     
-    C --> D{Tests Pass?}
-    D -->|✅ Yes| E[4. Build Application<br/>Maven package, create JAR]
-    D -->|❌ No| F[Stop, notify]
+    C --> D["Tests Pass?"]
+    D -->|Yes| E["4. Build Application<br/>Maven package, create JAR"]
+    D -->|No| F["Stop, notify"]
     
-    E --> G[5. Build Docker Image<br/>ghcr.io/keglev/stockease:latest]
-    G --> H[6. Push to Container Registry<br/>GHCR authentication, push image]
-    H --> I[7. Deploy to Koyeb<br/>Trigger redeploy via API]
-    I --> J[8. Wait for Healthy up to 10 min<br/>Poll service status]
+    E --> G["5. Build Docker Image<br/>ghcr.io/keglev/stockease latest"]
+    G --> H["6. Push to Container Registry<br/>GHCR authentication, push image"]
+    H --> I["7. Deploy to Koyeb<br/>Trigger redeploy via API"]
+    I --> J["8. Wait for Healthy up to 10 min<br/>Poll service status"]
     
-    J --> K{Deployment Healthy?}
-    K -->|✅ Yes| L[Success]
-    K -->|❌ Timeout| M[Failure notification]
+    J --> K["Deployment Healthy?"]
+    K -->|Yes| L[Success]
+    K -->|Timeout| M["Failure notification"]
     
     style A fill:#e3f2fd
     style B fill:#e3f2fd
