@@ -431,72 +431,85 @@
                 <p>The backend follows a <strong>three-tier layered
                 architecture</strong> with clear separation of
                 concerns:</p>
-                <pre><code>┌─────────────────────────────────────┐
-│   REST Controller Layer             │  ← HTTP Request/Response Handling
-│   (AuthController, ProductController,    HTTP Methods, Status Codes
-│    HealthController)                │   Request/Response Mapping
-├─────────────────────────────────────┤
-│   Service Layer                     │  ← Business Logic &amp; Validation
-│   (AuthService, ProductService)     │   Data transformation
-│                                     │   Authorization checks
-├─────────────────────────────────────┤
-│   Repository Layer                  │  ← Database Access (Spring Data JPA)
-│   (UserRepository, ProductRepository)   SQL query execution
-│                                     │   Entity lifecycle management
-├─────────────────────────────────────┤
-│   Entity/Model Layer                │  ← Domain Objects
-│   (AppUser, Product JPA Entities)   │   Database column mappings
-│                                     │   Relationships &amp; constraints
-├─────────────────────────────────────┤
-│   Database Layer                    │  ← PostgreSQL
-│   (Flyway Migrations, Tables)       │   ACID transactions
-│                                     │   Schema versioning
-└─────────────────────────────────────┘</code></pre>
+                <pre class="mermaid"><code>graph TD
+    subgraph Controller[&quot;REST Controller Layer&quot;]
+        C1[&quot;HTTP Request/Response Handling&lt;br/&gt;AuthController, ProductController, HealthController&lt;br/&gt;HTTP Methods, Status Codes, Request/Response Mapping&quot;]
+    end
+    
+    subgraph Service[&quot;Service Layer&quot;]
+        S1[&quot;Business Logic &amp; Validation&lt;br/&gt;AuthService, ProductService&lt;br/&gt;Data transformation, Authorization checks&quot;]
+    end
+    
+    subgraph Repository[&quot;Repository Layer&quot;]
+        R1[&quot;Database Access (Spring Data JPA)&lt;br/&gt;UserRepository, ProductRepository&lt;br/&gt;SQL query execution, Entity lifecycle management&quot;]
+    end
+    
+    subgraph Entity[&quot;Entity/Model Layer&quot;]
+        E1[&quot;Domain Objects&lt;br/&gt;AppUser, Product JPA Entities&lt;br/&gt;Database column mappings, Relationships &amp; constraints&quot;]
+    end
+    
+    subgraph Database[&quot;Database Layer&quot;]
+        D1[&quot;PostgreSQL&lt;br/&gt;Flyway Migrations, Tables&lt;br/&gt;ACID transactions, Schema versioning&quot;]
+    end
+    
+    Controller --&gt; Service
+    Service --&gt; Repository
+    Repository --&gt; Entity
+    Entity --&gt; Database
+    
+    style Controller fill:#e3f2fd
+    style Service fill:#fff3e0
+    style Repository fill:#e8f5e9
+    style Entity fill:#f3e5f5
+    style Database fill:#fce4ec</code></pre>
                 <hr />
                 <h2 id="request-lifecycle">Request Lifecycle</h2>
-                <pre><code>HTTP Request
-     ↓
-[Spring DispatcherServlet]
-     ↓
-[Security Filter Chain]
-     ├─ CorsFilter (CORS validation)
-     ├─ SecurityContextPersistenceFilter (JWT parsing)
-     └─ JwtAuthenticationFilter (Token validation)
-     ↓
-[Authentication successful]
-     ↓
-[Route to @RequestMapping handler]
-     ↓
-[Controller Method Execution]
-     ├─ @PathVariable &amp; @RequestParam binding
-     ├─ @RequestBody deserialization (JSON → DTO)
-     └─ Spring Validation (@Valid)
-     ↓
-[Invoke Service Method]
-     ├─ Business logic execution
-     ├─ Authorization checks (@PreAuthorize)
-     └─ Data validation
-     ↓
-[Invoke Repository Method]
-     ├─ Query execution
-     ├─ Entity lazy/eager loading
-     └─ Transaction management
-     ↓
-[Service processes results]
-     ├─ Transform entities to DTOs
-     ├─ Handle errors &amp; exceptions
-     └─ Return response object
-     ↓
-[Controller builds HTTP response]
-     ├─ ResponseEntity construction
-     ├─ HTTP status code assignment
-     └─ Header setup
-     ↓
-[Response Serialization]
-     ├─ DTO → JSON conversion (Jackson)
-     └─ Content-Type: application/json
-     ↓
-HTTP Response with Status &amp; Body</code></pre>
+                <pre class="mermaid"><code>graph TD
+    A[HTTP Request] --&gt; B[Spring DispatcherServlet]
+    B --&gt; C[Security Filter Chain]
+    
+    C --&gt; C1[CorsFilter: CORS validation]
+    C1 --&gt; C2[SecurityContextPersistenceFilter: JWT parsing]
+    C2 --&gt; C3[JwtAuthenticationFilter: Token validation]
+    
+    C3 --&gt; D{Authentication successful?}
+    D --&gt;|Yes| E[Route to @RequestMapping handler]
+    D --&gt;|No| X[Return 401 Unauthorized]
+    
+    E --&gt; F[Controller Method Execution]
+    F --&gt; F1[@PathVariable &amp; @RequestParam binding]
+    F1 --&gt; F2[@RequestBody deserialization JSON → DTO]
+    F2 --&gt; F3[Spring Validation @Valid]
+    
+    F3 --&gt; G[Invoke Service Method]
+    G --&gt; G1[Business logic execution]
+    G1 --&gt; G2[Authorization checks @PreAuthorize]
+    G2 --&gt; G3[Data validation]
+    
+    G3 --&gt; H[Invoke Repository Method]
+    H --&gt; H1[Query execution]
+    H1 --&gt; H2[Entity lazy/eager loading]
+    H2 --&gt; H3[Transaction management]
+    
+    H3 --&gt; I[Service processes results]
+    I --&gt; I1[Transform entities to DTOs]
+    I1 --&gt; I2[Handle errors &amp; exceptions]
+    I2 --&gt; I3[Return response object]
+    
+    I3 --&gt; J[Controller builds HTTP response]
+    J --&gt; J1[ResponseEntity construction]
+    J1 --&gt; J2[HTTP status code assignment]
+    J2 --&gt; J3[Header setup]
+    
+    J3 --&gt; K[Response Serialization]
+    K --&gt; K1[DTO → JSON conversion Jackson]
+    K1 --&gt; K2[Content-Type: application/json]
+    
+    K2 --&gt; L[HTTP Response with Status &amp; Body]
+    
+    style A fill:#e3f2fd
+    style L fill:#c8e6c9
+    style X fill:#ffcdd2</code></pre>
                 <hr />
                 <h2 id="project-structure">Project Structure</h2>
                 <pre><code>backend/

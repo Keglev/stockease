@@ -444,27 +444,29 @@
                 Flow</h2>
                 <h3 id="how-jwt-works-in-stockease">How JWT Works in
                 StockEase</h3>
-                <pre><code>1. User submits credentials
-   ├─ Username: &quot;testuser&quot;
-   └─ Password: &quot;testpassword&quot;
-
-2. POST /api/auth/login
-   ├─ AuthController receives request
-   ├─ AuthenticationManager validates password
-   ├─ JwtUtil generates JWT token
-   └─ Response: { &quot;data&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot; }
-
-3. Client stores JWT in Authorization header
-   └─ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-4. Subsequent requests include JWT
-   └─ GET /api/products
-      └─ JwtFilter validates token
-      └─ Extracts user, role
-      └─ Proceeds with request
-
-5. Token expires or becomes invalid
-   └─ Returns 401 Unauthorized</code></pre>
+                <pre class="mermaid"><code>graph TD
+    A[1. User submits credentials&lt;br/&gt;Username: testuser&lt;br/&gt;Password: testpassword] --&gt; B[2. POST /api/auth/login]
+    
+    B --&gt; C[AuthController receives request]
+    C --&gt; D[AuthenticationManager validates password]
+    D --&gt; E[JwtUtil generates JWT token]
+    E --&gt; F[Response: JWT token data]
+    
+    F --&gt; G[3. Client stores JWT in&lt;br/&gt;Authorization header]
+    G --&gt; H[4. Subsequent requests include JWT&lt;br/&gt;GET /api/products]
+    
+    H --&gt; I[JwtFilter validates token]
+    I --&gt; J[Extracts user, role]
+    J --&gt; K[Proceeds with request]
+    
+    K --&gt; L{Token valid?}
+    L --&gt;|Yes| M[Request processed]
+    L --&gt;|No/Expired| N[5. Returns 401 Unauthorized]
+    
+    style A fill:#e3f2fd
+    style F fill:#c8e6c9
+    style M fill:#c8e6c9
+    style N fill:#ffcdd2</code></pre>
                 <h3 id="jwt-token-structure-in-tests">JWT Token
                 Structure in Tests</h3>
                 <pre><code>Header (Algorithm &amp; Type)

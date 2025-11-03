@@ -421,22 +421,17 @@
                 <h2 id="the-test-pyramid-concept">The Test Pyramid
                 Concept</h2>
                 <h3 id="traditional-pyramid">Traditional Pyramid</h3>
-                <pre><code>                    ▲
-                   ╱│╲
-                  ╱ │ ╲                System/E2E (5%)
-                ╱   │   ╲              Slow, expensive
-               ╱─────┼─────╲           Simulate user scenarios
-              ╱      │      ╲
-             ╱       │       ╲         Integration (25%)
-            ╱        │        ╲        Medium speed
-           ╱─────────┼─────────╲       Test layer interactions
-          ╱          │          ╲
-         ╱           │           ╲     Unit (70%)
-        ╱            │            ╲    Fast, cheap
-       ╱─────────────┴─────────────╲   Test one thing
-      ╱                             ╲
-     ╱_____________________________────╲
-    ╱          Unit Tests (Base)       ╲</code></pre>
+                <pre class="mermaid"><code>graph TD
+    A[System/E2E 5%&lt;br/&gt;Slow, expensive&lt;br/&gt;Simulate user scenarios] 
+    B[Integration 25%&lt;br/&gt;Medium speed&lt;br/&gt;Test layer interactions]
+    C[Unit 70%&lt;br/&gt;Fast, cheap&lt;br/&gt;Test one thing]
+    
+    C --- B
+    B --- A
+    
+    style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+    style B fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px</code></pre>
                 <h3 id="benefits-of-this-shape">Benefits of This
                 Shape</h3>
                 <table>
@@ -484,22 +479,17 @@
                 <h2 id="stockease-test-pyramid">StockEase Test
                 Pyramid</h2>
                 <h3 id="current-distribution">Current Distribution</h3>
-                <pre><code>                    ▲
-                   ╱│╲
-                  ╱ │ ╲              
-                ╱ 🔵 │ ╲             System/E2E: 0 tests (🔴 Not yet)
-               ╱─────┼─────╲
-              ╱      │      ╲
-             ╱ 🟢 🟢 │ ╲         Integration: 1 test (5%)
-            ╱ 🟢 🟢 │  ╲        @SpringBootTest context load
-           ╱─────────┼─────────╲
-          ╱          │          ╲
-         ╱ 🟢🟢🟢🟢🟢🟢 │ ╲         Unit/Slice: 8 tests (95%)
-        ╱ 🟢🟢🟢🟢🟢🟢 │  ╲        @WebMvcTest + unit tests
-       ╱─────────────┴─────────────╲
-      ╱                             ╲
-     ╱_____________________________────╲
-    ╱          Unit &amp; Slice Tests       ╲</code></pre>
+                <pre class="mermaid"><code>graph TD
+    A[&quot;System/E2E: 0 tests 🔴&lt;br/&gt;Not yet implemented&quot;]
+    B[&quot;Integration: 1 test 5% 🟢&lt;br/&gt;@SpringBootTest context load&quot;]
+    C[&quot;Unit/Slice: 8 tests 95% 🟢&lt;br/&gt;@WebMvcTest + unit tests&quot;]
+    
+    C --- B
+    B --- A
+    
+    style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+    style B fill:#fff3e0,stroke:#388e3c,stroke-width:3px
+    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px</code></pre>
                 <h3 id="by-test-type">By Test Type</h3>
                 <table>
                 <thead>

@@ -440,52 +440,34 @@
                 <code>/docs/</code> only - Changes to
                 <code>.gitignore</code> only</p>
                 <h3 id="pipeline-stages">Pipeline Stages</h3>
-                <pre><code>┌─────────────────────────────────────┐
-│ 1. Checkout Code                    │
-│ Fetch repository from GitHub        │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 2. Setup Java Environment           │
-│ JDK 17, Maven cache, dependencies   │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 3. Run Tests (65+ tests)            │
-│ H2 database, ~1 minute              │
-└──────────────┬──────────────────────┘
-               ↓
-        ✅ Pass? → Continue
-        ❌ Fail? → Stop, notify
-               │
-               ↓
-┌─────────────────────────────────────┐
-│ 4. Build Application                │
-│ Maven package, create JAR           │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 5. Build Docker Image               │
-│ ghcr.io/keglev/stockease:latest     │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 6. Push to Container Registry       │
-│ GHCR authentication, push image     │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 7. Deploy to Koyeb                  │
-│ Trigger redeploy via API            │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 8. Wait for Healthy (up to 10 min)  │
-│ Poll service status                 │
-└──────────────┬──────────────────────┘
-               ↓
-        ✅ Healthy → Success
-        ❌ Timeout → Failure notification</code></pre>
+                <pre class="mermaid"><code>graph TD
+    A[1. Checkout Code&lt;br/&gt;Fetch repository from GitHub] --&gt; B[2. Setup Java Environment&lt;br/&gt;JDK 17, Maven cache, dependencies]
+    B --&gt; C[3. Run Tests 65+ tests&lt;br/&gt;H2 database, ~1 minute]
+    
+    C --&gt; D{Tests Pass?}
+    D --&gt;|✅ Yes| E[4. Build Application&lt;br/&gt;Maven package, create JAR]
+    D --&gt;|❌ No| F[Stop, notify]
+    
+    E --&gt; G[5. Build Docker Image&lt;br/&gt;ghcr.io/keglev/stockease:latest]
+    G --&gt; H[6. Push to Container Registry&lt;br/&gt;GHCR authentication, push image]
+    H --&gt; I[7. Deploy to Koyeb&lt;br/&gt;Trigger redeploy via API]
+    I --&gt; J[8. Wait for Healthy up to 10 min&lt;br/&gt;Poll service status]
+    
+    J --&gt; K{Deployment Healthy?}
+    K --&gt;|✅ Yes| L[Success]
+    K --&gt;|❌ Timeout| M[Failure notification]
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style E fill:#e3f2fd
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+    style I fill:#fff3e0
+    style J fill:#fff3e0
+    style L fill:#c8e6c9
+    style F fill:#ffcdd2
+    style M fill:#ffcdd2</code></pre>
                 <h3 id="stage-details">Stage Details</h3>
                 <h4 id="stage-1-checkout">Stage 1: Checkout</h4>
                 <div class="sourceCode" id="cb3"><pre

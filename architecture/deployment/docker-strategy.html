@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004a99;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            color: var(--text);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-breadcrumb {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .nav-breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .nav-breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            padding: 2rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-section a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-section a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .nav-section a.active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .content {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        h4, h5, h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code */
+        code {
+            background-color: var(--bg-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        table tbody tr:hover {
+            background-color: #f0f6ff;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Alerts / Boxes */
+        .info-box, .warning-box, .success-box, .danger-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border-color: var(--info);
+            color: #004a87;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .danger-box {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        /* TOC */
+        nav.toc {
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        nav.toc li {
+            margin: 0.25rem 0;
+        }
+
+        nav.toc a {
+            font-size: 0.95rem;
+        }
+
+        nav.toc > ul > li > a {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text);
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                order: 2;
+            }
+
+            main {
+                order: 1;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-breadcrumb {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            header, aside, footer {
+                display: none;
+            }
+
+            .content {
+                box-shadow: none;
+                background: white;
+            }
+        }
+
+        /* Syntax Highlighting (basic) */
+        .hljs-keyword { color: #569cd6; }
+        .hljs-string { color: #ce9178; }
+        .hljs-number { color: #b5cea8; }
+        .hljs-attr { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1 id="docker-containerization-strategy">Docker
+                Containerization Strategy</h1>
+                <h2 id="overview">Overview</h2>
+                <p>StockEase uses a multi-stage Docker build strategy to
+                create minimal, secure, and reproducible container
+                images for production deployment. The Dockerfile follows
+                enterprise best practices for layer caching, security
+                hardening, and runtime optimization.</p>
+                <h2 id="architecture">Architecture</h2>
+                <h3 id="multi-stage-build-pipeline">Multi-Stage Build
+                Pipeline</h3>
+                <pre class="mermaid"><code>graph TD
+    subgraph Stage1[&quot;Stage 1: BUILD&lt;br/&gt;Base: maven:3.9.6-eclipse-temurin-17&quot;]
+        B1[1. Copy Maven wrapper + pom.xml] --&gt; B2[2. Download dependencies]
+        B2 --&gt; B3[3. Copy application source code]
+        B3 --&gt; B4[4. Build JAR]
+        
+        B1 -.-&gt;|Enables| B1A[Dependency layer caching]
+        B2 -.-&gt;|Cached unless| B2A[pom.xml changes]
+        B3 -.-&gt;|Changes| B3A[frequently, runs last]
+        B4 -.-&gt;|Output| B4A[/workspace/target/stockease-0.0.1-SNAPSHOT.jar]
+        
+        B4 --&gt; Result1[Result: ~1.2GB image&lt;br/&gt;JDK + Maven + build tools]
+    end
+    
+    Result1 --&gt;|Extract artifact only| Stage2
+    
+    subgraph Stage2[&quot;Stage 2: RUNTIME&lt;br/&gt;Base: eclipse-temurin:17-jre-jammy&quot;]
+        R1[1. Copy JAR from build stage] --&gt; R2[2. Create non-root user app:app]
+        R2 --&gt; R3[3. Set USER app]
+        R3 --&gt; R4[4. Expose port 8081]
+        R4 --&gt; R5[5. ENTRYPOINT: java -jar /app/app.jar]
+        
+        R1 -.-&gt;|Command| R1A[COPY --from=build /workspace/target/*.jar /app/app.jar]
+        R2 -.-&gt;|Security| R2A[Run with limited permissions]
+        R3 -.-&gt;|Effect| R3A[All processes run as non-root]
+        R4 -.-&gt;|Matches| R4A[Spring Boot server.port]
+        
+        R5 --&gt; Result2[Result: ~250MB image&lt;br/&gt;JRE + application only]
+    end
+    
+    style Stage1 fill:#e3f2fd
+    style Stage2 fill:#fff3e0
+    style Result1 fill:#ffcdd2
+    style Result2 fill:#c8e6c9</code></pre>
+                <h2 id="build-configuration">Build Configuration</h2>
+                <h3 id="base-images">Base Images</h3>
+                <p><strong>Build Stage</strong>: - Image:
+                <code>maven:3.9.6-eclipse-temurin-17</code> - Purpose:
+                Full JDK + Maven for compilation - Size: ~850MB -
+                Contains: JDK 17, Maven 3.9.6, build tools</p>
+                <p><strong>Runtime Stage</strong>: - Image:
+                <code>eclipse-temurin:17-jre-jammy</code> - Purpose:
+                Minimal JRE for execution - Size: ~180MB base -
+                Contains: JRE 17 (headless), Ubuntu Jammy</p>
+                <h3 id="layer-caching-strategy">Layer Caching
+                Strategy</h3>
+                <p>Docker caches layers based on file changes. The
+                Dockerfile optimizes build speed:</p>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 1: Maven wrapper (rarely changes)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw pom.xml ./</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .mvn .mvn</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="fu">chmod</span> +x mvnw</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 2: Dependencies (changes when pom.xml changes)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> dependency:go-offline</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 3: Application code (changes frequently)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src ./src</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> <span class="at">-DskipTests</span> clean package</span></code></pre></div>
+                <p><strong>Caching Efficiency</strong>: - Source code
+                changes: Only Layer 3 rebuilds (~30s) - Dependency
+                changes: Layers 2-3 rebuild (~2-3 min) - Maven config
+                changes: All layers rebuild (~5 min)</p>
+                <h3 id="maven-build-arguments">Maven Build
+                Arguments</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Flag</th>
+                <th>Purpose</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>-B</code></td>
+                <td>Batch mode (non-interactive)</td>
+                </tr>
+                <tr class="even">
+                <td><code>-ntp</code></td>
+                <td>No transfer progress (cleaner logs)</td>
+                </tr>
+                <tr class="odd">
+                <td><code>-DskipTests</code></td>
+                <td>Skip tests in container build</td>
+                </tr>
+                <tr class="even">
+                <td><code>dependency:go-offline</code></td>
+                <td>Download all dependencies upfront</td>
+                </tr>
+                <tr class="odd">
+                <td><code>clean package</code></td>
+                <td>Clean + compile + package JAR</td>
+                </tr>
+                </tbody>
+                </table>
+                <p><strong>Why skip tests?</strong> - Tests run in CI
+                pipeline before Docker build - Keeps Docker build fast
+                (~1 min vs ~3 min) - Separates concerns: testing
+                vs. packaging</p>
+                <h2 id="security-hardening">Security Hardening</h2>
+                <h3 id="non-root-user-execution">Non-Root User
+                Execution</h3>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">--system</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">--system</span> <span class="at">--ingroup</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span></code></pre></div>
+                <p><strong>Benefits</strong>: - Limits privilege
+                escalation attacks - Container runs with UID 1000
+                (non-root) - Aligns with Kubernetes security policies -
+                Reduces attack surface if container is compromised</p>
+                <p><strong>Why <code>|| true</code>?</strong> - Some
+                base images have <code>app</code> user pre-created -
+                Prevents build failure if user already exists -
+                Idempotent operation (safe to run multiple times)</p>
+                <h3 id="minimal-runtime-dependencies">Minimal Runtime
+                Dependencies</h3>
+                <p>Runtime image contains only: - JRE 17 (no compiler) -
+                Application JAR - Ubuntu Jammy base (~80MB)</p>
+                <p><strong>NOT included</strong>: - Maven, Gradle -
+                Development tools (gcc, make) - Source code - Test
+                dependencies</p>
+                <h3 id="fixed-entrypoint">Fixed Entrypoint</h3>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>, <span class="st">&quot;--server.port=8081&quot;</span>]</span></code></pre></div>
+                <p><strong>Advantages</strong>: - Prevents accidental
+                shell execution - Forces consistent startup command -
+                Allows runtime argument overrides - Explicit port
+                configuration</p>
+                <h2 id="application-configuration">Application
+                Configuration</h2>
+                <h3 id="port-mapping">Port Mapping</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Context</th>
+                <th>Port</th>
+                <th>Purpose</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Dockerfile</td>
+                <td><code>EXPOSE 8081</code></td>
+                <td>Documentation + container metadata</td>
+                </tr>
+                <tr class="even">
+                <td>Spring Boot</td>
+                <td><code>server.port=8081</code></td>
+                <td>Application listening port</td>
+                </tr>
+                <tr class="odd">
+                <td>Koyeb</td>
+                <td><code>8081</code></td>
+                <td>Container port mapping</td>
+                </tr>
+                <tr class="even">
+                <td>CI/CD</td>
+                <td><code>8081</code></td>
+                <td>Health check endpoint</td>
+                </tr>
+                </tbody>
+                </table>
+                <p><strong>Port Selection</strong>: 8081 avoids
+                conflicts with common services (8080, 8000, 3000).</p>
+                <h3 id="environment-variables">Environment
+                Variables</h3>
+                <p>The container supports runtime configuration via
+                environment variables:</p>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Database configuration</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_URL</span><span class="op">=</span>jdbc:postgresql://host:5432/db</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_USERNAME</span><span class="op">=</span>user</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_PASSWORD</span><span class="op">=</span>secret</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Spring profiles</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="va">SPRING_PROFILES_ACTIVE</span><span class="op">=</span>prod</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># JVM tuning</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="va">JAVA_OPTS</span><span class="op">=</span>-Xmx512m <span class="ex">-Xms256m</span></span></code></pre></div>
+                <p><strong>Current deployment (Koyeb)</strong>: -
+                Profile: <code>prod</code> - Database: Neon PostgreSQL
+                (serverless) - Memory: 512MB container limit</p>
+                <h2 id="build-deploy-workflow">Build &amp; Deploy
+                Workflow</h2>
+                <h3 id="local-build">Local Build</h3>
+                <div class="sourceCode" id="cb6"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build image</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> stockease:local .</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run container</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-p</span> 8081:8081 <span class="dt">\</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_URL=jdbc:postgresql://localhost:5432/stockease <span class="dt">\</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_USERNAME=postgres <span class="dt">\</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_PASSWORD=postgres <span class="dt">\</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  stockease:local</span></code></pre></div>
+                <h3 id="cicd-pipeline-integration">CI/CD Pipeline
+                Integration</h3>
+                <p><strong>GitHub Actions</strong>
+                (<code>auto_deploy.yml</code>):</p>
+                <div class="sourceCode" id="cb7"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build Docker Image</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> docker build -t ghcr.io/keglev/stockease:latest .</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Push to GitHub Container Registry</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    docker push ghcr.io/keglev/stockease:latest</span></code></pre></div>
+                <p><strong>Deployment Flow</strong>: 1. Push to
+                <code>main</code> branch 2. GitHub Actions builds Docker
+                image 3. Image pushed to GHCR:
+                <code>ghcr.io/keglev/stockease:latest</code> 4. Koyeb
+                pulls image and redeploys service 5. Health checks
+                verify deployment</p>
+                <h3 id="image-registry">Image Registry</h3>
+                <p><strong>GitHub Container Registry (GHCR)</strong>: -
+                URL: <code>ghcr.io/keglev/stockease</code> - Tag:
+                <code>latest</code> (auto-updates on every main push) -
+                Visibility: Public - Size: ~250MB</p>
+                <h2 id="performance-characteristics">Performance
+                Characteristics</h2>
+                <h3 id="build-times">Build Times</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Scenario</th>
+                <th>Duration</th>
+                <th>Layers Rebuilt</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>First build</td>
+                <td>~5 min</td>
+                <td>All (download deps + compile)</td>
+                </tr>
+                <tr class="even">
+                <td>Code change only</td>
+                <td>~30 sec</td>
+                <td>Stage 1 Layer 3 only</td>
+                </tr>
+                <tr class="odd">
+                <td>Dependency change</td>
+                <td>~3 min</td>
+                <td>Stage 1 Layers 2-3</td>
+                </tr>
+                <tr class="even">
+                <td>Full rebuild</td>
+                <td>~5 min</td>
+                <td>All layers (no cache)</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="image-sizes">Image Sizes</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Stage</th>
+                <th>Size</th>
+                <th>Composition</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Build stage</td>
+                <td>~1.2GB</td>
+                <td>Maven (500MB) + JDK (350MB) + deps (350MB)</td>
+                </tr>
+                <tr class="even">
+                <td>Runtime image</td>
+                <td>~250MB</td>
+                <td>JRE (180MB) + JAR (70MB)</td>
+                </tr>
+                <tr class="odd">
+                <td>Compression</td>
+                <td>~85MB</td>
+                <td>GHCR compressed image</td>
+                </tr>
+                </tbody>
+                </table>
+                <p><strong>Size optimization achieved</strong>: 83%
+                reduction (1.2GB → 250MB)</p>
+                <h3 id="runtime-performance">Runtime Performance</h3>
+                <ul>
+                <li><strong>Startup time</strong>: ~8 seconds (Spring
+                Boot initialization)</li>
+                <li><strong>Memory footprint</strong>: ~200MB (idle),
+                ~400MB (under load)</li>
+                <li><strong>CPU usage</strong>: &lt;5% (idle), 20-40%
+                (moderate load)</li>
+                </ul>
+                <h2 id="technology-stack">Technology Stack</h2>
+                <h3 id="build-components">Build Components</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Component</th>
+                <th>Version</th>
+                <th>Purpose</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Maven</td>
+                <td>3.9.6</td>
+                <td>Build tool</td>
+                </tr>
+                <tr class="even">
+                <td>JDK</td>
+                <td>Eclipse Temurin 17</td>
+                <td>Compilation</td>
+                </tr>
+                <tr class="odd">
+                <td>Spring Boot</td>
+                <td>3.5.7</td>
+                <td>Application framework</td>
+                </tr>
+                <tr class="even">
+                <td>Docker</td>
+                <td>20.10+</td>
+                <td>Container runtime</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="runtime-components">Runtime Components</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Component</th>
+                <th>Version</th>
+                <th>Purpose</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>JRE</td>
+                <td>Eclipse Temurin 17</td>
+                <td>Java runtime</td>
+                </tr>
+                <tr class="even">
+                <td>Ubuntu Jammy</td>
+                <td>22.04 LTS</td>
+                <td>Base OS</td>
+                </tr>
+                <tr class="odd">
+                <td>PostgreSQL Driver</td>
+                <td>(bundled)</td>
+                <td>Database connectivity</td>
+                </tr>
+                </tbody>
+                </table>
+                <h2 id="best-practices-applied">Best Practices
+                Applied</h2>
+                <p>✅ <strong>Multi-stage builds</strong>: Separate
+                build and runtime environments<br />
+                ✅ <strong>Layer caching</strong>: Dependencies
+                downloaded before source code<br />
+                ✅ <strong>Minimal base images</strong>: JRE instead of
+                JDK in production<br />
+                ✅ <strong>Non-root user</strong>: Security-hardened
+                container<br />
+                ✅ <strong>Explicit ports</strong>: Clear port mapping
+                documentation<br />
+                ✅ <strong>Fixed entrypoint</strong>: Consistent startup
+                behavior<br />
+                ✅ <strong>Batch mode flags</strong>: Clean,
+                reproducible builds<br />
+                ✅ <strong>Wildcard JAR copy</strong>: Version-agnostic
+                artifact extraction</p>
+                <h2 id="common-issues-solutions">Common Issues &amp;
+                Solutions</h2>
+                <h3 id="issue-build-cache-not-working">Issue: Build
+                Cache Not Working</h3>
+                <p><strong>Symptom</strong>: Every build downloads
+                dependencies<br />
+                <strong>Cause</strong>: <code>pom.xml</code> or
+                <code>.mvn</code> directory changed<br />
+                <strong>Solution</strong>: Ensure <code>pom.xml</code>
+                is stable; use <code>dependency:go-offline</code></p>
+                <h3 id="issue-port-already-in-use">Issue: Port Already
+                In Use</h3>
+                <p><strong>Symptom</strong>:
+                <code>Address already in use: bind</code><br />
+                <strong>Cause</strong>: Port 8081 occupied by another
+                process<br />
+                <strong>Solution</strong>: Use different host port:
+                <code>docker run -p 8082:8081 ...</code></p>
+                <h3 id="issue-database-connection-failed">Issue:
+                Database Connection Failed</h3>
+                <p><strong>Symptom</strong>:
+                <code>Connection refused</code> or
+                <code>Unknown host</code><br />
+                <strong>Cause</strong>: Database not accessible from
+                container<br />
+                <strong>Solution</strong>: Use
+                <code>host.docker.internal</code> for localhost
+                databases</p>
+                <h3 id="issue-image-size-too-large">Issue: Image Size
+                Too Large</h3>
+                <p><strong>Symptom</strong>: Slow push/pull times<br />
+                <strong>Cause</strong>: Build stage included in final
+                image<br />
+                <strong>Solution</strong>: Already mitigated by
+                multi-stage build</p>
+                <h2 id="future-enhancements">Future Enhancements</h2>
+                <h3 id="planned-improvements">Planned Improvements</h3>
+                <ol type="1">
+                <li><strong>JVM Optimization</strong>: Add
+                <code>-XX:+UseContainerSupport</code> for better memory
+                limits</li>
+                <li><strong>Health Checks</strong>: Add
+                <code>HEALTHCHECK</code> instruction to Dockerfile</li>
+                <li><strong>Build Arguments</strong>: Support custom JVM
+                flags via <code>ARG</code></li>
+                <li><strong>Distroless Base</strong>: Migrate to Google
+                distroless Java image (~50MB smaller)</li>
+                <li><strong>Image Scanning</strong>: Integrate
+                Trivy/Grype for vulnerability scanning</li>
+                </ol>
+                <h3 id="advanced-configurations">Advanced
+                Configurations</h3>
+                <div class="sourceCode" id="cb8"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: JVM tuning for production</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="op">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:+UseContainerSupport&quot;</span>, <span class="op">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:MaxRAMPercentage=75.0&quot;</span>, <span class="op">\</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:+UseG1GC&quot;</span>, <span class="op">\</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-Djava.security.egd=file:/dev/./urandom&quot;</span>, <span class="op">\</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>]</span></code></pre></div>
+                <h2 id="references">References</h2>
+                <ul>
+                <li><a href="../../Dockerfile">Dockerfile
+                Location</a></li>
+                <li><a href="./ci-pipeline.html">CI/CD Pipeline
+                Documentation</a></li>
+                <li><a href="../deployment.html">Deployment
+                Overview</a></li>
+                <li><a
+                href="https://spring.io/guides/topicals/spring-boot-docker/index.html">Spring
+                Boot Container Images</a></li>
+                <li><a
+                href="https://docs.docker.com/build/building/multi-stage/index.html">Docker
+                Multi-Stage Builds</a></li>
+                <li><a
+                href="https://hub.docker.com/_/eclipse-temurin">Eclipse
+                Temurin Images</a></li>
+                </ul>
+                <h2 id="related-documentation">Related
+                Documentation</h2>
+                <ul>
+                <li><strong><a
+                href="./ci-pipeline.html">ci-pipeline.md</a></strong> —
+                CI/CD workflow that builds this image</li>
+                <li><strong><a
+                href="./staging-config.html">staging-config.md</a></strong>
+                — Environment configuration</li>
+                <li><strong><a
+                href="../deployment.html">deployment.md</a></strong> —
+                Overall deployment architecture</li>
+                </ul>
+            </div>
+        </main>
+    </aside>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Calculate relative path to architecture root based on current location
+        function getArchRoot() {
+            const path = window.location.pathname;
+            const segments = path.split('/').filter(s => s);
+            
+            // Find how many levels deep we are from 'architecture' folder
+            const archIndex = segments.indexOf('architecture');
+            if (archIndex === -1) return './';
+            
+            const depth = segments.length - archIndex - 2; // -2 for architecture and filename
+            if (depth <= 0) return './';
+            
+            return '../'.repeat(depth);
+        }
+
+        // Navigation Menu (paths relative to architecture root)
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: 'api-docs.html', isApiDoc: true },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: 'overview.html' },
+                { label: 'System Layers', href: 'layers.html' },
+                { label: 'Backend Architecture', href: 'backend.html' },
+                { label: 'Frontend Architecture', href: 'frontend.html' },
+                { label: 'Security Architecture', href: 'security.html' },
+                { label: 'Deployment Strategy', href: 'deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: 'decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: 'components/index.html' },
+                { label: 'Analytics Service', href: 'components/analytics-service.html' },
+                { label: 'Supplier Controller', href: 'components/supplier-controller.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: 'patterns/index.html' },
+                { label: 'Repository Pattern', href: 'patterns/repository-pattern.html' },
+                { label: 'Security Patterns', href: 'patterns/security-patterns.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: 'testing-architecture.html' },
+                { label: 'Test Pyramid', href: 'testing/pyramid.html' },
+                { label: 'Strategy', href: 'testing/strategy.html' },
+                { label: 'Spring Slices', href: 'testing/spring-slices.html' },
+                { label: 'Test Data Fixtures', href: 'testing/test-data-fixtures.html' },
+                { label: 'Security Tests', href: 'testing/security-tests.html' },
+                { label: 'Naming Conventions', href: 'testing/naming-conventions.html' },
+                { label: 'Test Matrix', href: 'testing/matrix.html' },
+                { label: 'Coverage & Quality', href: 'testing/coverage-and-quality.html' },
+                { label: 'Controller Integration', href: 'testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests', href: 'testing/ci-pipeline-tests.html' },
+            ],
+            'Deployment': [
+                { label: 'Overview', href: 'deployment.html' },
+                { label: 'CI/CD Pipeline', href: 'deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: 'deployment/docker-strategy.html' },
+                { label: 'Staging Config', href: 'deployment/staging-config.html' },
+            ],
+            'Reference': [
+                { label: 'Documentation Guide', href: 'DOCUMENTATION-GUIDE.html' },
+                { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
+                { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            const archRoot = getArchRoot();
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    
+                    // For API docs, go up to docs root; otherwise use architecture root
+                    if (link.isApiDoc) {
+                        a.href = archRoot + '../' + link.href;
+                    } else {
+                        a.href = archRoot + link.href;
+                    }
+                    
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    const linkPath = link.href.replace('.html', '');
+                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+</body>
+</html>

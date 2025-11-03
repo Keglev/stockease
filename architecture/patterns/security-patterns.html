@@ -424,21 +424,20 @@
                 <h3 id="jwt-bearer-token-pattern">1. JWT Bearer Token
                 Pattern</h3>
                 <p><strong>Flow</strong>:</p>
-                <pre><code>Client          Server
-  │                 │
-  ├─ POST /login   ─&gt;│
-  │  (credentials)   │
-  │                  ├─ Validate credentials
-  │                  ├─ Generate JWT token
-  │                  ├─ Return token
-  │&lt;─ token ────────┤
-  │                  │
-  ├─ GET /products ─&gt;│
-  │  (Bearer token)  │
-  │                  ├─ Validate token
-  │                  ├─ Extract user info
-  │                  ├─ Authorize request
-  │&lt;─ response ─────┤</code></pre>
+                <pre class="mermaid"><code>sequenceDiagram
+    participant Client
+    participant Server
+    
+    Client-&gt;&gt;Server: POST /login (credentials)
+    Server-&gt;&gt;Server: Validate credentials
+    Server-&gt;&gt;Server: Generate JWT token
+    Server--&gt;&gt;Client: Return token
+    
+    Client-&gt;&gt;Server: GET /products (Bearer token)
+    Server-&gt;&gt;Server: Validate token
+    Server-&gt;&gt;Server: Extract user info
+    Server-&gt;&gt;Server: Authorize request
+    Server--&gt;&gt;Client: Return response</code></pre>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb2"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Login endpoint</span></span>
@@ -483,16 +482,19 @@
                 <h3 id="password-hashing-with-bcrypt">2. Password
                 Hashing with BCrypt</h3>
                 <p><strong>Pattern</strong>:</p>
-                <pre><code>Plain Password
-  ↓ BCrypt + salt
-Hashed Password (stored in DB)
-
-Login
-Plain Password input
-  ↓ Apply same BCrypt + stored salt
-Compare with stored hash
-  ├─ Match → Success
-  └─ No match → Failure</code></pre>
+                <pre class="mermaid"><code>graph TD
+    A[Plain Password] --&gt;|BCrypt + salt| B[Hashed Password&lt;br/&gt;stored in DB]
+    
+    C[Login: Plain Password input] --&gt;|Apply same BCrypt&lt;br/&gt;+ stored salt| D[Compare with stored hash]
+    
+    D --&gt; E{Match?}
+    E --&gt;|Yes| F[Success]
+    E --&gt;|No| G[Failure]
+    
+    style A fill:#e3f2fd
+    style B fill:#fce4ec
+    style F fill:#c8e6c9
+    style G fill:#ffcdd2</code></pre>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb4"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
@@ -532,11 +534,12 @@ Compare with stored hash
                 <h3 id="role-based-access-control-rbac">1. Role-Based
                 Access Control (RBAC)</h3>
                 <p><strong>Roles</strong>:</p>
-                <pre><code>ADMIN    ─┐
-          ├─ Full access: read, create, update, delete
-          │
-USER     ─┤
-          └─ Limited access: read only</code></pre>
+                <pre class="mermaid"><code>graph LR
+    A[ADMIN] --&gt;|Full access| B[read, create, update, delete]
+    C[USER] --&gt;|Limited access| D[read only]
+    
+    style A fill:#ffcdd2
+    style C fill:#e3f2fd</code></pre>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb6"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Method-level security</span></span>

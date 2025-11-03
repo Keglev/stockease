@@ -611,29 +611,41 @@
                 <code>ProductCreateControllerTest</code>,
                 <code>ProductFetchControllerTest</code>, etc.</li>
                 </ul>
-                <pre><code>POST /api/auth/login
-├─ Success: Valid username/password → JWT token
-├─ Failure: Invalid credentials → 401
-└─ Failure: User not found → 401
-
-GET /api/products
-├─ Success: Admin/User → Product list
-├─ Authorization: Anonymous → 401
-└─ Pagination: Skip/limit parameters
-
-POST /api/products
-├─ Success: Admin only → Created product
-├─ Failure: Non-admin → 403
-└─ Failure: Invalid data → 400
-
-PUT /api/products/{id}
-├─ Success: Admin only → Updated product
-├─ Failure: Non-admin → 403
-└─ Failure: Invalid quantity → Validation error
-
-DELETE /api/products/{id}
-├─ Success: Admin only → 204 No Content
-└─ Failure: Non-admin → 403</code></pre>
+                <pre class="mermaid"><code>graph TD
+    subgraph Auth[&quot;POST /api/auth/login&quot;]
+        A1[Success: Valid username/password → JWT token]
+        A2[Failure: Invalid credentials → 401]
+        A3[Failure: User not found → 401]
+    end
+    
+    subgraph Get[&quot;GET /api/products&quot;]
+        G1[Success: Admin/User → Product list]
+        G2[Authorization: Anonymous → 401]
+        G3[Pagination: Skip/limit parameters]
+    end
+    
+    subgraph Post[&quot;POST /api/products&quot;]
+        P1[Success: Admin only → Created product]
+        P2[Failure: Non-admin → 403]
+        P3[Failure: Invalid data → 400]
+    end
+    
+    subgraph Put[&quot;PUT /api/products/{id}&quot;]
+        U1[Success: Admin only → Updated product]
+        U2[Failure: Non-admin → 403]
+        U3[Failure: Invalid quantity → Validation error]
+    end
+    
+    subgraph Delete[&quot;DELETE /api/products/{id}&quot;]
+        D1[Success: Admin only → 204 No Content]
+        D2[Failure: Non-admin → 403]
+    end
+    
+    style Auth fill:#e3f2fd
+    style Get fill:#fff3e0
+    style Post fill:#e8f5e9
+    style Put fill:#f3e5f5
+    style Delete fill:#ffcdd2</code></pre>
                 <h4 id="authentication-authorization">2. Authentication
                 &amp; Authorization</h4>
                 <ul>

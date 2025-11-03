@@ -419,17 +419,23 @@
                 <p>StockEase follows a <strong>classic N-tier layered
                 architecture</strong> with clear separation of
                 concerns:</p>
-                <pre><code>┌─────────────────────────────────────────────┐
-│          REST Controllers (Endpoints)       │  ← HTTP Layer
-├─────────────────────────────────────────────┤
-│    Security Layer (JWT, Spring Security)    │  ← Cross-cutting Concern
-├─────────────────────────────────────────────┤
-│        Business Logic (Services)            │  ← Domain Layer
-├─────────────────────────────────────────────┤
-│   Data Access (Repositories, Entities)      │  ← Persistence Layer
-├─────────────────────────────────────────────┤
-│    Database (PostgreSQL / H2 for tests)     │  ← Data Layer
-└─────────────────────────────────────────────┘</code></pre>
+                <pre class="mermaid"><code>graph TD
+    A[REST Controllers Endpoints&lt;br/&gt;HTTP Layer]
+    B[Security Layer&lt;br/&gt;JWT, Spring Security&lt;br/&gt;Cross-cutting Concern]
+    C[Business Logic Services&lt;br/&gt;Domain Layer]
+    D[Data Access&lt;br/&gt;Repositories, Entities&lt;br/&gt;Persistence Layer]
+    E[Database&lt;br/&gt;PostgreSQL / H2 for tests&lt;br/&gt;Data Layer]
+    
+    A --&gt; B
+    B --&gt; C
+    C --&gt; D
+    D --&gt; E
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+    style D fill:#f3e5f5
+    style E fill:#fce4ec</code></pre>
                 <h2 id="layer-descriptions">Layer Descriptions</h2>
                 <h3 id="httppresentation-layer-controllers">1.
                 HTTP/Presentation Layer (Controllers)</h3>
@@ -477,22 +483,21 @@
                 Intercept and validate requests -
                 <code>PasswordEncoder</code> - BCrypt hashing</p>
                 <p><strong>Authentication Flow</strong>:</p>
-                <pre><code>1. User calls POST /api/auth/login with username:password
-   ↓
-2. Spring Security intercepts (HTTP Basic)
-   ↓
-3. UserDetailsService validates credentials
-   ↓
-4. JwtProvider generates token
-   ↓
-5. Token returned in response
-   ↓
-6. Client includes token in Authorization: Bearer {token} header
-   ↓
-7. On subsequent requests, JwtProvider validates token
-   ↓
-8. If valid → Request proceeds to Service Layer
-   If invalid → 401 Unauthorized returned</code></pre>
+                <pre class="mermaid"><code>graph TD
+    A[1. User calls POST /api/auth/login&lt;br/&gt;with username:password] --&gt; B[2. Spring Security intercepts&lt;br/&gt;HTTP Basic]
+    B --&gt; C[3. UserDetailsService&lt;br/&gt;validates credentials]
+    C --&gt; D[4. JwtProvider generates token]
+    D --&gt; E[5. Token returned in response]
+    E --&gt; F[6. Client includes token in&lt;br/&gt;Authorization: Bearer header]
+    F --&gt; G[7. JwtProvider validates token&lt;br/&gt;on subsequent requests]
+    
+    G --&gt; H{Valid?}
+    H --&gt;|Yes| I[Request proceeds to Service Layer]
+    H --&gt;|No| J[401 Unauthorized returned]
+    
+    style A fill:#e3f2fd
+    style I fill:#c8e6c9
+    style J fill:#ffcdd2</code></pre>
                 <p><strong>Protected Endpoints</strong>: - All
                 <code>/api/products/*</code> endpoints require JWT token
                 - <code>/health</code> is public (no auth required)</p>
@@ -589,58 +594,69 @@
                 business logic - <code>HealthService</code> - System
                 status - Custom validators and processors</p>
                 <p><strong>AuthService Responsibilities</strong>:</p>
-                <pre><code>registerUser(username, password)
-  ├── Validate username (not empty, unique)
-  ├── Validate password (strength requirements)
-  ├── Hash password with BCrypt
-  ├── Create User entity
-  ├── Save to database
-  └── Return UserDTO
-
-authenticateUser(username, password)
-  ├── Find user by username
-  ├── Compare provided password with hashed password
-  ├── Generate JWT token (with role)
-  ├── Return token + user info
-  └── Throw exception if auth fails
-
-validateToken(token)
-  ├── Parse JWT signature
-  ├── Check expiration
-  ├── Extract user claims
-  └── Return user info or throw exception</code></pre>
+                <pre class="mermaid"><code>graph TD
+    subgraph registerUser[&quot;registerUser(username, password)&quot;]
+        R1[Validate username&lt;br/&gt;not empty, unique] --&gt; R2[Validate password&lt;br/&gt;strength requirements]
+        R2 --&gt; R3[Hash password with BCrypt]
+        R3 --&gt; R4[Create User entity]
+        R4 --&gt; R5[Save to database]
+        R5 --&gt; R6[Return UserDTO]
+    end
+    
+    subgraph authenticateUser[&quot;authenticateUser(username, password)&quot;]
+        A1[Find user by username] --&gt; A2[Compare provided password&lt;br/&gt;with hashed password]
+        A2 --&gt; A3[Generate JWT token&lt;br/&gt;with role]
+        A3 --&gt; A4[Return token + user info]
+        A2 -.-&gt;|Fail| A5[Throw exception if auth fails]
+    end
+    
+    subgraph validateToken[&quot;validateToken(token)&quot;]
+        V1[Parse JWT signature] --&gt; V2[Check expiration]
+        V2 --&gt; V3[Extract user claims]
+        V3 --&gt; V4[Return user info or&lt;br/&gt;throw exception]
+    end
+    
+    style registerUser fill:#e3f2fd
+    style authenticateUser fill:#fff3e0
+    style validateToken fill:#e8f5e9</code></pre>
                 <p><strong>ProductService Responsibilities</strong>:</p>
-                <pre><code>createProduct(request, userId, role)
-  ├── Validate request (name, price, quantity)
-  ├── Check authorization (ADMIN only)
-  ├── Check SKU uniqueness
-  ├── Create Product entity
-  ├── Set metadata (createdAt, createdBy)
-  ├── Save to database
-  └── Return ProductDTO
-
-getProducts(page, size, sort, filter)
-  ├── Build dynamic query from filters
-  ├── Apply pagination (page, size)
-  ├── Apply sorting (name, price, date)
-  ├── Execute query
-  ├── Map to DTOs
-  └── Return PageResponse
-
-updateProduct(id, request, userId, role)
-  ├── Find product by ID
-  ├── Check authorization (ADMIN only)
-  ├── Validate request fields
-  ├── Update product fields
-  ├── Set updatedAt timestamp
-  ├── Save to database
-  └── Return updated ProductDTO
-
-deleteProduct(id, userId, role)
-  ├── Find product by ID
-  ├── Check authorization (ADMIN only)
-  ├── Delete from database
-  └── Return success</code></pre>
+                <pre class="mermaid"><code>graph TD
+    subgraph createProduct[&quot;createProduct(request, userId, role)&quot;]
+        C1[Validate request&lt;br/&gt;name, price, quantity] --&gt; C2[Check authorization&lt;br/&gt;ADMIN only]
+        C2 --&gt; C3[Check SKU uniqueness]
+        C3 --&gt; C4[Create Product entity]
+        C4 --&gt; C5[Set metadata&lt;br/&gt;createdAt, createdBy]
+        C5 --&gt; C6[Save to database]
+        C6 --&gt; C7[Return ProductDTO]
+    end
+    
+    subgraph getProducts[&quot;getProducts(page, size, sort, filter)&quot;]
+        G1[Build dynamic query&lt;br/&gt;from filters] --&gt; G2[Apply pagination&lt;br/&gt;page, size]
+        G2 --&gt; G3[Apply sorting&lt;br/&gt;name, price, date]
+        G3 --&gt; G4[Execute query]
+        G4 --&gt; G5[Map to DTOs]
+        G5 --&gt; G6[Return PageResponse]
+    end
+    
+    subgraph updateProduct[&quot;updateProduct(id, request, userId, role)&quot;]
+        U1[Find product by ID] --&gt; U2[Check authorization&lt;br/&gt;ADMIN only]
+        U2 --&gt; U3[Validate request fields]
+        U3 --&gt; U4[Update product fields]
+        U4 --&gt; U5[Set updatedAt timestamp]
+        U5 --&gt; U6[Save to database]
+        U6 --&gt; U7[Return updated ProductDTO]
+    end
+    
+    subgraph deleteProduct[&quot;deleteProduct(id, userId, role)&quot;]
+        D1[Find product by ID] --&gt; D2[Check authorization&lt;br/&gt;ADMIN only]
+        D2 --&gt; D3[Delete from database]
+        D3 --&gt; D4[Return success]
+    end
+    
+    style createProduct fill:#e3f2fd
+    style getProducts fill:#fff3e0
+    style updateProduct fill:#e8f5e9
+    style deleteProduct fill:#ffcdd2</code></pre>
                 <p><strong>Key Design Patterns</strong>: -
                 <strong>Dependency Injection</strong>: Spring injects
                 repositories into services -

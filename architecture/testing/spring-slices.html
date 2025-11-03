@@ -478,26 +478,35 @@
                 </table>
                 <h3 id="comparison-full-vs.-slice">Comparison: Full
                 vs. Slice</h3>
-                <pre><code>Full Spring Context (@SpringBootTest)
-├─ Web Layer (Controllers)
-├─ Service Layer
-├─ Repository Layer
-├─ Database Layer
-├─ Security Configuration
-└─ All Beans
-
-Execution: ~2-3 seconds per test
-Use: Integration tests, application bootstrap
-
-
-Web Layer Slice (@WebMvcTest)
-├─ Web Layer (Controllers only)
-├─ Security Configuration
-└─ Relevant Beans
-
-Execution: ~0.5-1 second per test
-Use: REST API tests, controller logic
-Excluded: Services, repositories, database</code></pre>
+                <pre class="mermaid"><code>graph TD
+    subgraph Full[&quot;Full Spring Context @SpringBootTest&lt;br/&gt;Execution: ~2-3 seconds per test&quot;]
+        F1[Web Layer Controllers]
+        F2[Service Layer]
+        F3[Repository Layer]
+        F4[Database Layer]
+        F5[Security Configuration]
+        F6[All Beans]
+        
+        F1 --&gt; F2 --&gt; F3 --&gt; F4
+        F5 --&gt; F1
+    end
+    
+    subgraph Slice[&quot;Web Layer Slice @WebMvcTest&lt;br/&gt;Execution: ~0.5-1 second per test&quot;]
+        S1[Web Layer Controllers only]
+        S2[Security Configuration]
+        S3[Relevant Beans]
+        
+        S2 --&gt; S1
+        S1 --&gt; S3
+    end
+    
+    Full -.-&gt;|Use for| FU[Integration tests&lt;br/&gt;Application bootstrap]
+    Slice -.-&gt;|Use for| SU[REST API tests&lt;br/&gt;Controller logic]
+    
+    style Full fill:#ffcdd2
+    style Slice fill:#c8e6c9
+    style FU fill:#e3f2fd
+    style SU fill:#e3f2fd</code></pre>
                 <hr />
                 <h2 id="available-slices">Available Slices</h2>
                 <h3 id="webmvctest-web-layer-slicing">1. <span
