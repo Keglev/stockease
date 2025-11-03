@@ -493,9 +493,9 @@
     D --&gt;|No| X[Return 401 Unauthorized]
     
     E --&gt; F[Controller Method Execution]
-    F --&gt; F1[@PathVariable &amp; @RequestParam binding]
-    F1 --&gt; F2[@RequestBody deserialization JSON → DTO]
-    F2 --&gt; F3[Spring Validation @Valid]
+    F --&gt; F1[&quot;PathVariable and RequestParam binding&quot;]
+    F1 --&gt; F2[&quot;RequestBody deserialization JSON to DTO&quot;]
+    F2 --&gt; F3[&quot;Spring Validation Valid&quot;]
     
     F3 --&gt; G[Invoke Service Method]
     G --&gt; G1[Business logic execution]
@@ -509,7 +509,7 @@
     
     H3 --&gt; I[Service processes results]
     I --&gt; I1[Transform entities to DTOs]
-    I1 --&gt; I2[Handle errors &amp; exceptions]
+    I1 --&gt; I2[Handle errors and exceptions]
     I2 --&gt; I3[Return response object]
     
     I3 --&gt; J[Controller builds HTTP response]
@@ -521,7 +521,7 @@
     K --&gt; K1[DTO → JSON conversion Jackson]
     K1 --&gt; K2[Content-Type application/json]
     
-    K2 --&gt; L[HTTP Response with Status &amp; Body]
+    K2 --&gt; L[HTTP Response with Status and Body]
     
     style A fill:#e3f2fd
     style L fill:#c8e6c9
