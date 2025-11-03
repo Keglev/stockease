@@ -850,7 +850,7 @@ paths:
             text/plain:
               schema:
                 type: string
-                example: Database is down: Connection refused
+                example: Database is down - Connection refused
 
 security:
   - BearerAuth: []
