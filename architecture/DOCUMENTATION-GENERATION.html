@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #004a99;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --text: #212529;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            color: var(--text);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-breadcrumb {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .nav-breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .nav-breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            padding: 2rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin: 0.25rem 0;
+        }
+
+        .nav-section a {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-section a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .nav-section a.active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .content {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        h4, h5, h6 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code */
+        code {
+            background-color: var(--bg-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--danger);
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+
+        table tbody tr:hover {
+            background-color: #f0f6ff;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Alerts / Boxes */
+        .info-box, .warning-box, .success-box, .danger-box {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border-color: var(--info);
+            color: #004a87;
+        }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .success-box {
+            background-color: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .danger-box {
+            background-color: #f8d7da;
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        /* TOC */
+        nav.toc {
+            background-color: var(--bg-light);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        nav.toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        nav.toc li {
+            margin: 0.25rem 0;
+        }
+
+        nav.toc a {
+            font-size: 0.95rem;
+        }
+
+        nav.toc > ul > li > a {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--text);
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                order: 2;
+            }
+
+            main {
+                order: 1;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-breadcrumb {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            header, aside, footer {
+                display: none;
+            }
+
+            .content {
+                box-shadow: none;
+                background: white;
+            }
+        }
+
+        /* Syntax Highlighting (basic) */
+        .hljs-keyword { color: #569cd6; }
+        .hljs-string { color: #ce9178; }
+        .hljs-number { color: #b5cea8; }
+        .hljs-attr { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1
+                id="architecture-documentation-generation-deployment-guide">Architecture
+                Documentation Generation &amp; Deployment Guide</h1>
+                <h2 id="overview">Overview</h2>
+                <p>The StockEase project now has a complete automated
+                documentation pipeline that:</p>
+                <ol type="1">
+                <li><strong>Converts Markdown to HTML</strong> - All 31
+                markdown files in <code>/docs/architecture/</code> are
+                converted to HTML</li>
+                <li><strong>Applies Enterprise Template</strong> - Uses
+                a professional, navigable HTML template with sidebar,
+                TOC, and responsive design</li>
+                <li><strong>Deploys to GitHub Pages</strong> - Publishes
+                to <code>gh-pages</code> branch automatically on push to
+                <code>main</code></li>
+                </ol>
+                <hr />
+                <h2 id="documentation-structure">Documentation
+                Structure</h2>
+                <h3 id="input-files">Input Files</h3>
+                <p>Located in:
+                <code>backend/docs/architecture/</code></p>
+                <pre><code>architecture/
+├── index.md                          # Main entry point
+├── overview.md                       # System overview
+├── layers.md                         # Architectural layers
+├── backend.md                        # Backend architecture
+├── frontend.md                       # Frontend architecture
+├── security.md                       # Security architecture
+├── deployment.md                     # Deployment strategy
+├── testing-architecture.md           # Testing strategy
+├── components/
+│   ├── index.md
+│   ├── authentication.md
+│   ├── authorization.md
+│   ├── database.md
+│   ├── caching.md
+│   └── ...
+├── decisions/
+│   ├── index.md
+│   ├── adr-001-*.md
+│   └── ...
+├── patterns/
+│   ├── index.md
+│   └── ...
+├── testing/
+│   ├── strategy.md
+│   ├── pyramid.md
+│   ├── test-data-fixtures.md
+│   └── ...
+└── deployment/
+    ├── ci-pipeline.md
+    ├── docker-strategy.md
+    └── ...</code></pre>
+                <p><strong>Total: 31 markdown files</strong></p>
+                <h3 id="output-files">Output Files</h3>
+                <p>Generated in:
+                <code>target/docs/architecture/</code></p>
+                <p>All <code>.md</code> files are converted to
+                <code>.html</code> files with the same directory
+                structure.</p>
+                <hr />
+                <h2 id="enterprise-html-template">Enterprise HTML
+                Template</h2>
+                <p><strong>File:</strong>
+                <code>backend/docs/templates/enterprise-docs.html</code></p>
+                <h3 id="features">Features</h3>
+                <ul>
+                <li><strong>Professional Branding</strong> - StockEase
+                header with navigation breadcrumbs</li>
+                <li><strong>Responsive Sidebar</strong> - Auto-generated
+                navigation menu from predefined structure</li>
+                <li><strong>Table of Contents</strong> - Auto-generated
+                from markdown headers (H2, H3)</li>
+                <li><strong>Enterprise Styling</strong>
+                <ul>
+                <li>Modern color scheme (primary blue #0066cc)</li>
+                <li>Clear typography hierarchy</li>
+                <li>Code syntax highlighting</li>
+                <li>Alert boxes (info, warning, success, danger)</li>
+                <li>Tables with alternating row colors</li>
+                <li>Responsive grid layout</li>
+                </ul></li>
+                <li><strong>Navigation Structure</strong>
+                <ul>
+                <li>API Documentation section</li>
+                <li>Architecture section</li>
+                <li>Design Decisions</li>
+                <li>Components</li>
+                <li>Patterns</li>
+                <li>Testing</li>
+                <li>Deployment</li>
+                <li>Reference</li>
+                </ul></li>
+                </ul>
+                <h3 id="template-variables">Template Variables</h3>
+                <ul>
+                <li><code>$title$</code> - Document title</li>
+                <li><code>$body$</code> - Converted markdown
+                content</li>
+                <li>Navigation is built via JavaScript (hardcoded
+                structure in template)</li>
+                </ul>
+                <h3 id="customization">Customization</h3>
+                <p>To add new navigation items, edit the
+                <code>navigation</code> object in the template:</p>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> navigation <span class="op">=</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Section Name&#39;</span><span class="op">:</span> [</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        { <span class="dt">label</span><span class="op">:</span> <span class="st">&#39;Item Label&#39;</span><span class="op">,</span> <span class="dt">href</span><span class="op">:</span> <span class="st">&#39;./path/to/file.html&#39;</span> }<span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// more items...</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    ]<span class="op">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// more sections...</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+                <hr />
+                <h2 id="cicd-pipeline-integration">CI/CD Pipeline
+                Integration</h2>
+                <h3 id="workflow-file">Workflow File</h3>
+                <p><strong>File:</strong>
+                <code>.github/workflows/docs-pipeline.yml</code></p>
+                <h3 id="trigger-events">Trigger Events</h3>
+                <ul>
+                <li><strong>On Push to <code>main</code></strong> with
+                changes in:
+                <ul>
+                <li><code>backend/docs/**</code> - Any documentation
+                files</li>
+                <li><code>.github/workflows/docs-pipeline.yml</code> -
+                Workflow file itself</li>
+                </ul></li>
+                <li><strong>Manual Trigger</strong> - Via GitHub Actions
+                UI (workflow_dispatch)</li>
+                </ul>
+                <h3 id="pipeline-steps">Pipeline Steps</h3>
+                <h4 id="detect-project-root">1. Detect Project Root</h4>
+                <ul>
+                <li>Checks for <code>openapi.yaml</code> and
+                <code>pom.xml</code></li>
+                <li>Determines if root project or backend
+                subdirectory</li>
+                </ul>
+                <h4 id="install-dependencies">2. Install
+                Dependencies</h4>
+                <ul>
+                <li>Node.js 18</li>
+                <li><span class="citation"
+                data-cites="redocly/cli">@redocly/cli</span> (for API
+                docs generation)</li>
+                <li>pandoc (for markdown conversion)</li>
+                </ul>
+                <h4 id="generate-api-documentation">3. Generate API
+                Documentation</h4>
+                <ul>
+                <li>Input: <code>backend/docs/api/openapi.yaml</code>
+                (modular structure)</li>
+                <li>Output: <code>target/docs/index.html</code> (ReDoc
+                interactive docs)</li>
+                <li>Uses: <span class="citation"
+                data-cites="redocly/cli">@redocly/cli</span>
+                <code>build-docs</code> command</li>
+                </ul>
+                <h4 id="convert-architecture-markdown-to-html">4.
+                Convert Architecture Markdown to HTML</h4>
+                <ul>
+                <li>Input: All <code>.md</code> files in
+                <code>backend/docs/architecture/</code></li>
+                <li>Template:
+                <code>backend/docs/templates/enterprise-docs.html</code></li>
+                <li>Output: Matching <code>.html</code> files in
+                <code>target/docs/architecture/</code></li>
+                <li>Command:
+                <code>pandoc --template &lt;template&gt; --toc --toc-depth=3</code></li>
+                </ul>
+                <h4 id="create-documentation-index">5. Create
+                Documentation Index</h4>
+                <ul>
+                <li>Generates main
+                <code>target/docs/index.html</code></li>
+                <li>Landing page with cards linking to:
+                <ul>
+                <li>API Documentation</li>
+                <li>Architecture Overview</li>
+                <li>Backend Architecture</li>
+                <li>Frontend Architecture</li>
+                <li>Security Architecture</li>
+                <li>Deployment Strategy</li>
+                <li>Testing Architecture</li>
+                <li>Design Decisions</li>
+                </ul></li>
+                </ul>
+                <h4 id="verify-generation">6. Verify Generation</h4>
+                <ul>
+                <li>Counts generated HTML/JSON files</li>
+                <li>Shows directory size</li>
+                <li>Confirms completion</li>
+                </ul>
+                <h4 id="deploy-to-github-pages">7. Deploy to GitHub
+                Pages</h4>
+                <ul>
+                <li>Uses:
+                <code>peaceiris/actions-gh-pages@v3</code></li>
+                <li>Publishes: <code>target/docs/</code> directory</li>
+                <li>Branch: <code>gh-pages</code></li>
+                <li>Automatic on successful build</li>
+                </ul>
+                <hr />
+                <h2 id="accessing-generated-documentation">Accessing
+                Generated Documentation</h2>
+                <h3 id="before-first-deployment">Before First
+                Deployment</h3>
+                <p>The workflow must run at least once (automatically
+                when code is pushed to <code>main</code>).</p>
+                <h3 id="after-deployment">After Deployment</h3>
+                <p><strong>URL:</strong>
+                <code>https://keglev.github.io/stockease/</code></p>
+                <p>Structure: - <code>/</code> - Main documentation
+                index (landing page) - <code>/index.html</code> - API
+                documentation (ReDoc) - <code>/architecture/</code> -
+                Architecture documentation -
+                <code>/architecture/overview.html</code> - Architecture
+                overview - <code>/architecture/backend.html</code> -
+                Backend architecture -
+                <code>/architecture/frontend.html</code> - Frontend
+                architecture - etc.</p>
+                <h3 id="github-pages-settings">GitHub Pages
+                Settings</h3>
+                <p>The <code>gh-pages</code> branch is created
+                automatically by the workflow.</p>
+                <p>To verify/configure:</p>
+                <ol type="1">
+                <li>Go to GitHub repo → Settings → Pages</li>
+                <li>Source: <code>Deploy from a branch</code></li>
+                <li>Branch: <code>gh-pages</code> /
+                <code>/ (root)</code></li>
+                </ol>
+                <hr />
+                <h2 id="local-testing-optional">Local Testing
+                (Optional)</h2>
+                <h3 id="prerequisites">Prerequisites</h3>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install pandoc (on Windows via Chocolatey)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">choco</span> install pandoc</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Install @redocly/cli</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install <span class="at">-g</span> @redocly/cli</span></code></pre></div>
+                <h3 id="manual-local-build">Manual Local Build</h3>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate ReDoc docs</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">redocly</span> build-docs backend/docs/api/openapi.yaml <span class="at">-o</span> backend/target/docs/index.html</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate architecture docs</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="va">TEMPLATE</span><span class="op">=</span><span class="st">&quot;backend/docs/templates/enterprise-docs.html&quot;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> backend/docs/architecture <span class="at">-name</span> <span class="st">&quot;*.md&quot;</span> <span class="kw">|</span> <span class="cf">while</span> <span class="bu">read</span> <span class="va">md</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">out</span><span class="op">=</span><span class="st">&quot;backend/target/docs/architecture/</span><span class="va">${md</span><span class="op">#</span>backend/docs/architecture/<span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="va">out</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${out</span><span class="op">%</span>.md<span class="va">}</span><span class="st">.html&quot;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mkdir</span> <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$(</span><span class="fu">dirname</span> <span class="st">&quot;</span><span class="va">$out</span><span class="st">&quot;</span><span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">pandoc</span> <span class="st">&quot;</span><span class="va">$md</span><span class="st">&quot;</span> <span class="at">--template</span> <span class="st">&quot;</span><span class="va">$TEMPLATE</span><span class="st">&quot;</span> <span class="at">--toc</span> <span class="at">-o</span> <span class="st">&quot;</span><span class="va">$out</span><span class="st">&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># View locally</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> http.server <span class="at">-d</span> backend/target/docs/</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Then open http://localhost:8000/</span></span></code></pre></div>
+                <hr />
+                <h2 id="file-manifest">File Manifest</h2>
+                <h3 id="newmodified-files">New/Modified Files</h3>
+                <table>
+                <colgroup>
+                <col style="width: 26%" />
+                <col style="width: 39%" />
+                <col style="width: 34%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>File</th>
+                <th>Purpose</th>
+                <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>docs/templates/enterprise-docs.html</code></td>
+                <td>Enterprise HTML template</td>
+                <td>✅ Created</td>
+                </tr>
+                <tr class="even">
+                <td><code>.github/workflows/docs-pipeline.yml</code></td>
+                <td>CI/CD workflow</td>
+                <td>✅ Updated</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="documentation-sources">Documentation
+                Sources</h3>
+                <ul>
+                <li><code>docs/architecture/*.md</code> - 31 markdown
+                files (existing)</li>
+                <li><code>docs/api/openapi.yaml</code> - API
+                specification (existing)</li>
+                <li><code>docs/api/paths/*.yaml</code> - Modular API
+                paths (existing)</li>
+                </ul>
+                <h3 id="generated-on-github-pages">Generated (on GitHub
+                Pages)</h3>
+                <ul>
+                <li><code>target/docs/index.html</code> - Landing
+                page</li>
+                <li><code>target/docs/index.html</code> (from ReDoc) -
+                API docs</li>
+                <li><code>target/docs/architecture/*.html</code> - 31
+                architecture docs</li>
+                </ul>
+                <hr />
+                <h2 id="navigation-map">Navigation Map</h2>
+                <h3 id="main-entry-point">Main Entry Point</h3>
+                <p><strong><code>https://keglev.github.io/stockease/</code></strong></p>
+                <p>Landing page with 8 cards linking to:</p>
+                <ol type="1">
+                <li><strong>API Documentation</strong> → ReDoc
+                interactive specification</li>
+                <li><strong>Architecture Overview</strong> → System
+                design and layers</li>
+                <li><strong>Backend Architecture</strong> → Spring Boot
+                application structure</li>
+                <li><strong>Frontend Architecture</strong> →
+                React/TypeScript structure</li>
+                <li><strong>Security Architecture</strong> → JWT, auth,
+                access control</li>
+                <li><strong>Deployment Strategy</strong> → Docker,
+                CI/CD, cloud</li>
+                <li><strong>Testing Architecture</strong> → Test pyramid
+                and strategies</li>
+                <li><strong>Design Decisions</strong> → ADRs and
+                technical justifications</li>
+                </ol>
+                <h3 id="sidebar-navigation-in-each-doc">Sidebar
+                Navigation (in each doc)</h3>
+                <p>Each HTML page has a sidebar with sections:</p>
+                <ul>
+                <li><strong>API Documentation</strong> - Link to API
+                docs</li>
+                <li><strong>Architecture</strong> - 6 main architecture
+                pages</li>
+                <li><strong>Design Decisions</strong> - Link to
+                decisions index</li>
+                <li><strong>Components</strong> - Link to components
+                index</li>
+                <li><strong>Patterns</strong> - Link to patterns
+                index</li>
+                <li><strong>Testing</strong> - 4 testing-related
+                pages</li>
+                <li><strong>Deployment</strong> - 2 deployment
+                pages</li>
+                <li><strong>Reference</strong> - 3 reference
+                documents</li>
+                </ul>
+                <hr />
+                <h2 id="deployment-status">Deployment Status</h2>
+                <table>
+                <colgroup>
+                <col style="width: 39%" />
+                <col style="width: 28%" />
+                <col style="width: 32%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Component</th>
+                <th>Status</th>
+                <th>Details</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Template</td>
+                <td>✅ Ready</td>
+                <td>Enterprise design, responsive, professional</td>
+                </tr>
+                <tr class="even">
+                <td>Workflow</td>
+                <td>✅ Ready</td>
+                <td>Runs on push, converts all docs, deploys to
+                gh-pages</td>
+                </tr>
+                <tr class="odd">
+                <td>API Docs</td>
+                <td>✅ Ready</td>
+                <td>ReDoc interactive spec (index.html)</td>
+                </tr>
+                <tr class="even">
+                <td>Architecture Docs</td>
+                <td>✅ Ready</td>
+                <td>31 files converted to HTML with navigation</td>
+                </tr>
+                <tr class="odd">
+                <td>GitHub Pages</td>
+                <td>⏳ Ready</td>
+                <td>Configured, will activate on first workflow run</td>
+                </tr>
+                <tr class="even">
+                <td>Landing Page</td>
+                <td>✅ Ready</td>
+                <td>Custom HTML with card layout</td>
+                </tr>
+                </tbody>
+                </table>
+                <hr />
+                <h2 id="next-steps">Next Steps</h2>
+                <ol type="1">
+                <li><strong>Trigger Workflow</strong> (Automatic on next
+                push to <code>main</code>)
+                <ul>
+                <li>Or manually via GitHub Actions UI</li>
+                <li>Converts all docs to HTML with template</li>
+                <li>Deploys to gh-pages branch</li>
+                </ul></li>
+                <li><strong>Verify GitHub Pages</strong> (After workflow
+                completes ~2-3 min)
+                <ul>
+                <li>Check: Settings → Pages</li>
+                <li>Visit: https://keglev.github.io/stockease/</li>
+                </ul></li>
+                <li><strong>Monitor Workflow</strong>
+                <ul>
+                <li>Go to: Actions tab on GitHub</li>
+                <li>Watch “Docs Pipeline” workflow</li>
+                <li>Check logs for any errors</li>
+                </ul></li>
+                <li><strong>Iterate</strong> (if needed)
+                <ul>
+                <li>Edit markdown files</li>
+                <li>Push to main</li>
+                <li>Workflow auto-runs</li>
+                <li>Changes appear on gh-pages in ~3-5 minutes</li>
+                </ul></li>
+                </ol>
+                <hr />
+                <h2 id="architecture">Architecture</h2>
+                <pre><code>GitHub Repository
+├── main branch
+│   ├── backend/docs/architecture/ (31 .md files)
+│   ├── backend/docs/api/ (openapi.yaml + modular paths)
+│   ├── backend/docs/templates/ (enterprise-docs.html)
+│   └── .github/workflows/docs-pipeline.yml
+│
+├── [Workflow Triggers on Push]
+│   ├── Install deps (pandoc, redocly)
+│   ├── Generate API docs (ReDoc)
+│   ├── Convert architecture docs (Markdown → HTML)
+│   ├── Create landing page
+│   └── Deploy to gh-pages
+│
+└── gh-pages branch
+    └── target/docs/ (published to GitHub Pages)
+        ├── index.html (landing page)
+        ├── index.html (API docs from ReDoc)
+        ├── architecture/
+        │   ├── overview.html
+        │   ├── backend.html
+        │   ├── frontend.html
+        │   ├── security.html
+        │   ├── deployment.html
+        │   ├── testing-architecture.html
+        │   ├── components/
+        │   ├── decisions/
+        │   ├── patterns/
+        │   ├── testing/
+        │   └── deployment/
+        └── ... (all other converted docs)
+
+Live at: https://keglev.github.io/stockease/</code></pre>
+                <hr />
+                <h2 id="summary">Summary</h2>
+                <p>✅ <strong>Complete End-to-End Documentation
+                System</strong></p>
+                <ul>
+                <li><strong>31 Markdown files</strong> → Converted to
+                professional HTML</li>
+                <li><strong>Enterprise Template</strong> → Modern,
+                responsive, navigable</li>
+                <li><strong>Automated Deployment</strong> → GitHub
+                Actions workflow</li>
+                <li><strong>GitHub Pages Hosting</strong> → Free,
+                automatic, reliable</li>
+                <li><strong>Professional Navigation</strong> → Sidebar +
+                TOC + breadcrumbs</li>
+                <li><strong>Responsive Design</strong> → Works on
+                desktop, tablet, mobile</li>
+                </ul>
+                <p><strong>Ready to deploy on next push to
+                <code>main</code> branch!</strong></p>
+            </div>
+        </main>
+    </aside>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation Menu
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: '/stockease/api/' },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: './overview.html' },
+                { label: 'System Layers', href: './layers.html' },
+                { label: 'Backend Architecture', href: './backend.html' },
+                { label: 'Frontend Architecture', href: './frontend.html' },
+                { label: 'Security Architecture', href: './security.html' },
+                { label: 'Deployment Strategy', href: './deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: './decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: './components/index.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: './patterns/index.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: './testing-architecture.html' },
+                { label: 'Security Tests', href: './testing/security-tests.html' },
+                { label: 'Test Pyramid', href: './testing/pyramid.html' },
+                { label: 'Test Strategy', href: './testing/strategy.html' },
+            ],
+            'Deployment': [
+                { label: 'CI/CD Pipeline', href: './deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: './deployment/docker-strategy.html' },
+            ],
+            'Reference': [
+                { label: 'Navigation Map', href: './NAVIGATION-MAP.html' },
+                { label: 'Cross References', href: './CROSS-REFERENCE.html' },
+                { label: 'Documentation Index', href: './DOCUMENTATION-INDEX.html' },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = link.href;
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes(link.href.replace('./', '').replace('.html', ''))) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+</body>
+</html>
