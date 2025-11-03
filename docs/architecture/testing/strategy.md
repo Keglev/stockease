@@ -113,32 +113,32 @@ void testLowStockProductsWithRoles(String username, String role) { }
 ```mermaid
 graph TD
     subgraph Auth["POST /api/auth/login"]
-        A1[Success: Valid username/password → JWT token]
-        A2[Failure: Invalid credentials → 401]
-        A3[Failure: User not found → 401]
+        A1[Success - Valid username/password → JWT token]
+        A2[Failure - Invalid credentials → 401]
+        A3[Failure - User not found → 401]
     end
     
     subgraph Get["GET /api/products"]
-        G1[Success: Admin/User → Product list]
-        G2[Authorization: Anonymous → 401]
-        G3[Pagination: Skip/limit parameters]
+        G1[Success - Admin/User → Product list]
+        G2[Authorization - Anonymous → 401]
+        G3[Pagination - Skip/limit parameters]
     end
     
     subgraph Post["POST /api/products"]
-        P1[Success: Admin only → Created product]
-        P2[Failure: Non-admin → 403]
-        P3[Failure: Invalid data → 400]
+        P1[Success - Admin only → Created product]
+        P2[Failure - Non-admin → 403]
+        P3[Failure - Invalid data → 400]
     end
     
     subgraph Put["PUT /api/products/{id}"]
-        U1[Success: Admin only → Updated product]
-        U2[Failure: Non-admin → 403]
-        U3[Failure: Invalid quantity → Validation error]
+        U1[Success - Admin only → Updated product]
+        U2[Failure - Non-admin → 403]
+        U3[Failure - Invalid quantity → Validation error]
     end
     
     subgraph Delete["DELETE /api/products/{id}"]
-        D1[Success: Admin only → 204 No Content]
-        D2[Failure: Non-admin → 403]
+        D1[Success - Admin only → 204 No Content]
+        D2[Failure - Non-admin → 403]
     end
     
     style Auth fill:#e3f2fd

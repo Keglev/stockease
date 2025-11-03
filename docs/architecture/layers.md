@@ -76,11 +76,11 @@ public ResponseEntity<ProductDTO> createProduct(
 
 ```mermaid
 graph TD
-    A[1. User calls POST /api/auth/login<br/>with username:password] --> B[2. Spring Security intercepts<br/>HTTP Basic]
+    A[1. User calls POST /api/auth/login<br/>with username and password] --> B[2. Spring Security intercepts<br/>HTTP Basic]
     B --> C[3. UserDetailsService<br/>validates credentials]
     C --> D[4. JwtProvider generates token]
     D --> E[5. Token returned in response]
-    E --> F[6. Client includes token in<br/>Authorization: Bearer header]
+    E --> F[6. Client includes token in<br/>Authorization Bearer header]
     F --> G[7. JwtProvider validates token<br/>on subsequent requests]
     
     G --> H{Valid?}

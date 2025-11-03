@@ -78,7 +78,7 @@ public ResponseEntity<Page<ProductDTO>> getProducts(
 graph TD
     A[Plain Password] -->|BCrypt + salt| B[Hashed Password<br/>stored in DB]
     
-    C[Login: Plain Password input] -->|Apply same BCrypt<br/>+ stored salt| D[Compare with stored hash]
+    C[Login - Plain Password input] -->|Apply same BCrypt<br/>+ stored salt| D[Compare with stored hash]
     
     D --> E{Match?}
     E -->|Yes| F[Success]

@@ -92,7 +92,7 @@ graph TD
     
     J3 --> K[Response Serialization]
     K --> K1[DTO → JSON conversion Jackson]
-    K1 --> K2[Content-Type: application/json]
+    K1 --> K2[Content-Type application/json]
     
     K2 --> L[HTTP Response with Status & Body]
     

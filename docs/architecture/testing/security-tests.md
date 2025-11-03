@@ -23,18 +23,18 @@
 
 ```mermaid
 graph TD
-    A[1. User submits credentials<br/>Username: testuser<br/>Password: testpassword] --> B[2. POST /api/auth/login]
+    A[1. User submits credentials<br/>testuser / testpassword] --> B[2. POST /api/auth/login]
     
     B --> C[AuthController receives request]
     C --> D[AuthenticationManager validates password]
     D --> E[JwtUtil generates JWT token]
-    E --> F[Response: JWT token data]
+    E --> F[Response with JWT token data]
     
     F --> G[3. Client stores JWT in<br/>Authorization header]
     G --> H[4. Subsequent requests include JWT<br/>GET /api/products]
     
     H --> I[JwtFilter validates token]
-    I --> J[Extracts user, role]
+    I --> J[Extracts user and role]
     J --> K[Proceeds with request]
     
     K --> L{Token valid?}

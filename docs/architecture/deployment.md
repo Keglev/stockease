@@ -47,20 +47,20 @@ graph TB
 
 ```mermaid
 graph TD
-    A[Stage 1: Checkout & Setup] --> B[Stage 2: Build]
-    B --> C[Stage 3: Test]
-    C --> D[Stage 4: Build Docker Image]
-    D --> E[Stage 5: Push to Container Registry]
-    E --> F[Stage 6: Deploy to Koyeb]
-    F --> G[Stage 7: Verification]
+    A[Stage 1 - Checkout & Setup] --> B[Stage 2 - Build]
+    B --> C[Stage 3 - Test]
+    C --> D[Stage 4 - Build Docker Image]
+    D --> E[Stage 5 - Push to Container Registry]
+    E --> F[Stage 6 - Deploy to Koyeb]
+    F --> G[Stage 7 - Verification]
     
     A -->|Details| A1["- Checkout code from GitHub<br/>- Set up JDK 17<br/>- Cache Maven dependencies<br/>- Verify build environment"]
     B -->|Details| B1["- Run Maven clean package<br/>- Compile all Java source code<br/>- Skip tests in this stage<br/>- Generate JAR file"]
     C -->|Details| C1["- Run 65+ unit tests<br/>- Tests use H2 in-memory database<br/>- Generate coverage reports (JaCoCo)<br/>- Fail pipeline if tests don't pass"]
-    D -->|Details| D1["- Read Dockerfile from repository<br/>- Build image based on Dockerfile<br/>- Tag: ghcr.io/keglev/stockease:latest<br/>- Tag: ghcr.io/keglev/stockease:{commit-sha}<br/>- Generate SBOM"]
-    E -->|Details| E1["- Authenticate with GHCR<br/>- Push tagged images to GHCR<br/>- Make images available for deployment<br/>- Store in: ghcr.io/keglev/stockease:*"]
+    D -->|Details| D1["- Read Dockerfile from repository<br/>- Build image based on Dockerfile<br/>- Tag as ghcr.io/keglev/stockease latest<br/>- Tag as ghcr.io/keglev/stockease commit-sha<br/>- Generate SBOM"]
+    E -->|Details| E1["- Authenticate with GHCR<br/>- Push tagged images to GHCR<br/>- Make images available for deployment<br/>- Store in ghcr.io/keglev/stockease"]
     F -->|Details| F1["- Get Koyeb API token from secrets<br/>- Trigger Koyeb deployment<br/>- Pull latest image from GHCR<br/>- Perform blue-green deployment<br/>- Health checks (retry up to 5 times)<br/>- Rollback if health check fails"]
-    G -->|Details| G1["- Verify deployment status<br/>- Check health endpoint: /health<br/>- Log deployment results<br/>- Notify on success/failure"]
+    G -->|Details| G1["- Verify deployment status<br/>- Check health endpoint /health<br/>- Log deployment results<br/>- Notify on success/failure"]
     
     style A fill:#e3f2fd
     style B fill:#e3f2fd
@@ -81,17 +81,17 @@ graph TD
 
 ```mermaid
 graph TD
-    A[Stage 1: Extract OpenAPI Spec] --> B[Stage 2: Generate Redoc HTML]
-    B --> C[Stage 3: Convert Markdown to HTML]
-    C --> D[Stage 4: Collect Coverage Reports]
-    D --> E[Stage 5: Commit to Docs Branch]
-    E --> F[Stage 6: Cleanup]
+    A[Stage 1 - Extract OpenAPI Spec] --> B[Stage 2 - Generate Redoc HTML]
+    B --> C[Stage 3 - Convert Markdown to HTML]
+    C --> D[Stage 4 - Collect Coverage Reports]
+    D --> E[Stage 5 - Commit to Docs Branch]
+    E --> F[Stage 6 - Cleanup]
     
     A -->|Details| A1["- Build backend application<br/>- Start Spring Boot server<br/>- Fetch OpenAPI spec from /v3/api-docs<br/>- Validate OpenAPI spec<br/>- Save to docs/api/openapi/openapi.json"]
     B -->|Details| B1["- Install Redoc CLI<br/>- Read OpenAPI spec<br/>- Generate interactive HTML documentation<br/>- Output to docs/api/redoc/index.html<br/>- Optimize for web"]
     C -->|Details| C1["- Install pandoc<br/>- For each .md file in docs/architecture/:<br/>  * Convert to HTML<br/>  * Apply styling<br/>  * Output to docs/architecture/*.html<br/>- Convert docs/index.md to docs/index.html<br/>- Generate table of contents"]
     D -->|Details| D1["- Run Maven test with JaCoCo<br/>- Generate coverage report<br/>- Copy to docs/coverage/<br/>- Generate index.html for coverage dashboard<br/>- Calculate coverage percentage"]
-    E -->|Details| E1["- Switch to docs branch<br/>- Remove old generated files<br/>- Copy all new HTML files<br/>- Commit: 'docs: auto-generated documentation'<br/>- Push to origin/docs<br/>- GitHub Pages auto-publishes"]
+    E -->|Details| E1["- Switch to docs branch<br/>- Remove old generated files<br/>- Copy all new HTML files<br/>- Commit with auto-generated documentation<br/>- Push to origin/docs<br/>- GitHub Pages auto-publishes"]
     F -->|Details| F1["- Remove temporary files<br/>- Clean build artifacts<br/>- Log completion"]
     
     style A fill:#e3f2fd

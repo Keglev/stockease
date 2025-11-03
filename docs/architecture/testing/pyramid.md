@@ -38,9 +38,9 @@ graph TD
 
 ```mermaid
 graph TD
-    A["System/E2E: 0 tests 🔴<br/>Not yet implemented"]
-    B["Integration: 1 test 5% 🟢<br/>@SpringBootTest context load"]
-    C["Unit/Slice: 8 tests 95% 🟢<br/>@WebMvcTest + unit tests"]
+    A["System/E2E - 0 tests 🔴<br/>Not yet implemented"]
+    B["Integration - 1 test 5% 🟢<br/>@SpringBootTest context load"]
+    C["Unit/Slice - 8 tests 95% 🟢<br/>@WebMvcTest + unit tests"]
     
     C --- B
     B --- A

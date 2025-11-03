@@ -10,7 +10,7 @@ StockEase uses a multi-stage Docker build strategy to create minimal, secure, an
 
 ```mermaid
 graph TD
-    subgraph Stage1["Stage 1: BUILD<br/>Base: maven:3.9.6-eclipse-temurin-17"]
+    subgraph Stage1["Stage 1: BUILD - Base: maven:3.9.6-eclipse-temurin-17"]
         B1[1. Copy Maven wrapper + pom.xml] --> B2[2. Download dependencies]
         B2 --> B3[3. Copy application source code]
         B3 --> B4[4. Build JAR]
@@ -18,25 +18,25 @@ graph TD
         B1 -.->|Enables| B1A[Dependency layer caching]
         B2 -.->|Cached unless| B2A[pom.xml changes]
         B3 -.->|Changes| B3A[frequently, runs last]
-        B4 -.->|Output| B4A[/workspace/target/stockease-0.0.1-SNAPSHOT.jar]
+        B4 -.->|Output| B4A[JAR artifact in workspace/target]
         
-        B4 --> Result1[Result: ~1.2GB image<br/>JDK + Maven + build tools]
+        B4 --> Result1[Result: ~1.2GB image - JDK + Maven + build tools]
     end
     
     Result1 -->|Extract artifact only| Stage2
     
-    subgraph Stage2["Stage 2: RUNTIME<br/>Base: eclipse-temurin:17-jre-jammy"]
-        R1[1. Copy JAR from build stage] --> R2[2. Create non-root user app:app]
+    subgraph Stage2["Stage 2: RUNTIME - Base: eclipse-temurin:17-jre-jammy"]
+        R1[1. Copy JAR from build stage] --> R2[2. Create non-root user]
         R2 --> R3[3. Set USER app]
         R3 --> R4[4. Expose port 8081]
-        R4 --> R5[5. ENTRYPOINT: java -jar /app/app.jar]
+        R4 --> R5[5. Set ENTRYPOINT]
         
-        R1 -.->|Command| R1A[COPY --from=build /workspace/target/*.jar /app/app.jar]
+        R1 -.->|Command| R1A[COPY from build stage to /app/app.jar]
         R2 -.->|Security| R2A[Run with limited permissions]
         R3 -.->|Effect| R3A[All processes run as non-root]
         R4 -.->|Matches| R4A[Spring Boot server.port]
         
-        R5 --> Result2[Result: ~250MB image<br/>JRE + application only]
+        R5 --> Result2[Result: ~250MB image - JRE + application only]
     end
     
     style Stage1 fill:#e3f2fd
