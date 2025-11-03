@@ -1,5 +1,6 @@
 package com.stocks.stockease.controller;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,6 +24,7 @@ import jakarta.validation.Valid;
  * 
  * Manages user login and JWT token generation for securing API access.
  * Integrates with Spring Security for credential validation and role-based access.
+ * Disabled in 'docs' profile (no database/authentication).
  * 
  * @author Team StockEase
  * @version 1.0
@@ -30,6 +32,7 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/api/auth")
+@ConditionalOnBean(UserRepository.class)
 public class AuthController {
 
     /**

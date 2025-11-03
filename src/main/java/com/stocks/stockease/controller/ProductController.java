@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +38,7 @@ import jakarta.validation.constraints.Positive;
  * Provides endpoints for CRUD operations, pagination, searching, and stock analytics.
  * All non-admin endpoints require USER or ADMIN role authentication via JWT.
  * Admin-only endpoints (create, delete) require ADMIN role.
+ * Disabled in 'docs' profile (no database).
  * 
  * @author Team StockEase
  * @version 1.0
@@ -44,6 +46,7 @@ import jakarta.validation.constraints.Positive;
  */
 @RestController
 @RequestMapping("/api/products")
+@ConditionalOnBean(ProductRepository.class)
 public class ProductController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);

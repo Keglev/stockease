@@ -5,6 +5,7 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
  * - HTTP 500 Internal Error: Database unreachable or connection timeout
  * 
  * Endpoint: GET /api/health (public, no authentication required)
+ * Disabled in 'docs' profile (no DataSource available)
  * 
  * @author Team StockEase
  * @version 1.0
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/health")
+@ConditionalOnBean(DataSource.class)
 public class HealthController {
 
     /** Primary JDBC DataSource used by the application. Injected by Spring. */
