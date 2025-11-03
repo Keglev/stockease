@@ -54,20 +54,43 @@ jobs:
           APP_PID=$!
           echo "App started with PID $APP_PID"
           # Wait for app to initialize
-          sleep 20
-          # Fetch OpenAPI spec
-          curl -s http://localhost:8080/v3/api-docs > target/docs/openapi.json
-          # Verify it was created
-          test -f target/docs/openapi.json || (echo "❌ openapi.json missing" && cat /tmp/app.log && exit 1)
+          sleep 25
+          # Check if app is still running
+          if ! kill -0 $APP_PID 2>/dev/null; then
+            echo "❌ App crashed. Logs:"
+            cat /tmp/app.log
+            exit 1
+          fi
+          # Fetch OpenAPI spec with verbose output
+          echo "Fetching http://localhost:8080/v3/api-docs"
+          curl -v http://localhost:8080/v3/api-docs > target/docs/openapi.json 2>&1 | head -20
+          # Verify it was created and has content
+          if [ ! -f target/docs/openapi.json ] || [ ! -s target/docs/openapi.json ]; then
+            echo "❌ openapi.json is empty or missing. App logs:"
+            cat /tmp/app.log
+            exit 1
+          fi
+          echo "✓ OpenAPI spec generated ($(wc -c < target/docs/openapi.json) bytes)"
           # Kill app
           kill $APP_PID 2>/dev/null || true
-          echo "✓ OpenAPI spec generated"
 
       - name: Generate ReDoc HTML
         run: |
           npm install -g redoc-cli
           cd "${{ steps.where.outputs.dir }}/target/docs"
+          # Verify openapi.json exists and is valid JSON
+          if [ ! -f openapi.json ]; then
+            echo "❌ openapi.json not found"
+            exit 1
+          fi
+          echo "OpenAPI spec size: $(wc -c < openapi.json) bytes"
+          # Show first 100 chars to verify it's valid JSON
+          echo "First 100 chars:"
+          head -c 100 openapi.json
+          echo ""
+          # Build ReDoc
           redoc-cli build openapi.json -o index.html
+          echo "✓ ReDoc HTML generated"
 
       - name: Install pandoc
         run: sudo apt-get update && sudo apt-get install -y pandoc
