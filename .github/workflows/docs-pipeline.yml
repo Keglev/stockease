@@ -4,12 +4,8 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'pom.xml'
-      - 'src/main/**'
-      - 'backend/pom.xml'
-      - 'backend/src/main/**'
       - 'backend/docs/**'
-      - '.github/workflows/docs-pipeline.yml'
+      - 'backend/.github/workflows/docs-pipeline.yml'
   workflow_dispatch:
 
 permissions:
