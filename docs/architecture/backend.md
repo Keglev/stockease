@@ -66,9 +66,9 @@ graph TD
     D -->|No| X[Return 401 Unauthorized]
     
     E --> F[Controller Method Execution]
-    F --> F1[@PathVariable & @RequestParam binding]
-    F1 --> F2[@RequestBody deserialization JSON → DTO]
-    F2 --> F3[Spring Validation @Valid]
+    F --> F1["PathVariable and RequestParam binding"]
+    F1 --> F2["RequestBody deserialization JSON to DTO"]
+    F2 --> F3["Spring Validation Valid"]
     
     F3 --> G[Invoke Service Method]
     G --> G1[Business logic execution]
@@ -82,7 +82,7 @@ graph TD
     
     H3 --> I[Service processes results]
     I --> I1[Transform entities to DTOs]
-    I1 --> I2[Handle errors & exceptions]
+    I1 --> I2[Handle errors and exceptions]
     I2 --> I3[Return response object]
     
     I3 --> J[Controller builds HTTP response]
@@ -94,7 +94,7 @@ graph TD
     K --> K1[DTO → JSON conversion Jackson]
     K1 --> K2[Content-Type application/json]
     
-    K2 --> L[HTTP Response with Status & Body]
+    K2 --> L[HTTP Response with Status and Body]
     
     style A fill:#e3f2fd
     style L fill:#c8e6c9

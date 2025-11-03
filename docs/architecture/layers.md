@@ -10,7 +10,7 @@ graph TD
     B[Security Layer<br/>JWT, Spring Security<br/>Cross-cutting Concern]
     C[Business Logic Services<br/>Domain Layer]
     D[Data Access<br/>Repositories, Entities<br/>Persistence Layer]
-    E[Database<br/>PostgreSQL / H2 for tests<br/>Data Layer]
+    E["Database<br/>PostgreSQL or H2 for tests<br/>Data Layer"]
     
     A --> B
     B --> C
