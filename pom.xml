@@ -64,6 +64,12 @@
 			<version>42.7.4</version>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- H2 Database (for docs generation profile) -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		 <!-- Lombok Dependency -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -140,12 +146,6 @@
 				<artifactId>flyway-database-postgresql</artifactId>
 			</dependency>
 
-		<dependency>
-    		<groupId>com.h2database</groupId>
-    		<artifactId>h2</artifactId>
-    		<scope>test</scope>
-		</dependency>
-
 		<!--Mockito Dependencies-->
 		<dependency>
     		<groupId>org.mockito</groupId>
@@ -187,6 +187,53 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 				</configuration>
+			</plugin>
+
+			<!-- SpringDoc OpenAPI Maven Plugin: Generate OpenAPI spec at build time -->
+			<!-- 
+			Purpose: Generate openapi.json without running the full app with database
+			Activation: mvn springdoc-openapi:generate (runs in prepare-package phase)
+			How it works:
+			  1. Forks a new JVM process with the 'docs' profile
+			  2. Spring Boot starts in minimal mode (H2, no security, lazy init)
+			  3. Plugin waits 40 seconds for beans to initialize
+			  4. Calls /v3/api-docs endpoint (provided by springdoc-openapi dependency)
+			  5. Saves JSON response to target/docs/openapi.json
+			  6. Forked process exits cleanly
+			Output: backend/target/docs/openapi.json (used by ReDoc in workflow)
+			Troubleshooting:
+			  - If timeout, increase waitTimeInSeconds
+			  - If endpoint returns 404, verify springdoc-openapi-starter-webmvc-ui dependency
+			  - If "server already running", check that previous plugin runs were killed
+			-->
+			<plugin>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-maven-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<id>generate-openapi</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<!-- Runs after dependencies resolved, before package creation -->
+						<phase>prepare-package</phase>
+						<configuration>
+							<!-- Fork a new JVM process (avoids polluting main build) -->
+							<fork>true</fork>
+							<!-- Use the lightweight docs profile (H2, no security, etc.) -->
+							<profiles>docs</profiles>
+							<!-- Endpoint to scrape for OpenAPI spec -->
+							<apiDocsUrl>http://localhost:${server.port:8080}/v3/api-docs</apiDocsUrl>
+							<!-- Output filename -->
+							<outputFileName>openapi.json</outputFileName>
+							<!-- Output directory (used by workflow for ReDoc & gh-pages) -->
+							<outputDir>${project.build.directory}/docs</outputDir>
+							<!-- Timeout for app startup (default 30s, increase if beans are slow) -->
+							<waitTimeInSeconds>40</waitTimeInSeconds>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 			<!-- Flyway Maven Plugin for DB migrations in CI -->

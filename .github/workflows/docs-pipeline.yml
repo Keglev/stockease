@@ -1,308 +1,673 @@
-################################################################################
-# GitHub Actions Workflow: Documentation Generation & Deployment Pipeline
-# 
-# PHASE 3: Deployment Infrastructure - Automated Documentation Generation
-# 
-# Purpose:
-# --------
-# Automates the complete documentation lifecycle:
-# 1. Extracts OpenAPI specification from running Spring Boot application
-# 2. Generates interactive API documentation (Redoc HTML)
-# 3. Converts all markdown documentation to HTML with table of contents
-# 4. Deploys documentation to GitHub Pages (gh-pages branch)
-# 5. Creates documentation source branch for version control of .md files
-#
-# Architecture:
-# -----------
-# Input: Source code + documentation changes in main branch
-#   ↓
-# Build & Extract: Compile app, extract OpenAPI spec from /v3/api-docs endpoint
-#   ↓
-# Generate: Convert spec to Redoc HTML, convert markdown files to HTML
-#   ↓
-# Deploy: Push generated artifacts to gh-pages branch via peaceiris action
-#   ↓
-# Serve: GitHub Pages automatically serves content at keglev.github.io/stockease/
-#
-# Triggers:
-# --------
-# - Push to main branch with changes in backend/src/main/**, backend/docs/**, pom.xml
-# - Manual trigger via GitHub Actions UI (workflow_dispatch)
-#
-# Outputs:
-# -------
-# - gh-pages branch: Generated HTML documentation for public consumption
-# - docs-source branch: Source markdown files for documentation version control
-# - GitHub Pages: Public documentation URL (https://keglev.github.io/stockease/)
-#
-# Dependencies:
-# ------------
-# - Java 17 (for Spring Boot compilation)
-# - Maven 3.9.x (via cache)
-# - Node.js (for redoc-cli, pandoc)
-# - SpringDoc OpenAPI 2.4.0 (auto-exposes /v3/api-docs endpoint)
-#
-# Security:
-# --------
-# - Uses GITHUB_TOKEN (automatic, scoped to this workflow only)
-# - No secrets required
-# - Generated docs are public (by design - documentation should be public)
-#
-# Performance:
-# -----------
-# - Maven cache: Speeds up dependency resolution
-# - Ubuntu latest: Ensures up-to-date tools
-# - Total execution time: ~5-8 minutes
-#
-# Failure Handling:
-# ----------------
-# If any step fails, the workflow stops (fail-fast behavior)
-# Check GitHub Actions tab for detailed error messages
-# Common failures:
-#   - Pandoc not installed: Handled by apt-get in workflow
-#   - App startup timeout: Increase sleep duration if needed
-#   - Git authentication: Uses GITHUB_TOKEN automatically
-#
-# Author: Team StockEase
-# Version: 1.0
-# Last Updated: 2025-10-31
-################################################################################
+################################################################################################################################################################
 
-name: Docs Pipeline
+# Docs Pipeline Workflow# GitHub Actions Workflow: Documentation Generation & Deployment Pipeline
+
+## 
+
+# Purpose: Generate and deploy OpenAPI/ReDoc documentation automatically# PHASE 3: Deployment Infrastructure - Automated Documentation Generation
+
+## 
+
+# Triggers:# Purpose:
+
+# - Push to main with changes in: backend/src/main/**, backend/docs/**, pom.xml, or this workflow file# --------
+
+# - Manual trigger via workflow_dispatch button# Automates the complete documentation lifecycle:
+
+## 1. Extracts OpenAPI specification from running Spring Boot application
+
+# Deployment:# 2. Generates interactive API documentation (Redoc HTML)
+
+# - ReDoc HTML → gh-pages branch (public at https://keglev.github.io/stockease/)# 3. Converts all markdown documentation to HTML with table of contents
+
+# - Generated markdown HTML → gh-pages branch under /generated/ subfolder# 4. Deploys documentation to GitHub Pages (gh-pages branch)
+
+# - Source markdown files → docs-source branch (clean history, source only)# 5. Creates documentation source branch for version control of .md files
+
+##
+
+# Architecture:# Architecture:
+
+# 1. Build project with SpringDoc Maven plugin# -----------
+
+# 2. Plugin generates openapi.json (via forked docs profile with H2 DB)# Input: Source code + documentation changes in main branch
+
+# 3. ReDoc converts OpenAPI JSON → interactive HTML (index.html)#   ↓
+
+# 4. Pandoc converts markdown files → structured HTML with TOC# Build & Extract: Compile app, extract OpenAPI spec from /v3/api-docs endpoint
+
+# 5. Sitemap for SEO#   ↓
+
+# 6. Deploy all generated content to GitHub Pages (gh-pages branch)# Generate: Convert spec to Redoc HTML, convert markdown files to HTML
+
+# 7. Create/update docs-source branch with source files only#   ↓
+
+## Deploy: Push generated artifacts to gh-pages branch via peaceiris action
+
+# Why this approach:#   ↓
+
+# - No manual app startup in CI (avoids DB connection/security issues)# Serve: GitHub Pages automatically serves content at keglev.github.io/stockease/
+
+# - SpringDoc plugin handles OpenAPI generation safely with lightweight profile#
+
+# - Preserves directory structure for markdown conversion# Triggers:
+
+# - Clean separation: generated artifacts go to gh-pages, sources to docs-source# --------
+
+# - Generated files never committed to main branch (builds stay clean)# - Push to main branch with changes in backend/src/main/**, backend/docs/**, pom.xml
+
+## - Manual trigger via GitHub Actions UI (workflow_dispatch)
+
+# Performance:#
+
+# - Plugin fork with H2 database: ~5-8 seconds (vs. ~15s with full app)# Outputs:
+
+# - Full workflow: ~2-3 minutes including maven cache, compilation, and deployment# -------
+
+## - gh-pages branch: Generated HTML documentation for public consumption
+
+# Failure handling:# - docs-source branch: Source markdown files for documentation version control
+
+# - Plugin timeout: increase waitTimeInSeconds in pom.xml# - GitHub Pages: Public documentation URL (https://keglev.github.io/stockease/)
+
+# - Missing /v3/api-docs: verify springdoc-openapi-starter-webmvc-ui dependency#
+
+# - Markdown conversion errors: check pandoc syntax in error logs# Dependencies:
+
+# - GitHub Pages deployment: verify GITHUB_TOKEN has write permissions# ------------
+
+################################################################################# - Java 17 (for Spring Boot compilation)
+
+# - Maven 3.9.x (via cache)
+
+name: Docs Pipeline# - Node.js (for redoc-cli, pandoc)
+
+# - SpringDoc OpenAPI 2.4.0 (auto-exposes /v3/api-docs endpoint)
+
+on:#
+
+  push:# Security:
+
+    branches: [ main ]# --------
+
+    paths:# - Uses GITHUB_TOKEN (automatic, scoped to this workflow only)
+
+      - 'backend/src/main/**'# - No secrets required
+
+      - 'backend/docs/**'# - Generated docs are public (by design - documentation should be public)
+
+      - 'backend/pom.xml'#
+
+      - '.github/workflows/docs-pipeline.yml'# Performance:
+
+  workflow_dispatch:# -----------
+
+# - Maven cache: Speeds up dependency resolution
+
+permissions:# - Ubuntu latest: Ensures up-to-date tools
+
+  contents: write  # Required for peaceiris/actions-gh-pages to push to gh-pages branch# - Total execution time: ~5-8 minutes
+
+#
+
+jobs:# Failure Handling:
+
+  build-docs:# ----------------
+
+    runs-on: ubuntu-latest# If any step fails, the workflow stops (fail-fast behavior)
+
+# Check GitHub Actions tab for detailed error messages
+
+    steps:# Common failures:
+
+      - name: Checkout code#   - Pandoc not installed: Handled by apt-get in workflow
+
+        uses: actions/checkout@v4#   - App startup timeout: Increase sleep duration if needed
+
+        with:#   - Git authentication: Uses GITHUB_TOKEN automatically
+
+          fetch-depth: 0  # Full git history needed for orphan branch operations#
+
+# Author: Team StockEase
+
+      - name: Set up JDK 17# Version: 1.0
+
+        uses: actions/setup-java@v3# Last Updated: 2025-10-31
+
+        with:################################################################################
+
+          java-version: '17'
+
+          distribution: 'temurin'name: Docs Pipeline
+
+          cache: maven  # Cache ~/.m2/repository to speed up subsequent builds
 
 on:
-  push:
-    branches: [ main ]
-    paths: 
-      # Trigger on backend source code changes (may include endpoint documentation)
-      - 'backend/src/main/**'
-      # Trigger on documentation changes
-      - 'backend/docs/**'
-      # Trigger on dependency changes (may affect OpenAPI generation)
-      - 'backend/pom.xml'
-      # Trigger on workflow file changes (for testing/updates)
-      - '.github/workflows/docs-pipeline.yml'
-  # Allow manual trigger from GitHub Actions UI for testing/emergency deployments
-  workflow_dispatch:
 
-jobs:
-  build-docs:
-    # Run on ubuntu-latest to ensure all tools (pandoc, Node.js) available
-    # Standard GitHub-provided runner with no additional setup needed
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full git history needed for creating orphan branches
+      ################################################################################  push:
 
-      # Phase 1: Setup Build Environment
-      # Install Java 17 matching the project's source level configuration
-      # Cache Maven dependencies to speed up subsequent workflow runs (~2min faster)
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+      # PHASE 1: Build & Generate OpenAPI via SpringDoc Maven Plugin    branches: [ main ]
+
+      ################################################################################    paths: 
+
+      #       # Trigger on backend source code changes (may include endpoint documentation)
+
+      # What happens:      - 'backend/src/main/**'
+
+      # 1. mvn clean package: Compiles source, runs tests, creates JAR      # Trigger on documentation changes
+
+      # 2. mvn springdoc-openapi:generate: Forks a new JVM with 'docs' profile      - 'backend/docs/**'
+
+      #    - Profile uses lightweight H2 in-memory DB (no external connections)      # Trigger on dependency changes (may affect OpenAPI generation)
+
+      #    - Profile disables security (no JWT/OAuth2 required)      - 'backend/pom.xml'
+
+      #    - Profile enables lazy initialization (faster startup)      # Trigger on workflow file changes (for testing/updates)
+
+      # 3. Forked process starts Spring Boot, waits 40 seconds for beans      - '.github/workflows/docs-pipeline.yml'
+
+      # 4. Plugin calls http://localhost:8080/v3/api-docs (provided by springdoc-openapi dependency)  # Allow manual trigger from GitHub Actions UI for testing/emergency deployments
+
+      # 5. Saves JSON response to backend/target/docs/openapi.json  workflow_dispatch:
+
+      # 6. Forked process exits cleanly
+
+      #jobs:
+
+      # Advantages over manual curl approach:  build-docs:
+
+      # - No database connections required    # Run on ubuntu-latest to ensure all tools (pandoc, Node.js) available
+
+      # - No security beans trying to load secrets/keys    # Standard GitHub-provided runner with no additional setup needed
+
+      # - Safely isolated from main build    runs-on: ubuntu-latest
+
+      # - Part of standard Maven lifecycle (prepare-package phase)    
+
+      #    steps:
+
+      # Output: backend/target/docs/openapi.json      - name: Checkout code
+
+      # Failures: Check plugin logs for timeout/endpoint issues        uses: actions/checkout@v4
+
+      #        with:
+
+      - name: Build & Generate OpenAPI (via SpringDoc Maven plugin)          fetch-depth: 0  # Full git history needed for creating orphan branches
+
+        working-directory: backend
+
+        run: |      # Phase 1: Setup Build Environment
+
+          echo "=== Phase 1: Build application ==="      # Install Java 17 matching the project's source level configuration
+
+          mvn -q -DskipTests clean package      # Cache Maven dependencies to speed up subsequent workflow runs (~2min faster)
+
+          echo "Build successful"      - name: Set up JDK 17
+
+                  uses: actions/setup-java@v3
+
+          echo "=== Phase 1b: Generate OpenAPI spec ==="        with:
+
+          mvn -q -DskipTests springdoc-openapi:generate          java-version: '17'
+
+          echo "OpenAPI spec generated at target/docs/openapi.json"          distribution: 'temurin'
+
           cache: maven  # Cache ~/.m2/repository for faster builds
 
-      # Phase 2: Build Spring Boot Application
-      # Compile the application without running tests (tests verified in separate workflow)
-      # Output: backend/target/stockease-0.0.1-SNAPSHOT.jar
-      # Failure impact: If build fails, OpenAPI extraction cannot proceed
-      - name: Build Spring Boot app
-        working-directory: backend
-        run: mvn clean package -q -DskipTests
+      ################################################################################
 
-      # Phase 3: Extract OpenAPI Specification
-      # 
-      # Why this step matters:
-      # - OpenAPI spec is the machine-readable API contract
-      # - Automatically generated by SpringDoc at /v3/api-docs endpoint
-      # - Redoc uses this spec to generate interactive API documentation
+      # PHASE 2: Generate ReDoc HTML from OpenAPI Spec      # Phase 2: Build Spring Boot Application
+
+      ################################################################################      # Compile the application without running tests (tests verified in separate workflow)
+
+      #      # Output: backend/target/stockease-0.0.1-SNAPSHOT.jar
+
+      # What happens:      # Failure impact: If build fails, OpenAPI extraction cannot proceed
+
+      # 1. Installs redoc-cli globally via npm      - name: Build Spring Boot app
+
+      # 2. Reads backend/target/docs/openapi.json (generated by plugin)        working-directory: backend
+
+      # 3. Renders interactive HTML documentation        run: mvn clean package -q -DskipTests
+
+      # 4. Outputs to backend/target/docs/index.html
+
+      #      # Phase 3: Extract OpenAPI Specification
+
+      # ReDoc features:      # 
+
+      # - Single-page interactive API reference      # Why this step matters:
+
+      # - Full-text search across endpoints      # - OpenAPI spec is the machine-readable API contract
+
+      # - Request/response schema visualization      # - Automatically generated by SpringDoc at /v3/api-docs endpoint
+
+      # - Authentication requirements documentation      # - Redoc uses this spec to generate interactive API documentation
+
+      # - Mobile-responsive design      #
+
+      # - Syntax highlighting for request examples      # Execution flow:
+
+      #      # 1. Create target/docs directory for outputs
+
+      # Output: backend/target/docs/index.html (~2-3 MB self-contained HTML)      # 2. Start Spring Boot app in background (Tomcat server startup)
+
+      # Time: ~15-20 seconds      # 3. Wait 10 seconds for app to fully initialize and enable Spring beans
+
+      #      # 4. Call /v3/api-docs endpoint (provided by org.springdoc:springdoc-openapi-starter-webmvc-ui)
+
+      - name: Generate ReDoc HTML from OpenAPI      # 5. Save JSON response to backend/target/docs/openapi.json
+
+        run: |      # 6. Kill the process to free resources
+
+          echo "=== Phase 2: Generate ReDoc documentation ==="      #
+
+          npm install -g redoc-cli      # Failure scenarios:
+
+          cd backend/target/docs      # - App fails to start: Increase sleep duration (line "sleep 10")
+
+                # - Endpoint returns 404: Verify SpringDoc dependency in pom.xml
+
+          # Ensure openapi.json exists (generated by plugin in previous step)      # - curl fails: Network connectivity issue in runner environment
+
+          if [ ! -f openapi.json ]; then      - name: Extract OpenAPI spec
+
+            echo "ERROR: openapi.json not found. Plugin generation may have failed."        working-directory: backend
+
+            exit 1        run: |
+
+          fi          mkdir -p target/docs
+
+                    # Start app in background, wait for startup, extract spec, stop app
+
+          # Generate ReDoc HTML          java -jar target/stockease-0.0.1-SNAPSHOT.jar &
+
+          redoc-cli build openapi.json -o index.html          APP_PID=$!
+
+          echo "ReDoc HTML generated at $(pwd)/index.html"          sleep 10
+
+          curl -s http://localhost:8080/v3/api-docs > target/docs/openapi.json
+
+      ################################################################################          kill $APP_PID 2>/dev/null || true
+
+      # PHASE 3: Install Pandoc for Markdown Conversion          echo "OpenAPI spec extracted"
+
+      ################################################################################      
+
+      #      # Phase 4: Generate Interactive API Documentation (Redoc)
+
+      # Pandoc is the standard Markdown → HTML converter      # 
+
+      # Installed from Ubuntu package manager (not npm) because it's a system binary      # Purpose: Convert machine-readable OpenAPI JSON into human-friendly interactive HTML
+
+      #      # 
+
+      - name: Install Pandoc      # What Redoc provides:
+
+        run: |      # - Single-page interactive API reference (no external dependencies)
+
+          echo "=== Phase 3: Install Pandoc ==="      # - Full-text search across all endpoints
+
+          sudo apt-get update > /dev/null 2>&1      # - Request/response schema visualization
+
+          sudo apt-get install -y pandoc > /dev/null 2>&1      # - Authentication and security requirements documentation
+
+          pandoc --version | head -1      # - Code examples for different programming languages
+
+      # - Mobile-responsive design
+
+      ################################################################################      #
+
+      # PHASE 4: Convert Markdown to HTML (Preserving Directory Structure)      # Output: backend/target/docs/index.html (~2-3 MB single-page application)
+
+      ################################################################################      # 
+
+      #      # Customization options:
+
+      # What happens:      # - --title: Sets documentation title
+
+      # 1. Creates backend/target/docs/generated/ directory      # - --logo: Adds custom logo
+
+      # 2. Finds all .md files recursively in backend/docs/      # - --favicon: Adds custom favicon
+
+      # 3. For each .md file:      # See: https://github.com/Redocly/redoc/blob/main/cli/README.md
+
+      #    - Preserves relative path structure      - name: Generate Redoc HTML
+
+      #    - Converts to HTML with table of contents        run: |
+
+      #    - Saves to corresponding location in generated/          npm install -g redoc-cli
+
+      #          cd backend/target/docs
+
+      # Example:          redoc-cli build openapi.json -o index.html
+
+      #   Input:  backend/docs/architecture/patterns/caching.md          echo "Redoc HTML generated"
+
+      #   Output: backend/target/docs/generated/architecture/patterns/caching.html      
+
+      #      # Phase 5: Convert Markdown Documentation to HTML
+
+      # Pandoc options:      #
+
+      # -f markdown: input format (GitHub flavored markdown)      # Purpose: Transform all .md source files into styled HTML with table of contents
+
+      # -t html: output format      # Enables consistent documentation styling and enables GitHub Pages serving
+
+      # --toc: generate table of contents from headers      #
+
+      # -s: standalone HTML (includes html/body/head tags and embedded CSS)      # Processing:
+
+      #      # - Find all .md files recursively in backend/docs/
+
+      # Output: backend/target/docs/generated/ (multiple HTML files with directory structure)      # - Use pandoc to convert Markdown → HTML
+
+      # Time: ~5-10 seconds depending on markdown file count      # - Generate table of contents automatically from headers (--toc flag)
+
+      #      # - Standalone HTML with embedded CSS (--standalone flag)
+
+      - name: Convert Markdown to HTML (preserve directory structure)      # - Preserve relative paths in output directory structure
+
+        run: |      #
+
+          echo "=== Phase 4: Convert Markdown to HTML ==="      # Output structure:
+
+          mkdir -p backend/target/docs/generated      #   backend/target/docs/generated/
+
+                #   ├── index.html (from backend/docs/index.md)
+
+          base_dir="backend/docs"      #   ├── JAVADOC-GUIDE.html
+
+          file_count=0      #   ├── architecture/
+
+                #   │   ├── backend.html
+
+          find "$base_dir" -type f -name "*.md" | while read md_file; do      #   │   ├── frontend.html
+
+            # Strip leading base_dir/ to get relative path      #   │   └── ...
+
+            rel="${md_file#$base_dir/}"      #   └── ...
+
+            # Replace .md with .html for output path      #
+
+            out="backend/target/docs/generated/${rel%.md}.html"      # Note: First install pandoc (via apt-get on Ubuntu) since it's not in npm
+
+            # Create output directory if it doesn't exist      - name: Convert Markdown to HTML
+
+            mkdir -p "$(dirname "$out")"        run: |
+
+                      # Install pandoc from Ubuntu package manager (not npm)
+
+            # Convert with pandoc          sudo apt-get update && sudo apt-get install -y pandoc
+
+            pandoc "$md_file" -f markdown -t html --toc -s -o "$out"          
+
+            echo "  ✓ $rel → generated/${rel%.md}.html"          mkdir -p backend/target/docs/generated
+
+            ((file_count++))          
+
+          done          # Convert all .md files recursively
+
+                    find backend/docs -name "*.md" -type f | while read md_file; do
+
+          echo "Converted $file_count markdown files to HTML"            html_file="backend/target/docs/generated/$(basename "$md_file" .md).html"
+
+            # pandoc options:
+
+      ################################################################################            # -f markdown: input format
+
+      # PHASE 5: Generate Sitemap for Search Engines            # -t html: output format
+
+      ################################################################################            # --toc: generate table of contents
+
+      #            # -s: standalone HTML (includes html/body tags and CSS)
+
+      # Purpose: Help Google/Bing discover and index documentation            pandoc "$md_file" -f markdown -t html --toc -s -o "$html_file"
+
+      # Format: XML sitemap (standard format recognized by search engines)          done
+
+      #          echo "Markdown files converted to HTML"
+
+      # Contents:      
+
+      # - Entry for main API docs (index.html with ReDoc)      # Phase 6: Generate Sitemap for Search Engine Optimization
+
+      # - Entry for generated markdown documentation      # Purpose: Help search engines discover and index documentation
+
+      # - Last modified date (today's date)      # Output: backend/target/docs/sitemap.xml (standard XML format)
+
+      # - Priority scores (1.0 = most important, 0.8 = secondary)      - name: Generate sitemap
+
+      #        run: |
+
+      # Output: backend/target/docs/sitemap.xml          cat > backend/target/docs/sitemap.xml << 'EOF'
+
+      #          <?xml version="1.0" encoding="UTF-8"?>
+
+      - name: Generate sitemap          <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+        run: |            <url>
+
+          echo "=== Phase 5: Generate sitemap ==="              <loc>https://keglev.github.io/stockease/api/</loc>
+
+          cat > backend/target/docs/sitemap.xml << 'EOF'              <lastmod>$(date +%Y-%m-%d)</lastmod>
+
+          <?xml version="1.0" encoding="UTF-8"?>              <priority>1.0</priority>
+
+          <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">            </url>
+
+            <url>          </urlset>
+
+              <loc>https://keglev.github.io/stockease/</loc>          EOF
+
+              <lastmod>$(date +%Y-%m-%d)</lastmod>          echo "Sitemap generated"
+
+              <priority>1.0</priority>      
+
+              <changefreq>weekly</changefreq>      # Phase 7: Deploy Generated Documentation to GitHub Pages
+
+            </url>      #
+
+            <url>      # Purpose: Publish generated documentation for public access
+
+              <loc>https://keglev.github.io/stockease/generated/</loc>      # 
+
+              <lastmod>$(date +%Y-%m-%d)</lastmod>      # How peaceiris/actions-gh-pages works:
+
+              <priority>0.8</priority>      # 1. Creates/updates gh-pages branch in repository
+
+              <changefreq>weekly</changefreq>      # 2. Commits all files from publish_dir to gh-pages branch
+
+            </url>      # 3. Pushes to GitHub (GitHub Pages automatically detects changes)
+
+          </urlset>      # 4. GitHub Pages builds and serves content within ~30 seconds
+
+          EOF      #
+
+          echo "Sitemap generated"      # Deployment configuration:
+
+      # - github_token: Auto-provided by GitHub Actions (scoped to this repo)
+
+      ################################################################################      # - publish_dir: Source of files to deploy (backend/target/docs)
+
+      # PHASE 6: Deploy to GitHub Pages (gh-pages branch)      # - cname: Optional custom domain configuration (commented out by default)
+
+      ################################################################################      #
+
+      #      # Result:
+
+      # What happens:      # - Content available at: https://keglev.github.io/stockease/
+
+      # 1. peaceiris/actions-gh-pages@v3 action reads backend/target/docs      # - All files in gh-pages branch:
+
+      # 2. Creates/updates gh-pages branch with all files from that directory      #   ├── index.html (Redoc API docs)
+
+      # 3. Commits files with message "Deploy from GitHub Actions"      #   ├── openapi.json
+
+      # 4. Pushes to origin/gh-pages      #   ├── sitemap.xml
+
+      # 5. GitHub Pages automatically publishes content within ~30 seconds      #   └── generated/ (converted markdown HTML)
+
+      #      #
+
+      # Result:      # Security implications:
+
+      # - Content available at: https://keglev.github.io/stockease/      # - Documentation is PUBLIC (by design, API docs should be discoverable)
+
+      # - index.html (ReDoc) served as directory root      # - GITHUB_TOKEN has minimal permissions (write to this repo only)
+
+      # - generated/ folder contains converted markdown files      # - No sensitive information should be in documentation
+
+      # - sitemap.xml available for search engines      - name: Deploy to GitHub Pages
+
+      #        uses: peaceiris/actions-gh-pages@v3
+
+      # Security:        with:
+
+      # - GITHUB_TOKEN is auto-provided by GitHub Actions          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # - Token is scoped to this repository only          publish_dir: ./backend/target/docs
+
+      # - Token is short-lived (valid only for this workflow run)          # Optional custom domain (uncomment and configure if needed)
+
+      # - No sensitive data should be in documentation          # cname: stockease-docs.example.com
+
+      #      
+
+      # Troubleshooting:      # Phase 8: Create Documentation Source Branch
+
+      # - Check GitHub repo Settings → Pages to verify source is gh-pages branch      #
+
+      # - GitHub Pages build logs available in repo Settings → Pages      # Purpose: Maintain version-controlled copy of documentation source files
+
+      # - If 404, wait ~2 minutes for GitHub to publish      # Rationale: Separate source .md files from generated artifacts for clarity
+
+      #      #
+
+      - name: Deploy to GitHub Pages (gh-pages branch)      # Implementation:
+
+        uses: peaceiris/actions-gh-pages@v3      # - git checkout --orphan: Creates branch with clean history (no parent commits)
+
+        with:      # - Rationale: gh-pages branch contains many binary artifacts, docs-source stays lean
+
+          github_token: ${{ secrets.GITHUB_TOKEN }}      # - git rm -rf .: Clears all files from current working directory
+
+          publish_dir: ./backend/target/docs      # - git checkout HEAD --: Restores only specified files from main branch
+
+          # Optional: custom domain configuration      # - Force push: Ensures clean branch even if docs-source exists
+
+          # cname: docs.example.com      #
+
+      # Result: docs-source branch contains ONLY:
+
+      ################################################################################      # - backend/docs/*.md (all documentation sources)
+
+      # PHASE 7: Create/Update docs-source Branch      # - backend/src/main/docs/api.md (API-specific docs)
+
+      ################################################################################      # - README.md (project overview)
+
+      #      # 
+
+      # Purpose: Maintain clean history of documentation source files      # NOT included:
+
+      # Rationale:      # - Generated .html files
+
+      # - gh-pages contains large generated artifacts (HTML, etc.)      # - Compiled .class files
+
+      # - docs-source is lean, contains only .md source files      # - JAR artifacts
+
+      # - Easy for documentation team to track changes      # - Node modules
+
+      # - Clean separation of concerns      #
+
+      #      # Use case: For documentation team to track source changes over time
+
+      # How it works:      - name: Create docs-source branch
+
+      # 1. Records current commit SHA (GITHUB_SHA from workflow context)        run: |
+
+      # 2. Creates a git worktree at /tmp/docs-source          git config user.name "GitHub Actions"
+
+      # 3. Checks out docs-source branch (or creates if doesn't exist)          git config user.email "actions@github.com"
+
+      # 4. Removes all files from the worktree          
+
+      # 5. Checks out ONLY source files from the triggering commit:          # Create orphan docs-source branch (new history, no parent commits)
+
+      #    - backend/docs/          git checkout --orphan docs-source
+
+      #    - README.md          git rm -rf .
+
+      # 6. Commits with message indicating documentation source update          
+
+      # 7. Pushes to origin/docs-source          # Copy ONLY source documentation files (not generated HTML)
+
+      #          git checkout HEAD -- backend/docs backend/src/main/docs README.md
+
+      # Why git worktree?          git add -A
+
+      # - Clean, isolated filesystem (doesn't affect main working directory)          
+
+      # - Idempotent (safe to run multiple times)          git commit -m "docs: Documentation sources - Phase 3 (Item 3.13)"
+
+      # - No need to stash/restore changes          git push -u origin docs-source --force
+
       #
-      # Execution flow:
-      # 1. Create target/docs directory for outputs
-      # 2. Start Spring Boot app in background (Tomcat server startup)
-      # 3. Wait 10 seconds for app to fully initialize and enable Spring beans
-      # 4. Call /v3/api-docs endpoint (provided by org.springdoc:springdoc-openapi-starter-webmvc-ui)
-      # 5. Save JSON response to backend/target/docs/openapi.json
-      # 6. Kill the process to free resources
+
+      # Output: docs-source branch with ONLY:
+      #   backend/docs/*.md (all documentation files)
+      #   README.md (project overview)
+      #
+      # NOT included:
+      #   - Generated HTML files
+      #   - Compiled Java classes
+      #   - JAR/class files
+      #   - node_modules
+      #   - Any build artifacts
       #
       # Failure scenarios:
-      # - App fails to start: Increase sleep duration (line "sleep 10")
-      # - Endpoint returns 404: Verify SpringDoc dependency in pom.xml
-      # - curl fails: Network connectivity issue in runner environment
-      - name: Extract OpenAPI spec
-        working-directory: backend
+      # - First run: docs-source branch doesn't exist yet (will be created)
+      # - Subsequent runs: branch exists and is updated cleanly
+      # - If "working tree already exists", delete /tmp/docs-source and retry
+      #
+      - name: Create/Update docs-source branch
         run: |
-          mkdir -p target/docs
-          # Start app in background, wait for startup, extract spec, stop app
-          java -jar target/stockease-0.0.1-SNAPSHOT.jar &
-          APP_PID=$!
-          sleep 10
-          curl -s http://localhost:8080/v3/api-docs > target/docs/openapi.json
-          kill $APP_PID 2>/dev/null || true
-          echo "OpenAPI spec extracted"
-      
-      # Phase 4: Generate Interactive API Documentation (Redoc)
-      # 
-      # Purpose: Convert machine-readable OpenAPI JSON into human-friendly interactive HTML
-      # 
-      # What Redoc provides:
-      # - Single-page interactive API reference (no external dependencies)
-      # - Full-text search across all endpoints
-      # - Request/response schema visualization
-      # - Authentication and security requirements documentation
-      # - Code examples for different programming languages
-      # - Mobile-responsive design
-      #
-      # Output: backend/target/docs/index.html (~2-3 MB single-page application)
-      # 
-      # Customization options:
-      # - --title: Sets documentation title
-      # - --logo: Adds custom logo
-      # - --favicon: Adds custom favicon
-      # See: https://github.com/Redocly/redoc/blob/main/cli/README.md
-      - name: Generate Redoc HTML
-        run: |
-          npm install -g redoc-cli
-          cd backend/target/docs
-          redoc-cli build openapi.json -o index.html
-          echo "Redoc HTML generated"
-      
-      # Phase 5: Convert Markdown Documentation to HTML
-      #
-      # Purpose: Transform all .md source files into styled HTML with table of contents
-      # Enables consistent documentation styling and enables GitHub Pages serving
-      #
-      # Processing:
-      # - Find all .md files recursively in backend/docs/
-      # - Use pandoc to convert Markdown → HTML
-      # - Generate table of contents automatically from headers (--toc flag)
-      # - Standalone HTML with embedded CSS (--standalone flag)
-      # - Preserve relative paths in output directory structure
-      #
-      # Output structure:
-      #   backend/target/docs/generated/
-      #   ├── index.html (from backend/docs/index.md)
-      #   ├── JAVADOC-GUIDE.html
-      #   ├── architecture/
-      #   │   ├── backend.html
-      #   │   ├── frontend.html
-      #   │   └── ...
-      #   └── ...
-      #
-      # Note: First install pandoc (via apt-get on Ubuntu) since it's not in npm
-      - name: Convert Markdown to HTML
-        run: |
-          # Install pandoc from Ubuntu package manager (not npm)
-          sudo apt-get update && sudo apt-get install -y pandoc
+          echo "=== Phase 7: Create/Update docs-source branch ==="
           
-          mkdir -p backend/target/docs/generated
-          
-          # Convert all .md files recursively
-          find backend/docs -name "*.md" -type f | while read md_file; do
-            html_file="backend/target/docs/generated/$(basename "$md_file" .md).html"
-            # pandoc options:
-            # -f markdown: input format
-            # -t html: output format
-            # --toc: generate table of contents
-            # -s: standalone HTML (includes html/body tags and CSS)
-            pandoc "$md_file" -f markdown -t html --toc -s -o "$html_file"
-          done
-          echo "Markdown files converted to HTML"
-      
-      # Phase 6: Generate Sitemap for Search Engine Optimization
-      # Purpose: Help search engines discover and index documentation
-      # Output: backend/target/docs/sitemap.xml (standard XML format)
-      - name: Generate sitemap
-        run: |
-          cat > backend/target/docs/sitemap.xml << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-            <url>
-              <loc>https://keglev.github.io/stockease/api/</loc>
-              <lastmod>$(date +%Y-%m-%d)</lastmod>
-              <priority>1.0</priority>
-            </url>
-          </urlset>
-          EOF
-          echo "Sitemap generated"
-      
-      # Phase 7: Deploy Generated Documentation to GitHub Pages
-      #
-      # Purpose: Publish generated documentation for public access
-      # 
-      # How peaceiris/actions-gh-pages works:
-      # 1. Creates/updates gh-pages branch in repository
-      # 2. Commits all files from publish_dir to gh-pages branch
-      # 3. Pushes to GitHub (GitHub Pages automatically detects changes)
-      # 4. GitHub Pages builds and serves content within ~30 seconds
-      #
-      # Deployment configuration:
-      # - github_token: Auto-provided by GitHub Actions (scoped to this repo)
-      # - publish_dir: Source of files to deploy (backend/target/docs)
-      # - cname: Optional custom domain configuration (commented out by default)
-      #
-      # Result:
-      # - Content available at: https://keglev.github.io/stockease/
-      # - All files in gh-pages branch:
-      #   ├── index.html (Redoc API docs)
-      #   ├── openapi.json
-      #   ├── sitemap.xml
-      #   └── generated/ (converted markdown HTML)
-      #
-      # Security implications:
-      # - Documentation is PUBLIC (by design, API docs should be discoverable)
-      # - GITHUB_TOKEN has minimal permissions (write to this repo only)
-      # - No sensitive information should be in documentation
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./backend/target/docs
-          # Optional custom domain (uncomment and configure if needed)
-          # cname: stockease-docs.example.com
-      
-      # Phase 8: Create Documentation Source Branch
-      #
-      # Purpose: Maintain version-controlled copy of documentation source files
-      # Rationale: Separate source .md files from generated artifacts for clarity
-      #
-      # Implementation:
-      # - git checkout --orphan: Creates branch with clean history (no parent commits)
-      # - Rationale: gh-pages branch contains many binary artifacts, docs-source stays lean
-      # - git rm -rf .: Clears all files from current working directory
-      # - git checkout HEAD --: Restores only specified files from main branch
-      # - Force push: Ensures clean branch even if docs-source exists
-      #
-      # Result: docs-source branch contains ONLY:
-      # - backend/docs/*.md (all documentation sources)
-      # - backend/src/main/docs/api.md (API-specific docs)
-      # - README.md (project overview)
-      # 
-      # NOT included:
-      # - Generated .html files
-      # - Compiled .class files
-      # - JAR artifacts
-      # - Node modules
-      #
-      # Use case: For documentation team to track source changes over time
-      - name: Create docs-source branch
-        run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           
-          # Create orphan docs-source branch (new history, no parent commits)
-          git checkout --orphan docs-source
-          git rm -rf .
+          # Remember current commit (the one that triggered this workflow)
+          COMMIT_SHA="${GITHUB_SHA}"
+          echo "Current commit: $COMMIT_SHA"
           
-          # Copy ONLY source documentation files (not generated HTML)
-          git checkout HEAD -- backend/docs backend/src/main/docs README.md
+          # Create isolated git worktree for docs-source branch
+          rm -rf /tmp/docs-source 2>/dev/null || true
+          git worktree add -B docs-source /tmp/docs-source origin/docs-source 2>/dev/null || \
+            git worktree add -B docs-source /tmp/docs-source
+          
+          cd /tmp/docs-source
+          
+          # Clear all existing files
+          git rm -rf . >/dev/null 2>&1 || true
+          rm -rf .[^.]* * >/dev/null 2>&1 || true
+          
+          # Checkout ONLY source documentation from the triggering commit
+          git checkout "${COMMIT_SHA}" -- backend/docs README.md 2>/dev/null || \
+            echo "Note: Some source files not found in commit (first push?)"
+          
+          # Stage all changes
           git add -A
           
-          git commit -m "docs: Documentation sources - Phase 3 (Item 3.13)"
-          git push -u origin docs-source --force
-
+          # Commit if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes for docs-source branch"
+          else
+            git commit -m "docs: Documentation sources from commit ${COMMIT_SHA:0:7}"
+            git push origin docs-source
+            echo "docs-source branch updated"
+          fi
+          
+          # Cleanup worktree
+          cd /
+          git worktree remove /tmp/docs-source 2>/dev/null || true
