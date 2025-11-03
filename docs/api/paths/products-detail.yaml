@@ -1,0 +1,92 @@
+get:
+  summary: Retrieve a single product by ID
+  description: Returns product details if found, otherwise 404 error.
+  operationId: getProductById
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Product identifier
+      schema:
+        type: integer
+        format: int64
+        example: 1
+  responses:
+    '200':
+      description: Product found and returned
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseProduct'
+          example:
+            success: true
+            message: Product fetched successfully
+            data:
+              id: 1
+              name: Laptop
+              quantity: 50
+              price: 999.99
+              totalValue: 49999.50
+    '401':
+      description: Unauthorized - missing or invalid JWT token
+    '404':
+      description: Product not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: The product with ID 999 does not exist.
+            data: null
+
+delete:
+  summary: Delete a product (ADMIN only)
+  description: |
+    Deletes a product by ID. Returns 404 if product not found.
+    Deletion checks product existence first to avoid orphaned references.
+  operationId: deleteProduct
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Product identifier
+      schema:
+        type: integer
+        format: int64
+        example: 1
+  responses:
+    '200':
+      description: Product deleted successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: true
+            message: Product with ID 1 has been successfully deleted.
+            data: null
+    '400':
+      description: Invalid request - ID missing
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+    '401':
+      description: Unauthorized - missing or invalid JWT token
+    '403':
+      description: Forbidden - insufficient permissions (requires ADMIN role)
+    '404':
+      description: Product not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'

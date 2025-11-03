@@ -1,0 +1,8 @@
+BearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: |
+    JWT token for authentication. Obtained from /api/auth/login endpoint.
+    Include in Authorization header: "Authorization: Bearer <token>"
+    Tokens contain user role (ADMIN or USER) as claim.

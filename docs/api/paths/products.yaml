@@ -1,0 +1,109 @@
+get:
+  summary: Retrieve all products
+  description: |
+    Loads entire inventory without pagination. Returns all products sorted by ID.
+    Use /api/products/paged for large datasets to prevent memory issues.
+  operationId: getAllProducts
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Successfully retrieved all products
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProductList'
+          example:
+            - id: 1
+              name: Laptop
+              quantity: 50
+              price: 999.99
+              totalValue: 49999.50
+            - id: 2
+              name: Mouse
+              quantity: 200
+              price: 25.99
+              totalValue: 5198.00
+    '401':
+      description: Unauthorized - missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: Unauthorized
+            data: null
+
+post:
+  summary: Create a new product (ADMIN only)
+  description: |
+    Creates a new product with provided name, quantity, and price.
+    Validates all required fields and business rules:
+    - Name must be non-empty
+    - Quantity cannot be negative
+    - Price must be positive (> 0)
+    Automatically calculates totalValue = quantity * price
+  operationId: createProduct
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - name
+            - quantity
+            - price
+          properties:
+            name:
+              type: string
+              example: New Laptop
+            quantity:
+              type: integer
+              minimum: 0
+              example: 25
+            price:
+              type: number
+              format: double
+              minimum: 0.01
+              example: 1299.99
+  responses:
+    '200':
+      description: Product created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Product'
+          example:
+            id: 3
+            name: New Laptop
+            quantity: 25
+            price: 1299.99
+            totalValue: 32499.75
+    '400':
+      description: Validation error - missing fields or invalid values
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Incomplete update. Please fill in all required fields.
+    '401':
+      description: Unauthorized - missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+    '403':
+      description: Forbidden - insufficient permissions (requires ADMIN role)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'

@@ -1,0 +1,33 @@
+get:
+  summary: Calculate total inventory value
+  description: |
+    Computes sum of (quantity * price) for all products.
+    Useful for financial reporting and inventory valuation.
+    Database-optimized aggregation query.
+  operationId: getTotalStockValue
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Total stock value calculated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Total stock value fetched successfully
+              data:
+                type: number
+                format: double
+                example: 99999.99
+    '401':
+      description: Unauthorized - missing or invalid JWT token
+    '500':
+      description: Server error calculating total stock value

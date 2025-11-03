@@ -1,0 +1,59 @@
+put:
+  summary: Update product quantity
+  description: |
+    Updates quantity for a specific product. Automatically recalculates total stock value.
+    Prevents negative quantities.
+  operationId: updateQuantity
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Product identifier
+      schema:
+        type: integer
+        format: int64
+        example: 1
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - quantity
+          properties:
+            quantity:
+              type: integer
+              minimum: 0
+              description: New quantity (cannot be negative)
+              example: 75
+  responses:
+    '200':
+      description: Quantity updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseProduct'
+          example:
+            success: true
+            message: Quantity updated successfully
+            data:
+              id: 1
+              name: Laptop
+              quantity: 75
+              price: 999.99
+              totalValue: 74999.25
+    '400':
+      description: Validation error - invalid quantity or missing field
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+    '401':
+      description: Unauthorized - missing or invalid JWT token
+    '404':
+      description: Product not found

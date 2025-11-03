@@ -1,0 +1,110 @@
+post:
+  summary: Authenticate user and generate JWT token
+  description: |
+    Validates user credentials against stored user records via Spring Security.
+    Upon successful authentication, issues a signed JWT token with embedded user role.
+    Token can be used for subsequent API requests requiring USER or ADMIN role authorization.
+  operationId: login
+  tags:
+    - Authentication
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - username
+            - password
+          properties:
+            username:
+              type: string
+              minLength: 1
+              description: User account name (must not be blank)
+              example: admin
+            password:
+              type: string
+              minLength: 1
+              description: User account password (must not be blank)
+              example: password123
+          description: Credentials for user authentication
+        example:
+          username: admin
+          password: password123
+  responses:
+    '200':
+      description: Authentication successful - JWT token returned
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                required:
+                  - success
+                  - message
+                properties:
+                  success:
+                    type: boolean
+                    description: Operation success indicator
+                    example: true
+                  message:
+                    type: string
+                    description: Human-readable outcome message
+                    example: Login successful
+                  data:
+                    type: object
+                    nullable: true
+                    description: Operation result payload (null for error responses)
+              - type: object
+                properties:
+                  data:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+          example:
+            success: true
+            message: Login successful
+            data: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTcwMDAwMDAwMH0.signature
+    '400':
+      description: Invalid request - missing or blank username/password
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - message
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Username and password cannot be blank
+              data:
+                type: 'null'
+          example:
+            success: false
+            message: Username and password cannot be blank
+            data: null
+    '401':
+      description: Authentication failed - invalid credentials
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - message
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Bad credentials
+              data:
+                type: 'null'
+          example:
+            success: false
+            message: Bad credentials
+            data: null

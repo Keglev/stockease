@@ -1,0 +1,174 @@
+# Authentication DTOs
+LoginRequest:
+  type: object
+  required:
+    - username
+    - password
+  properties:
+    username:
+      type: string
+      minLength: 1
+      description: User account name (must not be blank)
+      example: admin
+    password:
+      type: string
+      minLength: 1
+      description: User account password (must not be blank)
+      example: password123
+  description: Credentials for user authentication
+
+ApiResponse:
+  type: object
+  required:
+    - success
+    - message
+  properties:
+    success:
+      type: boolean
+      description: Operation success indicator
+      example: true
+    message:
+      type: string
+      description: Human-readable outcome message
+      example: Login successful
+    data:
+      type: object
+      nullable: true
+      description: Operation result payload (null for error responses)
+  description: Standard wrapper for all API responses
+
+ApiResponseString:
+  allOf:
+    - $ref: '#/components/schemas/ApiResponse'
+    - type: object
+      properties:
+        data:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Product DTOs
+Product:
+  type: object
+  required:
+    - id
+    - name
+    - quantity
+    - price
+    - totalValue
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: Unique product identifier (auto-generated)
+      example: 1
+    name:
+      type: string
+      minLength: 1
+      description: Product name (unique in database)
+      example: Laptop
+    quantity:
+      type: integer
+      minimum: 0
+      description: Current stock quantity (cannot be negative)
+      example: 50
+    price:
+      type: number
+      format: double
+      minimum: 0.01
+      description: Unit price (must be positive)
+      example: 999.99
+    totalValue:
+      type: number
+      format: double
+      description: Total inventory value (auto-calculated as quantity * price)
+      example: 49999.50
+  description: Product inventory item with stock and pricing information
+
+ApiResponseProduct:
+  allOf:
+    - $ref: '#/components/schemas/ApiResponse'
+    - type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Product'
+
+ProductList:
+  type: array
+  items:
+    $ref: '#/components/schemas/Product'
+  description: List of products
+
+ApiResponseProductList:
+  allOf:
+    - $ref: '#/components/schemas/ApiResponse'
+    - type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProductList'
+
+PaginatedResponse:
+  type: object
+  required:
+    - content
+    - totalElements
+    - totalPages
+    - currentPage
+    - pageSize
+  properties:
+    content:
+      type: array
+      items:
+        $ref: '#/components/schemas/Product'
+      description: Products for current page
+    totalElements:
+      type: integer
+      format: int64
+      description: Total number of products across all pages
+      example: 100
+    totalPages:
+      type: integer
+      description: Total number of available pages
+      example: 10
+    currentPage:
+      type: integer
+      description: Zero-based current page number
+      example: 0
+    pageSize:
+      type: integer
+      description: Number of items per page
+      example: 10
+  description: Paginated product response with metadata
+
+ApiResponsePaginated:
+  allOf:
+    - $ref: '#/components/schemas/ApiResponse'
+    - type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/PaginatedResponse'
+
+# Error Responses
+ErrorResponse:
+  type: object
+  required:
+    - error
+  properties:
+    error:
+      type: string
+      description: Error message describing what went wrong
+      example: Incomplete update. Please fill in all required fields.
+
+ApiResponseError:
+  type: object
+  required:
+    - success
+    - message
+  properties:
+    success:
+      type: boolean
+      example: false
+    message:
+      type: string
+      example: Operation failed
+    data:
+      type: null

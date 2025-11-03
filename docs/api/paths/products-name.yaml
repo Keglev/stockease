@@ -1,0 +1,59 @@
+put:
+  summary: Update product name
+  description: |
+    Updates name for a specific product. Name must be non-empty.
+    Uniqueness constraint enforced at database level.
+  operationId: updateName
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Product identifier
+      schema:
+        type: integer
+        format: int64
+        example: 1
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              minLength: 1
+              description: New product name (must not be empty)
+              example: High-Performance Laptop
+  responses:
+    '200':
+      description: Name updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseProduct'
+          example:
+            success: true
+            message: Name updated successfully
+            data:
+              id: 1
+              name: High-Performance Laptop
+              quantity: 50
+              price: 999.99
+              totalValue: 49999.50
+    '400':
+      description: Validation error - name empty or missing
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+    '401':
+      description: Unauthorized - missing or invalid JWT token
+    '404':
+      description: Product not found

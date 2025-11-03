@@ -1,0 +1,60 @@
+put:
+  summary: Update product price
+  description: |
+    Updates price for a specific product. Automatically recalculates total stock value.
+    Prevents zero or negative prices.
+  operationId: updatePrice
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Product identifier
+      schema:
+        type: integer
+        format: int64
+        example: 1
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - price
+          properties:
+            price:
+              type: number
+              format: double
+              minimum: 0.01
+              description: New price (must be positive)
+              example: 1199.99
+  responses:
+    '200':
+      description: Price updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseProduct'
+          example:
+            success: true
+            message: Price updated successfully
+            data:
+              id: 1
+              name: Laptop
+              quantity: 50
+              price: 1199.99
+              totalValue: 59999.50
+    '400':
+      description: Validation error - invalid price or missing field
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+    '401':
+      description: Unauthorized - missing or invalid JWT token
+    '404':
+      description: Product not found

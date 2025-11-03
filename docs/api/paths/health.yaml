@@ -1,0 +1,30 @@
+get:
+  summary: Health check endpoint
+  description: |
+    Simple health check for orchestration and monitoring systems (Kubernetes, Docker, load balancers).
+    Validates database connectivity via lightweight JDBC connection test.
+    Returns 200 OK if database reachable; 500 error if unreachable.
+    No authentication required.
+    Used by:
+    - Kubernetes (liveness/readiness probes)
+    - Docker (healthcheck instruction)
+    - Load balancers (backend health verification)
+    - Monitoring systems (Prometheus, DataDog, etc.)
+  operationId: healthCheck
+  tags:
+    - Health
+  responses:
+    '200':
+      description: Application and database healthy
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Database is connected and API is running.
+    '500':
+      description: Application or database unhealthy
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Database is down - Connection refused

@@ -1,0 +1,36 @@
+get:
+  summary: Search products by name
+  description: |
+    Case-insensitive substring search. For example, searching "apple" returns products like
+    "Apple Juice", "APPLE", "Green Apple", etc.
+    Returns 204 NO_CONTENT if no matches found.
+  operationId: searchProductsByName
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: name
+      in: query
+      required: true
+      description: Search term (substring, case-insensitive)
+      schema:
+        type: string
+        example: laptop
+  responses:
+    '200':
+      description: Matching products found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProductList'
+          example:
+            - id: 1
+              name: Laptop
+              quantity: 50
+              price: 999.99
+              totalValue: 49999.50
+    '204':
+      description: No matching products found
+    '401':
+      description: Unauthorized - missing or invalid JWT token

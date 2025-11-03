@@ -1,0 +1,25 @@
+get:
+  summary: Get products with critically low stock
+  description: |
+    Returns products where quantity is below reorder threshold (5 items).
+    If all products adequately stocked, returns success message with empty list.
+  operationId: getLowStockProducts
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Low-stock products returned
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/ProductList'
+              - type: object
+                properties:
+                  message:
+                    type: string
+                    example: All products are sufficiently stocked.
+    '401':
+      description: Unauthorized - missing or invalid JWT token
