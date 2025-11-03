@@ -30,53 +30,35 @@ on:
 
 ### Pipeline Stages
 
-```
-┌─────────────────────────────────────┐
-│ 1. Checkout Code                    │
-│ Fetch repository from GitHub        │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 2. Setup Java Environment           │
-│ JDK 17, Maven cache, dependencies   │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 3. Run Tests (65+ tests)            │
-│ H2 database, ~1 minute              │
-└──────────────┬──────────────────────┘
-               ↓
-        ✅ Pass? → Continue
-        ❌ Fail? → Stop, notify
-               │
-               ↓
-┌─────────────────────────────────────┐
-│ 4. Build Application                │
-│ Maven package, create JAR           │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 5. Build Docker Image               │
-│ ghcr.io/keglev/stockease:latest     │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 6. Push to Container Registry       │
-│ GHCR authentication, push image     │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 7. Deploy to Koyeb                  │
-│ Trigger redeploy via API            │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│ 8. Wait for Healthy (up to 10 min)  │
-│ Poll service status                 │
-└──────────────┬──────────────────────┘
-               ↓
-        ✅ Healthy → Success
-        ❌ Timeout → Failure notification
+```mermaid
+graph TD
+    A[1. Checkout Code<br/>Fetch repository from GitHub] --> B[2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies]
+    B --> C[3. Run Tests 65+ tests<br/>H2 database, ~1 minute]
+    
+    C --> D{Tests Pass?}
+    D -->|✅ Yes| E[4. Build Application<br/>Maven package, create JAR]
+    D -->|❌ No| F[Stop, notify]
+    
+    E --> G[5. Build Docker Image<br/>ghcr.io/keglev/stockease:latest]
+    G --> H[6. Push to Container Registry<br/>GHCR authentication, push image]
+    H --> I[7. Deploy to Koyeb<br/>Trigger redeploy via API]
+    I --> J[8. Wait for Healthy up to 10 min<br/>Poll service status]
+    
+    J --> K{Deployment Healthy?}
+    K -->|✅ Yes| L[Success]
+    K -->|❌ Timeout| M[Failure notification]
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style E fill:#e3f2fd
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+    style I fill:#fff3e0
+    style J fill:#fff3e0
+    style L fill:#c8e6c9
+    style F fill:#ffcdd2
+    style M fill:#ffcdd2
 ```
 
 ### Stage Details

@@ -2,52 +2,36 @@
 
 ## Deployment Topology
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                         GitHub Repository                          │
-│                    (Keglev/stockease)                              │
-│  ┌─────────────────┐  ┌──────────────────────┐  ┌──────────────┐ │
-│  │  main branch    │  │  docs branch (GH     │  │ Pull Requests│ │
-│  │  (Source Code)  │  │  Pages output)       │  │ (Reviews)    │ │
-│  └────────┬────────┘  └──────────────────────┘  └──────────────┘ │
-└───────────┼─────────────────────────────────────────────────────────┘
-            │
-            │ Push to origin/main
-            ↓
-┌────────────────────────────────────────────────────────────────────┐
-│               GitHub Actions (CI/CD Pipelines)                     │
-│  ┌─────────────────────────┐      ┌──────────────────────────────┐ │
-│  │  Build & Test Workflow  │      │  Docs Generation Workflow   │ │
-│  │  (auto_deploy.yml)      │      │  (docs-ci.yml)              │ │
-│  │                         │      │                              │ │
-│  │  1. Checkout code       │      │  1. Extract OpenAPI spec    │ │
-│  │  2. Run Maven build     │      │  2. Convert Markdown → HTML │ │
-│  │  3. Run tests (65+)     │      │  3. Generate Redoc HTML     │ │
-│  │  4. Build Docker image  │      │  4. Collect coverage        │ │
-│  │  5. Push to GHCR        │      │  5. Commit to docs branch   │ │
-│  │  6. Deploy to Koyeb     │      │  6. GitHub Pages auto-sync  │ │
-│  └─────────────────────────┘      └──────────────────────────────┘ │
-└────────────┬───────────────────────────┬──────────────────────────────┘
-             │                           │
-             │ GHCR Image                │ Generated HTML
-             │ ghcr.io/keglev/...        │ docs branch
-             ↓                           ↓
-      ┌─────────────────┐         ┌──────────────────┐
-      │   Koyeb         │         │   GitHub Pages   │
-      │   Container     │         │   (docs branch)  │
-      │   Service       │         │                  │
-      │   (Production)  │         │ https://Keglev...│
-      └────────┬────────┘         └──────────────────┘
-               │
-               │ JDBC Connection
-               ↓
-      ┌─────────────────────────┐
-      │  Neon PostgreSQL 17.5   │
-      │  (Serverless Database)  │
-      │  - Auto-backups         │
-      │  - Connection pooling   │
-      │  - Failover support     │
-      └─────────────────────────┘
+```mermaid
+graph TB
+    subgraph GitHub["GitHub Repository (Keglev/stockease)"]
+        MainBranch["main branch<br/>(Source Code)"]
+        DocsBranch["docs branch<br/>(GH Pages output)"]
+        PRs["Pull Requests<br/>(Reviews)"]
+    end
+    
+    MainBranch -->|Push to origin/main| Actions
+    
+    subgraph Actions["GitHub Actions (CI/CD Pipelines)"]
+        Build["Build & Test Workflow<br/>(auto_deploy.yml)<br/>1. Checkout code<br/>2. Run Maven build<br/>3. Run tests (65+)<br/>4. Build Docker image<br/>5. Push to GHCR<br/>6. Deploy to Koyeb"]
+        Docs["Docs Generation Workflow<br/>(docs-ci.yml)<br/>1. Extract OpenAPI spec<br/>2. Convert Markdown → HTML<br/>3. Generate Redoc HTML<br/>4. Collect coverage<br/>5. Commit to docs branch<br/>6. GitHub Pages auto-sync"]
+    end
+    
+    Build -->|GHCR Image<br/>ghcr.io/keglev/...| Koyeb
+    Docs -->|Generated HTML<br/>docs branch| Pages
+    
+    Koyeb["Koyeb<br/>Container Service<br/>(Production)"]
+    Pages["GitHub Pages<br/>(docs branch)<br/>https://Keglev..."]
+    
+    Koyeb -->|JDBC Connection| Neon
+    
+    Neon["Neon PostgreSQL 17.5<br/>(Serverless Database)<br/>- Auto-backups<br/>- Connection pooling<br/>- Failover support"]
+    
+    style GitHub fill:#f9f9f9
+    style Actions fill:#e3f2fd
+    style Koyeb fill:#fff3e0
+    style Pages fill:#e8f5e9
+    style Neon fill:#fce4ec
 ```
 
 ## CI/CD Pipeline Details
@@ -61,51 +45,30 @@
 
 **Pipeline Stages**:
 
-```yaml
-Stage 1: Checkout & Setup
-  ├── Checkout code from GitHub
-  ├── Set up JDK 17
-  ├── Cache Maven dependencies
-  └── Verify build environment
-
-Stage 2: Build
-  ├── Run Maven clean package
-  ├── Compile all Java source code
-  ├── Skip tests in this stage (to save time)
-  └── Generate JAR file
-
-Stage 3: Test
-  ├── Run 65+ unit tests
-  ├── Tests use H2 in-memory database
-  ├── Generate coverage reports (JaCoCo)
-  └── Fail pipeline if tests don't pass
-
-Stage 4: Build Docker Image
-  ├── Read Dockerfile from repository
-  ├── Build image based on Dockerfile
-  ├── Tag: ghcr.io/keglev/stockease:latest
-  ├── Tag: ghcr.io/keglev/stockease:{commit-sha}
-  └── Generate SBOM (Software Bill of Materials)
-
-Stage 5: Push to Container Registry
-  ├── Authenticate with GHCR (GitHub Container Registry)
-  ├── Push tagged images to GHCR
-  ├── Make images available for deployment
-  └── Store in: ghcr.io/keglev/stockease:*
-
-Stage 6: Deploy to Koyeb
-  ├── Get Koyeb API token from secrets
-  ├── Trigger Koyeb deployment
-  ├── Pull latest image from GHCR
-  ├── Perform blue-green deployment
-  ├── Health checks (retry up to 5 times)
-  └── Rollback if health check fails
-
-Stage 7: Verification
-  ├── Verify deployment status
-  ├── Check health endpoint: /health
-  ├── Log deployment results
-  └── Notify on success/failure
+```mermaid
+graph TD
+    A[Stage 1: Checkout & Setup] --> B[Stage 2: Build]
+    B --> C[Stage 3: Test]
+    C --> D[Stage 4: Build Docker Image]
+    D --> E[Stage 5: Push to Container Registry]
+    E --> F[Stage 6: Deploy to Koyeb]
+    F --> G[Stage 7: Verification]
+    
+    A -->|Details| A1["- Checkout code from GitHub<br/>- Set up JDK 17<br/>- Cache Maven dependencies<br/>- Verify build environment"]
+    B -->|Details| B1["- Run Maven clean package<br/>- Compile all Java source code<br/>- Skip tests in this stage<br/>- Generate JAR file"]
+    C -->|Details| C1["- Run 65+ unit tests<br/>- Tests use H2 in-memory database<br/>- Generate coverage reports (JaCoCo)<br/>- Fail pipeline if tests don't pass"]
+    D -->|Details| D1["- Read Dockerfile from repository<br/>- Build image based on Dockerfile<br/>- Tag: ghcr.io/keglev/stockease:latest<br/>- Tag: ghcr.io/keglev/stockease:{commit-sha}<br/>- Generate SBOM"]
+    E -->|Details| E1["- Authenticate with GHCR<br/>- Push tagged images to GHCR<br/>- Make images available for deployment<br/>- Store in: ghcr.io/keglev/stockease:*"]
+    F -->|Details| F1["- Get Koyeb API token from secrets<br/>- Trigger Koyeb deployment<br/>- Pull latest image from GHCR<br/>- Perform blue-green deployment<br/>- Health checks (retry up to 5 times)<br/>- Rollback if health check fails"]
+    G -->|Details| G1["- Verify deployment status<br/>- Check health endpoint: /health<br/>- Log deployment results<br/>- Notify on success/failure"]
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e3f2fd
+    style E fill:#e3f2fd
+    style F fill:#e3f2fd
+    style G fill:#c8e6c9
 ```
 
 ### Documentation Pipeline (`docs-ci.yml` - TO BE CREATED)
@@ -116,49 +79,27 @@ Stage 7: Verification
 
 **Pipeline Stages**:
 
-```yaml
-Stage 1: Extract OpenAPI Spec
-  ├── Build backend application
-  ├── Start Spring Boot server
-  ├── Fetch OpenAPI spec from /v3/api-docs
-  ├── Validate OpenAPI spec
-  ├── Save to docs/api/openapi/openapi.json
-
-Stage 2: Generate Redoc HTML
-  ├── Install Redoc CLI
-  ├── Read OpenAPI spec
-  ├── Generate interactive HTML documentation
-  ├── Output to docs/api/redoc/index.html
-  └── Optimize for web
-
-Stage 3: Convert Markdown to HTML
-  ├── Install pandoc
-  ├── For each .md file in docs/architecture/:
-  │   ├── Convert to HTML
-  │   ├── Apply styling
-  │   └── Output to docs/architecture/*.html
-  ├── Convert docs/index.md to docs/index.html
-  └── Generate table of contents
-
-Stage 4: Collect Coverage Reports
-  ├── Run Maven test with JaCoCo
-  ├── Generate coverage report
-  ├── Copy to docs/coverage/
-  ├── Generate index.html for coverage dashboard
-  └── Calculate coverage percentage
-
-Stage 5: Commit to Docs Branch
-  ├── Switch to docs branch
-  ├── Remove old generated files
-  ├── Copy all new HTML files
-  ├── Commit: "docs: auto-generated documentation"
-  ├── Push to origin/docs
-  └── GitHub Pages auto-publishes
-
-Stage 6: Cleanup
-  ├── Remove temporary files
-  ├── Clean build artifacts
-  └── Log completion
+```mermaid
+graph TD
+    A[Stage 1: Extract OpenAPI Spec] --> B[Stage 2: Generate Redoc HTML]
+    B --> C[Stage 3: Convert Markdown to HTML]
+    C --> D[Stage 4: Collect Coverage Reports]
+    D --> E[Stage 5: Commit to Docs Branch]
+    E --> F[Stage 6: Cleanup]
+    
+    A -->|Details| A1["- Build backend application<br/>- Start Spring Boot server<br/>- Fetch OpenAPI spec from /v3/api-docs<br/>- Validate OpenAPI spec<br/>- Save to docs/api/openapi/openapi.json"]
+    B -->|Details| B1["- Install Redoc CLI<br/>- Read OpenAPI spec<br/>- Generate interactive HTML documentation<br/>- Output to docs/api/redoc/index.html<br/>- Optimize for web"]
+    C -->|Details| C1["- Install pandoc<br/>- For each .md file in docs/architecture/:<br/>  * Convert to HTML<br/>  * Apply styling<br/>  * Output to docs/architecture/*.html<br/>- Convert docs/index.md to docs/index.html<br/>- Generate table of contents"]
+    D -->|Details| D1["- Run Maven test with JaCoCo<br/>- Generate coverage report<br/>- Copy to docs/coverage/<br/>- Generate index.html for coverage dashboard<br/>- Calculate coverage percentage"]
+    E -->|Details| E1["- Switch to docs branch<br/>- Remove old generated files<br/>- Copy all new HTML files<br/>- Commit: 'docs: auto-generated documentation'<br/>- Push to origin/docs<br/>- GitHub Pages auto-publishes"]
+    F -->|Details| F1["- Remove temporary files<br/>- Clean build artifacts<br/>- Log completion"]
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e3f2fd
+    style E fill:#e3f2fd
+    style F fill:#c8e6c9
 ```
 
 ## Deployment Environments
@@ -285,7 +226,67 @@ V3__seed_data.sql
   └── Uses DB-agnostic existence check for H2 compatibility
 ```
 
+**Migrations Overview**:
+
+```mermaid
+erDiagram
+    users {
+        UUID id PK
+        VARCHAR username UK
+        VARCHAR password
+        VARCHAR email UK
+        VARCHAR role
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    
+    products {
+        UUID id PK
+        VARCHAR name
+        TEXT description
+        DECIMAL price
+        INTEGER quantity
+        VARCHAR sku UK
+        VARCHAR category
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by FK
+    }
+    
+    users ||--o{ products : "creates"
+```
+
+**Migration Files**:
+
+```mermaid
+graph TD
+    V1[V1__initial_schema.sql] --> V2[V2__add_indexes.sql]
+    V2 --> V3[V3__seed_data.sql]
+    
+    V1 -->|Creates| V1A["- users table<br/>- products table"]
+    V2 -->|Adds| V2A["- idx_products_sku<br/>- idx_products_category<br/>- idx_users_username<br/>- idx_products_created_by"]
+    V3 -->|Inserts| V3A["- admin user (admin/admin123)<br/>- regular user (user/user123)<br/>- sample products<br/>- H2 compatibility checks"]
+    
+    style V1 fill:#e3f2fd
+    style V2 fill:#e3f2fd
+    style V3 fill:#c8e6c9
+```
+
 **Migration Execution**:
+
+```mermaid
+graph TD
+    A[Application Startup] --> B[Spring Boot loads]
+    B --> C[Flyway initializes]
+    C --> D[Checks flyway_schema_history table]
+    D --> E[Identifies new migrations]
+    E --> F[Executes migrations in order]
+    F --> G[Updates schema version]
+    G --> H[Application proceeds with data access]
+    
+    style A fill:#fff3e0
+    style H fill:#c8e6c9
+```
 ```
 Application Startup
   ├── Spring Boot loads

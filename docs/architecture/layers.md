@@ -4,18 +4,24 @@
 
 StockEase follows a **classic N-tier layered architecture** with clear separation of concerns:
 
-```
-┌─────────────────────────────────────────────┐
-│          REST Controllers (Endpoints)       │  ← HTTP Layer
-├─────────────────────────────────────────────┤
-│    Security Layer (JWT, Spring Security)    │  ← Cross-cutting Concern
-├─────────────────────────────────────────────┤
-│        Business Logic (Services)            │  ← Domain Layer
-├─────────────────────────────────────────────┤
-│   Data Access (Repositories, Entities)      │  ← Persistence Layer
-├─────────────────────────────────────────────┤
-│    Database (PostgreSQL / H2 for tests)     │  ← Data Layer
-└─────────────────────────────────────────────┘
+```mermaid
+graph TD
+    A[REST Controllers Endpoints<br/>HTTP Layer]
+    B[Security Layer<br/>JWT, Spring Security<br/>Cross-cutting Concern]
+    C[Business Logic Services<br/>Domain Layer]
+    D[Data Access<br/>Repositories, Entities<br/>Persistence Layer]
+    E[Database<br/>PostgreSQL / H2 for tests<br/>Data Layer]
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+    style D fill:#f3e5f5
+    style E fill:#fce4ec
 ```
 
 ## Layer Descriptions
@@ -67,23 +73,23 @@ public ResponseEntity<ProductDTO> createProduct(
 - `PasswordEncoder` - BCrypt hashing
 
 **Authentication Flow**:
-```
-1. User calls POST /api/auth/login with username:password
-   ↓
-2. Spring Security intercepts (HTTP Basic)
-   ↓
-3. UserDetailsService validates credentials
-   ↓
-4. JwtProvider generates token
-   ↓
-5. Token returned in response
-   ↓
-6. Client includes token in Authorization: Bearer {token} header
-   ↓
-7. On subsequent requests, JwtProvider validates token
-   ↓
-8. If valid → Request proceeds to Service Layer
-   If invalid → 401 Unauthorized returned
+
+```mermaid
+graph TD
+    A[1. User calls POST /api/auth/login<br/>with username:password] --> B[2. Spring Security intercepts<br/>HTTP Basic]
+    B --> C[3. UserDetailsService<br/>validates credentials]
+    C --> D[4. JwtProvider generates token]
+    D --> E[5. Token returned in response]
+    E --> F[6. Client includes token in<br/>Authorization: Bearer header]
+    F --> G[7. JwtProvider validates token<br/>on subsequent requests]
+    
+    G --> H{Valid?}
+    H -->|Yes| I[Request proceeds to Service Layer]
+    H -->|No| J[401 Unauthorized returned]
+    
+    style A fill:#e3f2fd
+    style I fill:#c8e6c9
+    style J fill:#ffcdd2
 ```
 
 **Protected Endpoints**:
@@ -119,62 +125,75 @@ public ResponseEntity<ProductDTO> createProduct(
 - Custom validators and processors
 
 **AuthService Responsibilities**:
-```
-registerUser(username, password)
-  ├── Validate username (not empty, unique)
-  ├── Validate password (strength requirements)
-  ├── Hash password with BCrypt
-  ├── Create User entity
-  ├── Save to database
-  └── Return UserDTO
 
-authenticateUser(username, password)
-  ├── Find user by username
-  ├── Compare provided password with hashed password
-  ├── Generate JWT token (with role)
-  ├── Return token + user info
-  └── Throw exception if auth fails
-
-validateToken(token)
-  ├── Parse JWT signature
-  ├── Check expiration
-  ├── Extract user claims
-  └── Return user info or throw exception
+```mermaid
+graph TD
+    subgraph registerUser["registerUser(username, password)"]
+        R1[Validate username<br/>not empty, unique] --> R2[Validate password<br/>strength requirements]
+        R2 --> R3[Hash password with BCrypt]
+        R3 --> R4[Create User entity]
+        R4 --> R5[Save to database]
+        R5 --> R6[Return UserDTO]
+    end
+    
+    subgraph authenticateUser["authenticateUser(username, password)"]
+        A1[Find user by username] --> A2[Compare provided password<br/>with hashed password]
+        A2 --> A3[Generate JWT token<br/>with role]
+        A3 --> A4[Return token + user info]
+        A2 -.->|Fail| A5[Throw exception if auth fails]
+    end
+    
+    subgraph validateToken["validateToken(token)"]
+        V1[Parse JWT signature] --> V2[Check expiration]
+        V2 --> V3[Extract user claims]
+        V3 --> V4[Return user info or<br/>throw exception]
+    end
+    
+    style registerUser fill:#e3f2fd
+    style authenticateUser fill:#fff3e0
+    style validateToken fill:#e8f5e9
 ```
 
 **ProductService Responsibilities**:
-```
-createProduct(request, userId, role)
-  ├── Validate request (name, price, quantity)
-  ├── Check authorization (ADMIN only)
-  ├── Check SKU uniqueness
-  ├── Create Product entity
-  ├── Set metadata (createdAt, createdBy)
-  ├── Save to database
-  └── Return ProductDTO
 
-getProducts(page, size, sort, filter)
-  ├── Build dynamic query from filters
-  ├── Apply pagination (page, size)
-  ├── Apply sorting (name, price, date)
-  ├── Execute query
-  ├── Map to DTOs
-  └── Return PageResponse
-
-updateProduct(id, request, userId, role)
-  ├── Find product by ID
-  ├── Check authorization (ADMIN only)
-  ├── Validate request fields
-  ├── Update product fields
-  ├── Set updatedAt timestamp
-  ├── Save to database
-  └── Return updated ProductDTO
-
-deleteProduct(id, userId, role)
-  ├── Find product by ID
-  ├── Check authorization (ADMIN only)
-  ├── Delete from database
-  └── Return success
+```mermaid
+graph TD
+    subgraph createProduct["createProduct(request, userId, role)"]
+        C1[Validate request<br/>name, price, quantity] --> C2[Check authorization<br/>ADMIN only]
+        C2 --> C3[Check SKU uniqueness]
+        C3 --> C4[Create Product entity]
+        C4 --> C5[Set metadata<br/>createdAt, createdBy]
+        C5 --> C6[Save to database]
+        C6 --> C7[Return ProductDTO]
+    end
+    
+    subgraph getProducts["getProducts(page, size, sort, filter)"]
+        G1[Build dynamic query<br/>from filters] --> G2[Apply pagination<br/>page, size]
+        G2 --> G3[Apply sorting<br/>name, price, date]
+        G3 --> G4[Execute query]
+        G4 --> G5[Map to DTOs]
+        G5 --> G6[Return PageResponse]
+    end
+    
+    subgraph updateProduct["updateProduct(id, request, userId, role)"]
+        U1[Find product by ID] --> U2[Check authorization<br/>ADMIN only]
+        U2 --> U3[Validate request fields]
+        U3 --> U4[Update product fields]
+        U4 --> U5[Set updatedAt timestamp]
+        U5 --> U6[Save to database]
+        U6 --> U7[Return updated ProductDTO]
+    end
+    
+    subgraph deleteProduct["deleteProduct(id, userId, role)"]
+        D1[Find product by ID] --> D2[Check authorization<br/>ADMIN only]
+        D2 --> D3[Delete from database]
+        D3 --> D4[Return success]
+    end
+    
+    style createProduct fill:#e3f2fd
+    style getProducts fill:#fff3e0
+    style updateProduct fill:#e8f5e9
+    style deleteProduct fill:#ffcdd2
 ```
 
 **Key Design Patterns**:

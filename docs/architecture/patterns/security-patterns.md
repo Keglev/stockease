@@ -9,22 +9,22 @@ StockEase implements multiple security patterns to protect data, ensure user aut
 ### 1. JWT Bearer Token Pattern
 
 **Flow**:
-```
-Client          Server
-  │                 │
-  ├─ POST /login   ─>│
-  │  (credentials)   │
-  │                  ├─ Validate credentials
-  │                  ├─ Generate JWT token
-  │                  ├─ Return token
-  │<─ token ────────┤
-  │                  │
-  ├─ GET /products ─>│
-  │  (Bearer token)  │
-  │                  ├─ Validate token
-  │                  ├─ Extract user info
-  │                  ├─ Authorize request
-  │<─ response ─────┤
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    
+    Client->>Server: POST /login (credentials)
+    Server->>Server: Validate credentials
+    Server->>Server: Generate JWT token
+    Server-->>Client: Return token
+    
+    Client->>Server: GET /products (Bearer token)
+    Server->>Server: Validate token
+    Server->>Server: Extract user info
+    Server->>Server: Authorize request
+    Server-->>Client: Return response
 ```
 
 **Implementation**:
@@ -73,17 +73,21 @@ public ResponseEntity<Page<ProductDTO>> getProducts(
 ### 2. Password Hashing with BCrypt
 
 **Pattern**:
-```
-Plain Password
-  ↓ BCrypt + salt
-Hashed Password (stored in DB)
 
-Login
-Plain Password input
-  ↓ Apply same BCrypt + stored salt
-Compare with stored hash
-  ├─ Match → Success
-  └─ No match → Failure
+```mermaid
+graph TD
+    A[Plain Password] -->|BCrypt + salt| B[Hashed Password<br/>stored in DB]
+    
+    C[Login: Plain Password input] -->|Apply same BCrypt<br/>+ stored salt| D[Compare with stored hash]
+    
+    D --> E{Match?}
+    E -->|Yes| F[Success]
+    E -->|No| G[Failure]
+    
+    style A fill:#e3f2fd
+    style B fill:#fce4ec
+    style F fill:#c8e6c9
+    style G fill:#ffcdd2
 ```
 
 **Implementation**:
@@ -127,12 +131,14 @@ public class AuthService {
 ### 1. Role-Based Access Control (RBAC)
 
 **Roles**:
-```
-ADMIN    ─┐
-          ├─ Full access: read, create, update, delete
-          │
-USER     ─┤
-          └─ Limited access: read only
+
+```mermaid
+graph LR
+    A[ADMIN] -->|Full access| B[read, create, update, delete]
+    C[USER] -->|Limited access| D[read only]
+    
+    style A fill:#ffcdd2
+    style C fill:#e3f2fd
 ```
 
 **Implementation**:

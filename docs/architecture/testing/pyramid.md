@@ -8,23 +8,18 @@
 
 ### Traditional Pyramid
 
-```
-                    ▲
-                   ╱│╲
-                  ╱ │ ╲                System/E2E (5%)
-                ╱   │   ╲              Slow, expensive
-               ╱─────┼─────╲           Simulate user scenarios
-              ╱      │      ╲
-             ╱       │       ╲         Integration (25%)
-            ╱        │        ╲        Medium speed
-           ╱─────────┼─────────╲       Test layer interactions
-          ╱          │          ╲
-         ╱           │           ╲     Unit (70%)
-        ╱            │            ╲    Fast, cheap
-       ╱─────────────┴─────────────╲   Test one thing
-      ╱                             ╲
-     ╱_____________________________────╲
-    ╱          Unit Tests (Base)       ╲
+```mermaid
+graph TD
+    A[System/E2E 5%<br/>Slow, expensive<br/>Simulate user scenarios] 
+    B[Integration 25%<br/>Medium speed<br/>Test layer interactions]
+    C[Unit 70%<br/>Fast, cheap<br/>Test one thing]
+    
+    C --- B
+    B --- A
+    
+    style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+    style B fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
 ```
 
 ### Benefits of This Shape
@@ -41,23 +36,18 @@
 
 ### Current Distribution
 
-```
-                    ▲
-                   ╱│╲
-                  ╱ │ ╲              
-                ╱ 🔵 │ ╲             System/E2E: 0 tests (🔴 Not yet)
-               ╱─────┼─────╲
-              ╱      │      ╲
-             ╱ 🟢 🟢 │ ╲         Integration: 1 test (5%)
-            ╱ 🟢 🟢 │  ╲        @SpringBootTest context load
-           ╱─────────┼─────────╲
-          ╱          │          ╲
-         ╱ 🟢🟢🟢🟢🟢🟢 │ ╲         Unit/Slice: 8 tests (95%)
-        ╱ 🟢🟢🟢🟢🟢🟢 │  ╲        @WebMvcTest + unit tests
-       ╱─────────────┴─────────────╲
-      ╱                             ╲
-     ╱_____________________________────╲
-    ╱          Unit & Slice Tests       ╲
+```mermaid
+graph TD
+    A["System/E2E: 0 tests 🔴<br/>Not yet implemented"]
+    B["Integration: 1 test 5% 🟢<br/>@SpringBootTest context load"]
+    C["Unit/Slice: 8 tests 95% 🟢<br/>@WebMvcTest + unit tests"]
+    
+    C --- B
+    B --- A
+    
+    style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+    style B fill:#fff3e0,stroke:#388e3c,stroke-width:3px
+    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
 ```
 
 ### By Test Type

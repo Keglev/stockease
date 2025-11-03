@@ -8,20 +8,22 @@ The Repository Pattern abstracts data access logic from business logic, providin
 
 ### Pattern Structure
 
-```
-Business Logic (Service)
-    ↓ uses
-Repository Interface (Spring Data JPA)
-    ↓ extends
-JpaRepository<T, ID>
-    ↓ implements (Spring generates)
-Repository Implementation (Proxy)
-    ↓ uses
-EntityManager (Hibernate)
-    ↓ executes
-SQL Queries
-    ↓ accesses
-PostgreSQL Database
+```mermaid
+graph TD
+    A[Business Logic Service] -->|uses| B[Repository Interface<br/>Spring Data JPA]
+    B -->|extends| C[JpaRepository T, ID]
+    C -->|implements<br/>Spring generates| D[Repository Implementation<br/>Proxy]
+    D -->|uses| E[EntityManager<br/>Hibernate]
+    E -->|executes| F[SQL Queries]
+    F -->|accesses| G[PostgreSQL Database]
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+    style D fill:#f3e5f5
+    style E fill:#fce4ec
+    style F fill:#e1f5fe
+    style G fill:#f3e5f5
 ```
 
 ## Repository Interfaces

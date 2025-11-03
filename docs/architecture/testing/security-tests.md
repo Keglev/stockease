@@ -21,28 +21,30 @@
 
 ### How JWT Works in StockEase
 
-```
-1. User submits credentials
-   ├─ Username: "testuser"
-   └─ Password: "testpassword"
-
-2. POST /api/auth/login
-   ├─ AuthController receives request
-   ├─ AuthenticationManager validates password
-   ├─ JwtUtil generates JWT token
-   └─ Response: { "data": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
-
-3. Client stores JWT in Authorization header
-   └─ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-4. Subsequent requests include JWT
-   └─ GET /api/products
-      └─ JwtFilter validates token
-      └─ Extracts user, role
-      └─ Proceeds with request
-
-5. Token expires or becomes invalid
-   └─ Returns 401 Unauthorized
+```mermaid
+graph TD
+    A[1. User submits credentials<br/>Username: testuser<br/>Password: testpassword] --> B[2. POST /api/auth/login]
+    
+    B --> C[AuthController receives request]
+    C --> D[AuthenticationManager validates password]
+    D --> E[JwtUtil generates JWT token]
+    E --> F[Response: JWT token data]
+    
+    F --> G[3. Client stores JWT in<br/>Authorization header]
+    G --> H[4. Subsequent requests include JWT<br/>GET /api/products]
+    
+    H --> I[JwtFilter validates token]
+    I --> J[Extracts user, role]
+    J --> K[Proceeds with request]
+    
+    K --> L{Token valid?}
+    L -->|Yes| M[Request processed]
+    L -->|No/Expired| N[5. Returns 401 Unauthorized]
+    
+    style A fill:#e3f2fd
+    style F fill:#c8e6c9
+    style M fill:#c8e6c9
+    style N fill:#ffcdd2
 ```
 
 ### JWT Token Structure in Tests

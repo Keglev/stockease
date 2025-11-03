@@ -32,27 +32,36 @@ A test slice loads **only the layers needed to test a specific functionality**, 
 
 ### Comparison: Full vs. Slice
 
-```
-Full Spring Context (@SpringBootTest)
-├─ Web Layer (Controllers)
-├─ Service Layer
-├─ Repository Layer
-├─ Database Layer
-├─ Security Configuration
-└─ All Beans
-
-Execution: ~2-3 seconds per test
-Use: Integration tests, application bootstrap
-
-
-Web Layer Slice (@WebMvcTest)
-├─ Web Layer (Controllers only)
-├─ Security Configuration
-└─ Relevant Beans
-
-Execution: ~0.5-1 second per test
-Use: REST API tests, controller logic
-Excluded: Services, repositories, database
+```mermaid
+graph TD
+    subgraph Full["Full Spring Context @SpringBootTest<br/>Execution: ~2-3 seconds per test"]
+        F1[Web Layer Controllers]
+        F2[Service Layer]
+        F3[Repository Layer]
+        F4[Database Layer]
+        F5[Security Configuration]
+        F6[All Beans]
+        
+        F1 --> F2 --> F3 --> F4
+        F5 --> F1
+    end
+    
+    subgraph Slice["Web Layer Slice @WebMvcTest<br/>Execution: ~0.5-1 second per test"]
+        S1[Web Layer Controllers only]
+        S2[Security Configuration]
+        S3[Relevant Beans]
+        
+        S2 --> S1
+        S1 --> S3
+    end
+    
+    Full -.->|Use for| FU[Integration tests<br/>Application bootstrap]
+    Slice -.->|Use for| SU[REST API tests<br/>Controller logic]
+    
+    style Full fill:#ffcdd2
+    style Slice fill:#c8e6c9
+    style FU fill:#e3f2fd
+    style SU fill:#e3f2fd
 ```
 
 ---
