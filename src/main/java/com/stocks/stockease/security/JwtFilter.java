@@ -16,12 +16,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * 
  * Filter chain position: Early in chain (before controller execution).
  * Bypass: Public endpoints (login, health checks) via SecurityConfig.
+ * Disabled in 'docs' profile for CI/CD documentation generation.
  * 
  * @author Team StockEase
  * @version 1.0
  * @since 2025-01-01
  */
 @Component
+@org.springframework.context.annotation.Profile("!docs")
 public class JwtFilter extends OncePerRequestFilter {
 
     /**

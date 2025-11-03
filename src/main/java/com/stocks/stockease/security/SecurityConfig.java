@@ -41,6 +41,7 @@ import org.springframework.web.filter.CorsFilter;
  */
 @Configuration
 @EnableMethodSecurity
+@org.springframework.context.annotation.Profile("!docs")
 public class SecurityConfig {
 
     /**

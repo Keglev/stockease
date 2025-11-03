@@ -25,12 +25,14 @@ import com.stocks.stockease.repository.UserRepository;
  * 
  * Exception handling:
  * - Throws UsernameNotFoundException if user not found (triggers 401 Unauthorized)
+ * Disabled in 'docs' profile for CI/CD documentation generation.
  * 
  * @author Team StockEase
  * @version 1.0
  * @since 2025-01-01
  */
 @Service
+@org.springframework.context.annotation.Profile("!docs")
 public class CustomUserDetailsService implements UserDetailsService {
 
     /**

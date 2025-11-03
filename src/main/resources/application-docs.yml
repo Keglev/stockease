@@ -1,60 +1,28 @@
-################################################################################
-# application-docs.yml: Lightweight Profile for Documentation Generation
-#
-# Purpose:
-# This profile is used ONLY when the SpringDoc Maven plugin generates the OpenAPI
-# spec during the docs-pipeline CI workflow. It provides a minimal, safe environment
-# for the forked Spring Boot process to avoid database connections, security issues,
-# and heavy initialization.
-#
-# When active:
-# - Spring uses an in-memory H2 database (no external DB required)
-# - Security is disabled (no need for JWT, OAuth2 setup in CI)
-# - Lazy initialization reduces startup time (~2-3x faster)
-# - No files are created or persisted
-#
-# Activation:
-# The plugin sets -Dspring.profiles.active=docs on the forked Maven process
-################################################################################
+spring:
+  application:
+    name: StockEase
+  
+  # Disable JPA for docs profile - we only need OpenAPI endpoints
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.flywaydb.spring.boot.FlywayAutoConfiguration
+  
+  # Allow bean definition overriding for DocsSecurityConfig to override SecurityConfig
+  main:
+    lazy-initialization: true
+    allow-bean-definition-overriding: true
 
 server:
   port: 8080
 
-spring:
-  main:
-    # Defer bean initialization until explicitly needed
-    # Reduces startup time from ~15s to ~5s for docs generation
-    lazy-initialization: true
-
-  # In-memory database configuration (no network calls, no persistence)
-  datasource:
-    # H2 runs entirely in-memory and in PostgreSQL compatibility mode
-    driver-class-name: org.h2.Driver
-    # mem:docdb = in-memory database named "docdb"
-    # MODE=PostgreSQL = emulate PostgreSQL dialect for statement compatibility
-    # DB_CLOSE_DELAY=-1 = keep DB open for duration of this process
-    url: jdbc:h2:mem:docdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
-    username: sa
-    password: ""
-
-  jpa:
-    hibernate:
-      # Don't create/modify schema during docs generation
-      # We only need the Spring context, not a functional database
-      ddl-auto: none
-
-  # Disable all auto-configuration of security modules
-  # This prevents Spring from trying to load JWT, OAuth2, or other auth config
-  # which may reference environment variables or external services
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
-      - org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration
-      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
-
-# Reduce logging noise during docs generation (keep it clean in CI output)
 logging:
   level:
     root: WARN
-    '[org.springframework]': WARN
-    '[org.hibernate]': WARN
+    "[com.stocks]": WARN
+
+
+
+
