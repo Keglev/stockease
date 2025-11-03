@@ -27,26 +27,26 @@ StockEase delivers:
 
 ### Context Diagram (Level 1)
 ```mermaid
-flowchart LR
-  User([Business User]) -->|uses| Frontend[Frontend (React/Vite)]
+graph LR
+  User([Business User]) -->|uses| Frontend[Frontend React/Vite]
   Frontend -->|HTTPS| API[(Spring Boot API)]
-  API -->|JDBC/Flyway| DB[(PostgreSQL / Neon)]
-  API -->|calls| External[(External Services: email, storage, 3rd-party APIs)]
+  API -->|JDBC/Flyway| DB[(PostgreSQL or Neon)]
+  API -->|calls| External[(External Services)]
 ```
 
 ### Container Diagram (Level 2)
 ```mermaid
-flowchart TB
+graph TB
   subgraph Backend [StockEase Backend - Spring Boot]
     API[API Endpoints]
-    BIZ[Business Logic (Services)]
-    DATA[Data Access (Repositories, Flyway)]
+    BIZ[Business Logic Services]
+    DATA[Data Access Repositories Flyway]
   end
   API --> BIZ
   BIZ --> DATA
-  DATA --> DB[(PostgreSQL / Neon)]
-  API -->|exposes| OpenAPI[/v3/api-docs]
-  API -->|health| Health[/api/health]
+  DATA --> DB[(PostgreSQL or Neon)]
+  API -->|exposes| OpenAPI["/v3/api-docs"]
+  API -->|health| Health["/api/health"]
 ```
 
 ### Component Diagram (Level 3)
