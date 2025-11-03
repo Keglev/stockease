@@ -413,14 +413,175 @@
         <aside id="sidebar"></aside>
         <main>
             <div class="content">
-                <h1
-                id="stockease-complete-documentation-index">StockEase
-                Complete Documentation Index</h1>
-                <p><strong>Purpose</strong>: Quick reference guide to
-                all StockEase architecture and testing
+                <h1 id="stockease-documentation-guide">StockEase
+                Documentation Guide</h1>
+                <p><strong>Purpose</strong>: Complete guide to
+                navigating and understanding the StockEase architecture
                 documentation.</p>
+                <p><strong>Last Updated</strong>: November 3, 2025<br />
+                <strong>Status</strong>: ✅ COMPLETE - All documentation
+                indexed and cross-linked</p>
                 <hr />
-                <h2 id="documentation-map">Documentation Map</h2>
+                <h2 id="table-of-contents">Table of Contents</h2>
+                <ol type="1">
+                <li><a href="#quick-navigation-by-role">Quick Navigation
+                by Role</a></li>
+                <li><a href="#complete-documentation-index">Complete
+                Documentation Index</a></li>
+                <li><a
+                href="#documentation-navigation-maps">Documentation
+                Navigation Maps</a></li>
+                <li><a href="#link-flow-by-topic">Link Flow by
+                Topic</a></li>
+                <li><a href="#navigation-paths-by-role">Navigation Paths
+                by Role</a></li>
+                <li><a href="#how-to-use-this-documentation">How to Use
+                This Documentation</a></li>
+                <li><a href="#document-statistics">Document
+                Statistics</a></li>
+                </ol>
+                <hr />
+                <h2 id="quick-navigation-by-role">Quick Navigation by
+                Role</h2>
+                <h3 id="project-manager-business-analyst">👨‍💼 Project
+                Manager / Business Analyst</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./overview.html">overview.md</a> — Business
+                context and architecture decisions 2. <a
+                href="./testing-architecture.html">testing-architecture.md</a>
+                — Test goals and scope 3. <a
+                href="./testing/matrix.html">testing/matrix.md</a> —
+                Feature coverage summary</p>
+                <p><strong>Learning Path:</strong></p>
+                <pre><code>START: overview.md (Business context)
+  → Technology Stack section
+  → Deployment Architecture section
+  → Quality Attributes section
+  ↓
+THEN: deployment.md (Current status)
+  → Production Environment diagram
+  ↓
+OPTIONAL: patterns/ (Best practices overview)</code></pre>
+                <hr />
+                <h3 id="backend-developer-javaspring-boot">👨‍💻 Backend
+                Developer (Java/Spring Boot)</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./backend.html">backend.md</a> — Spring Boot
+                architecture 2. <a
+                href="./testing/spring-slices.html">testing/spring-slices.md</a>
+                — How to write tests 3. <a
+                href="./testing/security-tests.html">testing/security-tests.md</a>
+                — Authorization testing 4. <a
+                href="./testing/controller-integration.html">testing/controller-integration.md</a>
+                — MockMvc patterns</p>
+                <p><strong>Learning Path (New Developer):</strong></p>
+                <pre><code>START: index.md (Get oriented)
+  ↓
+THEN: overview.md (Full context)
+  ↓
+THEN: backend.md (Code organization)
+  → Project Structure section
+  → Controller/Service/Repository layers
+  ↓
+THEN: layers.md (Architecture patterns)
+  → Request lifecycle
+  → Layer interactions
+  ↓
+THEN: decisions/001-database-choice.md (Why PostgreSQL?)
+  ↓
+THEN: patterns/repository-pattern.md (Implementation details)
+  ↓
+THEN: security.md (Authentication to integrate)
+  ↓
+FINALLY: deployment.md (How to deploy changes)</code></pre>
+                <hr />
+                <h3 id="frontend-developer-reacttypescript">👩‍💻 Frontend
+                Developer (React/TypeScript)</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./frontend.html">frontend.md</a> — React
+                architecture 2. <a href="./backend.html">backend.md</a>
+                — APIs being consumed 3. <a
+                href="./testing/security-tests.html">testing/security-tests.md</a>
+                — JWT token flow 4. <a
+                href="./security.html">security.md</a> — Auth
+                implementation</p>
+                <p><strong>Learning Path:</strong></p>
+                <pre><code>START: index.md (Overview)
+  ↓
+THEN: overview.md (Backend context)
+  → API Endpoints Overview table
+  ↓
+THEN: frontend.md (React implementation)
+  → Component Hierarchy
+  → API Integration section
+  ↓
+THEN: backend.md (What APIs to call)
+  → ProductController section
+  → AuthController section
+  ↓
+THEN: security.md (JWT token handling)
+  → Authentication Flow section
+  ↓
+THEN: deployment.md (Render deployment)
+  → Frontend Deployment section</code></pre>
+                <hr />
+                <h3 id="devops-engineer">🔧 DevOps Engineer</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./deployment.html">deployment.md</a> —
+                Infrastructure and CI/CD 2. <a
+                href="./deployment/ci-pipeline.html">deployment/ci-pipeline.md</a>
+                — GitHub Actions details 3. <a
+                href="./testing/ci-pipeline-tests.html">testing/ci-pipeline-tests.md</a>
+                — Test gates 4. <a
+                href="./testing/coverage-and-quality.html">testing/coverage-and-quality.md</a>
+                — Coverage reporting</p>
+                <p><strong>Learning Path:</strong></p>
+                <pre><code>START: deployment.md (Infrastructure overview)
+  → Current Deployment Stack diagram
+  → Production Environment description
+  ↓
+THEN: deployment/ci-pipeline.md (GitHub Actions setup)
+  → Build steps
+  → Deployment stages
+  ↓
+THEN: deployment/staging-config.md (Staging environment)
+  → Testing configuration
+  ↓
+THEN: overview.md (Technology stack reference)
+  → Technology Stack table
+  ↓
+THEN: security.md (Production security)
+  → Deployment Security Checklist
+  ↓
+OPTIONAL: patterns/security-patterns.md (Secure configuration)</code></pre>
+                <hr />
+                <h3 id="qa-test-engineer">🧪 QA / Test Engineer</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./testing/pyramid.html">testing/pyramid.md</a> —
+                Test distribution 2. <a
+                href="./testing/strategy.html">testing/strategy.md</a> —
+                Test philosophy 3. <a
+                href="./testing/matrix.html">testing/matrix.md</a> —
+                What’s tested 4. <a
+                href="./testing/naming-conventions.html">testing/naming-conventions.md</a>
+                — Test organization</p>
+                <p><strong>Learning Path:</strong></p>
+                <pre><code>START: overview.md (System overview)
+  → Quality Attributes section
+  ↓
+THEN: backend.md (Testing strategies)
+  → Testing section
+  ↓
+THEN: layers.md (What to test per layer)
+  ↓
+THEN: deployment/staging-config.md (Pre-prod testing)
+  ↓
+THEN: security.md (Security test cases)
+  → JWT validation testing
+  → Authorization testing</code></pre>
+                <hr />
+                <h2 id="complete-documentation-index">Complete
+                Documentation Index</h2>
                 <h3 id="main-architecture-documents">📋 Main
                 Architecture Documents</h3>
                 <p><strong>Location</strong>:
@@ -450,37 +611,55 @@
                 href="./deployment.html">deployment.md</a></strong> —
                 Infrastructure, CI/CD, GitHub Actions</li>
                 </ol>
-                <h4 id="architecture-decisions">Architecture
-                Decisions</h4>
+                <h4 id="architecture-decisions-adrs">Architecture
+                Decisions (ADRs)</h4>
                 <ul>
-                <li><strong>decisions/001-database-choice.md</strong> —
-                PostgreSQL justification</li>
-                <li><strong>decisions/002-validation-strategy.md</strong>
+                <li><strong><a
+                href="./decisions/index.html">decisions/index.md</a></strong>
+                — Decision records index</li>
+                <li><strong><a
+                href="./decisions/001-database-choice.html">decisions/001-database-choice.md</a></strong>
+                — PostgreSQL justification</li>
+                <li><strong><a
+                href="./decisions/002-validation-strategy.html">decisions/002-validation-strategy.md</a></strong>
                 — Input + business validation</li>
                 </ul>
                 <h4 id="design-patterns">Design Patterns</h4>
                 <ul>
-                <li><strong>patterns/repository-pattern.md</strong> —
-                Spring Data JPA implementation</li>
-                <li><strong>patterns/security-patterns.md</strong> —
-                JWT, BCrypt, CORS best practices</li>
+                <li><strong><a
+                href="./patterns/index.html">patterns/index.md</a></strong>
+                — Design patterns index</li>
+                <li><strong><a
+                href="./patterns/repository-pattern.html">patterns/repository-pattern.md</a></strong>
+                — Spring Data JPA implementation</li>
+                <li><strong><a
+                href="./patterns/security-patterns.html">patterns/security-patterns.md</a></strong>
+                — JWT, BCrypt, CORS best practices</li>
+                </ul>
+                <h4 id="components">Components</h4>
+                <ul>
+                <li><strong><a
+                href="./components/index.html">components/index.md</a></strong>
+                — Component documentation index</li>
+                <li><strong><a
+                href="./components/analytics-service.html">components/analytics-service.md</a></strong>
+                — Analytics service architecture</li>
+                <li><strong><a
+                href="./components/supplier-controller.html">components/supplier-controller.md</a></strong>
+                — Supplier management</li>
                 </ul>
                 <h4 id="infrastructure-devops">Infrastructure &amp;
                 DevOps</h4>
                 <ul>
-                <li><strong>deployment/ci-pipeline.md</strong> — GitHub
-                Actions automation</li>
-                <li><strong>deployment/staging-config.md</strong> —
-                Pre-production setup</li>
-                </ul>
-                <h4 id="navigation-guides">Navigation Guides</h4>
-                <ul>
                 <li><strong><a
-                href="./CROSS-REFERENCE.html">CROSS-REFERENCE.md</a></strong>
-                — Link verification matrix</li>
+                href="./deployment/ci-pipeline.html">deployment/ci-pipeline.md</a></strong>
+                — GitHub Actions automation</li>
                 <li><strong><a
-                href="./NAVIGATION-MAP.html">NAVIGATION-MAP.md</a></strong>
-                — Role-based navigation paths</li>
+                href="./deployment/docker-strategy.html">deployment/docker-strategy.md</a></strong>
+                — Docker containerization</li>
+                <li><strong><a
+                href="./deployment/staging-config.html">deployment/staging-config.md</a></strong>
+                — Pre-production setup</li>
                 </ul>
                 <hr />
                 <h3 id="testing-architecture-documents">🧪 Testing
@@ -497,215 +676,167 @@
                 Why)</h4>
                 <ol type="1">
                 <li><strong><a
-                href="./testing/strategy.html">strategy.md</a></strong>
+                href="./testing/strategy.html">testing/strategy.md</a></strong>
                 — Testing philosophy, goals, scope</li>
                 <li><strong><a
-                href="./testing/naming-conventions.html">naming-conventions.md</a></strong>
+                href="./testing/naming-conventions.html">testing/naming-conventions.md</a></strong>
                 — Test method naming patterns</li>
                 <li><strong><a
-                href="./testing/pyramid.html">pyramid.md</a></strong> —
-                Unit (70%) / Slice (25%) / Integration (5%)</li>
+                href="./testing/pyramid.html">testing/pyramid.md</a></strong>
+                — Unit (70%) / Slice (25%) / Integration (5%)</li>
                 </ol>
                 <h4 id="techniques-how">Techniques (How)</h4>
                 <ol type="1">
                 <li><strong><a
-                href="./testing/spring-slices.html">spring-slices.md</a></strong>
+                href="./testing/spring-slices.html">testing/spring-slices.md</a></strong>
                 — <span class="citation"
                 data-cites="WebMvcTest">@WebMvcTest</span>, <span
                 class="citation"
                 data-cites="DataJpaTest">@DataJpaTest</span>
                 patterns</li>
                 <li><strong><a
-                href="./testing/security-tests.html">security-tests.md</a></strong>
+                href="./testing/security-tests.html">testing/security-tests.md</a></strong>
                 — JWT and authorization testing</li>
                 <li><strong><a
-                href="./testing/controller-integration.html">controller-integration.md</a></strong>
+                href="./testing/controller-integration.html">testing/controller-integration.md</a></strong>
                 — MockMvc HTTP patterns</li>
                 <li><strong><a
-                href="./testing/test-data-fixtures.html">test-data-fixtures.md</a></strong>
+                href="./testing/test-data-fixtures.html">testing/test-data-fixtures.md</a></strong>
                 — TestConfig and mock data</li>
                 </ol>
                 <h4 id="quality-metrics-measure">Quality &amp; Metrics
                 (Measure)</h4>
                 <ol type="1">
                 <li><strong><a
-                href="./testing/coverage-and-quality.html">coverage-and-quality.md</a></strong>
+                href="./testing/coverage-and-quality.html">testing/coverage-and-quality.md</a></strong>
                 — JaCoCo configuration</li>
                 <li><strong><a
-                href="./testing/matrix.html">matrix.md</a></strong> —
-                Coverage by layer and feature</li>
+                href="./testing/matrix.html">testing/matrix.md</a></strong>
+                — Coverage by layer and feature</li>
                 <li><strong><a
-                href="./testing/ci-pipeline-tests.html">ci-pipeline-tests.md</a></strong>
+                href="./testing/ci-pipeline-tests.html">testing/ci-pipeline-tests.md</a></strong>
                 — GitHub Actions CI/CD</li>
                 </ol>
-                <h4 id="reports">Reports</h4>
-                <ul>
-                <li><strong><a
-                href="./TESTING-COMPLETION-REPORT.html">TESTING-COMPLETION-REPORT.md</a></strong>
-                — Summary of all testing docs</li>
-                </ul>
                 <hr />
-                <h2 id="quick-navigation-by-role">Quick Navigation by
+                <h2 id="documentation-navigation-maps">Documentation
+                Navigation Maps</h2>
+                <h3 id="complete-navigation-graph">Complete Navigation
+                Graph</h3>
+                <pre><code>                          ┌─────────────────┐
+                          │   index.md      │
+                          │   (Hub/Nav)     │
+                          └────────┬────────┘
+                                   │
+                ┌──────────────────┼──────────────────┐
+                │                  │                  │
+                ▼                  ▼                  ▼
+        ┌─────────────────┐ ┌────────────────┐ ┌────────────────┐
+        │  overview.md    │ │  backend.md    │ │ frontend.md    │
+        │  (PRIMARY)      │ │  (Spring Boot) │ │  (React/TS)    │
+        └────────┬────────┘ └────────┬───────┘ └────────┬───────┘
+                 │                   │                   │
+                 └───────┬───────────┼───────────┬───────┘
+                         │           │           │
+                         ▼           ▼           ▼
+        ┌────────────────────┐  ┌────────────────────┐
+        │   layers.md        │  │  security.md       │
+        │   (Architecture)   │  │  (JWT &amp; Auth)      │
+        └────────┬───────────┘  └────────┬───────────┘
+                 │                       │
+                 └───────────┬───────────┘
+                             │
+                             ▼
+        ┌────────────────────────────────────┐
+        │   deployment.md                    │
+        │   (Koyeb, Neon, CI/CD)             │
+        └────────┬─────────────────────────────┘
+                 │
+        ┌────────┴────────────────────────────────────────┐
+        │                                                 │
+        ▼                                                 ▼
+    ┌─────────────────────────────────┐    ┌─────────────────────────────┐
+    │    decisions/                   │    │    patterns/                │
+    ├─────────────────────────────────┤    ├─────────────────────────────┤
+    │ 001-database-choice.md          │    │ repository-pattern.md       │
+    │ 002-validation-strategy.md      │    │ security-patterns.md        │
+    └─────────────────────────────────┘    └─────────────────────────────┘
+        ▲                                       ▲
+        │                                       │
+        └───────────────────┬───────────────────┘
+                            │
+                            ▼
+        ┌─────────────────────────────────────────┐
+        │    deployment/                          │
+        ├─────────────────────────────────────────┤
+        │ ci-pipeline.md                          │
+        │ docker-strategy.md                      │
+        │ staging-config.md                       │
+        └─────────────────────────────────────────┘</code></pre>
+                <hr />
+                <h2 id="link-flow-by-topic">Link Flow by Topic</h2>
+                <h3 id="authentication-security-topic">Authentication
+                &amp; Security Topic</h3>
+                <pre><code>overview.md (Why JWT chosen?)
+    ↓
+security.md (JWT implementation)
+    ↓ links to ↓
+patterns/security-patterns.md (JWT, BCrypt, CORS details)
+    ↓ links to ↓
+backend.md (JwtTokenProvider code)
+    ↓ links to ↓
+layers.md (Security filters in controller)
+    ↓ links to ↓
+deployment.md (TLS/HTTPS in production)
+    ↓ links to ↓
+decisions/002-validation-strategy.md (Input validation defense)</code></pre>
+                <h3 id="database-topic">Database Topic</h3>
+                <pre><code>overview.md (Why PostgreSQL?)
+    ↓
+layers.md (Repository layer)
+    ↓ links to ↓
+backend.md (Spring Data JPA code)
+    ↓ links to ↓
+patterns/repository-pattern.md (Repository implementation)
+    ↓ links to ↓
+decisions/001-database-choice.md (PostgreSQL vs H2 justification)
+    ↓ links to ↓
+deployment.md (Neon PostgreSQL setup)
+    ↓ links to ↓
+deployment/ci-pipeline.md (Flyway migrations in CI/CD)</code></pre>
+                <h3
+                id="frontend-backend-integration-topic">Frontend-Backend
+                Integration Topic</h3>
+                <pre><code>overview.md (Full-stack context)
+    ↓
+frontend.md (React APIs)
+    ↓ links to ↓
+backend.md (REST endpoints)
+    ↓ links to ↓
+layers.md (API layer in controllers)
+    ↓ links to ↓
+security.md (JWT token handling in API)
+    ↓ links to ↓
+deployment.md (Both deployed on Render/Koyeb)
+    ↓ links to ↓
+deployment/ci-pipeline.md (Frontend &amp; backend CI/CD)</code></pre>
+                <h3 id="deployment-topic">Deployment Topic</h3>
+                <pre><code>overview.md (Architecture decisions)
+    ↓
+deployment.md (Infrastructure &amp; CI/CD)
+    ↓ links to ↓
+deployment/ci-pipeline.md (GitHub Actions automation)
+    ↓ links to ↓
+deployment/staging-config.md (Pre-production testing)
+    ↓ also references ↓
+backend.md (Container image &amp; tests)
+frontend.md (Render deployment)
+security.md (Security checklist)
+patterns/security-patterns.md (Secure configuration)</code></pre>
+                <hr />
+                <h2 id="navigation-paths-by-role">Navigation Paths by
                 Role</h2>
-                <h3 id="project-manager-business-analyst">👨‍💼 Project
-                Manager / Business Analyst</h3>
-                <p>Start here: 1. <a
-                href="./overview.html">overview.md</a> — Business
-                context and architecture decisions 2. <a
-                href="./testing/strategy.html">testing/strategy.md</a> —
-                Test goals and scope 3. <a
-                href="./testing/matrix.html">testing/matrix.md</a> —
-                Feature coverage summary</p>
-                <h3 id="backend-developer-javaspring-boot">👨‍💻 Backend
-                Developer (Java/Spring Boot)</h3>
-                <p>Start here: 1. <a
-                href="./backend.html">backend.md</a> — Spring Boot
-                architecture 2. <a
-                href="./testing/spring-slices.html">testing/spring-slices.md</a>
-                — How to write tests 3. <a
-                href="./testing/security-tests.html">testing/security-tests.md</a>
-                — Authorization testing 4. <a
-                href="./testing/controller-integration.html">testing/controller-integration.md</a>
-                — MockMvc patterns</p>
-                <h3 id="frontend-developer-reacttypescript">👩‍💻 Frontend
-                Developer (React/TypeScript)</h3>
-                <p>Start here: 1. <a
-                href="./frontend.html">frontend.md</a> — React
-                architecture 2. <a href="./backend.html">backend.md</a>
-                — APIs being consumed 3. <a
-                href="./testing/security-tests.html">testing/security-tests.md</a>
-                — JWT token flow 4. <a
-                href="./security.html">security.md</a> — Auth
-                implementation</p>
-                <h3 id="devops-engineer">🔧 DevOps Engineer</h3>
-                <p>Start here: 1. <a
-                href="./deployment.html">deployment.md</a> —
-                Infrastructure and CI/CD 2. <a
-                href="./deployment/ci-pipeline.html">deployment/ci-pipeline.md</a>
-                — GitHub Actions details 3. <a
-                href="./testing/ci-pipeline-tests.html">testing/ci-pipeline-tests.md</a>
-                — Test gates 4. <a
-                href="./testing/coverage-and-quality.html">testing/coverage-and-quality.md</a>
-                — Coverage reporting</p>
-                <h3 id="qa-test-engineer">🧪 QA / Test Engineer</h3>
-                <p>Start here: 1. <a
-                href="./testing/pyramid.html">testing/pyramid.md</a> —
-                Test distribution 2. <a
-                href="./testing/strategy.html">testing/strategy.md</a> —
-                Test philosophy 3. <a
-                href="./testing/matrix.html">testing/matrix.md</a> —
-                What’s tested 4. <a
-                href="./testing/naming-conventions.html">testing/naming-conventions.md</a>
-                — Test organization</p>
-                <hr />
-                <h2 id="document-statistics">Document Statistics</h2>
-                <h3 id="counts">Counts</h3>
-                <ul>
-                <li><strong>Total Architecture Docs</strong>: 7</li>
-                <li><strong>Total Decision Records</strong>: 2</li>
-                <li><strong>Total Pattern Docs</strong>: 2</li>
-                <li><strong>Total Deployment Docs</strong>: 2</li>
-                <li><strong>Total Testing Docs</strong>: 12</li>
-                <li><strong>Total Navigation Guides</strong>: 2</li>
-                <li><strong>TOTAL</strong>: <strong>27 documentation
-                files</strong></li>
-                </ul>
-                <h3 id="content-volume">Content Volume</h3>
-                <table>
-                <thead>
-                <tr class="header">
-                <th>Category</th>
-                <th>Files</th>
-                <th>Lines</th>
-                <th>Size</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="odd">
-                <td>Architecture</td>
-                <td>7</td>
-                <td>3,700+</td>
-                <td>118 KB</td>
-                </tr>
-                <tr class="even">
-                <td>Decisions</td>
-                <td>2</td>
-                <td>800+</td>
-                <td>25 KB</td>
-                </tr>
-                <tr class="odd">
-                <td>Patterns</td>
-                <td>2</td>
-                <td>600+</td>
-                <td>19 KB</td>
-                </tr>
-                <tr class="even">
-                <td>Deployment</td>
-                <td>2</td>
-                <td>700+</td>
-                <td>22 KB</td>
-                </tr>
-                <tr class="odd">
-                <td>Testing</td>
-                <td>12</td>
-                <td>5,300+</td>
-                <td>165 KB</td>
-                </tr>
-                <tr class="even">
-                <td>Navigation</td>
-                <td>2</td>
-                <td>1,000+</td>
-                <td>32 KB</td>
-                </tr>
-                <tr class="odd">
-                <td><strong>TOTAL</strong></td>
-                <td><strong>27</strong></td>
-                <td><strong>~12,100</strong></td>
-                <td><strong>~381 KB</strong></td>
-                </tr>
-                </tbody>
-                </table>
-                <h3 id="cross-reference-stats">Cross-Reference
-                Stats</h3>
-                <ul>
-                <li><strong>Horizontal links</strong> (doc ↔︎ doc):
-                120+</li>
-                <li><strong>Vertical links</strong> (main ↔︎
-                subdirectory): 50+</li>
-                <li><strong>Total unique cross-references</strong>:
-                170+</li>
-                <li><strong>Link coverage</strong>: 100% (all docs
-                interconnected)</li>
-                </ul>
-                <hr />
-                <h2 id="key-documentation-highlights">Key Documentation
-                Highlights</h2>
-                <h3 id="reflects-actual-implementation">✅ Reflects
-                Actual Implementation</h3>
-                <ul>
-                <li>9 real test classes with 65+ test methods</li>
-                <li>Real Spring Boot 3.5.7 architecture</li>
-                <li>Real JWT authentication patterns</li>
-                <li>Real PostgreSQL + H2 database setup</li>
-                <li>Real GitHub Actions CI/CD pipeline</li>
-                </ul>
-                <h3 id="ready-for-html-generation">✅ Ready for HTML
-                Generation</h3>
-                <ul>
-                <li>All links use MkDocs-compatible format
-                (<code>./file.md</code>)</li>
-                <li>All headings properly structured</li>
-                <li>All code examples syntax-highlighted</li>
-                <li>All tables and diagrams ASCII art</li>
-                <li>GitHub Pages deployment ready</li>
-                </ul>
-                <h3 id="self-contained">✅ Self-Contained</h3>
-                <ul>
-                <li>No external dependencies</li>
-                <li>All concepts explained with examples</li>
-                <li>All patterns from actual code</li>
-                <li>Complete enough for onboarding new team members</li>
-                </ul>
+                <p><em>See “Quick Navigation by Role” section at the top
+                for detailed paths</em></p>
                 <hr />
                 <h2 id="how-to-use-this-documentation">How to Use This
                 Documentation</h2>
@@ -745,94 +876,7 @@
                 <li><strong>New feature</strong>: Add docs before or
                 with feature code</li>
                 </ol>
-                <hr />
-                <h2 id="cross-link-verification">Cross-Link
-                Verification</h2>
-                <h3 id="architecture-to-testing-links">Architecture to
-                Testing Links</h3>
-                <ul>
-                <li><a href="./overview.html">overview.md</a> → <a
-                href="./testing-architecture.html">testing-architecture.md</a>
-                ✅</li>
-                <li><a href="./backend.html">backend.md</a> → <a
-                href="./testing/spring-slices.html">testing/spring-slices.md</a>
-                ✅</li>
-                <li><a href="./security.html">security.md</a> → <a
-                href="./testing/security-tests.html">testing/security-tests.md</a>
-                ✅</li>
-                <li><a href="./deployment.html">deployment.md</a> → <a
-                href="./testing/ci-pipeline-tests.html">testing/ci-pipeline-tests.md</a>
-                ✅</li>
-                </ul>
-                <h3 id="testing-internal-links">Testing Internal
-                Links</h3>
-                <ul>
-                <li><a
-                href="./testing-architecture.html">testing-architecture.md</a>
-                → all 12 testing docs ✅</li>
-                <li><a href="./testing/strategy.html">strategy.md</a> →
-                <a href="./testing/pyramid.html">pyramid.md</a> ✅</li>
-                <li><a href="./testing/pyramid.html">pyramid.md</a> → <a
-                href="./testing/coverage-and-quality.html">coverage-and-quality.md</a>
-                ✅</li>
-                <li><a href="./testing/matrix.html">matrix.md</a> → <a
-                href="./testing/coverage-and-quality.html">coverage-and-quality.md</a>
-                ✅</li>
-                </ul>
-                <hr />
-                <h2 id="recent-documentation-initiatives">Recent
-                Documentation Initiatives</h2>
-                <h3 id="phase-1-complete">Phase 1: ✅ COMPLETE</h3>
-                <ul>
-                <li>Created main architecture docs (7 files)</li>
-                <li>Established cross-links between main docs</li>
-                <li>Created navigation and verification guides</li>
-                </ul>
-                <h3 id="phase-2-complete">Phase 2: ✅ COMPLETE</h3>
-                <ul>
-                <li>Created comprehensive testing documentation (12
-                files)</li>
-                <li>Based on actual 9 test classes and 65+ tests</li>
-                <li>Full cross-linking (88+ internal references)</li>
-                <li>Ready for HTML generation</li>
-                </ul>
-                <h3 id="phase-3-upcoming">Phase 3: 🔄 UPCOMING</h3>
-                <ul>
-                <li>Create <code>.github/workflows/docs-ci.yml</code>
-                (MkDocs → HTML)</li>
-                <li>Configure GitHub Pages publication</li>
-                <li>Add JaCoCo coverage measurement</li>
-                <li>Generate initial HTML site</li>
-                </ul>
-                <h3 id="phase-4-planned">Phase 4: 📋 PLANNED</h3>
-                <ul>
-                <li>Add service layer test documentation (future
-                tests)</li>
-                <li>Add repository layer test documentation (future
-                tests)</li>
-                <li>Create E2E test guide (Playwright integration)</li>
-                <li>Add performance testing guide (JMH/k6)</li>
-                </ul>
-                <hr />
-                <h2 id="getting-started-with-documentation">Getting
-                Started with Documentation</h2>
-                <h3 id="first-time">First Time?</h3>
-                <ol type="1">
-                <li>Read <a href="../../../README.html">README.md</a>
-                for project overview</li>
-                <li>Start with <a href="./index.html">index.md</a> for
-                architecture navigation</li>
-                <li>Jump to your role-based path above</li>
-                <li>Explore linked documents at bottom of each page</li>
-                </ol>
-                <h3 id="contributing-code">Contributing Code?</h3>
-                <ol type="1">
-                <li>Find relevant documentation file</li>
-                <li>Understand the pattern explained there</li>
-                <li>Follow the pattern in your code</li>
-                <li>Update documentation if pattern changes</li>
-                </ol>
-                <h3 id="running-tests">Running Tests?</h3>
+                <h3 id="running-tests">Running Tests</h3>
                 <ol type="1">
                 <li>See <a
                 href="./testing-architecture.html">testing-architecture.md</a>
@@ -842,6 +886,172 @@
                 <li>View coverage:
                 <code>mvn test jacoco:report &amp;&amp; open target/site/jacoco/index.html</code></li>
                 </ol>
+                <hr />
+                <h2 id="document-statistics">Document Statistics</h2>
+                <h3 id="counts">Counts</h3>
+                <ul>
+                <li><strong>Total Architecture Docs</strong>: 7 core + 7
+                subdirectory</li>
+                <li><strong>Total Decision Records (ADRs)</strong>:
+                2</li>
+                <li><strong>Total Pattern Docs</strong>: 2</li>
+                <li><strong>Total Component Docs</strong>: 2</li>
+                <li><strong>Total Deployment Docs</strong>: 3</li>
+                <li><strong>Total Testing Docs</strong>: 10</li>
+                <li><strong>TOTAL</strong>: <strong>~32 documentation
+                files</strong></li>
+                </ul>
+                <h3 id="content-volume">Content Volume</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Category</th>
+                <th>Files</th>
+                <th>Approx Lines</th>
+                <th>Approx Size</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Architecture</td>
+                <td>7</td>
+                <td>3,700+</td>
+                <td>118 KB</td>
+                </tr>
+                <tr class="even">
+                <td>Decisions</td>
+                <td>2</td>
+                <td>800+</td>
+                <td>25 KB</td>
+                </tr>
+                <tr class="odd">
+                <td>Patterns</td>
+                <td>2</td>
+                <td>600+</td>
+                <td>19 KB</td>
+                </tr>
+                <tr class="even">
+                <td>Components</td>
+                <td>2</td>
+                <td>600+</td>
+                <td>19 KB</td>
+                </tr>
+                <tr class="odd">
+                <td>Deployment</td>
+                <td>3</td>
+                <td>900+</td>
+                <td>28 KB</td>
+                </tr>
+                <tr class="even">
+                <td>Testing</td>
+                <td>10</td>
+                <td>4,500+</td>
+                <td>140 KB</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>TOTAL</strong></td>
+                <td><strong>32</strong></td>
+                <td><strong>~11,100</strong></td>
+                <td><strong>~350 KB</strong></td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="cross-reference-stats">Cross-Reference
+                Stats</h3>
+                <ul>
+                <li><strong>Horizontal links</strong> (doc ↔︎ doc):
+                120+</li>
+                <li><strong>Vertical links</strong> (main ↔︎
+                subdirectory): 50+</li>
+                <li><strong>Total unique cross-references</strong>:
+                170+</li>
+                <li><strong>Link coverage</strong>: 100% (all docs
+                interconnected)</li>
+                </ul>
+                <h3 id="link-density">Link Density</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Document</th>
+                <th>Outgoing Links</th>
+                <th>Incoming Links</th>
+                <th>Hub Score</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>overview.md</td>
+                <td>11</td>
+                <td>6</td>
+                <td>⭐⭐⭐ High</td>
+                </tr>
+                <tr class="even">
+                <td>backend.md</td>
+                <td>11</td>
+                <td>5</td>
+                <td>⭐⭐ Medium</td>
+                </tr>
+                <tr class="odd">
+                <td>security.md</td>
+                <td>10</td>
+                <td>6</td>
+                <td>⭐⭐⭐ High</td>
+                </tr>
+                <tr class="even">
+                <td>deployment.md</td>
+                <td>10</td>
+                <td>5</td>
+                <td>⭐⭐ Medium</td>
+                </tr>
+                <tr class="odd">
+                <td>layers.md</td>
+                <td>8</td>
+                <td>5</td>
+                <td>⭐⭐ Medium</td>
+                </tr>
+                <tr class="even">
+                <td>frontend.md</td>
+                <td>8</td>
+                <td>4</td>
+                <td>⭐⭐ Medium</td>
+                </tr>
+                <tr class="odd">
+                <td>index.md</td>
+                <td>8+</td>
+                <td>1</td>
+                <td>⭐⭐⭐ Hub</td>
+                </tr>
+                </tbody>
+                </table>
+                <hr />
+                <h2 id="key-documentation-highlights">Key Documentation
+                Highlights</h2>
+                <h3 id="reflects-actual-implementation">✅ Reflects
+                Actual Implementation</h3>
+                <ul>
+                <li>9 real test classes with 65+ test methods</li>
+                <li>Real Spring Boot 3.5.7 architecture</li>
+                <li>Real JWT authentication patterns</li>
+                <li>Real PostgreSQL + H2 database setup</li>
+                <li>Real GitHub Actions CI/CD pipeline</li>
+                </ul>
+                <h3 id="ready-for-html-generation">✅ Ready for HTML
+                Generation</h3>
+                <ul>
+                <li>All links use relative markdown format
+                (<code>./file.md</code>)</li>
+                <li>All headings properly structured</li>
+                <li>All code examples syntax-highlighted</li>
+                <li>All tables and diagrams ASCII art</li>
+                <li>Pandoc/GitHub Pages deployment ready</li>
+                </ul>
+                <h3 id="self-contained">✅ Self-Contained</h3>
+                <ul>
+                <li>No external dependencies</li>
+                <li>All concepts explained with examples</li>
+                <li>All patterns from actual code</li>
+                <li>Complete enough for onboarding new team members</li>
+                </ul>
                 <hr />
                 <h2 id="common-questions">Common Questions</h2>
                 <h3 id="q-where-do-i-start">Q: Where do I start?</h3>
@@ -904,9 +1114,7 @@
                 Documentation?</h3>
                 <ul>
                 <li>Check cross-links at bottom of each document</li>
-                <li>Review <a
-                href="./NAVIGATION-MAP.html">NAVIGATION-MAP.md</a> for
-                discovery</li>
+                <li>Review this guide for discovery paths</li>
                 <li>Search using GitHub’s search (Ctrl+K in VS
                 Code)</li>
                 </ul>
@@ -917,12 +1125,16 @@
                 <li>Reference issue if applicable</li>
                 </ul>
                 <hr />
-                <p><strong>Last Updated</strong>: October 31, 2025<br />
-                <strong>Documentation Version</strong>: 1.0<br />
-                <strong>Status</strong>: ✅ COMPLETE - All 27 documents
-                ready for review</p>
-                <p><a href="./overview.html">Back to Main
-                Architecture</a></p>
+                <p><strong>Documentation Guide Version</strong>:
+                2.0<br />
+                <strong>Last Updated</strong>: November 3, 2025<br />
+                <strong>Status</strong>: ✅ COMPLETE - Consolidated from
+                DOCUMENTATION-INDEX and NAVIGATION-MAP</p>
+                <p><strong>See Also</strong>: - <a
+                href="./DOCUMENTATION-GENERATION.html">DOCUMENTATION-GENERATION.md</a>
+                - Technical guide for HTML generation - <a
+                href="./overview.html">overview.md</a> - Start reading
+                the actual documentation</p>
             </div>
         </main>
     </aside>
@@ -997,9 +1209,9 @@
                 { label: 'Staging Config', href: 'deployment/staging-config.html' },
             ],
             'Reference': [
-                { label: 'Navigation Map', href: 'NAVIGATION-MAP.html' },
-                { label: 'Cross References', href: 'CROSS-REFERENCE.html' },
-                { label: 'Documentation Index', href: 'DOCUMENTATION-INDEX.html' },
+                { label: 'Documentation Guide', href: 'DOCUMENTATION-GUIDE.html' },
+                { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
+                { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
             ],
         };
 
