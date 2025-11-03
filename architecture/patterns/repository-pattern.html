@@ -441,7 +441,7 @@
                 <pre class="mermaid"><code>graph TD
     A[Business Logic Service] --&gt;|uses| B[Repository Interface&lt;br/&gt;Spring Data JPA]
     B --&gt;|extends| C[JpaRepository T, ID]
-    C --&gt;|implements&lt;br/&gt;Spring generates| D[Repository Implementation&lt;br/&gt;Proxy]
+    C --&gt;|Spring generates| D[Repository Implementation&lt;br/&gt;Proxy]
     D --&gt;|uses| E[EntityManager&lt;br/&gt;Hibernate]
     E --&gt;|executes| F[SQL Queries]
     F --&gt;|accesses| G[PostgreSQL Database]
