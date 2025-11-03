@@ -41,9 +41,9 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Generate documentation from static OpenAPI YAML
+      - name: Generate documentation from modular OpenAPI YAML
         run: |
-          npm install -g redoc-cli
+          npm install -g @redocly/cli
           PROJECT_DIR="${{ steps.where.outputs.dir }}"
           OUTPUT_DIR="$PROJECT_DIR/target/docs"
           mkdir -p "$OUTPUT_DIR"
@@ -57,9 +57,10 @@ jobs:
           echo "✓ Found OpenAPI spec at $PROJECT_DIR/docs/api/openapi.yaml"
           echo "  File size: $(wc -c < $PROJECT_DIR/docs/api/openapi.yaml) bytes"
           
-          # Generate ReDoc HTML from YAML
-          redoc-cli build "$PROJECT_DIR/docs/api/openapi.yaml" -o "$OUTPUT_DIR/index.html"
+          # Generate ReDoc HTML from modular YAML (with external path references)
+          redocly build-docs "$PROJECT_DIR/docs/api/openapi.yaml" -o "$OUTPUT_DIR/index.html"
           echo "✓ ReDoc HTML generated at $OUTPUT_DIR/index.html"
+          echo "  Output size: $(wc -c < $OUTPUT_DIR/index.html) bytes"
 
       - name: Install pandoc
         run: sudo apt-get update && sudo apt-get install -y pandoc
