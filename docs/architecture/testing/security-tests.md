@@ -23,7 +23,7 @@
 
 ```mermaid
 graph TD
-    A[1. User submits credentials<br/>testuser / testpassword] --> B[2. POST /api/auth/login]
+    A["1. User submits credentials<br/>testuser and testpassword"] --> B["2. POST /api/auth/login"]
     
     B --> C[AuthController receives request]
     C --> D[AuthenticationManager validates password]

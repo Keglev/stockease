@@ -10,8 +10,8 @@ StockEase uses a multi-stage Docker build strategy to create minimal, secure, an
 
 ```mermaid
 graph TD
-    subgraph Stage1["Stage 1: BUILD - Base: maven:3.9.6-eclipse-temurin-17"]
-        B1[1. Copy Maven wrapper + pom.xml] --> B2[2. Download dependencies]
+    subgraph Stage1["Stage 1 - BUILD with maven 3.9.6 and eclipse-temurin-17"]
+        B1["1. Copy Maven wrapper + pom.xml"] --> B2[2. Download dependencies]
         B2 --> B3[3. Copy application source code]
         B3 --> B4[4. Build JAR]
         
@@ -20,12 +20,12 @@ graph TD
         B3 -.->|Changes| B3A[frequently, runs last]
         B4 -.->|Output| B4A[JAR artifact in workspace/target]
         
-        B4 --> Result1[Result: ~1.2GB image - JDK + Maven + build tools]
+        B4 --> Result1[Result - approximately 1.2GB image with JDK Maven build tools]
     end
     
     Result1 -->|Extract artifact only| Stage2
     
-    subgraph Stage2["Stage 2: RUNTIME - Base: eclipse-temurin:17-jre-jammy"]
+    subgraph Stage2["Stage 2 - RUNTIME with eclipse-temurin 17-jre-jammy"]
         R1[1. Copy JAR from build stage] --> R2[2. Create non-root user]
         R2 --> R3[3. Set USER app]
         R3 --> R4[4. Expose port 8081]
@@ -36,7 +36,7 @@ graph TD
         R3 -.->|Effect| R3A[All processes run as non-root]
         R4 -.->|Matches| R4A[Spring Boot server.port]
         
-        R5 --> Result2[Result: ~250MB image - JRE + application only]
+        R5 --> Result2[Result - approximately 250MB image with JRE and application only]
     end
     
     style Stage1 fill:#e3f2fd

@@ -113,15 +113,15 @@ void testLowStockProductsWithRoles(String username, String role) { }
 ```mermaid
 graph TD
     subgraph Auth["POST /api/auth/login"]
-        A1[Success - Valid username/password → JWT token]
+        A1["Success - Valid username and password → JWT token"]
         A2[Failure - Invalid credentials → 401]
         A3[Failure - User not found → 401]
     end
     
     subgraph Get["GET /api/products"]
-        G1[Success - Admin/User → Product list]
+        G1["Success - Admin or User → Product list"]
         G2[Authorization - Anonymous → 401]
-        G3[Pagination - Skip/limit parameters]
+        G3["Pagination - Skip and limit parameters"]
     end
     
     subgraph Post["POST /api/products"]

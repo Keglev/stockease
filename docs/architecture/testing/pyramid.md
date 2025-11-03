@@ -10,7 +10,7 @@
 
 ```mermaid
 graph TD
-    A[System/E2E 5%<br/>Slow, expensive<br/>Simulate user scenarios] 
+    A["System E2E 5%<br/>Slow, expensive<br/>Simulate user scenarios"] 
     B[Integration 25%<br/>Medium speed<br/>Test layer interactions]
     C[Unit 70%<br/>Fast, cheap<br/>Test one thing]
     
