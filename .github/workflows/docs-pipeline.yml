@@ -65,21 +65,198 @@ jobs:
       - name: Install pandoc
         run: sudo apt-get update && sudo apt-get install -y pandoc
 
-      - name: Convert Markdown to HTML (preserve structure)
+      - name: Generate HTML from Architecture Markdown with Enterprise Template
+        run: |
+          PROJECT_DIR="${{ steps.where.outputs.dir }}"
+          ARCH_DIR="$PROJECT_DIR/docs/architecture"
+          OUTPUT_DIR="$PROJECT_DIR/target/docs/architecture"
+          TEMPLATE="$PROJECT_DIR/docs/templates/enterprise-docs.html"
+          
+          mkdir -p "$OUTPUT_DIR"
+          
+          if [ ! -f "$TEMPLATE" ]; then
+            echo "❌ Enterprise template not found at $TEMPLATE"
+            exit 1
+          fi
+          
+          # Find all markdown files in architecture directory
+          find "$ARCH_DIR" -type f -name "*.md" | while read md_file; do
+            # Calculate relative path from architecture base
+            rel_path="${md_file#$ARCH_DIR/}"
+            out_file="$OUTPUT_DIR/${rel_path%.md}.html"
+            
+            # Create output directory structure
+            mkdir -p "$(dirname "$out_file")"
+            
+            # Convert markdown to HTML with template
+            pandoc "$md_file" \
+              --from markdown \
+              --to html \
+              --template "$TEMPLATE" \
+              --toc \
+              --toc-depth=3 \
+              --standalone \
+              -o "$out_file"
+            
+            echo "✓ Generated: $out_file"
+          done
+          
+          echo "✓ All architecture markdown files converted to HTML"
+
+      - name: Convert Additional Markdown to HTML (preserve structure)
         run: |
           BASE="${{ steps.where.outputs.dir }}/docs"
           OUT="${{ steps.where.outputs.dir }}/target/docs/generated"
+          TEMPLATE="${{ steps.where.outputs.dir }}/docs/templates/enterprise-docs.html"
           mkdir -p "$OUT"
+          
+          # Skip architecture directory (already processed) and templates
           if [ -d "$BASE" ]; then
-            find "$BASE" -type f -name "*.md" | while read md; do
+            find "$BASE" -type f -name "*.md" \
+              ! -path "*/architecture/*" \
+              ! -path "*/templates/*" | while read md; do
               rel="${md#$BASE/}"
               out_file="$OUT/${rel%.md}.html"
               mkdir -p "$(dirname "$out_file")"
-              pandoc "$md" -f markdown -t html --toc -s -o "$out_file"
+              
+              if [ -f "$TEMPLATE" ]; then
+                pandoc "$md" \
+                  --from markdown \
+                  --to html \
+                  --template "$TEMPLATE" \
+                  --toc \
+                  --standalone \
+                  -o "$out_file"
+              else
+                pandoc "$md" \
+                  --from markdown \
+                  --to html \
+                  --toc \
+                  -s \
+                  -o "$out_file"
+              fi
             done
-          else
-            echo "No docs directory at $BASE (skipping Markdown conversion)."
           fi
+
+      - name: Create Navigation Index
+        run: |
+          PROJECT_DIR="${{ steps.where.outputs.dir }}"
+          OUTPUT_DIR="$PROJECT_DIR/target/docs"
+          
+          # Create main index.html that redirects or shows overview
+          cat > "$OUTPUT_DIR/index.html" << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>StockEase Documentation</title>
+              <style>
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
+                  .hero {
+                      background: linear-gradient(135deg, #0066cc 0%, #004a99 100%);
+                      color: white;
+                      padding: 4rem 1.5rem;
+                      text-align: center;
+                  }
+                  .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+                  .hero p { font-size: 1.1rem; margin-bottom: 2rem; opacity: 0.9; }
+                  .container { max-width: 1000px; margin: 0 auto; }
+                  .docs-grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                      gap: 2rem;
+                      padding: 3rem 1.5rem;
+                  }
+                  .doc-card {
+                      background: white;
+                      padding: 1.5rem;
+                      border-radius: 8px;
+                      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                      transition: transform 0.2s, box-shadow 0.2s;
+                      text-decoration: none;
+                      color: inherit;
+                      border-top: 3px solid #0066cc;
+                  }
+                  .doc-card:hover {
+                      transform: translateY(-4px);
+                      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+                  }
+                  .doc-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; color: #0066cc; }
+                  .doc-card p { color: #666; font-size: 0.95rem; }
+                  footer {
+                      background: #f8f9fa;
+                      padding: 2rem;
+                      text-align: center;
+                      color: #666;
+                      font-size: 0.9rem;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="hero">
+                  <div class="container">
+                      <h1>📚 StockEase Documentation</h1>
+                      <p>Complete API and Architecture Reference</p>
+                  </div>
+              </div>
+              <div class="container">
+                  <div class="docs-grid">
+                      <a href="index.html" class="doc-card">
+                          <h3>🔌 API Documentation</h3>
+                          <p>Interactive API specification with all endpoints, request/response schemas, and security details.</p>
+                      </a>
+                      <a href="architecture/overview.html" class="doc-card">
+                          <h3>🏗️ Architecture Overview</h3>
+                          <p>System design, layers, components, and technology stack overview.</p>
+                      </a>
+                      <a href="architecture/backend.html" class="doc-card">
+                          <h3>⚙️ Backend Architecture</h3>
+                          <p>Spring Boot application structure, controllers, services, and data layers.</p>
+                      </a>
+                      <a href="architecture/frontend.html" class="doc-card">
+                          <h3>🎨 Frontend Architecture</h3>
+                          <p>React/TypeScript application structure, components, and state management.</p>
+                      </a>
+                      <a href="architecture/security.html" class="doc-card">
+                          <h3>🔐 Security Architecture</h3>
+                          <p>Authentication, authorization, JWT, role-based access control, and data protection.</p>
+                      </a>
+                      <a href="architecture/deployment.html" class="doc-card">
+                          <h3>🚀 Deployment Strategy</h3>
+                          <p>Docker containerization, CI/CD pipelines, and cloud deployment patterns.</p>
+                      </a>
+                      <a href="architecture/testing-architecture.html" class="doc-card">
+                          <h3>✅ Testing Architecture</h3>
+                          <p>Test pyramid, strategies, unit tests, integration tests, and security testing.</p>
+                      </a>
+                      <a href="architecture/decisions/" class="doc-card">
+                          <h3>📋 Design Decisions</h3>
+                          <p>Record of Architectural Decision Records (ADRs) and technical justifications.</p>
+                      </a>
+                  </div>
+              </div>
+              <footer>
+                  <p><strong>StockEase</strong> - Inventory Management System</p>
+                  <p>Enterprise-Grade API & Architecture Documentation</p>
+              </footer>
+          </body>
+          </html>
+          EOF
+          
+          echo "✓ Created documentation index"
+
+      - name: Verify Generated Documentation
+        run: |
+          OUTPUT_DIR="${{ steps.where.outputs.dir }}/target/docs"
+          echo "📊 Generated Documentation Files:"
+          find "$OUTPUT_DIR" -type f \( -name "*.html" -o -name "*.json" \) | wc -l
+          echo ""
+          echo "📁 Directory structure:"
+          du -sh "$OUTPUT_DIR" 2>/dev/null || echo "(directory size)"
+          echo ""
+          echo "✓ Documentation generation complete"
 
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v3
