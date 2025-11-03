@@ -441,8 +441,8 @@
                 <h3 id="multi-stage-build-pipeline">Multi-Stage Build
                 Pipeline</h3>
                 <pre class="mermaid"><code>graph TD
-    subgraph Stage1[&quot;Stage 1: BUILD - Base: maven:3.9.6-eclipse-temurin-17&quot;]
-        B1[1. Copy Maven wrapper + pom.xml] --&gt; B2[2. Download dependencies]
+    subgraph Stage1[&quot;Stage 1 - BUILD with maven 3.9.6 and eclipse-temurin-17&quot;]
+        B1[&quot;1. Copy Maven wrapper + pom.xml&quot;] --&gt; B2[2. Download dependencies]
         B2 --&gt; B3[3. Copy application source code]
         B3 --&gt; B4[4. Build JAR]
         
@@ -451,12 +451,12 @@
         B3 -.-&gt;|Changes| B3A[frequently, runs last]
         B4 -.-&gt;|Output| B4A[JAR artifact in workspace/target]
         
-        B4 --&gt; Result1[Result: ~1.2GB image - JDK + Maven + build tools]
+        B4 --&gt; Result1[Result - approximately 1.2GB image with JDK Maven build tools]
     end
     
     Result1 --&gt;|Extract artifact only| Stage2
     
-    subgraph Stage2[&quot;Stage 2: RUNTIME - Base: eclipse-temurin:17-jre-jammy&quot;]
+    subgraph Stage2[&quot;Stage 2 - RUNTIME with eclipse-temurin 17-jre-jammy&quot;]
         R1[1. Copy JAR from build stage] --&gt; R2[2. Create non-root user]
         R2 --&gt; R3[3. Set USER app]
         R3 --&gt; R4[4. Expose port 8081]
@@ -467,7 +467,7 @@
         R3 -.-&gt;|Effect| R3A[All processes run as non-root]
         R4 -.-&gt;|Matches| R4A[Spring Boot server.port]
         
-        R5 --&gt; Result2[Result: ~250MB image - JRE + application only]
+        R5 --&gt; Result2[Result - approximately 250MB image with JRE and application only]
     end
     
     style Stage1 fill:#e3f2fd

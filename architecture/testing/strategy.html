@@ -629,15 +629,15 @@
                 </ul>
                 <pre class="mermaid"><code>graph TD
     subgraph Auth[&quot;POST /api/auth/login&quot;]
-        A1[Success - Valid username/password → JWT token]
+        A1[&quot;Success - Valid username and password → JWT token&quot;]
         A2[Failure - Invalid credentials → 401]
         A3[Failure - User not found → 401]
     end
     
     subgraph Get[&quot;GET /api/products&quot;]
-        G1[Success - Admin/User → Product list]
+        G1[&quot;Success - Admin or User → Product list&quot;]
         G2[Authorization - Anonymous → 401]
-        G3[Pagination - Skip/limit parameters]
+        G3[&quot;Pagination - Skip and limit parameters&quot;]
     end
     
     subgraph Post[&quot;POST /api/products&quot;]
