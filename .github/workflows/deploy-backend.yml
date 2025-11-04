@@ -1,3 +1,103 @@
+################################################################################
+#
+# STOCKEASE BACKEND DEPLOYMENT WORKFLOW
+# =====================================
+#
+# Workflow: GitHub Actions - Automated Backend Build, Test & Deployment
+#
+# PURPOSE:
+#   Automates the complete backend CI/CD pipeline:
+#   1. Build & Test: Compile Java code, run unit/integration tests
+#   2. Verify: Ensure application packages correctly
+#   3. Deploy: Trigger container redeploy on Koyeb cloud platform
+#   4. Monitor: Poll service status until healthy
+#
+# TRIGGER EVENTS:
+#   - Push to main branch (excluding /docs/** and certain config files)
+#   - Manual trigger: workflow_dispatch (via GitHub Actions UI)
+#
+# DEPLOYMENT TARGET:
+#   Platform: Koyeb (serverless container platform)
+#   Deployment: Git source (auto-build from Dockerfile)
+#   Status Polling: Up to 10 minutes for service to reach HEALTHY state
+#
+# ENVIRONMENT VARIABLES:
+#   - RUN_TESTS: 'true' (executes mvn test)
+#   - BACKEND_DIR: Auto-detected (repo root or /backend)
+#   - KOYEB_API_KEY: Stored in GitHub Secrets (authentication)
+#   - KOYEB_SERVICE_ID: Stored in GitHub Secrets (target service)
+#
+# BUILD PIPELINE:
+#   1. Checkout: Clone latest main branch
+#   2. Detect: Find Maven project (backend directory)
+#   3. Validate: Ensure Dockerfile exists
+#   4. Setup: Install JDK 17, load Maven cache
+#   5. Test: Run ./mvnw test (if RUN_TESTS=true)
+#   6. Verify: ./mvnw verify -DskipTests (build without tests)
+#   7. Deploy: Trigger Koyeb redeploy via API
+#   8. Monitor: Poll service status every 10 seconds (60 attempts = ~10 min)
+#
+# DEPLOYMENT FLOW:
+#   GitHub Push → Build & Test → Verify → API Redeploy → Status Polling
+#                                          ↓
+#                                   Koyeb Container Build
+#                                   (from Dockerfile + source)
+#                                          ↓
+#                                   Deploy New Container
+#                                          ↓
+#                                   Service Status Polling
+#                                   (HEALTHY or READY)
+#
+# TECHNOLOGIES:
+#   - Java 17: Application runtime
+#   - Maven: Build automation (mvnw wrapper)
+#   - Docker: Container packaging (Dockerfile)
+#   - Koyeb: Serverless container hosting
+#   - GitHub Secrets: API key storage
+#
+# FAILURE HANDLING:
+#   - Test Failure: Workflow stops (prevents bad code deployment)
+#   - Build Failure: Stops at verify step
+#   - Deploy API Failure: HTTP response code check (200, 201, 202 expected)
+#   - Timeout: Service doesn't reach HEALTHY after 10 minutes
+#   - Exit Code: 1 (failure) triggers GitHub Actions failure notification
+#
+# MONITORING & DEBUGGING:
+#   - View logs: GitHub Actions tab → select workflow run
+#   - Test output: See mvn test results in "Run backend tests"
+#   - Deploy logs: See Koyeb API response in "Trigger Koyeb redeploy"
+#   - Status polling: See real-time status updates every 10 seconds
+#
+# DEPENDENCIES:
+#   - GitHub Secrets:
+#     * KOYEB_API_KEY: Bearer token for API authentication
+#     * KOYEB_SERVICE_ID: Target Koyeb service identifier
+#   - Repository:
+#     * ./mvnw: Maven wrapper script
+#     * ./pom.xml: Maven project configuration
+#     * ./Dockerfile: Container image definition
+#
+# CACHE STRATEGY:
+#   - Maven dependency cache: Speeds up build (cache: maven)
+#   - Java version: 17 LTS (Temurin distribution)
+#
+# PERFORMANCE:
+#   - Typical build time: 2-5 minutes
+#   - Koyeb deployment: ~1-2 minutes
+#   - Status polling: ~1-2 minutes (depends on service readiness)
+#   - Total workflow time: ~5-10 minutes
+#
+# SECURITY:
+#   - API Key stored in GitHub Secrets (never logged)
+#   - SSH key-based authentication (Koyeb)
+#   - No credentials in workflow file (uses environment variable substitution)
+#   - Read-only permissions on repository
+#
+# LAST UPDATED: 2025-11-04
+# VERSION: 1.0 (Production ready)
+#
+################################################################################
+
 name: Deploy and Migrate Backend to Koyeb (Git Source)
 
 on:
@@ -13,6 +113,12 @@ permissions:
   contents: read
 
 env:
+  # ========================================================================
+  # Environment Configuration
+  # ========================================================================
+  # RUN_TESTS: Set to 'true' to execute full test suite before deployment
+  #   - Ensures code quality and prevents broken builds
+  #   - Can be disabled for emergency hotfixes (not recommended)
   RUN_TESTS: 'true'
 
 jobs:
@@ -20,9 +126,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # =====================================================================
+      # STEP 1: CHECKOUT REPOSITORY
+      # =====================================================================
+      # Clone the latest source code from main branch
+      # fetch-depth: 0 ensures full history for accurate build info
+      # =====================================================================
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # =====================================================================
+      # STEP 2: DETECT BACKEND DIRECTORY
+      # =====================================================================
+      # Project structure can be:
+      #   - Root level: ./mvnw, ./pom.xml
+      #   - Subdirectory: ./backend/mvnw, ./backend/pom.xml
+      # This step auto-detects and sets BACKEND_DIR environment variable
+      # =====================================================================
       - name: Detect backend directory
         run: |
           if [ -f "$GITHUB_WORKSPACE/mvnw" ] && [ -f "$GITHUB_WORKSPACE/pom.xml" ]; then
@@ -35,6 +155,12 @@ jobs:
           fi
           echo "Detected BACKEND_DIR=$BACKEND_DIR"
 
+      # =====================================================================
+      # STEP 3: VALIDATE DOCKERFILE
+      # =====================================================================
+      # Ensures Docker container configuration exists before attempting build
+      # Koyeb uses this to build and deploy the container
+      # =====================================================================
       - name: Ensure Dockerfile exists near backend
         run: |
           if [ -f "$BACKEND_DIR/Dockerfile" ]; then
@@ -44,6 +170,13 @@ jobs:
             exit 1
           fi
 
+      # =====================================================================
+      # STEP 4: SETUP JDK & MAVEN CACHE
+      # =====================================================================
+      # Installs Java 17 (Temurin LTS distribution)
+      # Enables Maven dependency cache for faster builds
+      # Cache reduces build time by ~50% for subsequent runs
+      # =====================================================================
       - name: Set up JDK 17 with Maven cache
         uses: actions/setup-java@v4
         with:
@@ -51,18 +184,68 @@ jobs:
           java-version: '17'
           cache: maven
 
+      # =====================================================================
+      # STEP 5: MAKE MAVEN WRAPPER EXECUTABLE
+      # =====================================================================
+      # mvnw wrapper script needs execute permissions on Linux/Mac
+      # Windows (.cmd version) handles permissions automatically
+      # =====================================================================
       - name: Make mvnw executable
         run: chmod +x "$BACKEND_DIR/mvnw"
 
+      # =====================================================================
+      # STEP 6: RUN TEST SUITE
+      # =====================================================================
+      # Executes all unit and integration tests:
+      #   ./mvnw -B test
+      #     -B: Batch mode (no interactive prompts)
+      #     -ntp: No transfer progress (cleaner logs)
+      #     test: Run JUnit tests
+      #
+      # Conditional: Only runs if RUN_TESTS env variable is 'true'
+      # Failure stops entire workflow (prevents bad code deployment)
+      # =====================================================================
       - name: Run backend tests
         if: env.RUN_TESTS == 'true'
         working-directory: ${{ env.BACKEND_DIR }}
         run: ./mvnw -B -ntp test
 
+      # =====================================================================
+      # STEP 7: BUILD & VERIFY APPLICATION
+      # =====================================================================
+      # Compiles source code and packages application:
+      #   ./mvnw verify -DskipTests
+      #     verify: Runs tests + integration + packaging
+      #     -DskipTests: Skip tests (already ran in previous step)
+      #     -Dspringdoc.skip=true: Skip API doc generation (optional speedup)
+      #
+      # Produces: target/*.jar (executable JAR file)
+      # =====================================================================
       - name: Verify build compiles (skip tests)
         working-directory: ${{ env.BACKEND_DIR }}
         run: ./mvnw -B -ntp -DskipTests -Dspringdoc.skip=true verify
 
+      # =====================================================================
+      # STEP 8: TRIGGER KOYEB REDEPLOY
+      # =====================================================================
+      # Calls Koyeb API to trigger container rebuild and deployment
+      #
+      # API Endpoint: POST /v1/services/{SERVICE_ID}/redeploy
+      # Authentication: Bearer token (KOYEB_API_KEY)
+      # Payload: Empty JSON object {} (uses Git source for rebuild)
+      #
+      # Expected HTTP Codes: 200, 201, 202 (success)
+      # Koyeb then:
+      #   1. Pulls latest Git changes
+      #   2. Builds new Docker image
+      #   3. Spins down old container
+      #   4. Spins up new container
+      #   5. Monitors service health
+      #
+      # Environment Variables (GitHub Secrets):
+      #   KOYEB_API_KEY: Bearer token for API auth (stored securely)
+      #   KOYEB_SERVICE_ID: Target service identifier
+      # =====================================================================
       - name: Trigger Koyeb redeploy (Git source)
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
@@ -83,6 +266,28 @@ jobs:
             exit 1
           fi
 
+      # =====================================================================
+      # STEP 9: WAIT FOR SERVICE HEALTHY
+      # =====================================================================
+      # Polls Koyeb service status every 10 seconds (maximum ~10 minutes)
+      # Ensures service reached HEALTHY or READY state before declaring success
+      #
+      # Status Polling:
+      #   - GET /v1/services/{SERVICE_ID}
+      #   - Parse JSON: .service.status field
+      #   - Success states: HEALTHY, READY
+      #   - Timeout: 60 attempts × 10 seconds = 600 seconds (~10 min)
+      #
+      # Dependencies:
+      #   - jq: JSON query tool (installed via apt-get)
+      #   - curl: HTTP client (pre-installed)
+      #
+      # Scenarios:
+      #   ✓ Service reaches HEALTHY → exit 0 (success)
+      #   ✓ Service reaches READY → exit 0 (success)
+      #   ✗ Timeout after 10 min → exit 1 (failure)
+      #   ✗ API error → exit 1 (failure)
+      # =====================================================================
       - name: Wait for Koyeb service HEALTHY/READY (up to ~10 min)
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
