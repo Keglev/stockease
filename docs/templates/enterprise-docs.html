@@ -197,10 +197,10 @@
         
         // Convert language-mermaid class to mermaid for compatibility with Pandoc output
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        console.log(`🔧 Found ${codeMermaidBlocks.length} code.language-mermaid blocks`);
+        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
         codeMermaidBlocks.forEach((code, index) => {
-            console.log(`  Converting block ${index + 1}: ${code.textContent.substring(0, 50)}...`);
+            console.log('  Converting block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
