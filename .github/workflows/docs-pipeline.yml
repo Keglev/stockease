@@ -1,3 +1,69 @@
+################################################################################
+#
+# STOCKEASE DOCUMENTATION PIPELINE
+# ================================
+#
+# Workflow: GitHub Actions - Automated Documentation Generation & Deployment
+#
+# PURPOSE:
+#   Generates professional enterprise documentation from architecture markdown
+#   files and OpenAPI specifications. Triggered automatically on push to /docs
+#   directory. Publishes to GitHub Pages with mermaid diagram rendering.
+#
+# TRIGGER EVENTS:
+#   - Push to main branch when /docs/** or .github/workflows/docs-pipeline.yml changes
+#   - Manual trigger: workflow_dispatch (via GitHub Actions UI)
+#
+# BUILD PIPELINE:
+#   1. Setup: Install Node.js, Pandoc, ReDoc CLI
+#   2. API Docs: Generate OpenAPI docs from openapi.yaml
+#   3. Architecture: Convert markdown → HTML with Pandoc + Lua filters
+#   4. Additional Docs: Process other markdown files
+#   5. Links: Fix relative links and directory references
+#   6. Index: Create navigation index
+#   7. Deploy: Publish to GitHub Pages (gh-pages branch)
+#
+# KEY TECHNOLOGIES:
+#   - Pandoc: Markdown → HTML conversion with custom templates
+#   - Lua Filters: Post-process Pandoc output (mermaid rendering)
+#   - ReDoc: OpenAPI specification documentation
+#   - GitHub Pages: Static site hosting
+#   - Mermaid.js: Architecture diagram rendering
+#
+# OUTPUT STRUCTURE:
+#   target/docs/
+#   ├── index.html (landing page)
+#   ├── api-docs.html (OpenAPI reference)
+#   ├── templates/ (CSS, HTML templates)
+#   └── architecture/
+#       ├── *.html (architecture pages)
+#       ├── testing/
+#       ├── deployment/
+#       ├── patterns/
+#       ├── components/
+#       └── decisions/
+#
+# DEPLOYMENT:
+#   Published to: https://keglev.github.io/stockease/
+#   Branch: gh-pages (managed by actions-gh-pages)
+#
+# DOCUMENTATION:
+#   - Each markdown file becomes a styled HTML page
+#   - Mermaid diagrams render via Lua filter + mermaid.js
+#   - Sidebar navigation auto-generated from menu structure
+#   - Table of contents auto-generated from headings
+#
+# MAINTENANCE:
+#   - Update docs/** markdown → auto-deployed
+#   - Modify template → regenerate all docs
+#   - Add/remove API specs → updates automatically
+#   - Mermaid syntax errors logged in workflow output
+#
+# LAST UPDATED: 2025-11-04
+# VERSION: 3.0 (CSS extraction + mermaid rendering fix)
+#
+################################################################################
+
 name: Docs Pipeline
 
 on:
@@ -82,7 +148,27 @@ jobs:
             exit 1
           fi
           
-          # Create a Lua filter to convert .md links to .html AND handle mermaid blocks
+          # ===================================================================
+          # PANDOC LUA FILTER: markdown links & mermaid diagram rendering
+          # ===================================================================
+          # This filter performs two critical transformations:
+          #
+          # 1. MARKDOWN LINK CONVERSION
+          #    - Input: [link](file.md) or [link](file.md#section)
+          #    - Output: [link](file.html) or [link](file.html#section)
+          #    - Purpose: Pandoc preserves .md extensions; filter converts to .html
+          #
+          # 2. MERMAID DIAGRAM RENDERING (CRITICAL FIX)
+          #    - Input: ```mermaid ...diagram... ``` (code fence)
+          #    - Output: <div class="mermaid">...diagram...</div>
+          #    - Problem Solved: Pandoc default wraps in <code>, breaking mermaid.js
+          #    - Solution: Output raw HTML div that mermaid.js can find and render
+          #
+          # Processing Pipeline:
+          #    markdown → Pandoc AST → Lua filter → HTML (with divs) → mermaid.js renders
+          #
+          # ===================================================================
+          
           cat > /tmp/md-to-html-links.lua << 'EOF'
           function Link(el)
             -- Convert .md links to .html
