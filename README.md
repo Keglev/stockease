@@ -1,6 +1,6 @@
 # StockEase Backend
 
-**Enterprise Stock Management System - Java Spring Boot & PostgreSQL**<!-- Last workflow trigger: 2025-10-30 09:45 UTC -->
+**Enterprise Stock Management System - Java Spring Boot & PostgreSQL**
 
 ## About
 
@@ -255,7 +255,7 @@ StockEase is deployed to Koyeb, a serverless container platform:
 - ✅ **Automated CI/CD**: Push to main → Automatic build, test, and deployment
 - ✅ **Container Deployment**: Docker image builds and deploys via GitHub Actions
 - ✅ **Health Checks**: Automated service verification after deployment
-- ✅ **Live Service**: Deployed and monitoring at [StockEase Backend](https://stockease-backend.koyeb.app)
+- ✅ **Live Service**: Deployed and monitoring at [StockEase Frontend](https://stockeasefrontend.vercel.app/)
 
 **Deployment Architecture:**
 
