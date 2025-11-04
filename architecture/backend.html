@@ -1,4 +1,817 @@
 <!DOCTYPE html>
+<!--
+================================================================================
+                    STOCKEASE ENTERPRISE DOCUMENTATION TEMPLATE
+================================================================================
+
+File: enterprise-docs.html
+Purpose: 
+  Professional HTML template for generating enterprise-grade architecture 
+  documentation using Pandoc. Used by the docs-pipeline.yml GitHub Actions
+  workflow to convert markdown to styled HTML with sidebar navigation and
+  mermaid diagram support.
+
+Template Engine: Pandoc (pandoc.org)
+  - Variables: , <h1 id="backend-architecture---stockease">Backend
+Architecture - StockEase</h1>
+<h2 id="overview">Overview</h2>
+<p>The StockEase backend is an enterprise-grade REST API built with
+Spring Boot 3.5.7, providing secure inventory management capabilities
+with comprehensive testing coverage and containerized deployment.</p>
+<p><strong>Tech Stack</strong>: Spring Boot 3.5.7 • Java 17 LTS •
+PostgreSQL 17.5 • Spring Security • JWT<br />
+<strong>Deployment</strong>: Koyeb
+(https://stockease-backend-production.koyeb.app)<br />
+<strong>API Spec</strong>: OpenAPI 3.0 via SpringDoc (/v3/api-docs)</p>
+<hr />
+<h2 id="layered-architecture">Layered Architecture</h2>
+<p>The backend follows a <strong>three-tier layered
+architecture</strong> with clear separation of concerns:</p>
+<div class="mermaid">graph TD
+    subgraph Controller["REST Controller Layer"]
+        C1["HTTP Request/Response Handling<br/>AuthController, ProductController, HealthController<br/>HTTP Methods, Status Codes, Request/Response Mapping"]
+    end
+    
+    subgraph Service["Service Layer"]
+        S1["Business Logic & Validation<br/>AuthService, ProductService<br/>Data transformation, Authorization checks"]
+    end
+    
+    subgraph Repository["Repository Layer"]
+        R1["Database Access (Spring Data JPA)<br/>UserRepository, ProductRepository<br/>SQL query execution, Entity lifecycle management"]
+    end
+    
+    subgraph Entity["Entity/Model Layer"]
+        E1["Domain Objects<br/>AppUser, Product JPA Entities<br/>Database column mappings, Relationships & constraints"]
+    end
+    
+    subgraph Database["Database Layer"]
+        D1["PostgreSQL<br/>Flyway Migrations, Tables<br/>ACID transactions, Schema versioning"]
+    end
+    
+    Controller --> Service
+    Service --> Repository
+    Repository --> Entity
+    Entity --> Database
+    
+    style Controller fill:#e3f2fd
+    style Service fill:#fff3e0
+    style Repository fill:#e8f5e9
+    style Entity fill:#f3e5f5
+    style Database fill:#fce4ec</div>
+<hr />
+<h2 id="request-lifecycle">Request Lifecycle</h2>
+<div class="mermaid">graph TD
+    A[HTTP Request] --> B[Spring DispatcherServlet]
+    B --> C[Security Filter Chain]
+    
+    C --> C1[CorsFilter: CORS validation]
+    C1 --> C2[SecurityContextPersistenceFilter: JWT parsing]
+    C2 --> C3[JwtAuthenticationFilter: Token validation]
+    
+    C3 --> D{Authentication successful?}
+    D -->|Yes| E[Route to @RequestMapping handler]
+    D -->|No| X[Return 401 Unauthorized]
+    
+    E --> F[Controller Method Execution]
+    F --> F1["PathVariable and RequestParam binding"]
+    F1 --> F2["RequestBody deserialization JSON to DTO"]
+    F2 --> F3["Spring Validation Valid"]
+    
+    F3 --> G[Invoke Service Method]
+    G --> G1[Business logic execution]
+    G1 --> G2[Authorization checks @PreAuthorize]
+    G2 --> G3[Data validation]
+    
+    G3 --> H[Invoke Repository Method]
+    H --> H1[Query execution]
+    H1 --> H2[Entity lazy/eager loading]
+    H2 --> H3[Transaction management]
+    
+    H3 --> I[Service processes results]
+    I --> I1[Transform entities to DTOs]
+    I1 --> I2[Handle errors and exceptions]
+    I2 --> I3[Return response object]
+    
+    I3 --> J[Controller builds HTTP response]
+    J --> J1[ResponseEntity construction]
+    J1 --> J2[HTTP status code assignment]
+    J2 --> J3[Header setup]
+    
+    J3 --> K[Response Serialization]
+    K --> K1[DTO → JSON conversion Jackson]
+    K1 --> K2[Content-Type application/json]
+    
+    K2 --> L[HTTP Response with Status and Body]
+    
+    style A fill:#e3f2fd
+    style L fill:#c8e6c9
+    style X fill:#ffcdd2</div>
+<hr />
+<h2 id="project-structure">Project Structure</h2>
+<pre><code>backend/
+├── src/main/java/com/stocks/stockease/
+│   ├── controller/                   # REST Endpoints (HTTP Layer)
+│   │   ├── AuthController.java
+│   │   ├── ProductController.java
+│   │   └── HealthController.java
+│   │
+│   ├── service/                      # Business Logic Layer
+│   │   ├── AuthService.java
+│   │   ├── ProductService.java
+│   │   └── HealthService.java
+│   │
+│   ├── repository/                   # Data Access Layer (Spring Data JPA)
+│   │   ├── UserRepository.java
+│   │   └── ProductRepository.java
+│   │
+│   ├── model/                        # Entity Classes (JPA Entities)
+│   │   ├── AppUser.java
+│   │   ├── Product.java
+│   │   └── BaseEntity.java
+│   │
+│   ├── dto/                          # Data Transfer Objects
+│   │   ├── AuthDTO.java
+│   │   ├── ProductDTO.java
+│   │   └── ErrorResponseDTO.java
+│   │
+│   ├── security/                     # Security Configuration &amp; JWT
+│   │   ├── JwtTokenProvider.java
+│   │   ├── SecurityConfig.java
+│   │   ├── JwtAuthenticationFilter.java
+│   │   └── CustomAuthenticationEntryPoint.java
+│   │
+│   ├── exception/                    # Custom Exceptions
+│   │   ├── ResourceNotFoundException.java
+│   │   ├── UnauthorizedException.java
+│   │   ├── ValidationException.java
+│   │   └── GlobalExceptionHandler.java
+│   │
+│   ├── config/                       # Configuration Classes
+│   │   ├── CorsConfig.java
+│   │   ├── JpaConfig.java
+│   │   └── OpenApiConfig.java
+│   │
+│   └── StockEaseApplication.java     # Spring Boot Entry Point
+│
+├── src/main/resources/
+│   ├── application.properties        # Default configuration
+│   ├── application-dev.properties    # Development profile
+│   ├── application-prod.properties   # Production profile
+│   └── db/migration/                 # Flyway migrations
+│       ├── V1__baseline.sql
+│       └── V2__create_schema.sql
+│
+├── src/test/java/com/stocks/stockease/
+│   ├── controller/
+│   │   ├── AuthControllerTest.java
+│   │   ├── ProductControllerTest.java
+│   │   ├── ProductCreateControllerTest.java
+│   │   ├── ProductUpdateControllerTest.java
+│   │   ├── ProductDeleteControllerTest.java
+│   │   ├── ProductFetchControllerTest.java
+│   │   ├── ProductPaginationControllerTest.java
+│   │   └── ProductInvalidUpdateControllerTest.java
+│   │
+│   └── (Corresponding service/repository tests)
+│
+├── src/test/resources/
+│   ├── application-test.properties   # Test configuration
+│   └── test-data.sql                 # Test fixtures
+│
+├── pom.xml                           # Maven configuration
+├── Dockerfile                        # Container image
+├── mvnw / mvnw.cmd                   # Maven wrapper
+└── README.md</code></pre>
+<hr />
+<h2 id="controller-layer">Controller Layer</h2>
+<h3 id="authcontroller">AuthController</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@RestController</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">@RequestMapping</span><span class="op">(</span><span class="st">&quot;/api/auth&quot;</span><span class="op">)</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">@CrossOrigin</span><span class="op">(</span>origins <span class="op">=</span> <span class="st">&quot;...&quot;</span><span class="op">,</span> maxAge <span class="op">=</span> <span class="dv">3600</span><span class="op">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> AuthController <span class="op">{</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PostMapping</span><span class="op">(</span><span class="st">&quot;/register&quot;</span><span class="op">)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">register</span><span class="op">(</span><span class="at">@Valid</span> <span class="at">@RequestBody</span> RegisterRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Create new user</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Encrypt password with BCrypt</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Save to database</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Return user DTO</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PostMapping</span><span class="op">(</span><span class="st">&quot;/login&quot;</span><span class="op">)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">login</span><span class="op">(</span><span class="at">@Valid</span> <span class="at">@RequestBody</span> LoginRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Authenticate user</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Generate JWT token</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Return token + user info</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">@GetMapping</span><span class="op">(</span><span class="st">&quot;/validate&quot;</span><span class="op">)</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;isAuthenticated()&quot;</span><span class="op">)</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">validateToken</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Return current user info if token valid</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Endpoints</strong>: - <code>POST /api/auth/register</code> -
+Register new user - <code>POST /api/auth/login</code> - Authenticate and
+get JWT - <code>GET /api/auth/validate</code> - Validate current
+token</p>
+<h3 id="productcontroller">ProductController</h3>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@RestController</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">@RequestMapping</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">@CrossOrigin</span><span class="op">(</span>origins <span class="op">=</span> <span class="st">&quot;...&quot;</span><span class="op">,</span> maxAge <span class="op">=</span> <span class="dv">3600</span><span class="op">)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductController <span class="op">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@GetMapping</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasAnyRole(&#39;ADMIN&#39;, &#39;USER&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span><span class="bu">List</span><span class="op">&lt;</span>ProductDTO<span class="op">&gt;&gt;</span> <span class="fu">getAllProducts</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Return all products</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@GetMapping</span><span class="op">(</span><span class="st">&quot;/paged&quot;</span><span class="op">)</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>Page<span class="op">&lt;</span>ProductDTO<span class="op">&gt;&gt;</span> <span class="fu">getProductsPaged</span><span class="op">(</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">@RequestParam</span><span class="op">(</span>defaultValue <span class="op">=</span> <span class="st">&quot;0&quot;</span><span class="op">)</span> <span class="dt">int</span> page<span class="op">,</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">@RequestParam</span><span class="op">(</span>defaultValue <span class="op">=</span> <span class="st">&quot;10&quot;</span><span class="op">)</span> <span class="dt">int</span> size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Return paginated products</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">@GetMapping</span><span class="op">(</span><span class="st">&quot;/{id}&quot;</span><span class="op">)</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">getProductById</span><span class="op">(</span><span class="at">@PathVariable</span> <span class="bu">Long</span> id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Return single product or 404</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PostMapping</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">createProduct</span><span class="op">(</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Valid</span> <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Create product (Admin only)</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PutMapping</span><span class="op">(</span><span class="st">&quot;/{id}&quot;</span><span class="op">)</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">updateProduct</span><span class="op">(</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">@PathVariable</span> <span class="bu">Long</span> id<span class="op">,</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Valid</span> <span class="at">@RequestBody</span> UpdateProductRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Update product (Admin only)</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DeleteMapping</span><span class="op">(</span><span class="st">&quot;/{id}&quot;</span><span class="op">)</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="at">@PathVariable</span> <span class="bu">Long</span> id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Delete product (Admin only)</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Endpoints</strong>: - <code>GET /api/products</code> - List
+all products - <code>GET /api/products/paged</code> - Paginated list -
+<code>GET /api/products/{id}</code> - Get single product -
+<code>POST /api/products</code> - Create (Admin) -
+<code>PUT /api/products/{id}</code> - Update (Admin) -
+<code>DELETE /api/products/{id}</code> - Delete (Admin)</p>
+<h3 id="healthcontroller">HealthController</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@RestController</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">@RequestMapping</span><span class="op">(</span><span class="st">&quot;/api/health&quot;</span><span class="op">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> HealthController <span class="op">{</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@GetMapping</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>HealthStatus<span class="op">&gt;</span> <span class="fu">health</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Check database connectivity</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Return UP/DOWN status</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="service-layer">Service Layer</h2>
+<h3 id="authservice">AuthService</h3>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Service</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> AuthService <span class="op">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> UserDTO <span class="fu">register</span><span class="op">(</span>RegisterRequest request<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Validate username not taken</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>userRepository<span class="op">.</span><span class="fu">existsByUsername</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getUsername</span><span class="op">()))</span> <span class="op">{</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">ValidationException</span><span class="op">(</span><span class="st">&quot;Username already exists&quot;</span><span class="op">);</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Create and save user</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        AppUser user <span class="op">=</span> <span class="kw">new</span> <span class="fu">AppUser</span><span class="op">();</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        user<span class="op">.</span><span class="fu">setUsername</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getUsername</span><span class="op">());</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        user<span class="op">.</span><span class="fu">setPassword</span><span class="op">(</span>passwordEncoder<span class="op">.</span><span class="fu">encode</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getPassword</span><span class="op">()));</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        user<span class="op">.</span><span class="fu">setRole</span><span class="op">(</span><span class="st">&quot;ROLE_USER&quot;</span><span class="op">);</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        userRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span>user<span class="op">);</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">mapToDTO</span><span class="op">(</span>user<span class="op">);</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> AuthResponse <span class="fu">login</span><span class="op">(</span>LoginRequest request<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Authenticate user</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        Authentication auth <span class="op">=</span> authenticationManager<span class="op">.</span><span class="fu">authenticate</span><span class="op">(</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>            <span class="kw">new</span> <span class="fu">UsernamePasswordAuthenticationToken</span><span class="op">(</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>                request<span class="op">.</span><span class="fu">getUsername</span><span class="op">(),</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                request<span class="op">.</span><span class="fu">getPassword</span><span class="op">()</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>            <span class="op">)</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        <span class="op">);</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Generate JWT token</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        <span class="bu">String</span> token <span class="op">=</span> jwtTokenProvider<span class="op">.</span><span class="fu">generateToken</span><span class="op">(</span>auth<span class="op">);</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">AuthResponse</span><span class="op">(</span>token<span class="op">,</span> <span class="fu">getCurrentUser</span><span class="op">());</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">boolean</span> <span class="fu">validateToken</span><span class="op">(</span><span class="bu">String</span> token<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> jwtTokenProvider<span class="op">.</span><span class="fu">validateToken</span><span class="op">(</span>token<span class="op">);</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="productservice">ProductService</h3>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Service</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductService <span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Transactional</span><span class="op">(</span>readOnly <span class="op">=</span> <span class="kw">true</span><span class="op">)</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> Page<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">getProductsPaged</span><span class="op">(</span><span class="dt">int</span> page<span class="op">,</span> <span class="dt">int</span> size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        PageRequest pageReq <span class="op">=</span> PageRequest<span class="op">.</span><span class="fu">of</span><span class="op">(</span>page<span class="op">,</span> size<span class="op">,</span> Sort<span class="op">.</span><span class="fu">by</span><span class="op">(</span><span class="st">&quot;name&quot;</span><span class="op">));</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> productRepository<span class="op">.</span><span class="fu">findAll</span><span class="op">(</span>pageReq<span class="op">)</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">map</span><span class="op">(</span><span class="kw">this</span><span class="op">::</span>mapToDTO<span class="op">);</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Transactional</span><span class="op">(</span>readOnly <span class="op">=</span> <span class="kw">true</span><span class="op">)</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ProductDTO <span class="fu">getProductById</span><span class="op">(</span><span class="bu">Long</span> id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> productRepository<span class="op">.</span><span class="fu">findById</span><span class="op">(</span>id<span class="op">)</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">map</span><span class="op">(</span><span class="kw">this</span><span class="op">::</span>mapToDTO<span class="op">)</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">orElseThrow</span><span class="op">(()</span> <span class="op">-&gt;</span> <span class="kw">new</span> <span class="fu">ResourceNotFoundException</span><span class="op">(</span><span class="st">&quot;Product not found&quot;</span><span class="op">));</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Transactional</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ProductDTO <span class="fu">createProduct</span><span class="op">(</span>CreateProductRequest request<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Validate input</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="fu">validateProductInput</span><span class="op">(</span>request<span class="op">);</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Create entity</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>        Product product <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">();</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        product<span class="op">.</span><span class="fu">setName</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getName</span><span class="op">());</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        product<span class="op">.</span><span class="fu">setQuantity</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getQuantity</span><span class="op">());</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        product<span class="op">.</span><span class="fu">setPrice</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getPrice</span><span class="op">());</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        product<span class="op">.</span><span class="fu">setTotalValue</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getPrice</span><span class="op">()</span> <span class="op">*</span> request<span class="op">.</span><span class="fu">getQuantity</span><span class="op">());</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Save and return</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        Product saved <span class="op">=</span> productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span>product<span class="op">);</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">mapToDTO</span><span class="op">(</span>saved<span class="op">);</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Transactional</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ProductDTO <span class="fu">updateProduct</span><span class="op">(</span><span class="bu">Long</span> id<span class="op">,</span> UpdateProductRequest request<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>        Product product <span class="op">=</span> productRepository<span class="op">.</span><span class="fu">findById</span><span class="op">(</span>id<span class="op">)</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">orElseThrow</span><span class="op">(()</span> <span class="op">-&gt;</span> <span class="kw">new</span> <span class="fu">ResourceNotFoundException</span><span class="op">(</span><span class="st">&quot;Product not found&quot;</span><span class="op">));</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Update fields</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>request<span class="op">.</span><span class="fu">getName</span><span class="op">()</span> <span class="op">!=</span> <span class="kw">null</span><span class="op">)</span> product<span class="op">.</span><span class="fu">setName</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getName</span><span class="op">());</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>request<span class="op">.</span><span class="fu">getQuantity</span><span class="op">()</span> <span class="op">!=</span> <span class="kw">null</span><span class="op">)</span> product<span class="op">.</span><span class="fu">setQuantity</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getQuantity</span><span class="op">());</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>request<span class="op">.</span><span class="fu">getPrice</span><span class="op">()</span> <span class="op">!=</span> <span class="kw">null</span><span class="op">)</span> product<span class="op">.</span><span class="fu">setPrice</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getPrice</span><span class="op">());</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Recalculate total</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>        product<span class="op">.</span><span class="fu">setTotalValue</span><span class="op">(</span>product<span class="op">.</span><span class="fu">getPrice</span><span class="op">()</span> <span class="op">*</span> product<span class="op">.</span><span class="fu">getQuantity</span><span class="op">());</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>        Product updated <span class="op">=</span> productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span>product<span class="op">);</span></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">mapToDTO</span><span class="op">(</span>updated<span class="op">);</span></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Transactional</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="bu">Long</span> id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>productRepository<span class="op">.</span><span class="fu">existsById</span><span class="op">(</span>id<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="fu">ResourceNotFoundException</span><span class="op">(</span><span class="st">&quot;Product not found&quot;</span><span class="op">);</span></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>        productRepository<span class="op">.</span><span class="fu">deleteById</span><span class="op">(</span>id<span class="op">);</span></span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="repository-layer">Repository Layer</h2>
+<h3 id="spring-data-jpa-repositories">Spring Data JPA Repositories</h3>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> UserRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>AppUser<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>AppUser<span class="op">&gt;</span> <span class="fu">findByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">boolean</span> <span class="fu">existsByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> ProductRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>Product<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByNameContainingIgnoreCase</span><span class="op">(</span><span class="bu">String</span> name<span class="op">);</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    Page<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAll</span><span class="op">(</span><span class="bu">Pageable</span> pageable<span class="op">);</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="dt">int</span> threshold<span class="op">);</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Built-in methods</strong> from JpaRepository: -
+<code>save()</code> - Create/Update - <code>findById()</code> - Get by
+PK - <code>findAll()</code> - Get all - <code>delete()</code> - Delete
+by entity - <code>deleteById()</code> - Delete by PK</p>
+<p><strong>Custom queries</strong> (derived from method names): -
+<code>findByUsername()</code> - WHERE username = ? -
+<code>findByQuantityLessThan()</code> - WHERE quantity &lt; ? -
+<code>findByNameContainingIgnoreCase()</code> - WHERE name ILIKE ?</p>
+<hr />
+<h2 id="entity-layer">Entity Layer</h2>
+<h3 id="jpa-entities">JPA Entities</h3>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Entity</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Table</span><span class="op">(</span>name <span class="op">=</span> <span class="st">&quot;app_user&quot;</span><span class="op">)</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> AppUser <span class="op">{</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Id</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@GeneratedValue</span><span class="op">(</span>strategy <span class="op">=</span> GenerationType<span class="op">.</span><span class="fu">IDENTITY</span><span class="op">)</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Long</span> id<span class="op">;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>unique <span class="op">=</span> <span class="kw">true</span><span class="op">,</span> nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> username<span class="op">;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> password<span class="op">;</span>  <span class="co">// BCrypt hashed</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> role<span class="op">;</span>  <span class="co">// ROLE_ADMIN, ROLE_USER</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">@CreationTimestamp</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> LocalDateTime createdAt<span class="op">;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">@UpdateTimestamp</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> LocalDateTime updatedAt<span class="op">;</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="at">@Entity</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="at">@Table</span><span class="op">(</span>name <span class="op">=</span> <span class="st">&quot;product&quot;</span><span class="op">)</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Product <span class="op">{</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Id</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">@GeneratedValue</span><span class="op">(</span>strategy <span class="op">=</span> GenerationType<span class="op">.</span><span class="fu">IDENTITY</span><span class="op">)</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Long</span> id<span class="op">;</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> name<span class="op">;</span></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Integer</span> quantity<span class="op">;</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">BigDecimal</span> price<span class="op">;</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Column</span><span class="op">(</span>nullable <span class="op">=</span> <span class="kw">false</span><span class="op">)</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">BigDecimal</span> totalValue<span class="op">;</span>  <span class="co">// quantity * price</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">@CreationTimestamp</span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> LocalDateTime createdAt<span class="op">;</span></span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">@UpdateTimestamp</span></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> LocalDateTime updatedAt<span class="op">;</span></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PrePersist</span></span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreUpdate</span></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">void</span> <span class="fu">calculateTotalValue</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>        <span class="kw">this</span><span class="op">.</span><span class="fu">totalValue</span> <span class="op">=</span> price<span class="op">.</span><span class="fu">multiply</span><span class="op">(</span><span class="kw">new</span> <span class="bu">BigDecimal</span><span class="op">(</span>quantity<span class="op">));</span></span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="security-layer">Security Layer</h2>
+<h3 id="jwt-token-provider">JWT Token Provider</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Component</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> JwtTokenProvider <span class="op">{</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Value</span><span class="op">(</span><span class="st">&quot;${app.jwt.secret}&quot;</span><span class="op">)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> jwtSecret<span class="op">;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Value</span><span class="op">(</span><span class="st">&quot;${app.jwt.expiration:86400000}&quot;</span><span class="op">)</span>  <span class="co">// 24 hours default</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">int</span> jwtExpiration<span class="op">;</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="bu">String</span> <span class="fu">generateToken</span><span class="op">(</span>Authentication authentication<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        AppUser user <span class="op">=</span> <span class="op">(</span>AppUser<span class="op">)</span> authentication<span class="op">.</span><span class="fu">getPrincipal</span><span class="op">();</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="bu">Date</span> now <span class="op">=</span> <span class="kw">new</span> <span class="bu">Date</span><span class="op">();</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="bu">Date</span> expiryDate <span class="op">=</span> <span class="kw">new</span> <span class="bu">Date</span><span class="op">(</span>now<span class="op">.</span><span class="fu">getTime</span><span class="op">()</span> <span class="op">+</span> jwtExpiration<span class="op">);</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Jwts<span class="op">.</span><span class="fu">builder</span><span class="op">()</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">setSubject</span><span class="op">(</span>user<span class="op">.</span><span class="fu">getId</span><span class="op">().</span><span class="fu">toString</span><span class="op">())</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">claim</span><span class="op">(</span><span class="st">&quot;username&quot;</span><span class="op">,</span> user<span class="op">.</span><span class="fu">getUsername</span><span class="op">())</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">claim</span><span class="op">(</span><span class="st">&quot;role&quot;</span><span class="op">,</span> user<span class="op">.</span><span class="fu">getRole</span><span class="op">())</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">setIssuedAt</span><span class="op">(</span>now<span class="op">)</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">setExpiration</span><span class="op">(</span>expiryDate<span class="op">)</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">signWith</span><span class="op">(</span>SignatureAlgorithm<span class="op">.</span><span class="fu">HS512</span><span class="op">,</span> jwtSecret<span class="op">)</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">compact</span><span class="op">();</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="bu">Long</span> <span class="fu">getUserIdFromJWT</span><span class="op">(</span><span class="bu">String</span> token<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>        Claims claims <span class="op">=</span> Jwts<span class="op">.</span><span class="fu">parser</span><span class="op">()</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">setSigningKey</span><span class="op">(</span>jwtSecret<span class="op">)</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">parseClaimsJws</span><span class="op">(</span>token<span class="op">)</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">getBody</span><span class="op">();</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">Long</span><span class="op">.</span><span class="fu">parseLong</span><span class="op">(</span>claims<span class="op">.</span><span class="fu">getSubject</span><span class="op">());</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">boolean</span> <span class="fu">validateToken</span><span class="op">(</span><span class="bu">String</span> token<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span> <span class="op">{</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>            Jwts<span class="op">.</span><span class="fu">parser</span><span class="op">()</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">setSigningKey</span><span class="op">(</span>jwtSecret<span class="op">)</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">parseClaimsJws</span><span class="op">(</span>token<span class="op">);</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">catch</span> <span class="op">(</span>JwtException <span class="op">|</span> <span class="bu">IllegalArgumentException</span> e<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="security-configuration">Security Configuration</h3>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">@EnableWebSecurity</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">@EnableGlobalMethodSecurity</span><span class="op">(</span>prePostEnabled <span class="op">=</span> <span class="kw">true</span><span class="op">)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> SecurityConfig <span class="op">{</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> SecurityFilterChain <span class="fu">filterChain</span><span class="op">(</span>HttpSecurity http<span class="op">)</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        http</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">cors</span><span class="op">()</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">and</span><span class="op">()</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">csrf</span><span class="op">().</span><span class="fu">disable</span><span class="op">()</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">exceptionHandling</span><span class="op">()</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">authenticationEntryPoint</span><span class="op">(</span><span class="kw">new</span> <span class="fu">CustomAuthenticationEntryPoint</span><span class="op">())</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">and</span><span class="op">()</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">authorizeRequests</span><span class="op">()</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">antMatchers</span><span class="op">(</span><span class="st">&quot;/api/auth/**&quot;</span><span class="op">,</span> <span class="st">&quot;/api/health&quot;</span><span class="op">,</span> <span class="st">&quot;/v3/api-docs/**&quot;</span><span class="op">).</span><span class="fu">permitAll</span><span class="op">()</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">antMatchers</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">,</span> <span class="st">&quot;/api/products/**&quot;</span><span class="op">).</span><span class="fu">authenticated</span><span class="op">()</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">anyRequest</span><span class="op">().</span><span class="fu">authenticated</span><span class="op">()</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">and</span><span class="op">()</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">sessionManagement</span><span class="op">()</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">sessionCreationPolicy</span><span class="op">(</span>SessionCreationPolicy<span class="op">.</span><span class="fu">STATELESS</span><span class="op">);</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>        http<span class="op">.</span><span class="fu">addFilterBefore</span><span class="op">(</span><span class="fu">jwtAuthenticationFilter</span><span class="op">(),</span> UsernamePasswordAuthenticationFilter<span class="op">.</span><span class="fu">class</span><span class="op">);</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> http<span class="op">.</span><span class="fu">build</span><span class="op">();</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> JwtAuthenticationFilter <span class="fu">jwtAuthenticationFilter</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">JwtAuthenticationFilter</span><span class="op">();</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> PasswordEncoder <span class="fu">passwordEncoder</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BCryptPasswordEncoder</span><span class="op">();</span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="exception-handling">Exception Handling</h2>
+<h3 id="global-exception-handler">Global Exception Handler</h3>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="at">@RestControllerAdvice</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> GlobalExceptionHandler <span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@ExceptionHandler</span><span class="op">(</span>ResourceNotFoundException<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ErrorResponse<span class="op">&gt;</span> <span class="fu">handleNotFound</span><span class="op">(</span>ResourceNotFoundException e<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ResponseEntity</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">status</span><span class="op">(</span>HttpStatus<span class="op">.</span><span class="fu">NOT_FOUND</span><span class="op">)</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">body</span><span class="op">(</span><span class="kw">new</span> <span class="fu">ErrorResponse</span><span class="op">(</span><span class="st">&quot;NOT_FOUND&quot;</span><span class="op">,</span> e<span class="op">.</span><span class="fu">getMessage</span><span class="op">()));</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@ExceptionHandler</span><span class="op">(</span><span class="bu">ValidationException</span><span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ErrorResponse<span class="op">&gt;</span> <span class="fu">handleValidation</span><span class="op">(</span><span class="bu">ValidationException</span> e<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ResponseEntity</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">status</span><span class="op">(</span>HttpStatus<span class="op">.</span><span class="fu">BAD_REQUEST</span><span class="op">)</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">body</span><span class="op">(</span><span class="kw">new</span> <span class="fu">ErrorResponse</span><span class="op">(</span><span class="st">&quot;VALIDATION_ERROR&quot;</span><span class="op">,</span> e<span class="op">.</span><span class="fu">getMessage</span><span class="op">()));</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">@ExceptionHandler</span><span class="op">(</span>UnauthorizedException<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ErrorResponse<span class="op">&gt;</span> <span class="fu">handleUnauthorized</span><span class="op">(</span>UnauthorizedException e<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ResponseEntity</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">status</span><span class="op">(</span>HttpStatus<span class="op">.</span><span class="fu">UNAUTHORIZED</span><span class="op">)</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">body</span><span class="op">(</span><span class="kw">new</span> <span class="fu">ErrorResponse</span><span class="op">(</span><span class="st">&quot;UNAUTHORIZED&quot;</span><span class="op">,</span> e<span class="op">.</span><span class="fu">getMessage</span><span class="op">()));</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">@ExceptionHandler</span><span class="op">(</span><span class="bu">Exception</span><span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ErrorResponse<span class="op">&gt;</span> <span class="fu">handleGenericException</span><span class="op">(</span><span class="bu">Exception</span> e<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ResponseEntity</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">status</span><span class="op">(</span>HttpStatus<span class="op">.</span><span class="fu">INTERNAL_SERVER_ERROR</span><span class="op">)</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">body</span><span class="op">(</span><span class="kw">new</span> <span class="fu">ErrorResponse</span><span class="op">(</span><span class="st">&quot;SERVER_ERROR&quot;</span><span class="op">,</span> <span class="st">&quot;An unexpected error occurred&quot;</span><span class="op">));</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="database-migrations-flyway">Database Migrations (Flyway)</h2>
+<h3 id="v1__baseline.sql">V1__baseline.sql</h3>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Baseline marker for existing schema</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- If schema already created via Hibernate, keep this empty</span></span></code></pre></div>
+<h3 id="v2__create_schema.sql">V2__create_schema.sql</h3>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> <span class="cf">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> app_user (</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">id</span> BIGSERIAL <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    username <span class="dt">VARCHAR</span>(<span class="dv">255</span>) <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">UNIQUE</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">password</span> <span class="dt">VARCHAR</span>(<span class="dv">255</span>) <span class="kw">NOT</span> <span class="kw">NULL</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">role</span> <span class="dt">VARCHAR</span>(<span class="dv">255</span>) <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="st">&#39;ROLE_USER&#39;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    created_at <span class="dt">TIMESTAMP</span> <span class="kw">DEFAULT</span> <span class="fu">CURRENT_TIMESTAMP</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    updated_at <span class="dt">TIMESTAMP</span> <span class="kw">DEFAULT</span> <span class="fu">CURRENT_TIMESTAMP</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> <span class="cf">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> product (</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">id</span> BIGSERIAL <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    name <span class="dt">VARCHAR</span>(<span class="dv">255</span>) <span class="kw">NOT</span> <span class="kw">NULL</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    quantity <span class="dt">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    price <span class="dt">NUMERIC</span>(<span class="dv">10</span>, <span class="dv">2</span>) <span class="kw">NOT</span> <span class="kw">NULL</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    total_value <span class="dt">NUMERIC</span>(<span class="dv">10</span>, <span class="dv">2</span>) <span class="kw">NOT</span> <span class="kw">NULL</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    created_at <span class="dt">TIMESTAMP</span> <span class="kw">DEFAULT</span> <span class="fu">CURRENT_TIMESTAMP</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    updated_at <span class="dt">TIMESTAMP</span> <span class="kw">DEFAULT</span> <span class="fu">CURRENT_TIMESTAMP</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> idx_username <span class="kw">ON</span> app_user(username);</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">INDEX</span> idx_product_name <span class="kw">ON</span> product(name);</span></code></pre></div>
+<hr />
+<h2 id="configuration">Configuration</h2>
+<h3 id="application.properties">application.properties</h3>
+<pre class="properties"><code># Server
+server.port=8081
+server.servlet.context-path=/
+
+# Database
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# Hibernate
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+
+# Connection Pool (HikariCP)
+spring.datasource.hikari.maximumPoolSize=10
+spring.datasource.hikari.minimumIdle=2
+spring.datasource.hikari.connectionTimeout=60000
+
+# CORS
+spring.web.cors.allowed-origins=https://stockease-frontend.onrender.com,http://localhost:5173
+spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
+spring.web.cors.allowed-headers=*
+spring.web.cors.allow-credentials=true
+
+# JWT
+app.jwt.secret=${JWT_SECRET}
+app.jwt.expiration=86400000
+
+# Logging
+logging.level.com.stocks.stockease=INFO
+logging.level.org.springframework=WARN</code></pre>
+<hr />
+<h2 id="testing">Testing</h2>
+<h3 id="test-structure-65-tests">Test Structure (65+ Tests)</h3>
+<pre><code>src/test/java/com/stocks/stockease/controller/
+├── AuthControllerTest
+├── ProductControllerTest
+├── ProductCreateControllerTest
+├── ProductUpdateControllerTest
+├── ProductDeleteControllerTest
+├── ProductFetchControllerTest
+├── ProductPaginationControllerTest
+└── ProductInvalidUpdateControllerTest</code></pre>
+<h3 id="example-test">Example Test</h3>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="at">@SpringBootTest</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutoConfigureMockMvc</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductControllerTest <span class="op">{</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockBean</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductService productService<span class="op">;</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">testGetAllProducts</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>        <span class="bu">List</span><span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> products <span class="op">=</span> <span class="bu">List</span><span class="op">.</span><span class="fu">of</span><span class="op">(</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>            <span class="kw">new</span> <span class="fu">ProductDTO</span><span class="op">(</span><span class="dv">1L</span><span class="op">,</span> <span class="st">&quot;Laptop&quot;</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="fl">1200.0</span><span class="op">,</span> <span class="fl">6000.0</span><span class="op">)</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">);</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">when</span><span class="op">(</span>productService<span class="op">.</span><span class="fu">getAll</span><span class="op">()).</span><span class="fu">thenReturn</span><span class="op">(</span>products<span class="op">);</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>        mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">header</span><span class="op">(</span><span class="st">&quot;Authorization&quot;</span><span class="op">,</span> <span class="st">&quot;Bearer token&quot;</span><span class="op">)</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">contentType</span><span class="op">(</span>MediaType<span class="op">.</span><span class="fu">APPLICATION_JSON</span><span class="op">))</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">())</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">jsonPath</span><span class="op">(</span><span class="st">&quot;$[0].name&quot;</span><span class="op">).</span><span class="fu">value</span><span class="op">(</span><span class="st">&quot;Laptop&quot;</span><span class="op">));</span></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="performance-optimization">Performance Optimization</h2>
+<h3 id="database-connection-pooling-hikaricp">Database Connection
+Pooling (HikariCP)</h3>
+<pre class="properties"><code>spring.datasource.hikari.maximumPoolSize=10
+spring.datasource.hikari.minimumIdle=2
+spring.datasource.hikari.connectionTimeout=60000
+spring.datasource.hikari.idleTimeout=600000
+spring.datasource.hikari.maxLifetime=1800000</code></pre>
+<h3 id="query-optimization">Query Optimization</h3>
+<ul>
+<li>Use pagination for large result sets</li>
+<li>Add indexes on frequently queried columns</li>
+<li>Use <code>@Transactional(readOnly = true)</code> for queries</li>
+<li>Avoid N+1 queries with proper joins</li>
+</ul>
+<h3 id="caching-strategies-future">Caching Strategies (Future)</h3>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Cacheable</span><span class="op">(</span><span class="st">&quot;products&quot;</span><span class="op">)</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="bu">List</span><span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">getAll</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="at">@CacheEvict</span><span class="op">(</span>value <span class="op">=</span> <span class="st">&quot;products&quot;</span><span class="op">,</span> allEntries <span class="op">=</span> <span class="kw">true</span><span class="op">)</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ProductDTO <span class="fu">createProduct</span><span class="op">(</span><span class="kw">...</span><span class="op">)</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="monitoring-observability">Monitoring &amp; Observability</h2>
+<h3 id="metrics-to-track">Metrics to Track</h3>
+<ul>
+<li>Request/response times</li>
+<li>Error rates and types</li>
+<li>Database connection pool status</li>
+<li>Memory and CPU usage</li>
+<li>JWT token validation failures</li>
+</ul>
+<h3 id="logging-strategy">Logging Strategy</h3>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>logger<span class="op">.</span><span class="fu">debug</span><span class="op">(</span><span class="st">&quot;Query executed for product id: {}&quot;</span><span class="op">,</span> id<span class="op">);</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>logger<span class="op">.</span><span class="fu">warn</span><span class="op">(</span><span class="st">&quot;Attempt to update non-existent product: {}&quot;</span><span class="op">,</span> id<span class="op">);</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>logger<span class="op">.</span><span class="fu">error</span><span class="op">(</span><span class="st">&quot;Database connection failed&quot;</span><span class="op">,</span> exception<span class="op">);</span></span></code></pre></div>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<h3 id="main-architecture-topics">Main Architecture Topics</h3>
+<ul>
+<li><strong><a href="./overview.html">Architecture Overview</a></strong>
+- Executive summary and design decisions</li>
+<li><strong><a href="./layers.html">Service Layers</a></strong> -
+High-level layer architecture and patterns</li>
+<li><strong><a href="./security.html">Security Architecture</a></strong>
+- Spring Security and JWT implementation details</li>
+<li><strong><a href="./deployment.html">Deployment
+Architecture</a></strong> - How backend is containerized and
+deployed</li>
+</ul>
+<h3 id="architecture-decisions-adrs">Architecture Decisions (ADRs)</h3>
+<ul>
+<li><strong><a href="./decisions/001-database-choice.html">Database
+Choice</a></strong> - Why PostgreSQL and Flyway were selected</li>
+<li><strong><a
+href="./decisions/002-validation-strategy.html">Validation
+Strategy</a></strong> - Validation approach in Service layer</li>
+</ul>
+<h3 id="design-patterns-practices">Design Patterns &amp; Practices</h3>
+<ul>
+<li><strong><a href="./patterns/repository-pattern.html">Repository
+Pattern</a></strong> - Spring Data JPA repository implementation</li>
+<li><strong><a href="./patterns/security-patterns.html">Security
+Patterns</a></strong> - JWT tokens, BCrypt, Spring Security filters</li>
+</ul>
+<h3 id="infrastructure-deployment">Infrastructure &amp; Deployment</h3>
+<ul>
+<li><strong><a href="./deployment/ci-pipeline.html">CI/CD
+Pipeline</a></strong> - GitHub Actions workflow for backend</li>
+<li><strong><a href="./deployment/staging-config.html">Staging
+Configuration</a></strong> - Testing configurations</li>
+</ul>
+<h3 id="related-frontend-docs">Related Frontend Docs</h3>
+<ul>
+<li><strong><a href="./frontend.html">Frontend Architecture</a></strong>
+- How frontend integrates with these APIs</li>
+</ul>
+<hr />
+<p><strong>Backend Documentation Version</strong>: 1.0<br />
+<strong>Last Updated</strong>: October 31, 2025<br />
+<strong>Status</strong>: Production
+Ready</p> are substituted by Pandoc during generation
+  - Standalone mode: --standalone flag ensures complete HTML output
+  - Template variables documented: https://pandoc.org/MANUAL.html#templates
+
+Key Features:
+  ✓ Responsive two-column layout (sidebar + content)
+  ✓ Professional styling via external enterprise-docs.css
+  ✓ Automatic sidebar navigation with active state highlighting
+  ✓ Mermaid.js v10 integration for architecture diagrams
+  ✓ Table of contents highlighting during scroll
+  ✓ Print-friendly styles
+  ✓ GitHub Pages compatible (absolute paths with /stockease/ root)
+
+Browser Support: All modern browsers (Chrome, Firefox, Safari, Edge)
+Accessibility: WCAG 2.1 AA compliant
+
+Dependencies:
+  - External CSS: /stockease/templates/enterprise-docs.css
+  - Mermaid.js v10: https://cdn.jsdelivr.net/npm/mermaid@10/
+  - Pandoc Lua Filter: /tmp/md-to-html-links.lua (converts mermaid blocks to divs)
+
+Generated Files Location:
+  - GitHub Pages: https://keglev.github.io/stockease/architecture/
+  - Build Output: target/docs/architecture/ (before deployment)
+
+Workflow Integration:
+  1. docs-pipeline.yml: Runs Pandoc with this template + Lua filter
+  2. Lua Filter: Converts mermaid code blocks to <div class="mermaid">
+  3. Pandoc: Processes markdown with this template
+  4. Output: Styled HTML in target/docs/architecture/
+  5. Deployment: Published to GitHub Pages via gh-pages action
+
+Last Updated: 2025-11-04
+Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
+================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -839,6 +1652,19 @@ spring.datasource.hikari.maxLifetime=1800000</code></pre>
     </footer>
 
     <script>
+        // ====================================================================
+        // SIDEBAR NAVIGATION MODULE
+        // ====================================================================
+        // Dynamically builds navigation sidebar based on static navigation
+        // object. Highlights current page based on window.location.pathname.
+        // 
+        // Features:
+        //   - Dynamic menu generation (no need to update HTML)
+        //   - Active state highlighting (bold + background color)
+        //   - Relative path calculation for nested pages (../../../templates)
+        //   - Architecture root detection for consistent navigation
+        // ====================================================================
+        
         // Calculate relative path to architecture root based on current location
         function getArchRoot() {
             const path = window.location.pathname;
@@ -986,10 +1812,32 @@ spring.datasource.hikari.maxLifetime=1800000</code></pre>
 
     <!-- Mermaid.js for diagram rendering -->
     <script type="module">
+        // ====================================================================
+        // MERMAID DIAGRAM RENDERING MODULE
+        // ====================================================================
+        // Renders architecture diagrams using Mermaid.js v10.
+        // 
+        // Diagram Source: Markdown files contain ```mermaid code fences
+        // Processing Pipeline:
+        //   1. Markdown (``` mermaid ... ```)
+        //   2. Pandoc Lua filter converts to <div class="mermaid">content</div>
+        //   3. This script imports mermaid.js and calls mermaid.run()
+        //   4. Mermaid.js renders SVG diagrams in-place
+        // 
+        // Supported Diagram Types:
+        //   - Flowcharts (graph/digraph)
+        //   - Sequence diagrams
+        //   - Class diagrams
+        //   - State diagrams
+        //   - Deployment diagrams
+        // 
+        // Security: securityLevel: 'loose' allows HTML in diagram labels
+        // Styling: Applied via enterprise-docs.css (.mermaid styles)
+        // 
+        // Browser Support: All modern browsers with ES Module support
+        // CDN: https://cdn.jsdelivr.net/npm/mermaid@10/
+        // ====================================================================
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        // Debug logging
-        console.log('🔧 Mermaid module loaded');
         
         mermaid.initialize({ 
             startOnLoad: false,
@@ -998,22 +1846,20 @@ spring.datasource.hikari.maxLifetime=1800000</code></pre>
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
         
-        console.log('🔧 Mermaid initialized');
-        
         // Look for mermaid divs that were generated by Pandoc Lua filter
         const mermaidDivs = document.querySelectorAll('div.mermaid');
-        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
         
-        mermaidDivs.forEach((div, index) => {
-            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
         });
         
-        // Also look for any code.language-mermaid blocks (fallback)
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
-        codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+        codeMermaidBlocks.forEach((code) => {
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
@@ -1022,27 +1868,19 @@ spring.datasource.hikari.maxLifetime=1800000</code></pre>
             }
         });
         
-        console.log('🔧 Class conversion complete');
-        
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
         if (document.readyState === 'loading') {
-            console.log('🔧 DOM still loading, waiting for DOMContentLoaded event');
             document.addEventListener('DOMContentLoaded', async () => {
-                console.log('🔧 DOMContentLoaded fired, running mermaid.run()');
                 try {
                     await mermaid.run();
-                    console.log('✓ Mermaid rendering complete');
                 } catch (err) {
-                    console.error('❌ Mermaid rendering error:', err);
+                    console.error('Mermaid rendering error:', err);
                 }
             });
         } else {
-            console.log('🔧 DOM already loaded, running mermaid.run() immediately');
             // Already loaded
-            mermaid.run().then(() => {
-                console.log('✓ Mermaid rendering complete');
-            }).catch(err => {
-                console.error('❌ Mermaid rendering error:', err);
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
             });
         }
     </script>

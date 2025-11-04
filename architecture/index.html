@@ -1,4 +1,459 @@
 <!DOCTYPE html>
+<!--
+================================================================================
+                    STOCKEASE ENTERPRISE DOCUMENTATION TEMPLATE
+================================================================================
+
+File: enterprise-docs.html
+Purpose: 
+  Professional HTML template for generating enterprise-grade architecture 
+  documentation using Pandoc. Used by the docs-pipeline.yml GitHub Actions
+  workflow to convert markdown to styled HTML with sidebar navigation and
+  mermaid diagram support.
+
+Template Engine: Pandoc (pandoc.org)
+  - Variables: , <h1 id="stockease-architecture-documentation">StockEase
+Architecture Documentation</h1>
+<p>Welcome to the StockEase Architecture Documentation Hub. This
+directory contains comprehensive documentation about the system
+architecture, design decisions, and implementation details.</p>
+<h2 id="quick-navigation">Quick Navigation</h2>
+<h3 id="overview-design">📋 Overview &amp; Design</h3>
+<ul>
+<li><strong><a href="./overview.html">overview.md</a></strong> -
+<strong>START HERE</strong> ⭐
+<ul>
+<li>Executive summary of the backend architecture</li>
+<li>Business context and problem statement</li>
+<li>C4 architecture model (Context, Container, Component levels)</li>
+<li>Technology stack with versions</li>
+<li>Key design decisions and rationale</li>
+<li>Data models and entity relationships</li>
+<li>API endpoints overview</li>
+<li>Quality attributes and metrics</li>
+<li><strong>Primary source of truth for architecture
+decisions</strong></li>
+</ul></li>
+</ul>
+<h3 id="architecture-layers">🏗️ Architecture Layers</h3>
+<ul>
+<li><strong><a href="./layers.html">layers.md</a></strong>
+<ul>
+<li>Service layer architecture (Controllers, Services,
+Repositories)</li>
+<li>Data flow and request lifecycle</li>
+<li>Component interaction patterns</li>
+<li>Dependency injection configuration</li>
+<li>Testing strategies per layer</li>
+</ul></li>
+</ul>
+<h3 id="security-architecture">🔐 Security Architecture</h3>
+<ul>
+<li><strong><a href="./security.html">security.md</a></strong>
+<ul>
+<li>Authentication flow (JWT tokens)</li>
+<li>Authorization and role-based access control (RBAC)</li>
+<li>Spring Security configuration</li>
+<li>Password hashing and encryption</li>
+<li>CORS configuration and origin restrictions</li>
+<li>Best practices and threat mitigation</li>
+</ul></li>
+</ul>
+<h3 id="deployment-architecture">🚀 Deployment Architecture</h3>
+<ul>
+<li><strong><a href="./deployment.html">deployment.md</a></strong>
+<ul>
+<li>Infrastructure setup (Koyeb, Neon PostgreSQL)</li>
+<li>CI/CD pipeline and GitHub Actions</li>
+<li>Database migrations (Flyway)</li>
+<li>Environment configuration</li>
+<li>Monitoring and observability strategies</li>
+<li>Disaster recovery and high availability</li>
+</ul></li>
+</ul>
+<h3 id="frontend-architecture">💻 Frontend Architecture</h3>
+<ul>
+<li><strong><a href="./frontend.html">frontend.md</a></strong>
+<ul>
+<li>React 18 with TypeScript</li>
+<li>Component hierarchy and structure</li>
+<li>State management (React Query, Context API, Local Storage)</li>
+<li>API integration and Axios configuration</li>
+<li>i18n multi-language support</li>
+<li>Dark mode and theme management</li>
+<li>Responsive design with Tailwind CSS</li>
+<li>Deployment to Render</li>
+</ul></li>
+</ul>
+<h3 id="complete-system-overview">📊 Complete System Overview</h3>
+<ul>
+<li><strong><a href="./ARCHITECTURE.html">ARCHITECTURE.md</a></strong>
+(Deprecated - refer to topic-specific docs above)
+<ul>
+<li>Comprehensive but superseded by topic-specific documentation</li>
+<li>Kept for reference only</li>
+</ul></li>
+</ul>
+<hr />
+<h2 id="document-organization">Document Organization</h2>
+<p>This documentation is organized by <strong>concerns</strong> rather
+than by technology layer:</p>
+<pre><code>backend/docs/architecture/
+├── index.md                 (Navigation hub - you are here)
+├── overview.md              (Executive summary &amp; design decisions) ⭐ PRIMARY
+├── layers.md                (Backend service layers)
+├── security.md              (Authentication &amp; authorization)
+├── deployment.md            (Infrastructure &amp; CI/CD)
+└── frontend.md              (React/TypeScript frontend)</code></pre>
+<h2 id="reading-path-for-different-roles">Reading Path for Different
+Roles</h2>
+<h3 id="project-managers-stakeholders">👔 Project Managers /
+Stakeholders</h3>
+<ol type="1">
+<li>Start with <a href="./overview.html">overview.md</a> - Business
+context section</li>
+<li>Review Quality Attributes table</li>
+<li>Check Future Enhancements for roadmap</li>
+</ol>
+<h3 id="backend-developers-new-to-project">👨‍💻 Backend Developers (New to
+Project)</h3>
+<ol type="1">
+<li>Read <a href="./overview.html">overview.md</a> - Full document for
+understanding</li>
+<li>Study <a href="./layers.html">layers.md</a> - Understand service
+architecture</li>
+<li>Review <a href="./security.html">security.md</a> - Authentication
+flows</li>
+<li>Check <a href="./deployment.html">deployment.md</a> - How to deploy
+locally</li>
+</ol>
+<h3 id="frontend-developers">🎨 Frontend Developers</h3>
+<ol type="1">
+<li>Read <a href="./overview.html">overview.md</a> - Business
+context</li>
+<li>Study <a href="./frontend.html">frontend.md</a> - Component
+architecture</li>
+<li>Review <a href="./security.html">security.md</a> - JWT token
+handling</li>
+<li>Check <a href="./deployment.html">deployment.md</a> - Environment
+setup</li>
+</ol>
+<h3 id="devops-infrastructure-engineers">🔧 DevOps / Infrastructure
+Engineers</h3>
+<ol type="1">
+<li>Review <a href="./overview.html">overview.md</a> - Technology Stack
+section</li>
+<li>Study <a href="./deployment.html">deployment.md</a> - Complete
+infrastructure guide</li>
+<li>Check <a href="./layers.html">layers.md</a> - Application
+topology</li>
+<li>Review <a href="./security.html">security.md</a> - Security
+requirements</li>
+</ol>
+<h3 id="qa-testing-engineers">🧪 QA / Testing Engineers</h3>
+<ol type="1">
+<li>Read <a href="./overview.html">overview.md</a> - Quality
+Attributes</li>
+<li>Study <a href="./layers.html">layers.md</a> - Testing strategies per
+layer</li>
+<li>Review <a href="./security.html">security.md</a> - Security test
+scenarios</li>
+<li>Check test coverage in CI/CD logs</li>
+</ol>
+<hr />
+<h2 id="key-architecture-principles">Key Architecture Principles</h2>
+<h3 id="layered-architecture">1. <strong>Layered
+Architecture</strong></h3>
+<p>Clean separation between Controllers, Services, and Repositories for
+maintainability and testability.</p>
+<h3 id="stateless-design">2. <strong>Stateless Design</strong></h3>
+<p>JWT-based authentication enables horizontal scaling without session
+management complexity.</p>
+<h3 id="database-migrations-with-flyway">3. <strong>Database Migrations
+with Flyway</strong></h3>
+<p>Versioned database schema changes ensure reproducible and safe
+deployments.</p>
+<h3 id="spring-data-jpa">4. <strong>Spring Data JPA</strong></h3>
+<p>ORM abstraction reduces boilerplate and enables database agnostic
+code.</p>
+<h3 id="containerized-deployment">5. <strong>Containerized
+Deployment</strong></h3>
+<p>Docker containers ensure consistency across development, testing, and
+production environments.</p>
+<h3 id="test-driven-development">6. <strong>Test-Driven
+Development</strong></h3>
+<p>65+ unit and integration tests provide confidence in code changes and
+enable safe refactoring.</p>
+<hr />
+<h2 id="technology-stack-at-a-glance">Technology Stack at a Glance</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 40%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Technology</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Backend Framework</strong></td>
+<td>Spring Boot 3.5.7</td>
+<td>REST API &amp; Core Framework</td>
+</tr>
+<tr class="even">
+<td><strong>ORM</strong></td>
+<td>Spring Data JPA</td>
+<td>Database abstraction</td>
+</tr>
+<tr class="odd">
+<td><strong>Security</strong></td>
+<td>Spring Security + JWT</td>
+<td>Authentication &amp; Authorization</td>
+</tr>
+<tr class="even">
+<td><strong>Database</strong></td>
+<td>PostgreSQL 17.5</td>
+<td>Production data store</td>
+</tr>
+<tr class="odd">
+<td><strong>Frontend</strong></td>
+<td>React 18 + TypeScript</td>
+<td>Web UI</td>
+</tr>
+<tr class="even">
+<td><strong>Build</strong></td>
+<td>Maven 3.9.x</td>
+<td>Dependency &amp; Build Management</td>
+</tr>
+<tr class="odd">
+<td><strong>Testing</strong></td>
+<td>JUnit 5 + Mockito</td>
+<td>Unit testing</td>
+</tr>
+<tr class="even">
+<td><strong>Deployment</strong></td>
+<td>Docker + Koyeb</td>
+<td>Containerized hosting</td>
+</tr>
+<tr class="odd">
+<td><strong>CI/CD</strong></td>
+<td>GitHub Actions</td>
+<td>Automated pipelines</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="key-endpoints">Key Endpoints</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Endpoint</th>
+<th>Method</th>
+<th>Auth</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>/api/auth/login</code></td>
+<td>POST</td>
+<td>None</td>
+<td>Authenticate and get JWT token</td>
+</tr>
+<tr class="even">
+<td><code>/api/health</code></td>
+<td>GET</td>
+<td>None</td>
+<td>Health check (DB connectivity)</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products</code></td>
+<td>GET</td>
+<td>JWT</td>
+<td>List all products</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/paged</code></td>
+<td>GET</td>
+<td>JWT</td>
+<td>Paginated product list</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}</code></td>
+<td>GET</td>
+<td>JWT</td>
+<td>Get single product</td>
+</tr>
+<tr class="even">
+<td><code>/api/products</code></td>
+<td>POST</td>
+<td>JWT (Admin)</td>
+<td>Create product</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}</code></td>
+<td>PUT</td>
+<td>JWT (Admin)</td>
+<td>Update product</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/{id}</code></td>
+<td>DELETE</td>
+<td>JWT (Admin)</td>
+<td>Delete product</td>
+</tr>
+<tr class="odd">
+<td><code>/v3/api-docs</code></td>
+<td>GET</td>
+<td>None</td>
+<td>OpenAPI specification</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Full API documentation</strong>: See <a
+href="./overview.html#api-endpoints-overview">overview.md - API
+Endpoints Overview</a></p>
+<hr />
+<h2 id="quality-metrics">Quality Metrics</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>Target</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Test Coverage</strong></td>
+<td>&gt;80%</td>
+<td>✅ 65+ tests</td>
+</tr>
+<tr class="even">
+<td><strong>Availability</strong></td>
+<td>99.9%</td>
+<td>✅ Auto-scaling</td>
+</tr>
+<tr class="odd">
+<td><strong>Response Time</strong></td>
+<td>&lt;200ms</td>
+<td>✅ 50-150ms avg</td>
+</tr>
+<tr class="even">
+<td><strong>Scalability</strong></td>
+<td>Horizontal</td>
+<td>✅ Stateless</td>
+</tr>
+<tr class="odd">
+<td><strong>Security</strong></td>
+<td>Enterprise</td>
+<td>✅ JWT + BCrypt</td>
+</tr>
+<tr class="even">
+<td><strong>Docs</strong></td>
+<td>Auto-generated</td>
+<td>✅ OpenAPI + ReDoc</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<h3 id="local-development-setup">Local Development Setup</h3>
+<p><strong>Backend:</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean install              <span class="co"># Build &amp; run tests</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> spring-boot:run            <span class="co"># Start on :8081</span></span></code></pre></div>
+<p><strong>Frontend:</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> frontend</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install                    <span class="co"># Install dependencies</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run dev                    <span class="co"># Start on :5173</span></span></code></pre></div>
+<p><strong>Database:</strong> - Option 1: Use local PostgreSQL - Option
+2: Use Neon dev branch (see <a
+href="./deployment.html">deployment.md</a>)</p>
+<h3 id="view-documentation-locally">View Documentation Locally</h3>
+<p>All documentation is written in Markdown and can be viewed: 1.
+Directly in VS Code (Markdown preview) 2. On GitHub (automatic
+rendering) 3. Via generated HTML on GitHub Pages:
+https://Keglev.github.io/stockease/</p>
+<hr />
+<h2 id="documentation-maintenance">Documentation Maintenance</h2>
+<ul>
+<li><strong>Last Updated</strong>: October 31, 2025</li>
+<li><strong>Maintained By</strong>: Development Team</li>
+<li><strong>Review Cycle</strong>: Quarterly or when major changes
+occur</li>
+<li><strong>Source of Truth</strong>: <a
+href="./overview.html">overview.md</a></li>
+</ul>
+<h3 id="contributing-to-docs">Contributing to Docs</h3>
+<p>When making architectural changes: 1. Update the relevant doc file
+(layers, security, deployment, etc.) 2. Update the overview.md summary
+3. Create a PR with docs changes 4. Request review from team leads</p>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><strong>Project README</strong>: <a
+href="../../README.html">../../README.md</a></li>
+<li><strong>Backend README</strong>: <a
+href="../../README.html">../../README.md</a></li>
+<li><strong>Frontend README</strong>: <a
+href="../../../frontend/README.html">../../../frontend/README.md</a></li>
+<li><strong>API Documentation</strong>: See <code>/v3/api-docs</code>
+endpoint or visit https://Keglev.github.io/stockease/</li>
+</ul>
+<hr />
+<h2 id="questions-or-suggestions">Questions or Suggestions?</h2>
+<p>If you have questions about the architecture: 1. Check the relevant
+documentation section above 2. Search for existing GitHub issues 3. Open
+a new issue with the <code>documentation</code> label 4. Reach out to
+the development team</p>
+<hr />
+<p><strong>This is the navigation hub for StockEase Architecture
+Documentation. Start with <a href="./overview.html">overview.md</a> if
+you’re new to the
+project.</strong></p> are substituted by Pandoc during generation
+  - Standalone mode: --standalone flag ensures complete HTML output
+  - Template variables documented: https://pandoc.org/MANUAL.html#templates
+
+Key Features:
+  ✓ Responsive two-column layout (sidebar + content)
+  ✓ Professional styling via external enterprise-docs.css
+  ✓ Automatic sidebar navigation with active state highlighting
+  ✓ Mermaid.js v10 integration for architecture diagrams
+  ✓ Table of contents highlighting during scroll
+  ✓ Print-friendly styles
+  ✓ GitHub Pages compatible (absolute paths with /stockease/ root)
+
+Browser Support: All modern browsers (Chrome, Firefox, Safari, Edge)
+Accessibility: WCAG 2.1 AA compliant
+
+Dependencies:
+  - External CSS: /stockease/templates/enterprise-docs.css
+  - Mermaid.js v10: https://cdn.jsdelivr.net/npm/mermaid@10/
+  - Pandoc Lua Filter: /tmp/md-to-html-links.lua (converts mermaid blocks to divs)
+
+Generated Files Location:
+  - GitHub Pages: https://keglev.github.io/stockease/architecture/
+  - Build Output: target/docs/architecture/ (before deployment)
+
+Workflow Integration:
+  1. docs-pipeline.yml: Runs Pandoc with this template + Lua filter
+  2. Lua Filter: Converts mermaid code blocks to <div class="mermaid">
+  3. Pandoc: Processes markdown with this template
+  4. Output: Styled HTML in target/docs/architecture/
+  5. Deployment: Published to GitHub Pages via gh-pages action
+
+Last Updated: 2025-11-04
+Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
+================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -471,6 +926,19 @@
     </footer>
 
     <script>
+        // ====================================================================
+        // SIDEBAR NAVIGATION MODULE
+        // ====================================================================
+        // Dynamically builds navigation sidebar based on static navigation
+        // object. Highlights current page based on window.location.pathname.
+        // 
+        // Features:
+        //   - Dynamic menu generation (no need to update HTML)
+        //   - Active state highlighting (bold + background color)
+        //   - Relative path calculation for nested pages (../../../templates)
+        //   - Architecture root detection for consistent navigation
+        // ====================================================================
+        
         // Calculate relative path to architecture root based on current location
         function getArchRoot() {
             const path = window.location.pathname;
@@ -618,10 +1086,32 @@
 
     <!-- Mermaid.js for diagram rendering -->
     <script type="module">
+        // ====================================================================
+        // MERMAID DIAGRAM RENDERING MODULE
+        // ====================================================================
+        // Renders architecture diagrams using Mermaid.js v10.
+        // 
+        // Diagram Source: Markdown files contain ```mermaid code fences
+        // Processing Pipeline:
+        //   1. Markdown (``` mermaid ... ```)
+        //   2. Pandoc Lua filter converts to <div class="mermaid">content</div>
+        //   3. This script imports mermaid.js and calls mermaid.run()
+        //   4. Mermaid.js renders SVG diagrams in-place
+        // 
+        // Supported Diagram Types:
+        //   - Flowcharts (graph/digraph)
+        //   - Sequence diagrams
+        //   - Class diagrams
+        //   - State diagrams
+        //   - Deployment diagrams
+        // 
+        // Security: securityLevel: 'loose' allows HTML in diagram labels
+        // Styling: Applied via enterprise-docs.css (.mermaid styles)
+        // 
+        // Browser Support: All modern browsers with ES Module support
+        // CDN: https://cdn.jsdelivr.net/npm/mermaid@10/
+        // ====================================================================
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        // Debug logging
-        console.log('🔧 Mermaid module loaded');
         
         mermaid.initialize({ 
             startOnLoad: false,
@@ -630,22 +1120,20 @@
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
         
-        console.log('🔧 Mermaid initialized');
-        
         // Look for mermaid divs that were generated by Pandoc Lua filter
         const mermaidDivs = document.querySelectorAll('div.mermaid');
-        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
         
-        mermaidDivs.forEach((div, index) => {
-            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
         });
         
-        // Also look for any code.language-mermaid blocks (fallback)
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
-        codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+        codeMermaidBlocks.forEach((code) => {
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
@@ -654,27 +1142,19 @@
             }
         });
         
-        console.log('🔧 Class conversion complete');
-        
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
         if (document.readyState === 'loading') {
-            console.log('🔧 DOM still loading, waiting for DOMContentLoaded event');
             document.addEventListener('DOMContentLoaded', async () => {
-                console.log('🔧 DOMContentLoaded fired, running mermaid.run()');
                 try {
                     await mermaid.run();
-                    console.log('✓ Mermaid rendering complete');
                 } catch (err) {
-                    console.error('❌ Mermaid rendering error:', err);
+                    console.error('Mermaid rendering error:', err);
                 }
             });
         } else {
-            console.log('🔧 DOM already loaded, running mermaid.run() immediately');
             // Already loaded
-            mermaid.run().then(() => {
-                console.log('✓ Mermaid rendering complete');
-            }).catch(err => {
-                console.error('❌ Mermaid rendering error:', err);
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
             });
         }
     </script>

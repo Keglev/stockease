@@ -1,4 +1,378 @@
 <!DOCTYPE html>
+<!--
+================================================================================
+                    STOCKEASE ENTERPRISE DOCUMENTATION TEMPLATE
+================================================================================
+
+File: enterprise-docs.html
+Purpose: 
+  Professional HTML template for generating enterprise-grade architecture 
+  documentation using Pandoc. Used by the docs-pipeline.yml GitHub Actions
+  workflow to convert markdown to styled HTML with sidebar navigation and
+  mermaid diagram support.
+
+Template Engine: Pandoc (pandoc.org)
+  - Variables: , <h1 id="staging-configuration-management">Staging &amp;
+Configuration Management</h1>
+<h2 id="environment-strategy">Environment Strategy</h2>
+<p>StockEase uses environment-based configuration to manage different
+deployment targets:</p>
+<pre><code>Development (Local)
+  ↓ (git push)
+Production (Koyeb)</code></pre>
+<h2 id="configuration-levels">Configuration Levels</h2>
+<h3 id="application-configuration-application.properties">1. Application
+Configuration (application.properties)</h3>
+<p><strong>Location</strong>:
+<code>src/main/resources/application.properties</code></p>
+<p><strong>Default configuration</strong> (inherited by all
+environments):</p>
+<pre class="properties"><code># Server
+server.port=8080
+server.servlet.context-path=/
+
+# Spring Boot
+spring.application.name=stockease
+spring.profiles.active=default
+
+# JPA/Hibernate
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.hibernate.ddl-auto=validate
+
+# Flyway
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+
+# Actuator
+management.endpoints.web.exposure.include=health,metrics
+
+# Logging
+logging.level.root=INFO
+logging.level.com.stocks.stockease=DEBUG</code></pre>
+<h3 id="environment-specific-overrides">2. Environment-Specific
+Overrides</h3>
+<h4 id="development-profile-application.properties">Development Profile
+(application.properties)</h4>
+<p><strong>Used</strong>: Local development</p>
+<pre class="properties"><code># Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/stockease_dev
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Logging
+logging.level.root=INFO
+logging.level.com.stocks.stockease=DEBUG
+logging.level.org.springframework.web=DEBUG
+
+# Security
+jwt.secret=dev-secret-key-do-not-use-in-production
+jwt.expiration=86400000
+
+# CORS
+app.cors.allowed-origins=http://localhost:3000,http://localhost:5173</code></pre>
+<h4 id="production-profile-application-prod.yml">Production Profile
+(application-prod.yml)</h4>
+<p><strong>Used</strong>: Koyeb deployment</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Database (from environment variables)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">spring</span><span class="kw">:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">datasource</span><span class="kw">:</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">url</span><span class="kw">:</span><span class="at"> jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">username</span><span class="kw">:</span><span class="at"> ${DB_USER}</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">password</span><span class="kw">:</span><span class="at"> ${DB_PASSWORD}</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">driver-class-name</span><span class="kw">:</span><span class="at"> org.postgresql.Driver</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hikari</span><span class="kw">:</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">maximum-pool-size</span><span class="kw">:</span><span class="at"> </span><span class="dv">10</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">minimum-idle</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">jpa</span><span class="kw">:</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">show-sql</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hibernate</span><span class="kw">:</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ddl-auto</span><span class="kw">:</span><span class="at"> validate</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">properties</span><span class="kw">:</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">hibernate</span><span class="kw">:</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">format_sql</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dialect</span><span class="kw">:</span><span class="at"> org.hibernate.dialect.PostgreSQLDialect</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Logging</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="fu">logging</span><span class="kw">:</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">level</span><span class="kw">:</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">root</span><span class="kw">:</span><span class="at"> WARN</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">com.stocks.stockease</span><span class="kw">:</span><span class="at"> INFO</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">org.springframework</span><span class="kw">:</span><span class="at"> WARN</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">file</span><span class="kw">:</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> /var/log/stockease/app.log</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Security</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="fu">jwt</span><span class="kw">:</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">secret</span><span class="kw">:</span><span class="at"> ${JWT_SECRET}</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">expiration</span><span class="kw">:</span><span class="at"> </span><span class="dv">86400000</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co"># CORS</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="fu">app</span><span class="kw">:</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">cors</span><span class="kw">:</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">allowed-origins</span><span class="kw">:</span><span class="at"> https://stockease.example.com</span></span></code></pre></div>
+<h4 id="test-profile-application-test.properties">Test Profile
+(application-test.properties)</h4>
+<p><strong>Used</strong>: Test suite</p>
+<pre class="properties"><code># Database (H2 in-memory)
+spring.datasource.url=jdbc:h2:mem:stockease_test
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# H2 console
+spring.h2.console.enabled=true
+
+# JPA
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=false
+
+# Logging
+logging.level.root=WARN
+logging.level.com.stocks.stockease=INFO
+
+# Security (test values)
+jwt.secret=test-secret-key
+jwt.expiration=86400000</code></pre>
+<h2 id="environment-variables">Environment Variables</h2>
+<h3 id="required-for-production">Required for Production</h3>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Database</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">DB_HOST</span><span class="op">=</span>...neon.tech</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">DB_PORT</span><span class="op">=</span>5432</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">DB_NAME</span><span class="op">=</span>stockease</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">DB_USER</span><span class="op">=&lt;</span>username<span class="op">&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">DB_PASSWORD</span><span class="op">=&lt;</span>password<span class="op">&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Security</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">JWT_SECRET</span><span class="op">=&lt;</span>32+ random characters<span class="op">&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Spring</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">SPRING_PROFILES_ACTIVE</span><span class="op">=</span>prod</span></code></pre></div>
+<h3 id="koyeb-environment-setup">Koyeb Environment Setup</h3>
+<p>In Koyeb dashboard → Service → Variables:</p>
+<pre><code>Key                     | Value                      | Scope
+------------------------|----------------------------|----------
+DB_HOST                 | [neon-endpoint]            | Runtime
+DB_PORT                 | 5432                       | Runtime
+DB_NAME                 | stockease                  | Runtime
+DB_USER                 | [from secrets]             | Runtime
+DB_PASSWORD             | [from secrets]             | Runtime
+JWT_SECRET              | [from secrets]             | Runtime
+SPRING_PROFILES_ACTIVE  | prod                       | Runtime</code></pre>
+<h2 id="deployment-topology">Deployment Topology</h2>
+<h3 id="development-environment">Development Environment</h3>
+<pre><code>Developer Laptop
+├── Spring Boot Application
+│   ├── Port 8080
+│   └── Auto-restart on code change (DevTools)
+└── PostgreSQL (local or Docker)
+    ├── Database: stockease_dev
+    └── Migrations auto-run (Flyway)</code></pre>
+<h3 id="production-environment-koyeb">Production Environment
+(Koyeb)</h3>
+<pre><code>GitHub Repository (main branch)
+  ↓ git push
+GitHub Actions (auto_deploy.yml)
+  ├── Tests
+  ├── Build Docker image
+  └── Push to GHCR
+  
+Koyeb Service (Docker container)
+  ├── Port 8080 (internal)
+  ├── Exposed via HTTPS
+  └── Environment variables injected
+  
+Neon PostgreSQL (serverless)
+  ├── SSL connection required
+  ├── Connection pooling
+  └── Auto-backups</code></pre>
+<h2 id="configuration-management-best-practices">Configuration
+Management Best Practices</h2>
+<h3 id="environment-variable-naming">1. Environment Variable Naming</h3>
+<pre class="properties"><code># Use clear, prefixed names
+DB_HOST          # Not: &quot;database_server&quot; or &quot;db&quot;
+JWT_SECRET       # Not: &quot;secret&quot; or &quot;key&quot;
+MAX_POOL_SIZE    # Not: &quot;max&quot;</code></pre>
+<h3 id="sensitive-data-handling">2. Sensitive Data Handling</h3>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ✅ USE: Environment variables for secrets</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">DB_PASSWORD</span><span class="op">=</span><span class="va">$(</span><span class="ex">kubectl</span> get secret db-creds <span class="at">-o</span> jsonpath=<span class="st">&#39;{.data.password}&#39;</span><span class="va">)</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ✅ USE: GitHub Secrets for CI/CD</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="ex">KOYEB_API_KEY:</span> <span class="va">${</span><span class="er">{ secrets.KOYEB_API_KEY </span><span class="va">}</span>}</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ❌ DON&#39;T: Hardcode secrets</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="va">DB_PASSWORD</span><span class="op">=</span>my-password  <span class="co"># NEVER!</span></span></code></pre></div>
+<h3 id="configuration-validation">3. Configuration Validation</h3>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">@ConfigurationProperties</span><span class="op">(</span>prefix <span class="op">=</span> <span class="st">&quot;app&quot;</span><span class="op">)</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="at">@Validated</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> AppConfig <span class="op">{</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;JWT secret is required&quot;</span><span class="op">)</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Min</span><span class="op">(</span><span class="dv">32</span><span class="op">)</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> jwtSecret<span class="op">;</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotEmpty</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">List</span><span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;</span> allowedOrigins<span class="op">;</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="logging-configuration">4. Logging Configuration</h3>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Development (verbose)</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">logging</span><span class="kw">:</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">level</span><span class="kw">:</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">root</span><span class="kw">:</span><span class="at"> INFO</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">com.stocks.stockease</span><span class="kw">:</span><span class="at"> DEBUG</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">org.springframework.security</span><span class="kw">:</span><span class="at"> DEBUG</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Production (minimal)</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="fu">logging</span><span class="kw">:</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">level</span><span class="kw">:</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">root</span><span class="kw">:</span><span class="at"> WARN</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">com.stocks.stockease</span><span class="kw">:</span><span class="at"> INFO</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">org.springframework.security</span><span class="kw">:</span><span class="at"> WARN</span></span></code></pre></div>
+<h2 id="migration-strategy">Migration Strategy</h2>
+<h3 id="schema-migrations-flyway">Schema Migrations (Flyway)</h3>
+<p><strong>Development</strong>:</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Automatic: mvnw spring-boot:run</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Flyway auto-runs V1, V2, V3 migrations</span></span></code></pre></div>
+<p><strong>Production</strong> (Koyeb):</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Automatic: On container startup</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Flyway applies any new migrations</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Fails fast if migration has issues</span></span></code></pre></div>
+<h3 id="data-migrations">Data Migrations</h3>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- V4__add_product_status.sql</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ADD</span> <span class="kw">COLUMN</span> status <span class="dt">VARCHAR</span>(<span class="dv">20</span>) <span class="kw">DEFAULT</span> <span class="st">&#39;ACTIVE&#39;</span>;</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> products <span class="kw">SET</span> status <span class="op">=</span> <span class="st">&#39;ACTIVE&#39;</span>;</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ALTER</span> <span class="kw">COLUMN</span> status <span class="kw">SET</span> <span class="kw">NOT</span> <span class="kw">NULL</span>;</span></code></pre></div>
+<h2 id="configuration-hierarchy">Configuration Hierarchy</h2>
+<pre><code>Priority (highest to lowest):
+
+1. Command-line arguments
+   java -Dspring.datasource.url=...
+
+2. Environment variables
+   export SPRING_DATASOURCE_URL=...
+
+3. application-{profile}.yml/properties
+   application-prod.yml
+
+4. application.yml/properties
+   application.properties (default)
+
+5. Built-in defaults
+   Spring Boot defaults</code></pre>
+<h2 id="troubleshooting-configuration">Troubleshooting
+Configuration</h2>
+<h3 id="missing-configuration-error">Missing Configuration Error</h3>
+<pre><code>Error: Could not resolve placeholder &#39;db.host&#39; in value &quot;${db.host}&quot;
+
+Solution: Set environment variable DB_HOST=...</code></pre>
+<h3 id="wrong-profile-active">Wrong Profile Active</h3>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check active profile</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> http://localhost:8080/actuator/env <span class="kw">|</span> <span class="fu">grep</span> spring.profiles.active</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Set profile explicitly</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">SPRING_PROFILES_ACTIVE</span><span class="op">=</span>prod</span></code></pre></div>
+<h3 id="configuration-not-reloading">Configuration Not Reloading</h3>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Development: Automatic with DevTools</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Production: Restart container</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Local test change:</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="ex">mvnw</span> spring-boot:run <span class="at">-Dspring-boot.run.arguments</span><span class="op">=</span><span class="st">&quot;--spring.profiles.active=test&quot;</span></span></code></pre></div>
+<h2 id="configuration-validation-checklist">Configuration Validation
+Checklist</h2>
+<p>Before production deployment: - [ ] All required environment
+variables set - [ ] Database connection string correct (with SSL) - [ ]
+JWT secret is 32+ characters and random - [ ] CORS origins match
+frontend domain - [ ] Logging level appropriate (WARN/ERROR) - [ ] No
+debug endpoints exposed - [ ] No default credentials remaining - [ ]
+Connection pool settings optimized - [ ] Health check endpoint working -
+[ ] Metrics endpoint secured</p>
+<h2 id="performance-tuning">Performance Tuning</h2>
+<h3 id="database-connection-pool">Database Connection Pool</h3>
+<pre class="properties"><code>spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=2
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.idle-timeout=600000</code></pre>
+<h3 id="application-server">Application Server</h3>
+<pre class="properties"><code>server.tomcat.threads.max=200
+server.tomcat.threads.min-spare=10
+server.compression.enabled=true
+server.compression.min-response-size=1024</code></pre>
+<h3 id="jvm-arguments">JVM Arguments</h3>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> <span class="at">-Xmx512m</span> <span class="at">-Xms256m</span> <span class="at">-XX:+UseG1GC</span> <span class="at">-Dfile.encoding</span><span class="op">=</span>UTF-8 <span class="at">-jar</span> app.jar</span></code></pre></div>
+<h2 id="monitoring-alerts">Monitoring &amp; Alerts</h2>
+<h3 id="health-endpoint">Health Endpoint</h3>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://localhost:8080/health <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.&#39;</span></span></code></pre></div>
+<h3 id="metrics">Metrics</h3>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> http://localhost:8080/metrics <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.names[]&#39;</span></span></code></pre></div>
+<h3 id="common-metrics-to-monitor">Common Metrics to Monitor</h3>
+<ul>
+<li><code>jvm.memory.used</code> - Heap memory usage</li>
+<li><code>process.cpu.usage</code> - CPU utilization</li>
+<li><code>http.server.requests</code> - Request rate</li>
+<li><code>db.connection.active</code> - DB connections</li>
+<li><code>spring.security.authentication.failure</code> - Auth
+failures</li>
+</ul>
+<hr />
+<p><strong>Document Version</strong>: 1.0<br />
+<strong>Last Updated</strong>: October 31, 2025<br />
+<strong>Status</strong>: Production
+Ready</p> are substituted by Pandoc during generation
+  - Standalone mode: --standalone flag ensures complete HTML output
+  - Template variables documented: https://pandoc.org/MANUAL.html#templates
+
+Key Features:
+  ✓ Responsive two-column layout (sidebar + content)
+  ✓ Professional styling via external enterprise-docs.css
+  ✓ Automatic sidebar navigation with active state highlighting
+  ✓ Mermaid.js v10 integration for architecture diagrams
+  ✓ Table of contents highlighting during scroll
+  ✓ Print-friendly styles
+  ✓ GitHub Pages compatible (absolute paths with /stockease/ root)
+
+Browser Support: All modern browsers (Chrome, Firefox, Safari, Edge)
+Accessibility: WCAG 2.1 AA compliant
+
+Dependencies:
+  - External CSS: /stockease/templates/enterprise-docs.css
+  - Mermaid.js v10: https://cdn.jsdelivr.net/npm/mermaid@10/
+  - Pandoc Lua Filter: /tmp/md-to-html-links.lua (converts mermaid blocks to divs)
+
+Generated Files Location:
+  - GitHub Pages: https://keglev.github.io/stockease/architecture/
+  - Build Output: target/docs/architecture/ (before deployment)
+
+Workflow Integration:
+  1. docs-pipeline.yml: Runs Pandoc with this template + Lua filter
+  2. Lua Filter: Converts mermaid code blocks to <div class="mermaid">
+  3. Pandoc: Processes markdown with this template
+  4. Output: Styled HTML in target/docs/architecture/
+  5. Deployment: Published to GitHub Pages via gh-pages action
+
+Last Updated: 2025-11-04
+Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
+================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -383,6 +757,19 @@ server.compression.min-response-size=1024</code></pre>
     </footer>
 
     <script>
+        // ====================================================================
+        // SIDEBAR NAVIGATION MODULE
+        // ====================================================================
+        // Dynamically builds navigation sidebar based on static navigation
+        // object. Highlights current page based on window.location.pathname.
+        // 
+        // Features:
+        //   - Dynamic menu generation (no need to update HTML)
+        //   - Active state highlighting (bold + background color)
+        //   - Relative path calculation for nested pages (../../../templates)
+        //   - Architecture root detection for consistent navigation
+        // ====================================================================
+        
         // Calculate relative path to architecture root based on current location
         function getArchRoot() {
             const path = window.location.pathname;
@@ -530,10 +917,32 @@ server.compression.min-response-size=1024</code></pre>
 
     <!-- Mermaid.js for diagram rendering -->
     <script type="module">
+        // ====================================================================
+        // MERMAID DIAGRAM RENDERING MODULE
+        // ====================================================================
+        // Renders architecture diagrams using Mermaid.js v10.
+        // 
+        // Diagram Source: Markdown files contain ```mermaid code fences
+        // Processing Pipeline:
+        //   1. Markdown (``` mermaid ... ```)
+        //   2. Pandoc Lua filter converts to <div class="mermaid">content</div>
+        //   3. This script imports mermaid.js and calls mermaid.run()
+        //   4. Mermaid.js renders SVG diagrams in-place
+        // 
+        // Supported Diagram Types:
+        //   - Flowcharts (graph/digraph)
+        //   - Sequence diagrams
+        //   - Class diagrams
+        //   - State diagrams
+        //   - Deployment diagrams
+        // 
+        // Security: securityLevel: 'loose' allows HTML in diagram labels
+        // Styling: Applied via enterprise-docs.css (.mermaid styles)
+        // 
+        // Browser Support: All modern browsers with ES Module support
+        // CDN: https://cdn.jsdelivr.net/npm/mermaid@10/
+        // ====================================================================
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        // Debug logging
-        console.log('🔧 Mermaid module loaded');
         
         mermaid.initialize({ 
             startOnLoad: false,
@@ -542,22 +951,20 @@ server.compression.min-response-size=1024</code></pre>
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
         
-        console.log('🔧 Mermaid initialized');
-        
         // Look for mermaid divs that were generated by Pandoc Lua filter
         const mermaidDivs = document.querySelectorAll('div.mermaid');
-        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
         
-        mermaidDivs.forEach((div, index) => {
-            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
         });
         
-        // Also look for any code.language-mermaid blocks (fallback)
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
-        codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+        codeMermaidBlocks.forEach((code) => {
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
@@ -566,27 +973,19 @@ server.compression.min-response-size=1024</code></pre>
             }
         });
         
-        console.log('🔧 Class conversion complete');
-        
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
         if (document.readyState === 'loading') {
-            console.log('🔧 DOM still loading, waiting for DOMContentLoaded event');
             document.addEventListener('DOMContentLoaded', async () => {
-                console.log('🔧 DOMContentLoaded fired, running mermaid.run()');
                 try {
                     await mermaid.run();
-                    console.log('✓ Mermaid rendering complete');
                 } catch (err) {
-                    console.error('❌ Mermaid rendering error:', err);
+                    console.error('Mermaid rendering error:', err);
                 }
             });
         } else {
-            console.log('🔧 DOM already loaded, running mermaid.run() immediately');
             // Already loaded
-            mermaid.run().then(() => {
-                console.log('✓ Mermaid rendering complete');
-            }).catch(err => {
-                console.error('❌ Mermaid rendering error:', err);
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
             });
         }
     </script>

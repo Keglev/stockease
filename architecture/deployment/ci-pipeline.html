@@ -1,4 +1,464 @@
 <!DOCTYPE html>
+<!--
+================================================================================
+                    STOCKEASE ENTERPRISE DOCUMENTATION TEMPLATE
+================================================================================
+
+File: enterprise-docs.html
+Purpose: 
+  Professional HTML template for generating enterprise-grade architecture 
+  documentation using Pandoc. Used by the docs-pipeline.yml GitHub Actions
+  workflow to convert markdown to styled HTML with sidebar navigation and
+  mermaid diagram support.
+
+Template Engine: Pandoc (pandoc.org)
+  - Variables: , <h1 id="cicd-pipeline-architecture">CI/CD Pipeline
+Architecture</h1>
+<h2 id="overview">Overview</h2>
+<p>The CI/CD pipeline automates building, testing, and deploying
+StockEase to production. Two workflows manage the process: -
+<strong>auto_deploy.yml</strong>: Builds and deploys backend to Koyeb -
+<strong>docs-ci.yml</strong>: Generates documentation and publishes to
+GitHub Pages</p>
+<h2 id="deployment-workflow-auto_deploy.yml">Deployment Workflow
+(auto_deploy.yml)</h2>
+<h3 id="trigger-events">Trigger Events</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> main </span><span class="kw">]</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">paths-ignore</span><span class="kw">:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;docs/**&#39;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;.gitignore&#39;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span><span class="co">  # Manual trigger</span></span></code></pre></div>
+<p><strong>Triggers on</strong>: - Push to main branch (excluding docs
+directory) - Manual workflow dispatch</p>
+<p><strong>Doesn’t trigger on</strong>: - Changes to <code>/docs/</code>
+only - Changes to <code>.gitignore</code> only</p>
+<h3 id="pipeline-stages">Pipeline Stages</h3>
+<div class="mermaid">graph TD
+    A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies"]
+    B --> C["3. Run Tests 65+ tests<br/>H2 database, ~1 minute"]
+    
+    C --> D["Tests Pass?"]
+    D -->|Yes| E["4. Build Application<br/>Maven package, create JAR"]
+    D -->|No| F["Stop, notify"]
+    
+    E --> G["5. Build Docker Image<br/>ghcr.io/keglev/stockease latest"]
+    G --> H["6. Push to Container Registry<br/>GHCR authentication, push image"]
+    H --> I["7. Deploy to Koyeb<br/>Trigger redeploy via API"]
+    I --> J["8. Wait for Healthy up to 10 min<br/>Poll service status"]
+    
+    J --> K["Deployment Healthy?"]
+    K -->|Yes| L[Success]
+    K -->|Timeout| M["Failure notification"]
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style E fill:#e3f2fd
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+    style I fill:#fff3e0
+    style J fill:#fff3e0
+    style L fill:#c8e6c9
+    style F fill:#ffcdd2
+    style M fill:#ffcdd2</div>
+<h3 id="stage-details">Stage Details</h3>
+<h4 id="stage-1-checkout">Stage 1: Checkout</h4>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Checkout repository</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span></code></pre></div>
+<p><strong>Duration</strong>: ~5 seconds<br />
+<strong>Purpose</strong>: Clone repository with full history</p>
+<h4 id="stage-2-setup-environment">Stage 2: Setup Environment</h4>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Set up JDK 17 with Maven cache</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/setup-java@v4</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">distribution</span><span class="kw">:</span><span class="at"> temurin</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">java-version</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;17&#39;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">cache</span><span class="kw">:</span><span class="at"> maven</span></span></code></pre></div>
+<p><strong>Duration</strong>: ~30 seconds (first run), ~5 seconds
+(cached)<br />
+<strong>Purpose</strong>: Install JDK 17 and Maven dependencies</p>
+<h4 id="stage-3-run-tests">Stage 3: Run Tests</h4>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Run backend tests</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> ./mvnw -B -ntp test</span></span></code></pre></div>
+<p><strong>Duration</strong>: ~30-45 seconds<br />
+<strong>Tests</strong>: 65+ unit and integration tests<br />
+<strong>Database</strong>: H2 in-memory<br />
+<strong>Failure Handling</strong>: Stops pipeline if tests fail</p>
+<h4 id="stage-4-build">Stage 4: Build</h4>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Verify build compiles</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> ./mvnw -B -ntp -DskipTests package</span></span></code></pre></div>
+<p><strong>Duration</strong>: ~20-30 seconds<br />
+<strong>Purpose</strong>: Create JAR file, catch compile errors</p>
+<h4 id="stage-5-build-docker-image">Stage 5: Build Docker Image</h4>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-alpine</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> target/stockease-backend-*.jar app.jar</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;app.jar&quot;</span>]</span></code></pre></div>
+<p><strong>Duration</strong>: ~15-20 seconds<br />
+<strong>Base Image</strong>: Alpine (122MB)<br />
+<strong>Final Size</strong>: ~350MB (with JAR + libs)</p>
+<h4 id="stage-6-push-to-ghcr">Stage 6: Push to GHCR</h4>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Push to GHCR</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">REGISTRY</span><span class="kw">:</span><span class="at"> ghcr.io</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> docker push ghcr.io/keglev/stockease:latest</span></span></code></pre></div>
+<p><strong>Duration</strong>: ~10-15 seconds<br />
+<strong>Authentication</strong>: GitHub token from secrets</p>
+<h4 id="stage-7-deploy-to-koyeb">Stage 7: Deploy to Koyeb</h4>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Trigger Koyeb redeploy</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    curl -X POST https://app.koyeb.com/v1/services/$SERVICE_ID/redeploy \</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>      -H &quot;Authorization: Bearer $KOYEB_API_KEY&quot;</span></code></pre></div>
+<p><strong>Duration</strong>: ~5 seconds (API call)<br />
+<strong>Actual Deployment</strong>: 1-2 minutes (Koyeb pulls image,
+starts container)</p>
+<h4 id="stage-8-health-check">Stage 8: Health Check</h4>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wait for Koyeb service HEALTHY</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    for i in {1..60}; do</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>      STATUS=$(curl -H &quot;Authorization: Bearer $API_KEY&quot; \</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        https://app.koyeb.com/v1/services/$SERVICE_ID)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>      if [ &quot;$STATUS&quot; = &quot;HEALTHY&quot; ]; then</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        exit 0</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      fi</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>      sleep 10</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    done</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    exit 1</span></code></pre></div>
+<p><strong>Duration</strong>: Up to 10 minutes (poll every 10
+seconds)<br />
+<strong>Success Criteria</strong>: Service reaches HEALTHY status<br />
+<strong>Failure Handling</strong>: Auto-rollback if health check
+fails</p>
+<h3 id="total-pipeline-duration">Total Pipeline Duration</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Duration</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Checkout</td>
+<td>5s</td>
+</tr>
+<tr class="even">
+<td>Setup</td>
+<td>30s</td>
+</tr>
+<tr class="odd">
+<td>Tests</td>
+<td>40s</td>
+</tr>
+<tr class="even">
+<td>Build</td>
+<td>25s</td>
+</tr>
+<tr class="odd">
+<td>Docker</td>
+<td>20s</td>
+</tr>
+<tr class="even">
+<td>Push</td>
+<td>15s</td>
+</tr>
+<tr class="odd">
+<td>Deploy (API)</td>
+<td>5s</td>
+</tr>
+<tr class="even">
+<td>Health Check</td>
+<td>10-120s</td>
+</tr>
+<tr class="odd">
+<td><strong>Total</strong></td>
+<td><strong>2-5 minutes</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="documentation-workflow-docs-ci.yml">Documentation Workflow
+(docs-ci.yml)</h2>
+<h3 id="trigger-events-1">Trigger Events</h3>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> main </span><span class="kw">]</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">paths</span><span class="kw">:</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;backend/docs/**&#39;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span></code></pre></div>
+<p><strong>Triggers on</strong>: - Push to main when
+<code>/backend/docs/</code> changes - Manual workflow dispatch</p>
+<h3 id="pipeline-stages-1">Pipeline Stages</h3>
+<pre><code>┌──────────────────────────────────────┐
+│ 1. Checkout Code                     │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 2. Setup Environment                 │
+│ Python, Node.js, MkDocs, ReDoc CLI   │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 3. Start Backend (Spring Boot)       │
+│ Start application for OpenAPI /v3    │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 4. Extract OpenAPI Spec              │
+│ Fetch /v3/api-docs.yaml              │
+│ Save to docs/api/openapi/            │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 5. Generate Redoc HTML               │
+│ redoc-cli build-docs openapi.yaml    │
+│ Output: docs/api/redoc/index.html    │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 6. Convert Markdown to HTML          │
+│ MkDocs build docs/architecture/      │
+│ Output: docs/architecture/*.html     │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 7. Generate Coverage Reports         │
+│ JaCoCo site generation               │
+│ Copy to docs/coverage/               │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 8. Commit to gh-pages Branch         │
+│ git checkout gh-pages                │
+│ Copy all generated files             │
+│ git commit &amp;&amp; push                   │
+└──────────────┬───────────────────────┘
+               ↓
+         GitHub Pages auto-publishes
+    https://Keglev.github.io/stockease/</code></pre>
+<h2 id="secret-management">Secret Management</h2>
+<h3 id="required-github-secrets">Required GitHub Secrets</h3>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 26%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Secret</th>
+<th>Purpose</th>
+<th>Set On</th>
+<th>Used By</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>KOYEB_API_KEY</code></td>
+<td>Deploy to Koyeb</td>
+<td>Settings → Secrets</td>
+<td>auto_deploy.yml</td>
+</tr>
+<tr class="even">
+<td><code>KOYEB_SERVICE_ID</code></td>
+<td>Target service</td>
+<td>Settings → Secrets</td>
+<td>auto_deploy.yml</td>
+</tr>
+<tr class="odd">
+<td><code>GITHUB_TOKEN</code></td>
+<td>CI/CD operations</td>
+<td>Auto-provided</td>
+<td>docs-ci.yml</td>
+</tr>
+</tbody>
+</table>
+<h3 id="no-secrets-in-code">No Secrets in Code</h3>
+<p>✅ <strong>Secrets in environment variables only</strong>:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span></code></pre></div>
+<p>❌ <strong>Never hardcode secrets</strong>:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> abc123...</span><span class="co"> # NEVER!</span></span></code></pre></div>
+<h2 id="failure-handling">Failure Handling</h2>
+<h3 id="test-failures">Test Failures</h3>
+<pre><code>If tests fail:
+1. Pipeline stops immediately
+2. GitHub marks commit as failed
+3. Notification sent
+4. Manual review required before retry</code></pre>
+<p><strong>Recovery</strong>: - Fix failing tests - Commit fix to main -
+Pipeline automatically re-runs</p>
+<h3 id="build-failures">Build Failures</h3>
+<pre><code>If build fails:
+1. JAR creation fails
+2. Pipeline stops at build stage
+3. Notification sent
+4. Check compilation errors in logs</code></pre>
+<h3 id="deployment-failures">Deployment Failures</h3>
+<pre><code>If Koyeb health check fails:
+1. Service status remains UNHEALTHY
+2. Previous healthy version still running
+3. Auto-rollback (no manual intervention)
+4. Notification sent for investigation</code></pre>
+<h3 id="health-check-timeout">Health Check Timeout</h3>
+<pre><code>If service doesn&#39;t reach HEALTHY in 10 minutes:
+1. Deployment marked as failed
+2. Service remains in unhealthy state
+3. Manual investigation required
+4. Can manually trigger redeploy once fixed</code></pre>
+<h2 id="rollback-strategy">Rollback Strategy</h2>
+<h3 id="automatic-rollback">Automatic Rollback</h3>
+<ul>
+<li>Health checks fail → Previous version auto-deployed</li>
+<li>No manual intervention needed</li>
+<li>Happens within 1-2 minutes</li>
+</ul>
+<h3 id="manual-rollback">Manual Rollback</h3>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Via Koyeb dashboard</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Or trigger auto_deploy on specific commit:</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>commit-sha<span class="op">&gt;</span>:main</span></code></pre></div>
+<h2 id="performance-optimization">Performance Optimization</h2>
+<h3 id="caching-strategy">Caching Strategy</h3>
+<ul>
+<li>Maven dependencies cached</li>
+<li>Docker layer caching</li>
+<li>GitHub Actions cache</li>
+</ul>
+<h3 id="parallel-execution-future">Parallel Execution (Future)</h3>
+<ul>
+<li>Run tests in parallel</li>
+<li>Build multiple artifacts simultaneously</li>
+</ul>
+<h2 id="monitoring-debugging">Monitoring &amp; Debugging</h2>
+<h3 id="workflow-logs">Workflow Logs</h3>
+<ul>
+<li>View at: GitHub Repo → Actions → Workflow runs</li>
+<li>Click run → View all jobs</li>
+<li>Expand any failed step to see logs</li>
+</ul>
+<h3 id="common-issues">Common Issues</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Issue</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tests fail</td>
+<td>Code regression</td>
+<td>Fix failing tests, commit</td>
+</tr>
+<tr class="even">
+<td>Build timeout</td>
+<td>Large dependencies</td>
+<td>Increase timeout, optimize POM</td>
+</tr>
+<tr class="odd">
+<td>Deploy timeout</td>
+<td>Koyeb slow</td>
+<td>Wait or check Koyeb status</td>
+</tr>
+<tr class="even">
+<td>Health check fails</td>
+<td>App crashed</td>
+<td>Check application logs on Koyeb</td>
+</tr>
+<tr class="odd">
+<td>Docker push fails</td>
+<td>Registry auth</td>
+<td>Verify <code>GITHUB_TOKEN</code> secret</td>
+</tr>
+</tbody>
+</table>
+<h2 id="best-practices">Best Practices</h2>
+<ol type="1">
+<li><strong>Keep workflows simple</strong> - One job per workflow</li>
+<li><strong>Fail fast</strong> - Stop on first error</li>
+<li><strong>Cache aggressively</strong> - Maven, Docker layers</li>
+<li><strong>Use environments</strong> - Secrets scoped per
+environment</li>
+<li><strong>Monitor carefully</strong> - Check logs regularly</li>
+<li><strong>Document changes</strong> - Update workflows when code
+changes</li>
+<li><strong>Test locally first</strong> - Run tests before pushing</li>
+<li><strong>Review secrets</strong> - Ensure no hardcoded passwords</li>
+</ol>
+<h2 id="future-enhancements">Future Enhancements</h2>
+<ol type="1">
+<li><strong>Multi-region deployment</strong> - Deploy to multiple Koyeb
+regions</li>
+<li><strong>Staged rollout</strong> - Blue-green deployment</li>
+<li><strong>Canary releases</strong> - Deploy to small percentage
+first</li>
+<li><strong>Performance testing</strong> - Run load tests
+pre-deployment</li>
+<li><strong>Slack notifications</strong> - Alert team on failures</li>
+<li><strong>Artifact retention</strong> - Keep previous deployments</li>
+<li><strong>Database migrations</strong> - Automated migration
+testing</li>
+<li><strong>Security scanning</strong> - SAST/DAST in pipeline</li>
+</ol>
+<hr />
+<p><strong>Document Version</strong>: 1.0<br />
+<strong>Last Updated</strong>: October 31, 2025<br />
+<strong>Status</strong>: Production
+Ready</p> are substituted by Pandoc during generation
+  - Standalone mode: --standalone flag ensures complete HTML output
+  - Template variables documented: https://pandoc.org/MANUAL.html#templates
+
+Key Features:
+  ✓ Responsive two-column layout (sidebar + content)
+  ✓ Professional styling via external enterprise-docs.css
+  ✓ Automatic sidebar navigation with active state highlighting
+  ✓ Mermaid.js v10 integration for architecture diagrams
+  ✓ Table of contents highlighting during scroll
+  ✓ Print-friendly styles
+  ✓ GitHub Pages compatible (absolute paths with /stockease/ root)
+
+Browser Support: All modern browsers (Chrome, Firefox, Safari, Edge)
+Accessibility: WCAG 2.1 AA compliant
+
+Dependencies:
+  - External CSS: /stockease/templates/enterprise-docs.css
+  - Mermaid.js v10: https://cdn.jsdelivr.net/npm/mermaid@10/
+  - Pandoc Lua Filter: /tmp/md-to-html-links.lua (converts mermaid blocks to divs)
+
+Generated Files Location:
+  - GitHub Pages: https://keglev.github.io/stockease/architecture/
+  - Build Output: target/docs/architecture/ (before deployment)
+
+Workflow Integration:
+  1. docs-pipeline.yml: Runs Pandoc with this template + Lua filter
+  2. Lua Filter: Converts mermaid code blocks to <div class="mermaid">
+  3. Pandoc: Processes markdown with this template
+  4. Output: Styled HTML in target/docs/architecture/
+  5. Deployment: Published to GitHub Pages via gh-pages action
+
+Last Updated: 2025-11-04
+Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
+================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -478,6 +938,19 @@
     </footer>
 
     <script>
+        // ====================================================================
+        // SIDEBAR NAVIGATION MODULE
+        // ====================================================================
+        // Dynamically builds navigation sidebar based on static navigation
+        // object. Highlights current page based on window.location.pathname.
+        // 
+        // Features:
+        //   - Dynamic menu generation (no need to update HTML)
+        //   - Active state highlighting (bold + background color)
+        //   - Relative path calculation for nested pages (../../../templates)
+        //   - Architecture root detection for consistent navigation
+        // ====================================================================
+        
         // Calculate relative path to architecture root based on current location
         function getArchRoot() {
             const path = window.location.pathname;
@@ -625,10 +1098,32 @@
 
     <!-- Mermaid.js for diagram rendering -->
     <script type="module">
+        // ====================================================================
+        // MERMAID DIAGRAM RENDERING MODULE
+        // ====================================================================
+        // Renders architecture diagrams using Mermaid.js v10.
+        // 
+        // Diagram Source: Markdown files contain ```mermaid code fences
+        // Processing Pipeline:
+        //   1. Markdown (``` mermaid ... ```)
+        //   2. Pandoc Lua filter converts to <div class="mermaid">content</div>
+        //   3. This script imports mermaid.js and calls mermaid.run()
+        //   4. Mermaid.js renders SVG diagrams in-place
+        // 
+        // Supported Diagram Types:
+        //   - Flowcharts (graph/digraph)
+        //   - Sequence diagrams
+        //   - Class diagrams
+        //   - State diagrams
+        //   - Deployment diagrams
+        // 
+        // Security: securityLevel: 'loose' allows HTML in diagram labels
+        // Styling: Applied via enterprise-docs.css (.mermaid styles)
+        // 
+        // Browser Support: All modern browsers with ES Module support
+        // CDN: https://cdn.jsdelivr.net/npm/mermaid@10/
+        // ====================================================================
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        // Debug logging
-        console.log('🔧 Mermaid module loaded');
         
         mermaid.initialize({ 
             startOnLoad: false,
@@ -637,22 +1132,20 @@
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
         
-        console.log('🔧 Mermaid initialized');
-        
         // Look for mermaid divs that were generated by Pandoc Lua filter
         const mermaidDivs = document.querySelectorAll('div.mermaid');
-        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
         
-        mermaidDivs.forEach((div, index) => {
-            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
         });
         
-        // Also look for any code.language-mermaid blocks (fallback)
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
-        codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+        codeMermaidBlocks.forEach((code) => {
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
@@ -661,27 +1154,19 @@
             }
         });
         
-        console.log('🔧 Class conversion complete');
-        
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
         if (document.readyState === 'loading') {
-            console.log('🔧 DOM still loading, waiting for DOMContentLoaded event');
             document.addEventListener('DOMContentLoaded', async () => {
-                console.log('🔧 DOMContentLoaded fired, running mermaid.run()');
                 try {
                     await mermaid.run();
-                    console.log('✓ Mermaid rendering complete');
                 } catch (err) {
-                    console.error('❌ Mermaid rendering error:', err);
+                    console.error('Mermaid rendering error:', err);
                 }
             });
         } else {
-            console.log('🔧 DOM already loaded, running mermaid.run() immediately');
             // Already loaded
-            mermaid.run().then(() => {
-                console.log('✓ Mermaid rendering complete');
-            }).catch(err => {
-                console.error('❌ Mermaid rendering error:', err);
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
             });
         }
     </script>

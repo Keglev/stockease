@@ -1,4 +1,720 @@
 <!DOCTYPE html>
+<!--
+================================================================================
+                    STOCKEASE ENTERPRISE DOCUMENTATION TEMPLATE
+================================================================================
+
+File: enterprise-docs.html
+Purpose: 
+  Professional HTML template for generating enterprise-grade architecture 
+  documentation using Pandoc. Used by the docs-pipeline.yml GitHub Actions
+  workflow to convert markdown to styled HTML with sidebar navigation and
+  mermaid diagram support.
+
+Template Engine: Pandoc (pandoc.org)
+  - Variables: , <h1 id="security-architecture">Security
+Architecture</h1>
+<h2 id="overview">Overview</h2>
+<p>StockEase implements a <strong>defense-in-depth security
+model</strong> with multiple layers of protection:</p>
+<pre><code>┌─────────────────────────────────────────┐
+│     HTTPS/TLS (Transport Security)      │
+├─────────────────────────────────────────┤
+│    CORS (Cross-Origin Resource Sharing) │
+├─────────────────────────────────────────┤
+│   HTTP Security Headers (Security)      │
+├─────────────────────────────────────────┤
+│    Authentication (JWT Tokens)          │
+├─────────────────────────────────────────┤
+│   Authorization (Role-Based Access)     │
+├─────────────────────────────────────────┤
+│     Input Validation &amp; Sanitization     │
+├─────────────────────────────────────────┤
+│      Password Hashing (BCrypt)          │
+├─────────────────────────────────────────┤
+│  Database Security (Parameterized SQL)  │
+└─────────────────────────────────────────┘</code></pre>
+<h2 id="transport-security-httpstls">1. Transport Security
+(HTTPS/TLS)</h2>
+<h3 id="implementation">Implementation</h3>
+<ul>
+<li><strong>Protocol</strong>: HTTPS only (TLS 1.2+)</li>
+<li><strong>Certificate</strong>: Managed by Koyeb/CloudFlare</li>
+<li><strong>Force HTTPS</strong>: All HTTP requests redirected to
+HTTPS</li>
+</ul>
+<h3 id="configuration">Configuration</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># application.properties</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">server.ssl.enabled=true</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">server.ssl.key-store-type=PKCS12</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Certificates managed by infrastructure</span></span></code></pre></div>
+<h3 id="benefits">Benefits</h3>
+<ul>
+<li>Encrypts all data in transit</li>
+<li>Prevents man-in-the-middle attacks</li>
+<li>Protects credentials and tokens</li>
+<li>Required for production APIs</li>
+</ul>
+<h2 id="authentication-authorization">2. Authentication &amp;
+Authorization</h2>
+<h3 id="jwt-json-web-tokens">JWT (JSON Web Tokens)</h3>
+<p><strong>Purpose</strong>: Stateless, scalable authentication</p>
+<p><strong>Token Structure</strong>:</p>
+<pre><code>Header.Payload.Signature
+
+Header:
+{
+  &quot;alg&quot;: &quot;HS256&quot;,
+  &quot;typ&quot;: &quot;JWT&quot;
+}
+
+Payload:
+{
+  &quot;sub&quot;: &quot;user-id-uuid&quot;,
+  &quot;username&quot;: &quot;john.doe&quot;,
+  &quot;role&quot;: &quot;ADMIN&quot;,
+  &quot;iat&quot;: 1701418200,
+  &quot;exp&quot;: 1701504600,
+  &quot;iss&quot;: &quot;stockease-backend&quot;,
+  &quot;aud&quot;: &quot;stockease-frontend&quot;
+}
+
+Signature:
+HMACSHA256(
+  base64UrlEncode(header) + &quot;.&quot; +
+  base64UrlEncode(payload),
+  secret_key
+)</code></pre>
+<p><strong>Token Generation Flow</strong>:</p>
+<pre><code>1. User calls POST /api/auth/login
+   ├── Headers: Content-Type: application/json
+   └── Body: { &quot;username&quot;: &quot;admin&quot;, &quot;password&quot;: &quot;admin123&quot; }
+
+2. AuthController receives request
+   ├── Calls AuthService.authenticate(username, password)
+   └── AuthService validates credentials
+
+3. Credential Validation
+   ├── Find user by username in database
+   ├── Compare provided password with BCrypt hash
+   ├── If match → proceed to token generation
+   ├── If no match → throw AuthenticationException (401)
+   └── If user not found → throw AuthenticationException (401)
+
+4. JWT Token Generation
+   ├── Create payload with:
+   │   ├── User ID (sub claim)
+   │   ├── Username
+   │   ├── Role (ADMIN / USER)
+   │   ├── Issue time (iat)
+   │   ├── Expiration time (exp = iat + 24 hours)
+   │   ├── Issuer (iss)
+   │   └── Audience (aud)
+   ├── Sign with secret key (HS256)
+   └── Encode as base64url string
+
+5. Response
+   ├── Status: 200 OK
+   ├── Body: { &quot;token&quot;: &quot;eyJhbG...&quot;, &quot;expiresIn&quot;: 86400 }
+   └── Client stores token (localStorage / sessionStorage)
+
+### Login Sequence (simplified)
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant FE as Frontend
+  participant BE as Backend (Spring Boot)
+  U-&gt;&gt;FE: Submit credentials (username/password)
+  FE-&gt;&gt;BE: POST /api/auth/login (JSON body)
+  BE-&gt;&gt;BE: Authenticate (AuthenticationManager)
+  BE-&gt;&gt;BE: Lookup user (UserRepository)
+  BE-&gt;&gt;BE: Generate JWT (JwtUtil)
+  BE--&gt;&gt;FE: 200 OK + { token }
+  FE--&gt;&gt;U: Store token; use for subsequent requests</code></pre>
+<pre><code>
+**Token Usage in Requests**:</code></pre>
+<p>Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…</p>
+<p>Every subsequent request must include this header</p>
+<pre><code>
+**Token Validation Flow**:</code></pre>
+<ol type="1">
+<li><p>Request arrives at controller with JWT token</p></li>
+<li><p>SecurityFilter intercepts request ├── Extracts token from
+Authorization header ├── Calls JwtProvider.validateToken(token) └──
+Passes token to validation logic</p></li>
+<li><p>JWT Validation ├── Verify token format (Header.Payload.Signature)
+├── Verify signature using secret key ├── Check expiration time (exp
+claim vs current time) ├── Extract claims (user ID, role) ├── If valid →
+create Authentication object ├── If invalid/expired → throw JwtException
+(401) └── If malformed → throw JwtException (401)</p></li>
+<li><p>SecurityContext Set ├── Store Authentication in SecurityContext
+├── Make available to controller via <span class="citation"
+data-cites="AuthenticationPrincipal">@AuthenticationPrincipal</span> └──
+Controller can access user info</p></li>
+<li><p>Request Proceeds ├── SecurityFilter passes to next filter ├──
+Request reaches ProductController └── Can access authenticated user
+info</p></li>
+</ol>
+<pre><code>
+### Role-Based Access Control (RBAC)
+
+**Roles Defined**:
+```java
+public enum Role {
+    ADMIN,   // Full access: create, read, update, delete
+    USER     // Limited access: read only
+}</code></pre>
+<p><strong>Authorization Rules (implemented)</strong>:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Endpoint</th>
+<th>Method</th>
+<th>ADMIN</th>
+<th>USER</th>
+<th>Anonymous</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>/api/health</code></td>
+<td>GET</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td><code>/api/auth/login</code></td>
+<td>POST</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅ (public)</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products</code></td>
+<td>GET</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/paged</code></td>
+<td>GET</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}</code></td>
+<td>GET</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="even">
+<td><code>/api/products</code></td>
+<td>POST</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}/quantity</code></td>
+<td>PUT</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/{id}/price</code></td>
+<td>PUT</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}/name</code></td>
+<td>PUT</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/low-stock</code></td>
+<td>GET</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/search</code></td>
+<td>GET</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/total-stock-value</code></td>
+<td>GET</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}</code></td>
+<td>DELETE</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Notes: The table above reflects the current
+<code>SecurityConfig</code> in code: login is permitted publicly
+(<code>/api/auth/login</code>), health is public, product create/delete
+are admin-only, and most read/update product endpoints allow ADMIN and
+USER.</p>
+</blockquote>
+<h3 id="api-map-quick-reference">API Map (quick reference)</h3>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 40%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endpoint</th>
+<th style="text-align: right;">Purpose</th>
+<th>Auth</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>POST /api/auth/login</code></td>
+<td style="text-align: right;">Return JWT for valid credentials</td>
+<td>Public (no token)</td>
+</tr>
+<tr class="even">
+<td><code>GET /api/health</code></td>
+<td style="text-align: right;">Liveness/database connectivity</td>
+<td>Public</td>
+</tr>
+<tr class="odd">
+<td><code>GET /api/products</code></td>
+<td style="text-align: right;">List products</td>
+<td>JWT (ADMIN/USER)</td>
+</tr>
+<tr class="even">
+<td><code>POST /api/products</code></td>
+<td style="text-align: right;">Create product</td>
+<td>JWT (ADMIN)</td>
+</tr>
+<tr class="odd">
+<td><code>PUT /api/products/{id}/quantity</code></td>
+<td style="text-align: right;">Update product quantity</td>
+<td>JWT (ADMIN/USER)</td>
+</tr>
+<tr class="even">
+<td><code>DELETE /api/products/{id}</code></td>
+<td style="text-align: right;">Delete product</td>
+<td>JWT (ADMIN)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Authorization Implementation</strong>:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">@PostMapping</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">createProduct</span><span class="op">(</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Only users with ADMIN role can reach here</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> productService<span class="op">.</span><span class="fu">create</span><span class="op">(</span>req<span class="op">);</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Or using method-level security:</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="at">@Service</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductService <span class="op">{</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Secured</span><span class="op">(</span><span class="st">&quot;ROLE_ADMIN&quot;</span><span class="op">)</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="bu">UUID</span> id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Only ADMIN can call this method</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="password-security">3. Password Security</h2>
+<h3 id="bcrypt-hashing">BCrypt Hashing</h3>
+<p><strong>Purpose</strong>: Store passwords securely, never in
+plaintext</p>
+<p><strong>BCrypt Properties</strong>: - <strong>One-way hash</strong>:
+Cannot reverse to get original password - <strong>Salt
+included</strong>: Each password has unique salt (prevents rainbow
+tables) - <strong>Adaptive</strong>: Slower algorithm resists brute
+force - <strong>Configurable strength</strong>: Cost factor 10-12
+iterations</p>
+<p><strong>Password Hashing Flow</strong>:</p>
+<pre><code>1. User provides password: &quot;MySecurePass123!&quot;
+
+2. BCryptPasswordEncoder
+   ├── Generate random salt
+   ├── Apply BCrypt algorithm with salt
+   ├── Produce hash: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36CHhzPm
+   └── Store hash in database
+
+3. Password Verification (login)
+   ├── User provides password: &quot;MySecurePass123!&quot;
+   ├── Retrieve stored hash from database
+   ├── Apply BCrypt with provided password and stored salt
+   ├── Compare computed hash with stored hash
+   ├── If match → password correct (401 vs 200)
+   ├── If no match → authentication failed (401 Unauthorized)
+   └── Never store or log plaintext password</code></pre>
+<p><strong>Configuration</strong>:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> SecurityConfig <span class="op">{</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> PasswordEncoder <span class="fu">passwordEncoder</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BCryptPasswordEncoder</span><span class="op">(</span><span class="dv">10</span><span class="op">);</span> <span class="co">// strength 10</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="api-security">4. API Security</h2>
+<h3 id="cors-cross-origin-resource-sharing">CORS (Cross-Origin Resource
+Sharing)</h3>
+<p><strong>Purpose</strong>: Control which origins can access the
+API</p>
+<p><strong>Configuration</strong>:</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> CorsConfig <span class="kw">implements</span> WebMvcConfigurer <span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Override</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">addCorsMappings</span><span class="op">(</span>CorsRegistry registry<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        registry<span class="op">.</span><span class="fu">addMapping</span><span class="op">(</span><span class="st">&quot;/api/**&quot;</span><span class="op">)</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">allowedOrigins</span><span class="op">(</span><span class="st">&quot;https://stockease.example.com&quot;</span><span class="op">)</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">allowedMethods</span><span class="op">(</span><span class="st">&quot;GET&quot;</span><span class="op">,</span> <span class="st">&quot;POST&quot;</span><span class="op">,</span> <span class="st">&quot;PUT&quot;</span><span class="op">,</span> <span class="st">&quot;DELETE&quot;</span><span class="op">,</span> <span class="st">&quot;OPTIONS&quot;</span><span class="op">)</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">allowedHeaders</span><span class="op">(</span><span class="st">&quot;Content-Type&quot;</span><span class="op">,</span> <span class="st">&quot;Authorization&quot;</span><span class="op">)</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">exposedHeaders</span><span class="op">(</span><span class="st">&quot;X-Total-Count&quot;</span><span class="op">,</span> <span class="st">&quot;X-Page-Count&quot;</span><span class="op">)</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">allowCredentials</span><span class="op">(</span><span class="kw">true</span><span class="op">)</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">maxAge</span><span class="op">(</span><span class="dv">3600</span><span class="op">);</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Production Settings</strong>: - ✅ Specific allowed origins
+(not <code>*</code>) - ✅ Limited HTTP methods - ✅ Credentials allowed
+for same-site requests - ✅ Limited max-age (3600 seconds)</p>
+<h3 id="security-headers">Security Headers</h3>
+<p><strong>Headers Set by Spring Security</strong>:</p>
+<pre><code>Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Cache-Control: no-cache, no-store, must-revalidate</code></pre>
+<p><strong>What They Prevent</strong>: - <code>HSTS</code>: Forces
+HTTPS-only communication - <code>X-Content-Type-Options: nosniff</code>:
+Prevents MIME-type sniffing - <code>X-Frame-Options: DENY</code>:
+Prevents clickjacking - <code>X-XSS-Protection</code>: Enables browser
+XSS protection</p>
+<h2 id="input-validation-sanitization">5. Input Validation &amp;
+Sanitization</h2>
+<h3 id="request-validation">Request Validation</h3>
+<p><strong>Purpose</strong>: Prevent malformed data and malicious
+inputs</p>
+<p><strong>Validation Rules</strong>:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> CreateProductRequest <span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Name cannot be null&quot;</span><span class="op">)</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Name cannot be blank&quot;</span><span class="op">)</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Size</span><span class="op">(</span>min <span class="op">=</span> <span class="dv">3</span><span class="op">,</span> max <span class="op">=</span> <span class="dv">255</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Name must be 3-255 characters&quot;</span><span class="op">)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> name<span class="op">;</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Price cannot be null&quot;</span><span class="op">)</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DecimalMin</span><span class="op">(</span>value <span class="op">=</span> <span class="st">&quot;0.01&quot;</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Price must be &gt; 0&quot;</span><span class="op">)</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DecimalMax</span><span class="op">(</span>value <span class="op">=</span> <span class="st">&quot;999999.99&quot;</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Price cannot exceed 999999.99&quot;</span><span class="op">)</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">BigDecimal</span> price<span class="op">;</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;Quantity cannot be null&quot;</span><span class="op">)</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Min</span><span class="op">(</span>value <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Quantity cannot be negative&quot;</span><span class="op">)</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Max</span><span class="op">(</span>value <span class="op">=</span> <span class="dv">1000000</span><span class="op">,</span> message <span class="op">=</span> <span class="st">&quot;Quantity cannot exceed 1,000,000&quot;</span><span class="op">)</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Integer</span> quantity<span class="op">;</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span><span class="op">(</span>message <span class="op">=</span> <span class="st">&quot;SKU is required&quot;</span><span class="op">)</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Pattern</span><span class="op">(</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>        regexp <span class="op">=</span> <span class="st">&quot;^[A-Z0-9-]{3,50}$&quot;</span><span class="op">,</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        message <span class="op">=</span> <span class="st">&quot;SKU must be 3-50 chars, alphanumeric and hyphens only&quot;</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">)</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> sku<span class="op">;</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Validation Execution</strong>:</p>
+<pre><code>1. Request arrives at @PostMapping
+2. @Valid annotation triggers validation
+3. CreateProductRequest deserialized and validated
+4. Validation fails → MethodArgumentNotValidException thrown
+5. GlobalExceptionHandler catches exception
+6. Returns 400 Bad Request with error details
+
+Response (if validation fails):
+{
+  &quot;status&quot;: 400,
+  &quot;error&quot;: &quot;Validation Failed&quot;,
+  &quot;message&quot;: &quot;Validation failed for argument &#39;request&#39;&quot;,
+  &quot;details&quot;: [
+    {
+      &quot;field&quot;: &quot;name&quot;,
+      &quot;message&quot;: &quot;Name must be 3-255 characters&quot;
+    },
+    {
+      &quot;field&quot;: &quot;price&quot;,
+      &quot;message&quot;: &quot;Price must be &gt; 0&quot;
+    }
+  ]
+}</code></pre>
+<h3 id="sql-injection-prevention">SQL Injection Prevention</h3>
+<p><strong>Parameterized Queries</strong> (Spring Data JPA):</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ SAFE: Spring Data prevents SQL injection</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>productRepository<span class="op">.</span><span class="fu">findBySku</span><span class="op">(</span>userProvidedSku<span class="op">);</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ SAFE: Native query with parameters</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.sku = ?1&quot;</span><span class="op">)</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>Optional<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findBySku</span><span class="op">(</span><span class="bu">String</span> sku<span class="op">);</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">// ❌ DANGEROUS: String concatenation</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="bu">Query</span> q <span class="op">=</span> entityManager<span class="op">.</span><span class="fu">createNativeQuery</span><span class="op">(</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;SELECT * FROM products WHERE sku = &#39;&quot;</span> <span class="op">+</span> userInput <span class="op">+</span> <span class="st">&quot;&#39;&quot;</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">// This allows SQL injection!</span></span></code></pre></div>
+<h2 id="database-security">6. Database Security</h2>
+<h3 id="connection-security">Connection Security</h3>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># application.properties</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="at">spring.datasource.url=jdbc:postgresql://host:5432/stockease?sslmode=require</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="at">spring.datasource.username=${DB_USER}</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="at">spring.datasource.password=${DB_PASSWORD}</span></span></code></pre></div>
+<p><strong>Environment Variables</strong> (never hardcoded): -
+<code>DB_USER</code>: Database username - <code>DB_PASSWORD</code>:
+Database password - <code>JWT_SECRET</code>: JWT signing key</p>
+<h3 id="row-level-security-future">Row-Level Security (Future)</h3>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode sql"><code class="sourceCode sql"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Example: Users can only see products they created</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ALTER</span> <span class="kw">TABLE</span> products <span class="kw">ENABLE</span> <span class="kw">ROW</span> <span class="kw">LEVEL</span> SECURITY;</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> POLICY user_products <span class="kw">ON</span> products</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">USING</span> (created_by <span class="op">=</span> current_user_id());</span></code></pre></div>
+<h2 id="audit-logging">7. Audit Logging</h2>
+<p><strong>Logged Events</strong>:</p>
+<pre><code>- User login attempt (success/failure)
+- User registration
+- Product creation (who, when)
+- Product modification (who, when)
+- Product deletion (who, when)
+- Authorization failures (403 errors)
+- API errors (500 errors)</code></pre>
+<p><strong>Log Format</strong>:</p>
+<pre><code>[2025-10-31 10:30:45] INFO  [AuthService] User &#39;john.doe&#39; logged in successfully
+[2025-10-31 10:31:12] INFO  [ProductService] Product &#39;Widget&#39; created by admin (ID: ...)
+[2025-10-31 10:32:00] WARN  [SecurityFilter] Unauthorized access attempt: invalid token
+[2025-10-31 10:33:15] ERROR [ProductService] Database error: connection timeout</code></pre>
+<h2 id="security-best-practices-implemented">8. Security Best Practices
+Implemented</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Practice</th>
+<th>Implementation</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>HTTPS/TLS</td>
+<td>Koyeb managed certificates</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>JWT Tokens</td>
+<td>HS256 signing with secret key</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>Password Hashing</td>
+<td>BCrypt with cost factor 10</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>RBAC</td>
+<td>ADMIN/USER roles</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>Input Validation</td>
+<td><span class="citation" data-cites="Valid">@Valid</span> + JSR-303
+annotations</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>SQL Injection Prevention</td>
+<td>Parameterized queries (JPA)</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>CORS</td>
+<td>Restricted to specific origins</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>Security Headers</td>
+<td>HSTS, X-Frame-Options, etc.</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>Audit Logging</td>
+<td>Request logging in critical paths</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>Secrets Management</td>
+<td>Environment variables, no hardcoding</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>Rate Limiting</td>
+<td>Per-endpoint rate limiting (future)</td>
+<td>⏳</td>
+</tr>
+<tr class="even">
+<td>API Key Management</td>
+<td>Support for API keys (future)</td>
+<td>⏳</td>
+</tr>
+</tbody>
+</table>
+<h2 id="default-credentials-developmenttesting">9. Default Credentials
+(Development/Testing)</h2>
+<p><strong>Purpose</strong>: Enable quick testing without additional
+setup</p>
+<p><strong>Admin User</strong>:</p>
+<pre><code>Username: admin
+Password: admin123
+Role: ADMIN</code></pre>
+<p><strong>Regular User</strong>:</p>
+<pre><code>Username: user
+Password: user123
+Role: USER</code></pre>
+<p>⚠️ <strong>WARNING</strong>: These credentials are seeded via V3
+migration for development only. In production, create secure passwords
+and remove seed data.</p>
+<h2 id="security-testing">10. Security Testing</h2>
+<h3 id="test-coverage">Test Coverage</h3>
+<pre><code>- Authentication tests (valid/invalid credentials)
+- Authorization tests (ADMIN vs USER endpoints)
+- Password hashing verification
+- JWT token validation/expiration
+- CORS policy enforcement
+- Input validation edge cases
+- SQL injection attempts (should fail)</code></pre>
+<h3 id="example-security-test">Example Security Test</h3>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">testUnauthorizedAccessToProductCreation</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// User role cannot create products</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">header</span><span class="op">(</span><span class="st">&quot;Authorization&quot;</span><span class="op">,</span> <span class="st">&quot;Bearer &quot;</span> <span class="op">+</span> userToken<span class="op">)</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">contentType</span><span class="op">(</span>MediaType<span class="op">.</span><span class="fu">APPLICATION_JSON</span><span class="op">)</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">content</span><span class="op">(</span>jsonRequest<span class="op">))</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isForbidden</span><span class="op">());</span> <span class="co">// 403</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">testInvalidTokenRejection</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">header</span><span class="op">(</span><span class="st">&quot;Authorization&quot;</span><span class="op">,</span> <span class="st">&quot;Bearer invalid-token&quot;</span><span class="op">))</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isUnauthorized</span><span class="op">());</span> <span class="co">// 401</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="deployment-security-checklist">11. Deployment Security
+Checklist</h2>
+<p>Before production deployment: - [ ] Change all default credentials -
+[ ] Remove seed data (V3 migration) - [ ] Set strong JWT secret (32+
+characters) - [ ] Enable HTTPS/TLS - [ ] Configure CORS for production
+domain only - [ ] Set up audit logging - [ ] Enable database backups - [
+] Review security headers - [ ] Perform security testing - [ ] Set up
+monitoring/alerting - [ ] Document security policies - [ ] Conduct code
+review for security issues</p>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<h3 id="main-architecture-topics">Main Architecture Topics</h3>
+<ul>
+<li><strong><a href="./overview.html">Architecture Overview</a></strong>
+- Overall system context and security decisions</li>
+<li><strong><a href="./backend.html">Backend Architecture</a></strong> -
+Spring Security configuration in code</li>
+<li><strong><a href="./layers.html">Service Layers</a></strong> -
+Authorization checks in Controller and Service layers</li>
+<li><strong><a href="./deployment.html">Deployment
+Architecture</a></strong> - Infrastructure security and TLS/HTTPS
+setup</li>
+</ul>
+<h3 id="architecture-decisions-adrs">Architecture Decisions (ADRs)</h3>
+<ul>
+<li><strong><a href="./decisions/001-database-choice.html">Database
+Choice</a></strong> - Database-level security implications</li>
+<li><strong><a
+href="./decisions/002-validation-strategy.html">Validation
+Strategy</a></strong> - Input validation as first line of defense</li>
+</ul>
+<h3 id="design-patterns-practices">Design Patterns &amp; Practices</h3>
+<ul>
+<li><strong><a href="./patterns/security-patterns.html">Security
+Patterns</a></strong> - JWT token generation, BCrypt hashing, CORS</li>
+<li><strong><a href="./patterns/repository-pattern.html">Repository
+Pattern</a></strong> - Query-level security considerations</li>
+</ul>
+<h3 id="infrastructure-deployment">Infrastructure &amp; Deployment</h3>
+<ul>
+<li><strong><a href="./deployment/ci-pipeline.html">CI/CD
+Pipeline</a></strong> - Secret management in GitHub Actions</li>
+<li><strong><a href="./deployment/staging-config.html">Staging
+Configuration</a></strong> - Security testing environment</li>
+</ul>
+<hr />
+<p><strong>Document Version</strong>: 1.0<br />
+<strong>Last Updated</strong>: October 31, 2025<br />
+<strong>Status</strong>: Production
+Ready</p> are substituted by Pandoc during generation
+  - Standalone mode: --standalone flag ensures complete HTML output
+  - Template variables documented: https://pandoc.org/MANUAL.html#templates
+
+Key Features:
+  ✓ Responsive two-column layout (sidebar + content)
+  ✓ Professional styling via external enterprise-docs.css
+  ✓ Automatic sidebar navigation with active state highlighting
+  ✓ Mermaid.js v10 integration for architecture diagrams
+  ✓ Table of contents highlighting during scroll
+  ✓ Print-friendly styles
+  ✓ GitHub Pages compatible (absolute paths with /stockease/ root)
+
+Browser Support: All modern browsers (Chrome, Firefox, Safari, Edge)
+Accessibility: WCAG 2.1 AA compliant
+
+Dependencies:
+  - External CSS: /stockease/templates/enterprise-docs.css
+  - Mermaid.js v10: https://cdn.jsdelivr.net/npm/mermaid@10/
+  - Pandoc Lua Filter: /tmp/md-to-html-links.lua (converts mermaid blocks to divs)
+
+Generated Files Location:
+  - GitHub Pages: https://keglev.github.io/stockease/architecture/
+  - Build Output: target/docs/architecture/ (before deployment)
+
+Workflow Integration:
+  1. docs-pipeline.yml: Runs Pandoc with this template + Lua filter
+  2. Lua Filter: Converts mermaid code blocks to <div class="mermaid">
+  3. Pandoc: Processes markdown with this template
+  4. Output: Styled HTML in target/docs/architecture/
+  5. Deployment: Published to GitHub Pages via gh-pages action
+
+Last Updated: 2025-11-04
+Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
+================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -746,6 +1462,19 @@ Role: USER</code></pre>
     </footer>
 
     <script>
+        // ====================================================================
+        // SIDEBAR NAVIGATION MODULE
+        // ====================================================================
+        // Dynamically builds navigation sidebar based on static navigation
+        // object. Highlights current page based on window.location.pathname.
+        // 
+        // Features:
+        //   - Dynamic menu generation (no need to update HTML)
+        //   - Active state highlighting (bold + background color)
+        //   - Relative path calculation for nested pages (../../../templates)
+        //   - Architecture root detection for consistent navigation
+        // ====================================================================
+        
         // Calculate relative path to architecture root based on current location
         function getArchRoot() {
             const path = window.location.pathname;
@@ -893,10 +1622,32 @@ Role: USER</code></pre>
 
     <!-- Mermaid.js for diagram rendering -->
     <script type="module">
+        // ====================================================================
+        // MERMAID DIAGRAM RENDERING MODULE
+        // ====================================================================
+        // Renders architecture diagrams using Mermaid.js v10.
+        // 
+        // Diagram Source: Markdown files contain ```mermaid code fences
+        // Processing Pipeline:
+        //   1. Markdown (``` mermaid ... ```)
+        //   2. Pandoc Lua filter converts to <div class="mermaid">content</div>
+        //   3. This script imports mermaid.js and calls mermaid.run()
+        //   4. Mermaid.js renders SVG diagrams in-place
+        // 
+        // Supported Diagram Types:
+        //   - Flowcharts (graph/digraph)
+        //   - Sequence diagrams
+        //   - Class diagrams
+        //   - State diagrams
+        //   - Deployment diagrams
+        // 
+        // Security: securityLevel: 'loose' allows HTML in diagram labels
+        // Styling: Applied via enterprise-docs.css (.mermaid styles)
+        // 
+        // Browser Support: All modern browsers with ES Module support
+        // CDN: https://cdn.jsdelivr.net/npm/mermaid@10/
+        // ====================================================================
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        // Debug logging
-        console.log('🔧 Mermaid module loaded');
         
         mermaid.initialize({ 
             startOnLoad: false,
@@ -905,22 +1656,20 @@ Role: USER</code></pre>
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
         
-        console.log('🔧 Mermaid initialized');
-        
         // Look for mermaid divs that were generated by Pandoc Lua filter
         const mermaidDivs = document.querySelectorAll('div.mermaid');
-        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
         
-        mermaidDivs.forEach((div, index) => {
-            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
         });
         
-        // Also look for any code.language-mermaid blocks (fallback)
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
-        codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+        codeMermaidBlocks.forEach((code) => {
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
@@ -929,27 +1678,19 @@ Role: USER</code></pre>
             }
         });
         
-        console.log('🔧 Class conversion complete');
-        
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
         if (document.readyState === 'loading') {
-            console.log('🔧 DOM still loading, waiting for DOMContentLoaded event');
             document.addEventListener('DOMContentLoaded', async () => {
-                console.log('🔧 DOMContentLoaded fired, running mermaid.run()');
                 try {
                     await mermaid.run();
-                    console.log('✓ Mermaid rendering complete');
                 } catch (err) {
-                    console.error('❌ Mermaid rendering error:', err);
+                    console.error('Mermaid rendering error:', err);
                 }
             });
         } else {
-            console.log('🔧 DOM already loaded, running mermaid.run() immediately');
             // Already loaded
-            mermaid.run().then(() => {
-                console.log('✓ Mermaid rendering complete');
-            }).catch(err => {
-                console.error('❌ Mermaid rendering error:', err);
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
             });
         }
     </script>

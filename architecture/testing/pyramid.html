@@ -1,4 +1,665 @@
 <!DOCTYPE html>
+<!--
+================================================================================
+                    STOCKEASE ENTERPRISE DOCUMENTATION TEMPLATE
+================================================================================
+
+File: enterprise-docs.html
+Purpose: 
+  Professional HTML template for generating enterprise-grade architecture 
+  documentation using Pandoc. Used by the docs-pipeline.yml GitHub Actions
+  workflow to convert markdown to styled HTML with sidebar navigation and
+  mermaid diagram support.
+
+Template Engine: Pandoc (pandoc.org)
+  - Variables: , <h1 id="test-pyramid">Test Pyramid</h1>
+<p><strong>Purpose</strong>: Define the target distribution of unit,
+integration, and system tests in StockEase.</p>
+<hr />
+<h2 id="the-test-pyramid-concept">The Test Pyramid Concept</h2>
+<h3 id="traditional-pyramid">Traditional Pyramid</h3>
+<div class="mermaid">graph TD
+    A["System E2E 5%<br/>Slow, expensive<br/>Simulate user scenarios"] 
+    B[Integration 25%<br/>Medium speed<br/>Test layer interactions]
+    C[Unit 70%<br/>Fast, cheap<br/>Test one thing]
+    
+    C --- B
+    B --- A
+    
+    style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+    style B fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px</div>
+<h3 id="benefits-of-this-shape">Benefits of This Shape</h3>
+<table>
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 19%" />
+<col style="width: 19%" />
+<col style="width: 16%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Level</th>
+<th>Tests</th>
+<th>Speed</th>
+<th>Cost</th>
+<th>Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Unit</strong></td>
+<td>Many</td>
+<td>Fast (ms)</td>
+<td>Low</td>
+<td>Fast feedback during development</td>
+</tr>
+<tr class="even">
+<td><strong>Integration</strong></td>
+<td>Some</td>
+<td>Medium (sec)</td>
+<td>Medium</td>
+<td>Test layer interactions</td>
+</tr>
+<tr class="odd">
+<td><strong>System</strong></td>
+<td>Few</td>
+<td>Slow (min)</td>
+<td>High</td>
+<td>Test real user scenarios</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="stockease-test-pyramid">StockEase Test Pyramid</h2>
+<h3 id="current-distribution">Current Distribution</h3>
+<div class="mermaid">graph TD
+    A["System E2E - 0 tests - NOT YET IMPLEMENTED<br/>(Red - not implemented)"]
+    B["Integration - 1 test 5%<br/>@SpringBootTest context load (Green - complete)"]
+    C["Unit Slice - 8 tests 95%<br/>@WebMvcTest + unit tests (Green - complete)"]
+    
+    C --- B
+    B --- A
+    
+    style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+    style B fill:#fff3e0,stroke:#388e3c,stroke-width:3px
+    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px</div>
+<h3 id="by-test-type">By Test Type</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Level</th>
+<th>Count</th>
+<th>Pattern</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Unit</strong></td>
+<td>1</td>
+<td>Plain Mockito (no Spring)</td>
+<td>AuthControllerTest</td>
+</tr>
+<tr class="even">
+<td><strong>Slice</strong></td>
+<td>7</td>
+<td><span class="citation"
+data-cites="WebMvcTest">@WebMvcTest</span></td>
+<td>Product*ControllerTest</td>
+</tr>
+<tr class="odd">
+<td><strong>Integration</strong></td>
+<td>1</td>
+<td><span class="citation"
+data-cites="SpringBootTest">@SpringBootTest</span></td>
+<td>StockEaseApplicationTests</td>
+</tr>
+<tr class="even">
+<td><strong>System/E2E</strong></td>
+<td>0</td>
+<td>(Future)</td>
+<td>-</td>
+</tr>
+<tr class="odd">
+<td><strong>TOTAL</strong></td>
+<td><strong>9</strong></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="rationale-why-this-distribution">Rationale: Why This
+Distribution</h2>
+<h3 id="why-70-unit-tests">✅ Why 70% Unit Tests</h3>
+<ol type="1">
+<li><strong>Fast Feedback</strong>: Run entire suite in &lt; 30
+seconds</li>
+<li><strong>Cost-Effective</strong>: No database, no server startup</li>
+<li><strong>Development Friendly</strong>: Can run locally before
+commit</li>
+<li><strong>Isolation</strong>: Test one component at a time</li>
+</ol>
+<p><strong>Example</strong>: AuthControllerTest — tests login logic
+without Spring context</p>
+<h3 id="why-25-slice-tests">✅ Why 25% Slice Tests</h3>
+<ol type="1">
+<li><strong>Layer Coverage</strong>: Test controllers with HTTP
+layer</li>
+<li><strong>Real HTTP Simulation</strong>: MockMvc simulates browser
+requests</li>
+<li><strong>Authorization Testing</strong>: Verify security rules at
+HTTP level</li>
+<li><strong>Fast Enough</strong>: Still complete &lt; 1 sec per
+test</li>
+</ol>
+<p><strong>Examples</strong>: ProductFetchControllerTest,
+ProductCreateControllerTest</p>
+<h3 id="why-5-integration-tests-future">⏳ Why 5% Integration Tests
+(Future)</h3>
+<ol type="1">
+<li><strong>Verify Bean Wiring</strong>: Ensure Spring beans are
+connected</li>
+<li><strong>Cross-Layer Flows</strong>: Test Service → Repository
+chains</li>
+<li><strong>Configuration Validation</strong>: Check properties are
+loaded</li>
+<li><strong>Slower</strong>: Worth it for critical paths</li>
+</ol>
+<p><strong>Current</strong>: StockEaseApplicationTests just checks
+context loads</p>
+<h3 id="why-not-100-systeme2e-tests">❌ Why Not 100% System/E2E
+Tests</h3>
+<ol type="1">
+<li><strong>Too Slow</strong>: Each test takes 10-30 seconds</li>
+<li><strong>Too Expensive</strong>: Requires UI framework (Selenium,
+Playwright)</li>
+<li><strong>Too Flaky</strong>: Browser automation has timing
+issues</li>
+<li><strong>Not Scalable</strong>: Can’t run full suite before every
+commit</li>
+</ol>
+<p><strong>Future</strong>: Could add browser tests for critical user
+flows</p>
+<hr />
+<h2 id="test-level-definitions">Test Level Definitions</h2>
+<h3 id="level-1-unit-tests-70">Level 1: Unit Tests (70%)</h3>
+<p><strong>What they test</strong>: Single class or method in
+isolation<br />
+<strong>Dependencies</strong>: All mocked<br />
+<strong>Framework</strong>: JUnit 5, Mockito<br />
+<strong>Speed</strong>: &lt; 1 second</p>
+<p><strong>Example</strong>:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> AuthControllerTest <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Mock</span> AuthenticationManager authenticationManager<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@InjectMocks</span> AuthController authController<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testLoginSuccess</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Test just the login method, no HTTP</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        ResponseEntity response <span class="op">=</span> authController<span class="op">.</span><span class="fu">login</span><span class="op">(</span>request<span class="op">);</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getStatusCode</span><span class="op">()).</span><span class="fu">isEqualTo</span><span class="op">(</span>OK<span class="op">);</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="level-2-slice-tests-25">Level 2: Slice Tests (25%)</h3>
+<p><strong>What they test</strong>: One horizontal layer (controllers,
+repositories)<br />
+<strong>Dependencies</strong>: Layer tested is real, others mocked<br />
+<strong>Framework</strong>: Spring Boot Test (<span class="citation"
+data-cites="WebMvcTest">@WebMvcTest</span>, <span class="citation"
+data-cites="DataJpaTest">@DataJpaTest</span>)<br />
+<strong>Speed</strong>: 0.5-2 seconds</p>
+<p><strong>Example</strong>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductControllerTest <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span> MockMvc mockMvc<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span> ProductRepository repository<span class="op">;</span>  <span class="co">// Mocked</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testGetProducts</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Test HTTP layer with real controller, mocked repo</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">))</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="level-3-integration-tests-5">Level 3: Integration Tests
+(5%)</h3>
+<p><strong>What they test</strong>: Multiple layers working
+together<br />
+<strong>Dependencies</strong>: All real (or most)<br />
+<strong>Framework</strong>: <span class="citation"
+data-cites="SpringBootTest">@SpringBootTest</span>, full Spring
+context<br />
+<strong>Speed</strong>: 2-5 seconds</p>
+<p><strong>Example</strong>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@SpringBootTest</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> StockEaseApplicationTests <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">contextLoads</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Test: entire app boots, all beans wire correctly</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="level-4-systeme2e-tests-0---future">Level 4: System/E2E Tests
+(0% - Future)</h3>
+<p><strong>What they test</strong>: Complete user scenarios
+end-to-end<br />
+<strong>Scope</strong>: Browser → Frontend → Backend → Database<br />
+<strong>Framework</strong>: Playwright, Cypress, Selenium<br />
+<strong>Speed</strong>: 10-30 seconds per test</p>
+<p><strong>Example</strong> (future):</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">test</span>(<span class="st">&#39;User can login and create product&#39;</span><span class="op">,</span> <span class="kw">async</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Visit login page</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> page<span class="op">.</span><span class="fu">goto</span>(<span class="st">&#39;http://localhost:3000/login&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Fill form</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> page<span class="op">.</span><span class="fu">fill</span>(<span class="st">&#39;input[name=&quot;username&quot;]&#39;</span><span class="op">,</span> <span class="st">&#39;admin&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Submit</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> page<span class="op">.</span><span class="fu">click</span>(<span class="st">&#39;button[type=&quot;submit&quot;]&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Verify redirect</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> page<span class="op">.</span><span class="fu">waitForNavigation</span>()<span class="op">;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Create product</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> page<span class="op">.</span><span class="fu">click</span>(<span class="st">&#39;button:has-text(&quot;New Product&quot;)&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<hr />
+<h2 id="current-test-breakdown-by-feature">Current Test Breakdown by
+Feature</h2>
+<h3 id="authentication">Authentication</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Test</th>
+<th>Type</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>testLoginSuccess</code></td>
+<td>Unit</td>
+<td>✅ Successful login with JWT</td>
+</tr>
+<tr class="even">
+<td><code>testAdminLoginSuccess</code></td>
+<td>Unit</td>
+<td>✅ Admin role login</td>
+</tr>
+<tr class="odd">
+<td><code>testLoginFailureWithInvalidCredentials</code></td>
+<td>Unit</td>
+<td>✅ Wrong password</td>
+</tr>
+<tr class="even">
+<td><code>testLoginFailureWithUserNotFound</code></td>
+<td>Unit</td>
+<td>✅ Unknown user</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total</strong>: 4 tests, 100% unit</p>
+<h3 id="product-fetch">Product Fetch</h3>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 27%" />
+<col style="width: 45%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Test</th>
+<th>Type</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>testGetProductsSuccess</code></td>
+<td>Slice</td>
+<td>✅ Get all products</td>
+</tr>
+<tr class="even">
+<td><code>testGetProductByIdSuccess</code></td>
+<td>Slice</td>
+<td>✅ Get by ID</td>
+</tr>
+<tr class="odd">
+<td><code>testGetProductByIdNotFound</code></td>
+<td>Slice</td>
+<td>✅ Product not found</td>
+</tr>
+<tr class="even">
+<td><code>testLowStockProductsWithRoles</code></td>
+<td>Slice</td>
+<td>✅ Low stock (parameterized)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total</strong>: 4-5 tests, 100% slice</p>
+<h3 id="product-create">Product Create</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Test</th>
+<th>Type</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>testValidProductCreation</code></td>
+<td>Slice</td>
+<td>✅ Admin creates product</td>
+</tr>
+<tr class="even">
+<td><code>testProductCreationDeniedForUser</code></td>
+<td>Slice</td>
+<td>✅ User blocked (403)</td>
+</tr>
+<tr class="odd">
+<td><code>testProductCreationWithoutAuth</code></td>
+<td>Slice</td>
+<td>✅ Unauthenticated (401)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total</strong>: 3 tests, 100% slice</p>
+<h3 id="product-update">Product Update</h3>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 27%" />
+<col style="width: 45%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Test</th>
+<th>Type</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>testValidProductUpdate</code></td>
+<td>Slice</td>
+<td>✅ Admin updates</td>
+</tr>
+<tr class="even">
+<td><code>testInvalidUpdateQuantity</code></td>
+<td>Slice</td>
+<td>✅ Negative quantity validation</td>
+</tr>
+<tr class="odd">
+<td><code>testProductUpdateDeniedForUser</code></td>
+<td>Slice</td>
+<td>✅ User blocked (403)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total</strong>: 3 tests, 100% slice</p>
+<h3 id="product-delete">Product Delete</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Test</th>
+<th>Type</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>testDeleteProductSuccess</code></td>
+<td>Slice</td>
+<td>✅ Admin deletes</td>
+</tr>
+<tr class="even">
+<td><code>testDeleteProductDeniedForUser</code></td>
+<td>Slice</td>
+<td>✅ User blocked (403)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total</strong>: 2 tests, 100% slice</p>
+<h3 id="product-pagination">Product Pagination</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Test</th>
+<th>Type</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>testPaginationWithValidParams</code></td>
+<td>Slice</td>
+<td>✅ Valid page/size</td>
+</tr>
+<tr class="even">
+<td><code>testPaginationWithInvalidParams</code></td>
+<td>Slice</td>
+<td>✅ Invalid parameters</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total</strong>: 2 tests, 100% slice</p>
+<h3 id="application-bootstrap">Application Bootstrap</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Test</th>
+<th>Type</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>contextLoads</code></td>
+<td>Integration</td>
+<td>✅ Spring context loads</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total</strong>: 1 test, 100% integration</p>
+<hr />
+<h2 id="recommended-test-additions">Recommended Test Additions</h2>
+<h3 id="to-improve-coverage-future">To Improve Coverage (Future)</h3>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 23%" />
+<col style="width: 34%" />
+<col style="width: 23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Current</th>
+<th>Recommended</th>
+<th>Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Service</strong></td>
+<td>0</td>
+<td>3-5 unit tests</td>
+<td>Test business logic isolation</td>
+</tr>
+<tr class="even">
+<td><strong>Repository</strong></td>
+<td>0</td>
+<td>2-3 <span class="citation"
+data-cites="DataJpaTest">@DataJpaTest</span></td>
+<td>Test query methods</td>
+</tr>
+<tr class="odd">
+<td><strong>Security</strong></td>
+<td>7 (in controllers)</td>
+<td>2 dedicated</td>
+<td>Focused security tests</td>
+</tr>
+<tr class="even">
+<td><strong>Validation</strong></td>
+<td>1 test</td>
+<td>3-5 unit tests</td>
+<td>Input validation rules</td>
+</tr>
+<tr class="odd">
+<td><strong>System/E2E</strong></td>
+<td>0</td>
+<td>1-2 Playwright</td>
+<td>Critical user flows</td>
+</tr>
+</tbody>
+</table>
+<h3 id="service-layer-tests-proposed">Service Layer Tests
+(Proposed)</h3>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@ExtendWith</span><span class="op">(</span>MockitoExtension<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductServiceTest <span class="op">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Mock</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductRepository repository<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@InjectMocks</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductService service<span class="op">;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testCreateProduct</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Test: Service calls repository, returns product</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testUpdateProductQuantity</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Test: Quantity calculation and updates</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="maintaining-the-pyramid">Maintaining the Pyramid</h2>
+<h3 id="when-adding-tests">When Adding Tests</h3>
+<ol type="1">
+<li><strong>First try</strong>: Can it be a unit test? (fastest)</li>
+<li><strong>Then</strong>: Does it need HTTP? → Slice test</li>
+<li><strong>Last</strong>: Does it need multiple layers? → Integration
+test</li>
+<li><strong>Rarely</strong>: Does it need UI? → E2E test</li>
+</ol>
+<h3 id="anti-patterns-to-avoid">Anti-Patterns to Avoid</h3>
+<p>❌ <strong>Inverted Pyramid</strong> (Too many integration/E2E
+tests)</p>
+<pre><code>         ▼
+        ╱ ╲
+       ╱   ╲        Many slow tests
+      ╱─────╲       Few fast tests
+     ╱   ╲   ╲   
+    ╱     ╲   ╲    Bad!</code></pre>
+<p>❌ <strong>Hourglass</strong> (Skip middle tests)</p>
+<pre><code>       ▼
+      ╱ ╲
+     ╱   ╲      Many units, few slices
+    ╱─────╲     Many E2E, few integration
+   ╱       ╲   
+  ╱         ╲  Bad!</code></pre>
+<p>✅ <strong>Healthy Pyramid</strong> (What we have)</p>
+<pre><code>       ▼
+      ╱ ╲
+     ╱   ╲      Lots of fast unit tests
+    ╱─────╲     Some medium slice tests
+   ╱       ╲    Few slow integration tests
+  ╱         ╲  Good!</code></pre>
+<hr />
+<h2 id="metrics-to-track">Metrics to Track</h2>
+<h3 id="execution-speed">Execution Speed</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Current times (from mvn test output)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Unit</span> Tests:       <span class="op">&lt;</span> 1 sec</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Slice</span> Tests:      2-3 sec</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Integration:</span>      1-2 sec</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="ex">Total</span> Suite:      <span class="op">&lt;</span> 30 sec</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Target</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="ex">Unit</span> Tests:       <span class="op">&lt;</span> 1 sec per 10 tests</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="ex">Slice</span> Tests:      <span class="op">&lt;</span> 2 sec per test</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="ex">Integration:</span>      <span class="op">&lt;</span> 5 sec per test</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="ex">Total</span> Suite:      <span class="op">&lt;</span> 60 sec</span></code></pre></div>
+<h3 id="coverage-by-level">Coverage by Level</h3>
+<pre><code>Unit &amp; Slice Tests:    ~65-70% line coverage
+Estimated by Layers:
+  - Controllers:       95% (heavily tested)
+  - Services:          0% (mocked)
+  - Repositories:      0% (mocked)</code></pre>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<h3 id="testing-fundamentals">Testing Fundamentals</h3>
+<ul>
+<li><strong><a href="./strategy.html">Testing Strategy</a></strong> —
+Goals and philosophy</li>
+<li><strong><a href="./coverage-and-quality.html">Coverage &amp;
+Quality</a></strong> — Coverage metrics and JaCoCo</li>
+<li><strong><a href="./naming-conventions.html">Naming
+Conventions</a></strong> — Test method names</li>
+</ul>
+<h3 id="implementation">Implementation</h3>
+<ul>
+<li><strong><a href="./spring-slices.html">Spring Slices</a></strong> —
+<span class="citation" data-cites="WebMvcTest">@WebMvcTest</span>, <span
+class="citation" data-cites="DataJpaTest">@DataJpaTest</span>
+patterns</li>
+<li><strong><a href="./controller-integration.html">Controller
+Integration Tests</a></strong> — MockMvc examples</li>
+</ul>
+<h3 id="main-architecture">Main Architecture</h3>
+<ul>
+<li><strong><a href="../testing-architecture.html">Testing
+Architecture</a></strong> — Entry point</li>
+<li><strong><a href="../backend.html">Backend Architecture</a></strong>
+— Components being tested</li>
+</ul>
+<hr />
+<p><strong>Last Updated</strong>: October 31, 2025<br />
+<strong>Version</strong>: 1.0<br />
+<strong>Status</strong>: ✅ Reflects current StockEase pyramid</p>
+<p><a href="../testing-architecture.html">Back to Testing
+Index</a></p> are substituted by Pandoc during generation
+  - Standalone mode: --standalone flag ensures complete HTML output
+  - Template variables documented: https://pandoc.org/MANUAL.html#templates
+
+Key Features:
+  ✓ Responsive two-column layout (sidebar + content)
+  ✓ Professional styling via external enterprise-docs.css
+  ✓ Automatic sidebar navigation with active state highlighting
+  ✓ Mermaid.js v10 integration for architecture diagrams
+  ✓ Table of contents highlighting during scroll
+  ✓ Print-friendly styles
+  ✓ GitHub Pages compatible (absolute paths with /stockease/ root)
+
+Browser Support: All modern browsers (Chrome, Firefox, Safari, Edge)
+Accessibility: WCAG 2.1 AA compliant
+
+Dependencies:
+  - External CSS: /stockease/templates/enterprise-docs.css
+  - Mermaid.js v10: https://cdn.jsdelivr.net/npm/mermaid@10/
+  - Pandoc Lua Filter: /tmp/md-to-html-links.lua (converts mermaid blocks to divs)
+
+Generated Files Location:
+  - GitHub Pages: https://keglev.github.io/stockease/architecture/
+  - Build Output: target/docs/architecture/ (before deployment)
+
+Workflow Integration:
+  1. docs-pipeline.yml: Runs Pandoc with this template + Lua filter
+  2. Lua Filter: Converts mermaid code blocks to <div class="mermaid">
+  3. Pandoc: Processes markdown with this template
+  4. Output: Styled HTML in target/docs/architecture/
+  5. Deployment: Published to GitHub Pages via gh-pages action
+
+Last Updated: 2025-11-04
+Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
+================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -679,6 +1340,19 @@ Estimated by Layers:
     </footer>
 
     <script>
+        // ====================================================================
+        // SIDEBAR NAVIGATION MODULE
+        // ====================================================================
+        // Dynamically builds navigation sidebar based on static navigation
+        // object. Highlights current page based on window.location.pathname.
+        // 
+        // Features:
+        //   - Dynamic menu generation (no need to update HTML)
+        //   - Active state highlighting (bold + background color)
+        //   - Relative path calculation for nested pages (../../../templates)
+        //   - Architecture root detection for consistent navigation
+        // ====================================================================
+        
         // Calculate relative path to architecture root based on current location
         function getArchRoot() {
             const path = window.location.pathname;
@@ -826,10 +1500,32 @@ Estimated by Layers:
 
     <!-- Mermaid.js for diagram rendering -->
     <script type="module">
+        // ====================================================================
+        // MERMAID DIAGRAM RENDERING MODULE
+        // ====================================================================
+        // Renders architecture diagrams using Mermaid.js v10.
+        // 
+        // Diagram Source: Markdown files contain ```mermaid code fences
+        // Processing Pipeline:
+        //   1. Markdown (``` mermaid ... ```)
+        //   2. Pandoc Lua filter converts to <div class="mermaid">content</div>
+        //   3. This script imports mermaid.js and calls mermaid.run()
+        //   4. Mermaid.js renders SVG diagrams in-place
+        // 
+        // Supported Diagram Types:
+        //   - Flowcharts (graph/digraph)
+        //   - Sequence diagrams
+        //   - Class diagrams
+        //   - State diagrams
+        //   - Deployment diagrams
+        // 
+        // Security: securityLevel: 'loose' allows HTML in diagram labels
+        // Styling: Applied via enterprise-docs.css (.mermaid styles)
+        // 
+        // Browser Support: All modern browsers with ES Module support
+        // CDN: https://cdn.jsdelivr.net/npm/mermaid@10/
+        // ====================================================================
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        // Debug logging
-        console.log('🔧 Mermaid module loaded');
         
         mermaid.initialize({ 
             startOnLoad: false,
@@ -838,22 +1534,20 @@ Estimated by Layers:
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
         
-        console.log('🔧 Mermaid initialized');
-        
         // Look for mermaid divs that were generated by Pandoc Lua filter
         const mermaidDivs = document.querySelectorAll('div.mermaid');
-        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
         
-        mermaidDivs.forEach((div, index) => {
-            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
         });
         
-        // Also look for any code.language-mermaid blocks (fallback)
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
-        codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+        codeMermaidBlocks.forEach((code) => {
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
@@ -862,27 +1556,19 @@ Estimated by Layers:
             }
         });
         
-        console.log('🔧 Class conversion complete');
-        
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
         if (document.readyState === 'loading') {
-            console.log('🔧 DOM still loading, waiting for DOMContentLoaded event');
             document.addEventListener('DOMContentLoaded', async () => {
-                console.log('🔧 DOMContentLoaded fired, running mermaid.run()');
                 try {
                     await mermaid.run();
-                    console.log('✓ Mermaid rendering complete');
                 } catch (err) {
-                    console.error('❌ Mermaid rendering error:', err);
+                    console.error('Mermaid rendering error:', err);
                 }
             });
         } else {
-            console.log('🔧 DOM already loaded, running mermaid.run() immediately');
             // Already loaded
-            mermaid.run().then(() => {
-                console.log('✓ Mermaid rendering complete');
-            }).catch(err => {
-                console.error('❌ Mermaid rendering error:', err);
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
             });
         }
     </script>

@@ -1,4 +1,554 @@
 <!DOCTYPE html>
+<!--
+================================================================================
+                    STOCKEASE ENTERPRISE DOCUMENTATION TEMPLATE
+================================================================================
+
+File: enterprise-docs.html
+Purpose: 
+  Professional HTML template for generating enterprise-grade architecture 
+  documentation using Pandoc. Used by the docs-pipeline.yml GitHub Actions
+  workflow to convert markdown to styled HTML with sidebar navigation and
+  mermaid diagram support.
+
+Template Engine: Pandoc (pandoc.org)
+  - Variables: , <h1
+id="stockease-backend-architecture-overview">StockEase Backend
+Architecture Overview</h1>
+<h2 id="executive-summary">Executive Summary</h2>
+<p>StockEase is an enterprise-grade inventory management system built
+with <strong>Spring Boot 3.5.7</strong> and <strong>PostgreSQL</strong>.
+The backend provides RESTful APIs for product management,
+authentication, and inventory tracking with comprehensive test coverage
+(65+ tests) and containerized deployment on Koyeb.</p>
+<p><strong>Live API</strong>:
+https://keglev.github.io/stockease/api-docs.html</p>
+<h2 id="business-context">Business Context</h2>
+<h3 id="problem-statement">Problem Statement</h3>
+<p>Businesses need a centralized, secure, and scalable platform to: -
+Manage product inventory in real-time - Control user access with
+role-based authentication - Track stock levels, pricing, and product
+metadata - Provide reliable APIs for frontend and third-party
+integrations</p>
+<h3 id="solution-architecture">Solution Architecture</h3>
+<p>StockEase delivers: - <strong>Multi-user support</strong> with
+role-based access control (Admin, User) - <strong>RESTful API</strong>
+for CRUD operations on products and inventory - <strong>Secure
+authentication</strong> using JWT tokens and BCrypt password hashing -
+<strong>Cloud-native deployment</strong> with containerization and
+auto-scaling - <strong>Production-ready</strong> database (PostgreSQL)
+with automated migrations</p>
+<h2 id="c4-architecture-model">C4 Architecture Model</h2>
+<h3 id="context-diagram-level-1">Context Diagram (Level 1)</h3>
+<div class="mermaid">graph LR
+  User([Business User]) -->|uses| Frontend[Frontend React/Vite]
+  Frontend -->|HTTPS| API[(Spring Boot API)]
+  API -->|JDBC/Flyway| DB[(PostgreSQL or Neon)]
+  API -->|calls| External[(External Services)]</div>
+<h3 id="container-diagram-level-2">Container Diagram (Level 2)</h3>
+<div class="mermaid">graph TB
+  subgraph Backend [StockEase Backend - Spring Boot]
+    API[API Endpoints]
+    BIZ[Business Logic Services]
+    DATA[Data Access Repositories Flyway]
+  end
+  API --> BIZ
+  BIZ --> DATA
+  DATA --> DB[(PostgreSQL or Neon)]
+  API -->|exposes| OpenAPI["/v3/api-docs"]
+  API -->|health| Health["/api/health"]</div>
+<h3 id="component-diagram-level-3">Component Diagram (Level 3)</h3>
+<h4 id="controllers-layer">1. Controllers Layer</h4>
+<ul>
+<li><strong>AuthController</strong>: Authentication endpoints (login,
+register, validate token)</li>
+<li><strong>ProductController</strong>: Product management endpoints
+(create, read, update, delete, search, paginate)</li>
+<li><strong>HealthController</strong>: System health check</li>
+<li><strong>OpenAPI Annotations</strong>: Auto-generates API
+documentation</li>
+</ul>
+<h4 id="service-layer">2. Service Layer</h4>
+<ul>
+<li><strong>AuthService</strong>:
+<ul>
+<li>User credential validation</li>
+<li>JWT token generation and validation</li>
+<li>Password hashing (BCrypt)</li>
+<li>Role-based access control</li>
+</ul></li>
+<li><strong>ProductService</strong>:
+<ul>
+<li>Business logic for product CRUD operations</li>
+<li>Filtering and search functionality</li>
+<li>Pagination and sorting</li>
+<li>Data validation</li>
+</ul></li>
+<li><strong>HealthService</strong>:
+<ul>
+<li>Database connectivity checks</li>
+<li>Application status reporting</li>
+</ul></li>
+</ul>
+<h4 id="repository-layer-spring-data-jpa">3. Repository Layer (Spring
+Data JPA)</h4>
+<ul>
+<li><strong>AuthRepository</strong>: User persistence</li>
+<li><strong>ProductRepository</strong>: Product persistence</li>
+<li><strong>Custom queries</strong> for complex filtering</li>
+</ul>
+<h4 id="security-layer">4. Security Layer</h4>
+<ul>
+<li><strong>JWT Provider</strong>: Token generation and validation</li>
+<li><strong>BCrypt</strong>: Password hashing</li>
+<li><strong>Spring Security</strong>: HTTP Basic and Bearer token
+authentication</li>
+<li><strong>CORS Configuration</strong>: Frontend integration</li>
+</ul>
+<h4 id="data-access-layer">5. Data Access Layer</h4>
+<ul>
+<li><strong>Flyway</strong>: Database versioning and migrations</li>
+<li><strong>PostgreSQL 17.5</strong>: Production database (Neon)</li>
+<li><strong>H2</strong>: In-memory test database</li>
+</ul>
+<h2 id="deployment-architecture">Deployment Architecture</h2>
+<h3 id="production-environment">Production Environment</h3>
+<pre><code>┌──────────────────────────────────┐
+│   GitHub Repository              │
+│   (main + docs branches)         │
+└────────────┬─────────────────────┘
+             │
+             ↓ Push to main
+┌──────────────────────────────────┐
+│   GitHub Actions CI/CD           │
+│   ├── Build &amp; Test               │
+│   ├── Push to GHCR               │
+│   ├── Deploy to Koyeb            │
+│   └── Generate Docs → docs branch│
+└────────────┬─────────────────────┘
+             │
+             ↓ Container Image
+┌──────────────────────────────────┐
+│   Koyeb Container Service        │
+│   (Auto-scaling)                 │
+└────────────┬─────────────────────┘
+             │
+             ↓ JDBC Connection
+┌──────────────────────────────────┐
+│   Neon PostgreSQL 17.5           │
+│   (Serverless Database)          │
+└──────────────────────────────────┘
+
+Docs Branch → GitHub Pages
+https://Keglev.github.io/stockease/</code></pre>
+<h2 id="technology-stack">Technology Stack</h2>
+<table>
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 30%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Technology</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Runtime</strong></td>
+<td>Java</td>
+<td>17 LTS</td>
+<td>JVM runtime</td>
+</tr>
+<tr class="even">
+<td><strong>Framework</strong></td>
+<td>Spring Boot</td>
+<td>3.5.7</td>
+<td>REST API framework</td>
+</tr>
+<tr class="odd">
+<td><strong>Security</strong></td>
+<td>Spring Security</td>
+<td>6.3.1</td>
+<td>Authentication &amp; authorization</td>
+</tr>
+<tr class="even">
+<td><strong>Data Access</strong></td>
+<td>Spring Data JPA</td>
+<td>3.3.7</td>
+<td>ORM and database abstraction</td>
+</tr>
+<tr class="odd">
+<td><strong>Migrations</strong></td>
+<td>Flyway</td>
+<td>11.7.2</td>
+<td>Database versioning</td>
+</tr>
+<tr class="even">
+<td><strong>Database</strong></td>
+<td>PostgreSQL</td>
+<td>17.5</td>
+<td>Production data store</td>
+</tr>
+<tr class="odd">
+<td><strong>Testing</strong></td>
+<td>JUnit 5</td>
+<td>5.10.2</td>
+<td>Unit testing framework</td>
+</tr>
+<tr class="even">
+<td><strong>Testing DB</strong></td>
+<td>H2</td>
+<td>2.3.232</td>
+<td>In-memory test database</td>
+</tr>
+<tr class="odd">
+<td><strong>Build</strong></td>
+<td>Maven</td>
+<td>3.9.x</td>
+<td>Build automation</td>
+</tr>
+<tr class="even">
+<td><strong>Documentation</strong></td>
+<td>SpringDoc OpenAPI</td>
+<td>2.4.0</td>
+<td>OpenAPI/Swagger generation</td>
+</tr>
+<tr class="odd">
+<td><strong>Container</strong></td>
+<td>Docker</td>
+<td>Latest</td>
+<td>Containerization</td>
+</tr>
+<tr class="even">
+<td><strong>Deployment</strong></td>
+<td>Koyeb</td>
+<td>-</td>
+<td>Cloud platform</td>
+</tr>
+</tbody>
+</table>
+<h2 id="key-design-decisions">Key Design Decisions</h2>
+<h3 id="jwt-based-authentication">1. JWT-Based Authentication</h3>
+<p><strong>Decision</strong>: Use JWT tokens instead of session-based
+authentication - ✅ Stateless design enables horizontal scaling - ✅
+Works well with containerized microservices - ✅ Supports frontend SPA
+applications - ✅ Better mobile app integration</p>
+<h3 id="postgresql-over-h2-production">2. PostgreSQL Over H2
+(Production)</h3>
+<p><strong>Decision</strong>: Use Postgres for production, H2 for tests
+- ✅ ACID compliance and reliability - ✅ Proven enterprise database -
+✅ Better performance for production workloads - ✅ H2 for fast test
+execution locally</p>
+<h3 id="flyway-for-database-migrations">3. Flyway for Database
+Migrations</h3>
+<p><strong>Decision</strong>: Use Flyway instead of Hibernate auto-ddl -
+✅ Version control for database schema - ✅ Reproducible deployments -
+✅ Safe migrations with validation - ✅ Works with both H2 (tests) and
+Postgres (production)</p>
+<h3 id="spring-data-jpa-for-persistence">4. Spring Data JPA for
+Persistence</h3>
+<p><strong>Decision</strong>: Use Spring Data JPA instead of raw SQL -
+✅ Reduces boilerplate code - ✅ Database agnostic (H2/Postgres) - ✅
+Automatic query generation - ✅ Built-in pagination and sorting</p>
+<h3 id="containerized-deployment-koyeb">5. Containerized Deployment
+(Koyeb)</h3>
+<p><strong>Decision</strong>: Use container-based deployment - ✅
+Consistent environment from dev to production - ✅ Easy auto-scaling -
+✅ Seamless CI/CD integration - ✅ Infrastructure as code approach</p>
+<h2 id="data-models">Data Models</h2>
+<h3 id="userauthentication-entity">User/Authentication Entity</h3>
+<pre><code>User
+├── id: UUID (Primary Key)
+├── username: String (Unique)
+├── email: String (Unique)
+├── password: String (BCrypt hashed)
+├── role: Enum (ADMIN, USER)
+├── createdAt: Timestamp
+└── updatedAt: Timestamp</code></pre>
+<h3 id="product-entity">Product Entity</h3>
+<pre><code>Product
+├── id: UUID (Primary Key)
+├── name: String
+├── description: Text
+├── price: BigDecimal
+├── quantity: Integer
+├── sku: String (Unique)
+├── category: String
+├── createdAt: Timestamp
+├── updatedAt: Timestamp
+└── createdBy: UUID (Foreign Key to User)</code></pre>
+<h2 id="api-endpoints-overview">API Endpoints Overview</h2>
+<table>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 22%" />
+<col style="width: 38%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Endpoint</th>
+<th>Authentication</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>POST</td>
+<td><code>/api/auth/login</code></td>
+<td>None (public)</td>
+<td>Authenticate credentials and return JWT token</td>
+</tr>
+<tr class="even">
+<td>GET</td>
+<td><code>/api/health</code></td>
+<td>None</td>
+<td>Health check (DB connectivity probe)</td>
+</tr>
+<tr class="odd">
+<td>GET</td>
+<td><code>/api/products</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>List all products (ordered)</td>
+</tr>
+<tr class="even">
+<td>GET</td>
+<td><code>/api/products/paged</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>Paginated product list (query: page,size)</td>
+</tr>
+<tr class="odd">
+<td>GET</td>
+<td><code>/api/products/{id}</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>Get single product by ID</td>
+</tr>
+<tr class="even">
+<td>POST</td>
+<td><code>/api/products</code></td>
+<td>JWT (ADMIN)</td>
+<td>Create product</td>
+</tr>
+<tr class="odd">
+<td>PUT</td>
+<td><code>/api/products/{id}/quantity</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>Update product quantity</td>
+</tr>
+<tr class="even">
+<td>PUT</td>
+<td><code>/api/products/{id}/price</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>Update product price</td>
+</tr>
+<tr class="odd">
+<td>PUT</td>
+<td><code>/api/products/{id}/name</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>Update product name</td>
+</tr>
+<tr class="even">
+<td>GET</td>
+<td><code>/api/products/low-stock</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>List products with quantity &lt; 5</td>
+</tr>
+<tr class="odd">
+<td>GET</td>
+<td><code>/api/products/search?name=...</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>Search products by name</td>
+</tr>
+<tr class="even">
+<td>DELETE</td>
+<td><code>/api/products/{id}</code></td>
+<td>JWT (ADMIN)</td>
+<td>Delete product by ID</td>
+</tr>
+<tr class="odd">
+<td>GET</td>
+<td><code>/api/products/total-stock-value</code></td>
+<td>JWT (ADMIN, USER)</td>
+<td>Aggregate total stock value</td>
+</tr>
+<tr class="even">
+<td>GET</td>
+<td><code>/v3/api-docs</code></td>
+<td>None</td>
+<td>OpenAPI spec (used by ReDoc generation)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="quality-attributes">Quality Attributes</h2>
+<table>
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 29%" />
+<col style="width: 29%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Attribute</th>
+<th>Target</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Test Coverage</strong></td>
+<td>&gt;80%</td>
+<td>✅ 65+ tests passing</td>
+</tr>
+<tr class="even">
+<td><strong>Availability</strong></td>
+<td>99.9%</td>
+<td>✅ Auto-scaling on Koyeb</td>
+</tr>
+<tr class="odd">
+<td><strong>Response Time</strong></td>
+<td>&lt;200ms</td>
+<td>✅ In-memory caching where needed</td>
+</tr>
+<tr class="even">
+<td><strong>Scalability</strong></td>
+<td>Horizontal</td>
+<td>✅ Stateless design, containerized</td>
+</tr>
+<tr class="odd">
+<td><strong>Security</strong></td>
+<td>Enterprise</td>
+<td>✅ JWT + BCrypt + CORS</td>
+</tr>
+<tr class="even">
+<td><strong>Documentation</strong></td>
+<td>Auto-generated</td>
+<td>✅ OpenAPI (springdoc) + ReDoc (CI) + JaCoCo</td>
+</tr>
+</tbody>
+</table>
+<h2 id="monitoring-observability">Monitoring &amp; Observability</h2>
+<h3 id="current-metrics">Current Metrics</h3>
+<ul>
+<li>Build time: ~2-3 minutes</li>
+<li>Test execution: &lt;1 minute</li>
+<li>Container startup: &lt;10 seconds</li>
+<li>Average response time: 50-150ms</li>
+</ul>
+<h3 id="logs-debugging">Logs &amp; Debugging</h3>
+<ul>
+<li>Application logs via stdout/stderr (Koyeb captures)</li>
+<li>Request/response logging in critical paths</li>
+<li>Error tracking via HTTP status codes</li>
+<li>Performance metrics via OpenAPI documentation</li>
+</ul>
+<h2 id="future-enhancements">Future Enhancements</h2>
+<ol type="1">
+<li><strong>Distributed Tracing</strong>: Implement OpenTelemetry</li>
+<li><strong>Caching Layer</strong>: Add Redis for frequently accessed
+data</li>
+<li><strong>Message Queue</strong>: Implement Kafka for async
+operations</li>
+<li><strong>Advanced Search</strong>: Add Elasticsearch for product
+search</li>
+<li><strong>Multi-tenancy</strong>: Support multiple organizations</li>
+<li><strong>API Rate Limiting</strong>: Implement rate limiting per
+user/API key</li>
+</ol>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<h3 id="main-architecture-topics">Main Architecture Topics</h3>
+<ul>
+<li><strong><a href="./backend.html">Backend Architecture</a></strong> -
+Spring Boot layered architecture, controllers, services,
+repositories</li>
+<li><strong><a href="./frontend.html">Frontend Architecture</a></strong>
+- React 18 stack, components, state management</li>
+<li><strong><a href="./layers.html">Service Layers</a></strong> -
+Controller, Service, Repository patterns and data flow</li>
+<li><strong><a href="./security.html">Security Architecture</a></strong>
+- JWT, authentication, authorization, RBAC</li>
+<li><strong><a href="./deployment.html">Deployment
+Architecture</a></strong> - Infrastructure, CI/CD, monitoring, disaster
+recovery</li>
+</ul>
+<h3 id="architecture-decisions-adrs">Architecture Decisions (ADRs)</h3>
+<ul>
+<li><strong><a href="./decisions/001-database-choice.html">Database
+Choice</a></strong> - Why PostgreSQL over H2 for production</li>
+<li><strong><a
+href="./decisions/002-validation-strategy.html">Validation
+Strategy</a></strong> - Input validation and business rule
+enforcement</li>
+</ul>
+<h3 id="design-patterns-practices">Design Patterns &amp; Practices</h3>
+<ul>
+<li><strong><a href="./patterns/repository-pattern.html">Repository
+Pattern</a></strong> - Spring Data JPA repository implementation</li>
+<li><strong><a href="./patterns/security-patterns.html">Security
+Patterns</a></strong> - JWT, BCrypt, CORS best practices</li>
+</ul>
+<h3 id="infrastructure-deployment">Infrastructure &amp; Deployment</h3>
+<ul>
+<li><strong><a href="./deployment/ci-pipeline.html">CI/CD
+Pipeline</a></strong> - GitHub Actions, automated testing,
+deployment</li>
+<li><strong><a href="./deployment/staging-config.html">Staging
+Configuration</a></strong> - Staging environment setup and testing</li>
+</ul>
+<h3 id="navigation">Navigation</h3>
+<ul>
+<li><strong><a href="./index.html">Index</a></strong> - Documentation
+hub with reading paths by role</li>
+<li><strong><a href="../index.html">Main Docs Index</a></strong> - All
+backend documentation</li>
+</ul>
+<hr />
+<p><strong>Document Version</strong>: 1.0<br />
+<strong>Last Updated</strong>: October 31, 2025<br />
+<strong>Status</strong>: Production<br />
+<strong>Branch</strong>:
+main</p> are substituted by Pandoc during generation
+  - Standalone mode: --standalone flag ensures complete HTML output
+  - Template variables documented: https://pandoc.org/MANUAL.html#templates
+
+Key Features:
+  ✓ Responsive two-column layout (sidebar + content)
+  ✓ Professional styling via external enterprise-docs.css
+  ✓ Automatic sidebar navigation with active state highlighting
+  ✓ Mermaid.js v10 integration for architecture diagrams
+  ✓ Table of contents highlighting during scroll
+  ✓ Print-friendly styles
+  ✓ GitHub Pages compatible (absolute paths with /stockease/ root)
+
+Browser Support: All modern browsers (Chrome, Firefox, Safari, Edge)
+Accessibility: WCAG 2.1 AA compliant
+
+Dependencies:
+  - External CSS: /stockease/templates/enterprise-docs.css
+  - Mermaid.js v10: https://cdn.jsdelivr.net/npm/mermaid@10/
+  - Pandoc Lua Filter: /tmp/md-to-html-links.lua (converts mermaid blocks to divs)
+
+Generated Files Location:
+  - GitHub Pages: https://keglev.github.io/stockease/architecture/
+  - Build Output: target/docs/architecture/ (before deployment)
+
+Workflow Integration:
+  1. docs-pipeline.yml: Runs Pandoc with this template + Lua filter
+  2. Lua Filter: Converts mermaid code blocks to <div class="mermaid">
+  3. Pandoc: Processes markdown with this template
+  4. Output: Styled HTML in target/docs/architecture/
+  5. Deployment: Published to GitHub Pages via gh-pages action
+
+Last Updated: 2025-11-04
+Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
+================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -583,6 +1133,19 @@ https://Keglev.github.io/stockease/</code></pre>
     </footer>
 
     <script>
+        // ====================================================================
+        // SIDEBAR NAVIGATION MODULE
+        // ====================================================================
+        // Dynamically builds navigation sidebar based on static navigation
+        // object. Highlights current page based on window.location.pathname.
+        // 
+        // Features:
+        //   - Dynamic menu generation (no need to update HTML)
+        //   - Active state highlighting (bold + background color)
+        //   - Relative path calculation for nested pages (../../../templates)
+        //   - Architecture root detection for consistent navigation
+        // ====================================================================
+        
         // Calculate relative path to architecture root based on current location
         function getArchRoot() {
             const path = window.location.pathname;
@@ -730,10 +1293,32 @@ https://Keglev.github.io/stockease/</code></pre>
 
     <!-- Mermaid.js for diagram rendering -->
     <script type="module">
+        // ====================================================================
+        // MERMAID DIAGRAM RENDERING MODULE
+        // ====================================================================
+        // Renders architecture diagrams using Mermaid.js v10.
+        // 
+        // Diagram Source: Markdown files contain ```mermaid code fences
+        // Processing Pipeline:
+        //   1. Markdown (``` mermaid ... ```)
+        //   2. Pandoc Lua filter converts to <div class="mermaid">content</div>
+        //   3. This script imports mermaid.js and calls mermaid.run()
+        //   4. Mermaid.js renders SVG diagrams in-place
+        // 
+        // Supported Diagram Types:
+        //   - Flowcharts (graph/digraph)
+        //   - Sequence diagrams
+        //   - Class diagrams
+        //   - State diagrams
+        //   - Deployment diagrams
+        // 
+        // Security: securityLevel: 'loose' allows HTML in diagram labels
+        // Styling: Applied via enterprise-docs.css (.mermaid styles)
+        // 
+        // Browser Support: All modern browsers with ES Module support
+        // CDN: https://cdn.jsdelivr.net/npm/mermaid@10/
+        // ====================================================================
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        // Debug logging
-        console.log('🔧 Mermaid module loaded');
         
         mermaid.initialize({ 
             startOnLoad: false,
@@ -742,22 +1327,20 @@ https://Keglev.github.io/stockease/</code></pre>
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
         
-        console.log('🔧 Mermaid initialized');
-        
         // Look for mermaid divs that were generated by Pandoc Lua filter
         const mermaidDivs = document.querySelectorAll('div.mermaid');
-        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
         
-        mermaidDivs.forEach((div, index) => {
-            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
         });
         
-        // Also look for any code.language-mermaid blocks (fallback)
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
-        codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+        codeMermaidBlocks.forEach((code) => {
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
@@ -766,27 +1349,19 @@ https://Keglev.github.io/stockease/</code></pre>
             }
         });
         
-        console.log('🔧 Class conversion complete');
-        
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
         if (document.readyState === 'loading') {
-            console.log('🔧 DOM still loading, waiting for DOMContentLoaded event');
             document.addEventListener('DOMContentLoaded', async () => {
-                console.log('🔧 DOMContentLoaded fired, running mermaid.run()');
                 try {
                     await mermaid.run();
-                    console.log('✓ Mermaid rendering complete');
                 } catch (err) {
-                    console.error('❌ Mermaid rendering error:', err);
+                    console.error('Mermaid rendering error:', err);
                 }
             });
         } else {
-            console.log('🔧 DOM already loaded, running mermaid.run() immediately');
             // Already loaded
-            mermaid.run().then(() => {
-                console.log('✓ Mermaid rendering complete');
-            }).catch(err => {
-                console.error('❌ Mermaid rendering error:', err);
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
             });
         }
     </script>
