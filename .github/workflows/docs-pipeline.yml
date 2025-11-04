@@ -82,7 +82,7 @@ jobs:
             exit 1
           fi
           
-          # Create a Lua filter to convert .md links to .html
+          # Create a Lua filter to convert .md links to .html AND handle mermaid blocks
           cat > /tmp/md-to-html-links.lua << 'EOF'
           function Link(el)
             -- Convert .md links to .html
@@ -90,6 +90,17 @@ jobs:
               el.target = el.target:gsub("%.md$", ".html")
             elseif el.target:match("%.md#") then
               el.target = el.target:gsub("%.md#", ".html#")
+            end
+            return el
+          end
+          
+          -- Handle mermaid code blocks specially - output as raw HTML div
+          function CodeBlock(el)
+            if el.classes:includes('mermaid') then
+              -- Output mermaid code as a div with class="mermaid" containing the code
+              local content = el.text
+              local html = '<div class="mermaid">' .. content .. '</div>'
+              return pandoc.RawBlock('html', html)
             end
             return el
           end
