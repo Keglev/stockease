@@ -18,7 +18,8 @@ integration, and system tests in StockEase.</p>
 <hr />
 <h2 id="the-test-pyramid-concept">The Test Pyramid Concept</h2>
 <h3 id="traditional-pyramid">Traditional Pyramid</h3>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     A["System E2E 5%<br/>Slow, expensive<br/>Simulate user scenarios"] 
     B[Integration 25%<br/>Medium speed<br/>Test layer interactions]
     C[Unit 70%<br/>Fast, cheap<br/>Test one thing]
@@ -28,7 +29,8 @@ integration, and system tests in StockEase.</p>
     
     style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
     style B fill:#fff3e0,stroke:#f57c00,stroke-width:3px
-    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px</div>
+    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+</div>
 <h3 id="benefits-of-this-shape">Benefits of This Shape</h3>
 <table>
 <colgroup>
@@ -74,7 +76,8 @@ integration, and system tests in StockEase.</p>
 <hr />
 <h2 id="stockease-test-pyramid">StockEase Test Pyramid</h2>
 <h3 id="current-distribution">Current Distribution</h3>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     A["System E2E - 0 tests - NOT YET IMPLEMENTED<br/>(Red - not implemented)"]
     B["Integration - 1 test 5%<br/>@SpringBootTest context load (Green - complete)"]
     C["Unit Slice - 8 tests 95%<br/>@WebMvcTest + unit tests (Green - complete)"]
@@ -84,7 +87,8 @@ integration, and system tests in StockEase.</p>
     
     style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
     style B fill:#fff3e0,stroke:#388e3c,stroke-width:3px
-    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px</div>
+    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+</div>
 <h3 id="by-test-type">By Test Type</h3>
 <table>
 <thead>
@@ -689,7 +693,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <h2 id="the-test-pyramid-concept">The Test Pyramid
                 Concept</h2>
                 <h3 id="traditional-pyramid">Traditional Pyramid</h3>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     A["System E2E 5%<br/>Slow, expensive<br/>Simulate user scenarios"] 
                     B[Integration 25%<br/>Medium speed<br/>Test layer interactions]
                     C[Unit 70%<br/>Fast, cheap<br/>Test one thing]
@@ -699,7 +704,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     
                     style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
                     style B fill:#fff3e0,stroke:#f57c00,stroke-width:3px
-                    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px</div>
+                    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+                </div>
                 <h3 id="benefits-of-this-shape">Benefits of This
                 Shape</h3>
                 <table>
@@ -747,7 +753,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <h2 id="stockease-test-pyramid">StockEase Test
                 Pyramid</h2>
                 <h3 id="current-distribution">Current Distribution</h3>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     A["System E2E - 0 tests - NOT YET IMPLEMENTED<br/>(Red - not implemented)"]
                     B["Integration - 1 test 5%<br/>@SpringBootTest context load (Green - complete)"]
                     C["Unit Slice - 8 tests 95%<br/>@WebMvcTest + unit tests (Green - complete)"]
@@ -757,7 +764,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     
                     style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
                     style B fill:#fff3e0,stroke:#388e3c,stroke-width:3px
-                    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px</div>
+                    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+                </div>
                 <h3 id="by-test-type">By Test Type</h3>
                 <table>
                 <thead>

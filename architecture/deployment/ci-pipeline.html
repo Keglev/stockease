@@ -36,7 +36,8 @@ directory) - Manual workflow dispatch</p>
 <p><strong>Doesn’t trigger on</strong>: - Changes to <code>/docs/</code>
 only - Changes to <code>.gitignore</code> only</p>
 <h3 id="pipeline-stages">Pipeline Stages</h3>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies"]
     B --> C["3. Run Tests 65+ tests<br/>H2 database, ~1 minute"]
     
@@ -63,7 +64,8 @@ only - Changes to <code>.gitignore</code> only</p>
     style J fill:#fff3e0
     style L fill:#c8e6c9
     style F fill:#ffcdd2
-    style M fill:#ffcdd2</div>
+    style M fill:#ffcdd2
+</div>
 <h3 id="stage-details">Stage Details</h3>
 <h4 id="stage-1-checkout">Stage 1: Checkout</h4>
 <div class="sourceCode" id="cb2"><pre
@@ -507,7 +509,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <code>/docs/</code> only - Changes to
                 <code>.gitignore</code> only</p>
                 <h3 id="pipeline-stages">Pipeline Stages</h3>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies"]
                     B --> C["3. Run Tests 65+ tests<br/>H2 database, ~1 minute"]
                     
@@ -534,7 +537,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     style J fill:#fff3e0
                     style L fill:#c8e6c9
                     style F fill:#ffcdd2
-                    style M fill:#ffcdd2</div>
+                    style M fill:#ffcdd2
+                </div>
                 <h3 id="stage-details">Stage Details</h3>
                 <h4 id="stage-1-checkout">Stage 1: Checkout</h4>
                 <div class="sourceCode" id="cb2"><pre

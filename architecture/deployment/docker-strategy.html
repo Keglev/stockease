@@ -21,7 +21,8 @@ Dockerfile follows enterprise best practices for layer caching, security
 hardening, and runtime optimization.</p>
 <h2 id="architecture">Architecture</h2>
 <h3 id="multi-stage-build-pipeline">Multi-Stage Build Pipeline</h3>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     subgraph Stage1["Stage 1 - BUILD with maven 3.9.6 and eclipse-temurin-17"]
         B1["1. Copy Maven wrapper + pom.xml"] --> B2[2. Download dependencies]
         B2 --> B3[3. Copy application source code]
@@ -54,7 +55,8 @@ hardening, and runtime optimization.</p>
     style Stage1 fill:#e3f2fd
     style Stage2 fill:#fff3e0
     style Result1 fill:#ffcdd2
-    style Result2 fill:#c8e6c9</div>
+    style Result2 fill:#c8e6c9
+</div>
 <h2 id="build-configuration">Build Configuration</h2>
 <h3 id="base-images">Base Images</h3>
 <p><strong>Build Stage</strong>: - Image:
@@ -506,7 +508,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <h2 id="architecture">Architecture</h2>
                 <h3 id="multi-stage-build-pipeline">Multi-Stage Build
                 Pipeline</h3>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     subgraph Stage1["Stage 1 - BUILD with maven 3.9.6 and eclipse-temurin-17"]
                         B1["1. Copy Maven wrapper + pom.xml"] --> B2[2. Download dependencies]
                         B2 --> B3[3. Copy application source code]
@@ -539,7 +542,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     style Stage1 fill:#e3f2fd
                     style Stage2 fill:#fff3e0
                     style Result1 fill:#ffcdd2
-                    style Result2 fill:#c8e6c9</div>
+                    style Result2 fill:#c8e6c9
+                </div>
                 <h2 id="build-configuration">Build Configuration</h2>
                 <h3 id="base-images">Base Images</h3>
                 <p><strong>Build Stage</strong>: - Image:

@@ -20,7 +20,8 @@ ensure user authentication, authorize actions, and audit operations.</p>
 <h2 id="authentication-patterns">Authentication Patterns</h2>
 <h3 id="jwt-bearer-token-pattern">1. JWT Bearer Token Pattern</h3>
 <p><strong>Flow</strong>:</p>
-<div class="mermaid">sequenceDiagram
+<div class="mermaid">
+sequenceDiagram
     participant Client
     participant Server
     
@@ -33,7 +34,8 @@ ensure user authentication, authorize actions, and audit operations.</p>
     Server->>Server: Validate token
     Server->>Server: Extract user info
     Server->>Server: Authorize request
-    Server-->>Client: Return response</div>
+    Server-->>Client: Return response
+</div>
 <p><strong>Implementation</strong>:</p>
 <div class="sourceCode" id="cb1"><pre
 class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Login endpoint</span></span>
@@ -78,7 +80,8 @@ class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="
 <h3 id="password-hashing-with-bcrypt">2. Password Hashing with
 BCrypt</h3>
 <p><strong>Pattern</strong>:</p>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     A[Plain Password] -->|BCrypt + salt| B[Hashed Password<br/>stored in DB]
     
     C[Login - Plain Password input] -->|Apply same BCrypt<br/>+ stored salt| D[Compare with stored hash]
@@ -90,7 +93,8 @@ BCrypt</h3>
     style A fill:#e3f2fd
     style B fill:#fce4ec
     style F fill:#c8e6c9
-    style G fill:#ffcdd2</div>
+    style G fill:#ffcdd2
+</div>
 <p><strong>Implementation</strong>:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
@@ -129,12 +133,14 @@ class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="
 <h3 id="role-based-access-control-rbac">1. Role-Based Access Control
 (RBAC)</h3>
 <p><strong>Roles</strong>:</p>
-<div class="mermaid">graph LR
+<div class="mermaid">
+graph LR
     A[ADMIN] -->|Full access| B[read, create, update, delete]
     C[USER] -->|Limited access| D[read only]
     
     style A fill:#ffcdd2
-    style C fill:#e3f2fd</div>
+    style C fill:#e3f2fd
+</div>
 <p><strong>Implementation</strong>:</p>
 <div class="sourceCode" id="cb3"><pre
 class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Method-level security</span></span>
@@ -490,7 +496,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <h3 id="jwt-bearer-token-pattern">1. JWT Bearer Token
                 Pattern</h3>
                 <p><strong>Flow</strong>:</p>
-                <div class="mermaid">sequenceDiagram
+                <div class="mermaid">
+                sequenceDiagram
                     participant Client
                     participant Server
                     
@@ -503,7 +510,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     Server->>Server: Validate token
                     Server->>Server: Extract user info
                     Server->>Server: Authorize request
-                    Server-->>Client: Return response</div>
+                    Server-->>Client: Return response
+                </div>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb1"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Login endpoint</span></span>
@@ -548,7 +556,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <h3 id="password-hashing-with-bcrypt">2. Password
                 Hashing with BCrypt</h3>
                 <p><strong>Pattern</strong>:</p>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     A[Plain Password] -->|BCrypt + salt| B[Hashed Password<br/>stored in DB]
                     
                     C[Login - Plain Password input] -->|Apply same BCrypt<br/>+ stored salt| D[Compare with stored hash]
@@ -560,7 +569,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     style A fill:#e3f2fd
                     style B fill:#fce4ec
                     style F fill:#c8e6c9
-                    style G fill:#ffcdd2</div>
+                    style G fill:#ffcdd2
+                </div>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb2"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
@@ -600,12 +610,14 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <h3 id="role-based-access-control-rbac">1. Role-Based
                 Access Control (RBAC)</h3>
                 <p><strong>Roles</strong>:</p>
-                <div class="mermaid">graph LR
+                <div class="mermaid">
+                graph LR
                     A[ADMIN] -->|Full access| B[read, create, update, delete]
                     C[USER] -->|Limited access| D[read only]
                     
                     style A fill:#ffcdd2
-                    style C fill:#e3f2fd</div>
+                    style C fill:#e3f2fd
+                </div>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb3"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Method-level security</span></span>

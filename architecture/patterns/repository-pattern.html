@@ -20,7 +20,8 @@ logic, providing a clean interface for CRUD operations and queries on
 aggregate roots.</p>
 <h2 id="implementation-in-stockease">Implementation in StockEase</h2>
 <h3 id="pattern-structure">Pattern Structure</h3>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     A[Business Logic Service] -->|uses| B[Repository Interface<br/>Spring Data JPA]
     B -->|extends| C[JpaRepository T, ID]
     C -->|Spring generates| D[Repository Implementation<br/>Proxy]
@@ -34,7 +35,8 @@ aggregate roots.</p>
     style D fill:#f3e5f5
     style E fill:#fce4ec
     style F fill:#e1f5fe
-    style G fill:#f3e5f5</div>
+    style G fill:#f3e5f5
+</div>
 <h2 id="repository-interfaces">Repository Interfaces</h2>
 <h3 id="userrepository">UserRepository</h3>
 <div class="sourceCode" id="cb1"><pre
@@ -471,7 +473,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <h2 id="implementation-in-stockease">Implementation in
                 StockEase</h2>
                 <h3 id="pattern-structure">Pattern Structure</h3>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     A[Business Logic Service] -->|uses| B[Repository Interface<br/>Spring Data JPA]
                     B -->|extends| C[JpaRepository T, ID]
                     C -->|Spring generates| D[Repository Implementation<br/>Proxy]
@@ -485,7 +488,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     style D fill:#f3e5f5
                     style E fill:#fce4ec
                     style F fill:#e1f5fe
-                    style G fill:#f3e5f5</div>
+                    style G fill:#f3e5f5
+                </div>
                 <h2 id="repository-interfaces">Repository
                 Interfaces</h2>
                 <h3 id="userrepository">UserRepository</h3>

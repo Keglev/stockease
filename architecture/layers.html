@@ -17,7 +17,8 @@ Layers &amp; Component Architecture</h1>
 <h2 id="layered-architecture">Layered Architecture</h2>
 <p>StockEase follows a <strong>classic N-tier layered
 architecture</strong> with clear separation of concerns:</p>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     A[REST Controllers Endpoints<br/>HTTP Layer]
     B[Security Layer<br/>JWT, Spring Security<br/>Cross-cutting Concern]
     C[Business Logic Services<br/>Domain Layer]
@@ -33,7 +34,8 @@ architecture</strong> with clear separation of concerns:</p>
     style B fill:#fff3e0
     style C fill:#e8f5e9
     style D fill:#f3e5f5
-    style E fill:#fce4ec</div>
+    style E fill:#fce4ec
+</div>
 <h2 id="layer-descriptions">Layer Descriptions</h2>
 <h3 id="httppresentation-layer-controllers">1. HTTP/Presentation Layer
 (Controllers)</h3>
@@ -77,7 +79,8 @@ and validate JWT tokens - <code>SecurityConfig</code> - Spring Security
 configuration - <code>AuthenticationFilter</code> - Intercept and
 validate requests - <code>PasswordEncoder</code> - BCrypt hashing</p>
 <p><strong>Authentication Flow</strong>:</p>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     A[1. User calls POST /api/auth/login<br/>with username and password] --> B[2. Spring Security intercepts<br/>HTTP Basic]
     B --> C[3. UserDetailsService<br/>validates credentials]
     C --> D[4. JwtProvider generates token]
@@ -91,7 +94,8 @@ validate requests - <code>PasswordEncoder</code> - BCrypt hashing</p>
     
     style A fill:#e3f2fd
     style I fill:#c8e6c9
-    style J fill:#ffcdd2</div>
+    style J fill:#ffcdd2
+</div>
 <p><strong>Protected Endpoints</strong>: - All
 <code>/api/products/*</code> endpoints require JWT token -
 <code>/health</code> is public (no auth required)</p>
@@ -186,7 +190,8 @@ authentication and authorization - <code>ProductService</code> - Product
 business logic - <code>HealthService</code> - System status - Custom
 validators and processors</p>
 <p><strong>AuthService Responsibilities</strong>:</p>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     subgraph registerUser["registerUser(username, password)"]
         R1[Validate username<br/>not empty, unique] --> R2[Validate password<br/>strength requirements]
         R2 --> R3[Hash password with BCrypt]
@@ -210,9 +215,11 @@ validators and processors</p>
     
     style registerUser fill:#e3f2fd
     style authenticateUser fill:#fff3e0
-    style validateToken fill:#e8f5e9</div>
+    style validateToken fill:#e8f5e9
+</div>
 <p><strong>ProductService Responsibilities</strong>:</p>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     subgraph createProduct["createProduct(request, userId, role)"]
         C1[Validate request<br/>name, price, quantity] --> C2[Check authorization<br/>ADMIN only]
         C2 --> C3[Check SKU uniqueness]
@@ -248,7 +255,8 @@ validators and processors</p>
     style createProduct fill:#e3f2fd
     style getProducts fill:#fff3e0
     style updateProduct fill:#e8f5e9
-    style deleteProduct fill:#ffcdd2</div>
+    style deleteProduct fill:#ffcdd2
+</div>
 <p><strong>Key Design Patterns</strong>: - <strong>Dependency
 Injection</strong>: Spring injects repositories into services -
 <strong>Validation</strong>: Validate before database calls -
@@ -601,7 +609,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <p>StockEase follows a <strong>classic N-tier layered
                 architecture</strong> with clear separation of
                 concerns:</p>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     A[REST Controllers Endpoints<br/>HTTP Layer]
                     B[Security Layer<br/>JWT, Spring Security<br/>Cross-cutting Concern]
                     C[Business Logic Services<br/>Domain Layer]
@@ -617,7 +626,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     style B fill:#fff3e0
                     style C fill:#e8f5e9
                     style D fill:#f3e5f5
-                    style E fill:#fce4ec</div>
+                    style E fill:#fce4ec
+                </div>
                 <h2 id="layer-descriptions">Layer Descriptions</h2>
                 <h3 id="httppresentation-layer-controllers">1.
                 HTTP/Presentation Layer (Controllers)</h3>
@@ -665,7 +675,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 Intercept and validate requests -
                 <code>PasswordEncoder</code> - BCrypt hashing</p>
                 <p><strong>Authentication Flow</strong>:</p>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     A[1. User calls POST /api/auth/login<br/>with username and password] --> B[2. Spring Security intercepts<br/>HTTP Basic]
                     B --> C[3. UserDetailsService<br/>validates credentials]
                     C --> D[4. JwtProvider generates token]
@@ -679,7 +690,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     
                     style A fill:#e3f2fd
                     style I fill:#c8e6c9
-                    style J fill:#ffcdd2</div>
+                    style J fill:#ffcdd2
+                </div>
                 <p><strong>Protected Endpoints</strong>: - All
                 <code>/api/products/*</code> endpoints require JWT token
                 - <code>/health</code> is public (no auth required)</p>
@@ -776,7 +788,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 business logic - <code>HealthService</code> - System
                 status - Custom validators and processors</p>
                 <p><strong>AuthService Responsibilities</strong>:</p>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     subgraph registerUser["registerUser(username, password)"]
                         R1[Validate username<br/>not empty, unique] --> R2[Validate password<br/>strength requirements]
                         R2 --> R3[Hash password with BCrypt]
@@ -800,9 +813,11 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     
                     style registerUser fill:#e3f2fd
                     style authenticateUser fill:#fff3e0
-                    style validateToken fill:#e8f5e9</div>
+                    style validateToken fill:#e8f5e9
+                </div>
                 <p><strong>ProductService Responsibilities</strong>:</p>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     subgraph createProduct["createProduct(request, userId, role)"]
                         C1[Validate request<br/>name, price, quantity] --> C2[Check authorization<br/>ADMIN only]
                         C2 --> C3[Check SKU uniqueness]
@@ -838,7 +853,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     style createProduct fill:#e3f2fd
                     style getProducts fill:#fff3e0
                     style updateProduct fill:#e8f5e9
-                    style deleteProduct fill:#ffcdd2</div>
+                    style deleteProduct fill:#ffcdd2
+                </div>
                 <p><strong>Key Design Patterns</strong>: -
                 <strong>Dependency Injection</strong>: Spring injects
                 repositories into services -

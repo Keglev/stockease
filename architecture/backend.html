@@ -27,7 +27,8 @@ PostgreSQL 17.5 • Spring Security • JWT<br />
 <h2 id="layered-architecture">Layered Architecture</h2>
 <p>The backend follows a <strong>three-tier layered
 architecture</strong> with clear separation of concerns:</p>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     subgraph Controller["REST Controller Layer"]
         C1["HTTP Request/Response Handling<br/>AuthController, ProductController, HealthController<br/>HTTP Methods, Status Codes, Request/Response Mapping"]
     end
@@ -57,10 +58,12 @@ architecture</strong> with clear separation of concerns:</p>
     style Service fill:#fff3e0
     style Repository fill:#e8f5e9
     style Entity fill:#f3e5f5
-    style Database fill:#fce4ec</div>
+    style Database fill:#fce4ec
+</div>
 <hr />
 <h2 id="request-lifecycle">Request Lifecycle</h2>
-<div class="mermaid">graph TD
+<div class="mermaid">
+graph TD
     A[HTTP Request] --> B[Spring DispatcherServlet]
     B --> C[Security Filter Chain]
     
@@ -105,7 +108,8 @@ architecture</strong> with clear separation of concerns:</p>
     
     style A fill:#e3f2fd
     style L fill:#c8e6c9
-    style X fill:#ffcdd2</div>
+    style X fill:#ffcdd2
+</div>
 <hr />
 <h2 id="project-structure">Project Structure</h2>
 <pre><code>backend/
@@ -851,7 +855,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                 <p>The backend follows a <strong>three-tier layered
                 architecture</strong> with clear separation of
                 concerns:</p>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     subgraph Controller["REST Controller Layer"]
                         C1["HTTP Request/Response Handling<br/>AuthController, ProductController, HealthController<br/>HTTP Methods, Status Codes, Request/Response Mapping"]
                     end
@@ -881,10 +886,12 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     style Service fill:#fff3e0
                     style Repository fill:#e8f5e9
                     style Entity fill:#f3e5f5
-                    style Database fill:#fce4ec</div>
+                    style Database fill:#fce4ec
+                </div>
                 <hr />
                 <h2 id="request-lifecycle">Request Lifecycle</h2>
-                <div class="mermaid">graph TD
+                <div class="mermaid">
+                graph TD
                     A[HTTP Request] --> B[Spring DispatcherServlet]
                     B --> C[Security Filter Chain]
                     
@@ -929,7 +936,8 @@ Version: 2.0 (CSS refactored to external file, mermaid rendering fixed)
                     
                     style A fill:#e3f2fd
                     style L fill:#c8e6c9
-                    style X fill:#ffcdd2</div>
+                    style X fill:#ffcdd2
+                </div>
                 <hr />
                 <h2 id="project-structure">Project Structure</h2>
                 <pre><code>backend/
