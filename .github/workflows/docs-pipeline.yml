@@ -210,6 +210,7 @@ jobs:
               --to html \
               --template "$TEMPLATE" \
               --lua-filter /tmp/md-to-html-links.lua \
+              --metadata=baseurl:/stockease \
               --toc \
               --toc-depth=3 \
               --standalone \
@@ -241,6 +242,7 @@ jobs:
                   --from markdown \
                   --to html \
                   --template "$TEMPLATE" \
+                  --metadata=baseurl:/stockease \
                   --toc \
                   --standalone \
                   -o "$out_file"
