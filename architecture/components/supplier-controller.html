@@ -503,6 +503,9 @@ SecurityConfig
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         
+        // Debug logging
+        console.log('🔧 Mermaid module loaded');
+        
         mermaid.initialize({ 
             startOnLoad: false,
             theme: 'default',
@@ -510,8 +513,14 @@ SecurityConfig
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
         
+        console.log('🔧 Mermaid initialized');
+        
         // Convert language-mermaid class to mermaid for compatibility with Pandoc output
-        document.querySelectorAll('code.language-mermaid').forEach(code => {
+        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
+        console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
+        
+        codeMermaidBlocks.forEach((code, index) => {
+            console.log('  Converting block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
@@ -520,14 +529,28 @@ SecurityConfig
             }
         });
         
+        console.log('🔧 Class conversion complete');
+        
         // Wait for DOM to be fully loaded, then render all mermaid diagrams
         if (document.readyState === 'loading') {
+            console.log('🔧 DOM still loading, waiting for DOMContentLoaded event');
             document.addEventListener('DOMContentLoaded', async () => {
-                await mermaid.run();
+                console.log('🔧 DOMContentLoaded fired, running mermaid.run()');
+                try {
+                    await mermaid.run();
+                    console.log('✓ Mermaid rendering complete');
+                } catch (err) {
+                    console.error('❌ Mermaid rendering error:', err);
+                }
             });
         } else {
+            console.log('🔧 DOM already loaded, running mermaid.run() immediately');
             // Already loaded
-            mermaid.run();
+            mermaid.run().then(() => {
+                console.log('✓ Mermaid rendering complete');
+            }).catch(err => {
+                console.error('❌ Mermaid rendering error:', err);
+            });
         }
     </script>
 </body>
