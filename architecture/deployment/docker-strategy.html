@@ -31,40 +31,40 @@
                 <h2 id="architecture">Architecture</h2>
                 <h3 id="multi-stage-build-pipeline">Multi-Stage Build
                 Pipeline</h3>
-                <pre class="mermaid"><code>graph TD
-    subgraph Stage1[&quot;Stage 1 - BUILD with maven 3.9.6 and eclipse-temurin-17&quot;]
-        B1[&quot;1. Copy Maven wrapper + pom.xml&quot;] --&gt; B2[2. Download dependencies]
-        B2 --&gt; B3[3. Copy application source code]
-        B3 --&gt; B4[4. Build JAR]
-        
-        B1 -.-&gt;|Enables| B1A[Dependency layer caching]
-        B2 -.-&gt;|Cached unless| B2A[pom.xml changes]
-        B3 -.-&gt;|Changes| B3A[frequently, runs last]
-        B4 -.-&gt;|Output| B4A[JAR artifact in workspace/target]
-        
-        B4 --&gt; Result1[Result - approximately 1.2GB image with JDK Maven build tools]
-    end
-    
-    Result1 --&gt;|Extract artifact only| Stage2
-    
-    subgraph Stage2[&quot;Stage 2 - RUNTIME with eclipse-temurin 17-jre-jammy&quot;]
-        R1[1. Copy JAR from build stage] --&gt; R2[2. Create non-root user]
-        R2 --&gt; R3[3. Set USER app]
-        R3 --&gt; R4[4. Expose port 8081]
-        R4 --&gt; R5[5. Set ENTRYPOINT]
-        
-        R1 -.-&gt;|Command| R1A[COPY from build stage to /app/app.jar]
-        R2 -.-&gt;|Security| R2A[Run with limited permissions]
-        R3 -.-&gt;|Effect| R3A[All processes run as non-root]
-        R4 -.-&gt;|Matches| R4A[Spring Boot server.port]
-        
-        R5 --&gt; Result2[Result - approximately 250MB image with JRE and application only]
-    end
-    
-    style Stage1 fill:#e3f2fd
-    style Stage2 fill:#fff3e0
-    style Result1 fill:#ffcdd2
-    style Result2 fill:#c8e6c9</code></pre>
+                <div class="mermaid">graph TD
+                    subgraph Stage1["Stage 1 - BUILD with maven 3.9.6 and eclipse-temurin-17"]
+                        B1["1. Copy Maven wrapper + pom.xml"] --> B2[2. Download dependencies]
+                        B2 --> B3[3. Copy application source code]
+                        B3 --> B4[4. Build JAR]
+                        
+                        B1 -.->|Enables| B1A[Dependency layer caching]
+                        B2 -.->|Cached unless| B2A[pom.xml changes]
+                        B3 -.->|Changes| B3A[frequently, runs last]
+                        B4 -.->|Output| B4A[JAR artifact in workspace/target]
+                        
+                        B4 --> Result1[Result - approximately 1.2GB image with JDK Maven build tools]
+                    end
+                    
+                    Result1 -->|Extract artifact only| Stage2
+                    
+                    subgraph Stage2["Stage 2 - RUNTIME with eclipse-temurin 17-jre-jammy"]
+                        R1[1. Copy JAR from build stage] --> R2[2. Create non-root user]
+                        R2 --> R3[3. Set USER app]
+                        R3 --> R4[4. Expose port 8081]
+                        R4 --> R5[5. Set ENTRYPOINT]
+                        
+                        R1 -.->|Command| R1A[COPY from build stage to /app/app.jar]
+                        R2 -.->|Security| R2A[Run with limited permissions]
+                        R3 -.->|Effect| R3A[All processes run as non-root]
+                        R4 -.->|Matches| R4A[Spring Boot server.port]
+                        
+                        R5 --> Result2[Result - approximately 250MB image with JRE and application only]
+                    end
+                    
+                    style Stage1 fill:#e3f2fd
+                    style Stage2 fill:#fff3e0
+                    style Result1 fill:#ffcdd2
+                    style Result2 fill:#c8e6c9</div>
                 <h2 id="build-configuration">Build Configuration</h2>
                 <h3 id="base-images">Base Images</h3>
                 <p><strong>Build Stage</strong>: - Image:
@@ -79,18 +79,18 @@
                 Strategy</h3>
                 <p>Docker caches layers based on file changes. The
                 Dockerfile optimizes build speed:</p>
-                <div class="sourceCode" id="cb2"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 1: Maven wrapper (rarely changes)</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw pom.xml ./</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .mvn .mvn</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="fu">chmod</span> +x mvnw</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 2: Dependencies (changes when pom.xml changes)</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> dependency:go-offline</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 3: Application code (changes frequently)</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src ./src</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> <span class="at">-DskipTests</span> clean package</span></code></pre></div>
+                <div class="sourceCode" id="cb1"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 1: Maven wrapper (rarely changes)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw pom.xml ./</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .mvn .mvn</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="fu">chmod</span> +x mvnw</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 2: Dependencies (changes when pom.xml changes)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> dependency:go-offline</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 3: Application code (changes frequently)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src ./src</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> <span class="at">-DskipTests</span> clean package</span></code></pre></div>
                 <p><strong>Caching Efficiency</strong>: - Source code
                 changes: Only Layer 3 rebuilds (~30s) - Dependency
                 changes: Layers 2-3 rebuild (~2-3 min) - Maven config
@@ -134,9 +134,9 @@
                 <h2 id="security-hardening">Security Hardening</h2>
                 <h3 id="non-root-user-execution">Non-Root User
                 Execution</h3>
-                <div class="sourceCode" id="cb3"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">--system</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">--system</span> <span class="at">--ingroup</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span></code></pre></div>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">--system</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">--system</span> <span class="at">--ingroup</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span></code></pre></div>
                 <p><strong>Benefits</strong>: - Limits privilege
                 escalation attacks - Container runs with UID 1000
                 (non-root) - Aligns with Kubernetes security policies -
@@ -153,8 +153,8 @@
                 Development tools (gcc, make) - Source code - Test
                 dependencies</p>
                 <h3 id="fixed-entrypoint">Fixed Entrypoint</h3>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>, <span class="st">&quot;--server.port=8081&quot;</span>]</span></code></pre></div>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>, <span class="st">&quot;--server.port=8081&quot;</span>]</span></code></pre></div>
                 <p><strong>Advantages</strong>: - Prevents accidental
                 shell execution - Forces consistent startup command -
                 Allows runtime argument overrides - Explicit port
@@ -199,45 +199,45 @@
                 Variables</h3>
                 <p>The container supports runtime configuration via
                 environment variables:</p>
-                <div class="sourceCode" id="cb5"><pre
-                class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Database configuration</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_URL</span><span class="op">=</span>jdbc:postgresql://host:5432/db</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_USERNAME</span><span class="op">=</span>user</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_PASSWORD</span><span class="op">=</span>secret</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Spring profiles</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="va">SPRING_PROFILES_ACTIVE</span><span class="op">=</span>prod</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># JVM tuning</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="va">JAVA_OPTS</span><span class="op">=</span>-Xmx512m <span class="ex">-Xms256m</span></span></code></pre></div>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Database configuration</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_URL</span><span class="op">=</span>jdbc:postgresql://host:5432/db</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_USERNAME</span><span class="op">=</span>user</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_PASSWORD</span><span class="op">=</span>secret</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Spring profiles</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">SPRING_PROFILES_ACTIVE</span><span class="op">=</span>prod</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># JVM tuning</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="va">JAVA_OPTS</span><span class="op">=</span>-Xmx512m <span class="ex">-Xms256m</span></span></code></pre></div>
                 <p><strong>Current deployment (Koyeb)</strong>: -
                 Profile: <code>prod</code> - Database: Neon PostgreSQL
                 (serverless) - Memory: 512MB container limit</p>
                 <h2 id="build-deploy-workflow">Build &amp; Deploy
                 Workflow</h2>
                 <h3 id="local-build">Local Build</h3>
-                <div class="sourceCode" id="cb6"><pre
-                class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build image</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> stockease:local .</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run container</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-p</span> 8081:8081 <span class="dt">\</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_URL=jdbc:postgresql://localhost:5432/stockease <span class="dt">\</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_USERNAME=postgres <span class="dt">\</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_PASSWORD=postgres <span class="dt">\</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  stockease:local</span></code></pre></div>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build image</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> stockease:local .</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run container</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-p</span> 8081:8081 <span class="dt">\</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_URL=jdbc:postgresql://localhost:5432/stockease <span class="dt">\</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_USERNAME=postgres <span class="dt">\</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_PASSWORD=postgres <span class="dt">\</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  stockease:local</span></code></pre></div>
                 <h3 id="cicd-pipeline-integration">CI/CD Pipeline
                 Integration</h3>
                 <p><strong>GitHub Actions</strong>
                 (<code>auto_deploy.yml</code>):</p>
-                <div class="sourceCode" id="cb7"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build Docker Image</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> docker build -t ghcr.io/keglev/stockease:latest .</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Push to GitHub Container Registry</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    docker push ghcr.io/keglev/stockease:latest</span></code></pre></div>
+                <div class="sourceCode" id="cb6"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build Docker Image</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> docker build -t ghcr.io/keglev/stockease:latest .</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Push to GitHub Container Registry</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    docker push ghcr.io/keglev/stockease:latest</span></code></pre></div>
                 <p><strong>Deployment Flow</strong>: 1. Push to
                 <code>main</code> branch 2. GitHub Actions builds Docker
                 image 3. Image pushed to GHCR:
@@ -451,14 +451,14 @@
                 </ol>
                 <h3 id="advanced-configurations">Advanced
                 Configurations</h3>
-                <div class="sourceCode" id="cb8"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: JVM tuning for production</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="op">\</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:+UseContainerSupport&quot;</span>, <span class="op">\</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:MaxRAMPercentage=75.0&quot;</span>, <span class="op">\</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:+UseG1GC&quot;</span>, <span class="op">\</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-Djava.security.egd=file:/dev/./urandom&quot;</span>, <span class="op">\</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>]</span></code></pre></div>
+                <div class="sourceCode" id="cb7"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: JVM tuning for production</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="op">\</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:+UseContainerSupport&quot;</span>, <span class="op">\</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:MaxRAMPercentage=75.0&quot;</span>, <span class="op">\</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:+UseG1GC&quot;</span>, <span class="op">\</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-Djava.security.egd=file:/dev/./urandom&quot;</span>, <span class="op">\</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>]</span></code></pre></div>
                 <h2 id="references">References</h2>
                 <ul>
                 <li><a href="../../Dockerfile">Dockerfile
@@ -664,12 +664,20 @@
         
         console.log('🔧 Mermaid initialized');
         
-        // Convert language-mermaid class to mermaid for compatibility with Pandoc output
+        // Look for mermaid divs that were generated by Pandoc Lua filter
+        const mermaidDivs = document.querySelectorAll('div.mermaid');
+        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
+        
+        mermaidDivs.forEach((div, index) => {
+            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        });
+        
+        // Also look for any code.language-mermaid blocks (fallback)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
         console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
         codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too

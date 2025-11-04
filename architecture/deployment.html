@@ -24,35 +24,35 @@
                 id="deployment-infrastructure-architecture">Deployment
                 &amp; Infrastructure Architecture</h1>
                 <h2 id="deployment-topology">Deployment Topology</h2>
-                <pre class="mermaid"><code>graph TB
-    subgraph GitHub[&quot;GitHub Repository (Keglev/stockease)&quot;]
-        MainBranch[&quot;main branch&lt;br/&gt;(Source Code)&quot;]
-        DocsBranch[&quot;docs branch&lt;br/&gt;(GH Pages output)&quot;]
-        PRs[&quot;Pull Requests&lt;br/&gt;(Reviews)&quot;]
-    end
-    
-    MainBranch --&gt;|Push to origin/main| Actions
-    
-    subgraph Actions[&quot;GitHub Actions (CI/CD Pipelines)&quot;]
-        Build[&quot;Build &amp; Test Workflow&lt;br/&gt;(auto_deploy.yml)&lt;br/&gt;1. Checkout code&lt;br/&gt;2. Run Maven build&lt;br/&gt;3. Run tests (65+)&lt;br/&gt;4. Build Docker image&lt;br/&gt;5. Push to GHCR&lt;br/&gt;6. Deploy to Koyeb&quot;]
-        Docs[&quot;Docs Generation Workflow&lt;br/&gt;(docs-ci.yml)&lt;br/&gt;1. Extract OpenAPI spec&lt;br/&gt;2. Convert Markdown → HTML&lt;br/&gt;3. Generate Redoc HTML&lt;br/&gt;4. Collect coverage&lt;br/&gt;5. Commit to docs branch&lt;br/&gt;6. GitHub Pages auto-sync&quot;]
-    end
-    
-    Build --&gt;|GHCR Image&lt;br/&gt;ghcr.io/keglev/...| Koyeb
-    Docs --&gt;|Generated HTML&lt;br/&gt;docs branch| Pages
-    
-    Koyeb[&quot;Koyeb&lt;br/&gt;Container Service&lt;br/&gt;(Production)&quot;]
-    Pages[&quot;GitHub Pages&lt;br/&gt;(docs branch)&lt;br/&gt;https://Keglev...&quot;]
-    
-    Koyeb --&gt;|JDBC Connection| Neon
-    
-    Neon[&quot;Neon PostgreSQL 17.5&lt;br/&gt;(Serverless Database)&lt;br/&gt;- Auto-backups&lt;br/&gt;- Connection pooling&lt;br/&gt;- Failover support&quot;]
-    
-    style GitHub fill:#f9f9f9
-    style Actions fill:#e3f2fd
-    style Koyeb fill:#fff3e0
-    style Pages fill:#e8f5e9
-    style Neon fill:#fce4ec</code></pre>
+                <div class="mermaid">graph TB
+                    subgraph GitHub["GitHub Repository (Keglev/stockease)"]
+                        MainBranch["main branch<br/>(Source Code)"]
+                        DocsBranch["docs branch<br/>(GH Pages output)"]
+                        PRs["Pull Requests<br/>(Reviews)"]
+                    end
+                    
+                    MainBranch -->|Push to origin/main| Actions
+                    
+                    subgraph Actions["GitHub Actions (CI/CD Pipelines)"]
+                        Build["Build & Test Workflow<br/>(auto_deploy.yml)<br/>1. Checkout code<br/>2. Run Maven build<br/>3. Run tests (65+)<br/>4. Build Docker image<br/>5. Push to GHCR<br/>6. Deploy to Koyeb"]
+                        Docs["Docs Generation Workflow<br/>(docs-ci.yml)<br/>1. Extract OpenAPI spec<br/>2. Convert Markdown → HTML<br/>3. Generate Redoc HTML<br/>4. Collect coverage<br/>5. Commit to docs branch<br/>6. GitHub Pages auto-sync"]
+                    end
+                    
+                    Build -->|GHCR Image<br/>ghcr.io/keglev/...| Koyeb
+                    Docs -->|Generated HTML<br/>docs branch| Pages
+                    
+                    Koyeb["Koyeb<br/>Container Service<br/>(Production)"]
+                    Pages["GitHub Pages<br/>(docs branch)<br/>https://Keglev..."]
+                    
+                    Koyeb -->|JDBC Connection| Neon
+                    
+                    Neon["Neon PostgreSQL 17.5<br/>(Serverless Database)<br/>- Auto-backups<br/>- Connection pooling<br/>- Failover support"]
+                    
+                    style GitHub fill:#f9f9f9
+                    style Actions fill:#e3f2fd
+                    style Koyeb fill:#fff3e0
+                    style Pages fill:#e8f5e9
+                    style Neon fill:#fce4ec</div>
                 <h2 id="cicd-pipeline-details">CI/CD Pipeline
                 Details</h2>
                 <h3 id="build-deploy-workflow-auto_deploy.yml">Build
@@ -62,29 +62,29 @@
                 <code>main</code> branch - Pull request creation -
                 Manual trigger (workflow_dispatch)</p>
                 <p><strong>Pipeline Stages</strong>:</p>
-                <pre class="mermaid"><code>graph TD
-    A[Stage 1 - Checkout &amp; Setup] --&gt; B[Stage 2 - Build]
-    B --&gt; C[Stage 3 - Test]
-    C --&gt; D[Stage 4 - Build Docker Image]
-    D --&gt; E[Stage 5 - Push to Container Registry]
-    E --&gt; F[Stage 6 - Deploy to Koyeb]
-    F --&gt; G[Stage 7 - Verification]
-    
-    A --&gt;|Details| A1[&quot;- Checkout code from GitHub&lt;br/&gt;- Set up JDK 17&lt;br/&gt;- Cache Maven dependencies&lt;br/&gt;- Verify build environment&quot;]
-    B --&gt;|Details| B1[&quot;- Run Maven clean package&lt;br/&gt;- Compile all Java source code&lt;br/&gt;- Skip tests in this stage&lt;br/&gt;- Generate JAR file&quot;]
-    C --&gt;|Details| C1[&quot;- Run 65+ unit tests&lt;br/&gt;- Tests use H2 in-memory database&lt;br/&gt;- Generate coverage reports (JaCoCo)&lt;br/&gt;- Fail pipeline if tests don&#39;t pass&quot;]
-    D --&gt;|Details| D1[&quot;- Read Dockerfile from repository&lt;br/&gt;- Build image based on Dockerfile&lt;br/&gt;- Tag as ghcr.io/keglev/stockease latest&lt;br/&gt;- Tag as ghcr.io/keglev/stockease commit-sha&lt;br/&gt;- Generate SBOM&quot;]
-    E --&gt;|Details| E1[&quot;- Authenticate with GHCR&lt;br/&gt;- Push tagged images to GHCR&lt;br/&gt;- Make images available for deployment&lt;br/&gt;- Store in ghcr.io/keglev/stockease&quot;]
-    F --&gt;|Details| F1[&quot;- Get Koyeb API token from secrets&lt;br/&gt;- Trigger Koyeb deployment&lt;br/&gt;- Pull latest image from GHCR&lt;br/&gt;- Perform blue-green deployment&lt;br/&gt;- Health checks (retry up to 5 times)&lt;br/&gt;- Rollback if health check fails&quot;]
-    G --&gt;|Details| G1[&quot;- Verify deployment status&lt;br/&gt;- Check health endpoint /health&lt;br/&gt;- Log deployment results&lt;br/&gt;- Notify on success/failure&quot;]
-    
-    style A fill:#e3f2fd
-    style B fill:#e3f2fd
-    style C fill:#e3f2fd
-    style D fill:#e3f2fd
-    style E fill:#e3f2fd
-    style F fill:#e3f2fd
-    style G fill:#c8e6c9</code></pre>
+                <div class="mermaid">graph TD
+                    A[Stage 1 - Checkout & Setup] --> B[Stage 2 - Build]
+                    B --> C[Stage 3 - Test]
+                    C --> D[Stage 4 - Build Docker Image]
+                    D --> E[Stage 5 - Push to Container Registry]
+                    E --> F[Stage 6 - Deploy to Koyeb]
+                    F --> G[Stage 7 - Verification]
+                    
+                    A -->|Details| A1["- Checkout code from GitHub<br/>- Set up JDK 17<br/>- Cache Maven dependencies<br/>- Verify build environment"]
+                    B -->|Details| B1["- Run Maven clean package<br/>- Compile all Java source code<br/>- Skip tests in this stage<br/>- Generate JAR file"]
+                    C -->|Details| C1["- Run 65+ unit tests<br/>- Tests use H2 in-memory database<br/>- Generate coverage reports (JaCoCo)<br/>- Fail pipeline if tests don't pass"]
+                    D -->|Details| D1["- Read Dockerfile from repository<br/>- Build image based on Dockerfile<br/>- Tag as ghcr.io/keglev/stockease latest<br/>- Tag as ghcr.io/keglev/stockease commit-sha<br/>- Generate SBOM"]
+                    E -->|Details| E1["- Authenticate with GHCR<br/>- Push tagged images to GHCR<br/>- Make images available for deployment<br/>- Store in ghcr.io/keglev/stockease"]
+                    F -->|Details| F1["- Get Koyeb API token from secrets<br/>- Trigger Koyeb deployment<br/>- Pull latest image from GHCR<br/>- Perform blue-green deployment<br/>- Health checks (retry up to 5 times)<br/>- Rollback if health check fails"]
+                    G -->|Details| G1["- Verify deployment status<br/>- Check health endpoint /health<br/>- Log deployment results<br/>- Notify on success/failure"]
+                    
+                    style A fill:#e3f2fd
+                    style B fill:#e3f2fd
+                    style C fill:#e3f2fd
+                    style D fill:#e3f2fd
+                    style E fill:#e3f2fd
+                    style F fill:#e3f2fd
+                    style G fill:#c8e6c9</div>
                 <h3
                 id="documentation-pipeline-docs-ci.yml---to-be-created">Documentation
                 Pipeline (<code>docs-ci.yml</code> - TO BE CREATED)</h3>
@@ -92,26 +92,26 @@
                 <code>main</code> when <code>/backend/docs/</code>
                 changes - Manual trigger</p>
                 <p><strong>Pipeline Stages</strong>:</p>
-                <pre class="mermaid"><code>graph TD
-    A[Stage 1 - Extract OpenAPI Spec] --&gt; B[Stage 2 - Generate Redoc HTML]
-    B --&gt; C[Stage 3 - Convert Markdown to HTML]
-    C --&gt; D[Stage 4 - Collect Coverage Reports]
-    D --&gt; E[Stage 5 - Commit to Docs Branch]
-    E --&gt; F[Stage 6 - Cleanup]
-    
-    A --&gt;|Details| A1[&quot;- Build backend application&lt;br/&gt;- Start Spring Boot server&lt;br/&gt;- Fetch OpenAPI spec from /v3/api-docs&lt;br/&gt;- Validate OpenAPI spec&lt;br/&gt;- Save to docs/api/openapi/openapi.json&quot;]
-    B --&gt;|Details| B1[&quot;- Install Redoc CLI&lt;br/&gt;- Read OpenAPI spec&lt;br/&gt;- Generate interactive HTML documentation&lt;br/&gt;- Output to docs/api/redoc/index.html&lt;br/&gt;- Optimize for web&quot;]
-    C --&gt;|Details| C1[&quot;- Install pandoc&lt;br/&gt;- For each .md file in docs/architecture/:&lt;br/&gt;  * Convert to HTML&lt;br/&gt;  * Apply styling&lt;br/&gt;  * Output to docs/architecture/*.html&lt;br/&gt;- Convert docs/index.md to docs/index.html&lt;br/&gt;- Generate table of contents&quot;]
-    D --&gt;|Details| D1[&quot;- Run Maven test with JaCoCo&lt;br/&gt;- Generate coverage report&lt;br/&gt;- Copy to docs/coverage/&lt;br/&gt;- Generate index.html for coverage dashboard&lt;br/&gt;- Calculate coverage percentage&quot;]
-    E --&gt;|Details| E1[&quot;- Switch to docs branch&lt;br/&gt;- Remove old generated files&lt;br/&gt;- Copy all new HTML files&lt;br/&gt;- Commit with auto-generated documentation&lt;br/&gt;- Push to origin/docs&lt;br/&gt;- GitHub Pages auto-publishes&quot;]
-    F --&gt;|Details| F1[&quot;- Remove temporary files&lt;br/&gt;- Clean build artifacts&lt;br/&gt;- Log completion&quot;]
-    
-    style A fill:#e3f2fd
-    style B fill:#e3f2fd
-    style C fill:#e3f2fd
-    style D fill:#e3f2fd
-    style E fill:#e3f2fd
-    style F fill:#c8e6c9</code></pre>
+                <div class="mermaid">graph TD
+                    A[Stage 1 - Extract OpenAPI Spec] --> B[Stage 2 - Generate Redoc HTML]
+                    B --> C[Stage 3 - Convert Markdown to HTML]
+                    C --> D[Stage 4 - Collect Coverage Reports]
+                    D --> E[Stage 5 - Commit to Docs Branch]
+                    E --> F[Stage 6 - Cleanup]
+                    
+                    A -->|Details| A1["- Build backend application<br/>- Start Spring Boot server<br/>- Fetch OpenAPI spec from /v3/api-docs<br/>- Validate OpenAPI spec<br/>- Save to docs/api/openapi/openapi.json"]
+                    B -->|Details| B1["- Install Redoc CLI<br/>- Read OpenAPI spec<br/>- Generate interactive HTML documentation<br/>- Output to docs/api/redoc/index.html<br/>- Optimize for web"]
+                    C -->|Details| C1["- Install pandoc<br/>- For each .md file in docs/architecture/:<br/>  * Convert to HTML<br/>  * Apply styling<br/>  * Output to docs/architecture/*.html<br/>- Convert docs/index.md to docs/index.html<br/>- Generate table of contents"]
+                    D -->|Details| D1["- Run Maven test with JaCoCo<br/>- Generate coverage report<br/>- Copy to docs/coverage/<br/>- Generate index.html for coverage dashboard<br/>- Calculate coverage percentage"]
+                    E -->|Details| E1["- Switch to docs branch<br/>- Remove old generated files<br/>- Copy all new HTML files<br/>- Commit with auto-generated documentation<br/>- Push to origin/docs<br/>- GitHub Pages auto-publishes"]
+                    F -->|Details| F1["- Remove temporary files<br/>- Clean build artifacts<br/>- Log completion"]
+                    
+                    style A fill:#e3f2fd
+                    style B fill:#e3f2fd
+                    style C fill:#e3f2fd
+                    style D fill:#e3f2fd
+                    style E fill:#e3f2fd
+                    style F fill:#c8e6c9</div>
                 <h2 id="deployment-environments">Deployment
                 Environments</h2>
                 <h3 id="development-environment">Development
@@ -156,44 +156,44 @@
                 <h2 id="koyeb-deployment-configuration">Koyeb Deployment
                 Configuration</h2>
                 <h3 id="service-details">Service Details</h3>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Service Name</span><span class="kw">:</span><span class="at"> stockease-backend-production</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Status</span><span class="kw">:</span><span class="at"> HEALTHY</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">Runtime</span><span class="kw">:</span><span class="at"> Docker (custom image)</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Region</span><span class="kw">:</span><span class="at"> US (Auto)</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">Replicas</span><span class="kw">:</span><span class="at"> 1-2 (auto-scaling)</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Domain</span><span class="kw">:</span><span class="at"> stockease-backend-production.koyeb.app</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">Environment Variables</span><span class="kw">:</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_PROFILES_ACTIVE</span><span class="kw">:</span><span class="at"> production</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_HOST</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">Neon endpoint</span><span class="kw">]</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_PORT</span><span class="kw">:</span><span class="at"> </span><span class="dv">5432</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_NAME</span><span class="kw">:</span><span class="at"> stockease</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_USER</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_PASSWORD</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JWT_SECRET</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JAVA_OPTS</span><span class="kw">:</span><span class="at"> -Xmx512m -Xms256m</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="fu">Port Mapping</span><span class="kw">:</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Container Port</span><span class="kw">:</span><span class="at"> </span><span class="dv">8080</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Public Port</span><span class="kw">:</span><span class="at"> 443 (HTTPS)</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Protocol</span><span class="kw">:</span><span class="at"> HTTP2</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="fu">Health Check</span><span class="kw">:</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Endpoint</span><span class="kw">:</span><span class="at"> /health</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Interval</span><span class="kw">:</span><span class="at"> 30 seconds</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Timeout</span><span class="kw">:</span><span class="at"> 5 seconds</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Failures</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Successes</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span></code></pre></div>
+                <div class="sourceCode" id="cb1"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Service Name</span><span class="kw">:</span><span class="at"> stockease-backend-production</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Status</span><span class="kw">:</span><span class="at"> HEALTHY</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">Runtime</span><span class="kw">:</span><span class="at"> Docker (custom image)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Region</span><span class="kw">:</span><span class="at"> US (Auto)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">Replicas</span><span class="kw">:</span><span class="at"> 1-2 (auto-scaling)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Domain</span><span class="kw">:</span><span class="at"> stockease-backend-production.koyeb.app</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">Environment Variables</span><span class="kw">:</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_PROFILES_ACTIVE</span><span class="kw">:</span><span class="at"> production</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_HOST</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">Neon endpoint</span><span class="kw">]</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_PORT</span><span class="kw">:</span><span class="at"> </span><span class="dv">5432</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_NAME</span><span class="kw">:</span><span class="at"> stockease</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_USER</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_PASSWORD</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JWT_SECRET</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JAVA_OPTS</span><span class="kw">:</span><span class="at"> -Xmx512m -Xms256m</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">Port Mapping</span><span class="kw">:</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Container Port</span><span class="kw">:</span><span class="at"> </span><span class="dv">8080</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Public Port</span><span class="kw">:</span><span class="at"> 443 (HTTPS)</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Protocol</span><span class="kw">:</span><span class="at"> HTTP2</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">Health Check</span><span class="kw">:</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Endpoint</span><span class="kw">:</span><span class="at"> /health</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Interval</span><span class="kw">:</span><span class="at"> 30 seconds</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Timeout</span><span class="kw">:</span><span class="at"> 5 seconds</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Failures</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Successes</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span></code></pre></div>
                 <h3 id="auto-scaling-configuration">Auto-Scaling
                 Configuration</h3>
-                <div class="sourceCode" id="cb5"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Min Replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Max Replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">Target CPU</span><span class="kw">:</span><span class="at"> 70%</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Target Memory</span><span class="kw">:</span><span class="at"> 80%</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">Scale Up Delay</span><span class="kw">:</span><span class="at"> 60 seconds</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Scale Down Delay</span><span class="kw">:</span><span class="at"> 300 seconds</span></span></code></pre></div>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Min Replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Max Replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">Target CPU</span><span class="kw">:</span><span class="at"> 70%</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Target Memory</span><span class="kw">:</span><span class="at"> 80%</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">Scale Up Delay</span><span class="kw">:</span><span class="at"> 60 seconds</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Scale Down Delay</span><span class="kw">:</span><span class="at"> 300 seconds</span></span></code></pre></div>
                 <h2 id="database-management-neon-postgresql">Database
                 Management (Neon PostgreSQL)</h2>
                 <h3 id="connection-details">Connection Details</h3>
@@ -247,55 +247,55 @@ V3__seed_data.sql
   ├── INSERT sample products
   └── Uses DB-agnostic existence check for H2 compatibility</code></pre>
                 <p><strong>Migrations Overview</strong>:</p>
-                <pre class="mermaid"><code>erDiagram
-    users {
-        UUID id PK
-        VARCHAR username UK
-        VARCHAR password
-        VARCHAR email UK
-        VARCHAR role
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-    }
-    
-    products {
-        UUID id PK
-        VARCHAR name
-        TEXT description
-        DECIMAL price
-        INTEGER quantity
-        VARCHAR sku UK
-        VARCHAR category
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        UUID created_by FK
-    }
-    
-    users ||--o{ products : &quot;creates&quot;</code></pre>
+                <div class="mermaid">erDiagram
+                    users {
+                        UUID id PK
+                        VARCHAR username UK
+                        VARCHAR password
+                        VARCHAR email UK
+                        VARCHAR role
+                        TIMESTAMP created_at
+                        TIMESTAMP updated_at
+                    }
+                    
+                    products {
+                        UUID id PK
+                        VARCHAR name
+                        TEXT description
+                        DECIMAL price
+                        INTEGER quantity
+                        VARCHAR sku UK
+                        VARCHAR category
+                        TIMESTAMP created_at
+                        TIMESTAMP updated_at
+                        UUID created_by FK
+                    }
+                    
+                    users ||--o{ products : "creates"</div>
                 <p><strong>Migration Files</strong>:</p>
-                <pre class="mermaid"><code>graph TD
-    V1[V1__initial_schema.sql] --&gt; V2[V2__add_indexes.sql]
-    V2 --&gt; V3[V3__seed_data.sql]
-    
-    V1 --&gt;|Creates| V1A[&quot;- users table&lt;br/&gt;- products table&quot;]
-    V2 --&gt;|Adds| V2A[&quot;- idx_products_sku&lt;br/&gt;- idx_products_category&lt;br/&gt;- idx_users_username&lt;br/&gt;- idx_products_created_by&quot;]
-    V3 --&gt;|Inserts| V3A[&quot;- admin user (admin/admin123)&lt;br/&gt;- regular user (user/user123)&lt;br/&gt;- sample products&lt;br/&gt;- H2 compatibility checks&quot;]
-    
-    style V1 fill:#e3f2fd
-    style V2 fill:#e3f2fd
-    style V3 fill:#c8e6c9</code></pre>
+                <div class="mermaid">graph TD
+                    V1[V1__initial_schema.sql] --> V2[V2__add_indexes.sql]
+                    V2 --> V3[V3__seed_data.sql]
+                    
+                    V1 -->|Creates| V1A["- users table<br/>- products table"]
+                    V2 -->|Adds| V2A["- idx_products_sku<br/>- idx_products_category<br/>- idx_users_username<br/>- idx_products_created_by"]
+                    V3 -->|Inserts| V3A["- admin user (admin/admin123)<br/>- regular user (user/user123)<br/>- sample products<br/>- H2 compatibility checks"]
+                    
+                    style V1 fill:#e3f2fd
+                    style V2 fill:#e3f2fd
+                    style V3 fill:#c8e6c9</div>
                 <p><strong>Migration Execution</strong>:</p>
-                <pre class="mermaid"><code>graph TD
-    A[Application Startup] --&gt; B[Spring Boot loads]
-    B --&gt; C[Flyway initializes]
-    C --&gt; D[Checks flyway_schema_history table]
-    D --&gt; E[Identifies new migrations]
-    E --&gt; F[Executes migrations in order]
-    F --&gt; G[Updates schema version]
-    G --&gt; H[Application proceeds with data access]
-    
-    style A fill:#fff3e0
-    style H fill:#c8e6c9</code></pre>
+                <div class="mermaid">graph TD
+                    A[Application Startup] --> B[Spring Boot loads]
+                    B --> C[Flyway initializes]
+                    C --> D[Checks flyway_schema_history table]
+                    D --> E[Identifies new migrations]
+                    E --> F[Executes migrations in order]
+                    F --> G[Updates schema version]
+                    G --> H[Application proceeds with data access]
+                    
+                    style A fill:#fff3e0
+                    style H fill:#c8e6c9</div>
                 <pre><code>Application Startup
   ├── Spring Boot loads
   ├── Flyway initializes
@@ -306,35 +306,35 @@ V3__seed_data.sql
   └── Application proceeds with data access</code></pre>
                 <h2 id="containerization">Containerization</h2>
                 <h3 id="dockerfile">Dockerfile</h3>
-                <div class="sourceCode" id="cb12"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-stage build for optimization</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jdk-alpine <span class="kw">AS</span> builder</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw .</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> pom.xml .</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src src</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Build application</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> clean package <span class="at">-DskipTests</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Runtime stage</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-alpine</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy JAR from builder</span></span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> <span class="op">--from=builder</span> /app/target/stockease-backend-*.jar app.jar</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Health check</span></span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="kw">HEALTHCHECK</span> <span class="op">--interval=30s</span> <span class="op">--timeout=5s</span> <span class="op">--start-period=10s</span> <span class="op">--retries=3</span> \</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">CMD</span> <span class="fu">wget</span> <span class="at">--no-verbose</span> <span class="at">--tries</span><span class="op">=</span>1 <span class="at">--spider</span> http://localhost:8080/health <span class="kw">||</span> <span class="bu">exit</span> 1</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Expose port</span></span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> 8080</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Run application</span></span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;app.jar&quot;</span>]</span></code></pre></div>
+                <div class="sourceCode" id="cb6"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-stage build for optimization</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jdk-alpine <span class="kw">AS</span> builder</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw .</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> pom.xml .</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src src</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Build application</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> clean package <span class="at">-DskipTests</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Runtime stage</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-alpine</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy JAR from builder</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> <span class="op">--from=builder</span> /app/target/stockease-backend-*.jar app.jar</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Health check</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="kw">HEALTHCHECK</span> <span class="op">--interval=30s</span> <span class="op">--timeout=5s</span> <span class="op">--start-period=10s</span> <span class="op">--retries=3</span> \</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">CMD</span> <span class="fu">wget</span> <span class="at">--no-verbose</span> <span class="at">--tries</span><span class="op">=</span>1 <span class="at">--spider</span> http://localhost:8080/health <span class="kw">||</span> <span class="bu">exit</span> 1</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Expose port</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> 8080</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Run application</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;app.jar&quot;</span>]</span></code></pre></div>
                 <p><strong>Image Details</strong>: - <strong>Base
                 Image</strong>: eclipse-temurin:17-jre-alpine (122MB) -
                 <strong>Final Size</strong>: ~350MB (with JAR and
@@ -354,41 +354,41 @@ Image Tags:
                 <p><strong>Endpoint</strong>:
                 <code>GET /health</code></p>
                 <p><strong>Response</strong> (when healthy):</p>
-                <div class="sourceCode" id="cb14"><pre
-                class="sourceCode json"><code class="sourceCode json"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;components&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;db&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;database&quot;</span><span class="fu">:</span> <span class="st">&quot;PostgreSQL&quot;</span><span class="fu">,</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;validationQuery&quot;</span><span class="fu">:</span> <span class="st">&quot;isValid()&quot;</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">},</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;diskSpace&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;total&quot;</span><span class="fu">:</span> <span class="dv">10737418240</span><span class="fu">,</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;free&quot;</span><span class="fu">:</span> <span class="dv">5368709120</span><span class="fu">,</span></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;threshold&quot;</span><span class="fu">:</span> <span class="dv">10485760</span><span class="fu">,</span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;exists&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+                <div class="sourceCode" id="cb8"><pre
+                class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;components&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;db&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;database&quot;</span><span class="fu">:</span> <span class="st">&quot;PostgreSQL&quot;</span><span class="fu">,</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;validationQuery&quot;</span><span class="fu">:</span> <span class="st">&quot;isValid()&quot;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">},</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;diskSpace&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;total&quot;</span><span class="fu">:</span> <span class="dv">10737418240</span><span class="fu">,</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;free&quot;</span><span class="fu">:</span> <span class="dv">5368709120</span><span class="fu">,</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;threshold&quot;</span><span class="fu">:</span> <span class="dv">10485760</span><span class="fu">,</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;exists&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
                 <p><strong>Response</strong> (when unhealthy):</p>
-                <div class="sourceCode" id="cb15"><pre
-                class="sourceCode json"><code class="sourceCode json"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;DOWN&quot;</span><span class="fu">,</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;components&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;db&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;DOWN&quot;</span><span class="fu">,</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;error&quot;</span><span class="fu">:</span> <span class="st">&quot;Connection refused&quot;</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+                <div class="sourceCode" id="cb9"><pre
+                class="sourceCode json"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;DOWN&quot;</span><span class="fu">,</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;components&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;db&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;DOWN&quot;</span><span class="fu">,</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;error&quot;</span><span class="fu">:</span> <span class="st">&quot;Connection refused&quot;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
                 <h3 id="application-logs">Application Logs</h3>
                 <p><strong>Log Output</strong> (captured by Koyeb):</p>
                 <pre><code>[2025-10-31 10:30:00] INFO  o.s.b.StartupInfoLogger : Starting StockEaseApplication
@@ -730,12 +730,20 @@ Connection Timeout: 30 seconds</code></pre>
         
         console.log('🔧 Mermaid initialized');
         
-        // Convert language-mermaid class to mermaid for compatibility with Pandoc output
+        // Look for mermaid divs that were generated by Pandoc Lua filter
+        const mermaidDivs = document.querySelectorAll('div.mermaid');
+        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
+        
+        mermaidDivs.forEach((div, index) => {
+            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        });
+        
+        // Also look for any code.language-mermaid blocks (fallback)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
         console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
         codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too

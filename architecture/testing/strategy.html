@@ -218,41 +218,41 @@
                 <code>ProductCreateControllerTest</code>,
                 <code>ProductFetchControllerTest</code>, etc.</li>
                 </ul>
-                <pre class="mermaid"><code>graph TD
-    subgraph Auth[&quot;POST /api/auth/login&quot;]
-        A1[&quot;Success - Valid username and password → JWT token&quot;]
-        A2[Failure - Invalid credentials → 401]
-        A3[Failure - User not found → 401]
-    end
-    
-    subgraph Get[&quot;GET /api/products&quot;]
-        G1[&quot;Success - Admin or User → Product list&quot;]
-        G2[Authorization - Anonymous → 401]
-        G3[&quot;Pagination - Skip and limit parameters&quot;]
-    end
-    
-    subgraph Post[&quot;POST /api/products&quot;]
-        P1[Success - Admin only → Created product]
-        P2[Failure - Non-admin → 403]
-        P3[Failure - Invalid data → 400]
-    end
-    
-    subgraph Put[&quot;PUT /api/products/{id}&quot;]
-        U1[Success - Admin only → Updated product]
-        U2[Failure - Non-admin → 403]
-        U3[Failure - Invalid quantity → Validation error]
-    end
-    
-    subgraph Delete[&quot;DELETE /api/products/{id}&quot;]
-        D1[Success - Admin only → 204 No Content]
-        D2[Failure - Non-admin → 403]
-    end
-    
-    style Auth fill:#e3f2fd
-    style Get fill:#fff3e0
-    style Post fill:#e8f5e9
-    style Put fill:#f3e5f5
-    style Delete fill:#ffcdd2</code></pre>
+                <div class="mermaid">graph TD
+                    subgraph Auth["POST /api/auth/login"]
+                        A1["Success - Valid username and password → JWT token"]
+                        A2[Failure - Invalid credentials → 401]
+                        A3[Failure - User not found → 401]
+                    end
+                    
+                    subgraph Get["GET /api/products"]
+                        G1["Success - Admin or User → Product list"]
+                        G2[Authorization - Anonymous → 401]
+                        G3["Pagination - Skip and limit parameters"]
+                    end
+                    
+                    subgraph Post["POST /api/products"]
+                        P1[Success - Admin only → Created product]
+                        P2[Failure - Non-admin → 403]
+                        P3[Failure - Invalid data → 400]
+                    end
+                    
+                    subgraph Put["PUT /api/products/{id}"]
+                        U1[Success - Admin only → Updated product]
+                        U2[Failure - Non-admin → 403]
+                        U3[Failure - Invalid quantity → Validation error]
+                    end
+                    
+                    subgraph Delete["DELETE /api/products/{id}"]
+                        D1[Success - Admin only → 204 No Content]
+                        D2[Failure - Non-admin → 403]
+                    end
+                    
+                    style Auth fill:#e3f2fd
+                    style Get fill:#fff3e0
+                    style Post fill:#e8f5e9
+                    style Put fill:#f3e5f5
+                    style Delete fill:#ffcdd2</div>
                 <h4 id="authentication-authorization">2. Authentication
                 &amp; Authorization</h4>
                 <ul>
@@ -373,19 +373,19 @@
                 <strong>Execution</strong>: 1-2 sec per test<br />
                 <strong>Files</strong>: Most classes in
                 <code>backend/src/test/java/com/stocks/stockease/controller/</code></p>
-                <div class="sourceCode" id="cb5"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductFetchControllerTest <span class="op">{</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span> <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span> <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span> <span class="co">// Mocked!</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testGetProducts</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">with</span><span class="op">(</span>SecurityMockMvcRequestPostProcessors<span class="op">.</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;testUser&quot;</span><span class="op">)))</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductFetchControllerTest <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span> <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span> <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span> <span class="co">// Mocked!</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testGetProducts</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">with</span><span class="op">(</span>SecurityMockMvcRequestPostProcessors<span class="op">.</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;testUser&quot;</span><span class="op">)))</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <h3 id="level-3-integration-tests-5">Level 3:
                 Integration Tests (5%)</h3>
                 <p><strong>Definition</strong>: Test multiple components
@@ -401,15 +401,15 @@
                 <strong>Execution</strong>: 3-5 sec per test<br />
                 <strong>Files</strong>:
                 <code>backend/src/test/java/com/stocks/stockease/</code></p>
-                <div class="sourceCode" id="cb6"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">@SpringBootTest</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">@ActiveProfiles</span><span class="op">(</span><span class="st">&quot;test&quot;</span><span class="op">)</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> StockEaseApplicationTests <span class="op">{</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">contextLoads</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Spring has successfully loaded all beans</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@SpringBootTest</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">@ActiveProfiles</span><span class="op">(</span><span class="st">&quot;test&quot;</span><span class="op">)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> StockEaseApplicationTests <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">contextLoads</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Spring has successfully loaded all beans</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <h3 id="level-4-systeme2e-tests-future">Level 4:
                 System/E2E Tests (Future)</h3>
                 <p><strong>Not implemented yet</strong> — Would require:
@@ -843,12 +843,20 @@
         
         console.log('🔧 Mermaid initialized');
         
-        // Convert language-mermaid class to mermaid for compatibility with Pandoc output
+        // Look for mermaid divs that were generated by Pandoc Lua filter
+        const mermaidDivs = document.querySelectorAll('div.mermaid');
+        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
+        
+        mermaidDivs.forEach((div, index) => {
+            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        });
+        
+        // Also look for any code.language-mermaid blocks (fallback)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
         console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
         codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too

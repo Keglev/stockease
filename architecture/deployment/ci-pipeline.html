@@ -47,59 +47,59 @@
                 <code>/docs/</code> only - Changes to
                 <code>.gitignore</code> only</p>
                 <h3 id="pipeline-stages">Pipeline Stages</h3>
-                <pre class="mermaid"><code>graph TD
-    A[&quot;1. Checkout Code&lt;br/&gt;Fetch repository from GitHub&quot;] --&gt; B[&quot;2. Setup Java Environment&lt;br/&gt;JDK 17, Maven cache, dependencies&quot;]
-    B --&gt; C[&quot;3. Run Tests 65+ tests&lt;br/&gt;H2 database, ~1 minute&quot;]
-    
-    C --&gt; D[&quot;Tests Pass?&quot;]
-    D --&gt;|Yes| E[&quot;4. Build Application&lt;br/&gt;Maven package, create JAR&quot;]
-    D --&gt;|No| F[&quot;Stop, notify&quot;]
-    
-    E --&gt; G[&quot;5. Build Docker Image&lt;br/&gt;ghcr.io/keglev/stockease latest&quot;]
-    G --&gt; H[&quot;6. Push to Container Registry&lt;br/&gt;GHCR authentication, push image&quot;]
-    H --&gt; I[&quot;7. Deploy to Koyeb&lt;br/&gt;Trigger redeploy via API&quot;]
-    I --&gt; J[&quot;8. Wait for Healthy up to 10 min&lt;br/&gt;Poll service status&quot;]
-    
-    J --&gt; K[&quot;Deployment Healthy?&quot;]
-    K --&gt;|Yes| L[Success]
-    K --&gt;|Timeout| M[&quot;Failure notification&quot;]
-    
-    style A fill:#e3f2fd
-    style B fill:#e3f2fd
-    style C fill:#fff3e0
-    style E fill:#e3f2fd
-    style G fill:#e3f2fd
-    style H fill:#e3f2fd
-    style I fill:#fff3e0
-    style J fill:#fff3e0
-    style L fill:#c8e6c9
-    style F fill:#ffcdd2
-    style M fill:#ffcdd2</code></pre>
+                <div class="mermaid">graph TD
+                    A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies"]
+                    B --> C["3. Run Tests 65+ tests<br/>H2 database, ~1 minute"]
+                    
+                    C --> D["Tests Pass?"]
+                    D -->|Yes| E["4. Build Application<br/>Maven package, create JAR"]
+                    D -->|No| F["Stop, notify"]
+                    
+                    E --> G["5. Build Docker Image<br/>ghcr.io/keglev/stockease latest"]
+                    G --> H["6. Push to Container Registry<br/>GHCR authentication, push image"]
+                    H --> I["7. Deploy to Koyeb<br/>Trigger redeploy via API"]
+                    I --> J["8. Wait for Healthy up to 10 min<br/>Poll service status"]
+                    
+                    J --> K["Deployment Healthy?"]
+                    K -->|Yes| L[Success]
+                    K -->|Timeout| M["Failure notification"]
+                    
+                    style A fill:#e3f2fd
+                    style B fill:#e3f2fd
+                    style C fill:#fff3e0
+                    style E fill:#e3f2fd
+                    style G fill:#e3f2fd
+                    style H fill:#e3f2fd
+                    style I fill:#fff3e0
+                    style J fill:#fff3e0
+                    style L fill:#c8e6c9
+                    style F fill:#ffcdd2
+                    style M fill:#ffcdd2</div>
                 <h3 id="stage-details">Stage Details</h3>
                 <h4 id="stage-1-checkout">Stage 1: Checkout</h4>
-                <div class="sourceCode" id="cb3"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Checkout repository</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span></code></pre></div>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Checkout repository</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span></code></pre></div>
                 <p><strong>Duration</strong>: ~5 seconds<br />
                 <strong>Purpose</strong>: Clone repository with full
                 history</p>
                 <h4 id="stage-2-setup-environment">Stage 2: Setup
                 Environment</h4>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Set up JDK 17 with Maven cache</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/setup-java@v4</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">distribution</span><span class="kw">:</span><span class="at"> temurin</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">java-version</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;17&#39;</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">cache</span><span class="kw">:</span><span class="at"> maven</span></span></code></pre></div>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Set up JDK 17 with Maven cache</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/setup-java@v4</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">distribution</span><span class="kw">:</span><span class="at"> temurin</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">java-version</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;17&#39;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">cache</span><span class="kw">:</span><span class="at"> maven</span></span></code></pre></div>
                 <p><strong>Duration</strong>: ~30 seconds (first run),
                 ~5 seconds (cached)<br />
                 <strong>Purpose</strong>: Install JDK 17 and Maven
                 dependencies</p>
                 <h4 id="stage-3-run-tests">Stage 3: Run Tests</h4>
-                <div class="sourceCode" id="cb5"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Run backend tests</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> ./mvnw -B -ntp test</span></span></code></pre></div>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Run backend tests</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> ./mvnw -B -ntp test</span></span></code></pre></div>
                 <p><strong>Duration</strong>: ~30-45 seconds<br />
                 <strong>Tests</strong>: 65+ unit and integration
                 tests<br />
@@ -107,58 +107,58 @@
                 <strong>Failure Handling</strong>: Stops pipeline if
                 tests fail</p>
                 <h4 id="stage-4-build">Stage 4: Build</h4>
-                <div class="sourceCode" id="cb6"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Verify build compiles</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> ./mvnw -B -ntp -DskipTests package</span></span></code></pre></div>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Verify build compiles</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> ./mvnw -B -ntp -DskipTests package</span></span></code></pre></div>
                 <p><strong>Duration</strong>: ~20-30 seconds<br />
                 <strong>Purpose</strong>: Create JAR file, catch compile
                 errors</p>
                 <h4 id="stage-5-build-docker-image">Stage 5: Build
                 Docker Image</h4>
-                <div class="sourceCode" id="cb7"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-alpine</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> target/stockease-backend-*.jar app.jar</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;app.jar&quot;</span>]</span></code></pre></div>
+                <div class="sourceCode" id="cb6"><pre
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-alpine</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> target/stockease-backend-*.jar app.jar</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;app.jar&quot;</span>]</span></code></pre></div>
                 <p><strong>Duration</strong>: ~15-20 seconds<br />
                 <strong>Base Image</strong>: Alpine (122MB)<br />
                 <strong>Final Size</strong>: ~350MB (with JAR +
                 libs)</p>
                 <h4 id="stage-6-push-to-ghcr">Stage 6: Push to GHCR</h4>
-                <div class="sourceCode" id="cb8"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Push to GHCR</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">REGISTRY</span><span class="kw">:</span><span class="at"> ghcr.io</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> docker push ghcr.io/keglev/stockease:latest</span></span></code></pre></div>
+                <div class="sourceCode" id="cb7"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Push to GHCR</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">REGISTRY</span><span class="kw">:</span><span class="at"> ghcr.io</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> docker push ghcr.io/keglev/stockease:latest</span></span></code></pre></div>
                 <p><strong>Duration</strong>: ~10-15 seconds<br />
                 <strong>Authentication</strong>: GitHub token from
                 secrets</p>
                 <h4 id="stage-7-deploy-to-koyeb">Stage 7: Deploy to
                 Koyeb</h4>
-                <div class="sourceCode" id="cb9"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Trigger Koyeb redeploy</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    curl -X POST https://app.koyeb.com/v1/services/$SERVICE_ID/redeploy \</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>      -H &quot;Authorization: Bearer $KOYEB_API_KEY&quot;</span></code></pre></div>
+                <div class="sourceCode" id="cb8"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Trigger Koyeb redeploy</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    curl -X POST https://app.koyeb.com/v1/services/$SERVICE_ID/redeploy \</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>      -H &quot;Authorization: Bearer $KOYEB_API_KEY&quot;</span></code></pre></div>
                 <p><strong>Duration</strong>: ~5 seconds (API
                 call)<br />
                 <strong>Actual Deployment</strong>: 1-2 minutes (Koyeb
                 pulls image, starts container)</p>
                 <h4 id="stage-8-health-check">Stage 8: Health Check</h4>
-                <div class="sourceCode" id="cb10"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wait for Koyeb service HEALTHY</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    for i in {1..60}; do</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>      STATUS=$(curl -H &quot;Authorization: Bearer $API_KEY&quot; \</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        https://app.koyeb.com/v1/services/$SERVICE_ID)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>      if [ &quot;$STATUS&quot; = &quot;HEALTHY&quot; ]; then</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        exit 0</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>      fi</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>      sleep 10</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    done</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    exit 1</span></code></pre></div>
+                <div class="sourceCode" id="cb9"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wait for Koyeb service HEALTHY</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    for i in {1..60}; do</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>      STATUS=$(curl -H &quot;Authorization: Bearer $API_KEY&quot; \</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        https://app.koyeb.com/v1/services/$SERVICE_ID)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>      if [ &quot;$STATUS&quot; = &quot;HEALTHY&quot; ]; then</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        exit 0</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      fi</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>      sleep 10</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    done</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    exit 1</span></code></pre></div>
                 <p><strong>Duration</strong>: Up to 10 minutes (poll
                 every 10 seconds)<br />
                 <strong>Success Criteria</strong>: Service reaches
@@ -217,13 +217,13 @@
                 id="documentation-workflow-docs-ci.yml">Documentation
                 Workflow (docs-ci.yml)</h2>
                 <h3 id="trigger-events-1">Trigger Events</h3>
-                <div class="sourceCode" id="cb11"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> main </span><span class="kw">]</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">paths</span><span class="kw">:</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;backend/docs/**&#39;</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span></code></pre></div>
+                <div class="sourceCode" id="cb10"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> main </span><span class="kw">]</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">paths</span><span class="kw">:</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;backend/docs/**&#39;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span></code></pre></div>
                 <p><strong>Triggers on</strong>: - Push to main when
                 <code>/backend/docs/</code> changes - Manual workflow
                 dispatch</p>
@@ -317,13 +317,13 @@
                 <h3 id="no-secrets-in-code">No Secrets in Code</h3>
                 <p>✅ <strong>Secrets in environment variables
                 only</strong>:</p>
+                <div class="sourceCode" id="cb12"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span></code></pre></div>
+                <p>❌ <strong>Never hardcode secrets</strong>:</p>
                 <div class="sourceCode" id="cb13"><pre
                 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span></code></pre></div>
-                <p>❌ <strong>Never hardcode secrets</strong>:</p>
-                <div class="sourceCode" id="cb14"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> abc123...</span><span class="co"> # NEVER!</span></span></code></pre></div>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> abc123...</span><span class="co"> # NEVER!</span></span></code></pre></div>
                 <h2 id="failure-handling">Failure Handling</h2>
                 <h3 id="test-failures">Test Failures</h3>
                 <pre><code>If tests fail:
@@ -360,10 +360,10 @@
                 <li>Happens within 1-2 minutes</li>
                 </ul>
                 <h3 id="manual-rollback">Manual Rollback</h3>
-                <div class="sourceCode" id="cb19"><pre
-                class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Via Koyeb dashboard</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Or trigger auto_deploy on specific commit:</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>commit-sha<span class="op">&gt;</span>:main</span></code></pre></div>
+                <div class="sourceCode" id="cb18"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Via Koyeb dashboard</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Or trigger auto_deploy on specific commit:</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>commit-sha<span class="op">&gt;</span>:main</span></code></pre></div>
                 <h2 id="performance-optimization">Performance
                 Optimization</h2>
                 <h3 id="caching-strategy">Caching Strategy</h3>
@@ -639,12 +639,20 @@
         
         console.log('🔧 Mermaid initialized');
         
-        // Convert language-mermaid class to mermaid for compatibility with Pandoc output
+        // Look for mermaid divs that were generated by Pandoc Lua filter
+        const mermaidDivs = document.querySelectorAll('div.mermaid');
+        console.log('🔧 Found ' + mermaidDivs.length + ' div.mermaid blocks');
+        
+        mermaidDivs.forEach((div, index) => {
+            console.log('  Found mermaid diagram ' + (index + 1) + ': ' + div.textContent.substring(0, 50) + '...');
+        });
+        
+        // Also look for any code.language-mermaid blocks (fallback)
         const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
         console.log('🔧 Found ' + codeMermaidBlocks.length + ' code.language-mermaid blocks');
         
         codeMermaidBlocks.forEach((code, index) => {
-            console.log('  Converting block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
+            console.log('  Converting code block ' + (index + 1) + ': ' + code.textContent.substring(0, 50) + '...');
             code.classList.remove('language-mermaid');
             code.classList.add('mermaid');
             // If wrapped in pre, mark pre as mermaid too
