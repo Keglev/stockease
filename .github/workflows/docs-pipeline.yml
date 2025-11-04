@@ -44,6 +44,12 @@ jobs:
           OUTPUT_DIR="$PROJECT_DIR/target/docs"
           mkdir -p "$OUTPUT_DIR"
           
+          # Copy template files to output directory
+          mkdir -p "$OUTPUT_DIR/templates"
+          cp "$PROJECT_DIR/docs/templates/enterprise-docs.css" "$OUTPUT_DIR/templates/" || true
+          cp "$PROJECT_DIR/docs/templates/enterprise-docs.html" "$OUTPUT_DIR/templates/" || true
+          echo "✓ Copied template files to output directory"
+          
           # Verify OpenAPI YAML exists
           if [ ! -f "$PROJECT_DIR/docs/api/openapi.yaml" ]; then
             echo "❌ OpenAPI YAML not found at $PROJECT_DIR/docs/api/openapi.yaml"
