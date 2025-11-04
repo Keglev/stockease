@@ -1,140 +1,103 @@
-# StockEase# StockEase Backend
+# StockEase Backend
 
 **Enterprise Stock Management System - Java Spring Boot & PostgreSQL**<!-- Last workflow trigger: 2025-10-30 09:45 UTC -->
 
-## About## About
+## About
 
 StockEase is a backend service for managing stock-related data efficiently. Built with **Spring Boot** and integrated with **PostgreSQL**, this project showcases authentication, role-based access control, and CRUD operations for products.StockEase is a backend service for managing stock-related data efficiently. Built with **Spring Boot** and integrated with **PostgreSQL**, this project showcases authentication, role-based access control, and CRUD operations for products. 
 
-## Description## 📖 Table of Contents
+## Description 
 
-This project demonstrates a production-ready backend system for stock inventory management with comprehensive documentation, security architecture, and CI/CD integration. It includes modern technologies, JWT authentication, automated CI/CD pipelines, comprehensive testing, and enterprise-level architectural patterns.- [📌 About](#-about)
+This project demonstrates a production-ready backend system for stock inventory management with comprehensive documentation, security architecture, and CI/CD integration. It includes modern technologies, JWT authentication, automated CI/CD pipelines, comprehensive testing, and enterprise-level architectural patterns.
 
-- [🚀 Features](#-features)
+![CI Backend](https://github.com/Keglev/inventory-service/actions/workflows/ci-build.yml/badge.svg) 
 
-![CI Backend](https://github.com/Keglev/stockease/actions/workflows/deploy-backend.yml/badge.svg)- [🖼️ Screenshots](#-screenshots)
+**📅 Last Updated:** November 4, 2025 - Updates in Architecture documents
 
-- [🛠️ Installation](#-installation)
+## 📖 Table of Contents
 
-**📅 Last Updated:** November 4, 2025 - Complete Documentation & CI/CD Pipeline  - [📌 Usage](#-usage)
+1. [Screenshots](#screenshots)  
 
-**🏗️ Status:** Comprehensive documentation | Enterprise architecture | Working CI/CD pipeline- [🧑‍💻 Available Scripts](#-available-scripts)
+2. [Project Status](#project-status)  
 
-- [⚙️ Technologies](#-technologies)
+3. [Features](#features)  
 
----- [🔗 API Integration](#-api-integration)
+4. [Security](#security)  
 
-- [🤝 Contributing](#-contributing)
+5. [Documentation](#documentation)  
 
-## Table of Contents
-
-## 🚀 Features
-
-1. [Screenshots](#screenshots)- ✅ **User Authentication with JWT** 🔑
-
-2. [Project Status](#project-status)- ✅ **Role-Based Access Control (Admin & User)** 👥
-
-3. [Features](#features)- ✅ **CRUD Operations for Products** 📝
-
-4. [Security](#security)- ✅ **Paginated Product Fetching** 📑
-
-5. [Documentation](#documentation)- ✅ **Total Stock Value Calculation** 💰
-
-   - [Architecture Overview](#architecture-overview)- ✅ **Industry-Standard Testing with Mockito** 🧪
+   - [Architecture Overview](#architecture-overview) 
 
    - [API Integration Guides](#api-integration-guides)
 
-   - [API Documentation Hub](#api-documentation-hub)# Screenshots
-
-   - [API Endpoints](#api-endpoints)Here are some screenshots from Postman showing some API answers:
+   - [API Documentation Hub](#api-documentation-hub)
 
 6. [Testing & Code Quality](#testing-code-quality)
 
-7. [Tech Stack](#tech-stack)### Example API Response in Postman:
+7. [Tech Stack](#tech-stack)
 
 8. [Environment Profiles](#environment-profiles)
 
-9. [CI/CD](#cicd)### Adding a Product
+9. [CI/CD](#cicd)
 
-10. [Available Scripts](#available-scripts)<img src="./src/assets/imgs/project-image.png" alt="Adding Product" width="600" height="300"/>
+10. [Available Scripts](#available-scripts)
 
 11. [Deployment](#deployment)
 
-### Updating Product Quantity
+12. [Contributing](#contributing)
 
 ---
 
-<img src="./src/assets/imgs/updateQuantity.png" alt="Update Quantity" width="600" height="300"/>
-
+<a id="screenshots"></a>
 ## Screenshots
-
-### Example of a missing input from the user.
 
 Here are some screenshots from Postman showing API responses:
 
-<img src="./src/assets/imgs/Missingquantity.png" alt="Missing quantity" width="600" height="300"/>
-
 ### Adding a Product
 
-<img src="./src/assets/imgs/project-image.png" alt="Adding Product" width="600" height="300"/>## 🛠️ Installation
+<img src="./src/assets/imgs/project-image.png" alt="Adding Product" width="600" height="300"/>
 
-### **1. Clone the Repository**
-
-### Updating Product Quantity```bash
-
-<img src="./src/assets/imgs/updateQuantity.png" alt="Update Quantity" width="600" height="300"/>git clone https://github.com/yourusername/StockEase.git
-
-cd StockEase
-
-### Example of Missing Input from the User```
+### Example of a missing input from the user.
 
 <img src="./src/assets/imgs/Missingquantity.png" alt="Missing quantity" width="600" height="300"/>
 
-### **2. Set Up Database Credentials**
+### Updating Product Quantity
 
----Create an `application.properties` file inside `src/main/resources/` and configure it:
+<img src="./src/assets/imgs/updateQuantity.png" alt="Update Quantity" width="600" height="300"/>
 
-```properties
+---
 
-## Project Statusspring.datasource.url=jdbc:postgresql://DATABASE_HOST/DATABASE_NAME
+<a id="project-status"></a>
+## Project Status 
 
-spring.datasource.username=YOUR_DB_USER
+### ✅ Backend Development - Complete 
 
-### ✅ Backend Development - Completespring.datasource.password=YOUR_DB_PASSWORD
+- ✅ Enterprise-level documentation with architecture diagrams 
 
-- ✅ Enterprise-level documentation with architecture diagramsmore on this later if you want to deploy a database in a different server
-
-- ✅ Professional API documentation with OpenAPI specifications```
+- ✅ Professional API documentation with OpenAPI specifications
 
 - ✅ Complete backend architecture with security patternsReplace placeholders with actual values.
 
 - ✅ Working CI/CD pipeline for build, test, and deployment
 
-- ✅ Controller layer testing architecture complete### **3. Run the Application**
+- ✅ Controller layer testing architecture complete
 
 - ✅ JWT authentication with role-based access controlUse Maven to build and start the application:
 
-```bash
+### 📚 Documentation Status 
 
-### 📚 Documentation Statusmvn spring-boot:run
-
-- ✅ Complete backend architecture documentation```
+- ✅ Complete backend architecture documentation
 
 - ✅ Security architecture and patterns
 
-- ✅ Testing strategy documentation## 📌 Usage
+- ✅ Testing strategy documentation
 
-- ✅ Deployment and CI/CD documentationThis portfolio backend is designed to:
+- ✅ Deployment and CI/CD documentation
 
-- **Handle stock-related data** including adding, updating, deleting, and fetching product details.
+---
 
----- **Provide secured endpoints** with JWT authentication.
-
-- **Manage user roles** to restrict access to admin and user functionalities.
-
-## 🚀 Features- **Integrate with a frontend application** for full-stack functionality.
-
-
+<a id="features"></a>
+## 🚀 Features
 
 ### 🎯 Core Modules## 🧑‍💻 Available Scripts
 
@@ -146,67 +109,56 @@ spring.datasource.username=YOUR_DB_USER
 
 - ✅ **Advanced Querying** – Pagination, filtering, sorting
 
-- ✅ **Stock Calculations** – Total stock value computation##  Technologies ⚙️
+- ✅ **Stock Calculations** – Total stock value computation 
 
-- **Spring Boot**
+---
 
----- **Java**
-
-- **Spring Security** 
-
-## 🛡️ Security- **PostgreSQL** 
+<a id="security"></a>
+## 🛡️ Security- 
 
 - **JWT** (JSON Web Token) 
 
-StockEase implements enterprise-grade security with JWT authentication, role-based access control, and secure endpoint protection. All API endpoints are secured with Spring Security, and fine-grained access control uses `@PreAuthorize` annotations for authorization.- **Mockito** 
+StockEase implements enterprise-grade security with JWT authentication, role-based access control, and secure endpoint protection. All API endpoints are secured with Spring Security, and fine-grained access control uses `@PreAuthorize` annotations for authorization.- **Mockito**  
 
-- **Jakarta Persistence API (JPA)** 
+📖 **[View Security Architecture Documentation](https://keglev.github.io/stockease/architecture/security.html)
 
-> 📖 **[View Security Architecture Documentation](https://keglev.github.io/stockease/architecture/security.html)**- Jakarta Validation API (Data Validation)
+---
 
-- **Hibernate Core** (ORM Implementation)
+<a id="documentation"></a>
+## 📘 Documentation 
 
----- Hibernate Validator 
+<a id="architecture-overview"></a>
+### 🏗️ Architecture Overview 
 
-- **Lombok** 
-
-## 📘 Documentation- Spring Boot DevTools 
-
-- Jakarta Servlet API (HTTP Request Handling)
-
-### 🏗️ Architecture Overview- **REST API** 
-
-- **Maven** (Build Tool)
-
-- **[Backend Architecture Index](https://keglev.github.io/stockease/architecture/overview.html)** — Complete architecture documentation with service catalog and design patterns
-
-## Documentation
+- **[Index for Backend Architecture Documentation](https://keglev.github.io/stockease/architecture/overview.html)** — Complete architecture documentation with service catalog and design patterns
 
 - **[Deployment Overview](https://keglev.github.io/stockease/architecture/deployment.html)** — Infrastructure, deployment strategy, and environment configuration
 
+---
+
 ## 🔗 API Integration
 
-### 📡 API Integration GuidesThis backend provides a **REST API** for interacting with stock data. You can find the full INDEX API documentation here:
+<a id="api-integration-guides"></a>
+### 📡 API Integration Guides
 
+This backend provides compreensive documentation for interacting with stock data. 
 
-Comprehensive integration documentation for all backend layers:📌 **[Index API Documentation](src/main/docs/api.md)**
+It also provides: 
 
+- Service patterns and abstractions
 
-- Service patterns and abstractions## 🤝 Contributing
+- Exception handling and error management
 
-- Exception handling and error managementContributions are welcome! If you'd like to improve this project, feel free to:
+- Data mapping and DTO patterns
 
-- Data mapping and DTO patterns- Fork the repository
+- Configuration best practices
 
-- Configuration best practices- Create a new branch
+- Security patterns and JWT integration
 
-- Security patterns and JWT integration- Make your changes
+---
 
-- Submit a pull request
-
+<a id="api-documentation-hub"></a>
 ### 🚀 API Documentation Hub
-
-For any issues or improvements, please open a GitHub issue. 🚀
 
 - **[Interactive API Documentation](https://keglev.github.io/stockease/api-docs.html)** — Complete OpenAPI specification
 
@@ -214,6 +166,9 @@ For any issues or improvements, please open a GitHub issue. 🚀
 
 - **[Product Management Endpoints](https://keglev.github.io/stockease/api-docs.html#tag/Products)** — CRUD operations and product queries
 
+---
+
+<a id="testing-code-quality"></a>
 ## 🧪 Testing & Code Quality
 
 StockEase includes comprehensive testing architecture with automated test execution and code quality analysis:
@@ -228,7 +183,7 @@ StockEase includes comprehensive testing architecture with automated test execut
 **📊 Coverage Reports:** 🚧 *Under Construction* - Coverage dashboard coming soon
 
 ---
-
+<a id="tech-stack"></a>
 ## 🧰 Tech Stack
 
 ### Backend
@@ -248,6 +203,7 @@ StockEase includes comprehensive testing architecture with automated test execut
 
 ---
 
+<a id="environment-profiles"></a>
 ## 🌐 Environment Profiles
 
 StockEase supports multiple environment configurations:
@@ -258,7 +214,8 @@ StockEase supports multiple environment configurations:
 
 ---
 
-## ✅ CI/CD
+<a id="cicd"></a>
+## CI/CD
 
 StockEase includes automated CI/CD pipelines for continuous integration and deployment:
 
@@ -275,6 +232,7 @@ StockEase includes automated CI/CD pipelines for continuous integration and depl
 
 ---
 
+<a id="available-scripts"></a>
 ## 🧑‍💻 Available Scripts
 
 Common commands for development and deployment:
@@ -286,6 +244,7 @@ Common commands for development and deployment:
 
 ---
 
+<a id="deployment"></a>
 ## Deployment
 
 ### Production Deployment
@@ -305,7 +264,7 @@ GitHub Push → Build & Test → Docker Build → Push to Registry → Koyeb Dep
 > 📖 **[View Complete Deployment Strategy](https://keglev.github.io/stockease/architecture/deployment.html)**
 
 ---
-
+<a id="contributing"></a>
 ## 🤝 Contributing
 
 Contributions are welcome! To improve this project:
