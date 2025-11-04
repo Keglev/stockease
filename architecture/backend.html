@@ -1658,9 +1658,8 @@ spring.datasource.hikari.maxLifetime=1800000</code></pre>
             <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
         </div>
     </footer>
-
-    <script>
-        // ====================================================================
+    <!-- Sidebar Navigation Script
+    // ====================================================================
         // SIDEBAR NAVIGATION MODULE
         // ====================================================================
         // Dynamically builds navigation sidebar based on static navigation
@@ -1674,6 +1673,8 @@ spring.datasource.hikari.maxLifetime=1800000</code></pre>
         // ====================================================================
         
         // Calculate relative path to architecture root based on current location
+    -->
+    <script>
         function getArchRoot() {
             const path = window.location.pathname;
             const segments = path.split('/').filter(s => s);
@@ -1818,9 +1819,8 @@ spring.datasource.hikari.maxLifetime=1800000</code></pre>
         });
     </script>
 
-    <!-- Mermaid.js for diagram rendering -->
-    <script type="module">
-        // ====================================================================
+    <!-- Mermaid.js for diagram rendering 
+     // ====================================================================
         // MERMAID DIAGRAM RENDERING MODULE
         // ====================================================================
         // Renders architecture diagrams using Mermaid.js v10.
@@ -1845,6 +1845,8 @@ spring.datasource.hikari.maxLifetime=1800000</code></pre>
         // Browser Support: All modern browsers with ES Module support
         // CDN: https://cdn.jsdelivr.net/npm/mermaid@10/
         // ====================================================================
+    -->
+    <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         
         mermaid.initialize({ 
