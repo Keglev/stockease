@@ -86,20 +86,35 @@
                 <h3 id="comparison-full-vs.-slice">Comparison: Full
                 vs. Slice</h3>
                 <div class="mermaid">
-                graph TD subgraph Full["Full Spring Context
-                @SpringBootTest&lt;br/&gt;Execution: ~2-3 seconds per
-                test"] F1[Web Layer Controllers] F2[Service Layer]
-                F3[Repository Layer] F4[Database Layer] F5[Security
-                Configuration] F6[All Beans] F1 --&gt; F2 --&gt; F3
-                --&gt; F4 F5 --&gt; F1 end subgraph Slice["Web Layer
-                Slice @WebMvcTest&lt;br/&gt;Execution: ~0.5-1 second per
-                test"] S1[Web Layer Controllers only] S2[Security
-                Configuration] S3[Relevant Beans] S2 --&gt; S1 S1 --&gt;
-                S3 end Full -.-&gt;|Use for| FU[Integration
-                tests&lt;br/&gt;Application bootstrap] Slice -.-&gt;|Use
-                for| SU[REST API tests&lt;br/&gt;Controller logic] style
-                Full fill:#ffcdd2 style Slice fill:#c8e6c9 style FU
-                fill:#e3f2fd style SU fill:#e3f2fd
+                graph TD
+                    subgraph Full["Full Spring Context @SpringBootTest<br/>Execution: ~2-3 seconds per test"]
+                        F1[Web Layer Controllers]
+                        F2[Service Layer]
+                        F3[Repository Layer]
+                        F4[Database Layer]
+                        F5[Security Configuration]
+                        F6[All Beans]
+                        
+                        F1 --> F2 --> F3 --> F4
+                        F5 --> F1
+                    end
+                    
+                    subgraph Slice["Web Layer Slice @WebMvcTest<br/>Execution: ~0.5-1 second per test"]
+                        S1[Web Layer Controllers only]
+                        S2[Security Configuration]
+                        S3[Relevant Beans]
+                        
+                        S2 --> S1
+                        S1 --> S3
+                    end
+                    
+                    Full -.->|Use for| FU[Integration tests<br/>Application bootstrap]
+                    Slice -.->|Use for| SU[REST API tests<br/>Controller logic]
+                    
+                    style Full fill:#ffcdd2
+                    style Slice fill:#c8e6c9
+                    style FU fill:#e3f2fd
+                    style SU fill:#e3f2fd
                 </div>
                 <hr />
                 <h2 id="available-slices">Available Slices</h2>

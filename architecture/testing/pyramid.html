@@ -29,14 +29,17 @@
                 Concept</h2>
                 <h3 id="traditional-pyramid">Traditional Pyramid</h3>
                 <div class="mermaid">
-                graph TD A["System E2E 5%&lt;br/&gt;Slow,
-                expensive&lt;br/&gt;Simulate user scenarios"]
-                B[Integration 25%&lt;br/&gt;Medium speed&lt;br/&gt;Test
-                layer interactions] C[Unit 70%&lt;br/&gt;Fast,
-                cheap&lt;br/&gt;Test one thing] C --- B B --- A style A
-                fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px style B
-                fill:#fff3e0,stroke:#f57c00,stroke-width:3px style C
-                fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+                graph TD
+                    A["System E2E 5%<br/>Slow, expensive<br/>Simulate user scenarios"] 
+                    B[Integration 25%<br/>Medium speed<br/>Test layer interactions]
+                    C[Unit 70%<br/>Fast, cheap<br/>Test one thing]
+                    
+                    C --- B
+                    B --- A
+                    
+                    style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+                    style B fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+                    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
                 </div>
                 <h3 id="benefits-of-this-shape">Benefits of This
                 Shape</h3>
@@ -86,15 +89,17 @@
                 Pyramid</h2>
                 <h3 id="current-distribution">Current Distribution</h3>
                 <div class="mermaid">
-                graph TD A["System E2E - 0 tests - NOT YET
-                IMPLEMENTED&lt;br/&gt;(Red - not implemented)"]
-                B["Integration - 1 test 5%&lt;br/&gt;@SpringBootTest
-                context load (Green - complete)"] C["Unit Slice - 8
-                tests 95%&lt;br/&gt;@WebMvcTest + unit tests (Green -
-                complete)"] C --- B B --- A style A
-                fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px style B
-                fill:#fff3e0,stroke:#388e3c,stroke-width:3px style C
-                fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+                graph TD
+                    A["System E2E - 0 tests - NOT YET IMPLEMENTED<br/>(Red - not implemented)"]
+                    B["Integration - 1 test 5%<br/>@SpringBootTest context load (Green - complete)"]
+                    C["Unit Slice - 8 tests 95%<br/>@WebMvcTest + unit tests (Green - complete)"]
+                    
+                    C --- B
+                    B --- A
+                    
+                    style A fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+                    style B fill:#fff3e0,stroke:#388e3c,stroke-width:3px
+                    style C fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
                 </div>
                 <h3 id="by-test-type">By Test Type</h3>
                 <table>

@@ -25,36 +25,35 @@
                 &amp; Infrastructure Architecture</h1>
                 <h2 id="deployment-topology">Deployment Topology</h2>
                 <div class="mermaid">
-                graph TB subgraph GitHub["GitHub Repository
-                (Keglev/stockease)"] MainBranch["main
-                branch&lt;br/&gt;(Source Code)"] DocsBranch["docs
-                branch&lt;br/&gt;(GH Pages output)"] PRs["Pull
-                Requests&lt;br/&gt;(Reviews)"] end MainBranch
-                --&gt;|Push to origin/main| Actions subgraph
-                Actions["GitHub Actions (CI/CD Pipelines)"] Build["Build
-                &amp; Test
-                Workflow&lt;br/&gt;(auto_deploy.yml)&lt;br/&gt;1.
-                Checkout code&lt;br/&gt;2. Run Maven build&lt;br/&gt;3.
-                Run tests (65+)&lt;br/&gt;4. Build Docker
-                image&lt;br/&gt;5. Push to GHCR&lt;br/&gt;6. Deploy to
-                Koyeb"] Docs["Docs Generation
-                Workflow&lt;br/&gt;(docs-ci.yml)&lt;br/&gt;1. Extract
-                OpenAPI spec&lt;br/&gt;2. Convert Markdown →
-                HTML&lt;br/&gt;3. Generate Redoc HTML&lt;br/&gt;4.
-                Collect coverage&lt;br/&gt;5. Commit to docs
-                branch&lt;br/&gt;6. GitHub Pages auto-sync"] end Build
-                --&gt;|GHCR Image&lt;br/&gt;ghcr.io/keglev/...| Koyeb
-                Docs --&gt;|Generated HTML&lt;br/&gt;docs branch| Pages
-                Koyeb["Koyeb&lt;br/&gt;Container
-                Service&lt;br/&gt;(Production)"] Pages["GitHub
-                Pages&lt;br/&gt;(docs
-                branch)&lt;br/&gt;https://Keglev..."] Koyeb --&gt;|JDBC
-                Connection| Neon Neon["Neon PostgreSQL
-                17.5&lt;br/&gt;(Serverless Database)&lt;br/&gt;-
-                Auto-backups&lt;br/&gt;- Connection pooling&lt;br/&gt;-
-                Failover support"] style GitHub fill:#f9f9f9 style
-                Actions fill:#e3f2fd style Koyeb fill:#fff3e0 style
-                Pages fill:#e8f5e9 style Neon fill:#fce4ec
+                graph TB
+                    subgraph GitHub["GitHub Repository (Keglev/stockease)"]
+                        MainBranch["main branch<br/>(Source Code)"]
+                        DocsBranch["docs branch<br/>(GH Pages output)"]
+                        PRs["Pull Requests<br/>(Reviews)"]
+                    end
+                    
+                    MainBranch -->|Push to origin/main| Actions
+                    
+                    subgraph Actions["GitHub Actions (CI/CD Pipelines)"]
+                        Build["Build & Test Workflow<br/>(auto_deploy.yml)<br/>1. Checkout code<br/>2. Run Maven build<br/>3. Run tests (65+)<br/>4. Build Docker image<br/>5. Push to GHCR<br/>6. Deploy to Koyeb"]
+                        Docs["Docs Generation Workflow<br/>(docs-ci.yml)<br/>1. Extract OpenAPI spec<br/>2. Convert Markdown → HTML<br/>3. Generate Redoc HTML<br/>4. Collect coverage<br/>5. Commit to docs branch<br/>6. GitHub Pages auto-sync"]
+                    end
+                    
+                    Build -->|GHCR Image<br/>ghcr.io/keglev/...| Koyeb
+                    Docs -->|Generated HTML<br/>docs branch| Pages
+                    
+                    Koyeb["Koyeb<br/>Container Service<br/>(Production)"]
+                    Pages["GitHub Pages<br/>(docs branch)<br/>https://Keglev..."]
+                    
+                    Koyeb -->|JDBC Connection| Neon
+                    
+                    Neon["Neon PostgreSQL 17.5<br/>(Serverless Database)<br/>- Auto-backups<br/>- Connection pooling<br/>- Failover support"]
+                    
+                    style GitHub fill:#f9f9f9
+                    style Actions fill:#e3f2fd
+                    style Koyeb fill:#fff3e0
+                    style Pages fill:#e8f5e9
+                    style Neon fill:#fce4ec
                 </div>
                 <h2 id="cicd-pipeline-details">CI/CD Pipeline
                 Details</h2>
@@ -66,42 +65,29 @@
                 Manual trigger (workflow_dispatch)</p>
                 <p><strong>Pipeline Stages</strong>:</p>
                 <div class="mermaid">
-                graph TD A[Stage 1 - Checkout &amp; Setup] --&gt;
-                B[Stage 2 - Build] B --&gt; C[Stage 3 - Test] C --&gt;
-                D[Stage 4 - Build Docker Image] D --&gt; E[Stage 5 -
-                Push to Container Registry] E --&gt; F[Stage 6 - Deploy
-                to Koyeb] F --&gt; G[Stage 7 - Verification] A
-                --&gt;|Details| A1["- Checkout code from
-                GitHub&lt;br/&gt;- Set up JDK 17&lt;br/&gt;- Cache Maven
-                dependencies&lt;br/&gt;- Verify build environment"] B
-                --&gt;|Details| B1["- Run Maven clean
-                package&lt;br/&gt;- Compile all Java source
-                code&lt;br/&gt;- Skip tests in this stage&lt;br/&gt;-
-                Generate JAR file"] C --&gt;|Details| C1["- Run 65+ unit
-                tests&lt;br/&gt;- Tests use H2 in-memory
-                database&lt;br/&gt;- Generate coverage reports
-                (JaCoCo)&lt;br/&gt;- Fail pipeline if tests don't pass"]
-                D --&gt;|Details| D1["- Read Dockerfile from
-                repository&lt;br/&gt;- Build image based on
-                Dockerfile&lt;br/&gt;- Tag as ghcr.io/keglev/stockease
-                latest&lt;br/&gt;- Tag as ghcr.io/keglev/stockease
-                commit-sha&lt;br/&gt;- Generate SBOM"] E --&gt;|Details|
-                E1["- Authenticate with GHCR&lt;br/&gt;- Push tagged
-                images to GHCR&lt;br/&gt;- Make images available for
-                deployment&lt;br/&gt;- Store in
-                ghcr.io/keglev/stockease"] F --&gt;|Details| F1["- Get
-                Koyeb API token from secrets&lt;br/&gt;- Trigger Koyeb
-                deployment&lt;br/&gt;- Pull latest image from
-                GHCR&lt;br/&gt;- Perform blue-green
-                deployment&lt;br/&gt;- Health checks (retry up to 5
-                times)&lt;br/&gt;- Rollback if health check fails"] G
-                --&gt;|Details| G1["- Verify deployment
-                status&lt;br/&gt;- Check health endpoint
-                /health&lt;br/&gt;- Log deployment results&lt;br/&gt;-
-                Notify on success/failure"] style A fill:#e3f2fd style B
-                fill:#e3f2fd style C fill:#e3f2fd style D fill:#e3f2fd
-                style E fill:#e3f2fd style F fill:#e3f2fd style G
-                fill:#c8e6c9
+                graph TD
+                    A[Stage 1 - Checkout & Setup] --> B[Stage 2 - Build]
+                    B --> C[Stage 3 - Test]
+                    C --> D[Stage 4 - Build Docker Image]
+                    D --> E[Stage 5 - Push to Container Registry]
+                    E --> F[Stage 6 - Deploy to Koyeb]
+                    F --> G[Stage 7 - Verification]
+                    
+                    A -->|Details| A1["- Checkout code from GitHub<br/>- Set up JDK 17<br/>- Cache Maven dependencies<br/>- Verify build environment"]
+                    B -->|Details| B1["- Run Maven clean package<br/>- Compile all Java source code<br/>- Skip tests in this stage<br/>- Generate JAR file"]
+                    C -->|Details| C1["- Run 65+ unit tests<br/>- Tests use H2 in-memory database<br/>- Generate coverage reports (JaCoCo)<br/>- Fail pipeline if tests don't pass"]
+                    D -->|Details| D1["- Read Dockerfile from repository<br/>- Build image based on Dockerfile<br/>- Tag as ghcr.io/keglev/stockease latest<br/>- Tag as ghcr.io/keglev/stockease commit-sha<br/>- Generate SBOM"]
+                    E -->|Details| E1["- Authenticate with GHCR<br/>- Push tagged images to GHCR<br/>- Make images available for deployment<br/>- Store in ghcr.io/keglev/stockease"]
+                    F -->|Details| F1["- Get Koyeb API token from secrets<br/>- Trigger Koyeb deployment<br/>- Pull latest image from GHCR<br/>- Perform blue-green deployment<br/>- Health checks (retry up to 5 times)<br/>- Rollback if health check fails"]
+                    G -->|Details| G1["- Verify deployment status<br/>- Check health endpoint /health<br/>- Log deployment results<br/>- Notify on success/failure"]
+                    
+                    style A fill:#e3f2fd
+                    style B fill:#e3f2fd
+                    style C fill:#e3f2fd
+                    style D fill:#e3f2fd
+                    style E fill:#e3f2fd
+                    style F fill:#e3f2fd
+                    style G fill:#c8e6c9
                 </div>
                 <h3
                 id="documentation-pipeline-docs-ci.yml---to-be-created">Documentation
@@ -111,39 +97,26 @@
                 changes - Manual trigger</p>
                 <p><strong>Pipeline Stages</strong>:</p>
                 <div class="mermaid">
-                graph TD A[Stage 1 - Extract OpenAPI Spec] --&gt;
-                B[Stage 2 - Generate Redoc HTML] B --&gt; C[Stage 3 -
-                Convert Markdown to HTML] C --&gt; D[Stage 4 - Collect
-                Coverage Reports] D --&gt; E[Stage 5 - Commit to Docs
-                Branch] E --&gt; F[Stage 6 - Cleanup] A --&gt;|Details|
-                A1["- Build backend application&lt;br/&gt;- Start Spring
-                Boot server&lt;br/&gt;- Fetch OpenAPI spec from
-                /v3/api-docs&lt;br/&gt;- Validate OpenAPI
-                spec&lt;br/&gt;- Save to docs/api/openapi/openapi.json"]
-                B --&gt;|Details| B1["- Install Redoc CLI&lt;br/&gt;-
-                Read OpenAPI spec&lt;br/&gt;- Generate interactive HTML
-                documentation&lt;br/&gt;- Output to
-                docs/api/redoc/index.html&lt;br/&gt;- Optimize for web"]
-                C --&gt;|Details| C1["- Install pandoc&lt;br/&gt;- For
-                each .md file in docs/architecture/:&lt;br/&gt; *
-                Convert to HTML&lt;br/&gt; * Apply styling&lt;br/&gt; *
-                Output to docs/architecture/*.html&lt;br/&gt;- Convert
-                docs/index.md to docs/index.html&lt;br/&gt;- Generate
-                table of contents"] D --&gt;|Details| D1["- Run Maven
-                test with JaCoCo&lt;br/&gt;- Generate coverage
-                report&lt;br/&gt;- Copy to docs/coverage/&lt;br/&gt;-
-                Generate index.html for coverage dashboard&lt;br/&gt;-
-                Calculate coverage percentage"] E --&gt;|Details| E1["-
-                Switch to docs branch&lt;br/&gt;- Remove old generated
-                files&lt;br/&gt;- Copy all new HTML files&lt;br/&gt;-
-                Commit with auto-generated documentation&lt;br/&gt;-
-                Push to origin/docs&lt;br/&gt;- GitHub Pages
-                auto-publishes"] F --&gt;|Details| F1["- Remove
-                temporary files&lt;br/&gt;- Clean build
-                artifacts&lt;br/&gt;- Log completion"] style A
-                fill:#e3f2fd style B fill:#e3f2fd style C fill:#e3f2fd
-                style D fill:#e3f2fd style E fill:#e3f2fd style F
-                fill:#c8e6c9
+                graph TD
+                    A[Stage 1 - Extract OpenAPI Spec] --> B[Stage 2 - Generate Redoc HTML]
+                    B --> C[Stage 3 - Convert Markdown to HTML]
+                    C --> D[Stage 4 - Collect Coverage Reports]
+                    D --> E[Stage 5 - Commit to Docs Branch]
+                    E --> F[Stage 6 - Cleanup]
+                    
+                    A -->|Details| A1["- Build backend application<br/>- Start Spring Boot server<br/>- Fetch OpenAPI spec from /v3/api-docs<br/>- Validate OpenAPI spec<br/>- Save to docs/api/openapi/openapi.json"]
+                    B -->|Details| B1["- Install Redoc CLI<br/>- Read OpenAPI spec<br/>- Generate interactive HTML documentation<br/>- Output to docs/api/redoc/index.html<br/>- Optimize for web"]
+                    C -->|Details| C1["- Install pandoc<br/>- For each .md file in docs/architecture/:<br/>  * Convert to HTML<br/>  * Apply styling<br/>  * Output to docs/architecture/*.html<br/>- Convert docs/index.md to docs/index.html<br/>- Generate table of contents"]
+                    D -->|Details| D1["- Run Maven test with JaCoCo<br/>- Generate coverage report<br/>- Copy to docs/coverage/<br/>- Generate index.html for coverage dashboard<br/>- Calculate coverage percentage"]
+                    E -->|Details| E1["- Switch to docs branch<br/>- Remove old generated files<br/>- Copy all new HTML files<br/>- Commit with auto-generated documentation<br/>- Push to origin/docs<br/>- GitHub Pages auto-publishes"]
+                    F -->|Details| F1["- Remove temporary files<br/>- Clean build artifacts<br/>- Log completion"]
+                    
+                    style A fill:#e3f2fd
+                    style B fill:#e3f2fd
+                    style C fill:#e3f2fd
+                    style D fill:#e3f2fd
+                    style E fill:#e3f2fd
+                    style F fill:#c8e6c9
                 </div>
                 <h2 id="deployment-environments">Deployment
                 Environments</h2>
@@ -281,38 +254,59 @@ V3__seed_data.sql
   └── Uses DB-agnostic existence check for H2 compatibility</code></pre>
                 <p><strong>Migrations Overview</strong>:</p>
                 <div class="mermaid">
-                erDiagram users { UUID id PK VARCHAR username UK VARCHAR
-                password VARCHAR email UK VARCHAR role TIMESTAMP
-                created_at TIMESTAMP updated_at } products { UUID id PK
-                VARCHAR name TEXT description DECIMAL price INTEGER
-                quantity VARCHAR sku UK VARCHAR category TIMESTAMP
-                created_at TIMESTAMP updated_at UUID created_by FK }
-                users ||--o{ products : "creates"
+                erDiagram
+                    users {
+                        UUID id PK
+                        VARCHAR username UK
+                        VARCHAR password
+                        VARCHAR email UK
+                        VARCHAR role
+                        TIMESTAMP created_at
+                        TIMESTAMP updated_at
+                    }
+                    
+                    products {
+                        UUID id PK
+                        VARCHAR name
+                        TEXT description
+                        DECIMAL price
+                        INTEGER quantity
+                        VARCHAR sku UK
+                        VARCHAR category
+                        TIMESTAMP created_at
+                        TIMESTAMP updated_at
+                        UUID created_by FK
+                    }
+                    
+                    users ||--o{ products : "creates"
                 </div>
                 <p><strong>Migration Files</strong>:</p>
                 <div class="mermaid">
-                graph TD V1[V1__initial_schema.sql] --&gt;
-                V2[V2__add_indexes.sql] V2 --&gt; V3[V3__seed_data.sql]
-                V1 --&gt;|Creates| V1A["- users table&lt;br/&gt;-
-                products table"] V2 --&gt;|Adds| V2A["-
-                idx_products_sku&lt;br/&gt;-
-                idx_products_category&lt;br/&gt;-
-                idx_users_username&lt;br/&gt;- idx_products_created_by"]
-                V3 --&gt;|Inserts| V3A["- admin user
-                (admin/admin123)&lt;br/&gt;- regular user
-                (user/user123)&lt;br/&gt;- sample products&lt;br/&gt;-
-                H2 compatibility checks"] style V1 fill:#e3f2fd style V2
-                fill:#e3f2fd style V3 fill:#c8e6c9
+                graph TD
+                    V1[V1__initial_schema.sql] --> V2[V2__add_indexes.sql]
+                    V2 --> V3[V3__seed_data.sql]
+                    
+                    V1 -->|Creates| V1A["- users table<br/>- products table"]
+                    V2 -->|Adds| V2A["- idx_products_sku<br/>- idx_products_category<br/>- idx_users_username<br/>- idx_products_created_by"]
+                    V3 -->|Inserts| V3A["- admin user (admin/admin123)<br/>- regular user (user/user123)<br/>- sample products<br/>- H2 compatibility checks"]
+                    
+                    style V1 fill:#e3f2fd
+                    style V2 fill:#e3f2fd
+                    style V3 fill:#c8e6c9
                 </div>
                 <p><strong>Migration Execution</strong>:</p>
                 <div class="mermaid">
-                graph TD A[Application Startup] --&gt; B[Spring Boot
-                loads] B --&gt; C[Flyway initializes] C --&gt; D[Checks
-                flyway_schema_history table] D --&gt; E[Identifies new
-                migrations] E --&gt; F[Executes migrations in order] F
-                --&gt; G[Updates schema version] G --&gt; H[Application
-                proceeds with data access] style A fill:#fff3e0 style H
-                fill:#c8e6c9
+                graph TD
+                    A[Application Startup] --> B[Spring Boot loads]
+                    B --> C[Flyway initializes]
+                    C --> D[Checks flyway_schema_history table]
+                    D --> E[Identifies new migrations]
+                    E --> F[Executes migrations in order]
+                    F --> G[Updates schema version]
+                    G --> H[Application proceeds with data access]
+                    
+                    style A fill:#fff3e0
+                    style H fill:#c8e6c9
                 </div>
                 <pre><code>Application Startup
   ├── Spring Boot loads

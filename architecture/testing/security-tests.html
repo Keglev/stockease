@@ -52,21 +52,29 @@
                 <h3 id="how-jwt-works-in-stockease">How JWT Works in
                 StockEase</h3>
                 <div class="mermaid">
-                graph TD A["1. User submits
-                credentials&lt;br/&gt;testuser and testpassword"] --&gt;
-                B["2. POST /api/auth/login"] B --&gt; C[AuthController
-                receives request] C --&gt; D[AuthenticationManager
-                validates password] D --&gt; E[JwtUtil generates JWT
-                token] E --&gt; F[Response with JWT token data] F --&gt;
-                G[3. Client stores JWT in&lt;br/&gt;Authorization
-                header] G --&gt; H[4. Subsequent requests include
-                JWT&lt;br/&gt;GET /api/products] H --&gt; I[JwtFilter
-                validates token] I --&gt; J[Extracts user and role] J
-                --&gt; K[Proceeds with request] K --&gt; L{Token valid?}
-                L --&gt;|Yes| M[Request processed] L --&gt;|No/Expired|
-                N[5. Returns 401 Unauthorized] style A fill:#e3f2fd
-                style F fill:#c8e6c9 style M fill:#c8e6c9 style N
-                fill:#ffcdd2
+                graph TD
+                    A["1. User submits credentials<br/>testuser and testpassword"] --> B["2. POST /api/auth/login"]
+                    
+                    B --> C[AuthController receives request]
+                    C --> D[AuthenticationManager validates password]
+                    D --> E[JwtUtil generates JWT token]
+                    E --> F[Response with JWT token data]
+                    
+                    F --> G[3. Client stores JWT in<br/>Authorization header]
+                    G --> H[4. Subsequent requests include JWT<br/>GET /api/products]
+                    
+                    H --> I[JwtFilter validates token]
+                    I --> J[Extracts user and role]
+                    J --> K[Proceeds with request]
+                    
+                    K --> L{Token valid?}
+                    L -->|Yes| M[Request processed]
+                    L -->|No/Expired| N[5. Returns 401 Unauthorized]
+                    
+                    style A fill:#e3f2fd
+                    style F fill:#c8e6c9
+                    style M fill:#c8e6c9
+                    style N fill:#ffcdd2
                 </div>
                 <h3 id="jwt-token-structure-in-tests">JWT Token
                 Structure in Tests</h3>

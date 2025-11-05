@@ -219,24 +219,41 @@
                 <code>ProductFetchControllerTest</code>, etc.</li>
                 </ul>
                 <div class="mermaid">
-                graph TD subgraph Auth["POST /api/auth/login"]
-                A1["Success - Valid username and password → JWT token"]
-                A2[Failure - Invalid credentials → 401] A3[Failure -
-                User not found → 401] end subgraph Get["GET
-                /api/products"] G1["Success - Admin or User → Product
-                list"] G2[Authorization - Anonymous → 401]
-                G3["Pagination - Skip and limit parameters"] end
-                subgraph Post["POST /api/products"] P1[Success - Admin
-                only → Created product] P2[Failure - Non-admin → 403]
-                P3[Failure - Invalid data → 400] end subgraph Put["PUT
-                /api/products/{id}"] U1[Success - Admin only → Updated
-                product] U2[Failure - Non-admin → 403] U3[Failure -
-                Invalid quantity → Validation error] end subgraph
-                Delete["DELETE /api/products/{id}"] D1[Success - Admin
-                only → 204 No Content] D2[Failure - Non-admin → 403] end
-                style Auth fill:#e3f2fd style Get fill:#fff3e0 style
-                Post fill:#e8f5e9 style Put fill:#f3e5f5 style Delete
-                fill:#ffcdd2
+                graph TD
+                    subgraph Auth["POST /api/auth/login"]
+                        A1["Success - Valid username and password → JWT token"]
+                        A2[Failure - Invalid credentials → 401]
+                        A3[Failure - User not found → 401]
+                    end
+                    
+                    subgraph Get["GET /api/products"]
+                        G1["Success - Admin or User → Product list"]
+                        G2[Authorization - Anonymous → 401]
+                        G3["Pagination - Skip and limit parameters"]
+                    end
+                    
+                    subgraph Post["POST /api/products"]
+                        P1[Success - Admin only → Created product]
+                        P2[Failure - Non-admin → 403]
+                        P3[Failure - Invalid data → 400]
+                    end
+                    
+                    subgraph Put["PUT /api/products/{id}"]
+                        U1[Success - Admin only → Updated product]
+                        U2[Failure - Non-admin → 403]
+                        U3[Failure - Invalid quantity → Validation error]
+                    end
+                    
+                    subgraph Delete["DELETE /api/products/{id}"]
+                        D1[Success - Admin only → 204 No Content]
+                        D2[Failure - Non-admin → 403]
+                    end
+                    
+                    style Auth fill:#e3f2fd
+                    style Get fill:#fff3e0
+                    style Post fill:#e8f5e9
+                    style Put fill:#f3e5f5
+                    style Delete fill:#ffcdd2
                 </div>
                 <h4 id="authentication-authorization">2. Authentication
                 &amp; Authorization</h4>
