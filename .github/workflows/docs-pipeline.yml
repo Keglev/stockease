@@ -180,12 +180,11 @@ jobs:
             return el
           end
           
-          -- Handle mermaid code blocks - output as div with mermaid class
+          -- Handle mermaid code blocks - output as HTML div with mermaid class
           function CodeBlock(el)
             if el.classes:includes('mermaid') then
-              local div = pandoc.Div(el.text)
-              div.classes = pandoc.List({'mermaid'})
-              return div
+              local html = '<div class="mermaid">\n' .. el.text .. '\n</div>'
+              return pandoc.RawBlock('html', html)
             end
             return el
           end
