@@ -130,9 +130,9 @@ StockEase implements enterprise-grade security with JWT authentication, role-bas
 <a id="architecture-overview"></a>
 ### 🏗️ Architecture Overview 
 
-- **[Index for Backend Architecture Documentation](https://keglev.github.io/stockease/architecture/overview.html)** — Complete architecture documentation with service catalog and design patterns
+- [Index for Backend Architecture Documentation](https://keglev.github.io/stockease/architecture/overview.html) — Complete architecture documentation with service catalog and design patterns
 
-- **[Deployment Overview](https://keglev.github.io/stockease/architecture/deployment.html)** — Infrastructure, deployment strategy, and environment configuration
+- [Deployment Overview](https://keglev.github.io/stockease/architecture/deployment.html) — Infrastructure, deployment strategy, and environment configuration
 
 ---
 
