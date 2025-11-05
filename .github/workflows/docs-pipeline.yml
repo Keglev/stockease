@@ -180,14 +180,10 @@ jobs:
             return el
           end
           
-          -- Handle mermaid code blocks specially - convert to Div with mermaid class
-          -- This allows Pandoc to handle the element properly, and mermaid.js
-          -- will find and render divs with class="mermaid"
+          -- Handle mermaid code blocks - output as div with mermaid class
           function CodeBlock(el)
             if el.classes:includes('mermaid') then
-              -- Create a Div element with mermaid class containing the diagram code
-              local content = el.text
-              local div = pandoc.Div(pandoc.RawBlock('html', content))
+              local div = pandoc.Div(el.text)
               div.classes = pandoc.List({'mermaid'})
               return div
             end
