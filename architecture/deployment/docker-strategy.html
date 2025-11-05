@@ -32,40 +32,29 @@
                 <h3 id="multi-stage-build-pipeline">Multi-Stage Build
                 Pipeline</h3>
                 <div class="mermaid">
-                graph TD
-                    subgraph Stage1["Stage 1 - BUILD with maven 3.9.6 and eclipse-temurin-17"]
-                        B1["1. Copy Maven wrapper + pom.xml"] --> B2[2. Download dependencies]
-                        B2 --> B3[3. Copy application source code]
-                        B3 --> B4[4. Build JAR]
-                        
-                        B1 -.->|Enables| B1A[Dependency layer caching]
-                        B2 -.->|Cached unless| B2A[pom.xml changes]
-                        B3 -.->|Changes| B3A[frequently, runs last]
-                        B4 -.->|Output| B4A[JAR artifact in workspace/target]
-                        
-                        B4 --> Result1[Result - approximately 1.2GB image with JDK Maven build tools]
-                    end
-                    
-                    Result1 -->|Extract artifact only| Stage2
-                    
-                    subgraph Stage2["Stage 2 - RUNTIME with eclipse-temurin 17-jre-jammy"]
-                        R1[1. Copy JAR from build stage] --> R2[2. Create non-root user]
-                        R2 --> R3[3. Set USER app]
-                        R3 --> R4[4. Expose port 8081]
-                        R4 --> R5[5. Set ENTRYPOINT]
-                        
-                        R1 -.->|Command| R1A[COPY from build stage to /app/app.jar]
-                        R2 -.->|Security| R2A[Run with limited permissions]
-                        R3 -.->|Effect| R3A[All processes run as non-root]
-                        R4 -.->|Matches| R4A[Spring Boot server.port]
-                        
-                        R5 --> Result2[Result - approximately 250MB image with JRE and application only]
-                    end
-                    
-                    style Stage1 fill:#e3f2fd
-                    style Stage2 fill:#fff3e0
-                    style Result1 fill:#ffcdd2
-                    style Result2 fill:#c8e6c9
+                graph TD subgraph Stage1["Stage 1 - BUILD with maven
+                3.9.6 and eclipse-temurin-17"] B1["1. Copy Maven wrapper
+                + pom.xml"] --&gt; B2[2. Download dependencies] B2
+                --&gt; B3[3. Copy application source code] B3 --&gt;
+                B4[4. Build JAR] B1 -.-&gt;|Enables| B1A[Dependency
+                layer caching] B2 -.-&gt;|Cached unless| B2A[pom.xml
+                changes] B3 -.-&gt;|Changes| B3A[frequently, runs last]
+                B4 -.-&gt;|Output| B4A[JAR artifact in workspace/target]
+                B4 --&gt; Result1[Result - approximately 1.2GB image
+                with JDK Maven build tools] end Result1 --&gt;|Extract
+                artifact only| Stage2 subgraph Stage2["Stage 2 - RUNTIME
+                with eclipse-temurin 17-jre-jammy"] R1[1. Copy JAR from
+                build stage] --&gt; R2[2. Create non-root user] R2
+                --&gt; R3[3. Set USER app] R3 --&gt; R4[4. Expose port
+                8081] R4 --&gt; R5[5. Set ENTRYPOINT] R1
+                -.-&gt;|Command| R1A[COPY from build stage to
+                /app/app.jar] R2 -.-&gt;|Security| R2A[Run with limited
+                permissions] R3 -.-&gt;|Effect| R3A[All processes run as
+                non-root] R4 -.-&gt;|Matches| R4A[Spring Boot
+                server.port] R5 --&gt; Result2[Result - approximately
+                250MB image with JRE and application only] end style
+                Stage1 fill:#e3f2fd style Stage2 fill:#fff3e0 style
+                Result1 fill:#ffcdd2 style Result2 fill:#c8e6c9
                 </div>
                 <h2 id="build-configuration">Build Configuration</h2>
                 <h3 id="base-images">Base Images</h3>

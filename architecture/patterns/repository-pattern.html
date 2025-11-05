@@ -30,21 +30,16 @@
                 StockEase</h2>
                 <h3 id="pattern-structure">Pattern Structure</h3>
                 <div class="mermaid">
-                graph TD
-                    A[Business Logic Service] -->|uses| B[Repository Interface<br/>Spring Data JPA]
-                    B -->|extends| C[JpaRepository T, ID]
-                    C -->|Spring generates| D[Repository Implementation<br/>Proxy]
-                    D -->|uses| E[EntityManager<br/>Hibernate]
-                    E -->|executes| F[SQL Queries]
-                    F -->|accesses| G[PostgreSQL Database]
-                    
-                    style A fill:#e3f2fd
-                    style B fill:#fff3e0
-                    style C fill:#e8f5e9
-                    style D fill:#f3e5f5
-                    style E fill:#fce4ec
-                    style F fill:#e1f5fe
-                    style G fill:#f3e5f5
+                graph TD A[Business Logic Service] --&gt;|uses|
+                B[Repository Interface&lt;br/&gt;Spring Data JPA] B
+                --&gt;|extends| C[JpaRepository T, ID] C --&gt;|Spring
+                generates| D[Repository Implementation&lt;br/&gt;Proxy]
+                D --&gt;|uses| E[EntityManager&lt;br/&gt;Hibernate] E
+                --&gt;|executes| F[SQL Queries] F --&gt;|accesses|
+                G[PostgreSQL Database] style A fill:#e3f2fd style B
+                fill:#fff3e0 style C fill:#e8f5e9 style D fill:#f3e5f5
+                style E fill:#fce4ec style F fill:#e1f5fe style G
+                fill:#f3e5f5
                 </div>
                 <h2 id="repository-interfaces">Repository
                 Interfaces</h2>

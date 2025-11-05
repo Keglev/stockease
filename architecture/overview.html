@@ -56,26 +56,21 @@
                 <h3 id="context-diagram-level-1">Context Diagram (Level
                 1)</h3>
                 <div class="mermaid">
-                graph LR
-                  User([Business User]) -->|uses| Frontend[Frontend React/Vite]
-                  Frontend -->|HTTPS| API[(Spring Boot API)]
-                  API -->|JDBC/Flyway| DB[(PostgreSQL or Neon)]
-                  API -->|calls| External[(External Services)]
+                graph LR User([Business User]) --&gt;|uses|
+                Frontend[Frontend React/Vite] Frontend --&gt;|HTTPS|
+                API[(Spring Boot API)] API --&gt;|JDBC/Flyway|
+                DB[(PostgreSQL or Neon)] API --&gt;|calls|
+                External[(External Services)]
                 </div>
                 <h3 id="container-diagram-level-2">Container Diagram
                 (Level 2)</h3>
                 <div class="mermaid">
-                graph TB
-                  subgraph Backend [StockEase Backend - Spring Boot]
-                    API[API Endpoints]
-                    BIZ[Business Logic Services]
-                    DATA[Data Access Repositories Flyway]
-                  end
-                  API --> BIZ
-                  BIZ --> DATA
-                  DATA --> DB[(PostgreSQL or Neon)]
-                  API -->|exposes| OpenAPI["/v3/api-docs"]
-                  API -->|health| Health["/api/health"]
+                graph TB subgraph Backend [StockEase Backend - Spring
+                Boot] API[API Endpoints] BIZ[Business Logic Services]
+                DATA[Data Access Repositories Flyway] end API --&gt; BIZ
+                BIZ --&gt; DATA DATA --&gt; DB[(PostgreSQL or Neon)] API
+                --&gt;|exposes| OpenAPI["/v3/api-docs"] API
+                --&gt;|health| Health["/api/health"]
                 </div>
                 <h3 id="component-diagram-level-3">Component Diagram
                 (Level 3)</h3>

@@ -32,20 +32,16 @@
                 Pattern</h3>
                 <p><strong>Flow</strong>:</p>
                 <div class="mermaid">
-                sequenceDiagram
-                    participant Client
-                    participant Server
-                    
-                    Client->>Server: POST /login (credentials)
-                    Server->>Server: Validate credentials
-                    Server->>Server: Generate JWT token
-                    Server-->>Client: Return token
-                    
-                    Client->>Server: GET /products (Bearer token)
-                    Server->>Server: Validate token
-                    Server->>Server: Extract user info
-                    Server->>Server: Authorize request
-                    Server-->>Client: Return response
+                sequenceDiagram participant Client participant Server
+                Client-&gt;&gt;Server: POST /login (credentials)
+                Server-&gt;&gt;Server: Validate credentials
+                Server-&gt;&gt;Server: Generate JWT token
+                Server--&gt;&gt;Client: Return token
+                Client-&gt;&gt;Server: GET /products (Bearer token)
+                Server-&gt;&gt;Server: Validate token
+                Server-&gt;&gt;Server: Extract user info
+                Server-&gt;&gt;Server: Authorize request
+                Server--&gt;&gt;Client: Return response
                 </div>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb1"><pre
@@ -92,19 +88,13 @@
                 Hashing with BCrypt</h3>
                 <p><strong>Pattern</strong>:</p>
                 <div class="mermaid">
-                graph TD
-                    A[Plain Password] -->|BCrypt + salt| B[Hashed Password<br/>stored in DB]
-                    
-                    C[Login - Plain Password input] -->|Apply same BCrypt<br/>+ stored salt| D[Compare with stored hash]
-                    
-                    D --> E{Match?}
-                    E -->|Yes| F[Success]
-                    E -->|No| G[Failure]
-                    
-                    style A fill:#e3f2fd
-                    style B fill:#fce4ec
-                    style F fill:#c8e6c9
-                    style G fill:#ffcdd2
+                graph TD A[Plain Password] --&gt;|BCrypt + salt|
+                B[Hashed Password&lt;br/&gt;stored in DB] C[Login -
+                Plain Password input] --&gt;|Apply same
+                BCrypt&lt;br/&gt;+ stored salt| D[Compare with stored
+                hash] D --&gt; E{Match?} E --&gt;|Yes| F[Success] E
+                --&gt;|No| G[Failure] style A fill:#e3f2fd style B
+                fill:#fce4ec style F fill:#c8e6c9 style G fill:#ffcdd2
                 </div>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb2"><pre
@@ -146,12 +136,9 @@
                 Access Control (RBAC)</h3>
                 <p><strong>Roles</strong>:</p>
                 <div class="mermaid">
-                graph LR
-                    A[ADMIN] -->|Full access| B[read, create, update, delete]
-                    C[USER] -->|Limited access| D[read only]
-                    
-                    style A fill:#ffcdd2
-                    style C fill:#e3f2fd
+                graph LR A[ADMIN] --&gt;|Full access| B[read, create,
+                update, delete] C[USER] --&gt;|Limited access| D[read
+                only] style A fill:#ffcdd2 style C fill:#e3f2fd
                 </div>
                 <p><strong>Implementation</strong>:</p>
                 <div class="sourceCode" id="cb3"><pre

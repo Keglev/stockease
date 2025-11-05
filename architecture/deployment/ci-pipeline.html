@@ -48,34 +48,26 @@
                 <code>.gitignore</code> only</p>
                 <h3 id="pipeline-stages">Pipeline Stages</h3>
                 <div class="mermaid">
-                graph TD
-                    A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies"]
-                    B --> C["3. Run Tests 65+ tests<br/>H2 database, ~1 minute"]
-                    
-                    C --> D["Tests Pass?"]
-                    D -->|Yes| E["4. Build Application<br/>Maven package, create JAR"]
-                    D -->|No| F["Stop, notify"]
-                    
-                    E --> G["5. Build Docker Image<br/>ghcr.io/keglev/stockease latest"]
-                    G --> H["6. Push to Container Registry<br/>GHCR authentication, push image"]
-                    H --> I["7. Deploy to Koyeb<br/>Trigger redeploy via API"]
-                    I --> J["8. Wait for Healthy up to 10 min<br/>Poll service status"]
-                    
-                    J --> K["Deployment Healthy?"]
-                    K -->|Yes| L[Success]
-                    K -->|Timeout| M["Failure notification"]
-                    
-                    style A fill:#e3f2fd
-                    style B fill:#e3f2fd
-                    style C fill:#fff3e0
-                    style E fill:#e3f2fd
-                    style G fill:#e3f2fd
-                    style H fill:#e3f2fd
-                    style I fill:#fff3e0
-                    style J fill:#fff3e0
-                    style L fill:#c8e6c9
-                    style F fill:#ffcdd2
-                    style M fill:#ffcdd2
+                graph TD A["1. Checkout Code&lt;br/&gt;Fetch repository
+                from GitHub"] --&gt; B["2. Setup Java
+                Environment&lt;br/&gt;JDK 17, Maven cache,
+                dependencies"] B --&gt; C["3. Run Tests 65+
+                tests&lt;br/&gt;H2 database, ~1 minute"] C --&gt;
+                D["Tests Pass?"] D --&gt;|Yes| E["4. Build
+                Application&lt;br/&gt;Maven package, create JAR"] D
+                --&gt;|No| F["Stop, notify"] E --&gt; G["5. Build Docker
+                Image&lt;br/&gt;ghcr.io/keglev/stockease latest"] G
+                --&gt; H["6. Push to Container Registry&lt;br/&gt;GHCR
+                authentication, push image"] H --&gt; I["7. Deploy to
+                Koyeb&lt;br/&gt;Trigger redeploy via API"] I --&gt;
+                J["8. Wait for Healthy up to 10 min&lt;br/&gt;Poll
+                service status"] J --&gt; K["Deployment Healthy?"] K
+                --&gt;|Yes| L[Success] K --&gt;|Timeout| M["Failure
+                notification"] style A fill:#e3f2fd style B fill:#e3f2fd
+                style C fill:#fff3e0 style E fill:#e3f2fd style G
+                fill:#e3f2fd style H fill:#e3f2fd style I fill:#fff3e0
+                style J fill:#fff3e0 style L fill:#c8e6c9 style F
+                fill:#ffcdd2 style M fill:#ffcdd2
                 </div>
                 <h3 id="stage-details">Stage Details</h3>
                 <h4 id="stage-1-checkout">Stage 1: Checkout</h4>
