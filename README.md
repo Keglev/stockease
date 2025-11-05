@@ -160,7 +160,7 @@ It also provides:
 <a id="api-documentation-hub"></a>
 ### 🚀 API Documentation Hub
 
-- **[Interactive API Documentation](https://keglev.github.io/stockease/api-docs.html)** — Complete OpenAPI specification
+- **[Complete API Interactive Documentation](https://keglev.github.io/stockease/api-docs.html)** — Complete OpenAPI specification
 
 - **[Authentication Endpoints](https://keglev.github.io/stockease/api-docs.html#tag/Authentication)** — Login, registration, token management
 
