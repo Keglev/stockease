@@ -255,7 +255,9 @@ StockEase is deployed to Koyeb, a serverless container platform:
 - ✅ **Automated CI/CD**: Push to main → Automatic build, test, and deployment
 - ✅ **Container Deployment**: Docker image builds and deploys via GitHub Actions
 - ✅ **Health Checks**: Automated service verification after deployment
-- ✅ **Live Service**: Deployed and monitoring at [StockEase Frontend](https://stockeasefrontend.vercel.app/)
+
+### Live Application
+🌍 **Production URL**:[https://stockeasefrontend.vercel.app/](https://stockeasefrontend.vercel.app/)
 
 **Deployment Architecture:**
 
