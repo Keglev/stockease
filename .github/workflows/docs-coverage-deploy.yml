@@ -30,12 +30,18 @@ jobs:
 
       - name: Prepare docs directory
         run: |
+          echo "🔍 Checking downloaded artifact structure:"
+          ls -laR downloaded-docs 2>/dev/null | head -80 || echo "downloaded-docs not found"
+          
           # Move downloaded docs to target/docs (the artifact is the content of target/docs)
           mkdir -p target/docs
           mv downloaded-docs/* target/docs/ 2>/dev/null || true
           rmdir downloaded-docs 2>/dev/null || true
+          
+          echo ""
           echo "✓ Docs prepared in target/docs"
-          ls -la target/docs/ | head -20
+          echo "Contents of target/docs:"
+          ls -laR target/docs/ | head -50 || echo "target/docs is empty"
 
       - name: Detect project root
         id: where
