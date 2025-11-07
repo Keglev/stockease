@@ -59,8 +59,8 @@
 #   - Add/remove API specs → updates automatically
 #   - Mermaid syntax errors logged in workflow output
 #
-# LAST UPDATED: 2025-11-04
-# VERSION: 3.0 (CSS extraction + mermaid rendering fix)
+# LAST UPDATED: 2025-11-07
+# VERSION: 4.0 (Single deployment point + JaCoCo coverage integration)
 #
 ################################################################################
 
