@@ -375,46 +375,11 @@ jobs:
           
           echo "✓ Created documentation index"
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Upload docs-site artifact
+        uses: actions/upload-artifact@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Run tests with JaCoCo coverage
-        run: |
-          PROJECT_DIR="${{ steps.where.outputs.dir }}"
-          cd "$PROJECT_DIR"
-          
-          echo "🧪 Running Maven tests with JaCoCo..."
-          mvn clean test -DskipTests=false 2>&1 | tail -20
-          
-          if [ -d "docs/coverage" ]; then
-            echo "✓ JaCoCo coverage report generated at docs/coverage/"
-            ls -lah docs/coverage/ | head -10
-          else
-            echo "⚠ No coverage report found (tests may have failed)"
-          fi
-
-      - name: Copy coverage report to output
-        run: |
-          PROJECT_DIR="${{ steps.where.outputs.dir }}"
-          OUTPUT_DIR="$PROJECT_DIR/target/docs"
-          
-          if [ -d "$PROJECT_DIR/docs/coverage" ] && [ -f "$PROJECT_DIR/docs/coverage/index.html" ]; then
-            mkdir -p "$OUTPUT_DIR/coverage"
-            # Copy the wrapper index.html
-            cp "$PROJECT_DIR/docs/coverage/index.html" "$OUTPUT_DIR/coverage/"
-            echo "✓ Copied coverage wrapper to output"
-            
-            # Copy raw JaCoCo report if it exists
-            if [ -d "$PROJECT_DIR/docs/coverage/raw" ]; then
-              cp -r "$PROJECT_DIR/docs/coverage/raw" "$OUTPUT_DIR/coverage/" || true
-            fi
-          else
-            echo "ℹ Coverage report not available (skipping)"
-          fi
+          name: docs-site
+          path: ${{ steps.where.outputs.dir }}/target/docs
 
       - name: Verify Generated Documentation
         run: |
@@ -426,10 +391,3 @@ jobs:
           du -sh "$OUTPUT_DIR" 2>/dev/null || echo "(directory size)"
           echo ""
           echo "✓ Documentation generation complete"
-
-      - name: Publish to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ steps.where.outputs.dir }}/target/docs
-          # cname: your.domain  # optional
