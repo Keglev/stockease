@@ -52,6 +52,12 @@ jobs:
           echo "Running tests in $PROJECT_DIR"
           cd "$PROJECT_DIR"
           mvn -B clean test
+          echo "Tests completed - coverage generated at $PROJECT_DIR/docs/coverage"
+
+      - name: Verify artifact was downloaded
+        run: |
+          echo "Contents of target/docs:"
+          ls -laR target/docs 2>/dev/null | head -50 || echo "target/docs not found or empty"
 
       - name: Generate coverage wrapper and merge into site
         run: |
@@ -60,7 +66,18 @@ jobs:
           COVERAGE_SRC="$PROJECT_DIR/docs/coverage"
           COVERAGE_OUT="$OUTPUT_DIR/coverage"
 
+          echo "Merging coverage:"
+          echo "  SOURCE: $COVERAGE_SRC"
+          echo "  OUTPUT: $COVERAGE_OUT"
+
           mkdir -p "$COVERAGE_OUT"
+
+          # Verify docs were downloaded
+          if [ ! -f "$OUTPUT_DIR/index.html" ]; then
+            echo "⚠️  WARNING: Docs artifact may not have downloaded properly"
+            echo "Contents of target/docs:"
+            ls -laR target/docs 2>/dev/null | head -20 || true
+          fi
 
           # Create coverage wrapper index.html using printf to avoid YAML parsing issues
           printf '%s\n' \
@@ -91,17 +108,21 @@ jobs:
             '</html>' > "$COVERAGE_OUT/index.html"
 
           if [ -d "$COVERAGE_SRC" ]; then
-            echo "Copying generated JaCoCo files into site tree"
-            cp -r "$COVERAGE_SRC"/* "$COVERAGE_OUT/" || true
-
+            echo "✓ Copying JaCoCo coverage files"
+            cp -r "$COVERAGE_SRC"/* "$COVERAGE_OUT/" 2>&1 | head -10
+            
+            # Create raw subdirectory with detailed reports
             mkdir -p "$COVERAGE_OUT/raw"
-            for f in $(ls "$COVERAGE_SRC" | grep -v "^index.html$"); do
-              cp -r "$COVERAGE_SRC/$f" "$COVERAGE_OUT/raw/" || true
+            for f in $(ls "$COVERAGE_SRC" 2>/dev/null | grep -v "^index.html$" || true); do
+              [ -e "$COVERAGE_SRC/$f" ] && cp -r "$COVERAGE_SRC/$f" "$COVERAGE_OUT/raw/" 2>/dev/null || true
             done
-            echo "Coverage merged into target/docs/coverage"
+            echo "✓ Coverage merged into target/docs/coverage"
           else
-            echo "No coverage generated at $COVERAGE_SRC - skipping merge"
+            echo "⚠️  No coverage generated at $COVERAGE_SRC"
           fi
+
+          echo "Final structure of target/docs:"
+          find target/docs -type f -name "*.html" | head -20
 
       - name: Deploy docs with coverage to gh-pages
         uses: peaceiris/actions-gh-pages@v3
