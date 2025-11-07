@@ -98,6 +98,9 @@
                 { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
                 { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
             ],
+            'Quality & Coverage': [
+                { label: 'Test Coverage Report', href: 'coverage/index.html', isCoverage: true },
+            ],
         };
 
         // Build sidebar
@@ -121,8 +124,8 @@
                     const li = document.createElement('li');
                     const a = document.createElement('a');
                     
-                    // For API docs, go up to docs root; otherwise use architecture root
-                    if (link.isApiDoc) {
+                    // For API docs and coverage, go up to docs root; otherwise use architecture root
+                    if (link.isApiDoc || link.isCoverage) {
                         a.href = archRoot + '../' + link.href;
                     } else {
                         a.href = archRoot + link.href;
