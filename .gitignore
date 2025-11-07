@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### JaCoCo Coverage ###
+docs/coverage/
