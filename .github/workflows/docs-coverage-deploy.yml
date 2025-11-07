@@ -24,9 +24,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: docs-site
-          path: target/docs
+          path: downloaded-docs
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare docs directory
+        run: |
+          # Move downloaded docs to target/docs (the artifact is the content of target/docs)
+          mkdir -p target/docs
+          mv downloaded-docs/* target/docs/ 2>/dev/null || true
+          rmdir downloaded-docs 2>/dev/null || true
+          echo "✓ Docs prepared in target/docs"
+          ls -la target/docs/ | head -20
 
       - name: Detect project root
         id: where
