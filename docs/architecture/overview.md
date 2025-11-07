@@ -1,5 +1,7 @@
 # StockEase Backend Architecture Overview
 
+**[Deutsche Version](./overview.de.md)**
+
 ## Executive Summary
 
 StockEase is an enterprise-grade inventory management system built with **Spring Boot 3.5.7** and **PostgreSQL**. The backend provides RESTful APIs for product management, authentication, and inventory tracking with comprehensive test coverage (65+ tests) and containerized deployment on Koyeb.
