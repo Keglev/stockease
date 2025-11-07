@@ -139,12 +139,9 @@ jobs:
           echo "Final structure of target/docs:"
           find target/docs -type f -name "*.html" | head -20
 
-      - name: Publish coverage report to GitHub Pages
-        run: |
-          # Note: Docs are already deployed by docs-pipeline.yml
-          # This step just verifies coverage was added
-          if [ -f "target/docs/coverage/index.html" ]; then
-            echo "✓ Coverage report available at: https://keglev.github.io/stockease/coverage/"
-          else
-            echo "⚠️  Coverage report not found"
-          fi
+      - name: Deploy coverage to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: target/docs/coverage
+          destination_dir: coverage
