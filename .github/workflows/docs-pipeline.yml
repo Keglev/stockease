@@ -71,6 +71,7 @@ on:
     branches: [ main ]
     paths:
       - 'docs/**'
+      - 'pom.xml'
       - '.github/workflows/docs-pipeline.yml'
   workflow_dispatch:
 
