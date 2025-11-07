@@ -380,6 +380,15 @@ jobs:
           
           echo "✓ Created documentation index"
 
+      - name: Verify docs before upload
+        run: |
+          OUTPUT_DIR="${{ steps.where.outputs.dir }}/target/docs"
+          echo "📂 Contents of $OUTPUT_DIR:"
+          ls -laR "$OUTPUT_DIR" 2>/dev/null | head -100 || echo "Directory not found"
+          echo ""
+          echo "📊 File count:"
+          find "$OUTPUT_DIR" -type f | wc -l
+
       - name: Upload docs-site artifact
         uses: actions/upload-artifact@v4
         with:
