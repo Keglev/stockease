@@ -396,9 +396,3 @@ jobs:
           du -sh "$OUTPUT_DIR" 2>/dev/null || echo "(directory size)"
           echo ""
           echo "✓ Documentation generation complete"
-
-      - name: Deploy docs to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ steps.where.outputs.dir }}/target/docs
