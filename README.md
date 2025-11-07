@@ -180,7 +180,7 @@ StockEase includes comprehensive testing architecture with automated test execut
 
 📚 **[View Testing Architecture Documentation](https://keglev.github.io/stockease/architecture/testing-architecture.html)**
 
-**📊 Coverage Reports:** 🚧 *Under Construction* - Coverage dashboard coming soon
+**📊 Coverage Reports**: [Coverage Testing Report from JaCoCo](https://keglev.github.io/stockease/coverage/index.html) 
 
 ---
 <a id="tech-stack"></a>
