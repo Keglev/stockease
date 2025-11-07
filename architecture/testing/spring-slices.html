@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1 id="spring-boot-test-slices">Spring Boot Test
+                Slices</h1>
+                <p><strong>Purpose</strong>: Guide to using Spring
+                Boot’s <code>@*Test</code> annotations to test
+                horizontal slices of the application (controller layer,
+                data layer, etc.) in isolation.</p>
+                <hr />
+                <h2 id="table-of-contents">Table of Contents</h2>
+                <ol type="1">
+                <li><a href="#what-are-test-slices">What Are Test
+                Slices?</a></li>
+                <li><a href="#available-slices">Available
+                Slices</a></li>
+                <li><a href="#webmvctest-pattern">WebMvcTest
+                Pattern</a></li>
+                <li><a href="#other-slice-annotations">Other Slice
+                Annotations</a></li>
+                <li><a href="#mocking-strategy">Mocking
+                Strategy</a></li>
+                <li><a href="#examples-from-stockease">Examples from
+                StockEase</a></li>
+                <li><a href="#when-to-use-which">When to Use
+                Which</a></li>
+                <li><a href="#related-documentation">Related
+                Documentation</a></li>
+                </ol>
+                <hr />
+                <h2 id="what-are-test-slices">What Are Test Slices?</h2>
+                <h3 id="definition">Definition</h3>
+                <p>A test slice loads <strong>only the layers needed to
+                test a specific functionality</strong>, not the entire
+                application.</p>
+                <h3 id="benefits">Benefits</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Benefit</th>
+                <th>Impact</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><strong>Faster</strong></td>
+                <td>Load only web layer (100ms) instead of full app
+                (1-2s)</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Focused</strong></td>
+                <td>No database overhead; test HTTP logic in
+                isolation</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>Clearer</strong></td>
+                <td>Easy to see what’s being tested (just the
+                controller)</td>
+                </tr>
+                <tr class="even">
+                <td><strong>Cacheable</strong></td>
+                <td>Spring can cache contexts across similar slice
+                tests</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="comparison-full-vs.-slice">Comparison: Full
+                vs. Slice</h3>
+                <div class="mermaid">
+                graph TD
+                    subgraph Full["Full Spring Context @SpringBootTest<br/>Execution: ~2-3 seconds per test"]
+                        F1[Web Layer Controllers]
+                        F2[Service Layer]
+                        F3[Repository Layer]
+                        F4[Database Layer]
+                        F5[Security Configuration]
+                        F6[All Beans]
+                        
+                        F1 --> F2 --> F3 --> F4
+                        F5 --> F1
+                    end
+                    
+                    subgraph Slice["Web Layer Slice @WebMvcTest<br/>Execution: ~0.5-1 second per test"]
+                        S1[Web Layer Controllers only]
+                        S2[Security Configuration]
+                        S3[Relevant Beans]
+                        
+                        S2 --> S1
+                        S1 --> S3
+                    end
+                    
+                    Full -.->|Use for| FU[Integration tests<br/>Application bootstrap]
+                    Slice -.->|Use for| SU[REST API tests<br/>Controller logic]
+                    
+                    style Full fill:#ffcdd2
+                    style Slice fill:#c8e6c9
+                    style FU fill:#e3f2fd
+                    style SU fill:#e3f2fd
+                </div>
+                <hr />
+                <h2 id="available-slices">Available Slices</h2>
+                <h3 id="webmvctest-web-layer-slicing">1. <span
+                class="citation"
+                data-cites="WebMvcTest">@WebMvcTest</span> (Web Layer
+                Slicing)</h3>
+                <p><strong>What it loads</strong>: Controller + security
+                configuration<br />
+                <strong>What it excludes</strong>: Services,
+                repositories, database<br />
+                <strong>When to use</strong>: Testing REST endpoints
+                (80% of your tests)</p>
+                <p><strong>Auto-configured beans</strong>: -
+                <code>MockMvc</code> — HTTP client simulation - Spring
+                Security configuration - <code>@Controller</code>,
+                <code>@RestController</code> beans - Exception
+                handlers</p>
+                <p><strong>Not configured</strong>: -
+                <code>@Service</code> beans (must mock) -
+                <code>@Repository</code> beans (must mock) - Database
+                connections</p>
+                <p><strong>Example</strong>:</p>
+                <div class="sourceCode" id="cb1"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductFetchControllerTest <span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span> <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span> <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// MockMvc makes HTTP requests</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ProductRepository is a mock</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="datajpatest-repository-layer-slicing">2. <span
+                class="citation"
+                data-cites="DataJpaTest">@DataJpaTest</span> (Repository
+                Layer Slicing)</h3>
+                <p><strong>What it loads</strong>: JPA repositories,
+                Hibernate, embedded database<br />
+                <strong>What it excludes</strong>: Web layer,
+                services<br />
+                <strong>When to use</strong>: Testing query methods on
+                repositories</p>
+                <p><strong>Auto-configured beans</strong>: -
+                <code>TestEntityManager</code> — Low-level JPA testing -
+                Embedded database (H2 by default) -
+                <code>@Repository</code> beans</p>
+                <p><strong>Not configured</strong>: - Controllers -
+                Services - Security</p>
+                <p><strong>Example</strong>:</p>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@DataJpaTest</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductRepositoryTest <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span> <span class="kw">private</span> TestEntityManager entityManager<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span> <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testFindByQuantityLessThan</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Test repository queries directly</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p><strong>Note</strong>: Not currently used in
+                StockEase (repositories are mocked in controller
+                tests)</p>
+                <h3 id="springboottest-full-context">3. <span
+                class="citation"
+                data-cites="SpringBootTest">@SpringBootTest</span> (Full
+                Context)</h3>
+                <p><strong>What it loads</strong>: Entire application
+                context<br />
+                <strong>When to use</strong>: Integration tests, context
+                bootstrap<br />
+                <strong>Execution</strong>: Slowest (~2-3 seconds)</p>
+                <p><strong>Example</strong>:</p>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@SpringBootTest</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">@ActiveProfiles</span><span class="op">(</span><span class="st">&quot;test&quot;</span><span class="op">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> StockEaseApplicationTests <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">contextLoads</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">// All beans are loaded and wired</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="webfluxtest-reactive-web">4. <span
+                class="citation"
+                data-cites="WebFluxTest">@WebFluxTest</span> (Reactive
+                Web)</h3>
+                <p><strong>Not used in StockEase</strong> (synchronous
+                Spring MVC)</p>
+                <h3 id="restclienttest-rest-client-slicing">5. <span
+                class="citation"
+                data-cites="RestClientTest">@RestClientTest</span> (REST
+                Client Slicing)</h3>
+                <p><strong>Not used in StockEase</strong> (no outbound
+                HTTP clients)</p>
+                <h3 id="jsontest-json-serialization">6. <span
+                class="citation" data-cites="JsonTest">@JsonTest</span>
+                (JSON Serialization)</h3>
+                <p><strong>Not used in StockEase</strong> (JSON tested
+                indirectly in MockMvc tests)</p>
+                <hr />
+                <h2 id="webmvctest-pattern">WebMvcTest Pattern</h2>
+                <h3 id="structure">Structure</h3>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span>         <span class="co">// Load only this controller</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">@ExtendWith</span><span class="op">(</span>MockitoExtension<span class="op">.</span><span class="fu">class</span><span class="op">)</span>           <span class="co">// Enable Mockito</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductFetchControllerTest <span class="op">{</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span>                  <span class="co">// HTTP client</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span>  <span class="co">// Mocked dependency</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> JwtUtil jwtUtil<span class="op">;</span>                  <span class="co">// Mocked dependency</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@BeforeEach</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">resetMocks</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        Mockito<span class="op">.</span><span class="fu">reset</span><span class="op">(</span>productRepository<span class="op">,</span> jwtUtil<span class="op">);</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Setup mock behavior</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testEndpoint</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Use mockMvc.perform(get(...))</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="key-components">Key Components</h3>
+                <h4 id="webmvctest-parameter">1. <span class="citation"
+                data-cites="WebMvcTest">@WebMvcTest</span>
+                Parameter</h4>
+                <p>Specifies which controller to load:</p>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span>  <span class="co">// Load ProductController</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">({</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">,</span> AuthController<span class="op">.</span><span class="fu">class</span><span class="op">})</span>  <span class="co">// Multiple</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span>                           <span class="co">// Auto-detect (use first)</span></span></code></pre></div>
+                <h4 id="mockitobean">2. <span class="citation"
+                data-cites="MockitoBean">@MockitoBean</span></h4>
+                <p>Replaces a Spring bean with a Mockito mock:</p>
+                <div class="sourceCode" id="cb6"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">@MockitoBean</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> ProductRepository productRepository<span class="op">;</span>  <span class="co">// Mocked</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">// In test:</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">findAll</span><span class="op">()).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="bu">Arrays</span><span class="op">.</span><span class="fu">asList</span><span class="op">(</span><span class="kw">...</span><span class="op">));</span></span></code></pre></div>
+                <p><strong>Difference from <span class="citation"
+                data-cites="Mock">@Mock</span></strong>: -
+                <code>@Mock</code> — Plain Mockito mock (not in Spring
+                context) - <code>@MockitoBean</code> — Spring-aware mock
+                (injected into beans)</p>
+                <h4 id="mockmvc">3. MockMvc</h4>
+                <p>Simulates HTTP requests without starting a real
+                server:</p>
+                <div class="sourceCode" id="cb7"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;testUser&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;USER&quot;</span><span class="op">)))</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">())</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">jsonPath</span><span class="op">(</span><span class="st">&quot;$[0].name&quot;</span><span class="op">).</span><span class="fu">value</span><span class="op">(</span><span class="st">&quot;Product 1&quot;</span><span class="op">));</span></span></code></pre></div>
+                <h4 id="beforeeach">4. <span class="citation"
+                data-cites="BeforeEach">@BeforeEach</span></h4>
+                <p>Reset mocks before each test to ensure isolation:</p>
+                <div class="sourceCode" id="cb8"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">@BeforeEach</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">resetMocks</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    Mockito<span class="op">.</span><span class="fu">reset</span><span class="op">(</span>productRepository<span class="op">,</span> jwtUtil<span class="op">);</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    Mockito<span class="op">.</span><span class="fu">when</span><span class="op">(</span>jwtUtil<span class="op">.</span><span class="fu">validateToken</span><span class="op">(</span>Mockito<span class="op">.</span><span class="fu">anyString</span><span class="op">()))</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">true</span><span class="op">);</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <hr />
+                <h2 id="mocking-strategy">Mocking Strategy</h2>
+                <h3 id="what-to-mock-in-webmvctest">What to Mock in
+                <span class="citation"
+                data-cites="WebMvcTest">@WebMvcTest</span></h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Component</th>
+                <th>Mock?</th>
+                <th>Why</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Repository</td>
+                <td>✅ Yes</td>
+                <td>We’re testing controller, not DB queries</td>
+                </tr>
+                <tr class="even">
+                <td>Service</td>
+                <td>✅ Yes</td>
+                <td>Same reason; test one layer at a time</td>
+                </tr>
+                <tr class="odd">
+                <td>JwtUtil</td>
+                <td>✅ Yes</td>
+                <td>Avoid cryptographic overhead</td>
+                </tr>
+                <tr class="even">
+                <td>AuthenticationManager</td>
+                <td>✅ Yes</td>
+                <td>Avoid Spring Security internals</td>
+                </tr>
+                <tr class="odd">
+                <td>External API clients</td>
+                <td>✅ Yes</td>
+                <td>Would require network calls</td>
+                </tr>
+                <tr class="even">
+                <td>Controllers</td>
+                <td>❌ No</td>
+                <td>We’re testing these!</td>
+                </tr>
+                <tr class="odd">
+                <td>RequestMappings</td>
+                <td>❌ No</td>
+                <td>We’re testing these!</td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="how-to-mock-mockitobean">How to Mock: <span
+                class="citation"
+                data-cites="MockitoBean">@MockitoBean</span></h3>
+                <div class="sourceCode" id="cb9"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductCreateControllerTest <span class="op">{</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// This bean is MOCKED</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// This bean is REAL (loaded by @WebMvcTest)</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testCreateProduct</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Setup mock</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        Product mockProduct <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span><span class="st">&quot;Test&quot;</span><span class="op">,</span> <span class="dv">10</span><span class="op">,</span> <span class="fl">100.0</span><span class="op">);</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        mockProduct<span class="op">.</span><span class="fu">setId</span><span class="op">(</span><span class="dv">1L</span><span class="op">);</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span><span class="fu">any</span><span class="op">(</span>Product<span class="op">.</span><span class="fu">class</span><span class="op">)))</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span>mockProduct<span class="op">);</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Test controller (real)</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>        mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">contentType</span><span class="op">(</span>APPLICATION_JSON<span class="op">)</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">content</span><span class="op">(</span><span class="st">&quot;{</span><span class="sc">\&quot;</span><span class="st">name</span><span class="sc">\&quot;</span><span class="st">: </span><span class="sc">\&quot;</span><span class="st">Test</span><span class="sc">\&quot;</span><span class="st">, ...}&quot;</span><span class="op">)</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;admin&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">)))</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Assert response (controller&#39;s HTTP response)</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">())</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">jsonPath</span><span class="op">(</span><span class="st">&quot;$.name&quot;</span><span class="op">).</span><span class="fu">value</span><span class="op">(</span><span class="st">&quot;Test&quot;</span><span class="op">));</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="mock-behavior-pattern">Mock Behavior
+                Pattern</h3>
+                <div class="sourceCode" id="cb10"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">// 1. Import Mockito</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">static</span><span class="im"> org</span><span class="op">.</span><span class="im">mockito</span><span class="op">.</span><span class="im">Mockito</span><span class="op">.*;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">// 2. Setup mock in @BeforeEach</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">@MockitoBean</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="at">@BeforeEach</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">setupMocks</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Define what the mock should return</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">findAll</span><span class="op">())</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span><span class="bu">Arrays</span><span class="op">.</span><span class="fu">asList</span><span class="op">(</span>product1<span class="op">,</span> product2<span class="op">));</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">findById</span><span class="op">(</span><span class="dv">1L</span><span class="op">))</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span>Optional<span class="op">.</span><span class="fu">of</span><span class="op">(</span>product1<span class="op">));</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span><span class="fu">any</span><span class="op">(</span>Product<span class="op">.</span><span class="fu">class</span><span class="op">)))</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span>product1<span class="op">);</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Define what should happen with invalid input</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">findById</span><span class="op">(</span><span class="dv">999L</span><span class="op">))</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span>Optional<span class="op">.</span><span class="fu">empty</span><span class="op">());</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="co">// 3. Use in test</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">))</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Behind the scenes: Controller calls mock repository</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Mock returns the predefined list</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Controller serializes to JSON</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    <span class="co">// MockMvc captures the response</span></span></code></pre></div>
+                <hr />
+                <h2 id="examples-from-stockease">Examples from
+                StockEase</h2>
+                <h3
+                id="example-1-productfetchcontrollertest.java">Example
+                1: ProductFetchControllerTest.java</h3>
+                <div class="sourceCode" id="cb11"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="at">@ExtendWith</span><span class="op">(</span>MockitoExtension<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span>  <span class="co">// Only web layer</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductFetchControllerTest <span class="op">{</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span>  <span class="co">// HTTP client</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span>  <span class="co">// Mocked</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> JwtUtil jwtUtil<span class="op">;</span>  <span class="co">// Mocked</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@BeforeEach</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">resetMocks</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>        Mockito<span class="op">.</span><span class="fu">reset</span><span class="op">(</span>productRepository<span class="op">,</span> jwtUtil<span class="op">);</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Mock returns true for token validation</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>        Mockito<span class="op">.</span><span class="fu">when</span><span class="op">(</span>jwtUtil<span class="op">.</span><span class="fu">validateToken</span><span class="op">(</span>Mockito<span class="op">.</span><span class="fu">anyString</span><span class="op">()))</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">true</span><span class="op">);</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testGetProductByIdSuccess</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>        Product product1 <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span><span class="st">&quot;Product 1&quot;</span><span class="op">,</span> <span class="dv">10</span><span class="op">,</span> <span class="fl">100.0</span><span class="op">);</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>        product1<span class="op">.</span><span class="fu">setId</span><span class="op">(</span><span class="dv">1L</span><span class="op">);</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Setup mock repository</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>        <span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">findById</span><span class="op">(</span><span class="dv">1L</span><span class="op">))</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span>Optional<span class="op">.</span><span class="fu">of</span><span class="op">(</span>product1<span class="op">));</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Make HTTP request</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>        mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products/1&quot;</span><span class="op">)</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;testUser&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;USER&quot;</span><span class="op">)))</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Assert response</span></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">())</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">jsonPath</span><span class="op">(</span><span class="st">&quot;$.name&quot;</span><span class="op">).</span><span class="fu">value</span><span class="op">(</span><span class="st">&quot;Product 1&quot;</span><span class="op">));</span></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3
+                id="example-2-productcreatecontrollertest.java">Example
+                2: ProductCreateControllerTest.java</h3>
+                <div class="sourceCode" id="cb12"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Import</span><span class="op">(</span>TestConfig<span class="op">.</span><span class="fu">class</span><span class="op">)</span>  <span class="co">// Import shared test beans</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductCreateControllerTest <span class="op">{</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> JwtUtil jwtUtil<span class="op">;</span>  <span class="co">// From TestConfig (real/mocked)</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span>  <span class="co">// Mocked here</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testValidProductCreation</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Given: Admin is authenticated</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        Product product1 <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span><span class="st">&quot;Product 1&quot;</span><span class="op">,</span> <span class="dv">10</span><span class="op">,</span> <span class="fl">100.0</span><span class="op">);</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>        product1<span class="op">.</span><span class="fu">setId</span><span class="op">(</span><span class="dv">1L</span><span class="op">);</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>        product1<span class="op">.</span><span class="fu">setTotalValue</span><span class="op">(</span><span class="fl">1000.0</span><span class="op">);</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>        <span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span><span class="fu">any</span><span class="op">(</span>Product<span class="op">.</span><span class="fu">class</span><span class="op">)))</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span>product1<span class="op">);</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        <span class="co">// When: POST request with valid data</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>        mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">contentType</span><span class="op">(</span>APPLICATION_JSON<span class="op">)</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">content</span><span class="op">(</span><span class="st">&quot;{</span><span class="sc">\&quot;</span><span class="st">name</span><span class="sc">\&quot;</span><span class="st">: </span><span class="sc">\&quot;</span><span class="st">Product 1</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">quantity</span><span class="sc">\&quot;</span><span class="st">: 10, </span><span class="sc">\&quot;</span><span class="st">price</span><span class="sc">\&quot;</span><span class="st">: 100.0}&quot;</span><span class="op">)</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;adminUser&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">)))</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Then: Product is created</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">())</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">jsonPath</span><span class="op">(</span><span class="st">&quot;$.name&quot;</span><span class="op">).</span><span class="fu">value</span><span class="op">(</span><span class="st">&quot;Product 1&quot;</span><span class="op">))</span></span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">jsonPath</span><span class="op">(</span><span class="st">&quot;$.quantity&quot;</span><span class="op">).</span><span class="fu">value</span><span class="op">(</span><span class="dv">10</span><span class="op">));</span></span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3
+                id="example-3-authcontrollertest.java-unit-not-slice">Example
+                3: AuthControllerTest.java (Unit, Not Slice)</h3>
+                <div class="sourceCode" id="cb13"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Note: This is a UNIT </span><span class="al">TEST</span><span class="co">, not a slice test</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">// It doesn&#39;t use @WebMvcTest</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> AuthControllerTest <span class="op">{</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Mock</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> AuthenticationManager authenticationManager<span class="op">;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Mock</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> JwtUtil jwtUtil<span class="op">;</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@InjectMocks</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> AuthController authController<span class="op">;</span>  <span class="co">// Not @WebMvcTest!</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@BeforeEach</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">setUp</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        MockitoAnnotations<span class="op">.</span><span class="fu">openMocks</span><span class="op">(</span><span class="kw">this</span><span class="op">);</span>  <span class="co">// Plain Mockito</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testLoginSuccess</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>        <span class="co">// No HTTP layer, just method calls</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>        ResponseEntity<span class="op">&lt;</span>ApiResponse<span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;&gt;</span> response <span class="op">=</span> </span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>            authController<span class="op">.</span><span class="fu">login</span><span class="op">(</span>loginRequest<span class="op">);</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>        <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getStatusCode</span><span class="op">()).</span><span class="fu">isEqualTo</span><span class="op">(</span>HttpStatus<span class="op">.</span><span class="fu">OK</span><span class="op">);</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <hr />
+                <h2 id="when-to-use-which">When to Use Which</h2>
+                <h3 id="use-webmvctest-when">✅ Use <span
+                class="citation"
+                data-cites="WebMvcTest">@WebMvcTest</span> When:</h3>
+                <ul>
+                <li>Testing REST endpoint logic (controllers)</li>
+                <li>Need to verify HTTP status codes</li>
+                <li>Testing request/response serialization</li>
+                <li>Need MockMvc for HTTP simulation</li>
+                </ul>
+                <p><strong>Examples in StockEase</strong>:</p>
+                <pre><code>ProductFetchControllerTest — Testing GET /api/products
+ProductCreateControllerTest — Testing POST /api/products
+ProductUpdateControllerTest — Testing PUT /api/products/{id}
+ProductDeleteControllerTest — Testing DELETE /api/products/{id}</code></pre>
+                <h3 id="use-datajpatest-when">✅ Use <span
+                class="citation"
+                data-cites="DataJpaTest">@DataJpaTest</span> When:</h3>
+                <ul>
+                <li>Testing repository query methods</li>
+                <li>Need to verify database interactions</li>
+                <li>Testing JPA entity mappings</li>
+                </ul>
+                <p><strong>Not used in StockEase yet</strong>
+                (repositories are mocked)</p>
+                <h3 id="use-springboottest-when">✅ Use <span
+                class="citation"
+                data-cites="SpringBootTest">@SpringBootTest</span>
+                When:</h3>
+                <ul>
+                <li>Testing full application flow (end-to-end)</li>
+                <li>Verifying bean wiring across layers</li>
+                <li>Testing application bootstrap</li>
+                </ul>
+                <p><strong>Examples in StockEase</strong>:</p>
+                <pre><code>StockEaseApplicationTests — Verify context loads</code></pre>
+                <h3 id="use-plain-test-unit-when">✅ Use Plain <span
+                class="citation" data-cites="Test">@Test</span> (Unit)
+                When:</h3>
+                <ul>
+                <li>Testing isolated business logic</li>
+                <li>No Spring context needed</li>
+                <li>Testing utilities, mappers, validators</li>
+                </ul>
+                <p><strong>Examples in StockEase</strong>:</p>
+                <pre><code>AuthControllerTest — Testing auth logic with plain Mockito</code></pre>
+                <hr />
+                <h2 id="common-pitfalls">Common Pitfalls</h2>
+                <h3 id="pitfall-1-too-many-webmvctest-classes">❌
+                Pitfall 1: Too Many <span class="citation"
+                data-cites="WebMvcTest">@WebMvcTest</span> Classes</h3>
+                <div class="sourceCode" id="cb17"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ❌ BAD: 3 separate test classes for same controller</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductGetTest <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductPostTest <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductPutTest <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ BETTER: Organize by operation</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="co">// ProductFetchControllerTest — All GET operations</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co">// ProductCreateControllerTest — POST operation</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co">// ProductUpdateControllerTest — PUT operation</span></span></code></pre></div>
+                <h3
+                id="pitfall-2-mocking-the-controller-youre-testing">❌
+                Pitfall 2: Mocking the Controller You’re Testing</h3>
+                <div class="sourceCode" id="cb18"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ❌ BAD: Don&#39;t mock the controller!</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductTest <span class="op">{</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductController productController<span class="op">;</span>  <span class="co">// WRONG!</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ CORRECT: Mock the dependencies</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductTest <span class="op">{</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span>  <span class="co">// ✓ Mock the dependency</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="pitfall-3-not-resetting-mocks">❌ Pitfall 3: Not
+                Resetting Mocks</h3>
+                <div class="sourceCode" id="cb19"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ❌ BAD: Mocks retain state between tests</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">test1</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>repo<span class="op">.</span><span class="fu">findAll</span><span class="op">()).</span><span class="fu">thenReturn</span><span class="op">(</span>list1<span class="op">);</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">test2</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// repo.findAll() might still return list1!</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ CORRECT: Reset in @BeforeEach</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="at">@BeforeEach</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">resetMocks</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    Mockito<span class="op">.</span><span class="fu">reset</span><span class="op">(</span>productRepository<span class="op">,</span> jwtUtil<span class="op">);</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    Mockito<span class="op">.</span><span class="fu">when</span><span class="op">(</span>jwtUtil<span class="op">.</span><span class="fu">validateToken</span><span class="op">(</span><span class="kw">...</span><span class="op">)).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">true</span><span class="op">);</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h3 id="pitfall-4-over-mocking">❌ Pitfall 4:
+                Over-Mocking</h3>
+                <div class="sourceCode" id="cb20"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ❌ BAD: Mocking everything defeats the purpose</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductTest <span class="op">{</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span> <span class="kw">private</span> ProductRepository repo<span class="op">;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span> <span class="kw">private</span> ProductService service<span class="op">;</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span> <span class="kw">private</span> ProductValidator validator<span class="op">;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Now we&#39;re not testing anything real!</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ BETTER: Mock only external dependencies</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductTest <span class="op">{</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span> <span class="kw">private</span> ProductRepository repo<span class="op">;</span>  <span class="co">// External dependency</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Services and validators are real (part of controller&#39;s concern)</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <hr />
+                <h2 id="related-documentation">Related
+                Documentation</h2>
+                <h3 id="testing-fundamentals">Testing Fundamentals</h3>
+                <ul>
+                <li><strong><a href="./strategy.html">Testing
+                Strategy</a></strong> — Goals and philosophy</li>
+                <li><strong><a href="./pyramid.html">Test
+                Pyramid</a></strong> — Unit/slice/integration
+                breakdown</li>
+                <li><strong><a href="./naming-conventions.html">Naming
+                Conventions</a></strong> — Test method naming</li>
+                </ul>
+                <h3 id="implementation">Implementation</h3>
+                <ul>
+                <li><strong><a
+                href="./controller-integration.html">Controller
+                Integration Tests</a></strong> — MockMvc details</li>
+                <li><strong><a href="./test-data-fixtures.html">Test
+                Data &amp; Fixtures</a></strong> — TestConfig, mock
+                data</li>
+                <li><strong><a href="./security-tests.html">Security
+                Tests</a></strong> — Role-based testing</li>
+                </ul>
+                <h3 id="main-architecture">Main Architecture</h3>
+                <ul>
+                <li><strong><a
+                href="../testing-architecture.html">Testing
+                Architecture</a></strong> — Entry point</li>
+                <li><strong><a href="../backend.html">Backend
+                Architecture</a></strong> — Controllers being
+                tested</li>
+                </ul>
+                <hr />
+                <p><strong>Last Updated</strong>: October 31, 2025<br />
+                <strong>Version</strong>: 1.0<br />
+                <strong>Status</strong>: ✅ Based on StockEase
+                implementation</p>
+                <p><a href="../testing-architecture.html">Back to
+                Testing Index</a></p>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function getArchRoot() {
+            const path = window.location.pathname;
+            const segments = path.split('/').filter(s => s);
+            
+            // Find how many levels deep we are from 'architecture' folder
+            const archIndex = segments.indexOf('architecture');
+            if (archIndex === -1) return './';
+            
+            const depth = segments.length - archIndex - 2; // -2 for architecture and filename
+            if (depth <= 0) return './';
+            
+            return '../'.repeat(depth);
+        }
+
+        // Navigation Menu (paths relative to architecture root)
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: 'api-docs.html', isApiDoc: true },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: 'overview.html' },
+                { label: 'System Layers', href: 'layers.html' },
+                { label: 'Backend Architecture', href: 'backend.html' },
+                { label: 'Frontend Architecture', href: 'frontend.html' },
+                { label: 'Security Architecture', href: 'security.html' },
+                { label: 'Deployment Strategy', href: 'deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: 'decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: 'components/index.html' },
+                { label: 'Analytics Service', href: 'components/analytics-service.html' },
+                { label: 'Supplier Controller', href: 'components/supplier-controller.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: 'patterns/index.html' },
+                { label: 'Repository Pattern', href: 'patterns/repository-pattern.html' },
+                { label: 'Security Patterns', href: 'patterns/security-patterns.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: 'testing-architecture.html' },
+                { label: 'Test Pyramid', href: 'testing/pyramid.html' },
+                { label: 'Strategy', href: 'testing/strategy.html' },
+                { label: 'Spring Slices', href: 'testing/spring-slices.html' },
+                { label: 'Test Data Fixtures', href: 'testing/test-data-fixtures.html' },
+                { label: 'Security Tests', href: 'testing/security-tests.html' },
+                { label: 'Naming Conventions', href: 'testing/naming-conventions.html' },
+                { label: 'Test Matrix', href: 'testing/matrix.html' },
+                { label: 'Coverage & Quality', href: 'testing/coverage-and-quality.html' },
+                { label: 'Controller Integration', href: 'testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests', href: 'testing/ci-pipeline-tests.html' },
+            ],
+            'Deployment': [
+                { label: 'Overview', href: 'deployment.html' },
+                { label: 'CI/CD Pipeline', href: 'deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: 'deployment/docker-strategy.html' },
+                { label: 'Staging Config', href: 'deployment/staging-config.html' },
+            ],
+            'Reference': [
+                { label: 'Documentation Guide', href: 'DOCUMENTATION-GUIDE.html' },
+                { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
+                { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
+            ],
+            'Quality & Coverage': [
+                { label: 'Test Coverage Report', href: 'coverage/index.html', isCoverage: true },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            const archRoot = getArchRoot();
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    
+                    // For API docs and coverage, go up to docs root; otherwise use architecture root
+                    if (link.isApiDoc || link.isCoverage) {
+                        a.href = archRoot + '../' + link.href;
+                    } else {
+                        a.href = archRoot + link.href;
+                    }
+                    
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    const linkPath = link.href.replace('.html', '');
+                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        });
+        
+        // Look for mermaid divs that were generated by Pandoc Lua filter
+        const mermaidDivs = document.querySelectorAll('div.mermaid');
+        
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
+        });
+        
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
+        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
+        
+        codeMermaidBlocks.forEach((code) => {
+            code.classList.remove('language-mermaid');
+            code.classList.add('mermaid');
+            // If wrapped in pre, mark pre as mermaid too
+            if (code.parentElement.tagName === 'PRE') {
+                code.parentElement.classList.add('mermaid-block');
+            }
+        });
+        
+        // Wait for DOM to be fully loaded, then render all mermaid diagrams
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', async () => {
+                try {
+                    await mermaid.run();
+                } catch (err) {
+                    console.error('Mermaid rendering error:', err);
+                }
+            });
+        } else {
+            // Already loaded
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
+            });
+        }
+    </script>
+</body>
+</html>

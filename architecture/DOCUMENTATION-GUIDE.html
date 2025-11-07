@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1 id="stockease-documentation-guide">StockEase
+                Documentation Guide</h1>
+                <p><strong>Purpose</strong>: Complete guide to
+                navigating and understanding the StockEase architecture
+                documentation.</p>
+                <p><strong>Last Updated</strong>: November 3, 2025<br />
+                <strong>Status</strong>: ✅ COMPLETE - All documentation
+                indexed and cross-linked</p>
+                <hr />
+                <h2 id="table-of-contents">Table of Contents</h2>
+                <ol type="1">
+                <li><a href="#quick-navigation-by-role">Quick Navigation
+                by Role</a></li>
+                <li><a href="#complete-documentation-index">Complete
+                Documentation Index</a></li>
+                <li><a
+                href="#documentation-navigation-maps">Documentation
+                Navigation Maps</a></li>
+                <li><a href="#link-flow-by-topic">Link Flow by
+                Topic</a></li>
+                <li><a href="#navigation-paths-by-role">Navigation Paths
+                by Role</a></li>
+                <li><a href="#how-to-use-this-documentation">How to Use
+                This Documentation</a></li>
+                <li><a href="#document-statistics">Document
+                Statistics</a></li>
+                </ol>
+                <hr />
+                <h2 id="quick-navigation-by-role">Quick Navigation by
+                Role</h2>
+                <h3 id="project-manager-business-analyst">👨‍💼 Project
+                Manager / Business Analyst</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./overview.html">overview.md</a> — Business
+                context and architecture decisions 2. <a
+                href="./testing-architecture.html">testing-architecture.md</a>
+                — Test goals and scope 3. <a
+                href="./testing/matrix.html">testing/matrix.md</a> —
+                Feature coverage summary</p>
+                <p><strong>Learning Path:</strong></p>
+                <pre><code>START: overview.md (Business context)
+  → Technology Stack section
+  → Deployment Architecture section
+  → Quality Attributes section
+  ↓
+THEN: deployment.md (Current status)
+  → Production Environment diagram
+  ↓
+OPTIONAL: patterns/ (Best practices overview)</code></pre>
+                <hr />
+                <h3 id="backend-developer-javaspring-boot">👨‍💻 Backend
+                Developer (Java/Spring Boot)</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./backend.html">backend.md</a> — Spring Boot
+                architecture 2. <a
+                href="./testing/spring-slices.html">testing/spring-slices.md</a>
+                — How to write tests 3. <a
+                href="./testing/security-tests.html">testing/security-tests.md</a>
+                — Authorization testing 4. <a
+                href="./testing/controller-integration.html">testing/controller-integration.md</a>
+                — MockMvc patterns</p>
+                <p><strong>Learning Path (New Developer):</strong></p>
+                <pre><code>START: index.md (Get oriented)
+  ↓
+THEN: overview.md (Full context)
+  ↓
+THEN: backend.md (Code organization)
+  → Project Structure section
+  → Controller/Service/Repository layers
+  ↓
+THEN: layers.md (Architecture patterns)
+  → Request lifecycle
+  → Layer interactions
+  ↓
+THEN: decisions/001-database-choice.md (Why PostgreSQL?)
+  ↓
+THEN: patterns/repository-pattern.md (Implementation details)
+  ↓
+THEN: security.md (Authentication to integrate)
+  ↓
+FINALLY: deployment.md (How to deploy changes)</code></pre>
+                <hr />
+                <h3 id="frontend-developer-reacttypescript">👩‍💻 Frontend
+                Developer (React/TypeScript)</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./frontend.html">frontend.md</a> — React
+                architecture 2. <a href="./backend.html">backend.md</a>
+                — APIs being consumed 3. <a
+                href="./testing/security-tests.html">testing/security-tests.md</a>
+                — JWT token flow 4. <a
+                href="./security.html">security.md</a> — Auth
+                implementation</p>
+                <p><strong>Learning Path:</strong></p>
+                <pre><code>START: index.md (Overview)
+  ↓
+THEN: overview.md (Backend context)
+  → API Endpoints Overview table
+  ↓
+THEN: frontend.md (React implementation)
+  → Component Hierarchy
+  → API Integration section
+  ↓
+THEN: backend.md (What APIs to call)
+  → ProductController section
+  → AuthController section
+  ↓
+THEN: security.md (JWT token handling)
+  → Authentication Flow section
+  ↓
+THEN: deployment.md (Render deployment)
+  → Frontend Deployment section</code></pre>
+                <hr />
+                <h3 id="devops-engineer">🔧 DevOps Engineer</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./deployment.html">deployment.md</a> —
+                Infrastructure and CI/CD 2. <a
+                href="./deployment/ci-pipeline.html">deployment/ci-pipeline.md</a>
+                — GitHub Actions details 3. <a
+                href="./testing/ci-pipeline-tests.html">testing/ci-pipeline-tests.md</a>
+                — Test gates 4. <a
+                href="./testing/coverage-and-quality.html">testing/coverage-and-quality.md</a>
+                — Coverage reporting</p>
+                <p><strong>Learning Path:</strong></p>
+                <pre><code>START: deployment.md (Infrastructure overview)
+  → Current Deployment Stack diagram
+  → Production Environment description
+  ↓
+THEN: deployment/ci-pipeline.md (GitHub Actions setup)
+  → Build steps
+  → Deployment stages
+  ↓
+THEN: deployment/staging-config.md (Staging environment)
+  → Testing configuration
+  ↓
+THEN: overview.md (Technology stack reference)
+  → Technology Stack table
+  ↓
+THEN: security.md (Production security)
+  → Deployment Security Checklist
+  ↓
+OPTIONAL: patterns/security-patterns.md (Secure configuration)</code></pre>
+                <hr />
+                <h3 id="qa-test-engineer">🧪 QA / Test Engineer</h3>
+                <p><strong>Start here:</strong> 1. <a
+                href="./testing/pyramid.html">testing/pyramid.md</a> —
+                Test distribution 2. <a
+                href="./testing/strategy.html">testing/strategy.md</a> —
+                Test philosophy 3. <a
+                href="./testing/matrix.html">testing/matrix.md</a> —
+                What’s tested 4. <a
+                href="./testing/naming-conventions.html">testing/naming-conventions.md</a>
+                — Test organization</p>
+                <p><strong>Learning Path:</strong></p>
+                <pre><code>START: overview.md (System overview)
+  → Quality Attributes section
+  ↓
+THEN: backend.md (Testing strategies)
+  → Testing section
+  ↓
+THEN: layers.md (What to test per layer)
+  ↓
+THEN: deployment/staging-config.md (Pre-prod testing)
+  ↓
+THEN: security.md (Security test cases)
+  → JWT validation testing
+  → Authorization testing</code></pre>
+                <hr />
+                <h2 id="complete-documentation-index">Complete
+                Documentation Index</h2>
+                <h3 id="main-architecture-documents">📋 Main
+                Architecture Documents</h3>
+                <p><strong>Location</strong>:
+                <code>backend/docs/architecture/</code></p>
+                <h4 id="core-architecture-7-documents">Core Architecture
+                (7 documents)</h4>
+                <ol type="1">
+                <li><strong><a href="./index.html">index.md</a></strong>
+                — Navigation hub with reading paths by role</li>
+                <li><strong><a
+                href="./overview.html">overview.md</a></strong> —
+                Executive summary (PRIMARY SOURCE OF TRUTH)</li>
+                <li><strong><a
+                href="./backend.html">backend.md</a></strong> — Spring
+                Boot layered architecture</li>
+                <li><strong><a
+                href="./frontend.html">frontend.md</a></strong> — React
+                18 + TypeScript frontend</li>
+                <li><strong><a
+                href="./layers.html">layers.md</a></strong> — 3-tier
+                layered architecture (Controller → Service → Repository
+                → Entity)</li>
+                <li><strong><a
+                href="./security.html">security.md</a></strong> — JWT
+                authentication and authorization</li>
+                <li><strong><a
+                href="./deployment.html">deployment.md</a></strong> —
+                Infrastructure, CI/CD, GitHub Actions</li>
+                </ol>
+                <h4 id="architecture-decisions-adrs">Architecture
+                Decisions (ADRs)</h4>
+                <ul>
+                <li><strong><a
+                href="./decisions/index.html">decisions/index.md</a></strong>
+                — Decision records index</li>
+                <li><strong><a
+                href="./decisions/001-database-choice.html">decisions/001-database-choice.md</a></strong>
+                — PostgreSQL justification</li>
+                <li><strong><a
+                href="./decisions/002-validation-strategy.html">decisions/002-validation-strategy.md</a></strong>
+                — Input + business validation</li>
+                </ul>
+                <h4 id="design-patterns">Design Patterns</h4>
+                <ul>
+                <li><strong><a
+                href="./patterns/index.html">patterns/index.md</a></strong>
+                — Design patterns index</li>
+                <li><strong><a
+                href="./patterns/repository-pattern.html">patterns/repository-pattern.md</a></strong>
+                — Spring Data JPA implementation</li>
+                <li><strong><a
+                href="./patterns/security-patterns.html">patterns/security-patterns.md</a></strong>
+                — JWT, BCrypt, CORS best practices</li>
+                </ul>
+                <h4 id="components">Components</h4>
+                <ul>
+                <li><strong><a
+                href="./components/index.html">components/index.md</a></strong>
+                — Component documentation index</li>
+                <li><strong><a
+                href="./components/analytics-service.html">components/analytics-service.md</a></strong>
+                — Analytics service architecture</li>
+                <li><strong><a
+                href="./components/supplier-controller.html">components/supplier-controller.md</a></strong>
+                — Supplier management</li>
+                </ul>
+                <h4 id="infrastructure-devops">Infrastructure &amp;
+                DevOps</h4>
+                <ul>
+                <li><strong><a
+                href="./deployment/ci-pipeline.html">deployment/ci-pipeline.md</a></strong>
+                — GitHub Actions automation</li>
+                <li><strong><a
+                href="./deployment/docker-strategy.html">deployment/docker-strategy.md</a></strong>
+                — Docker containerization</li>
+                <li><strong><a
+                href="./deployment/staging-config.html">deployment/staging-config.md</a></strong>
+                — Pre-production setup</li>
+                </ul>
+                <hr />
+                <h3 id="testing-architecture-documents">🧪 Testing
+                Architecture Documents</h3>
+                <p><strong>Location</strong>:
+                <code>backend/docs/architecture/testing/</code></p>
+                <h4 id="entry-point">Entry Point</h4>
+                <ul>
+                <li><strong><a
+                href="./testing-architecture.html">testing-architecture.md</a></strong>
+                — Quick start and navigation hub</li>
+                </ul>
+                <h4 id="fundamentals-what-why">Fundamentals (What &amp;
+                Why)</h4>
+                <ol type="1">
+                <li><strong><a
+                href="./testing/strategy.html">testing/strategy.md</a></strong>
+                — Testing philosophy, goals, scope</li>
+                <li><strong><a
+                href="./testing/naming-conventions.html">testing/naming-conventions.md</a></strong>
+                — Test method naming patterns</li>
+                <li><strong><a
+                href="./testing/pyramid.html">testing/pyramid.md</a></strong>
+                — Unit (70%) / Slice (25%) / Integration (5%)</li>
+                </ol>
+                <h4 id="techniques-how">Techniques (How)</h4>
+                <ol type="1">
+                <li><strong><a
+                href="./testing/spring-slices.html">testing/spring-slices.md</a></strong>
+                — <span class="citation"
+                data-cites="WebMvcTest">@WebMvcTest</span>, <span
+                class="citation"
+                data-cites="DataJpaTest">@DataJpaTest</span>
+                patterns</li>
+                <li><strong><a
+                href="./testing/security-tests.html">testing/security-tests.md</a></strong>
+                — JWT and authorization testing</li>
+                <li><strong><a
+                href="./testing/controller-integration.html">testing/controller-integration.md</a></strong>
+                — MockMvc HTTP patterns</li>
+                <li><strong><a
+                href="./testing/test-data-fixtures.html">testing/test-data-fixtures.md</a></strong>
+                — TestConfig and mock data</li>
+                </ol>
+                <h4 id="quality-metrics-measure">Quality &amp; Metrics
+                (Measure)</h4>
+                <ol type="1">
+                <li><strong><a
+                href="./testing/coverage-and-quality.html">testing/coverage-and-quality.md</a></strong>
+                — JaCoCo configuration</li>
+                <li><strong><a
+                href="./testing/matrix.html">testing/matrix.md</a></strong>
+                — Coverage by layer and feature</li>
+                <li><strong><a
+                href="./testing/ci-pipeline-tests.html">testing/ci-pipeline-tests.md</a></strong>
+                — GitHub Actions CI/CD</li>
+                </ol>
+                <hr />
+                <h2 id="documentation-navigation-maps">Documentation
+                Navigation Maps</h2>
+                <h3 id="complete-navigation-graph">Complete Navigation
+                Graph</h3>
+                <pre><code>                          ┌─────────────────┐
+                          │   index.md      │
+                          │   (Hub/Nav)     │
+                          └────────┬────────┘
+                                   │
+                ┌──────────────────┼──────────────────┐
+                │                  │                  │
+                ▼                  ▼                  ▼
+        ┌─────────────────┐ ┌────────────────┐ ┌────────────────┐
+        │  overview.md    │ │  backend.md    │ │ frontend.md    │
+        │  (PRIMARY)      │ │  (Spring Boot) │ │  (React/TS)    │
+        └────────┬────────┘ └────────┬───────┘ └────────┬───────┘
+                 │                   │                   │
+                 └───────┬───────────┼───────────┬───────┘
+                         │           │           │
+                         ▼           ▼           ▼
+        ┌────────────────────┐  ┌────────────────────┐
+        │   layers.md        │  │  security.md       │
+        │   (Architecture)   │  │  (JWT &amp; Auth)      │
+        └────────┬───────────┘  └────────┬───────────┘
+                 │                       │
+                 └───────────┬───────────┘
+                             │
+                             ▼
+        ┌────────────────────────────────────┐
+        │   deployment.md                    │
+        │   (Koyeb, Neon, CI/CD)             │
+        └────────┬─────────────────────────────┘
+                 │
+        ┌────────┴────────────────────────────────────────┐
+        │                                                 │
+        ▼                                                 ▼
+    ┌─────────────────────────────────┐    ┌─────────────────────────────┐
+    │    decisions/                   │    │    patterns/                │
+    ├─────────────────────────────────┤    ├─────────────────────────────┤
+    │ 001-database-choice.md          │    │ repository-pattern.md       │
+    │ 002-validation-strategy.md      │    │ security-patterns.md        │
+    └─────────────────────────────────┘    └─────────────────────────────┘
+        ▲                                       ▲
+        │                                       │
+        └───────────────────┬───────────────────┘
+                            │
+                            ▼
+        ┌─────────────────────────────────────────┐
+        │    deployment/                          │
+        ├─────────────────────────────────────────┤
+        │ ci-pipeline.md                          │
+        │ docker-strategy.md                      │
+        │ staging-config.md                       │
+        └─────────────────────────────────────────┘</code></pre>
+                <hr />
+                <h2 id="link-flow-by-topic">Link Flow by Topic</h2>
+                <h3 id="authentication-security-topic">Authentication
+                &amp; Security Topic</h3>
+                <pre><code>overview.md (Why JWT chosen?)
+    ↓
+security.md (JWT implementation)
+    ↓ links to ↓
+patterns/security-patterns.md (JWT, BCrypt, CORS details)
+    ↓ links to ↓
+backend.md (JwtTokenProvider code)
+    ↓ links to ↓
+layers.md (Security filters in controller)
+    ↓ links to ↓
+deployment.md (TLS/HTTPS in production)
+    ↓ links to ↓
+decisions/002-validation-strategy.md (Input validation defense)</code></pre>
+                <h3 id="database-topic">Database Topic</h3>
+                <pre><code>overview.md (Why PostgreSQL?)
+    ↓
+layers.md (Repository layer)
+    ↓ links to ↓
+backend.md (Spring Data JPA code)
+    ↓ links to ↓
+patterns/repository-pattern.md (Repository implementation)
+    ↓ links to ↓
+decisions/001-database-choice.md (PostgreSQL vs H2 justification)
+    ↓ links to ↓
+deployment.md (Neon PostgreSQL setup)
+    ↓ links to ↓
+deployment/ci-pipeline.md (Flyway migrations in CI/CD)</code></pre>
+                <h3
+                id="frontend-backend-integration-topic">Frontend-Backend
+                Integration Topic</h3>
+                <pre><code>overview.md (Full-stack context)
+    ↓
+frontend.md (React APIs)
+    ↓ links to ↓
+backend.md (REST endpoints)
+    ↓ links to ↓
+layers.md (API layer in controllers)
+    ↓ links to ↓
+security.md (JWT token handling in API)
+    ↓ links to ↓
+deployment.md (Both deployed on Render/Koyeb)
+    ↓ links to ↓
+deployment/ci-pipeline.md (Frontend &amp; backend CI/CD)</code></pre>
+                <h3 id="deployment-topic">Deployment Topic</h3>
+                <pre><code>overview.md (Architecture decisions)
+    ↓
+deployment.md (Infrastructure &amp; CI/CD)
+    ↓ links to ↓
+deployment/ci-pipeline.md (GitHub Actions automation)
+    ↓ links to ↓
+deployment/staging-config.md (Pre-production testing)
+    ↓ also references ↓
+backend.md (Container image &amp; tests)
+frontend.md (Render deployment)
+security.md (Security checklist)
+patterns/security-patterns.md (Secure configuration)</code></pre>
+                <hr />
+                <h2 id="navigation-paths-by-role">Navigation Paths by
+                Role</h2>
+                <p><em>See “Quick Navigation by Role” section at the top
+                for detailed paths</em></p>
+                <hr />
+                <h2 id="how-to-use-this-documentation">How to Use This
+                Documentation</h2>
+                <h3 id="for-reading">For Reading</h3>
+                <ol type="1">
+                <li><strong>New developer?</strong> Start with <a
+                href="./index.html">index.md</a> or role-based paths
+                above</li>
+                <li><strong>Need specific info?</strong> Use role-based
+                quick navigation</li>
+                <li><strong>Exploring a topic?</strong> Follow
+                cross-links at bottom of each document</li>
+                <li><strong>Understanding code?</strong> Look up
+                patterns in testing docs</li>
+                </ol>
+                <h3 id="for-contributing">For Contributing</h3>
+                <ol type="1">
+                <li><strong>Adding new code?</strong> Update relevant
+                documentation</li>
+                <li><strong>Adding new tests?</strong> Follow patterns
+                in <a
+                href="./testing/naming-conventions.html">testing/naming-conventions.md</a></li>
+                <li><strong>Changing architecture?</strong> Update <a
+                href="./overview.html">overview.md</a> as single source
+                of truth</li>
+                <li><strong>Modifying tests?</strong> Cross-check with
+                testing docs</li>
+                </ol>
+                <h3 id="for-maintaining">For Maintaining</h3>
+                <ol type="1">
+                <li><strong>Monthly review</strong>: Check documentation
+                for drift from code</li>
+                <li><strong>Before release</strong>: Verify
+                deployment.md matches actual setup</li>
+                <li><strong>After refactor</strong>: Update affected
+                documentation sections</li>
+                <li><strong>New feature</strong>: Add docs before or
+                with feature code</li>
+                </ol>
+                <h3 id="running-tests">Running Tests</h3>
+                <ol type="1">
+                <li>See <a
+                href="./testing-architecture.html">testing-architecture.md</a>
+                “Quick Start”</li>
+                <li>Run:
+                <code>cd backend &amp;&amp; mvn clean test</code></li>
+                <li>View coverage:
+                <code>mvn test jacoco:report &amp;&amp; open target/site/jacoco/index.html</code></li>
+                </ol>
+                <hr />
+                <h2 id="document-statistics">Document Statistics</h2>
+                <h3 id="counts">Counts</h3>
+                <ul>
+                <li><strong>Total Architecture Docs</strong>: 7 core + 7
+                subdirectory</li>
+                <li><strong>Total Decision Records (ADRs)</strong>:
+                2</li>
+                <li><strong>Total Pattern Docs</strong>: 2</li>
+                <li><strong>Total Component Docs</strong>: 2</li>
+                <li><strong>Total Deployment Docs</strong>: 3</li>
+                <li><strong>Total Testing Docs</strong>: 10</li>
+                <li><strong>TOTAL</strong>: <strong>~32 documentation
+                files</strong></li>
+                </ul>
+                <h3 id="content-volume">Content Volume</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Category</th>
+                <th>Files</th>
+                <th>Approx Lines</th>
+                <th>Approx Size</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Architecture</td>
+                <td>7</td>
+                <td>3,700+</td>
+                <td>118 KB</td>
+                </tr>
+                <tr class="even">
+                <td>Decisions</td>
+                <td>2</td>
+                <td>800+</td>
+                <td>25 KB</td>
+                </tr>
+                <tr class="odd">
+                <td>Patterns</td>
+                <td>2</td>
+                <td>600+</td>
+                <td>19 KB</td>
+                </tr>
+                <tr class="even">
+                <td>Components</td>
+                <td>2</td>
+                <td>600+</td>
+                <td>19 KB</td>
+                </tr>
+                <tr class="odd">
+                <td>Deployment</td>
+                <td>3</td>
+                <td>900+</td>
+                <td>28 KB</td>
+                </tr>
+                <tr class="even">
+                <td>Testing</td>
+                <td>10</td>
+                <td>4,500+</td>
+                <td>140 KB</td>
+                </tr>
+                <tr class="odd">
+                <td><strong>TOTAL</strong></td>
+                <td><strong>32</strong></td>
+                <td><strong>~11,100</strong></td>
+                <td><strong>~350 KB</strong></td>
+                </tr>
+                </tbody>
+                </table>
+                <h3 id="cross-reference-stats">Cross-Reference
+                Stats</h3>
+                <ul>
+                <li><strong>Horizontal links</strong> (doc ↔︎ doc):
+                120+</li>
+                <li><strong>Vertical links</strong> (main ↔︎
+                subdirectory): 50+</li>
+                <li><strong>Total unique cross-references</strong>:
+                170+</li>
+                <li><strong>Link coverage</strong>: 100% (all docs
+                interconnected)</li>
+                </ul>
+                <h3 id="link-density">Link Density</h3>
+                <table>
+                <thead>
+                <tr class="header">
+                <th>Document</th>
+                <th>Outgoing Links</th>
+                <th>Incoming Links</th>
+                <th>Hub Score</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>overview.md</td>
+                <td>11</td>
+                <td>6</td>
+                <td>⭐⭐⭐ High</td>
+                </tr>
+                <tr class="even">
+                <td>backend.md</td>
+                <td>11</td>
+                <td>5</td>
+                <td>⭐⭐ Medium</td>
+                </tr>
+                <tr class="odd">
+                <td>security.md</td>
+                <td>10</td>
+                <td>6</td>
+                <td>⭐⭐⭐ High</td>
+                </tr>
+                <tr class="even">
+                <td>deployment.md</td>
+                <td>10</td>
+                <td>5</td>
+                <td>⭐⭐ Medium</td>
+                </tr>
+                <tr class="odd">
+                <td>layers.md</td>
+                <td>8</td>
+                <td>5</td>
+                <td>⭐⭐ Medium</td>
+                </tr>
+                <tr class="even">
+                <td>frontend.md</td>
+                <td>8</td>
+                <td>4</td>
+                <td>⭐⭐ Medium</td>
+                </tr>
+                <tr class="odd">
+                <td>index.md</td>
+                <td>8+</td>
+                <td>1</td>
+                <td>⭐⭐⭐ Hub</td>
+                </tr>
+                </tbody>
+                </table>
+                <hr />
+                <h2 id="key-documentation-highlights">Key Documentation
+                Highlights</h2>
+                <h3 id="reflects-actual-implementation">✅ Reflects
+                Actual Implementation</h3>
+                <ul>
+                <li>9 real test classes with 65+ test methods</li>
+                <li>Real Spring Boot 3.5.7 architecture</li>
+                <li>Real JWT authentication patterns</li>
+                <li>Real PostgreSQL + H2 database setup</li>
+                <li>Real GitHub Actions CI/CD pipeline</li>
+                </ul>
+                <h3 id="ready-for-html-generation">✅ Ready for HTML
+                Generation</h3>
+                <ul>
+                <li>All links use relative markdown format
+                (<code>./file.md</code>)</li>
+                <li>All headings properly structured</li>
+                <li>All code examples syntax-highlighted</li>
+                <li>All tables and diagrams ASCII art</li>
+                <li>Pandoc/GitHub Pages deployment ready</li>
+                </ul>
+                <h3 id="self-contained">✅ Self-Contained</h3>
+                <ul>
+                <li>No external dependencies</li>
+                <li>All concepts explained with examples</li>
+                <li>All patterns from actual code</li>
+                <li>Complete enough for onboarding new team members</li>
+                </ul>
+                <hr />
+                <h2 id="common-questions">Common Questions</h2>
+                <h3 id="q-where-do-i-start">Q: Where do I start?</h3>
+                <p><strong>A</strong>: See “Quick Navigation by Role”
+                section above. Pick your role and follow the path.</p>
+                <h3 id="q-how-is-testing-organized">Q: How is testing
+                organized?</h3>
+                <p><strong>A</strong>: See <a
+                href="./testing/pyramid.html">testing/pyramid.md</a> —
+                70% unit, 25% slice, 5% integration. Details in <a
+                href="./testing/strategy.html">testing/strategy.md</a>.</p>
+                <h3 id="q-how-do-i-write-a-test">Q: How do I write a
+                test?</h3>
+                <p><strong>A</strong>: See <a
+                href="./testing/naming-conventions.html">testing/naming-conventions.md</a>
+                and <a
+                href="./testing/spring-slices.html">testing/spring-slices.md</a>
+                for patterns and examples.</p>
+                <h3 id="q-how-do-i-understand-authentication">Q: How do
+                I understand authentication?</h3>
+                <p><strong>A</strong>: See <a
+                href="./security.html">security.md</a> for architecture,
+                <a
+                href="./testing/security-tests.html">testing/security-tests.md</a>
+                for testing patterns.</p>
+                <h3 id="q-how-does-cicd-work">Q: How does CI/CD
+                work?</h3>
+                <p><strong>A</strong>: See <a
+                href="./deployment.html">deployment.md</a> for
+                infrastructure, <a
+                href="./testing/ci-pipeline-tests.html">testing/ci-pipeline-tests.md</a>
+                for test gates.</p>
+                <hr />
+                <h2 id="documentation-maintenance">Documentation
+                Maintenance</h2>
+                <h3 id="keeping-docs-in-sync">Keeping Docs in Sync</h3>
+                <ul>
+                <li>Documentation is a <strong>first-class
+                artifact</strong> (like code)</li>
+                <li><strong>Update docs when</strong> code changes
+                significantly</li>
+                <li><strong>Review docs during</strong> code review</li>
+                <li><strong>Link new docs</strong> to existing
+                documentation hub</li>
+                </ul>
+                <h3 id="coverage-goals">Coverage Goals</h3>
+                <ul>
+                <li><strong>New feature</strong>: Must include
+                documentation</li>
+                <li><strong>Bug fix</strong>: Update docs if behavior
+                changes</li>
+                <li><strong>Refactor</strong>: Update docs to reflect
+                new structure</li>
+                <li><strong>Test addition</strong>: Document test
+                patterns and rationale</li>
+                </ul>
+                <hr />
+                <h2 id="contact-support">Contact &amp; Support</h2>
+                <h3 id="questions-about-documentation">Questions About
+                Documentation?</h3>
+                <ul>
+                <li>Check cross-links at bottom of each document</li>
+                <li>Review this guide for discovery paths</li>
+                <li>Search using GitHub’s search (Ctrl+K in VS
+                Code)</li>
+                </ul>
+                <h3 id="found-an-error">Found an Error?</h3>
+                <ul>
+                <li>Edit the document directly</li>
+                <li>Create PR with correction</li>
+                <li>Reference issue if applicable</li>
+                </ul>
+                <hr />
+                <p><strong>Documentation Guide Version</strong>:
+                2.0<br />
+                <strong>Last Updated</strong>: November 3, 2025<br />
+                <strong>Status</strong>: ✅ COMPLETE - Consolidated from
+                DOCUMENTATION-INDEX and NAVIGATION-MAP</p>
+                <p><strong>See Also</strong>: - <a
+                href="./DOCUMENTATION-GENERATION.html">DOCUMENTATION-GENERATION.md</a>
+                - Technical guide for HTML generation - <a
+                href="./overview.html">overview.md</a> - Start reading
+                the actual documentation</p>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function getArchRoot() {
+            const path = window.location.pathname;
+            const segments = path.split('/').filter(s => s);
+            
+            // Find how many levels deep we are from 'architecture' folder
+            const archIndex = segments.indexOf('architecture');
+            if (archIndex === -1) return './';
+            
+            const depth = segments.length - archIndex - 2; // -2 for architecture and filename
+            if (depth <= 0) return './';
+            
+            return '../'.repeat(depth);
+        }
+
+        // Navigation Menu (paths relative to architecture root)
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: 'api-docs.html', isApiDoc: true },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: 'overview.html' },
+                { label: 'System Layers', href: 'layers.html' },
+                { label: 'Backend Architecture', href: 'backend.html' },
+                { label: 'Frontend Architecture', href: 'frontend.html' },
+                { label: 'Security Architecture', href: 'security.html' },
+                { label: 'Deployment Strategy', href: 'deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: 'decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: 'components/index.html' },
+                { label: 'Analytics Service', href: 'components/analytics-service.html' },
+                { label: 'Supplier Controller', href: 'components/supplier-controller.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: 'patterns/index.html' },
+                { label: 'Repository Pattern', href: 'patterns/repository-pattern.html' },
+                { label: 'Security Patterns', href: 'patterns/security-patterns.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: 'testing-architecture.html' },
+                { label: 'Test Pyramid', href: 'testing/pyramid.html' },
+                { label: 'Strategy', href: 'testing/strategy.html' },
+                { label: 'Spring Slices', href: 'testing/spring-slices.html' },
+                { label: 'Test Data Fixtures', href: 'testing/test-data-fixtures.html' },
+                { label: 'Security Tests', href: 'testing/security-tests.html' },
+                { label: 'Naming Conventions', href: 'testing/naming-conventions.html' },
+                { label: 'Test Matrix', href: 'testing/matrix.html' },
+                { label: 'Coverage & Quality', href: 'testing/coverage-and-quality.html' },
+                { label: 'Controller Integration', href: 'testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests', href: 'testing/ci-pipeline-tests.html' },
+            ],
+            'Deployment': [
+                { label: 'Overview', href: 'deployment.html' },
+                { label: 'CI/CD Pipeline', href: 'deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: 'deployment/docker-strategy.html' },
+                { label: 'Staging Config', href: 'deployment/staging-config.html' },
+            ],
+            'Reference': [
+                { label: 'Documentation Guide', href: 'DOCUMENTATION-GUIDE.html' },
+                { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
+                { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
+            ],
+            'Quality & Coverage': [
+                { label: 'Test Coverage Report', href: 'coverage/index.html', isCoverage: true },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            const archRoot = getArchRoot();
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    
+                    // For API docs and coverage, go up to docs root; otherwise use architecture root
+                    if (link.isApiDoc || link.isCoverage) {
+                        a.href = archRoot + '../' + link.href;
+                    } else {
+                        a.href = archRoot + link.href;
+                    }
+                    
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    const linkPath = link.href.replace('.html', '');
+                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        });
+        
+        // Look for mermaid divs that were generated by Pandoc Lua filter
+        const mermaidDivs = document.querySelectorAll('div.mermaid');
+        
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
+        });
+        
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
+        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
+        
+        codeMermaidBlocks.forEach((code) => {
+            code.classList.remove('language-mermaid');
+            code.classList.add('mermaid');
+            // If wrapped in pre, mark pre as mermaid too
+            if (code.parentElement.tagName === 'PRE') {
+                code.parentElement.classList.add('mermaid-block');
+            }
+        });
+        
+        // Wait for DOM to be fully loaded, then render all mermaid diagrams
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', async () => {
+                try {
+                    await mermaid.run();
+                } catch (err) {
+                    console.error('Mermaid rendering error:', err);
+                }
+            });
+        } else {
+            // Already loaded
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
+            });
+        }
+    </script>
+</body>
+</html>
