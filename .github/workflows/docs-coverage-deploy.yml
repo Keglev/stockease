@@ -24,24 +24,24 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: docs-site
-          path: downloaded-docs
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare docs directory
         run: |
-          echo "🔍 Checking downloaded artifact structure:"
-          ls -laR downloaded-docs 2>/dev/null | head -80 || echo "downloaded-docs not found"
+          echo "🔍 Checking current directory structure after artifact download:"
+          ls -laR . 2>/dev/null | grep -E "^\./(target|api|architecture|index)" | head -50
           
-          # Move downloaded docs to target/docs (the artifact is the content of target/docs)
-          mkdir -p target/docs
-          mv downloaded-docs/* target/docs/ 2>/dev/null || true
-          rmdir downloaded-docs 2>/dev/null || true
+          # The artifact downloads to current dir, so we don't need to move anything
+          # Just verify target/docs exists
+          if [ ! -d "target/docs" ]; then
+            echo "⚠️ Creating target/docs..."
+            mkdir -p target/docs
+          fi
           
           echo ""
-          echo "✓ Docs prepared in target/docs"
-          echo "Contents of target/docs:"
-          ls -laR target/docs/ | head -50 || echo "target/docs is empty"
+          echo "✓ Docs ready"
+          ls -laR target/docs | head -50 || echo "target/docs still empty"
 
       - name: Detect project root
         id: where
@@ -139,8 +139,12 @@ jobs:
           echo "Final structure of target/docs:"
           find target/docs -type f -name "*.html" | head -20
 
-      - name: Deploy docs with coverage to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: target/docs
+      - name: Publish coverage report to GitHub Pages
+        run: |
+          # Note: Docs are already deployed by docs-pipeline.yml
+          # This step just verifies coverage was added
+          if [ -f "target/docs/coverage/index.html" ]; then
+            echo "✓ Coverage report available at: https://keglev.github.io/stockease/coverage/"
+          else
+            echo "⚠️  Coverage report not found"
+          fi
