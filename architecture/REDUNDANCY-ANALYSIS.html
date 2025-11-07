@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> - StockEase Architecture Documentation</title>
+    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
+            <nav class="nav-breadcrumb">
+                <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar"></aside>
+        <main>
+            <div class="content">
+                <h1
+                id="documentation-redundancy-analysis-report">Documentation
+                Redundancy Analysis Report</h1>
+                <p><strong>Date</strong>: November 3, 2025<br />
+                <strong>Last Updated</strong>: November 3, 2025 - All
+                redundancy consolidation completed<br />
+                <strong>Scope</strong>: Architecture documentation at
+                root level (<code>docs/architecture/*.md</code>)</p>
+                <hr />
+                <h2 id="executive-summary">Executive Summary</h2>
+                <p>After analyzing all architecture documentation, I’ve
+                identified <strong>4 categories of redundancy</strong>
+                and <strong>3 recommended consolidations</strong> that
+                will streamline the documentation without losing any
+                valuable information.</p>
+                <h3 id="implementation-status">Implementation
+                Status</h3>
+                <p>✅ <strong>HIGH REDUNDANCY - COMPLETED</strong> -
+                Deleted <code>testing/index.md</code> -
+                testing-architecture.md is the primary entry point -
+                Deleted <code>deployment/index.md</code> - deployment.md
+                is the comprehensive guide - Updated sidebar navigation
+                in enterprise-docs.html template</p>
+                <p>✅ <strong>MEDIUM REDUNDANCY - COMPLETED</strong> -
+                Created <code>DOCUMENTATION-GUIDE.md</code> -
+                consolidated from DOCUMENTATION-INDEX.md +
+                NAVIGATION-MAP.md - Updated
+                <code>DOCUMENTATION-GENERATION.md</code> - added link
+                verification from CROSS-REFERENCE.md - Deleted 4
+                obsolete meta-documentation files - Updated sidebar
+                navigation to point to new consolidated files</p>
+                <h3 id="key-findings">Key Findings</h3>
+                <p>✅ <strong>Good Separation</strong>: Most
+                subdirectory index files serve as navigational
+                hubs<br />
+                ⚠️ <strong>Redundancy Found</strong>: Root-level files
+                duplicate content from subdirectory indexes<br />
+                📋 <strong>Meta-Documentation</strong>: Multiple
+                meta-docs (INDEX, MAP, CROSS-REF) can be
+                consolidated</p>
+                <hr />
+                <h2 id="detailed-redundancy-analysis">Detailed
+                Redundancy Analysis</h2>
+                <h3 id="high-redundancy---completed">✅ HIGH REDUNDANCY
+                - COMPLETED</h3>
+                <h4
+                id="testing-architecture.md-vs-testingindex.md-done">1.
+                <code>testing-architecture.md</code> vs
+                <code>testing/index.md</code> ✅ DONE</h4>
+                <p><strong>Status</strong>: <strong>COMPLETED</strong> -
+                testing/index.md deleted</p>
+                <p><strong>Implementation</strong>: - ✅ Deleted
+                <code>docs/architecture/testing/index.md</code> - ✅
+                Sidebar navigation already points to
+                <code>testing-architecture.html</code> - ✅ No other
+                files linked to testing/index.md</p>
+                <p><strong>Result</strong>: testing-architecture.md is
+                now the single entry point for testing documentation</p>
+                <hr />
+                <h4 id="deployment.md-vs-deploymentindex.md-done">2.
+                <code>deployment.md</code> vs
+                <code>deployment/index.md</code> ✅ DONE</h4>
+                <p><strong>Status</strong>: <strong>COMPLETED</strong> -
+                deployment/index.md deleted</p>
+                <p><strong>Implementation</strong>: - ✅ Deleted
+                <code>docs/architecture/deployment/index.md</code> - ✅
+                Updated sidebar navigation to include
+                <code>deployment.html</code> as “Overview” - ✅ No other
+                files linked to deployment/index.md</p>
+                <p><strong>Result</strong>: deployment.md is now the
+                comprehensive deployment guide</p>
+                <hr />
+                <h3 id="medium-redundancy---completed">✅ MEDIUM
+                REDUNDANCY - COMPLETED</h3>
+                <h4 id="meta-documentation-files-done">3.
+                Meta-Documentation Files ✅ DONE</h4>
+                <p><strong>Status</strong>: <strong>COMPLETED</strong> -
+                Consolidated 5 files into 2 files</p>
+                <p><strong>Original Files</strong>: -
+                DOCUMENTATION-INDEX.md (305 lines) - File index with
+                descriptions - NAVIGATION-MAP.md (317 lines) - Visual
+                navigation graphs and role-based paths<br />
+                - CROSS-REFERENCE.md (324 lines) - Link verification
+                matrix - COMPLETION-REPORT.md (328 lines) - Historical
+                documentation completion report -
+                DOCUMENTATION-GENERATION.md (381 lines) - HTML
+                generation guide</p>
+                <p><strong>Implementation</strong>: 1. ✅ Created
+                <code>DOCUMENTATION-GUIDE.md</code> by merging: -
+                Complete file index from DOCUMENTATION-INDEX.md -
+                Role-based navigation paths from NAVIGATION-MAP.md -
+                Visual navigation graphs from NAVIGATION-MAP.md - Quick
+                navigation by role from DOCUMENTATION-INDEX.md</p>
+                <ol start="2" type="1">
+                <li>✅ Updated <code>DOCUMENTATION-GENERATION.md</code>
+                by adding:
+                <ul>
+                <li>Link verification and cross-reference matrix from
+                CROSS-REFERENCE.md</li>
+                <li>Link coverage analysis</li>
+                <li>Link density statistics</li>
+                </ul></li>
+                <li>✅ Deleted obsolete files:
+                <ul>
+                <li>COMPLETION-REPORT.md (historical, no longer
+                needed)</li>
+                <li>CROSS-REFERENCE.md (merged into
+                DOCUMENTATION-GENERATION.md)</li>
+                <li>DOCUMENTATION-INDEX.md (merged into
+                DOCUMENTATION-GUIDE.md)</li>
+                <li>NAVIGATION-MAP.md (merged into
+                DOCUMENTATION-GUIDE.md)</li>
+                </ul></li>
+                <li>✅ Updated enterprise-docs.html template Reference
+                section:
+                <ul>
+                <li>Changed from: Navigation Map, Cross References,
+                Documentation Index</li>
+                <li>Changed to: Documentation Guide, HTML Generation,
+                Redundancy Analysis</li>
+                </ul></li>
+                </ol>
+                <p><strong>Result</strong>: 5 meta-documentation files →
+                2 consolidated files (-3 files)</p>
+                <hr />
+                <h3 id="lowno-redundancy---keep-as-is">🟢 LOW/NO
+                REDUNDANCY - Keep As-Is</h3>
+                <h4
+                id="components-patterns-decisions-subdirectories">Components,
+                Patterns, Decisions Subdirectories</h4>
+                <p><strong>components/index.md</strong>: ✅ Serves as
+                navigation hub for 2 component docs
+                <strong>patterns/index.md</strong>: ✅ Serves as
+                navigation hub for 2 pattern docs
+                <strong>decisions/index.md</strong>: ✅ Serves as
+                navigation hub for 2 ADR docs</p>
+                <p><strong>Analysis</strong>: These are simple
+                navigation hubs, not duplicates. They provide context
+                and structure for their respective subdirectories.</p>
+                <p><strong>Recommendation</strong>:
+                <strong>KEEP</strong> - No changes needed</p>
+                <hr />
+                <h2 id="consolidation-action-plan">Consolidation Action
+                Plan</h2>
+                <h3 id="phase-1-critical-redundancy-removal">Phase 1:
+                Critical Redundancy Removal</h3>
+                <h4 id="action-1-remove-testingindex.md">Action 1:
+                Remove <code>testing/index.md</code></h4>
+                <div class="sourceCode" id="cb1"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Delete redundant testing index</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> docs/architecture/testing/index.md</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Update enterprise-docs.html template navigation</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Change: { label: &#39;Architecture&#39;, href: &#39;testing/index.html&#39; }</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># To:     { label: &#39;Architecture&#39;, href: &#39;testing-architecture.html&#39; }</span></span></code></pre></div>
+                <p><strong>Impact</strong>: - Removes duplicate testing
+                hub - Keeps comprehensive testing-architecture.md as
+                primary entry point - Simplifies navigation
+                structure</p>
+                <hr />
+                <h4 id="action-2-remove-deploymentindex.md">Action 2:
+                Remove <code>deployment/index.md</code></h4>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Delete redundant deployment index</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> docs/architecture/deployment/index.md</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Update enterprise-docs.html template navigation</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Change: { label: &#39;Index&#39;, href: &#39;deployment/index.html&#39; }</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># To:     { label: &#39;Overview&#39;, href: &#39;deployment.html&#39; }</span></span></code></pre></div>
+                <p><strong>Impact</strong>: - Removes 100% redundant
+                file - deployment.md already covers all content -
+                Cleaner deployment directory structure</p>
+                <hr />
+                <h3 id="phase-2-meta-documentation-consolidation">Phase
+                2: Meta-Documentation Consolidation</h3>
+                <h4 id="action-3-create-documentation-guide.md">Action
+                3: Create <code>DOCUMENTATION-GUIDE.md</code></h4>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge INDEX + NAVIGATION-MAP</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Content from DOCUMENTATION-INDEX.md (file listings)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># + Content from NAVIGATION-MAP.md (navigation graphs + role paths)</span></span></code></pre></div>
+                <p><strong>New file structure</strong>:</p>
+                <div class="sourceCode" id="cb4"><pre
+                class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># StockEase Documentation Guide</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quick Navigation by Role</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">From NAVIGATION-MAP.md - Role-based paths section</span><span class="co">]</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">## Complete Documentation Index</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">From DOCUMENTATION-INDEX.md - File listings with descriptions</span><span class="co">]</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Navigation Maps</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">From NAVIGATION-MAP.md - Visual graphs</span><span class="co">]</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## How to Navigate</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>For quick overview: Start with overview.md</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>For specific topics: Use this index</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>For learning paths: Follow role-based guides above</span></code></pre></div>
+                <hr />
+                <h4
+                id="action-4-update-documentation-generation.md">Action
+                4: Update <code>DOCUMENTATION-GENERATION.md</code></h4>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add link verification section from CROSS-REFERENCE.md</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep existing HTML generation content</span></span></code></pre></div>
+                <hr />
+                <h4 id="action-5-remove-obsolete-meta-docs">Action 5:
+                Remove Obsolete Meta-Docs</h4>
+                <div class="sourceCode" id="cb6"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove after consolidation</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> docs/architecture/COMPLETION-REPORT.md      <span class="co"># Historical, no longer needed</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> docs/architecture/CROSS-REFERENCE.md        <span class="co"># Merged into GENERATION</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> docs/architecture/DOCUMENTATION-INDEX.md    <span class="co"># Merged into GUIDE</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> docs/architecture/NAVIGATION-MAP.md         <span class="co"># Merged into GUIDE</span></span></code></pre></div>
+                <hr />
+                <h2 id="summary-of-changes">Summary of Changes</h2>
+                <h3 id="completed---all-redundancy-removal">✅ COMPLETED
+                - All Redundancy Removal</h3>
+                <h4 id="files-deleted-6-files-total">Files DELETED (6
+                files total)</h4>
+                <ol type="1">
+                <li>✅ <code>testing/index.md</code> - Redundant with
+                testing-architecture.md</li>
+                <li>✅ <code>deployment/index.md</code> - Redundant with
+                deployment.md</li>
+                <li>✅ <code>COMPLETION-REPORT.md</code> - Historical
+                meta-doc</li>
+                <li>✅ <code>CROSS-REFERENCE.md</code> - Merged into
+                DOCUMENTATION-GENERATION</li>
+                <li>✅ <code>DOCUMENTATION-INDEX.md</code> - Merged into
+                DOCUMENTATION-GUIDE</li>
+                <li>✅ <code>NAVIGATION-MAP.md</code> - Merged into
+                DOCUMENTATION-GUIDE</li>
+                </ol>
+                <h4 id="files-created-1-file">Files CREATED (1
+                file)</h4>
+                <ol type="1">
+                <li>✅ <code>DOCUMENTATION-GUIDE.md</code> -
+                Consolidated navigation guide</li>
+                </ol>
+                <h4 id="files-updated-2-files">Files UPDATED (2
+                files)</h4>
+                <ol type="1">
+                <li>✅ <code>DOCUMENTATION-GENERATION.md</code> - Added
+                link verification section</li>
+                <li>✅ <code>docs/templates/enterprise-docs.html</code>
+                - Updated sidebar navigation:
+                <ul>
+                <li>Testing section points to
+                testing-architecture.html</li>
+                <li>Deployment section includes Overview link to
+                deployment.html</li>
+                <li>Reference section updated to new consolidated
+                files</li>
+                </ul></li>
+                </ol>
+                <h4 id="result">Result</h4>
+                <ul>
+                <li>6 files removed from repository</li>
+                <li>1 new consolidated file created</li>
+                <li>2 files updated with enhanced content</li>
+                <li>Clearer documentation structure</li>
+                <li>No broken links</li>
+                <li>Sidebar navigation properly configured</li>
+                </ul>
+                <hr />
+                <h3 id="files-kept-core-documentation">Files KEPT (Core
+                Documentation)</h3>
+                <ul>
+                <li>✅ index.md</li>
+                <li>✅ overview.md</li>
+                <li>✅ backend.md</li>
+                <li>✅ frontend.md</li>
+                <li>✅ layers.md</li>
+                <li>✅ security.md</li>
+                <li>✅ deployment.md</li>
+                <li>✅ testing-architecture.md</li>
+                <li>✅ components/ (2 files + index)</li>
+                <li>✅ patterns/ (2 files + index)</li>
+                <li>✅ decisions/ (2 files + index)</li>
+                <li>✅ testing/ (10 files, no index)</li>
+                <li>✅ deployment/ (2 files, no index)</li>
+                </ul>
+                <hr />
+                <h2 id="before-after-comparison">Before &amp; After
+                Comparison</h2>
+                <h3 id="before-original-state">Before (Original
+                State)</h3>
+                <pre><code>architecture/
+├── 8 main .md files (root)
+├── 5 meta-documentation files (INDEX, MAP, CROSS-REF, COMPLETION, GENERATION)
+├── components/ (3 files: index + 2 docs)
+├── decisions/ (3 files: index + 2 ADRs)
+├── patterns/ (3 files: index + 2 patterns)
+├── testing/ (11 files: index + 10 docs)
+└── deployment/ (3 files: index + 2 docs)
+
+Total: 36 markdown files</code></pre>
+                <h3
+                id="after-high-redundancy-removal-current-state">After
+                High Redundancy Removal (Current State) ✅</h3>
+                <pre><code>architecture/
+├── 8 main .md files (root) - unchanged
+├── 5 meta-documentation files - NOT YET CONSOLIDATED
+├── components/ (3 files) - unchanged
+├── decisions/ (3 files) - unchanged
+├── patterns/ (3 files) - unchanged
+├── testing/ (10 files: NO index, 10 docs) ✅ removed testing/index.md
+└── deployment/ (2 files: NO index, 2 docs) ✅ removed deployment/index.md
+
+Total: 34 markdown files (-2 files completed)</code></pre>
+                <h3
+                id="after-full-consolidation-if-medium-redundancy-completed">After
+                Full Consolidation (If Medium Redundancy Completed)</h3>
+                <pre><code>architecture/
+├── 8 main .md files (root) - unchanged
+├── 2 meta-documentation files (GUIDE, GENERATION) - consolidated from 5
+├── components/ (3 files) - unchanged
+├── decisions/ (3 files) - unchanged
+├── patterns/ (3 files) - unchanged
+├── testing/ (10 files) - as is
+└── deployment/ (2 files) - as is
+
+Total: 31 markdown files (-5 files total, -14% reduction)</code></pre>
+                <hr />
+                <h2
+                id="benefits-of-high-redundancy-removal-completed">Benefits
+                of High Redundancy Removal (Completed)</h2>
+                <h3 id="reduced-maintenance">1. Reduced Maintenance
+                ✅</h3>
+                <ul>
+                <li>2 fewer files to update when structure changes</li>
+                <li>Single source of truth for testing
+                (testing-architecture.md) and deployment
+                (deployment.md)</li>
+                <li>No conflicting information between index and main
+                files</li>
+                </ul>
+                <h3 id="clearer-navigation">2. Clearer Navigation
+                ✅</h3>
+                <ul>
+                <li>testing-architecture.md is obviously the entry point
+                for testing</li>
+                <li>deployment.md clearly covers all deployment
+                topics</li>
+                <li>No confusion about which file to read first</li>
+                </ul>
+                <h3 id="better-user-experience">3. Better User
+                Experience ✅</h3>
+                <ul>
+                <li>Less confusion about which file to read first</li>
+                <li>Comprehensive content in primary documents</li>
+                <li>Cleaner file structure in subdirectories</li>
+                </ul>
+                <h3 id="easier-html-generation">4. Easier HTML
+                Generation</h3>
+                <ul>
+                <li>Fewer pages to generate and deploy</li>
+                <li>Clearer sidebar navigation structure</li>
+                <li>Better SEO (fewer duplicate content pages)</li>
+                </ul>
+                <hr />
+                <h2 id="implementation-priority">Implementation
+                Priority</h2>
+                <h3
+                id="priority-1-completed-critical-redundancy-removal">✅
+                Priority 1 (COMPLETED): Critical Redundancy Removal</h3>
+                <ol type="1">
+                <li>✅ Delete <code>testing/index.md</code></li>
+                <li>✅ Delete <code>deployment/index.md</code></li>
+                <li>✅ Update navigation template</li>
+                </ol>
+                <p><strong>Time</strong>: 15 minutes<br />
+                <strong>Status</strong>: ✅ COMPLETED<br />
+                <strong>Risk</strong>: Low (straightforward
+                deletions)</p>
+                <hr />
+                <h3
+                id="priority-2-pending-decision-meta-documentation-cleanup">⏳
+                Priority 2 (PENDING DECISION): Meta-Documentation
+                Cleanup</h3>
+                <ol type="1">
+                <li>⏳ Create <code>DOCUMENTATION-GUIDE.md</code></li>
+                <li>⏳ Update
+                <code>DOCUMENTATION-GENERATION.md</code></li>
+                <li>⏳ Delete 4 obsolete meta-docs</li>
+                <li>⏳ Update any external links</li>
+                </ol>
+                <p><strong>Time</strong>: 1 hour<br />
+                <strong>Status</strong>: ⏳ Awaiting approval<br />
+                <strong>Risk</strong>: Low-Medium (requires content
+                merging)</p>
+                <hr />
+                <h2 id="validation-checklist-priority-1">Validation
+                Checklist (Priority 1)</h2>
+                <p>After high redundancy removal: - ✅ All links in
+                remaining documents still work (verified via grep
+                search) - ✅ Sidebar navigation in template updated - ✅
+                No broken links to deleted files (only
+                REDUNDANCY-ANALYSIS.md references them) - ⏳ HTML
+                generation pipeline (to be verified on next push) - ⏳
+                GitHub Pages deployment (to be verified on next push) -
+                ✅ Role-based navigation paths still functional</p>
+                <hr />
+                <p><strong>Status</strong>: High Redundancy Removal
+                Complete - Ready for Testing<br />
+                <strong>Next Steps</strong>: Push to GitHub and verify
+                HTML generation works correctly<br />
+                <strong>End of Report</strong></p>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>StockEase</strong> - Inventory Management System</p>
+            <p>Architecture Documentation | Generated with Enterprise Standards</p>
+            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function getArchRoot() {
+            const path = window.location.pathname;
+            const segments = path.split('/').filter(s => s);
+            
+            // Find how many levels deep we are from 'architecture' folder
+            const archIndex = segments.indexOf('architecture');
+            if (archIndex === -1) return './';
+            
+            const depth = segments.length - archIndex - 2; // -2 for architecture and filename
+            if (depth <= 0) return './';
+            
+            return '../'.repeat(depth);
+        }
+
+        // Navigation Menu (paths relative to architecture root)
+        const navigation = {
+            'API Documentation': [
+                { label: 'Overview', href: 'api-docs.html', isApiDoc: true },
+            ],
+            'Architecture': [
+                { label: 'Overview', href: 'overview.html' },
+                { label: 'System Layers', href: 'layers.html' },
+                { label: 'Backend Architecture', href: 'backend.html' },
+                { label: 'Frontend Architecture', href: 'frontend.html' },
+                { label: 'Security Architecture', href: 'security.html' },
+                { label: 'Deployment Strategy', href: 'deployment.html' },
+            ],
+            'Design Decisions': [
+                { label: 'Index', href: 'decisions/index.html' },
+            ],
+            'Components': [
+                { label: 'Index', href: 'components/index.html' },
+                { label: 'Analytics Service', href: 'components/analytics-service.html' },
+                { label: 'Supplier Controller', href: 'components/supplier-controller.html' },
+            ],
+            'Patterns': [
+                { label: 'Index', href: 'patterns/index.html' },
+                { label: 'Repository Pattern', href: 'patterns/repository-pattern.html' },
+                { label: 'Security Patterns', href: 'patterns/security-patterns.html' },
+            ],
+            'Testing': [
+                { label: 'Architecture', href: 'testing-architecture.html' },
+                { label: 'Test Pyramid', href: 'testing/pyramid.html' },
+                { label: 'Strategy', href: 'testing/strategy.html' },
+                { label: 'Spring Slices', href: 'testing/spring-slices.html' },
+                { label: 'Test Data Fixtures', href: 'testing/test-data-fixtures.html' },
+                { label: 'Security Tests', href: 'testing/security-tests.html' },
+                { label: 'Naming Conventions', href: 'testing/naming-conventions.html' },
+                { label: 'Test Matrix', href: 'testing/matrix.html' },
+                { label: 'Coverage & Quality', href: 'testing/coverage-and-quality.html' },
+                { label: 'Controller Integration', href: 'testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests', href: 'testing/ci-pipeline-tests.html' },
+            ],
+            'Deployment': [
+                { label: 'Overview', href: 'deployment.html' },
+                { label: 'CI/CD Pipeline', href: 'deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy', href: 'deployment/docker-strategy.html' },
+                { label: 'Staging Config', href: 'deployment/staging-config.html' },
+            ],
+            'Reference': [
+                { label: 'Documentation Guide', href: 'DOCUMENTATION-GUIDE.html' },
+                { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
+                { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
+            ],
+            'Quality & Coverage': [
+                { label: 'Test Coverage Report', href: 'coverage/index.html', isCoverage: true },
+            ],
+        };
+
+        // Build sidebar
+        function buildSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            const archRoot = getArchRoot();
+
+            Object.entries(navigation).forEach(([section, links]) => {
+                const navSection = document.createElement('div');
+                navSection.className = 'nav-section';
+
+                const title = document.createElement('div');
+                title.className = 'nav-section-title';
+                title.textContent = section;
+                navSection.appendChild(title);
+
+                const ul = document.createElement('ul');
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    
+                    // For API docs and coverage, go up to docs root; otherwise use architecture root
+                    if (link.isApiDoc || link.isCoverage) {
+                        a.href = archRoot + '../' + link.href;
+                    } else {
+                        a.href = archRoot + link.href;
+                    }
+                    
+                    a.textContent = link.label;
+
+                    // Highlight current page
+                    const currentPath = window.location.pathname;
+                    const linkPath = link.href.replace('.html', '');
+                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
+                        a.className = 'active';
+                    }
+
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+
+                navSection.appendChild(ul);
+                sidebar.appendChild(navSection);
+            });
+        }
+
+        // Build table of contents highlight
+        function initTableOfContents() {
+            const tocLinks = document.querySelectorAll('nav.toc a');
+            const headings = document.querySelectorAll('h2, h3');
+
+            window.addEventListener('scroll', () => {
+                let currentHeading = null;
+                headings.forEach(heading => {
+                    if (heading.getBoundingClientRect().top <= 100) {
+                        currentHeading = heading;
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (currentHeading) {
+                        const href = link.getAttribute('href');
+                        if (href === '#' + currentHeading.id) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildSidebar();
+            initTableOfContents();
+        });
+    </script>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        });
+        
+        // Look for mermaid divs that were generated by Pandoc Lua filter
+        const mermaidDivs = document.querySelectorAll('div.mermaid');
+        
+        mermaidDivs.forEach((div) => {
+            // Verify mermaid content is present
+            if (div.textContent.trim()) {
+                // Content is ready for rendering
+            }
+        });
+        
+        // Also look for any code.language-mermaid blocks (fallback for compatibility)
+        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
+        
+        codeMermaidBlocks.forEach((code) => {
+            code.classList.remove('language-mermaid');
+            code.classList.add('mermaid');
+            // If wrapped in pre, mark pre as mermaid too
+            if (code.parentElement.tagName === 'PRE') {
+                code.parentElement.classList.add('mermaid-block');
+            }
+        });
+        
+        // Wait for DOM to be fully loaded, then render all mermaid diagrams
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', async () => {
+                try {
+                    await mermaid.run();
+                } catch (err) {
+                    console.error('Mermaid rendering error:', err);
+                }
+            });
+        } else {
+            // Already loaded
+            mermaid.run().catch(err => {
+                console.error('Mermaid rendering error:', err);
+            });
+        }
+    </script>
+</body>
+</html>
