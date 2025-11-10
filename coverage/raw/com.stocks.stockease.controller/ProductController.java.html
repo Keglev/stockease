@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.controller</a> &gt; <span class="el_source">ProductController.java</span></div><h1>ProductController.java</h1><pre class="source lang-java linenums">
+package com.stocks.stockease.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.stocks.stockease.dto.ApiResponse;
+import com.stocks.stockease.dto.PaginatedResponse;
+import com.stocks.stockease.model.Product;
+import com.stocks.stockease.repository.ProductRepository;
+
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+
+/**
+ * REST controller for product inventory management.
+ * 
+ * Provides endpoints for CRUD operations, pagination, searching, and stock analytics.
+ * All non-admin endpoints require USER or ADMIN role authentication via JWT.
+ * Admin-only endpoints (create, delete) require ADMIN role.
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ */
+@RestController
+@RequestMapping(&quot;/api/products&quot;)
+public class ProductController {
+
+<span class="fc" id="L49">    private static final Logger log = LoggerFactory.getLogger(ProductController.class);</span>
+
+    private final ProductRepository productRepository;
+
+<span class="fc" id="L53">    public ProductController(ProductRepository productRepository) {</span>
+<span class="fc" id="L54">        this.productRepository = productRepository;</span>
+<span class="fc" id="L55">    }</span>
+
+    /**
+     * Retrieves all products sorted by ID.
+     * 
+     * Loads entire inventory without pagination. Use {@link #getPagedProducts} for large datasets.
+     * 
+     * @return list of all products ordered by ID ascending
+     */
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;Product&gt; getAllProducts() {
+<span class="fc" id="L67">        return productRepository.findAllOrderById();</span>
+    }
+
+    /**
+     * Retrieves products with pagination support.
+     * 
+     * Prevents loading entire table into memory. Returns metadata including total count
+     * and page information for client-side pagination controls.
+     * 
+     * @param page zero-based page number (default: 0)
+     * @param size items per page (default: 10, must be positive)
+     * @return paginated response with product list and metadata
+     */
+    @GetMapping(&quot;/paged&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;PaginatedResponse&lt;Product&gt;&gt;&gt; getPagedProducts(
+            @RequestParam(defaultValue = &quot;0&quot;) @Min(0) int page,
+            @RequestParam(defaultValue = &quot;10&quot;) @Positive int size) {
+        // Validate parameters via @Min/@Positive annotations; invalid values trigger 400 error
+<span class="fc" id="L86">        Pageable pageable = PageRequest.of(page, size);</span>
+<span class="fc" id="L87">        Page&lt;Product&gt; products = productRepository.findAll(pageable);</span>
+<span class="fc" id="L88">        PaginatedResponse&lt;Product&gt; response = new PaginatedResponse&lt;&gt;(products);</span>
+<span class="fc" id="L89">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Paged products fetched successfully&quot;, response));</span>
+    }
+
+    /**
+     * Retrieves a single product by ID.
+     * 
+     * Returns 404 if product not found.
+     * 
+     * @param id product identifier
+     * @return product details if found; 404 error response if not
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Product&gt;&gt; getProductById(@PathVariable Long id) {
+<span class="fc" id="L103">        return productRepository.findById(id)</span>
+<span class="fc" id="L104">                .map(product -&gt; ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Product fetched successfully&quot;, product)))</span>
+<span class="fc" id="L105">                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L106">                        .body(new ApiResponse&lt;&gt;(false, &quot;The product with ID &quot; + id + &quot; does not exist.&quot;, null)));</span>
+    }
+
+    /**
+     * Creates a new product (ADMIN only).
+     * 
+     * Validates all required fields (name, quantity, price). Calculates total stock value
+     * as quantity * price. Returns 400 if validation fails.
+     * 
+     * @param product product data (name, quantity, price)
+     * @return created product with auto-generated ID
+     * @throws IllegalArgumentException if required fields missing or invalid
+     */
+    @PostMapping
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;?&gt; createProduct(@RequestBody(required = false) Product product) {
+<span class="fc" id="L122">        log.debug(&quot;Received request to create product: {}&quot;, product);</span>
+        try {
+            // Validate all required fields present and non-empty
+<span class="pc bpc" id="L125" title="2 of 6 branches missed.">            if (product == null || product.getName() == null || product.getName().isBlank() ||</span>
+<span class="pc bpc" id="L126" title="2 of 4 branches missed.">                product.getQuantity() == null || product.getPrice() == null) {</span>
+<span class="fc" id="L127">                return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L128">                    .body(Map.of(&quot;error&quot;, &quot;Incomplete update. Please fill in all required fields.&quot;));</span>
+            }
+
+            // Business rule: quantity cannot be negative (invalid stock state)
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            if (product.getQuantity() &lt; 0) {</span>
+<span class="fc" id="L133">                return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L134">                    .body(Map.of(&quot;error&quot;, &quot;Quantity cannot be negative.&quot;));</span>
+            }
+
+            // Business rule: price must be positive (prevents free/negative cost items)
+<span class="fc bfc" id="L138" title="All 2 branches covered.">            if (product.getPrice() &lt;= 0) {</span>
+<span class="fc" id="L139">                return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L140">                    .body(Map.of(&quot;error&quot;, &quot;Price must be greater than 0.&quot;));</span>
+            }
+
+            // Database saves product and generates auto-increment ID
+<span class="fc" id="L144">            Product savedProduct = productRepository.save(product);</span>
+<span class="fc" id="L145">            return ResponseEntity.ok(savedProduct);</span>
+
+<span class="nc" id="L147">        } catch (Exception ex) {</span>
+<span class="nc" id="L148">            log.error(&quot;Unexpected error occurred: &quot;, ex);</span>
+<span class="nc" id="L149">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L150">                .body(Map.of(&quot;error&quot;, &quot;An unexpected error occurred. Please try again later.&quot;));</span>
+        }
+    }
+
+    /**
+     * Deletes a product by ID (ADMIN only).
+     * 
+     * Returns 404 if product not found. Does not require product data in body.
+     * 
+     * @param id product identifier to delete
+     * @return success message if deleted; error response if not found
+     */
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; deleteProduct(@PathVariable Long id) {
+<span class="fc" id="L165">        log.info(&quot;Entering deleteProduct method with ID: {}&quot;, id);</span>
+
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">        if (id == null) {</span>
+<span class="nc" id="L168">            return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="nc" id="L169">                    .body(new ApiResponse&lt;&gt;(false, &quot;ID must be provided in the request.&quot;, null));</span>
+        }
+
+        // Check if product exists before attempting deletion (avoids orphaned references)
+<span class="fc bfc" id="L173" title="All 2 branches covered.">        if (!productRepository.existsById(id)) {</span>
+<span class="fc" id="L174">            return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L175">                    .body(new ApiResponse&lt;&gt;(false, &quot;Cannot delete. Product with ID &quot; + id + &quot; does not exist.&quot;, null));</span>
+        }
+
+<span class="fc" id="L178">        productRepository.deleteById(id);</span>
+
+<span class="fc" id="L180">        return ResponseEntity.ok(</span>
+                new ApiResponse&lt;&gt;(true, &quot;Product with ID &quot; + id + &quot; has been successfully deleted.&quot;, null)
+        );
+    }
+
+    /**
+     * Retrieves products with critically low stock.
+     * 
+     * Returns products where quantity &lt; 5 (reorder threshold).
+     * Returns success message if all products adequately stocked.
+     * 
+     * @return list of low-stock products; empty response if all stock levels sufficient
+     */
+    @GetMapping(&quot;/low-stock&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;?&gt; getLowStockProducts() {
+        // Hardcoded threshold (5 items) - consider making configurable via application.properties
+<span class="fc" id="L197">        List&lt;Product&gt; lowStockProducts = productRepository.findByQuantityLessThan(5);</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">        if (lowStockProducts.isEmpty()) {</span>
+<span class="fc" id="L199">            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;All products are sufficiently stocked.&quot;));</span>
+        }
+<span class="fc" id="L201">        return ResponseEntity.ok(lowStockProducts);</span>
+    }
+
+    /**
+     * Searches products by name (case-insensitive substring match).
+     * 
+     * Example: searching &quot;apple&quot; returns &quot;Apple Juice&quot;, &quot;APPLE&quot;, &quot;Green Apple&quot;, etc.
+     * Returns 204 NO_CONTENT if no matches found.
+     * 
+     * @param name search term (substring)
+     * @return matching products; empty response if none found
+     */
+    @GetMapping(&quot;/search&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;?&gt; searchProductsByName(@RequestParam String name) {
+        // Case-insensitive LIKE query via repository
+<span class="fc" id="L217">        List&lt;Product&gt; products = productRepository.findByNameContainingIgnoreCase(name);</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        if (products.isEmpty()) {</span>
+<span class="fc" id="L219">            return ResponseEntity.status(HttpStatus.NO_CONTENT)</span>
+<span class="fc" id="L220">                    .body(Map.of(&quot;message&quot;, &quot;No products found matching the name: &quot; + name));</span>
+        }
+<span class="fc" id="L222">        return ResponseEntity.ok(products);</span>
+    }
+
+    /**
+     * Updates product quantity for a specific product.
+     * 
+     * Accepts quantity in request body. Automatically recalculates total stock value
+     * (quantity * price). Prevents negative quantities.
+     * 
+     * @param id product identifier
+     * @param request Map containing &quot;quantity&quot; field (integer)
+     * @return updated product; error if quantity invalid or product not found
+     */
+    @PutMapping(&quot;/{id}/quantity&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Product&gt;&gt; updateQuantity(@PathVariable Long id, @RequestBody(required = false) Map&lt;String, Object&gt; request) {
+        try {
+            // Validate request payload structure
+<span class="pc bpc" id="L240" title="2 of 6 branches missed.">            if (request == null || !request.containsKey(&quot;quantity&quot;) || request.get(&quot;quantity&quot;) == null) {</span>
+<span class="fc" id="L241">                return ResponseEntity.badRequest()</span>
+<span class="fc" id="L242">                        .body(new ApiResponse&lt;&gt;(false, &quot;Quantity field is missing or null.&quot;, null));</span>
+            }
+
+            // Type check: quantity must be integer (prevents string/decimal injection)
+<span class="fc" id="L246">            Object quantityObj = request.get(&quot;quantity&quot;);</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">            if (!(quantityObj instanceof Integer)) {</span>
+<span class="fc" id="L248">                return ResponseEntity.badRequest()</span>
+<span class="fc" id="L249">                        .body(new ApiResponse&lt;&gt;(false, &quot;Quantity must be a valid integer.&quot;, null));</span>
+            }
+
+            // Business rule: quantity cannot be negative (invalid inventory state)
+<span class="fc" id="L253">            int newQuantity = (int) quantityObj;</span>
+<span class="pc bpc" id="L254" title="1 of 2 branches missed.">            if (newQuantity &lt; 0) {</span>
+<span class="nc" id="L255">                return ResponseEntity.badRequest()</span>
+<span class="nc" id="L256">                        .body(new ApiResponse&lt;&gt;(false, &quot;Quantity cannot be negative.&quot;, null));</span>
+            }
+
+            // Load product from DB; throws EntityNotFoundException if not found
+<span class="fc" id="L260">            Product product = productRepository.findById(id)</span>
+<span class="fc" id="L261">                    .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
+
+            // Setter automatically recalculates totalValue = quantity * price
+<span class="fc" id="L264">            product.setQuantity(newQuantity);</span>
+<span class="fc" id="L265">            Product updatedProduct = productRepository.save(product);</span>
+
+<span class="fc" id="L267">            return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Quantity updated successfully&quot;, updatedProduct));</span>
+<span class="fc" id="L268">        } catch (EntityNotFoundException ex) {</span>
+<span class="fc" id="L269">            log.error(&quot;Product not found for ID: &quot; + id, ex);</span>
+<span class="fc" id="L270">            return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L271">                    .body(new ApiResponse&lt;&gt;(false, &quot;Product not found.&quot;, null));</span>
+<span class="nc" id="L272">        } catch (Exception ex) {</span>
+<span class="nc" id="L273">            log.error(&quot;Unexpected error occurred while updating quantity for product with ID: &quot; + id, ex);</span>
+<span class="nc" id="L274">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L275">                    .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
+        }
+    }
+
+    /**
+     * Updates product price for a specific product.
+     * 
+     * Accepts price in request body (decimal). Automatically recalculates total stock value
+     * (quantity * price). Prevents zero or negative prices.
+     * 
+     * @param id product identifier
+     * @param request Map containing &quot;price&quot; field (number)
+     * @return updated product; error if price invalid or product not found
+     */
+    @PutMapping(&quot;/{id}/price&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Product&gt;&gt; updatePrice(@PathVariable Long id, @RequestBody(required = false) Map&lt;String, Object&gt; request) {
+        try {
+            // Validate request payload structure
+<span class="pc bpc" id="L294" title="3 of 6 branches missed.">            if (request == null || !request.containsKey(&quot;price&quot;) || request.get(&quot;price&quot;) == null) {</span>
+<span class="nc" id="L295">                return ResponseEntity.badRequest()</span>
+<span class="nc" id="L296">                        .body(new ApiResponse&lt;&gt;(false, &quot;Price field is missing or null.&quot;, null));</span>
+            }
+
+            // Type check: price must be numeric (handles Integer, Double, BigDecimal via Number interface)
+<span class="fc" id="L300">            Object priceObj = request.get(&quot;price&quot;);</span>
+<span class="fc bfc" id="L301" title="All 2 branches covered.">            if (!(priceObj instanceof Number)) {</span>
+<span class="fc" id="L302">                return ResponseEntity.badRequest()</span>
+<span class="fc" id="L303">                        .body(new ApiResponse&lt;&gt;(false, &quot;Price must be a valid number.&quot;, null));</span>
+            }
+
+            // Business rule: price must be positive (prevents free or negative cost items)
+<span class="fc" id="L307">            double newPrice = ((Number) priceObj).doubleValue();</span>
+<span class="fc bfc" id="L308" title="All 2 branches covered.">            if (newPrice &lt;= 0) {</span>
+<span class="fc" id="L309">                return ResponseEntity.badRequest()</span>
+<span class="fc" id="L310">                        .body(new ApiResponse&lt;&gt;(false, &quot;Price must be greater than 0.&quot;, null));</span>
+            }
+
+            // Load product from DB; throws EntityNotFoundException if not found
+<span class="fc" id="L314">            Product product = productRepository.findById(id)</span>
+<span class="pc" id="L315">                    .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
+
+            // Setter automatically recalculates totalValue = quantity * price
+<span class="fc" id="L318">            product.setPrice(newPrice);</span>
+<span class="fc" id="L319">            Product updatedProduct = productRepository.save(product);</span>
+
+<span class="fc" id="L321">            return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Price updated successfully&quot;, updatedProduct));</span>
+<span class="nc" id="L322">        } catch (EntityNotFoundException ex) {</span>
+<span class="nc" id="L323">            log.error(&quot;Product not found for ID: &quot; + id, ex);</span>
+<span class="nc" id="L324">            return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="nc" id="L325">                    .body(new ApiResponse&lt;&gt;(false, &quot;Product not found.&quot;, null));</span>
+<span class="nc" id="L326">        } catch (Exception ex) {</span>
+<span class="nc" id="L327">            log.error(&quot;Unexpected error occurred while updating price for product with ID: &quot; + id, ex);</span>
+<span class="nc" id="L328">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L329">                    .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
+        }
+    }
+
+    /**
+     * Updates product name for a specific product.
+     * 
+     * Validates that name is non-empty. Uniqueness constraint enforced at database level.
+     * 
+     * @param id product identifier
+     * @param request Map containing &quot;name&quot; field (string)
+     * @return updated product; error if name empty or product not found
+     */
+    @PutMapping(&quot;/{id}/name&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Product&gt;&gt; updateName(@PathVariable Long id, @RequestBody Map&lt;String, String&gt; request) {
+        try {
+            // Validate name field: must be present and non-empty
+<span class="pc bpc" id="L347" title="1 of 4 branches missed.">            if (!request.containsKey(&quot;name&quot;) || request.get(&quot;name&quot;).isBlank()) {</span>
+<span class="fc" id="L348">                throw new IllegalArgumentException(&quot;Name is required and cannot be empty.&quot;);</span>
+            }
+
+<span class="fc" id="L351">            String newName = request.get(&quot;name&quot;);</span>
+
+            // Load product from DB; throws EntityNotFoundException if not found
+<span class="fc" id="L354">            Product product = productRepository.findById(id)</span>
+<span class="pc" id="L355">                    .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
+
+<span class="fc" id="L357">            product.setName(newName);</span>
+<span class="fc" id="L358">            Product updatedProduct = productRepository.save(product);</span>
+
+<span class="fc" id="L360">            return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Name updated successfully&quot;, updatedProduct));</span>
+<span class="nc" id="L361">        } catch (EntityNotFoundException ex) {</span>
+<span class="nc" id="L362">            log.error(&quot;Product not found for ID: &quot; + id, ex);</span>
+<span class="nc" id="L363">            return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="nc" id="L364">                    .body(new ApiResponse&lt;&gt;(false, ex.getMessage(), null));</span>
+<span class="fc" id="L365">        } catch (IllegalArgumentException ex) {</span>
+<span class="fc" id="L366">            log.error(&quot;Invalid name provided for product with ID: &quot; + id, ex);</span>
+<span class="fc" id="L367">            return ResponseEntity.badRequest()</span>
+<span class="fc" id="L368">                    .body(new ApiResponse&lt;&gt;(false, ex.getMessage(), null));</span>
+<span class="nc" id="L369">        } catch (Exception ex) {</span>
+<span class="nc" id="L370">            log.error(&quot;Unexpected error occurred while updating name for product with ID: &quot; + id, ex);</span>
+<span class="nc" id="L371">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L372">                    .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
+        }
+    }
+
+    /**
+     * Calculates total inventory value across all products.
+     * 
+     * Computes sum of (quantity * price) for all products.
+     * Useful for financial reporting and inventory valuation.
+     * 
+     * @return total stock value as double
+     */
+    @GetMapping(&quot;/total-stock-value&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Double&gt;&gt; getTotalStockValue() {
+        try {
+            // Custom aggregate query from repository - optimized at database level
+<span class="fc" id="L389">            double totalStockValue = productRepository.calculateTotalStockValue();</span>
+<span class="fc" id="L390">            return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Total stock value fetched successfully&quot;, totalStockValue));</span>
+<span class="nc" id="L391">        } catch (Exception ex) {</span>
+<span class="nc" id="L392">            log.error(&quot;Error calculating total stock value:&quot;, ex);</span>
+<span class="nc" id="L393">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L394">                    .body(new ApiResponse&lt;&gt;(false, &quot;Failed to fetch total stock value.&quot;, null));</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
