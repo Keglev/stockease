@@ -13,8 +13,8 @@ graph TB
     MainBranch -->|Push to origin/main| Actions
     
     subgraph Actions["GitHub Actions (CI/CD Pipelines)"]
-        Build["Build & Test Workflow<br/>(auto_deploy.yml)<br/>1. Checkout code<br/>2. Run Maven build<br/>3. Run tests (65+)<br/>4. Build Docker image<br/>5. Push to GHCR<br/>6. Deploy to Koyeb"]
-        Docs["Docs Generation Workflow<br/>(docs-ci.yml)<br/>1. Extract OpenAPI spec<br/>2. Convert Markdown → HTML<br/>3. Generate Redoc HTML<br/>4. Collect coverage<br/>5. Commit to docs branch<br/>6. GitHub Pages auto-sync"]
+  Build["Build & Test Workflow<br/>(deploy-backend.yml)<br/>1. Checkout code<br/>2. Run Maven build<br/>3. Run tests (65+)<br/>4. Build Docker image<br/>5. Push to GHCR<br/>6. Deploy to Koyeb"]
+  Docs["Docs Generation Workflow<br/>(docs-pipeline.yml + docs-coverage-deploy.yml)<br/>1. Extract OpenAPI spec<br/>2. Convert Markdown → HTML<br/>3. Generate Redoc HTML<br/>4. Collect coverage<br/>5. Commit to docs branch<br/>6. GitHub Pages auto-sync"]
     end
     
     Build -->|GHCR Image<br/>ghcr.io/keglev/...| Koyeb
@@ -36,7 +36,7 @@ graph TB
 
 ## CI/CD Pipeline Details
 
-### Build & Deploy Workflow (`auto_deploy.yml`)
+### Build & Deploy Workflow (`deploy-backend.yml`)
 
 **Trigger Events**:
 - Push to `main` branch
@@ -71,7 +71,7 @@ graph TD
     style G fill:#c8e6c9
 ```
 
-### Documentation Pipeline (`docs-ci.yml` - TO BE CREATED)
+### Documentation Pipeline (`docs-pipeline.yml` + `docs-coverage-deploy.yml`)
 
 **Trigger Events**:
 - Push to `main` when `/backend/docs/` changes

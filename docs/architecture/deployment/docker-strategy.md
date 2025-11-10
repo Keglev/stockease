@@ -197,7 +197,7 @@ docker run -p 8081:8081 \
 
 ### CI/CD Pipeline Integration
 
-**GitHub Actions** (`auto_deploy.yml`):
+**GitHub Actions** (`deploy-backend.yml`):
 
 ```yaml
 - name: Build Docker Image

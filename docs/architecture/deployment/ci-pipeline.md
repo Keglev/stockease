@@ -3,10 +3,10 @@
 ## Overview
 
 The CI/CD pipeline automates building, testing, and deploying StockEase to production. Two workflows manage the process:
-- **auto_deploy.yml**: Builds and deploys backend to Koyeb
-- **docs-ci.yml**: Generates documentation and publishes to GitHub Pages
+- **deploy-backend.yml**: Builds and deploys backend to Koyeb
+- **docs-pipeline.yml** + **docs-coverage-deploy.yml**: Generates documentation, collects coverage, and publishes to GitHub Pages
 
-## Deployment Workflow (auto_deploy.yml)
+## Deployment Workflow (deploy-backend.yml)
 
 ### Trigger Events
 
@@ -166,7 +166,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 | Health Check | 10-120s |
 | **Total** | **2-5 minutes** |
 
-## Documentation Workflow (docs-ci.yml)
+## Documentation Workflow (docs-pipeline.yml + docs-coverage-deploy.yml)
 
 ### Trigger Events
 
@@ -241,9 +241,9 @@ on:
 
 | Secret | Purpose | Set On | Used By |
 |--------|---------|--------|---------|
-| `KOYEB_API_KEY` | Deploy to Koyeb | Settings → Secrets | auto_deploy.yml |
-| `KOYEB_SERVICE_ID` | Target service | Settings → Secrets | auto_deploy.yml |
-| `GITHUB_TOKEN` | CI/CD operations | Auto-provided | docs-ci.yml |
+| `KOYEB_API_KEY` | Deploy to Koyeb | Settings → Secrets | deploy-backend.yml |
+| `KOYEB_SERVICE_ID` | Target service | Settings → Secrets | deploy-backend.yml |
+| `GITHUB_TOKEN` | CI/CD operations | Auto-provided | docs-pipeline.yml / docs-coverage-deploy.yml |
 
 ### No Secrets in Code
 

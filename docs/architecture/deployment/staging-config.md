@@ -196,7 +196,7 @@ Developer Laptop
 ```
 GitHub Repository (main branch)
   ↓ git push
-GitHub Actions (auto_deploy.yml)
+GitHub Actions (deploy-backend.yml)
   ├── Tests
   ├── Build Docker image
   └── Push to GHCR
