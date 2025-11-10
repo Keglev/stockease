@@ -25,12 +25,15 @@
                 <h2 id="overview">Overview</h2>
                 <p>The CI/CD pipeline automates building, testing, and
                 deploying StockEase to production. Two workflows manage
-                the process: - <strong>auto_deploy.yml</strong>: Builds
-                and deploys backend to Koyeb -
-                <strong>docs-ci.yml</strong>: Generates documentation
-                and publishes to GitHub Pages</p>
-                <h2 id="deployment-workflow-auto_deploy.yml">Deployment
-                Workflow (auto_deploy.yml)</h2>
+                the process: - <strong>deploy-backend.yml</strong>:
+                Builds and deploys backend to Koyeb -
+                <strong>docs-pipeline.yml</strong> +
+                <strong>docs-coverage-deploy.yml</strong>: Generates
+                documentation, collects coverage, and publishes to
+                GitHub Pages</p>
+                <h2
+                id="deployment-workflow-deploy-backend.yml">Deployment
+                Workflow (deploy-backend.yml)</h2>
                 <h3 id="trigger-events">Trigger Events</h3>
                 <div class="sourceCode" id="cb1"><pre
                 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
@@ -216,8 +219,9 @@
                 </tbody>
                 </table>
                 <h2
-                id="documentation-workflow-docs-ci.yml">Documentation
-                Workflow (docs-ci.yml)</h2>
+                id="documentation-workflow-docs-pipeline.yml-docs-coverage-deploy.yml">Documentation
+                Workflow (docs-pipeline.yml +
+                docs-coverage-deploy.yml)</h2>
                 <h3 id="trigger-events-1">Trigger Events</h3>
                 <div class="sourceCode" id="cb10"><pre
                 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
@@ -300,19 +304,19 @@
                 <td><code>KOYEB_API_KEY</code></td>
                 <td>Deploy to Koyeb</td>
                 <td>Settings → Secrets</td>
-                <td>auto_deploy.yml</td>
+                <td>deploy-backend.yml</td>
                 </tr>
                 <tr class="even">
                 <td><code>KOYEB_SERVICE_ID</code></td>
                 <td>Target service</td>
                 <td>Settings → Secrets</td>
-                <td>auto_deploy.yml</td>
+                <td>deploy-backend.yml</td>
                 </tr>
                 <tr class="odd">
                 <td><code>GITHUB_TOKEN</code></td>
                 <td>CI/CD operations</td>
                 <td>Auto-provided</td>
-                <td>docs-ci.yml</td>
+                <td>docs-pipeline.yml / docs-coverage-deploy.yml</td>
                 </tr>
                 </tbody>
                 </table>
@@ -542,8 +546,7 @@
             ],
             'Reference': [
                 { label: 'Documentation Guide', href: 'DOCUMENTATION-GUIDE.html' },
-                { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
-                { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
+                { label: 'Documentation Generation', href: 'DOCUMENTATION-GENERATION.html' },
             ],
             'Quality & Coverage': [
                 { label: 'Test Coverage Report', href: 'coverage/index.html', isCoverage: true },

@@ -35,8 +35,8 @@
                     MainBranch -->|Push to origin/main| Actions
                     
                     subgraph Actions["GitHub Actions (CI/CD Pipelines)"]
-                        Build["Build & Test Workflow<br/>(auto_deploy.yml)<br/>1. Checkout code<br/>2. Run Maven build<br/>3. Run tests (65+)<br/>4. Build Docker image<br/>5. Push to GHCR<br/>6. Deploy to Koyeb"]
-                        Docs["Docs Generation Workflow<br/>(docs-ci.yml)<br/>1. Extract OpenAPI spec<br/>2. Convert Markdown → HTML<br/>3. Generate Redoc HTML<br/>4. Collect coverage<br/>5. Commit to docs branch<br/>6. GitHub Pages auto-sync"]
+                  Build["Build & Test Workflow<br/>(deploy-backend.yml)<br/>1. Checkout code<br/>2. Run Maven build<br/>3. Run tests (65+)<br/>4. Build Docker image<br/>5. Push to GHCR<br/>6. Deploy to Koyeb"]
+                  Docs["Docs Generation Workflow<br/>(docs-pipeline.yml + docs-coverage-deploy.yml)<br/>1. Extract OpenAPI spec<br/>2. Convert Markdown → HTML<br/>3. Generate Redoc HTML<br/>4. Collect coverage<br/>5. Commit to docs branch<br/>6. GitHub Pages auto-sync"]
                     end
                     
                     Build -->|GHCR Image<br/>ghcr.io/keglev/...| Koyeb
@@ -57,9 +57,9 @@
                 </div>
                 <h2 id="cicd-pipeline-details">CI/CD Pipeline
                 Details</h2>
-                <h3 id="build-deploy-workflow-auto_deploy.yml">Build
+                <h3 id="build-deploy-workflow-deploy-backend.yml">Build
                 &amp; Deploy Workflow
-                (<code>auto_deploy.yml</code>)</h3>
+                (<code>deploy-backend.yml</code>)</h3>
                 <p><strong>Trigger Events</strong>: - Push to
                 <code>main</code> branch - Pull request creation -
                 Manual trigger (workflow_dispatch)</p>
@@ -90,8 +90,9 @@
                     style G fill:#c8e6c9
                 </div>
                 <h3
-                id="documentation-pipeline-docs-ci.yml---to-be-created">Documentation
-                Pipeline (<code>docs-ci.yml</code> - TO BE CREATED)</h3>
+                id="documentation-pipeline-docs-pipeline.yml-docs-coverage-deploy.yml">Documentation
+                Pipeline (<code>docs-pipeline.yml</code> +
+                <code>docs-coverage-deploy.yml</code>)</h3>
                 <p><strong>Trigger Events</strong>: - Push to
                 <code>main</code> when <code>/backend/docs/</code>
                 changes - Manual trigger</p>
@@ -643,8 +644,7 @@ Connection Timeout: 30 seconds</code></pre>
             ],
             'Reference': [
                 { label: 'Documentation Guide', href: 'DOCUMENTATION-GUIDE.html' },
-                { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
-                { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
+                { label: 'Documentation Generation', href: 'DOCUMENTATION-GENERATION.html' },
             ],
             'Quality & Coverage': [
                 { label: 'Test Coverage Report', href: 'coverage/index.html', isCoverage: true },

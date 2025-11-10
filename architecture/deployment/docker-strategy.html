@@ -231,7 +231,7 @@
                 <h3 id="cicd-pipeline-integration">CI/CD Pipeline
                 Integration</h3>
                 <p><strong>GitHub Actions</strong>
-                (<code>auto_deploy.yml</code>):</p>
+                (<code>deploy-backend.yml</code>):</p>
                 <div class="sourceCode" id="cb6"><pre
                 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build Docker Image</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> docker build -t ghcr.io/keglev/stockease:latest .</span></span>
@@ -567,8 +567,7 @@
             ],
             'Reference': [
                 { label: 'Documentation Guide', href: 'DOCUMENTATION-GUIDE.html' },
-                { label: 'HTML Generation', href: 'DOCUMENTATION-GENERATION.html' },
-                { label: 'Redundancy Analysis', href: 'REDUNDANCY-ANALYSIS.html' },
+                { label: 'Documentation Generation', href: 'DOCUMENTATION-GENERATION.html' },
             ],
             'Quality & Coverage': [
                 { label: 'Test Coverage Report', href: 'coverage/index.html', isCoverage: true },
