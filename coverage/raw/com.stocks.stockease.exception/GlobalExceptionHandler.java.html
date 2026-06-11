@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.exception;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+
+import com.stocks.stockease.dto.ApiResponse;
+
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
+
+/**
+ * Centralized exception handler for REST API error responses.
+ * 
+ * Design pattern: @RestControllerAdvice (AOP-based exception interception)
+ * - Intercepts exceptions thrown in @RestController methods
+ * - Converts exceptions to standardized HTTP responses (JSON)
+ * - Decouples exception handling from business logic
+ * 
+ * Response format (all handlers):
+ * {
+ *   &quot;success&quot;: false,
+ *   &quot;message&quot;: &quot;Human-readable error description&quot;,
+ *   &quot;data&quot;: null or validation errors map
+ * }
+ * 
+ * HTTP status mapping:
+ * - 400 Bad Request: Invalid input, validation failures, malformed JSON
+ * - 401 Unauthorized: Invalid/expired JWT, bad credentials
+ * - 403 Forbidden: User lacks required role/permission
+ * - 404 Not Found: Resource doesn't exist (product ID not found)
+ * - 500 Internal Server Error: Unexpected runtime exceptions
+ * 
+ * Security considerations:
+ * - Never expose stack traces to clients (prevents reconnaissance)
+ * - Generic messages for auth failures (prevents username enumeration)
+ * - Detailed validation errors for client-side form rendering
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ */
+@RestControllerAdvice
+<span class="fc" id="L55">public class GlobalExceptionHandler {</span>
+
+    /**
+     * Handles NoSuchElementException (Collection operations like Stream.get()).
+     * 
+     * Scenario: Business logic calls stream.findFirst().get() without Optional wrapping.
+     * Response: 404 with user-friendly &quot;Resource not found&quot; message.
+     * 
+     * @param ex the caught exception
+     * @return 404 response with error details
+     */
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleNoSuchElementException(NoSuchElementException ex) {
+<span class="nc" id="L68">        return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="nc" id="L69">                .body(new ApiResponse&lt;&gt;(false, &quot;Resource not found: &quot; + ex.getMessage(), null));</span>
+    }
+
+    /**
+     * Handles JPA EntityNotFoundException (database queries on non-existent records).
+     * 
+     * Scenario: Service calls productRepository.getReferenceById() then accesses lazy fields.
+     * Response: 404 with entity-specific message.
+     * 
+     * @param ex the caught exception
+     * @return 404 response with error details
+     */
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleEntityNotFoundException(EntityNotFoundException ex) {
+<span class="nc" id="L83">        return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="nc" id="L84">                .body(new ApiResponse&lt;&gt;(false, &quot;Entity not found: &quot; + ex.getMessage(), null));</span>
+    }
+
+    /**
+     * Handles IllegalArgumentException (business logic validation failures).
+     * 
+     * Scenario: Service validates input (e.g., quantity &gt; 0) and throws with custom message.
+     * Response: 400 with validation message (preserves business semantics).
+     * 
+     * @param ex the caught exception
+     * @return 400 response with error message
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleIllegalArgumentException(IllegalArgumentException ex) {
+<span class="nc" id="L98">        return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="nc" id="L99">                .body(new ApiResponse&lt;&gt;(false, ex.getMessage(), null));</span>
+    }
+
+    /**
+     * Handles AccessDeniedException (Spring Security authorization failures).
+     * 
+     * Scenario: User with USER role attempts DELETE /api/products/123 (ADMIN only).
+     * Response: 403 with permission denial message (complements SecurityConfig exception handler).
+     * 
+     * @param ex the caught exception
+     * @return 403 response with permission error
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleAccessDeniedException(AccessDeniedException ex) {
+<span class="nc" id="L113">        return ResponseEntity.status(HttpStatus.FORBIDDEN)</span>
+<span class="nc" id="L114">                .body(new ApiResponse&lt;&gt;(false, &quot;You do not have permission to access this resource.&quot;, null));</span>
+    }
+
+    /**
+     * Handles JwtException (invalid/expired JWT tokens).
+     * 
+     * Scenario: JwtFilter detects malformed or expired token signature.
+     * Response: 401 with security-appropriate message (doesn't expose token structure).
+     * 
+     * @param ex the caught exception
+     * @return 401 response with authentication error
+     */
+    @ExceptionHandler(io.jsonwebtoken.JwtException.class)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleJwtException(io.jsonwebtoken.JwtException ex) {
+<span class="nc" id="L128">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="nc" id="L129">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid or expired token.&quot;, null));</span>
+    }
+
+    /**
+     * Handles BadCredentialsException (login with wrong password).
+     * 
+     * Scenario: AuthController authenticate(username, password) fails during login.
+     * Response: 401 with generic message (prevents username enumeration).
+     * 
+     * @param ex the caught exception
+     * @return 401 response with generic auth error
+     */
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleBadCredentialsException(
+            org.springframework.security.authentication.BadCredentialsException ex) {
+<span class="nc" id="L144">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="nc" id="L145">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid username or password&quot;, null));</span>
+    }
+
+    /**
+     * Handles MethodArgumentNotValidException (@Valid bean validation failures).
+     * 
+     * Scenario: POST /api/products with missing @NotNull fields or @Size violations.
+     * Response: 400 with field-level validation errors (enables frontend form highlighting).
+     * 
+     * @param ex the caught exception
+     * @return 400 response with field errors map
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ApiResponse&lt;Map&lt;String, String&gt;&gt;&gt; handleValidationException(MethodArgumentNotValidException ex) {
+<span class="nc" id="L159">        Map&lt;String, String&gt; errors = ex.getBindingResult()</span>
+<span class="nc" id="L160">                .getFieldErrors()</span>
+<span class="nc" id="L161">                .stream()</span>
+<span class="nc" id="L162">                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));</span>
+<span class="nc" id="L163">        return ResponseEntity.badRequest()</span>
+<span class="nc" id="L164">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors));</span>
+    }
+
+    /**
+     * Handles HttpMessageNotReadableException (malformed request body).
+     * 
+     * Scenario: POST /api/products with invalid JSON or type mismatch (e.g., string for price).
+     * Response: 400 with user-friendly parsing error message.
+     * 
+     * @param ex the caught exception
+     * @return 400 response with parsing error
+     */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleHttpMessageNotReadableException(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+<span class="fc" id="L179">        String message = &quot;Invalid or missing request body. Please check your input.&quot;;</span>
+<span class="pc bpc" id="L180" title="2 of 4 branches missed.">        if (ex.getMessage() != null &amp;&amp; ex.getMessage().contains(&quot;Cannot deserialize&quot;)) {</span>
+<span class="fc" id="L181">            message = &quot;Invalid request format or data type.&quot;;</span>
+        }
+<span class="fc" id="L183">        return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L184">                .body(new ApiResponse&lt;&gt;(false, message, null));</span>
+    }
+
+    /**
+     * Handles HandlerMethodValidationException (path variable/request param validation).
+     * 
+     * Scenario: GET /api/products/{id} with id=&quot;invalid&quot; (expects Long) or @Min violation.
+     * Response: 400 with validation error details extracted from cause chain.
+     * 
+     * Note: Uses if-else pattern matching (Java 16+). Switch pattern matching (Java 21+) not yet available.
+     * 
+     * @param ex the caught exception
+     * @return 400 response with constraint violation details
+     */
+    @SuppressWarnings(&quot;preview&quot;) // Switch pattern matching requires Java 21+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity&lt;ApiResponse&lt;Map&lt;String, String&gt;&gt;&gt; handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
+<span class="fc" id="L201">        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();</span>
+
+        // Pattern matching with if-else (Java 16+): cleaner than instanceof + cast
+<span class="fc" id="L204">        Throwable cause = ex.getCause();</span>
+<span class="pc bpc" id="L205" title="1 of 2 branches missed.">        if (cause instanceof ConstraintViolationException constraintViolationException) {</span>
+            // Extract constraint violations (e.g., @Min, @NotNull on path variables)
+<span class="nc" id="L207">            constraintViolationException.getConstraintViolations().forEach(violation -&gt; </span>
+<span class="nc" id="L208">                errors.put(violation.getPropertyPath().toString(), violation.getMessage())</span>
+            );
+<span class="pc bpc" id="L210" title="1 of 2 branches missed.">        } else if (cause instanceof BindException bindException) {</span>
+           // Extract field binding errors (type mismatches)
+<span class="nc" id="L212">           bindException.getBindingResult().getFieldErrors().forEach(fieldError -&gt; </span>
+<span class="nc" id="L213">                errors.put(fieldError.getField(), fieldError.getDefaultMessage())</span>
+           );
+        } else {
+           // Fallback for null or unknown validation errors
+<span class="fc" id="L217">           errors.put(&quot;Unknown&quot;, &quot;Unable to extract detailed validation error.&quot;);</span>
+        }
+
+<span class="fc" id="L220">       return ResponseEntity.badRequest()</span>
+<span class="fc" id="L221">           .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors));</span>
+    }
+
+    /**
+     * Handles all other uncaught exceptions (safety net).
+     * 
+     * Scenario: Unexpected RuntimeException or database deadlock.
+     * Response: 500 with generic message (never expose stack traces to clients).
+     * 
+     * Recommendation: Log full exception and stack trace server-side for debugging.
+     * 
+     * @param ex the caught exception
+     * @return 500 response with generic error message
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleGeneralException(Exception ex) {
+<span class="nc" id="L237">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L238">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
