@@ -1,74 +1,8 @@
-###############################################################################
-#
-# STOCKEASE DOCUMENTATION PIPELINE
-# ================================
-#
-# Workflow: GitHub Actions - Automated Documentation Generation & Deployment
-#
-# PURPOSE:
-#   Generates professional enterprise documentation from architecture markdown
-#   files and OpenAPI specifications. Triggered automatically on push to /docs
-#   directory. Publishes to GitHub Pages with mermaid diagram rendering.
-#
-# TRIGGER EVENTS:
-#   - Push to main branch when /docs/** or .github/workflows/docs-pipeline.yml changes
-#   - Manual trigger: workflow_dispatch (via GitHub Actions UI)
-#
-# BUILD PIPELINE:
-#   1. Setup: Install Node.js, Pandoc, ReDoc CLI
-#   2. API Docs: Generate OpenAPI docs from openapi.yaml
-#   3. Architecture: Convert markdown → HTML with Pandoc + Lua filters
-#   4. Additional Docs: Process other markdown files
-#   5. Links: Fix relative links and directory references
-#   6. Index: Create navigation index
-#   7. Deploy: Publish to GitHub Pages (gh-pages branch)
-#
-# KEY TECHNOLOGIES:
-#   - Pandoc: Markdown → HTML conversion with custom templates
-#   - Lua Filters: Post-process Pandoc output (mermaid rendering)
-#   - ReDoc: OpenAPI specification documentation
-#   - GitHub Pages: Static site hosting
-#   - Mermaid.js: Architecture diagram rendering
-#
-# OUTPUT STRUCTURE:
-#   target/docs/
-#   ├── index.html (landing page)
-#   ├── api-docs.html (OpenAPI reference)
-#   ├── templates/ (CSS, HTML templates)
-#   └── architecture/
-#       ├── *.html (architecture pages)
-#       ├── testing/
-#       ├── deployment/
-#       ├── patterns/
-#       ├── components/
-#       └── decisions/
-#
-# DEPLOYMENT:
-#   Published to: https://keglev.github.io/stockease/
-#   Branch: gh-pages (managed by actions-gh-pages)
-#
-# DOCUMENTATION:
-#   - Each markdown file becomes a styled HTML page
-#   - Mermaid diagrams render via Lua filter + mermaid.js
-#   - Sidebar navigation auto-generated from menu structure
-#   - Table of contents auto-generated from headings
-#
-# MAINTENANCE:
-#   - Update docs/** markdown → auto-deployed
-#   - Modify template → regenerate all docs
-#   - Add/remove API specs → updates automatically
-#   - Mermaid syntax errors logged in workflow output
-#
-# LAST UPDATED: 2025-11-07
-# VERSION: 4.0 (Single deployment point + JaCoCo coverage integration)
-#
-###############################################################################
-
 name: Docs Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'docs/**'
       - 'pom.xml'
@@ -81,324 +15,63 @@ permissions:
 jobs:
   build-and-publish-docs:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
-      - name: Detect project root (root vs /backend)
-        id: where
-        run: |
-          if [ -f "docs/api/openapi.yaml" ] && [ -f "pom.xml" ]; then
-            echo "dir=." >> $GITHUB_OUTPUT
-          elif [ -f "backend/docs/api/openapi.yaml" ] && [ -f "backend/pom.xml" ]; then
-            echo "dir=backend" >> $GITHUB_OUTPUT
-          else
-            echo "❌ No OpenAPI YAML found in docs/api/ or backend/docs/api/" >&2
-            exit 1
-          fi
-          echo "Using dir=$(cat $GITHUB_OUTPUT | cut -d= -f2)"
+      - name: Detect project root
+        run: bash .github/scripts/shared/detect-maven-project.sh
 
-      - name: Install Node.js and ReDoc CLI
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Generate documentation from modular OpenAPI YAML
+      - name: Generate API docs
+        run: bash .github/scripts/docs/generate-api-docs.sh
+
+      - name: Install Pandoc
+        run: sudo apt-get update -q && sudo apt-get install -y -q pandoc
+
+      - name: Generate architecture docs
         run: |
-          npm install -g @redocly/cli
-          PROJECT_DIR="${{ steps.where.outputs.dir }}"
+          bash .github/scripts/docs/generate-docs.sh \
+            --source architecture \
+            --output architecture \
+            --toc-depth 3 \
+            --lua-filter
+
+      - name: Generate additional docs
+        run: |
+          bash .github/scripts/docs/generate-docs.sh \
+            --source . \
+            --output generated \
+            --exclude "*/architecture/*" \
+            --exclude "*/templates/*"
+
+      - name: Fix directory links
+        run: bash .github/scripts/docs/fix-directory-links.sh
+
+      - name: Copy documentation index
+        run: cp "$PROJECT_DIR/docs/templates/index.html" "$PROJECT_DIR/target/docs/index.html"
+
+      - name: Verify output
+        run: |
           OUTPUT_DIR="$PROJECT_DIR/target/docs"
-          mkdir -p "$OUTPUT_DIR"
-          
-          # Copy template files to output directory
-          mkdir -p "$OUTPUT_DIR/templates"
-          cp "$PROJECT_DIR/docs/templates/enterprise-docs.css" "$OUTPUT_DIR/templates/" || true
-          cp "$PROJECT_DIR/docs/templates/enterprise-docs.html" "$OUTPUT_DIR/templates/" || true
-          echo "✓ Copied template files to output directory"
-          
-          # Verify OpenAPI YAML exists
-          if [ ! -f "$PROJECT_DIR/docs/api/openapi.yaml" ]; then
-            echo "❌ OpenAPI YAML not found at $PROJECT_DIR/docs/api/openapi.yaml"
-            exit 1
-          fi
-          
-          echo "✓ Found OpenAPI spec at $PROJECT_DIR/docs/api/openapi.yaml"
-          echo "  File size: $(wc -c < $PROJECT_DIR/docs/api/openapi.yaml) bytes"
-          
-          # Generate ReDoc HTML from modular YAML (with external path references)
-          # Output to api-docs.html instead of index.html to avoid overwriting landing page
-          redocly build-docs "$PROJECT_DIR/docs/api/openapi.yaml" -o "$OUTPUT_DIR/api-docs.html"
-          echo "✓ ReDoc HTML generated at $OUTPUT_DIR/api-docs.html"
-          echo "  Output size: $(wc -c < $OUTPUT_DIR/api-docs.html) bytes"
-
-      - name: Install pandoc
-        run: sudo apt-get update && sudo apt-get install -y pandoc
-
-      - name: Generate HTML from Architecture Markdown with Enterprise Template
-        run: |
-          PROJECT_DIR="${{ steps.where.outputs.dir }}"
-          ARCH_DIR="$PROJECT_DIR/docs/architecture"
-          OUTPUT_DIR="$PROJECT_DIR/target/docs/architecture"
-          TEMPLATE="$PROJECT_DIR/docs/templates/enterprise-docs.html"
-          
-          mkdir -p "$OUTPUT_DIR"
-          
-          if [ ! -f "$TEMPLATE" ]; then
-            echo "❌ Enterprise template not found at $TEMPLATE"
-            exit 1
-          fi
-          
-          # ===================================================================
-          # PANDOC LUA FILTER: markdown links & mermaid diagram rendering
-          # ===================================================================
-          # This filter performs two critical transformations:
-          #
-          # 1. MARKDOWN LINK CONVERSION
-          #    - Input: [link](file.md) or [link](file.md#section)
-          #    - Output: [link](file.html) or [link](file.html#section)
-          #    - Purpose: Pandoc preserves .md extensions; filter converts to .html
-          #
-          # 2. MERMAID DIAGRAM RENDERING (CRITICAL FIX)
-          #    - Input: ```mermaid ...diagram... ``` (code fence)
-          #    - Output: <div class="mermaid">...diagram...</div>
-          #    - Problem Solved: Pandoc default wraps in <code>, breaking mermaid.js
-          #    - Solution: Output raw HTML div that mermaid.js can find and render
-          #
-          # Processing Pipeline:
-          #    markdown → Pandoc AST → Lua filter → HTML (with divs) → mermaid.js renders
-          #
-          # ===================================================================
-          
-          cat > /tmp/md-to-html-links.lua << 'EOF'
-          function Link(el)
-            -- Convert .md links to .html
-            if el.target:match("%.md$") then
-              el.target = el.target:gsub("%.md$", ".html")
-            elseif el.target:match("%.md#") then
-              el.target = el.target:gsub("%.md#", ".html#")
-            end
-            return el
-          end
-          
-          -- Handle mermaid code blocks - output as HTML div with mermaid class
-          function CodeBlock(el)
-            if el.classes:includes('mermaid') then
-              local html = '<div class="mermaid">\n' .. el.text .. '\n</div>'
-              return pandoc.RawBlock('html', html)
-            end
-            return el
-          end
-          EOF
-          
-          # Find all markdown files in architecture directory
-          find "$ARCH_DIR" -type f -name "*.md" | while read md_file; do
-            # Calculate relative path from architecture base
-            rel_path="${md_file#$ARCH_DIR/}"
-            out_file="$OUTPUT_DIR/${rel_path%.md}.html"
-            
-            # Create output directory structure
-            mkdir -p "$(dirname "$out_file")"
-            
-            # Convert markdown to HTML with template
-            pandoc "$md_file" \
-              --from markdown \
-              --to html \
-              --template "$TEMPLATE" \
-              --lua-filter /tmp/md-to-html-links.lua \
-              --metadata=baseurl:/stockease \
-              --toc \
-              --toc-depth=3 \
-              --standalone \
-              -o "$out_file"
-            
-            echo "✓ Generated: $out_file"
-          done
-          
-          echo "✓ All architecture markdown files converted to HTML"
-
-      - name: Convert Additional Markdown to HTML (preserve structure)
-        run: |
-          BASE="${{ steps.where.outputs.dir }}/docs"
-          OUT="${{ steps.where.outputs.dir }}/target/docs/generated"
-          TEMPLATE="${{ steps.where.outputs.dir }}/docs/templates/enterprise-docs.html"
-          mkdir -p "$OUT"
-          
-          # Skip architecture directory (already processed) and templates
-          if [ -d "$BASE" ]; then
-            find "$BASE" -type f -name "*.md" \
-              ! -path "*/architecture/*" \
-              ! -path "*/templates/*" | while read md; do
-              rel="${md#$BASE/}"
-              out_file="$OUT/${rel%.md}.html"
-              mkdir -p "$(dirname "$out_file")"
-              
-              if [ -f "$TEMPLATE" ]; then
-                pandoc "$md" \
-                  --from markdown \
-                  --to html \
-                  --template "$TEMPLATE" \
-                  --metadata=baseurl:/stockease \
-                  --toc \
-                  --standalone \
-                  -o "$out_file"
-              else
-                pandoc "$md" \
-                  --from markdown \
-                  --to html \
-                  --toc \
-                  -s \
-                  -o "$out_file"
-              fi
-            done
-          fi
-
-      - name: Fix Directory Links in Generated HTML
-        run: |
-          OUTPUT_DIR="${{ steps.where.outputs.dir }}/target/docs"
-          
-          # Find all generated HTML files and fix directory links
-          find "$OUTPUT_DIR" -type f -name "*.html" | while read html_file; do
-            # Fix links like href="path/to/directory/" to href="path/to/directory/index.html"
-            sed -i 's|href="\([^"]*\)/"|href="\1/index.html"|g' "$html_file"
-            sed -i "s|href='\([^']*\)/'|href='\1/index.html'|g" "$html_file"
-            echo "✓ Fixed directory links in: $(basename $html_file)"
-          done
-          
-          echo "✓ All directory links fixed in generated HTML files"
-
-      - name: Create Navigation Index
-        run: |
-          PROJECT_DIR="${{ steps.where.outputs.dir }}"
-          OUTPUT_DIR="$PROJECT_DIR/target/docs"
-          
-          # Create main index.html that redirects or shows overview
-          cat > "$OUTPUT_DIR/index.html" << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>StockEase Documentation</title>
-              <style>
-                  * { margin: 0; padding: 0; box-sizing: border-box; }
-                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
-                  .hero {
-                      background: linear-gradient(135deg, #0066cc 0%, #004a99 100%);
-                      color: white;
-                      padding: 2rem 1.5rem;
-                      text-align: center;
-                  }
-                  .hero h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
-                  .hero p { font-size: 0.95rem; margin-bottom: 1rem; opacity: 0.9; }
-                  .container { max-width: 1000px; margin: 0 auto; }
-                  .docs-grid {
-                      display: grid;
-                      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                      gap: 2rem;
-                      padding: 3rem 1.5rem;
-                  }
-                  .doc-card {
-                      background: white;
-                      padding: 1.5rem;
-                      border-radius: 8px;
-                      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                      transition: transform 0.2s, box-shadow 0.2s;
-                      text-decoration: none;
-                      color: inherit;
-                      border-top: 3px solid #0066cc;
-                  }
-                  .doc-card:hover {
-                      transform: translateY(-4px);
-                      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-                  }
-                  .doc-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; color: #0066cc; }
-                  .doc-card p { color: #666; font-size: 0.95rem; }
-                  footer {
-                      background: #f8f9fa;
-                      padding: 2rem;
-                      text-align: center;
-                      color: #666;
-                      font-size: 0.9rem;
-                  }
-              </style>
-          </head>
-          <body>
-              <div class="hero">
-                  <div class="container">
-                      <h1>📚 StockEase Documentation</h1>
-                      <p>Complete API and Architecture Reference</p>
-                  </div>
-              </div>
-              <div class="container">
-                  <div class="docs-grid">
-                      <a href="architecture/overview.de.html" class="doc-card">
-                          <h3>🏗️ Architektur Übersicht (Deutsch)</h3>
-                          <p>Systemdesign, Schichten, Komponenten und Technologie-Stack – auf Deutsch.</p>
-                      </a>
-                      <a href="api-docs.html" class="doc-card">
-                          <h3>🔌 API Documentation</h3>
-                          <p>Interactive API specification with all endpoints, request/response schemas, and security details.</p>
-                      </a>
-                      <a href="architecture/overview.html" class="doc-card">
-                          <h3>🏗️ Architecture Overview</h3>
-                          <p>System design, layers, components, and technology stack overview.</p>
-                      </a>
-                      <a href="architecture/backend.html" class="doc-card">
-                          <h3>⚙️ Backend Architecture</h3>
-                          <p>Spring Boot application structure, controllers, services, and data layers.</p>
-                      </a>
-                      <a href="architecture/frontend.html" class="doc-card">
-                          <h3>🎨 Frontend Architecture</h3>
-                          <p>React/TypeScript application structure, components, and state management.</p>
-                      </a>
-                      <a href="architecture/security.html" class="doc-card">
-                          <h3>🔐 Security Architecture</h3>
-                          <p>Authentication, authorization, JWT, role-based access control, and data protection.</p>
-                      </a>
-                      <a href="architecture/deployment.html" class="doc-card">
-                          <h3>🚀 Deployment Strategy</h3>
-                          <p>Docker containerization, CI/CD pipelines, and cloud deployment patterns.</p>
-                      </a>
-                      <a href="architecture/testing-architecture.html" class="doc-card">
-                          <h3>✅ Testing Architecture</h3>
-                          <p>Test pyramid, strategies, unit tests, integration tests, and security testing.</p>
-                      </a>
-                      <a href="architecture/decisions/index.html" class="doc-card">
-                          <h3>📋 Design Decisions</h3>
-                          <p>Record of Architectural Decision Records (ADRs) and technical justifications.</p>
-                      </a>
-                      <a href="coverage/index.html" class="doc-card">
-                          <h3>📊 Code Coverage Report</h3>
-                          <p>JaCoCo code coverage analysis showing test execution breadth and quality metrics.</p>
-                      </a>
-                  </div>
-              </div>
-              <footer>
-                  <p><strong>StockEase</strong> - Inventory Management System</p>
-                  <p>Enterprise-Grade API & Architecture Documentation</p>
-              </footer>
-          </body>
-          </html>
-          EOF
-          
-          echo "✓ Created documentation index"
-
-      - name: Lightweight verification before upload
-        # Minimal checks kept for health/monitoring: file count and total size.
-        run: |
-          OUTPUT_DIR="${{ steps.where.outputs.dir }}/target/docs"
-          echo "Files in $OUTPUT_DIR: $(find "$OUTPUT_DIR" -type f | wc -l 2>/dev/null || echo 0)"
-          du -sh "$OUTPUT_DIR" 2>/dev/null || echo "(directory size unavailable)"
+          echo "Files: $(find "$OUTPUT_DIR" -type f | wc -l)"
+          du -sh "$OUTPUT_DIR"
 
       - name: Upload docs-site artifact
         uses: actions/upload-artifact@v4
         with:
           name: docs-site
-          path: ${{ steps.where.outputs.dir }}/target/docs
+          path: ${{ env.PROJECT_DIR }}/target/docs
 
-      - name: Deploy docs to gh-pages
+      - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ steps.where.outputs.dir }}/target/docs
+          publish_dir: ${{ env.PROJECT_DIR }}/target/docs

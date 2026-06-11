@@ -1,29 +1,3 @@
-###############################################################################
-# Docs Coverage Deploy
-# --------------------
-# Purpose:
-#   This workflow is triggered after the main Docs Pipeline completes successfully.
-#   It runs the test suite to generate JaCoCo HTML coverage reports, embeds a
-#   lightweight wrapper into the generated docs tree, and publishes the coverage
-#   subtree to GitHub Pages under the `coverage/` directory.
-#
-# Assumptions:
-#   - The `Docs Pipeline` workflow builds the site and uploads an artifact named
-#     `docs-site` containing `target/docs/` with the rendered documentation.
-#   - The repository contains a Maven project (pom.xml) at the detected project
-#     root (either repository root or `backend/`).
-#   - CI has permission to write to the `gh-pages` branch via GITHUB_TOKEN.
-#
-# Inputs / Outputs:
-#   - Input: artifact `docs-site` (target/docs)
-#   - Output: published subtree `coverage/` on gh-pages containing JaCoCo HTML
-#
-# Error modes / behavior:
-#   - If no coverage is generated, the workflow will publish an empty wrapper and
-#     emit a clear warning (non-fatal). The Docs Pipeline remains the single
-#     source-of-truth for the main site; this workflow only publishes the
-#     `coverage/` subpath to avoid race conditions.
-#
 name: Docs Coverage Deploy
 
 on:
@@ -36,7 +10,6 @@ permissions:
 
 jobs:
   coverage-deploy:
-    # Only run if Docs Pipeline succeeded
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
@@ -53,95 +26,24 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare docs directory (minimal)
-        # Keep this step intentionally minimal: ensure `target/docs` exists so
-        # subsequent copy/merge operations can place coverage files there.
-        run: |
-          mkdir -p target/docs
-
       - name: Detect project root
-        id: where
-        run: |
-          if [ -f "pom.xml" ]; then
-            echo "dir=." >> $GITHUB_OUTPUT
-          elif [ -f "backend/pom.xml" ]; then
-            echo "dir=backend" >> $GITHUB_OUTPUT
-          else
-            echo "dir=." >> $GITHUB_OUTPUT
-          fi
+        run: bash .github/scripts/shared/detect-maven-project.sh
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
           cache: maven
 
-      - name: Run Maven tests with JaCoCo
-        # Execute tests to generate JaCoCo HTML into PROJECT_DIR/docs/coverage
-        run: |
-          PROJECT_DIR="${{ steps.where.outputs.dir }}"
-          cd "$PROJECT_DIR"
-          mvn -B clean test
+      - name: Run tests with JaCoCo
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: mvn -B clean test
 
-      - name: Generate coverage wrapper and merge into site
-        # This step creates a simple wrapper index.html that embeds the JaCoCo
-        # report (raw/index.html) and copies the generated JaCoCo files into
-        # the documentation tree under target/docs/coverage.
-        run: |
-          PROJECT_DIR="${{ steps.where.outputs.dir }}"
-          OUTPUT_DIR="target/docs"
-          COVERAGE_SRC="$PROJECT_DIR/docs/coverage"
-          COVERAGE_OUT="$OUTPUT_DIR/coverage"
-
-          mkdir -p "$COVERAGE_OUT"
-
-          # Create a minimal wrapper page that embeds the raw JaCoCo index.
-          # Use printf to avoid YAML/heredoc escaping issues in the workflow YAML.
-          printf '%s\n' \
-            '<!DOCTYPE html>' \
-            '<html lang="en">' \
-            '<head>' \
-            '    <meta charset="UTF-8">' \
-            '    <meta name="viewport" content="width=device-width, initial-scale=1.0">' \
-            '    <title>StockEase - Code Coverage Report</title>' \
-            '    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">' \
-            '    <style>' \
-            '        .coverage-iframe { width: 100%; height: 80vh; border: 1px solid #ddd; border-radius: 4px; }' \
-            '        .coverage-container { padding: 1.5rem; background: #fff; border-radius: 6px; }' \
-            '    </style>' \
-            '</head>' \
-            '<body>' \
-            '  <div class="container">' \
-            '    <main>' \
-            '      <div class="content">' \
-            '        <h1>Code Coverage Report</h1>' \
-            '        <p>JaCoCo coverage for the StockEase backend. For full details see the embedded report below.</p>' \
-            '        <p><a href="raw/index.html">Open raw JaCoCo report</a></p>' \
-            '        <iframe src="raw/index.html" class="coverage-iframe" title="JaCoCo Coverage Report"></iframe>' \
-            '      </div>' \
-            '    </main>' \
-            '  </div>' \
-            '</body>' \
-            '</html>' > "$COVERAGE_OUT/index.html"
-
-          # If the JaCoCo output exists, copy the generated files into the
-          # coverage subtree. We also create a `raw/` directory which holds the
-          # original JaCoCo files for direct inspection.
-          if [ -d "$COVERAGE_SRC" ]; then
-            cp -r "$COVERAGE_SRC"/* "$COVERAGE_OUT/" || true
-            mkdir -p "$COVERAGE_OUT/raw"
-            # Copy everything except index.html into raw/ (keep the wrapper at root)
-            for f in "$COVERAGE_SRC"/*; do
-              [ "$(basename "$f")" != "index.html" ] && cp -r "$f" "$COVERAGE_OUT/raw/" 2>/dev/null || true
-            done
-          else
-            echo "::warning::No JaCoCo coverage directory found at $COVERAGE_SRC"
-          fi
+      - name: Generate coverage wrapper
+        run: bash .github/scripts/docs/generate-coverage-wrapper.sh
 
       - name: Deploy coverage to gh-pages
-        # Publish _only_ the coverage subtree. This avoids overwriting the main
-        # site which is published by the authoritative Docs Pipeline workflow.
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
