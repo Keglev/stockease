@@ -146,8 +146,8 @@
                 <li><strong>On Push to <code>main</code></strong> with
                 changes in:
                 <ul>
-                <li><code>backend/docs/**</code> - Any documentation
-                files</li>
+                <li><code>docs/**</code> - Any documentation files</li>
+                <li><code>pom.xml</code> - Maven project file</li>
                 <li><code>.github/workflows/docs-pipeline.yml</code> -
                 Workflow file itself</li>
                 </ul></li>
@@ -176,8 +176,8 @@
                 <ul>
                 <li>Input: <code>backend/docs/api/openapi.yaml</code>
                 (modular structure)</li>
-                <li>Output: <code>target/docs/index.html</code> (ReDoc
-                interactive docs)</li>
+                <li>Output: <code>target/docs/api-docs.html</code>
+                (Redocly interactive docs)</li>
                 <li>Uses: <span class="citation"
                 data-cites="redocly/cli">@redocly/cli</span>
                 <code>build-docs</code> command</li>

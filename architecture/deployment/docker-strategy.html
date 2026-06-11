@@ -233,19 +233,24 @@
                 <p><strong>GitHub Actions</strong>
                 (<code>deploy-backend.yml</code>):</p>
                 <div class="sourceCode" id="cb6"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build Docker Image</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> docker build -t ghcr.io/keglev/stockease:latest .</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Push to GitHub Container Registry</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">  run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    docker push ghcr.io/keglev/stockease:latest</span></code></pre></div>
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Trigger Koyeb redeploy</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> bash .github/scripts/deploy/koyeb-redeploy.sh</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wait for service healthy</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> bash .github/scripts/deploy/koyeb-wait-healthy.sh</span></span></code></pre></div>
                 <p><strong>Deployment Flow</strong>: 1. Push to
-                <code>main</code> branch 2. GitHub Actions builds Docker
-                image 3. Image pushed to GHCR:
-                <code>ghcr.io/keglev/stockease:latest</code> 4. Koyeb
-                pulls image and redeploys service 5. Health checks
-                verify deployment</p>
+                <code>main</code> branch 2. GitHub Actions builds the
+                JAR (<code>mvn verify</code>) 3. Koyeb is triggered via
+                REST API (<code>POST /v1/services/{id}/redeploy</code>)
+                4. Koyeb pulls the latest source code and builds the
+                Docker image from the Dockerfile 5. Health checks verify
+                deployment (HEALTHY or READY status)</p>
                 <h3 id="image-registry">Image Registry</h3>
                 <p><strong>GitHub Container Registry (GHCR)</strong>: -
                 URL: <code>ghcr.io/keglev/stockease</code> - Tag:

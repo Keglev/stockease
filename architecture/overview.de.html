@@ -152,16 +152,15 @@
                 <h3 id="produktionsumgebung">Produktionsumgebung</h3>
                 <pre><code>┌──────────────────────────────────┐
 │   GitHub Repository              │
-│   (main + docs branches)         │
+│   (main + gh-pages branches)     │
 └────────────┬─────────────────────┘
              │
              ↓ Push to main
 ┌──────────────────────────────────┐
 │   GitHub Actions CI/CD           │
 │   ├── Build &amp; Test               │
-│   ├── Push to GHCR               │
 │   ├── Deploy to Koyeb            │
-│   └── Generate Docs → docs branch│
+│   └── Generate Docs → gh-pages   │
 └────────────┬─────────────────────┘
              │
              ↓ Container Image
