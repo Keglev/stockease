@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # full history; shallow clone omits git metadata used by docs scripts
 
       - name: Detect project root
         run: bash .github/scripts/shared/detect-maven-project.sh
@@ -42,7 +42,7 @@ jobs:
             --source architecture \
             --output architecture \
             --toc-depth 3 \
-            --lua-filter
+            --lua-filter  # converts mermaid fences and .md links for mermaid.js
 
       - name: Generate additional docs
         run: |
