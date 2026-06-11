@@ -2,6 +2,7 @@ package com.stocks.stockease.controller;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,9 +13,11 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.lang.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -101,15 +104,12 @@ public class ProductControllerTest {
     })
     void testLowStockProductsWithRoles(String username, String role) throws Exception {
         Product product1 = new Product("Low Stock Product 1", 3, 50.0);
-        product1.setId(1L);
-
         Product product2 = new Product("Low Stock Product 2", 2, 30.0);
-        product2.setId(2L);
 
         when(productRepository.findByQuantityLessThan(5)).thenReturn(Arrays.asList(product1, product2));
 
         mockMvc.perform(get("/api/products/low-stock")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .with(userWithRole(username, role)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Low Stock Product 1"))
                 .andExpect(jsonPath("$[1].name").value("Low Stock Product 2"));
@@ -134,7 +134,7 @@ public class ProductControllerTest {
         when(productRepository.findByQuantityLessThan(5)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/products/low-stock")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .with(userWithRole(username, role)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("All products are sufficiently stocked."));
     }
@@ -163,7 +163,7 @@ public class ProductControllerTest {
             .thenReturn(List.of(product));
 
         mockMvc.perform(get("/api/products/search")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
+                .with(userWithRole(username, role))
                 .param("name", "searchable"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Searchable Product"));
@@ -190,7 +190,7 @@ public class ProductControllerTest {
             .thenReturn(List.of());
 
         mockMvc.perform(get("/api/products/search")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
+                .with(userWithRole(username, role))
                 .param("name", "nonexistent"))
                 .andExpect(status().isNoContent())
                 .andExpect(jsonPath("$.message").value("No products found matching the name: nonexistent"));
@@ -208,7 +208,7 @@ public class ProductControllerTest {
         when(productRepository.calculateTotalStockValue()).thenReturn(500.0);
 
         mockMvc.perform(get("/api/products/total-stock-value")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .with(userWithRole(username, role)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value(500.0))
                 .andExpect(jsonPath("$.success").value(true))
@@ -227,10 +227,15 @@ public class ProductControllerTest {
         when(productRepository.calculateTotalStockValue()).thenReturn(0.0);
 
         mockMvc.perform(get("/api/products/total-stock-value")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .with(userWithRole(username, role)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value(0.0))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Total stock value fetched successfully"));
+    }
+
+    @NonNull
+    private static RequestPostProcessor userWithRole(String username, String role) {
+        return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }

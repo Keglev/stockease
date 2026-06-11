@@ -99,7 +99,7 @@ public class ProductController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> getProductById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Product>> getProductById(@PathVariable long id) {
         return productRepository.findById(id)
                 .map(product -> ResponseEntity.ok(new ApiResponse<>(true, "Product fetched successfully", product)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -161,13 +161,8 @@ public class ProductController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable long id) {
         log.info("Entering deleteProduct method with ID: {}", id);
-
-        if (id == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(false, "ID must be provided in the request.", null));
-        }
 
         // Check if product exists before attempting deletion (avoids orphaned references)
         if (!productRepository.existsById(id)) {
@@ -234,7 +229,7 @@ public class ProductController {
      */
     @PutMapping("/{id}/quantity")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable long id, @RequestBody(required = false) Map<String, Object> request) {
         try {
             // Validate request payload structure
             if (request == null || !request.containsKey("quantity") || request.get("quantity") == null) {
@@ -288,7 +283,7 @@ public class ProductController {
      */
     @PutMapping("/{id}/price")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable long id, @RequestBody(required = false) Map<String, Object> request) {
         try {
             // Validate request payload structure
             if (request == null || !request.containsKey("price") || request.get("price") == null) {
@@ -341,7 +336,7 @@ public class ProductController {
      */
     @PutMapping("/{id}/name")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable Long id, @RequestBody Map<String, String> request) {
+    public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable long id, @RequestBody Map<String, String> request) {
         try {
             // Validate name field: must be present and non-empty
             if (!request.containsKey("name") || request.get("name").isBlank()) {

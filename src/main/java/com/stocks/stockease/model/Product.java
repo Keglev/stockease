@@ -114,11 +114,10 @@ public class Product {
      * @param quantity stock quantity (required, non-negative)
      * @param price unit price (required, positive)
      */
-    public Product(String name, Integer quantity, Double price) {
+    public Product(String name, int quantity, double price) {
         this.name = name;
         this.quantity = quantity;
         this.price = price;
-        // Pre-calculate totalValue during construction for consistency
-        this.totalValue = (quantity != null && price != null) ? quantity * price : 0.0;
+        this.totalValue = quantity * price;
     }
 }
