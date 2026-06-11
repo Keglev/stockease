@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CorsConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.config</a> &gt; <span class="el_source">CorsConfig.java</span></div><h1>CorsConfig.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+/**
+ * WebMvcConfigurer for Cross-Origin Resource Sharing (CORS) policy.
+ * 
+ * Problem solved:
+ * - Browsers block requests from frontend (http://localhost:5173) to backend API
+ * - Solution: Configure CORS headers to allow cross-origin requests
+ * 
+ * Configuration applied:
+ * - Path pattern: //** (all endpoints)
+ * - Allowed origins: localhost:5173 (dev), stockeasefrontend.vercel.app (prod)
+ * - Allowed methods: GET, POST, PUT, DELETE, OPTIONS (REST operations + preflight)
+ * - Allowed headers: * (all headers, especially Authorization for JWT)
+ * - Credentials: true (allows cookies, JWT tokens in headers)
+ * 
+ * Note: SecurityConfig also has CorsConfiguration via SecurityFilterChain.
+ * Both work together:
+ * - This config: WebMvc level (servlet filter chain)
+ * - SecurityConfig: Spring Security level (filter chain)
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ */
+@Configuration
+<span class="fc" id="L32">public class CorsConfig implements WebMvcConfigurer {</span>
+
+    /**
+     * Configures CORS mappings for all REST endpoints.
+     * 
+     * CORS flow (browser perspective):
+     * 1. Browser makes preflight OPTIONS request with:
+     *    - Origin: http://localhost:5173
+     *    - Access-Control-Request-Method: POST
+     * 2. Server responds with Access-Control-Allow-* headers
+     * 3. Browser validates response and allows/blocks actual request
+     * 4. Actual POST/GET/PUT/DELETE request sent with credentials
+     * 
+     * Allowed origins:
+     * - http://localhost:5173: Local dev frontend (Vite server)
+     * - https://stockeasefrontend.vercel.app/: Production deployment (Vercel)
+     * 
+     * @param registry CorsRegistry for fluent configuration
+     */
+    @Override
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
+<span class="fc" id="L53">        registry.addMapping(&quot;/**&quot;) // Apply to all endpoints</span>
+<span class="fc" id="L54">                .allowedOrigins(</span>
+                    &quot;https://stockeasefrontend.vercel.app/&quot;, // Production frontend
+                    &quot;http://localhost:5173&quot;) // Development frontend (Vite)
+<span class="fc" id="L57">                .allowedMethods(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;) // REST + preflight</span>
+<span class="fc" id="L58">                .allowedHeaders(&quot;*&quot;) // Allow all headers (Authorization, Content-Type, etc.)</span>
+<span class="fc" id="L59">                .allowCredentials(true); // Allow cookies and authentication headers</span>
+<span class="fc" id="L60">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
