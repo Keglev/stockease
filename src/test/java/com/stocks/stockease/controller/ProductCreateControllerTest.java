@@ -1,5 +1,7 @@
 package com.stocks.stockease.controller;
 
+import java.util.Objects;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,11 +14,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
+import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -113,13 +117,13 @@ public class ProductCreateControllerTest {
      */
     @Test
     void testValidProductCreation() throws Exception {
-        when(productRepository.save(any(Product.class))).thenReturn(product1);
+        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(post("/api/products")
-                .contentType(APPLICATION_JSON)
+                .contentType(applicationJson())
                 .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": 100.0, \"totalValue\": 1000.0}")
-                .with(csrf())
-                .with(SecurityMockMvcRequestPostProcessors.user("adminUser").roles("ADMIN")))
+                .with(csrfToken())
+                .with(userWithRole("adminUser", "ADMIN")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("Product 1"))
             .andExpect(jsonPath("$.quantity").value(10))
@@ -143,9 +147,9 @@ public class ProductCreateControllerTest {
     })
     void testProductCreationDeniedForUser(String username, String role) throws Exception {
         mockMvc.perform(post("/api/products")
-                .contentType(APPLICATION_JSON)
+                .contentType(applicationJson())
                 .content("{\"name\": \"Valid Product\", \"quantity\": 10, \"price\": 100.0, \"totalValue\": 1000.0}")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .with(userWithRole(username, role)))
             .andExpect(status().isForbidden());
     }
 
@@ -162,10 +166,10 @@ public class ProductCreateControllerTest {
     @Test
     void testProductCreationWithMissingFields() throws Exception {
         mockMvc.perform(post("/api/products")
-                .contentType(APPLICATION_JSON)
+                .contentType(applicationJson())
                 .content("{\"name\": \"\"}")
-                .with(SecurityMockMvcRequestPostProcessors.user("adminUser").roles("ADMIN"))
-                .with(csrf()))
+                .with(userWithRole("adminUser", "ADMIN"))
+                .with(csrfToken()))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("Incomplete update. Please fill in all required fields."));
     }
@@ -183,10 +187,10 @@ public class ProductCreateControllerTest {
     @Test
     void testProductCreationWithNegativeQuantity() throws Exception {
         mockMvc.perform(post("/api/products")
-                .contentType(APPLICATION_JSON)
+                .contentType(applicationJson())
                 .content("{\"name\": \"Product 1\", \"quantity\": -5, \"price\": 100.0, \"totalValue\": 1000.0}")
-                .with(SecurityMockMvcRequestPostProcessors.user("adminUser").roles("ADMIN"))
-                .with(csrf()))
+                .with(userWithRole("adminUser", "ADMIN"))
+                .with(csrfToken()))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("Quantity cannot be negative."));
     }
@@ -204,10 +208,10 @@ public class ProductCreateControllerTest {
     @Test
     void testProductCreationWithZeroPrice() throws Exception {
         mockMvc.perform(post("/api/products")
-                .contentType(APPLICATION_JSON)
+                .contentType(applicationJson())
                 .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": 0, \"totalValue\": 0}")
-                .with(SecurityMockMvcRequestPostProcessors.user("adminUser").roles("ADMIN"))
-                .with(csrf()))
+                .with(userWithRole("adminUser", "ADMIN"))
+                .with(csrfToken()))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("Price must be greater than 0."));
     }
@@ -225,13 +229,34 @@ public class ProductCreateControllerTest {
      */
     @Test
     void testProductCreationWithInvalidTypeForPrice() throws Exception {
-        when(productRepository.save(any(Product.class))).thenReturn(product1);
+        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
         mockMvc.perform(post("/api/products")
-                .contentType(APPLICATION_JSON)
+                .contentType(applicationJson())
                 .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": \"notANumber\", \"totalValue\": 1000.0}")
-                .with(SecurityMockMvcRequestPostProcessors.user("adminUser").roles("ADMIN"))
-                .with(csrf()))
+                .with(userWithRole("adminUser", "ADMIN"))
+                .with(csrfToken()))
             .andExpect(status().isBadRequest());
+    }
+
+    @NonNull
+    private static MediaType applicationJson() {
+        return Objects.requireNonNull(MediaType.APPLICATION_JSON);
+    }
+
+    @NonNull
+    private static RequestPostProcessor csrfToken() {
+        return Objects.requireNonNull(csrf());
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    private static <T> T anyNonNull(Class<T> clazz) {
+        return any(clazz);
+    }
+
+    @NonNull
+    private static RequestPostProcessor userWithRole(String username, String role) {
+        return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }
 

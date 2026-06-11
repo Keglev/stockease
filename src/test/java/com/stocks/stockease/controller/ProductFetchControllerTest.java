@@ -1,6 +1,7 @@
 package com.stocks.stockease.controller;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,11 +16,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.lang.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -134,7 +137,7 @@ public class ProductFetchControllerTest {
 
         // Perform GET request and validate response
         ResultActions result = mockMvc.perform(get("/api/products")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)));
+                .with(userWithRole(username, role)));
 
         // Validate JSON response
         result.andExpect(status().isOk())
@@ -175,7 +178,7 @@ public class ProductFetchControllerTest {
 
         // Perform GET request and validate response
         mockMvc.perform(get("/api/products/1")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .with(userWithRole(username, role)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.name").value("Product 1"))
             .andExpect(jsonPath("$.data.totalValue").value(1000.0));
@@ -207,10 +210,15 @@ public class ProductFetchControllerTest {
 
         // Perform GET request for a non-existing product and validate response
         mockMvc.perform(get("/api/products/999")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role)))
+                .with(userWithRole(username, role)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.message").value("The product with ID 999 does not exist."))
             .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @NonNull
+    private static RequestPostProcessor userWithRole(String username, String role) {
+        return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }

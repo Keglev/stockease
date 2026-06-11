@@ -1,5 +1,7 @@
 package com.stocks.stockease.controller;
 
+import java.util.Objects;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,9 +15,11 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.lang.NonNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -91,7 +95,7 @@ public class ProductDeleteControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testDeleteProductAsAdmin() throws Exception {
         mockMvc.perform(delete("/api/products/1")
-                .with(csrf())) // Add CSRF token
+                .with(csrfToken())) // Add CSRF token
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.message").value("Product with ID 1 has been successfully deleted."));
@@ -116,12 +120,17 @@ public class ProductDeleteControllerTest {
         Mockito.when(productRepository.existsById(1L)).thenReturn(false);
 
         mockMvc.perform(delete("/api/products/1")
-                .with(csrf()))
+                .with(csrfToken()))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.message").value("Cannot delete. Product with ID 1 does not exist."));
 
         Mockito.verify(productRepository, Mockito.never()).deleteById(Mockito.anyLong());
+    }
+
+    @NonNull
+    private static RequestPostProcessor csrfToken() {
+        return Objects.requireNonNull(csrf());
     }
 
     /**

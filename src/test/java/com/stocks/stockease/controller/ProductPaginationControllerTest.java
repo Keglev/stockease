@@ -2,6 +2,7 @@ package com.stocks.stockease.controller;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +21,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -97,8 +101,8 @@ public class ProductPaginationControllerTest {
                 .mapToObj(i -> new Product("Product " + i, i, i * 10.0))
                 .collect(Collectors.toList());
 
-        Page<Product> productPage = new PageImpl<>(products.subList(0, 10), PageRequest.of(0, 10), products.size());
-        Mockito.when(productRepository.findAll(Mockito.any(Pageable.class))).thenReturn(productPage);
+        Page<Product> productPage = new PageImpl<>(Objects.requireNonNull(products.subList(0, 10)), PageRequest.of(0, 10), products.size());
+        Mockito.when(productRepository.findAll(anyNonNull(Pageable.class))).thenReturn(productPage);
     }
 
     /**
@@ -118,11 +122,11 @@ public class ProductPaginationControllerTest {
     })
     void testGetPagedProductsWithRoles(String username, String role) throws Exception {
         mockMvc.perform(get("/api/products/paged")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
+                .with(userWithRole(username, role))
                 .param("page", "0")
                 .param("size", "10"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.content", hasSize(10)))
+            .andExpect(jsonPath("$.data.content", Objects.requireNonNull(hasSize(10))))
             .andExpect(jsonPath("$.data.content[0].name").value("Product 1"))
             .andExpect(jsonPath("$.data.content[9].name").value("Product 10"))
             .andExpect(jsonPath("$.data.totalElements").value(20))
@@ -145,11 +149,11 @@ public class ProductPaginationControllerTest {
         "regularUser, USER"
     })
     void testGetPagedProductsEmptyPage(String username, String role) throws Exception {
-        Page<Product> emptyPage = new PageImpl<>(Collections.emptyList());
-        Mockito.when(productRepository.findAll(Mockito.any(Pageable.class))).thenReturn(emptyPage);
+        Page<Product> emptyPage = new PageImpl<>(Objects.requireNonNull(Collections.emptyList()));
+        Mockito.when(productRepository.findAll(anyNonNull(Pageable.class))).thenReturn(emptyPage);
 
         mockMvc.perform(get("/api/products/paged")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
+                .with(userWithRole(username, role))
                 .param("page", "1")
                 .param("size", "10"))
             .andExpect(status().isOk())
@@ -174,12 +178,23 @@ public class ProductPaginationControllerTest {
     })
     void testGetPagedProductsInvalidParams(String username, String role) throws Exception {
         mockMvc.perform(get("/api/products/paged")
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
+                .with(userWithRole(username, role))
                 .param("page", "-1")
                 .param("size", "-10"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.message").value("Validation failed for request parameters."))
             .andExpect(jsonPath("$.data.Unknown").value("Unable to extract detailed validation error.")); // Adjust expectation based on actual error message
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    private static <T> T anyNonNull(Class<T> clazz) {
+        return any(clazz);
+    }
+
+    @NonNull
+    private static RequestPostProcessor userWithRole(String username, String role) {
+        return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }
