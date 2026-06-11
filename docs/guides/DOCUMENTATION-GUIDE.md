@@ -24,9 +24,9 @@
 ### 👨‍💼 Project Manager / Business Analyst
 
 **Start here:**
-1. [overview.md](./overview.md) — Business context and architecture decisions
-2. [testing-architecture.md](./testing-architecture.md) — Test goals and scope
-3. [testing/matrix.md](./testing/matrix.md) — Feature coverage summary
+1. [overview.md](../architecture/system/overview.md) — Business context and architecture decisions
+2. [testing-architecture.md](../architecture/testing-architecture.md) — Test goals and scope
+3. [testing/matrix.md](../architecture/testing/matrix.md) — Feature coverage summary
 
 **Learning Path:**
 ```
@@ -46,10 +46,10 @@ OPTIONAL: patterns/ (Best practices overview)
 ### 👨‍💻 Backend Developer (Java/Spring Boot)
 
 **Start here:**
-1. [backend.md](./backend.md) — Spring Boot architecture
-2. [testing/spring-slices.md](./testing/spring-slices.md) — How to write tests
-3. [testing/security-tests.md](./testing/security-tests.md) — Authorization testing
-4. [testing/controller-integration.md](./testing/controller-integration.md) — MockMvc patterns
+1. [backend.md](../architecture/system/backend.md) — Spring Boot architecture
+2. [testing/spring-slices.md](../architecture/testing/spring-slices.md) — How to write tests
+3. [testing/security-tests.md](../architecture/testing/security-tests.md) — Authorization testing
+4. [testing/controller-integration.md](../architecture/testing/controller-integration.md) — MockMvc patterns
 
 **Learning Path (New Developer):**
 ```
@@ -79,10 +79,10 @@ FINALLY: deployment.md (How to deploy changes)
 ### 👩‍💻 Frontend Developer (React/TypeScript)
 
 **Start here:**
-1. [frontend.md](./frontend.md) — React architecture
-2. [backend.md](./backend.md) — APIs being consumed
-3. [testing/security-tests.md](./testing/security-tests.md) — JWT token flow
-4. [security.md](./security.md) — Auth implementation
+1. [frontend.md](../architecture/system/frontend.md) — React architecture
+2. [backend.md](../architecture/system/backend.md) — APIs being consumed
+3. [testing/security-tests.md](../architecture/testing/security-tests.md) — JWT token flow
+4. [security.md](../architecture/system/security.md) — Auth implementation
 
 **Learning Path:**
 ```
@@ -111,10 +111,10 @@ THEN: deployment.md (Render deployment)
 ### 🔧 DevOps Engineer
 
 **Start here:**
-1. [deployment.md](./deployment.md) — Infrastructure and CI/CD
-2. [deployment/ci-pipeline.md](./deployment/ci-pipeline.md) — GitHub Actions details
-3. [testing/ci-pipeline-tests.md](./testing/ci-pipeline-tests.md) — Test gates
-4. [testing/coverage-and-quality.md](./testing/coverage-and-quality.md) — Coverage reporting
+1. [deployment.md](../architecture/deployment.md) — Infrastructure and CI/CD
+2. [deployment/ci-pipeline.md](../architecture/deployment/ci-pipeline.md) — GitHub Actions details
+3. [testing/ci-pipeline-tests.md](../architecture/testing/ci-pipeline-tests.md) — Test gates
+4. [testing/coverage-and-quality.md](../architecture/testing/coverage-and-quality.md) — Coverage reporting
 
 **Learning Path:**
 ```
@@ -143,10 +143,10 @@ OPTIONAL: patterns/security-patterns.md (Secure configuration)
 ### 🧪 QA / Test Engineer
 
 **Start here:**
-1. [testing/pyramid.md](./testing/pyramid.md) — Test distribution
-2. [testing/strategy.md](./testing/strategy.md) — Test philosophy
-3. [testing/matrix.md](./testing/matrix.md) — What's tested
-4. [testing/naming-conventions.md](./testing/naming-conventions.md) — Test organization
+1. [testing/pyramid.md](../architecture/testing/pyramid.md) — Test distribution
+2. [testing/strategy.md](../architecture/testing/strategy.md) — Test philosophy
+3. [testing/matrix.md](../architecture/testing/matrix.md) — What's tested
+4. [testing/naming-conventions.md](../architecture/testing/naming-conventions.md) — Test organization
 
 **Learning Path:**
 ```
@@ -175,32 +175,32 @@ THEN: security.md (Security test cases)
 
 #### Core Architecture (7 documents)
 1. **[index.md](./index.md)** — Navigation hub with reading paths by role
-2. **[overview.md](./overview.md)** — Executive summary (PRIMARY SOURCE OF TRUTH)
-3. **[backend.md](./backend.md)** — Spring Boot layered architecture
-4. **[frontend.md](./frontend.md)** — React 18 + TypeScript frontend
-5. **[layers.md](./layers.md)** — 3-tier layered architecture (Controller → Service → Repository → Entity)
-6. **[security.md](./security.md)** — JWT authentication and authorization
-7. **[deployment.md](./deployment.md)** — Infrastructure, CI/CD, GitHub Actions
+2. **[overview.md](../architecture/system/overview.md)** — Executive summary (PRIMARY SOURCE OF TRUTH)
+3. **[backend.md](../architecture/system/backend.md)** — Spring Boot layered architecture
+4. **[frontend.md](../architecture/system/frontend.md)** — React 18 + TypeScript frontend
+5. **[layers.md](../architecture/system/layers.md)** — 3-tier layered architecture (Controller → Service → Repository → Entity)
+6. **[security.md](../architecture/system/security.md)** — JWT authentication and authorization
+7. **[deployment.md](../architecture/deployment.md)** — Infrastructure, CI/CD, GitHub Actions
 
 #### Architecture Decisions (ADRs)
-- **[decisions/index.md](./decisions/index.md)** — Decision records index
-- **[decisions/001-database-choice.md](./decisions/001-database-choice.md)** — PostgreSQL justification
-- **[decisions/002-validation-strategy.md](./decisions/002-validation-strategy.md)** — Input + business validation
+- **[decisions/index.md](../architecture/decisions/index.md)** — Decision records index
+- **[decisions/001-database-choice.md](../architecture/decisions/001-database-choice.md)** — PostgreSQL justification
+- **[decisions/002-validation-strategy.md](../architecture/decisions/002-validation-strategy.md)** — Input + business validation
 
 #### Design Patterns
-- **[patterns/index.md](./patterns/index.md)** — Design patterns index
-- **[patterns/repository-pattern.md](./patterns/repository-pattern.md)** — Spring Data JPA implementation
-- **[patterns/security-patterns.md](./patterns/security-patterns.md)** — JWT, BCrypt, CORS best practices
+- **[patterns/index.md](../architecture/patterns/index.md)** — Design patterns index
+- **[patterns/repository-pattern.md](../architecture/patterns/repository-pattern.md)** — Spring Data JPA implementation
+- **[patterns/security-patterns.md](../architecture/patterns/security-patterns.md)** — JWT, BCrypt, CORS best practices
 
 #### Components
-- **[components/index.md](./components/index.md)** — Component documentation index
-- **[components/analytics-service.md](./components/analytics-service.md)** — Analytics service architecture
-- **[components/supplier-controller.md](./components/supplier-controller.md)** — Supplier management
+- **[components/index.md](../architecture/components/index.md)** — Component documentation index
+- **[components/analytics-service.md](../architecture/components/analytics-service.md)** — Analytics service architecture
+- **[components/supplier-controller.md](../architecture/components/supplier-controller.md)** — Supplier management
 
 #### Infrastructure & DevOps
-- **[deployment/ci-pipeline.md](./deployment/ci-pipeline.md)** — GitHub Actions automation
-- **[deployment/docker-strategy.md](./deployment/docker-strategy.md)** — Docker containerization
-- **[deployment/staging-config.md](./deployment/staging-config.md)** — Pre-production setup
+- **[deployment/ci-pipeline.md](../architecture/deployment/ci-pipeline.md)** — GitHub Actions automation
+- **[deployment/docker-strategy.md](../architecture/deployment/docker-strategy.md)** — Docker containerization
+- **[deployment/staging-config.md](../architecture/deployment/staging-config.md)** — Pre-production setup
 
 ---
 
@@ -209,23 +209,23 @@ THEN: security.md (Security test cases)
 **Location**: `backend/docs/architecture/testing/`
 
 #### Entry Point
-- **[testing-architecture.md](./testing-architecture.md)** — Quick start and navigation hub
+- **[testing-architecture.md](../architecture/testing-architecture.md)** — Quick start and navigation hub
 
 #### Fundamentals (What & Why)
-1. **[testing/strategy.md](./testing/strategy.md)** — Testing philosophy, goals, scope
-2. **[testing/naming-conventions.md](./testing/naming-conventions.md)** — Test method naming patterns
-3. **[testing/pyramid.md](./testing/pyramid.md)** — Unit (70%) / Slice (25%) / Integration (5%)
+1. **[testing/strategy.md](../architecture/testing/strategy.md)** — Testing philosophy, goals, scope
+2. **[testing/naming-conventions.md](../architecture/testing/naming-conventions.md)** — Test method naming patterns
+3. **[testing/pyramid.md](../architecture/testing/pyramid.md)** — Unit (70%) / Slice (25%) / Integration (5%)
 
 #### Techniques (How)
-1. **[testing/spring-slices.md](./testing/spring-slices.md)** — @WebMvcTest, @DataJpaTest patterns
-2. **[testing/security-tests.md](./testing/security-tests.md)** — JWT and authorization testing
-3. **[testing/controller-integration.md](./testing/controller-integration.md)** — MockMvc HTTP patterns
-4. **[testing/test-data-fixtures.md](./testing/test-data-fixtures.md)** — TestConfig and mock data
+1. **[testing/spring-slices.md](../architecture/testing/spring-slices.md)** — @WebMvcTest, @DataJpaTest patterns
+2. **[testing/security-tests.md](../architecture/testing/security-tests.md)** — JWT and authorization testing
+3. **[testing/controller-integration.md](../architecture/testing/controller-integration.md)** — MockMvc HTTP patterns
+4. **[testing/test-data-fixtures.md](../architecture/testing/test-data-fixtures.md)** — TestConfig and mock data
 
 #### Quality & Metrics (Measure)
-1. **[testing/coverage-and-quality.md](./testing/coverage-and-quality.md)** — JaCoCo configuration
-2. **[testing/matrix.md](./testing/matrix.md)** — Coverage by layer and feature
-3. **[testing/ci-pipeline-tests.md](./testing/ci-pipeline-tests.md)** — GitHub Actions CI/CD
+1. **[testing/coverage-and-quality.md](../architecture/testing/coverage-and-quality.md)** — JaCoCo configuration
+2. **[testing/matrix.md](../architecture/testing/matrix.md)** — Coverage by layer and feature
+3. **[testing/ci-pipeline-tests.md](../architecture/testing/ci-pipeline-tests.md)** — GitHub Actions CI/CD
 
 ---
 
@@ -375,8 +375,8 @@ patterns/security-patterns.md (Secure configuration)
 
 ### For Contributing
 1. **Adding new code?** Update relevant documentation
-2. **Adding new tests?** Follow patterns in [testing/naming-conventions.md](./testing/naming-conventions.md)
-3. **Changing architecture?** Update [overview.md](./overview.md) as single source of truth
+2. **Adding new tests?** Follow patterns in [testing/naming-conventions.md](../architecture/testing/naming-conventions.md)
+3. **Changing architecture?** Update [overview.md](../architecture/system/overview.md) as single source of truth
 4. **Modifying tests?** Cross-check with testing docs
 
 ### For Maintaining
@@ -386,7 +386,7 @@ patterns/security-patterns.md (Secure configuration)
 4. **New feature**: Add docs before or with feature code
 
 ### Running Tests
-1. See [testing-architecture.md](./testing-architecture.md) "Quick Start"
+1. See [testing-architecture.md](../architecture/testing-architecture.md) "Quick Start"
 2. Run: `cd backend && mvn clean test`
 3. View coverage: `mvn test jacoco:report && open target/site/jacoco/index.html`
 
@@ -463,16 +463,16 @@ patterns/security-patterns.md (Secure configuration)
 **A**: See "Quick Navigation by Role" section above. Pick your role and follow the path.
 
 ### Q: How is testing organized?
-**A**: See [testing/pyramid.md](./testing/pyramid.md) — 70% unit, 25% slice, 5% integration. Details in [testing/strategy.md](./testing/strategy.md).
+**A**: See [testing/pyramid.md](../architecture/testing/pyramid.md) — 70% unit, 25% slice, 5% integration. Details in [testing/strategy.md](../architecture/testing/strategy.md).
 
 ### Q: How do I write a test?
-**A**: See [testing/naming-conventions.md](./testing/naming-conventions.md) and [testing/spring-slices.md](./testing/spring-slices.md) for patterns and examples.
+**A**: See [testing/naming-conventions.md](../architecture/testing/naming-conventions.md) and [testing/spring-slices.md](../architecture/testing/spring-slices.md) for patterns and examples.
 
 ### Q: How do I understand authentication?
-**A**: See [security.md](./security.md) for architecture, [testing/security-tests.md](./testing/security-tests.md) for testing patterns.
+**A**: See [security.md](../architecture/system/security.md) for architecture, [testing/security-tests.md](../architecture/testing/security-tests.md) for testing patterns.
 
 ### Q: How does CI/CD work?
-**A**: See [deployment.md](./deployment.md) for infrastructure, [testing/ci-pipeline-tests.md](./testing/ci-pipeline-tests.md) for test gates.
+**A**: See [deployment.md](../architecture/deployment.md) for infrastructure, [testing/ci-pipeline-tests.md](../architecture/testing/ci-pipeline-tests.md) for test gates.
 
 ---
 
@@ -512,5 +512,5 @@ patterns/security-patterns.md (Secure configuration)
 
 **See Also**:
 - [DOCUMENTATION-GENERATION.md](./DOCUMENTATION-GENERATION.md) - Technical guide for HTML generation
-- [overview.md](./overview.md) - Start reading the actual documentation
+- [overview.md](../architecture/system/overview.md) - Start reading the actual documentation
 

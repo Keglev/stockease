@@ -270,19 +270,19 @@ Product
 - **[Frontend Architecture](./frontend.md)** - React 18 stack, components, state management
 - **[Service Layers](./layers.md)** - Controller, Service, Repository patterns and data flow
 - **[Security Architecture](./security.md)** - JWT, authentication, authorization, RBAC
-- **[Deployment Architecture](./deployment.md)** - Infrastructure, CI/CD, monitoring, disaster recovery
+- **[Deployment Architecture](../deployment.md)** - Infrastructure, CI/CD, monitoring, disaster recovery
 
 ### Architecture Decisions (ADRs)
-- **[Database Choice](./decisions/001-database-choice.md)** - Why PostgreSQL over H2 for production
-- **[Validation Strategy](./decisions/002-validation-strategy.md)** - Input validation and business rule enforcement
+- **[Database Choice](../decisions/001-database-choice.md)** - Why PostgreSQL over H2 for production
+- **[Validation Strategy](../decisions/002-validation-strategy.md)** - Input validation and business rule enforcement
 
 ### Design Patterns & Practices
-- **[Repository Pattern](./patterns/repository-pattern.md)** - Spring Data JPA repository implementation
-- **[Security Patterns](./patterns/security-patterns.md)** - JWT, BCrypt, CORS best practices
+- **[Repository Pattern](../patterns/repository-pattern.md)** - Spring Data JPA repository implementation
+- **[Security Patterns](../patterns/security-patterns.md)** - JWT, BCrypt, CORS best practices
 
 ### Infrastructure & Deployment
-- **[CI/CD Pipeline](./deployment/ci-pipeline.md)** - GitHub Actions, automated testing, deployment
-- **[Staging Configuration](./deployment/staging-config.md)** - Staging environment setup and testing
+- **[CI/CD Pipeline](../deployment/ci-pipeline.md)** - GitHub Actions, automated testing, deployment
+- **[Staging Configuration](../deployment/staging-config.md)** - Staging environment setup and testing
 
 ### Navigation
 - **[Index](./index.md)** - Documentation hub with reading paths by role

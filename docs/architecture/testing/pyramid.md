@@ -388,7 +388,7 @@ Estimated by Layers:
 
 ### Main Architecture
 - **[Testing Architecture](../testing-architecture.md)** — Entry point
-- **[Backend Architecture](../backend.md)** — Components being tested
+- **[Backend Architecture](../system/backend.md)** — Components being tested
 
 ---
 

@@ -585,7 +585,7 @@ public class ProductTest {
 
 ### Main Architecture
 - **[Testing Architecture](../testing-architecture.md)** — Entry point
-- **[Backend Architecture](../backend.md)** — Controllers being tested
+- **[Backend Architecture](../system/backend.md)** — Controllers being tested
 
 ---
 

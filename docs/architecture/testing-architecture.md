@@ -322,9 +322,9 @@ void testWithRoles(String username, String role) { }
 - **[CI Pipeline Tests](./testing/ci-pipeline-tests.md)** — What runs in GitHub Actions
 
 ### Architecture Overview
-- **[Architecture Overview](./overview.md)** — Main system architecture
-- **[Backend Architecture](./backend.md)** — Spring Boot layers and components
-- **[Security Architecture](./security.md)** — JWT, authentication, authorization
+- **[Architecture Overview](./system/overview.md)** — Main system architecture
+- **[Backend Architecture](./system/backend.md)** — Spring Boot layers and components
+- **[Security Architecture](./system/security.md)** — JWT, authentication, authorization
 - **[Deployment](./deployment.md)** — CI/CD and production setup
 
 ---

@@ -270,19 +270,19 @@ Product
 - **[Frontend-Architektur](./frontend.md)** - React 18 Stack, Komponenten, State Management
 - **[Service-Schichten](./layers.md)** - Controller, Service, Repository Muster und Datenfluss
 - **[Sicherheitsarchitektur](./security.md)** - JWT, Authentifizierung, Autorisierung, RBAC
-- **[Bereitstellungsarchitektur](./deployment.md)** - Infrastruktur, CI/CD, Monitoring, Disaster Recovery
+- **[Bereitstellungsarchitektur](../deployment.md)** - Infrastruktur, CI/CD, Monitoring, Disaster Recovery
 
 ### Architektur-Entscheidungen (ADRs)
-- **[Datenbankwahl](./decisions/001-database-choice.md)** - Warum PostgreSQL über H2 für Produktion
-- **[Validierungsstrategie](./decisions/002-validation-strategy.md)** - Eingabevalidierung und Business-Rule-Durchsetzung
+- **[Datenbankwahl](../decisions/001-database-choice.md)** - Warum PostgreSQL über H2 für Produktion
+- **[Validierungsstrategie](../decisions/002-validation-strategy.md)** - Eingabevalidierung und Business-Rule-Durchsetzung
 
 ### Design-Muster & Best Practices
-- **[Repository-Muster](./patterns/repository-pattern.md)** - Spring Data JPA Repository-Implementierung
-- **[Sicherheitsmuster](./patterns/security-patterns.md)** - JWT, BCrypt, CORS Best Practices
+- **[Repository-Muster](../patterns/repository-pattern.md)** - Spring Data JPA Repository-Implementierung
+- **[Sicherheitsmuster](../patterns/security-patterns.md)** - JWT, BCrypt, CORS Best Practices
 
 ### Infrastruktur & Bereitstellung
-- **[CI/CD-Pipeline](./deployment/ci-pipeline.md)** - GitHub Actions, automatisiertes Testing, Bereitstellung
-- **[Staging-Konfiguration](./deployment/staging-config.md)** - Staging-Umgebungssetup und Testing
+- **[CI/CD-Pipeline](../deployment/ci-pipeline.md)** - GitHub Actions, automatisiertes Testing, Bereitstellung
+- **[Staging-Konfiguration](../deployment/staging-config.md)** - Staging-Umgebungssetup und Testing
 
 ### Navigation
 - **[Index](./index.md)** - Dokumentations-Hub mit Lesepfaden nach Rolle

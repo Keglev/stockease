@@ -349,7 +349,7 @@ Sprint 4 (Plan):     82% coverage, 25 test classes (+5 repository)
 
 ### Main Architecture
 - **[Testing Architecture](../testing-architecture.md)** — Entry point
-- **[Backend Architecture](../backend.md)** — Code being measured
+- **[Backend Architecture](../system/backend.md)** — Code being measured
 
 ---
 

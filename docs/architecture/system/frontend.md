@@ -665,19 +665,19 @@ describe('ProductCard', () => {
 - **[Backend Architecture](./backend.md)** - Backend APIs that frontend consumes
 - **[Service Layers](./layers.md)** - Backend layer architecture
 - **[Security Architecture](./security.md)** - JWT token handling and authentication flow
-- **[Deployment Architecture](./deployment.md)** - Frontend deployment to Render and backend integration
+- **[Deployment Architecture](../deployment.md)** - Frontend deployment to Render and backend integration
 
 ### Architecture Decisions (ADRs)
-- **[Database Choice](./decisions/001-database-choice.md)** - Backend database (PostgreSQL)
-- **[Validation Strategy](./decisions/002-validation-strategy.md)** - Server-side and client-side validation
+- **[Database Choice](../decisions/001-database-choice.md)** - Backend database (PostgreSQL)
+- **[Validation Strategy](../decisions/002-validation-strategy.md)** - Server-side and client-side validation
 
 ### Design Patterns & Practices
-- **[Security Patterns](./patterns/security-patterns.md)** - JWT token management and secure APIs
-- **[Repository Pattern](./patterns/repository-pattern.md)** - Backend data access patterns
+- **[Security Patterns](../patterns/security-patterns.md)** - JWT token management and secure APIs
+- **[Repository Pattern](../patterns/repository-pattern.md)** - Backend data access patterns
 
 ### Infrastructure & Deployment
-- **[CI/CD Pipeline](./deployment/ci-pipeline.md)** - Frontend build and deployment automation
-- **[Staging Configuration](./deployment/staging-config.md)** - Frontend staging environment
+- **[CI/CD Pipeline](../deployment/ci-pipeline.md)** - Frontend build and deployment automation
+- **[Staging Configuration](../deployment/staging-config.md)** - Frontend staging environment
 
 ---
 

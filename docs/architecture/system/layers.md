@@ -499,15 +499,15 @@ CREATE INDEX idx_users_username ON users(username);
 - **[Architecture Overview](./overview.md)** - Business context, technology stack, design decisions
 - **[Backend Architecture](./backend.md)** - Spring Boot components and code organization
 - **[Security Architecture](./security.md)** - Authentication and authorization in each layer
-- **[Deployment Architecture](./deployment.md)** - How layers are deployed to production
+- **[Deployment Architecture](../deployment.md)** - How layers are deployed to production
 
 ### Architecture Decisions (ADRs)
-- **[Database Choice](./decisions/001-database-choice.md)** - Repository layer database selection
-- **[Validation Strategy](./decisions/002-validation-strategy.md)** - Validation in Service layer
+- **[Database Choice](../decisions/001-database-choice.md)** - Repository layer database selection
+- **[Validation Strategy](../decisions/002-validation-strategy.md)** - Validation in Service layer
 
 ### Design Patterns & Practices
-- **[Repository Pattern](./patterns/repository-pattern.md)** - Repository layer implementation details
-- **[Security Patterns](./patterns/security-patterns.md)** - Security filters in Controller layer
+- **[Repository Pattern](../patterns/repository-pattern.md)** - Repository layer implementation details
+- **[Security Patterns](../patterns/security-patterns.md)** - Security filters in Controller layer
 
 ---
 

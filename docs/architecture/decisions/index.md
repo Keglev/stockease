@@ -38,6 +38,6 @@ To add a new design decision:
 ---
 
 For more information, see:
-- [Architecture Overview](../overview.md)
+- [Architecture Overview](../system/overview.md)
 - [Components Documentation](../components/index.md)
 - [Design Patterns](../patterns/index.md)

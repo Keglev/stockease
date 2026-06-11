@@ -429,7 +429,7 @@ Top Uncovered Code:
 
 ### Main Architecture
 - **[Testing Architecture](../testing-architecture.md)** — Entry point
-- **[Backend Architecture](../backend.md)** — Code being measured
+- **[Backend Architecture](../system/backend.md)** — Code being measured
 - **[Deployment](../deployment.md)** — Publishing reports
 
 ---

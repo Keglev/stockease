@@ -535,19 +535,19 @@ Before production deployment:
 - **[Architecture Overview](./overview.md)** - Overall system context and security decisions
 - **[Backend Architecture](./backend.md)** - Spring Security configuration in code
 - **[Service Layers](./layers.md)** - Authorization checks in Controller and Service layers
-- **[Deployment Architecture](./deployment.md)** - Infrastructure security and TLS/HTTPS setup
+- **[Deployment Architecture](../deployment.md)** - Infrastructure security and TLS/HTTPS setup
 
 ### Architecture Decisions (ADRs)
-- **[Database Choice](./decisions/001-database-choice.md)** - Database-level security implications
-- **[Validation Strategy](./decisions/002-validation-strategy.md)** - Input validation as first line of defense
+- **[Database Choice](../decisions/001-database-choice.md)** - Database-level security implications
+- **[Validation Strategy](../decisions/002-validation-strategy.md)** - Input validation as first line of defense
 
 ### Design Patterns & Practices
-- **[Security Patterns](./patterns/security-patterns.md)** - JWT token generation, BCrypt hashing, CORS
-- **[Repository Pattern](./patterns/repository-pattern.md)** - Query-level security considerations
+- **[Security Patterns](../patterns/security-patterns.md)** - JWT token generation, BCrypt hashing, CORS
+- **[Repository Pattern](../patterns/repository-pattern.md)** - Query-level security considerations
 
 ### Infrastructure & Deployment
-- **[CI/CD Pipeline](./deployment/ci-pipeline.md)** - Secret management in GitHub Actions
-- **[Staging Configuration](./deployment/staging-config.md)** - Security testing environment
+- **[CI/CD Pipeline](../deployment/ci-pipeline.md)** - Secret management in GitHub Actions
+- **[Staging Configuration](../deployment/staging-config.md)** - Security testing environment
 
 ---
 

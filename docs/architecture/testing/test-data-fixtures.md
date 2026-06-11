@@ -300,7 +300,7 @@ public class ProductBuilder {
 
 ### Main Architecture
 - **[Testing Architecture](../testing-architecture.md)** — Entry point
-- **[Backend Architecture](../backend.md)** — Models and entities
+- **[Backend Architecture](../system/backend.md)** — Models and entities
 
 ---
 

@@ -804,19 +804,19 @@ logger.error("Database connection failed", exception);
 - **[Architecture Overview](./overview.md)** - Executive summary and design decisions
 - **[Service Layers](./layers.md)** - High-level layer architecture and patterns
 - **[Security Architecture](./security.md)** - Spring Security and JWT implementation details
-- **[Deployment Architecture](./deployment.md)** - How backend is containerized and deployed
+- **[Deployment Architecture](../deployment.md)** - How backend is containerized and deployed
 
 ### Architecture Decisions (ADRs)
-- **[Database Choice](./decisions/001-database-choice.md)** - Why PostgreSQL and Flyway were selected
-- **[Validation Strategy](./decisions/002-validation-strategy.md)** - Validation approach in Service layer
+- **[Database Choice](../decisions/001-database-choice.md)** - Why PostgreSQL and Flyway were selected
+- **[Validation Strategy](../decisions/002-validation-strategy.md)** - Validation approach in Service layer
 
 ### Design Patterns & Practices
-- **[Repository Pattern](./patterns/repository-pattern.md)** - Spring Data JPA repository implementation
-- **[Security Patterns](./patterns/security-patterns.md)** - JWT tokens, BCrypt, Spring Security filters
+- **[Repository Pattern](../patterns/repository-pattern.md)** - Spring Data JPA repository implementation
+- **[Security Patterns](../patterns/security-patterns.md)** - JWT tokens, BCrypt, Spring Security filters
 
 ### Infrastructure & Deployment
-- **[CI/CD Pipeline](./deployment/ci-pipeline.md)** - GitHub Actions workflow for backend
-- **[Staging Configuration](./deployment/staging-config.md)** - Testing configurations
+- **[CI/CD Pipeline](../deployment/ci-pipeline.md)** - GitHub Actions workflow for backend
+- **[Staging Configuration](../deployment/staging-config.md)** - Testing configurations
 
 ### Related Frontend Docs
 - **[Frontend Architecture](./frontend.md)** - How frontend integrates with these APIs

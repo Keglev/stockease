@@ -54,7 +54,7 @@ Each pattern includes:
 ---
 
 For more information, see:
-- [Architecture Overview](../overview.md)
-- [Backend Architecture](../backend.md)
+- [Architecture Overview](../system/overview.md)
+- [Backend Architecture](../system/backend.md)
 - [Components Documentation](../components/index.md)
 - [Design Decisions](../decisions/index.md)

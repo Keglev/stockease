@@ -64,7 +64,7 @@ When documenting components:
 ---
 
 For more information, see:
-- [Architecture Overview](../overview.md)
-- [Backend Architecture](../backend.md)
+- [Architecture Overview](../system/overview.md)
+- [Backend Architecture](../system/backend.md)
 - [Design Patterns](../patterns/index.md)
 - [Design Decisions](../decisions/index.md)

@@ -566,8 +566,8 @@ mockMvc.perform(get("/api/products")
 - **[Test Data & Fixtures](./test-data-fixtures.md)** — TestConfig details
 
 ### Architecture & Implementation
-- **[Security Architecture](../security.md)** — JWT, authentication, authorization design
-- **[Backend Architecture](../backend.md)** — Controllers implementing security
+- **[Security Architecture](../system/security.md)** — JWT, authentication, authorization design
+- **[Backend Architecture](../system/backend.md)** — Controllers implementing security
 - **[Testing Architecture](../testing-architecture.md)** — Entry point
 
 ---

@@ -438,7 +438,7 @@ When writing a new test, ensure:
 
 ### Main Documentation
 - **[Testing Architecture](../testing-architecture.md)** — Entry point
-- **[Backend Architecture](../backend.md)** — Code being tested
+- **[Backend Architecture](../system/backend.md)** — Code being tested
 
 ---
 

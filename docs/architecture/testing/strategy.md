@@ -390,8 +390,8 @@ class StockEaseApplicationTests {
 
 ### Main Architecture
 - **[Testing Architecture](../testing-architecture.md)** — Entry point for all test docs
-- **[Backend Architecture](../backend.md)** — System components being tested
-- **[Security Architecture](../security.md)** — Authentication & authorization
+- **[Backend Architecture](../system/backend.md)** — System components being tested
+- **[Security Architecture](../system/security.md)** — Authentication & authorization
 
 ---
 
