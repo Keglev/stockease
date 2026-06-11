@@ -13,51 +13,53 @@ The CI/CD pipeline automates building, testing, and deploying StockEase to produ
 ```yaml
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - 'docs/**'
       - '.gitignore'
-  workflow_dispatch:  # Manual trigger
+      - '.github/workflows/docs-pipeline.yml'
+  workflow_dispatch:
 ```
 
 **Triggers on**:
-- Push to main branch (excluding docs directory)
+- Push to main branch (excluding docs, .gitignore, and docs-pipeline.yml changes)
 - Manual workflow dispatch
 
 **Doesn't trigger on**:
 - Changes to `/docs/` only
 - Changes to `.gitignore` only
+- Changes to `.github/workflows/docs-pipeline.yml` only
 
 ### Pipeline Stages
 
 ```mermaid
 graph TD
-    A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Setup Java Environment<br/>JDK 17, Maven cache, dependencies"]
-    B --> C["3. Run Tests 65+ tests<br/>H2 database, ~1 minute"]
-    
-    C --> D["Tests Pass?"]
-    D -->|Yes| E["4. Build Application<br/>Maven package, create JAR"]
-    D -->|No| F["Stop, notify"]
-    
-    E --> G["5. Build Docker Image<br/>ghcr.io/keglev/stockease latest"]
-    G --> H["6. Push to Container Registry<br/>GHCR authentication, push image"]
-    H --> I["7. Deploy to Koyeb<br/>Trigger redeploy via API"]
-    I --> J["8. Wait for Healthy up to 10 min<br/>Poll service status"]
-    
+    A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Detect project root<br/>detect-maven-project.sh"]
+    B --> C["3. Validate Dockerfile<br/>validate-dockerfile.sh"]
+    C --> D["4. Setup Java Environment<br/>JDK 17, Maven cache"]
+    D --> E["5. Run Tests (conditional on RUN_TESTS)<br/>H2 in-memory, ~40 seconds"]
+
+    E --> F["Tests Pass?"]
+    F -->|Yes| G["6. Build Application<br/>Maven verify, create JAR"]
+    F -->|No| H["Stop, notify"]
+
+    G --> I["7. Trigger Koyeb Redeploy<br/>koyeb-redeploy.sh — POST API call"]
+    I --> J["8. Wait for Healthy up to 10 min<br/>koyeb-wait-healthy.sh — poll every 10s"]
+
     J --> K["Deployment Healthy?"]
     K -->|Yes| L[Success]
     K -->|Timeout| M["Failure notification"]
-    
+
     style A fill:#e3f2fd
     style B fill:#e3f2fd
-    style C fill:#fff3e0
-    style E fill:#e3f2fd
+    style C fill:#e3f2fd
+    style D fill:#e3f2fd
+    style E fill:#fff3e0
     style G fill:#e3f2fd
-    style H fill:#e3f2fd
     style I fill:#fff3e0
     style J fill:#fff3e0
     style L fill:#c8e6c9
-    style F fill:#ffcdd2
+    style H fill:#ffcdd2
     style M fill:#ffcdd2
 ```
 
@@ -85,86 +87,63 @@ graph TD
 
 #### Stage 3: Run Tests
 ```yaml
-- name: Run backend tests
+- name: Run tests
+  if: env.RUN_TESTS == 'true'
+  working-directory: ${{ env.PROJECT_DIR }}
   run: ./mvnw -B -ntp test
 ```
 **Duration**: ~30-45 seconds  
 **Tests**: 65+ unit and integration tests  
 **Database**: H2 in-memory  
+**Conditional**: Controlled by `RUN_TESTS` env var (default `true`; set `false` only for emergency hotfixes)  
 **Failure Handling**: Stops pipeline if tests fail
 
-#### Stage 4: Build
+#### Stage 4: Build and Verify
 ```yaml
-- name: Verify build compiles
-  run: ./mvnw -B -ntp -DskipTests package
+- name: Build and verify
+  working-directory: ${{ env.PROJECT_DIR }}
+  run: ./mvnw -B -ntp -DskipTests -Dspringdoc.skip=true verify
 ```
 **Duration**: ~20-30 seconds  
-**Purpose**: Create JAR file, catch compile errors
+**Purpose**: Create JAR file, run verify lifecycle; `-Dspringdoc.skip=true` prevents redundant OpenAPI generation at build time
 
-#### Stage 5: Build Docker Image
-```dockerfile
-FROM eclipse-temurin:17-jre-alpine
-COPY target/stockease-backend-*.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
-```
-**Duration**: ~15-20 seconds  
-**Base Image**: Alpine (122MB)  
-**Final Size**: ~350MB (with JAR + libs)
-
-#### Stage 6: Push to GHCR
-```yaml
-- name: Push to GHCR
-  env:
-    REGISTRY: ghcr.io
-  run: docker push ghcr.io/keglev/stockease:latest
-```
-**Duration**: ~10-15 seconds  
-**Authentication**: GitHub token from secrets
-
-#### Stage 7: Deploy to Koyeb
+#### Stage 5: Trigger Koyeb Redeploy
 ```yaml
 - name: Trigger Koyeb redeploy
   env:
     KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
     KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
-  run: |
-    curl -X POST https://app.koyeb.com/v1/services/$SERVICE_ID/redeploy \
-      -H "Authorization: Bearer $KOYEB_API_KEY"
+  run: bash .github/scripts/deploy/koyeb-redeploy.sh
 ```
 **Duration**: ~5 seconds (API call)  
-**Actual Deployment**: 1-2 minutes (Koyeb pulls image, starts container)
+**Method**: `POST /v1/services/{id}/redeploy` — Koyeb pulls the latest code and rebuilds from the Dockerfile  
+**Success**: HTTP 200, 201, or 202 response from Koyeb API
 
-#### Stage 8: Health Check
+#### Stage 6: Wait for Healthy
 ```yaml
-- name: Wait for Koyeb service HEALTHY
-  run: |
-    for i in {1..60}; do
-      STATUS=$(curl -H "Authorization: Bearer $API_KEY" \
-        https://app.koyeb.com/v1/services/$SERVICE_ID)
-      if [ "$STATUS" = "HEALTHY" ]; then
-        exit 0
-      fi
-      sleep 10
-    done
-    exit 1
+- name: Wait for service healthy
+  env:
+    KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+    KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
+  run: bash .github/scripts/deploy/koyeb-wait-healthy.sh
 ```
-**Duration**: Up to 10 minutes (poll every 10 seconds)  
-**Success Criteria**: Service reaches HEALTHY status  
-**Failure Handling**: Auto-rollback if health check fails
+**Duration**: Up to 10 minutes (60 polls × 10-second interval)  
+**Success Criteria**: Service reaches `HEALTHY` or `READY` status  
+**Failure Handling**: Pipeline fails; previous healthy version remains running on Koyeb  
+**Env Overrides**: `POLL_ATTEMPTS` and `POLL_INTERVAL` can override defaults
 
 ### Total Pipeline Duration
 
 | Stage | Duration |
 |-------|----------|
 | Checkout | 5s |
-| Setup | 30s |
+| Detect root + Validate | <5s |
+| Setup JDK 17 | 30s |
 | Tests | 40s |
-| Build | 25s |
-| Docker | 20s |
-| Push | 15s |
+| Build (verify) | 25s |
 | Deploy (API) | 5s |
 | Health Check | 10-120s |
-| **Total** | **2-5 minutes** |
+| **Total** | **2-4 minutes** |
 
 ## Documentation Workflow (docs-pipeline.yml + docs-coverage-deploy.yml)
 
@@ -173,66 +152,112 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ```yaml
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'backend/docs/**'
+      - 'docs/**'
+      - 'pom.xml'
+      - '.github/workflows/docs-pipeline.yml'
   workflow_dispatch:
 ```
 
 **Triggers on**:
-- Push to main when `/backend/docs/` changes
+- Push to main when `docs/**`, `pom.xml`, or `.github/workflows/docs-pipeline.yml` changes
 - Manual workflow dispatch
+- `docs-coverage-deploy.yml` additionally triggers automatically when this workflow completes successfully
 
 ### Pipeline Stages
 
+The documentation pipeline is split across two workflows that run in sequence.
+
+#### docs-pipeline.yml
+
 ```
 ┌──────────────────────────────────────┐
-│ 1. Checkout Code                     │
+│ 1. Checkout                          │
+│ fetch-depth: 0 (full history)        │
 └──────────────┬───────────────────────┘
                ↓
 ┌──────────────────────────────────────┐
-│ 2. Setup Environment                 │
-│ Python, Node.js, MkDocs, ReDoc CLI   │
+│ 2. Detect project root               │
+│ detect-maven-project.sh → PROJECT_DIR│
 └──────────────┬───────────────────────┘
                ↓
 ┌──────────────────────────────────────┐
-│ 3. Start Backend (Spring Boot)       │
-│ Start application for OpenAPI /v3    │
+│ 3. Set up Node.js 18                 │
+│ Install @redocly/cli                 │
 └──────────────┬───────────────────────┘
                ↓
 ┌──────────────────────────────────────┐
-│ 4. Extract OpenAPI Spec              │
-│ Fetch /v3/api-docs.yaml              │
-│ Save to docs/api/openapi/            │
+│ 4. Generate API docs                 │
+│ generate-api-docs.sh                 │
+│ Reads docs/api/openapi.yaml (static) │
+│ Output: target/docs/api-docs.html    │
 └──────────────┬───────────────────────┘
                ↓
 ┌──────────────────────────────────────┐
-│ 5. Generate Redoc HTML               │
-│ redoc-cli build-docs openapi.yaml    │
-│ Output: docs/api/redoc/index.html    │
+│ 5. Install Pandoc + generate docs    │
+│ generate-docs.sh (architecture/)     │
+│ generate-docs.sh (remaining docs)    │
+│ Pandoc + enterprise-docs.html tmpl   │
+│ Output: target/docs/**/*.html        │
 └──────────────┬───────────────────────┘
                ↓
 ┌──────────────────────────────────────┐
-│ 6. Convert Markdown to HTML          │
-│ MkDocs build docs/architecture/      │
-│ Output: docs/architecture/*.html     │
+│ 6. Fix directory links               │
+│ fix-directory-links.sh               │
+│ Rewrites href="path/" → index.html   │
 └──────────────┬───────────────────────┘
                ↓
 ┌──────────────────────────────────────┐
-│ 7. Generate Coverage Reports         │
-│ JaCoCo site generation               │
-│ Copy to docs/coverage/               │
+│ 7. Copy documentation index          │
+│ .github/scripts/templates/index.html │
+│ → target/docs/index.html             │
 └──────────────┬───────────────────────┘
                ↓
 ┌──────────────────────────────────────┐
-│ 8. Commit to gh-pages Branch         │
-│ git checkout gh-pages                │
-│ Copy all generated files             │
-│ git commit && push                   │
+│ 8. Upload docs-site artifact         │
+│ Retained for docs-coverage-deploy    │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 9. Deploy to gh-pages                │
+│ peaceiris/actions-gh-pages@v3        │
+│ publish_dir: target/docs             │
 └──────────────┬───────────────────────┘
                ↓
          GitHub Pages auto-publishes
     https://Keglev.github.io/stockease/
+```
+
+#### docs-coverage-deploy.yml (triggered on docs-pipeline success)
+
+```
+┌──────────────────────────────────────┐
+│ 1. Checkout + Download artifact      │
+│ Downloads docs-site from docs-pipel. │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 2. Detect project root + JDK 17      │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 3. Run tests with JaCoCo             │
+│ mvn -B clean test                    │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 4. Generate coverage wrapper         │
+│ generate-coverage-wrapper.sh         │
+│ Creates index.html iframe + raw/     │
+└──────────────┬───────────────────────┘
+               ↓
+┌──────────────────────────────────────┐
+│ 5. Deploy coverage to gh-pages       │
+│ publish_dir: target/docs/coverage    │
+│ destination_dir: coverage            │
+│ (deploys to /coverage — not root)    │
+└──────────────────────────────────────┘
 ```
 
 ## Secret Management

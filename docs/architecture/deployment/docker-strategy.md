@@ -200,21 +200,25 @@ docker run -p 8081:8081 \
 **GitHub Actions** (`deploy-backend.yml`):
 
 ```yaml
-- name: Build Docker Image
-  run: docker build -t ghcr.io/keglev/stockease:latest .
+- name: Trigger Koyeb redeploy
+  env:
+    KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+    KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
+  run: bash .github/scripts/deploy/koyeb-redeploy.sh
 
-- name: Push to GitHub Container Registry
-  run: |
-    echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-    docker push ghcr.io/keglev/stockease:latest
+- name: Wait for service healthy
+  env:
+    KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
+    KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
+  run: bash .github/scripts/deploy/koyeb-wait-healthy.sh
 ```
 
 **Deployment Flow**:
 1. Push to `main` branch
-2. GitHub Actions builds Docker image
-3. Image pushed to GHCR: `ghcr.io/keglev/stockease:latest`
-4. Koyeb pulls image and redeploys service
-5. Health checks verify deployment
+2. GitHub Actions builds the JAR (`mvn verify`)
+3. Koyeb is triggered via REST API (`POST /v1/services/{id}/redeploy`)
+4. Koyeb pulls the latest source code and builds the Docker image from the Dockerfile
+5. Health checks verify deployment (HEALTHY or READY status)
 
 ### Image Registry
 

@@ -118,7 +118,8 @@ const navigation = {
 ### Trigger Events
 
 - **On Push to `main`** with changes in:
-  - `backend/docs/**` - Any documentation files
+  - `docs/**` - Any documentation files
+  - `pom.xml` - Maven project file
   - `.github/workflows/docs-pipeline.yml` - Workflow file itself
 - **Manual Trigger** - Via GitHub Actions UI (workflow_dispatch)
 
@@ -135,7 +136,7 @@ const navigation = {
 
 #### 3. Generate API Documentation
 - Input: `backend/docs/api/openapi.yaml` (modular structure)
-- Output: `target/docs/index.html` (ReDoc interactive docs)
+- Output: `target/docs/api-docs.html` (Redocly interactive docs)
 - Uses: @redocly/cli `build-docs` command
 
 #### 4. Convert Architecture Markdown to HTML

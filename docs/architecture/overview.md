@@ -98,16 +98,15 @@ graph TB
 ```
 ┌──────────────────────────────────┐
 │   GitHub Repository              │
-│   (main + docs branches)         │
+│   (main + gh-pages branches)     │
 └────────────┬─────────────────────┘
              │
              ↓ Push to main
 ┌──────────────────────────────────┐
 │   GitHub Actions CI/CD           │
 │   ├── Build & Test               │
-│   ├── Push to GHCR               │
 │   ├── Deploy to Koyeb            │
-│   └── Generate Docs → docs branch│
+│   └── Generate Docs → gh-pages   │
 └────────────┬─────────────────────┘
              │
              ↓ Container Image
