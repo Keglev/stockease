@@ -51,7 +51,7 @@ if [ -z "$SOURCE" ] || [ -z "$OUTPUT" ]; then
   exit 1
 fi
 
-TEMPLATE="$PROJECT_DIR/docs/templates/enterprise-docs.html"
+TEMPLATE="$PROJECT_DIR/.github/scripts/templates/enterprise-docs.html"
 LUA_FILTER="$(dirname "$0")/md-to-html-links.lua"
 SRC_DIR="$PROJECT_DIR/docs/$SOURCE"
 OUT_DIR="$PROJECT_DIR/target/docs/$OUTPUT"

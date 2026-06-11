@@ -56,7 +56,7 @@ jobs:
         run: bash .github/scripts/docs/fix-directory-links.sh
 
       - name: Copy documentation index
-        run: cp "$PROJECT_DIR/docs/templates/index.html" "$PROJECT_DIR/target/docs/index.html"
+        run: cp "$PROJECT_DIR/.github/scripts/templates/index.html" "$PROJECT_DIR/target/docs/index.html"
 
       - name: Verify output
         run: |

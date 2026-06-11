@@ -63,7 +63,7 @@ All `.md` files are converted to `.html` files with the same directory structure
 
 ## Enterprise HTML Template
 
-**File:** `backend/docs/templates/enterprise-docs.html`
+**File:** `backend/.github/scripts/templates/enterprise-docs.html`
 
 ### Features
 
@@ -140,7 +140,7 @@ const navigation = {
 
 #### 4. Convert Architecture Markdown to HTML
 - Input: All `.md` files in `backend/docs/architecture/`
-- Template: `backend/docs/templates/enterprise-docs.html`
+- Template: `backend/.github/scripts/templates/enterprise-docs.html`
 - Output: Matching `.html` files in `target/docs/architecture/`
 - Command: `pandoc --template <template> --toc --toc-depth=3`
 
@@ -219,7 +219,7 @@ npm install -g @redocly/cli
 redocly build-docs backend/docs/api/openapi.yaml -o backend/target/docs/index.html
 
 # Generate architecture docs
-TEMPLATE="backend/docs/templates/enterprise-docs.html"
+TEMPLATE="backend/.github/scripts/templates/enterprise-docs.html"
 find backend/docs/architecture -name "*.md" | while read md; do
   out="backend/target/docs/architecture/${md#backend/docs/architecture/}"
   out="${out%.md}.html"
@@ -240,7 +240,7 @@ python -m http.server -d backend/target/docs/
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `docs/templates/enterprise-docs.html` | Enterprise HTML template | ✅ Created |
+| `.github/scripts/templates/enterprise-docs.html` | Enterprise HTML template | ✅ Created |
 | `.github/workflows/docs-pipeline.yml` | CI/CD workflow | ✅ Updated |
 
 ### Documentation Sources
@@ -333,7 +333,7 @@ GitHub Repository
 ├── main branch
 │   ├── backend/docs/architecture/ (31 .md files)
 │   ├── backend/docs/api/ (openapi.yaml + modular paths)
-│   ├── backend/docs/templates/ (enterprise-docs.html)
+│   ├── backend/.github/scripts/templates/ (enterprise-docs.html)
 │   └── .github/workflows/docs-pipeline.yml
 │
 ├── [Workflow Triggers on Push]

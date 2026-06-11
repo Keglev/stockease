@@ -11,7 +11,7 @@ set -euo pipefail
 
 SPEC="$PROJECT_DIR/docs/api/openapi.yaml"
 OUTPUT_DIR="$PROJECT_DIR/target/docs"
-TEMPLATES="$PROJECT_DIR/docs/templates"
+TEMPLATES="$PROJECT_DIR/.github/scripts/templates"
 
 if [ ! -f "$SPEC" ]; then
   echo "ERROR: OpenAPI spec not found at $SPEC" >&2
