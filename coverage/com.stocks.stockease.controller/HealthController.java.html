@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HealthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.controller</a> &gt; <span class="el_source">HealthController.java</span></div><h1>HealthController.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.controller;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Application health check endpoint for orchestration and monitoring.
+ * 
+ * Used by:
+ * - Kubernetes (K8s liveness probes, readiness probes)
+ * - Docker (healthcheck instruction)
+ * - Load balancers (backend health checks)
+ * - Monitoring systems (Prometheus, DataDog, etc.)
+ * 
+ * Design principles:
+ * - Lightweight: Single DB connection validation, no expensive operations
+ * - Fast response: ~10ms typical latency (10-second timeout for slow DB startups)
+ * - Side-effect free: No state changes, safe to call frequently
+ * - Minimal contract: Simple 200 OK or 500 error with short text message
+ * 
+ * Success criteria:
+ * - HTTP 200 OK: Database is reachable and connection valid
+ * - HTTP 500 Internal Error: Database unreachable or connection timeout
+ * 
+ * Endpoint: GET /api/health (public, no authentication required)
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ */
+@RestController
+@RequestMapping(&quot;/api/health&quot;)
+public class HealthController {
+
+    /** Primary JDBC DataSource used by the application. Injected by Spring. */
+    private final DataSource dataSource;
+
+    /**
+     * Constructor for dependency injection.
+     *
+     * @param dataSource the JDBC DataSource to check for connectivity
+     */
+<span class="fc" id="L50">    public HealthController(DataSource dataSource) {</span>
+<span class="fc" id="L51">        this.dataSource = dataSource;</span>
+<span class="fc" id="L52">    }</span>
+
+    /**
+     * Simple health check endpoint for orchestrators and monitoring systems.
+     * 
+     * Implementation strategy:
+     * - Obtains connection from pool (validates JDBC driver is loaded)
+     * - Calls Connection.isValid(10) to verify database liveness
+     * - 10-second timeout balances startup latency vs probe responsiveness
+     * - Handles SQLException for database connection failures
+     * 
+     * Success response: 200 OK with &quot;Database is connected and API is running.&quot;
+     * Failure response: 500 Internal Error with diagnostic message
+     * 
+     * Important: Keep this handler lightweight. Avoid:
+     * - SELECT COUNT(*) queries (expensive)
+     * - Schema migrations (causes cascading failures)
+     * - Logging detailed errors (expose internal state)
+     * - Caching responses (defeats real-time health checks)
+     *
+     * @return ResponseEntity with HTTP 200 on success, 500 on failure
+     */
+    @GetMapping
+    public ResponseEntity&lt;String&gt; healthCheck() {
+        // Probe the primary backing service (database). This call is intentionally
+        // lightweight and non-destructive: it only validates the connection socket
+        // and basic liveness using the JDBC isValid() method.
+<span class="nc" id="L79">        try (Connection connection = dataSource.getConnection()) {</span>
+            // Bound the liveness check so callers don't wait too long. A short
+            // timeout (10s) balances resilience for slow DB startups against probe
+            // latency for health check callers.
+<span class="nc bnc" id="L83" title="All 2 branches missed.">            if (connection.isValid(10)) {</span>
+<span class="nc" id="L84">                return ResponseEntity.ok(&quot;Database is connected and API is running.&quot;);</span>
+            }
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        } catch (SQLException e) {</span>
+            // Return a concise error message. Avoid returning stack traces or
+            // detailed internal state to external callers for security reasons.
+<span class="nc" id="L89">            return ResponseEntity.status(500).body(&quot;Database is down: &quot; + e.getMessage());</span>
+<span class="nc" id="L90">        }</span>
+
+        // Fallback generic error when connection opened but did not validate
+        // within the expected bounds. This path is reachable if isValid() returns
+        // false for any reason.
+<span class="nc" id="L95">        return ResponseEntity.status(500).body(&quot;Unknown issue with database connection.&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
