@@ -98,7 +98,7 @@
 #
 ################################################################################
 
-name: Deploy and Migrate Backend to Koyeb (Git Source)
+name: Deploy Backend to Koyeb (Git Source)
 
 on:
   push:

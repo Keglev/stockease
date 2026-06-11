@@ -1,5 +1,6 @@
 package com.stocks.stockease.controller;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,12 +14,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
+import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -83,8 +86,8 @@ public class ProductInvalidUpdateControllerTest {
      * 
      * Execution: @BeforeEach runs BEFORE each @ParameterizedTest method
      */
-    @SuppressWarnings("unused") // Called by JUnit 5 @BeforeEach lifecycle
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUpJwtMock() {
         // Mock JwtUtil behavior for consistent authorization
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
@@ -113,14 +116,14 @@ public class ProductInvalidUpdateControllerTest {
     void testUpdateQuantityMissingField(String username, String role) throws Exception {
 
         // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
-        when(productRepository.save(any(Product.class))).thenReturn(product1);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
+        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
 
         // Perform the PUT request
         mockMvc.perform(put("/api/products/1/quantity")
-                .contentType(APPLICATION_JSON)
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
-                .with(csrf())  // Add CSRF token
+                .contentType(applicationJson())
+                .with(userWithRole(username, role))
+                .with(csrfToken())
                 .content("{}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Quantity field is missing or null."));
@@ -144,13 +147,13 @@ public class ProductInvalidUpdateControllerTest {
     void testUpdateQuantityInvalidType(String username, String role) throws Exception {
 
         // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
 
         // Perform the PUT request
         mockMvc.perform(put("/api/products/1/quantity")
-                .contentType(APPLICATION_JSON)
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
-                .with(csrf())  // Add CSRF token
+                .contentType(applicationJson())
+                .with(userWithRole(username, role))
+                .with(csrfToken())
                 .content("{\"quantity\": \"notAnInteger\"}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Quantity must be a valid integer."));
@@ -167,14 +170,14 @@ public class ProductInvalidUpdateControllerTest {
     void testUpdatePriceNegativeValue(String username, String role) throws Exception {
 
         // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
-        when(productRepository.save(any(Product.class))).thenReturn(product1);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
+        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
 
         // Perform the PUT request
         mockMvc.perform(put("/api/products/1/price")
-                .contentType(APPLICATION_JSON)
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
-                .with(csrf())  // Add CSRF token
+                .contentType(applicationJson())
+                .with(userWithRole(username, role))
+                .with(csrfToken())
                 .content("{\"price\": -10.0}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Price must be greater than 0."));
@@ -191,13 +194,13 @@ public class ProductInvalidUpdateControllerTest {
     void testUpdatePriceInvalidType(String username, String role) throws Exception {
 
         // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
 
         // Perform the PUT request
         mockMvc.perform(put("/api/products/1/price")
-                .contentType(APPLICATION_JSON)
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
-                .with(csrf())  // Add CSRF token
+                .contentType(applicationJson())
+                .with(userWithRole(username, role))
+                .with(csrfToken())
                 .content("{\"price\": \"notANumber\"}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Price must be a valid number."));
@@ -214,13 +217,13 @@ public class ProductInvalidUpdateControllerTest {
     void testUpdatePriceZeroValue(String username, String role) throws Exception {
 
         // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
 
         // Perform the PUT request
         mockMvc.perform(put("/api/products/1/price")
-                .contentType(APPLICATION_JSON)
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
-                .with(csrf())  // Add CSRF token
+                .contentType(applicationJson())
+                .with(userWithRole(username, role))
+                .with(csrfToken())
                 .content("{\"price\": 0}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Price must be greater than 0."));
@@ -237,13 +240,13 @@ public class ProductInvalidUpdateControllerTest {
     void testUpdateNameWhitespaceOnly(String username, String role) throws Exception {
 
         // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
 
         // Perform the PUT request
         mockMvc.perform(put("/api/products/1/name")
-                .contentType(APPLICATION_JSON)
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
-                .with(csrf())  // Add CSRF token
+                .contentType(applicationJson())
+                .with(userWithRole(username, role))
+                .with(csrfToken())
                 .content("{\"name\": \"   \"}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Name is required and cannot be empty."));
@@ -264,9 +267,9 @@ public class ProductInvalidUpdateControllerTest {
 
         // Perform the PUT request
         mockMvc.perform(put("/api/products/999/quantity")
-                .contentType(APPLICATION_JSON)
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
-                .with(csrf())  // Add CSRF token
+                .contentType(applicationJson())
+                .with(userWithRole(username, role))
+                .with(csrfToken())
                 .content("{\"quantity\": 10}"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message").value("Product not found."));
@@ -283,13 +286,34 @@ public class ProductInvalidUpdateControllerTest {
     void testUpdateWithoutCsrfToken(String username, String role) throws Exception {
 
         // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
 
         // Perform the PUT request without CSRF token
         mockMvc.perform(put("/api/products/1/quantity")
-                .contentType(APPLICATION_JSON)
-                .with(SecurityMockMvcRequestPostProcessors.user(username).roles(role))
+                .contentType(applicationJson())
+                .with(userWithRole(username, role))
                 .content("{\"quantity\": 10}"))
             .andExpect(status().isForbidden());
+    }
+
+    @NonNull
+    private static MediaType applicationJson() {
+        return Objects.requireNonNull(MediaType.APPLICATION_JSON);
+    }
+
+    @NonNull
+    private static RequestPostProcessor csrfToken() {
+        return Objects.requireNonNull(csrf());
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    private static <T> T anyNonNull(Class<T> clazz) {
+        return any(clazz);
+    }
+
+    @NonNull
+    private static RequestPostProcessor userWithRole(String username, String role) {
+        return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }
