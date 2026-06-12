@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomUserDetailsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.security</a> &gt; <span class="el_source">CustomUserDetailsService.java</span></div><h1>CustomUserDetailsService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.security;
+
+import java.util.Collections;
+
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import com.stocks.stockease.model.User;
+import com.stocks.stockease.repository.UserRepository;
+
+/**
+ * Custom UserDetailsService implementation for Spring Security authentication.
+ * 
+ * Bridges StockEase User domain model with Spring Security's UserDetails contract.
+ * Invoked by AuthenticationManager during login flow to load user authorities.
+ * 
+ * Integration points:
+ * - Called by AuthenticationManager during credential validation
+ * - Loads User from database by username
+ * - Converts role string to Spring Security GrantedAuthority
+ * - Returns UserDetails with populated username, password, and authorities
+ * 
+ * Exception handling:
+ * - Throws UsernameNotFoundException if user not found (triggers 401 Unauthorized)
+ * Disabled in 'docs' profile for CI/CD documentation generation.
+ * 
+ * @author Team StockEase
+ * @version 1.0
+ * @since 2025-01-01
+ */
+@Service
+@org.springframework.context.annotation.Profile(&quot;!docs&quot;)
+public class CustomUserDetailsService implements UserDetailsService {
+
+    /**
+     * Repository for accessing User entities from database.
+     */
+    private final UserRepository userRepository;
+
+    /**
+     * Constructor for dependency injection.
+     * 
+     * @param userRepository repository for user data access
+     */
+<span class="fc" id="L48">    public CustomUserDetailsService(UserRepository userRepository) {</span>
+<span class="fc" id="L49">        this.userRepository = userRepository;</span>
+<span class="fc" id="L50">    }</span>
+
+    /**
+     * Loads user details by username for Spring Security authentication.
+     * 
+     * Execution flow:
+     * 1. Query database for User by username
+     * 2. If not found: throw UsernameNotFoundException (triggers 401 response)
+     * 3. Convert domain User to Spring UserDetails:
+     *    - Username: from User entity
+     *    - Password: BCrypt-encoded hash (never plaintext)
+     *    - Authorities: Role (ADMIN or USER) wrapped as GrantedAuthority
+     * 4. Return to AuthenticationManager for credential comparison
+     * 
+     * @param username the username to look up
+     * @return Spring Security UserDetails (username, password, authorities)
+     * @throws UsernameNotFoundException if user not found in database
+     */
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Query database for User entity by username
+<span class="nc" id="L71">        User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L72">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;User not found with username: &quot; + username));</span>
+
+        // Convert User domain model to Spring Security UserDetails
+        // Password is already BCrypt-encoded in database, AuthenticationManager will hash submitted password and compare
+<span class="nc" id="L76">        return new org.springframework.security.core.userdetails.User(</span>
+<span class="nc" id="L77">                    user.getUsername(),</span>
+<span class="nc" id="L78">                    user.getPassword(), // BCrypt-encoded password hash (from database)</span>
+<span class="nc" id="L79">                    Collections.singletonList(new SimpleGrantedAuthority(user.getRole())) // Convert role to authority</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
