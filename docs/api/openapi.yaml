@@ -7,17 +7,17 @@ info:
     JWT-based authentication, pagination, search, and stock analytics. All endpoints except login and health check 
     require valid JWT authentication with USER or ADMIN roles.
   contact:
-    name: Team StockEase
-    email: support@stockease.com
+    name: Carlos Felipe Keglevich
+    url: https://github.com/Keglev
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8081
     description: Local development environment
-  - url: https://api.stockease.com
-    description: Production environment
+  - url: https://stockeasebackend.koyeb.app
+    description: Production environment (Koyeb)
 
 tags:
   - name: Authentication
@@ -250,4 +250,3 @@ paths:
 
 security:
   - BearerAuth: []
-

@@ -80,13 +80,16 @@ post:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Product'
+            $ref: '#/components/schemas/ApiResponseProduct'
           example:
-            id: 3
-            name: New Laptop
-            quantity: 25
-            price: 1299.99
-            totalValue: 32499.75
+            success: true
+            message: Product created successfully
+            data:
+              id: 3
+              name: New Laptop
+              quantity: 25
+              price: 1299.99
+              totalValue: 32499.75
     '400':
       description: Validation error - missing fields or invalid values
       content:

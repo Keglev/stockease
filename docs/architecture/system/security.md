@@ -28,7 +28,7 @@ Header.Payload.Signature
 
 Payload:
 {
-  "sub": "user-id-uuid",
+  "sub": "1",
   "username": "john.doe",
   "role": "ADMIN",
   "iat": 1701418200,
@@ -139,17 +139,18 @@ Verification at login: `passwordEncoder.matches(providedRaw, storedHash)`.
 public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-            .allowedOrigins("https://stockease-frontend.onrender.com")
+        registry.addMapping("/**")
+            .allowedOrigins(
+                "https://stockeasefrontend.vercel.app/",
+                "http://localhost:5173")
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-            .allowedHeaders("Content-Type", "Authorization")
-            .allowCredentials(true)
-            .maxAge(3600);
+            .allowedHeaders("*")
+            .allowCredentials(true);
     }
 }
 ```
 
-Production: specific origin only, no wildcard `*`.
+CORS is enforced at two levels: `CorsConfig` (MVC layer) and `SecurityConfig` (Spring Security filter). Both must allow the same origins. Production origins are restricted to the Vercel frontend and local dev — no wildcard `*` for `allowedOrigins`.
 
 ---
 
@@ -157,26 +158,31 @@ Production: specific origin only, no wildcard `*`.
 
 ```java
 @Configuration
-@EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors().and()
-            .csrf().disable()
-            .exceptionHandling()
-                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
-            .and()
-            .authorizeRequests()
-                .antMatchers("/api/auth/**", "/api/health", "/v3/api-docs/**").permitAll()
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/actuator/health/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/products/**").hasAnyRole("ADMIN", "USER")
+                .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("ADMIN", "USER")
                 .anyRequest().authenticated()
-            .and()
-            .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
+            )
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

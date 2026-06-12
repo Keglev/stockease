@@ -110,50 +110,51 @@ Connection Pooling: enabled (limit: 100)
 
 ```mermaid
 erDiagram
-    users {
-        UUID id PK
+    app_user {
+        BIGINT id PK
         VARCHAR username UK
         VARCHAR password
         VARCHAR role
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
     }
-    products {
-        UUID id PK
+    product {
+        BIGINT id PK
         VARCHAR name
-        DECIMAL price
+        DOUBLE_PRECISION price
         INTEGER quantity
-        VARCHAR sku UK
-        TIMESTAMP created_at
-        TIMESTAMP updated_at
-        UUID created_by FK
+        DOUBLE_PRECISION total_value
     }
-    users ||--o{ products : "creates"
 ```
 
 Migration files in `src/main/resources/db/migration/`:
 
 | File | Action |
 |------|--------|
-| `V1__init_schema.sql` | Creates `users` and `products` tables |
-| `V2__add_indexes.sql` | Adds indexes on `sku`, `category`, `username`, `created_by` |
-| `V3__seed_data.sql` | Inserts admin/user accounts and sample products (H2-compatible) |
+| `V1__baseline.sql` | Empty Flyway baseline marker for existing schema |
+| `V2__create_schema.sql` | Creates `app_user` and `product` tables with BIGSERIAL PKs |
 
-Flyway runs automatically on application startup and validates the schema version before allowing data access.
+Seed data (fixture users and products) is inserted at application startup by `DataSeeder.java`, which is active in all non-production profiles (`@Profile("!prod")`). See [Staging & Configuration](./staging-config.md) for details.
+
+Flyway runs automatically on application startup via `FlywayConfiguration.java`, which forces migrations to execute before JPA initializes — resolving a Spring Boot 3.5.x startup ordering issue.
 
 ---
 
 ## Monitoring
 
-### Health Endpoint
+### Health Endpoints
 
-`GET /health` — public, used by Koyeb health checks.
+Two health check paths exist:
 
+**`GET /api/health`** — custom endpoint, returns `text/plain`. Used by Koyeb health probes.
+```
+Database is connected and API is running.
+```
+
+**`GET /actuator/health`** and **`GET /actuator/health/**`** — Spring Boot Actuator endpoints, return JSON. Also public per `SecurityConfig`.
 ```json
 {
   "status": "UP",
   "components": {
-    "db": { "status": "UP", "details": { "database": "PostgreSQL" } },
+    "db": { "status": "UP" },
     "diskSpace": { "status": "UP" }
   }
 }

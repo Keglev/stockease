@@ -1,6 +1,6 @@
 # System Architecture — Index
 
-**Scope**: This index covers the /system directory. For testing documentation, see the [Testing Architecture](../testing-architecture.md). For deployment, see the [deployment](../deployment/) directory.
+**Scope**: This index covers the /system directory. For testing documentation, see the [Testing Architecture](../testing/testing-architecture.md). For deployment, see the [deployment](../deployment/) directory.
 
 ---
 
@@ -34,11 +34,11 @@
 
 ## Related Directories
 
-- [Testing Architecture](../testing-architecture.md) — Entry point for all test documentation
+- [Testing Architecture](../testing/testing-architecture.md) — Entry point for all test documentation
 - [Deployment](../deployment/) — CI/CD pipeline, Docker, staging configuration
 - [Decisions (ADRs)](../decisions/) — Architecture decision records
 - [Patterns](../patterns/) — Repository pattern, security patterns
-- [Components](../components/) — Analytics service, supplier controller
+- [Components](../components/) — Analytics service, observability
 
 ---
 

@@ -2,7 +2,7 @@
 
 **[English Version](./index.md)**
 
-**Umfang**: Dieser Index umfasst das /system-Verzeichnis. Für Testdokumentation siehe [Testing Architecture](../testing-architecture.md). Für Bereitstellung siehe das [deployment](../deployment/)-Verzeichnis.
+**Umfang**: Dieser Index umfasst das /system-Verzeichnis. Für Testdokumentation siehe [Testing Architecture](../testing/testing-architecture.md). Für Bereitstellung siehe das [deployment](../deployment/)-Verzeichnis.
 
 ---
 
@@ -36,11 +36,11 @@
 
 ## Verwandte Verzeichnisse
 
-- [Testing Architecture](../testing-architecture.md) — Einstiegspunkt für alle Testdokumentation
+- [Testing Architecture](../testing/testing-architecture.md) — Einstiegspunkt für alle Testdokumentation
 - [Deployment](../deployment/) — CI/CD-Pipeline, Docker, Staging-Konfiguration
 - [Entscheidungen (ADRs)](../decisions/) — Architekturentscheidungsaufzeichnungen
 - [Muster](../patterns/) — Repository-Muster, Sicherheitsmuster
-- [Komponenten](../components/) — Analytics-Service, Supplier-Controller
+- [Komponenten](../components/) — Analytics-Service, Observability
 
 ---
 

@@ -129,6 +129,38 @@ In Koyeb dashboard → Service → Variables:
 
 ---
 
+## DataSeeder — Fixture Data
+
+`DataSeeder.java` (`@Profile("!prod")`) seeds fixture users and products on startup in all non-production profiles:
+
+| Credential | Role | Purpose |
+|-----------|------|---------|
+| `admin` / `admin123` | `ROLE_ADMIN` | Full access for development and testing |
+| `user` / `user123` | `ROLE_USER` | Read-only access for development and testing |
+
+5 fixture products are also seeded (Product 1–5 with varying quantities and prices).
+
+Seed inserts are idempotent — guarded by `count() == 0` checks, so restarting the application never creates duplicates. `DataSeeder` is **not active** in the `prod` profile — the `@Profile("!prod")` annotation prevents it from running in production.
+
+---
+
+## FlywayConfiguration — Migration Ordering
+
+`FlywayConfiguration.java` overrides Spring Boot's auto-configured Flyway bean to resolve a startup ordering issue in **Spring Boot 3.5.x**: without explicit ordering, `EntityManagerFactory` may attempt to validate the schema before Flyway has had a chance to create it.
+
+Key settings:
+
+| Setting | Value | Reason |
+|---------|-------|--------|
+| `baselineOnMigrate` | `true` | Handles databases that already have a schema |
+| `cleanDisabled` | `true` | Prevents accidental database wipe in production |
+| `outOfOrder` | `true` | Allows applying migrations out of version order |
+| `connectRetries` | `20` (every 2s) | Tolerates slow database availability at startup |
+
+The `spring.flyway.enabled=false` property (used in test profiles) disables migration entirely — when disabled, `FlywayConfiguration` creates a no-op Flyway instance and skips migration.
+
+---
+
 ## Configuration Hierarchy
 
 Priority from highest to lowest:

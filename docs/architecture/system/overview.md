@@ -88,9 +88,9 @@ graph TB
 
 ## Data Models
 
-**AppUser**: `id` (UUID, PK), `username` (unique), `password` (BCrypt), `role` (ADMIN/USER), `createdAt`, `updatedAt`
+**AppUser**: `id` (Long, PK auto-increment), `username` (unique), `password` (BCrypt), `role` (ROLE_ADMIN/ROLE_USER)
 
-**Product**: `id` (UUID, PK), `name`, `price` (BigDecimal), `quantity`, `sku` (unique), `totalValue`, `createdAt`, `updatedAt`, `createdBy` (FK → AppUser)
+**Product**: `id` (Long, PK auto-increment), `name`, `price` (DOUBLE PRECISION), `quantity` (INTEGER), `totalValue` (DOUBLE PRECISION)
 
 ---
 

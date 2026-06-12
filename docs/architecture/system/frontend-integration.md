@@ -3,7 +3,7 @@
 **Purpose**: Document the frontend architecture and how it integrates with the StockEase backend API.
 
 **Tech Stack**: React 18 · TypeScript 5.x · Vite 5 · Tailwind CSS 3 · React Router 6
-**Deployment**: https://stockease-frontend.onrender.com
+**Deployment**: https://stockeasefrontend.vercel.app
 
 ---
 
@@ -202,13 +202,13 @@ CSS variables in `variables.css` define `--background` and `--foreground` for bo
 
 ```bash
 # Environment variable
-VITE_API_BASE_URL=https://stockease-backend-production.koyeb.app/api
+VITE_API_BASE_URL=https://stockeasebackend.koyeb.app/api
 
 # Build
 npm install && npm run build  # Output: dist/
 ```
 
-Deployed to Render. Build command: `npm run build`. Publish directory: `dist`. Redeploys automatically on push to `main`.
+Deployed to Vercel. Build command: `npm run build`. Publish directory: `dist`. Redeploys automatically on push to `main`.
 
 ---
 

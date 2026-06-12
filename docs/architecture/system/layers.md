@@ -65,12 +65,10 @@ Implements business rules, validates domain constraints, manages transactions, a
 Spring Data JPA interfaces. Provides derived queries, custom `@Query` methods, and pagination support.
 
 ```java
-public interface ProductRepository extends JpaRepository<Product, UUID> {
-    Optional<Product> findBySku(String sku);
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    List<Product> findByNameContainingIgnoreCase(String name);
+    List<Product> findByQuantityLessThan(int threshold);
     Page<Product> findAll(Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE p.price > ?1 AND p.quantity > 0")
-    List<Product> findAffordableInStock(BigDecimal maxPrice);
 }
 ```
 
@@ -144,13 +142,9 @@ All exceptions are caught by `GlobalExceptionHandler` (`@RestControllerAdvice`) 
 
 ## Database Indexing
 
-```sql
-CREATE INDEX idx_products_sku      ON products(sku);
-CREATE INDEX idx_products_category ON products(category);
-CREATE INDEX idx_users_username    ON users(username);
-```
+The current schema (`V2__create_schema.sql`) defines no explicit indexes beyond the primary key constraints. The `username` column in `app_user` has a `UNIQUE` constraint which PostgreSQL backs with an implicit index. Pagination uses `ORDER BY` with `LIMIT/OFFSET` handled by Spring Data's `Pageable`.
 
-Queries on `sku`, `category`, and `username` use these indexes. Pagination uses `ORDER BY` with `LIMIT/OFFSET` handled by Spring Data's `Pageable`.
+Explicit indexes (e.g., on `product.name` for search queries) are a planned addition when query performance profiling indicates a need.
 
 ---
 

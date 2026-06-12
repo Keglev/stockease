@@ -29,46 +29,21 @@ graph TD
 ### UserRepository
 
 ```java
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<AppUser, Long> {
 
-    Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
+    Optional<AppUser> findByUsername(String username);
     boolean existsByUsername(String username);
-
-    @Query("""
-        SELECT u FROM User u
-        WHERE u.role = :role
-        ORDER BY u.createdAt DESC
-        """)
-    List<User> findByRoleOrderByDate(@Param("role") Role role);
 }
 ```
 
 ### ProductRepository
 
 ```java
-public interface ProductRepository extends JpaRepository<Product, UUID> {
+public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    Optional<Product> findBySku(String sku);
-    Page<Product> findByCategory(String category, Pageable pageable);
-    List<Product> findByCreatedBy(UUID userId);
-    boolean existsBySku(String sku);
-
-    @Query("""
-        SELECT p FROM Product p
-        WHERE p.price BETWEEN :minPrice AND :maxPrice
-        AND p.quantity > 0
-        ORDER BY p.price ASC
-        """)
-    List<Product> findAffordableInStock(
-        @Param("minPrice") BigDecimal minPrice,
-        @Param("maxPrice") BigDecimal maxPrice);
-
-    @Query("""
-        SELECT p FROM Product p
-        WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))
-        """)
-    Page<Product> searchByName(@Param("search") String search, Pageable pageable);
+    List<Product> findByNameContainingIgnoreCase(String name);
+    List<Product> findByQuantityLessThan(int threshold);
+    Page<Product> findAll(Pageable pageable);
 }
 ```
 
@@ -80,13 +55,12 @@ Spring Data JPA generates SQL from method names automatically:
 
 | Method Name | Generated Query |
 |-------------|----------------|
-| `findBySku(String sku)` | `WHERE sku = ?` |
-| `findByCategoryAndPrice(String, BigDecimal)` | `WHERE category = ? AND price = ?` |
+| `findByNameContainingIgnoreCase(String name)` | `WHERE LOWER(name) LIKE LOWER(?)` |
+| `findByQuantityLessThan(int threshold)` | `WHERE quantity < ?` |
+| `findByUsername(String username)` | `WHERE username = ?` |
+| `existsByUsername(String username)` | `SELECT COUNT(*) > 0 WHERE username = ?` |
 | `findByPriceGreaterThan(BigDecimal)` | `WHERE price > ?` |
 | `findByPriceLessThanEqual(BigDecimal)` | `WHERE price <= ?` |
-| `findBySkuContaining(String)` | `WHERE sku LIKE ?` |
-| `findBySkuIn(List<String>)` | `WHERE sku IN (?, ...)` |
-| `existsBySku(String)` | `SELECT COUNT(*) > 0 WHERE sku = ?` |
 
 ---
 
@@ -97,24 +71,22 @@ Spring Data JPA generates SQL from method names automatically:
 public class ProductService {
 
     @Transactional(readOnly = true)
-    public Page<ProductDTO> getProducts(int page, int size, String category) {
+    public Page<ProductDTO> getProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByCategory(category, pageable)
+        return productRepository.findAll(pageable)
             .map(ProductDTO::fromEntity);
     }
 
     @Transactional
-    public ProductDTO createProduct(CreateProductRequest request, UUID userId) {
-        if (productRepository.existsBySku(request.getSku()))
-            throw new ValidationException("SKU already exists");
-
-        Product product = new Product(request);
-        product.setCreatedBy(userId);
+    public ProductDTO createProduct(CreateProductRequest request) {
+        Product product = new Product(
+            request.getName(), request.getQuantity(), request.getPrice());
+        product.setTotalValue(request.getPrice() * request.getQuantity());
         return ProductDTO.fromEntity(productRepository.save(product));
     }
 
     @Transactional
-    public void deleteProduct(UUID id) {
+    public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Product not found"));
         productRepository.delete(product);
@@ -185,14 +157,10 @@ public void createAndAudit(CreateProductRequest request) {
 
 ## N+1 Query Prevention
 
-```java
-// Problem: N+1 queries — one extra query per product to load creator
-List<Product> products = productRepository.findAll();
-for (Product p : products) {
-    User creator = p.getCreatedBy(); // Additional query per product
-}
+The current `Product` entity has no associations (no `@ManyToOne` or `@OneToMany` relationships), so N+1 is not a current concern. If associations are added in the future (e.g., `createdBy → AppUser`), use fetch joins to prevent N+1 queries:
 
-// Solution: fetch join loads everything in one query
+```java
+// Problem: N+1 queries with a hypothetical association
 @Query("""
     SELECT DISTINCT p FROM Product p
     LEFT JOIN FETCH p.createdBy
@@ -200,20 +168,7 @@ for (Product p : products) {
 List<Product> findAllWithCreator();
 ```
 
-### Lazy vs Eager Loading
-
-```java
-@Entity
-public class Product {
-    @ManyToOne(fetch = FetchType.LAZY)
-    private User createdBy;  // Loaded only when accessed
-
-    @OneToMany(fetch = FetchType.EAGER)
-    private Set<Tag> tags;   // Always loaded with the entity
-}
-```
-
-Use `LAZY` by default. Switch to `EAGER` or use fetch joins only when the association is always needed.
+Use `FetchType.LAZY` by default on any future associations. Switch to `EAGER` or use fetch joins only when the association is always needed.
 
 ---
 

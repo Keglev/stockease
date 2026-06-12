@@ -1,7 +1,7 @@
 # Backend Architecture
 
 **Tech Stack**: Spring Boot 3.5.7 · Java 17 LTS · PostgreSQL 17.5 · Spring Security · JWT
-**Deployment**: https://stockease-backend-production.koyeb.app
+**Deployment**: https://stockeasebackend.koyeb.app
 **API Spec**: OpenAPI 3.0 via SpringDoc (`/v3/api-docs`)
 
 ---
@@ -97,8 +97,8 @@ backend/src/main/java/com/stocks/stockease/
 │   └── GlobalExceptionHandler.java
 ├── config/
 │   ├── CorsConfig.java
-│   ├── JpaConfig.java
-│   └── OpenApiConfig.java
+│   ├── DataSeeder.java
+│   └── FlywayConfiguration.java
 └── StockEaseApplication.java
 
 src/main/resources/
@@ -155,11 +155,23 @@ public class ProductController {
     public ResponseEntity<ProductDTO> createProduct(
         @Valid @RequestBody CreateProductRequest req) { }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProductDTO> updateProduct(
+    @PutMapping("/{id}/quantity")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<?> updateQuantity(
         @PathVariable Long id,
-        @Valid @RequestBody UpdateProductRequest req) { }
+        @Valid @RequestBody UpdateQuantityRequest req) { }
+
+    @PutMapping("/{id}/price")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<?> updatePrice(
+        @PathVariable Long id,
+        @Valid @RequestBody UpdatePriceRequest req) { }
+
+    @PutMapping("/{id}/name")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<?> updateName(
+        @PathVariable Long id,
+        @Valid @RequestBody UpdateNameRequest req) { }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -329,7 +341,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.datasource.hikari.maximumPoolSize=10
 spring.datasource.hikari.minimumIdle=2
 spring.datasource.hikari.connectionTimeout=60000
-spring.web.cors.allowed-origins=https://stockease-frontend.onrender.com,http://localhost:5173
+app.cors.allowed-origins=https://stockeasefrontend.vercel.app,http://localhost:5173
 app.jwt.secret=${JWT_SECRET}
 app.jwt.expiration=86400000
 logging.level.com.stocks.stockease=INFO

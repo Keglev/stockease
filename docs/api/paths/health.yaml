@@ -1,5 +1,6 @@
 get:
   summary: Health check endpoint
+  security: []
   description: |
     Simple health check for orchestration and monitoring systems (Kubernetes, Docker, load balancers).
     Validates database connectivity via lightweight JDBC connection test.

@@ -50,49 +50,49 @@ backend/src/test/
 ## Navigation by Role
 
 **Backend Developer**
-Start with [Spring Slices](./testing/spring-slices.md), then [Security Tests](./testing/security-tests.md), then [Test Data & Fixtures](./testing/test-data-fixtures.md).
+Start with [Spring Slices](./spring-slices.md), then [Security Tests](./security-tests.md), then [Test Data & Fixtures](./test-data-fixtures.md).
 
 **DevOps / CI Engineer**
-Start with [CI Pipeline Tests](./testing/ci-pipeline-tests.md), then [Coverage & Quality](./testing/coverage-and-quality.md).
+Start with [CI Pipeline Tests](./ci-pipeline-tests.md), then [Coverage & Quality](./coverage-and-quality.md).
 
 **QA / Test Engineer**
-Start with [Test Pyramid](./testing/pyramid.md), then [Coverage Matrix](./testing/matrix.md), then [Naming Conventions](./testing/naming-conventions.md).
+Start with [Test Pyramid](./pyramid.md), then [Coverage Matrix](./matrix.md), then [Naming Conventions](./naming-conventions.md).
 
 **New to the project**
-Start with [Testing Strategy](./testing/strategy.md) for goals and scope, then [Coverage Matrix](./testing/matrix.md) for what is covered.
+Start with [Testing Strategy](./strategy.md) for goals and scope, then [Coverage Matrix](./matrix.md) for what is covered.
 
 ---
 
 ## Documentation Index
 
 ### Strategy and Coverage
-- [Testing Strategy](./testing/strategy.md) — Goals, philosophy, and scope
-- [Test Pyramid](./testing/pyramid.md) — Test level distribution and rationale
-- [Coverage Matrix](./testing/matrix.md) — Full test inventory by layer, endpoint, and role
-- [Coverage & Quality](./testing/coverage-and-quality.md) — JaCoCo configuration and thresholds
+- [Testing Strategy](./strategy.md) — Goals, philosophy, and scope
+- [Test Pyramid](./pyramid.md) — Test level distribution and rationale
+- [Coverage Matrix](./matrix.md) — Full test inventory by layer, endpoint, and role
+- [Coverage & Quality](./coverage-and-quality.md) — JaCoCo configuration and thresholds
 
 ### Implementation Reference
-- [Spring Slices](./testing/spring-slices.md) — `@WebMvcTest`, `@DataJpaTest`, `@SpringBootTest`
-- [Controller Integration Tests](./testing/controller-integration.md) — MockMvc request and assertion patterns
-- [Security Tests](./testing/security-tests.md) — JWT and role-based access control tests
-- [Test Data & Fixtures](./testing/test-data-fixtures.md) — TestConfig, mock setup, builder pattern
-- [Naming Conventions](./testing/naming-conventions.md) — Test class and method naming rules
+- [Spring Slices](./spring-slices.md) — `@WebMvcTest`, `@DataJpaTest`, `@SpringBootTest`
+- [Controller Integration Tests](./controller-integration.md) — MockMvc request and assertion patterns
+- [Security Tests](./security-tests.md) — JWT and role-based access control tests
+- [Test Data & Fixtures](./test-data-fixtures.md) — TestConfig, mock setup, builder pattern
+- [Naming Conventions](./naming-conventions.md) — Test class and method naming rules
 
 ### Operations
-- [CI Pipeline Tests](./testing/ci-pipeline-tests.md) — Pipeline gates and GitHub Actions workflow
-- [Troubleshooting](./testing/troubleshooting.md) — Common errors and fixes
+- [CI Pipeline Tests](./ci-pipeline-tests.md) — Pipeline gates and GitHub Actions workflow
+- [Troubleshooting](./troubleshooting.md) — Common errors and fixes
 
 ---
 
 ## Related Architecture
-- [System Overview](./system/overview.md)
-- [Backend Architecture](./system/backend.md)
-- [Security Architecture](./system/security.md)
-- [Deployment](./deployment/deployment.md)
+- [System Overview](../system/overview.md)
+- [Backend Architecture](../system/backend.md)
+- [Security Architecture](../system/security.md)
+- [Deployment](../deployment/infrastructure.md)
 
 ---
 
 **Last Updated**: June 2026
 **Status**: Current
 
-[Back to Architecture Index](./index.md)
+[Back to Architecture Index](../index.md)

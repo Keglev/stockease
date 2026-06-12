@@ -7,27 +7,13 @@ post:
   operationId: login
   tags:
     - Authentication
+  security: []
   requestBody:
     required: true
     content:
       application/json:
         schema:
-          type: object
-          required:
-            - username
-            - password
-          properties:
-            username:
-              type: string
-              minLength: 1
-              description: User account name (must not be blank)
-              example: admin
-            password:
-              type: string
-              minLength: 1
-              description: User account password (must not be blank)
-              example: password123
-          description: Credentials for user authentication
+          $ref: '#/components/schemas/LoginRequest'
         example:
           username: admin
           password: password123
@@ -37,29 +23,7 @@ post:
       content:
         application/json:
           schema:
-            allOf:
-              - type: object
-                required:
-                  - success
-                  - message
-                properties:
-                  success:
-                    type: boolean
-                    description: Operation success indicator
-                    example: true
-                  message:
-                    type: string
-                    description: Human-readable outcome message
-                    example: Login successful
-                  data:
-                    type: object
-                    nullable: true
-                    description: Operation result payload (null for error responses)
-              - type: object
-                properties:
-                  data:
-                    type: string
-                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+            $ref: '#/components/schemas/ApiResponseString'
           example:
             success: true
             message: Login successful
@@ -69,19 +33,7 @@ post:
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - success
-              - message
-            properties:
-              success:
-                type: boolean
-                example: false
-              message:
-                type: string
-                example: Username and password cannot be blank
-              data:
-                type: 'null'
+            $ref: '#/components/schemas/ApiResponseError'
           example:
             success: false
             message: Username and password cannot be blank
@@ -91,19 +43,7 @@ post:
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - success
-              - message
-            properties:
-              success:
-                type: boolean
-                example: false
-              message:
-                type: string
-                example: Bad credentials
-              data:
-                type: 'null'
+            $ref: '#/components/schemas/ApiResponseError'
           example:
             success: false
             message: Bad credentials

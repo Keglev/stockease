@@ -1,6 +1,6 @@
 # Architecture Documentation
 
-Entry point for all StockEase architecture documentation.
+Entry point for all StockEase backend architecture documentation.
 
 ## Sections
 
