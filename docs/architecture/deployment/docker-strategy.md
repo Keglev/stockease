@@ -19,7 +19,7 @@ graph TD
     subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-jammy ~250MB)"]
         R1[Copy JAR from build stage] --> R2[Create non-root user]
         R2 --> R3[Set USER app]
-        R3 --> R4[EXPOSE 8081]
+        R3 --> R4[EXPOSE <port>]
         R4 --> R5[ENTRYPOINT]
     end
 
@@ -59,9 +59,9 @@ COPY --from=builder /app/target/stockease-backend-*.jar app.jar
 RUN addgroup --system app && adduser --system --ingroup app app || true
 USER app
 
-EXPOSE 8081
+EXPOSE <port>
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar", "--server.port=8081"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar", "--server.port=<port>"]
 ```
 
 ---
@@ -107,13 +107,13 @@ Tests are intentionally skipped in the Docker build. They run in the CI pipeline
 ## Image Registry (GHCR)
 
 ```
-Registry: ghcr.io/keglev/stockease
+Registry: <registry-rost>/keglev/stockease
 Visibility: Public
 
 Tags:
-  ghcr.io/keglev/stockease:latest      — updated on every main push
-  ghcr.io/keglev/stockease:v1.0.0      — semantic version tags
-  ghcr.io/keglev/stockease:sha-abc123  — commit hash tags
+  <registry-rost>/keglev/stockease:latest      — updated on every main push
+  <registry-rost>/keglev/stockease:v1.0.0      — semantic version tags
+  <registry-rost>/keglev/stockease:sha-abc123  — commit hash tags
 ```
 
 ---
@@ -122,12 +122,12 @@ Tags:
 
 | Context | Port |
 |---------|------|
-| Dockerfile `EXPOSE` | 8081 |
-| Spring Boot `server.port` | 8081 |
-| Koyeb container port | 8081 |
-| Health check | 8081 |
+| Dockerfile `EXPOSE` | <port> |
+| Spring Boot `server.port` | <port> |
+| Koyeb container port | <port> |
+| Health check | <port> |
 
-Port 8081 is used to avoid conflicts with common default ports (8080, 3000, 8000).
+Port <port> is used to avoid conflicts with common default ports (8080, 3000, 8000).
 
 ---
 
@@ -138,10 +138,10 @@ Port 8081 is used to avoid conflicts with common default ports (8080, 3000, 8000
 docker build -t stockease:local .
 
 # Run container
-docker run -p 8081:8081 \
+docker run -p <port>:<port> \
   -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/stockease \
-  -e SPRING_DATASOURCE_USERNAME=postgres \
-  -e SPRING_DATASOURCE_PASSWORD=postgres \
+  -e SPRING_DATASOURCE_USERNAME=${DB_USER} \
+  -e SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD} \
   -e JWT_SECRET=local-dev-secret-32-chars-min \
   stockease:local
 ```
