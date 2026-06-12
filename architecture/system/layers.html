@@ -20,8 +20,8 @@
         <aside id="sidebar"></aside>
         <main>
             <div class="content">
-                <h1 id="service-layers-component-architecture">Service
-                Layers &amp; Component Architecture</h1>
+                <h1 id="component-architecture-layers">Component
+                Architecture &amp; Layers</h1>
                 <p><strong>Purpose</strong>: Document the
                 responsibilities of each layer, data flow, transaction
                 boundaries, and component dependencies.</p>
@@ -31,18 +31,15 @@
                 graph TD
                     A[REST Controllers — HTTP Layer]
                     B[Security Layer — JWT and Spring Security]
-                    C[Business Logic — Services]
                     D[Data Access — Repositories and Entities]
                     E[Database — PostgreSQL or H2]
 
                     A --> B
-                    B --> C
-                    C --> D
+                    B --> D
                     D --> E
 
                     style A fill:#e3f2fd
                     style B fill:#fff3e0
-                    style C fill:#e8f5e9
                     style D fill:#f3e5f5
                     style E fill:#fce4ec
                 </div>
@@ -51,9 +48,11 @@
                 Responsibilities</h2>
                 <h3 id="http-controller-layer">HTTP / Controller
                 Layer</h3>
-                <p>Handles request/response mapping, input format
-                validation, and routing. Calls service methods and
-                formats <code>ResponseEntity</code> responses.</p>
+                <p>Handles request/response mapping, input validation,
+                and routing. Controllers call repositories directly —
+                there is no intermediate service layer. Results are
+                formatted into <code>ResponseEntity</code>
+                responses.</p>
                 <p>DTOs used: - <code>LoginRequest</code> —
                 <code>{ username: String, password: String }</code>
                 (validated with <code>@NotBlank</code>) -
@@ -67,7 +66,7 @@
                 (Cross-cutting)</h3>
                 <p>Intercepts all requests. Validates JWT tokens,
                 extracts user role, and enforces authorization before
-                the request reaches the service layer.</p>
+                the request reaches the controller.</p>
                 <div class="mermaid">
                 sequenceDiagram
                     participant U as User
@@ -80,29 +79,29 @@
                     BE-->>FE: 200 OK + { token }
                     FE-->>U: Store token; include in Authorization header
                 </div>
-                <h3 id="business-logic-layer-services">Business Logic
-                Layer (Services)</h3>
-                <p>Implements business rules, validates domain
-                constraints, manages transactions, and maps entities to
-                DTOs.</p>
-                <p><strong>AuthService</strong> responsibilities:
-                credential validation, JWT generation, BCrypt password
-                comparison.</p>
-                <p><strong>ProductService</strong> responsibilities:
-                CRUD orchestration, business rule validation (price &gt;
-                0, quantity ≥ 0), <code>@Transactional</code>
-                boundaries, entity-to-DTO mapping.</p>
                 <h3 id="data-access-layer-repositories">Data Access
                 Layer (Repositories)</h3>
                 <p>Spring Data JPA interfaces. Provides derived queries,
                 custom <code>@Query</code> methods, and pagination
                 support.</p>
                 <div class="sourceCode" id="cb1"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> ProductRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>Product<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByNameContainingIgnoreCase</span><span class="op">(</span><span class="bu">String</span> name<span class="op">);</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="dt">int</span> threshold<span class="op">);</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    Page<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAll</span><span class="op">(</span><span class="bu">Pageable</span> pageable<span class="op">);</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> UserRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>User<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>User<span class="op">&gt;</span> <span class="fu">findByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> ProductRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>Product<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.quantity &lt; :threshold&quot;</span><span class="op">)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="at">@Param</span><span class="op">(</span><span class="st">&quot;threshold&quot;</span><span class="op">)</span> <span class="dt">int</span> threshold<span class="op">);</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p ORDER BY p.id ASC&quot;</span><span class="op">)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAllOrderById</span><span class="op">();</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p&quot;</span><span class="op">)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> <span class="fu">calculateTotalStockValue</span><span class="op">();</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByNameContainingIgnoreCase</span><span class="op">(</span><span class="bu">String</span> name<span class="op">);</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <h3 id="database-layer">Database Layer</h3>
                 <p>PostgreSQL 17.5 in production (Neon serverless). H2
                 in-memory for tests. Schema managed by Flyway.</p>
@@ -194,31 +193,39 @@
                 <hr />
                 <h2 id="transaction-boundaries">Transaction
                 Boundaries</h2>
-                <p>Read operations use
-                <code>@Transactional(readOnly = true)</code>. Write
-                operations use <code>@Transactional</code> to ensure
-                atomicity.</p>
-                <div class="sourceCode" id="cb2"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Transactional</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">createProduct</span><span class="op">(</span>CreateProductRequest req<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    Product product <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span>req<span class="op">);</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span>product<span class="op">);</span>        <span class="co">// atomic with next line</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    auditLog<span class="op">.</span><span class="fu">log</span><span class="op">(</span><span class="st">&quot;Product created&quot;</span><span class="op">,</span> product<span class="op">.</span><span class="fu">getId</span><span class="op">());</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Both succeed or both roll back</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p>There is no explicit service layer. Controllers call
+                <code>JpaRepository</code> methods directly, which
+                Spring Data JPA wraps in transactions automatically for
+                each operation. There are no multi-step write sequences
+                that require explicit <code>@Transactional</code>
+                boundaries in application code — each
+                <code>save()</code> or <code>delete()</code> is its own
+                atomic unit.</p>
                 <hr />
                 <h2 id="component-dependencies">Component
                 Dependencies</h2>
-                <pre><code>AuthController       → AuthService → UserRepository, JwtProvider, PasswordEncoder
-ProductController    → ProductService → ProductRepository
+                <pre><code>AuthController       → AuthenticationManager, JwtUtil, UserRepository
+ProductController    → ProductRepository
+HealthController     → DataSource (direct JDBC connection check)
 GlobalExceptionHandler (cross-cutting)
 
-SecurityConfig       → JwtProvider, UserDetailsService, PasswordEncoder
-JwtAuthenticationFilter → JwtProvider</code></pre>
+SecurityConfig             → JwtFilter, CustomUserDetailsService, PasswordEncoder
+JwtFilter                  → JwtUtil, CustomUserDetailsService
+CustomUserDetailsService   → UserRepository</code></pre>
                 <hr />
                 <h2 id="error-handling-strategy">Error Handling
                 Strategy</h2>
+                <p>All exceptions are caught by
+                <code>GlobalExceptionHandler</code>
+                (<code>@RestControllerAdvice</code>) and returned as a
+                consistent <code>ApiResponse&lt;T&gt;</code> JSON body
+                with <code>success: false</code>.</p>
                 <table>
+                <colgroup>
+                <col style="width: 36%" />
+                <col style="width: 43%" />
+                <col style="width: 20%" />
+                </colgroup>
                 <thead>
                 <tr class="header">
                 <th>Exception</th>
@@ -228,36 +235,58 @@ JwtAuthenticationFilter → JwtProvider</code></pre>
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td><code>ResourceNotFoundException</code></td>
+                <td><code>EntityNotFoundException</code></td>
                 <td>404</td>
-                <td>Entity not found by ID</td>
+                <td>Product not found by ID</td>
                 </tr>
                 <tr class="even">
-                <td><code>ValidationException</code></td>
+                <td><code>NoSuchElementException</code></td>
+                <td>404</td>
+                <td><code>.get()</code> on empty Optional</td>
+                </tr>
+                <tr class="odd">
+                <td><code>IllegalArgumentException</code></td>
                 <td>400</td>
                 <td>Business rule violation</td>
                 </tr>
+                <tr class="even">
+                <td><code>MethodArgumentNotValidException</code></td>
+                <td>400</td>
+                <td><code>@Valid</code> bean validation failure</td>
+                </tr>
                 <tr class="odd">
-                <td><code>UnauthorizedException</code></td>
-                <td>401</td>
-                <td>Invalid or missing token</td>
+                <td><code>HttpMessageNotReadableException</code></td>
+                <td>400</td>
+                <td>Malformed request body</td>
                 </tr>
                 <tr class="even">
-                <td><code>AuthorizationException</code></td>
-                <td>403</td>
-                <td>Insufficient role</td>
+                <td><code>HandlerMethodValidationException</code></td>
+                <td>400</td>
+                <td><code>@Min</code>/<code>@Positive</code> on
+                path/query params</td>
                 </tr>
                 <tr class="odd">
+                <td><code>AccessDeniedException</code></td>
+                <td>403</td>
+                <td>Insufficient role (Spring Security)</td>
+                </tr>
+                <tr class="even">
+                <td><code>BadCredentialsException</code></td>
+                <td>401</td>
+                <td>Wrong password during login</td>
+                </tr>
+                <tr class="odd">
+                <td><code>JwtException</code></td>
+                <td>401</td>
+                <td>Invalid/expired JWT token</td>
+                </tr>
+                <tr class="even">
                 <td><code>Exception</code> (catch-all)</td>
                 <td>500</td>
                 <td>Unexpected server error</td>
                 </tr>
                 </tbody>
                 </table>
-                <p>All exceptions are caught by
-                <code>GlobalExceptionHandler</code>
-                (<code>@RestControllerAdvice</code>) and returned as a
-                consistent <code>ErrorResponse</code> JSON body.</p>
                 <hr />
                 <h2 id="database-indexing">Database Indexing</h2>
                 <p>The current schema

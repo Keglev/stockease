@@ -43,26 +43,26 @@
                 <li><strong>API layer</strong> — JSR-303 bean validation
                 annotations on request DTOs, triggered by
                 <code>@Valid</code></li>
-                <li><strong>Service layer</strong> — business rule
-                validation in code (uniqueness checks, authorization
-                checks, domain constraints)</li>
+                <li><strong>Controller layer</strong> — business rule
+                checks in controller code before calling the repository
+                (e.g. existence checks that throw
+                <code>EntityNotFoundException</code>)</li>
                 <li><strong>Database layer</strong> — constraints as a
-                final safety net (UNIQUE, CHECK, NOT NULL, foreign
-                keys)</li>
+                final safety net (UNIQUE, NOT NULL)</li>
                 <li><strong>Error handling</strong> —
                 <code>GlobalExceptionHandler</code>
                 (<code>@RestControllerAdvice</code>) formats all
                 validation failures into a consistent
-                <code>ErrorResponse</code> JSON body</li>
+                <code>ApiResponse&lt;T&gt;</code> JSON body</li>
                 </ol>
                 <hr />
                 <h2 id="rationale">Rationale</h2>
                 <p>JSR-303 annotations keep validation rules co-located
                 with the data they validate, are declarative and
                 readable, and are automatically enforced by Spring MVC
-                without boilerplate. Service-layer validation handles
-                rules that require database queries (SKU uniqueness) or
-                business context (authorization). Database constraints
+                without boilerplate. Controller-layer checks handle
+                rules that require a database query (e.g. product
+                existence before update or delete). Database constraints
                 act as the last line of defense and guarantee integrity
                 even if application code has a bug.</p>
                 <p>A global exception handler ensures that validation
@@ -77,61 +77,82 @@
                     B --> C{JSR-303 validation}
                     C -->|violations| D[MethodArgumentNotValidException]
                     D --> E[GlobalExceptionHandler]
-                    E --> F[400 Bad Request with field details]
-                    C -->|passes| G[Controller calls Service]
-                    G --> H{Business rule validation}
-                    H -->|fails| I[ValidationException or AuthorizationException]
-                    I --> E
-                    H -->|passes| J[Repository saves entity]
+                    E --> F[400 Bad Request with field-error map]
+                    C -->|passes| G[Controller — business rule checks]
+                    G -->|fails| H[EntityNotFoundException or IllegalArgumentException]
+                    H --> E
+                    G -->|passes| J[Repository saves entity]
                     J --> K{Database constraints}
                     K -->|violated| L[DataIntegrityViolationException]
                     L --> E
-                    K -->|pass| M[201 / 200 Success]
+                    K -->|pass| M[200 Success]
 
                     style F fill:#ffcdd2
                     style M fill:#c8e6c9
                 </div>
                 <hr />
                 <h2 id="validation-rules">Validation Rules</h2>
-                <h3 id="product">Product</h3>
+                <h3 id="createproductrequest">CreateProductRequest</h3>
                 <ul>
-                <li><code>name</code> — required, 3–255 characters</li>
-                <li><code>price</code> — required, 0.01–999,999.99</li>
-                <li><code>quantity</code> — required, 0–1,000,000</li>
-                <li><code>sku</code> — required, 3–50 characters,
-                pattern <code>^[A-Z0-9-]{3,50}$</code>, unique</li>
+                <li><code>name</code> — <code>@NotNull @NotBlank</code>
+                (must not be blank)</li>
+                <li><code>quantity</code> —
+                <code>@NotNull @Min(0)</code> (must be zero or
+                greater)</li>
+                <li><code>price</code> — <code>@NotNull @Positive</code>
+                (must be greater than zero, <code>Double</code>)</li>
                 </ul>
-                <h3 id="user">User</h3>
+                <h3
+                id="updatequantityrequest">UpdateQuantityRequest</h3>
                 <ul>
-                <li><code>username</code> — required, 3–50 characters,
-                alphanumeric + underscore, unique</li>
-                <li><code>password</code> — required, minimum 8
-                characters</li>
-                <li><code>role</code> — required, must be
-                <code>ADMIN</code> or <code>USER</code></li>
+                <li><code>quantity</code> —
+                <code>@NotNull @Min(0)</code></li>
+                </ul>
+                <h3 id="updatepricerequest">UpdatePriceRequest</h3>
+                <ul>
+                <li><code>price</code> —
+                <code>@NotNull @Positive</code></li>
+                </ul>
+                <h3 id="updatenamerequest">UpdateNameRequest</h3>
+                <ul>
+                <li><code>name</code> —
+                <code>@NotNull @NotBlank</code></li>
+                </ul>
+                <h3 id="loginrequest">LoginRequest</h3>
+                <ul>
+                <li><code>username</code> — <code>@NotBlank</code></li>
+                <li><code>password</code> — <code>@NotBlank</code></li>
                 </ul>
                 <hr />
                 <h2 id="error-response-format">Error Response
                 Format</h2>
+                <p>All error responses use the
+                <code>ApiResponse&lt;T&gt;</code> envelope with
+                <code>success: false</code>. For <code>@Valid</code>
+                bean validation failures
+                (<code>MethodArgumentNotValidException</code>) and
+                parameter constraint violations
+                (<code>HandlerMethodValidationException</code>), the
+                <code>data</code> field is a map of field names to
+                constraint messages:</p>
                 <div class="sourceCode" id="cb1"><pre
                 class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="dv">400</span><span class="fu">,</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;error&quot;</span><span class="fu">:</span> <span class="st">&quot;Validation Failed&quot;</span><span class="fu">,</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;timestamp&quot;</span><span class="fu">:</span> <span class="st">&quot;2025-10-31T10:30:00Z&quot;</span><span class="fu">,</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;path&quot;</span><span class="fu">:</span> <span class="st">&quot;/api/products&quot;</span><span class="fu">,</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;field&quot;</span><span class="fu">:</span> <span class="st">&quot;name&quot;</span><span class="fu">,</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="st">&quot;Name must be 3-255 characters&quot;</span><span class="fu">,</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;rejectedValue&quot;</span><span class="fu">:</span> <span class="st">&quot;AB&quot;</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;field&quot;</span><span class="fu">:</span> <span class="st">&quot;price&quot;</span><span class="fu">,</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="st">&quot;Price must be &gt; 0&quot;</span><span class="fu">,</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;rejectedValue&quot;</span><span class="fu">:</span> <span class="st">&quot;-10&quot;</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;success&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="st">&quot;Validation failed for request parameters.&quot;</span><span class="fu">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;data&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;must not be blank&quot;</span><span class="fu">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;price&quot;</span><span class="fu">:</span> <span class="st">&quot;must be greater than 0&quot;</span><span class="fu">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;quantity&quot;</span><span class="fu">:</span> <span class="st">&quot;must be greater than or equal to 0&quot;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+                <p>For all other errors (404, 401, 403, 500),
+                <code>data</code> is <code>null</code>:</p>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;success&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="st">&quot;Entity not found: Product with ID 99 not found.&quot;</span><span class="fu">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;data&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
                 <hr />
                 <h2 id="alternatives-considered">Alternatives
                 Considered</h2>
@@ -150,27 +171,31 @@
                 <h2 id="consequences">Consequences</h2>
                 <p><strong>Positive</strong>: declarative and readable,
                 consistent error responses across all endpoints, Spring
-                enforces API-layer rules automatically, business rules
-                are clearly separated into the service layer.</p>
+                enforces API-layer rules automatically, field-level
+                error map enables frontend form highlighting.</p>
                 <p><strong>Negative</strong>: complex validation rules
-                are hard to express as annotations alone and require
-                custom validator classes. Database constraints are the
-                last resort and produce less friendly error messages if
-                they are the first to catch a violation — this means
-                API-layer and service-layer validation must be
-                thorough.</p>
+                that span multiple fields are hard to express as
+                annotations alone and require custom validator classes
+                or explicit controller checks. Database constraints
+                (e.g. <code>UNIQUE</code> on <code>username</code>)
+                produce <code>DataIntegrityViolationException</code>
+                which maps to a generic 500 — API-layer validation must
+                catch these cases first to return a user-friendly
+                400.</p>
                 <hr />
                 <h2 id="implementation-status">Implementation
                 Status</h2>
                 <ul>
                 <li>JSR-303 annotations on all request DTOs —
                 implemented</li>
-                <li>GlobalExceptionHandler with standardized error
-                format — implemented</li>
-                <li>Service-layer business rule validation —
+                <li><code>GlobalExceptionHandler</code> with
+                <code>ApiResponse&lt;T&gt;</code> error format —
                 implemented</li>
-                <li>Database UNIQUE, CHECK, and NOT NULL constraints —
+                <li>Controller-layer existence checks
+                (<code>EntityNotFoundException</code>) —
                 implemented</li>
+                <li>Database <code>UNIQUE</code> and
+                <code>NOT NULL</code> constraints — implemented</li>
                 </ul>
                 <hr />
                 <p><a href="./index.html">Back to Decisions

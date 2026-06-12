@@ -35,80 +35,97 @@
                 <h2 id="application-profiles">Application Profiles</h2>
                 <h3 id="default-application.properties">Default —
                 <code>application.properties</code></h3>
-                <p>Inherited by all environments:</p>
-                <pre class="properties"><code>server.port=8081
-spring.application.name=stockease
-spring.jpa.show-sql=false
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-spring.flyway.locations=classpath:db/migration
-management.endpoints.web.exposure.include=health,metrics
-logging.level.root=INFO
-logging.level.com.stocks.stockease=DEBUG</code></pre>
-                <h3
-                id="development-local-overrides-in-application.properties">Development
-                — local overrides in
-                <code>application.properties</code></h3>
-                <pre class="properties"><code>spring.datasource.url=jdbc:postgresql://localhost:5432/stockease_dev
-spring.datasource.username=postgres
-spring.datasource.password=postgres
+                <p>Inherited by all environments (key properties
+                shown):</p>
+                <pre class="properties"><code>spring.application.name=StockEase
+spring.datasource.url=${NEON_JDBC_URL:${DATABASE_URL:}}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 spring.datasource.driver-class-name=org.postgresql.Driver
+# WARNING: overridden to validate in application-prod.yml; must never reach production as update
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.show-sql=true
-logging.level.com.stocks.stockease=DEBUG
-logging.level.org.springframework.web=DEBUG
-jwt.secret=dev-secret-key-do-not-use-in-production
-jwt.expiration=86400000
-app.cors.allowed-origins=http://localhost:3000,http://localhost:5173</code></pre>
+spring.jpa.open-in-view=false
+server.port=8081
+logging.level.com.stocks.stockease=INFO
+logging.level.org.springframework=INFO
+logging.level.org.hibernate.SQL=WARN
+logging.level.org.apache.catalina=WARN</code></pre>
+                <h3 id="development">Development</h3>
+                <p>Development uses the same
+                <code>application.properties</code> file. Environment
+                variables (<code>SPRING_DATASOURCE_USERNAME</code>,
+                <code>SPRING_DATASOURCE_PASSWORD</code>,
+                <code>NEON_JDBC_URL</code>) are supplied via IDE run
+                configuration or a local <code>.env</code> file. There
+                is no separate
+                <code>application-dev.properties</code>.</p>
                 <h3 id="production-application-prod.yml">Production —
                 <code>application-prod.yml</code></h3>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">spring</span><span class="kw">:</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">datasource</span><span class="kw">:</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">url</span><span class="kw">:</span><span class="at"> jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">username</span><span class="kw">:</span><span class="at"> ${DB_USER}</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">password</span><span class="kw">:</span><span class="at"> ${DB_PASSWORD}</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">driver-class-name</span><span class="kw">:</span><span class="at"> org.postgresql.Driver</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hikari</span><span class="kw">:</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">maximum-pool-size</span><span class="kw">:</span><span class="at"> </span><span class="dv">10</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">minimum-idle</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">jpa</span><span class="kw">:</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">show-sql</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hibernate</span><span class="kw">:</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ddl-auto</span><span class="kw">:</span><span class="at"> validate</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">properties</span><span class="kw">:</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">hibernate</span><span class="kw">:</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dialect</span><span class="kw">:</span><span class="at"> org.hibernate.dialect.PostgreSQLDialect</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="fu">logging</span><span class="kw">:</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">level</span><span class="kw">:</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">root</span><span class="kw">:</span><span class="at"> WARN</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">com.stocks.stockease</span><span class="kw">:</span><span class="at"> INFO</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">org.springframework</span><span class="kw">:</span><span class="at"> WARN</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="fu">jwt</span><span class="kw">:</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">secret</span><span class="kw">:</span><span class="at"> ${JWT_SECRET}</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">expiration</span><span class="kw">:</span><span class="at"> </span><span class="dv">86400000</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="fu">app</span><span class="kw">:</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">cors</span><span class="kw">:</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">allowed-origins</span><span class="kw">:</span><span class="at"> https://stockease-frontend.onrender.com</span></span></code></pre></div>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">management</span><span class="kw">:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">endpoints</span><span class="kw">:</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">web</span><span class="kw">:</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">exposure</span><span class="kw">:</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">include</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;health,info&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">endpoint</span><span class="kw">:</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">health</span><span class="kw">:</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">probes</span><span class="kw">:</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">show-details</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;when_authorized&quot;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">spring</span><span class="kw">:</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">main</span><span class="kw">:</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">lazy-initialization</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">jpa</span><span class="kw">:</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hibernate</span><span class="kw">:</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ddl-auto</span><span class="kw">:</span><span class="at"> validate</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">datasource</span><span class="kw">:</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">url</span><span class="kw">:</span><span class="at"> ${SPRING_DATASOURCE_URL}</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">username</span><span class="kw">:</span><span class="at"> ${SPRING_DATASOURCE_USERNAME}</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">password</span><span class="kw">:</span><span class="at"> ${SPRING_DATASOURCE_PASSWORD}</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hikari</span><span class="kw">:</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">minimum-idle</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">maximum-pool-size</span><span class="kw">:</span><span class="at"> </span><span class="dv">5</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">idle-timeout</span><span class="kw">:</span><span class="at"> </span><span class="dv">120000</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">connection-timeout</span><span class="kw">:</span><span class="at"> </span><span class="dv">30000</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">max-lifetime</span><span class="kw">:</span><span class="at"> </span><span class="dv">1800000</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">flyway</span><span class="kw">:</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">locations</span><span class="kw">:</span><span class="at"> classpath:db/migration</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">baseline-on-migrate</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">clean-disabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="fu">logging</span><span class="kw">:</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">level</span><span class="kw">:</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">&#39;[org.flywaydb]&#39;</span><span class="kw">:</span><span class="at"> INFO</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">&#39;[com.stocks.stockease]&#39;</span><span class="kw">:</span><span class="at"> INFO</span></span></code></pre></div>
                 <h3 id="test-application-test.properties">Test —
                 <code>application-test.properties</code></h3>
-                <pre class="properties"><code>spring.datasource.url=jdbc:h2:mem:stockease_test
+                <pre class="properties"><code>spring.datasource.url=jdbc:h2:mem:testdb
 spring.datasource.driver-class-name=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=
+
 spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 spring.jpa.hibernate.ddl-auto=create-drop
-spring.jpa.show-sql=false
-logging.level.root=WARN
-jwt.secret=test-secret-key
-jwt.expiration=86400000</code></pre>
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.open-in-view=false
+
+spring.datasource.hikari.connection-test-query=SELECT 1
+spring.datasource.hikari.maximum-pool-size=5</code></pre>
                 <hr />
                 <h2
                 id="required-environment-variables-production">Required
                 Environment Variables (Production)</h2>
                 <table>
+                <colgroup>
+                <col style="width: 35%" />
+                <col style="width: 32%" />
+                <col style="width: 32%" />
+                </colgroup>
                 <thead>
                 <tr class="header">
                 <th>Variable</th>
@@ -118,27 +135,18 @@ jwt.expiration=86400000</code></pre>
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td><code>DB_HOST</code></td>
-                <td>Neon database host</td>
-                <td><code>[project].neon.tech</code></td>
+                <td><code>SPRING_DATASOURCE_URL</code></td>
+                <td>Neon JDBC connection string (includes host, port, DB
+                name, SSL mode)</td>
+                <td>from Neon dashboard</td>
                 </tr>
                 <tr class="even">
-                <td><code>DB_PORT</code></td>
-                <td>Database port</td>
-                <td><code>5432</code></td>
-                </tr>
-                <tr class="odd">
-                <td><code>DB_NAME</code></td>
-                <td>Database name</td>
-                <td><code>stockease</code></td>
-                </tr>
-                <tr class="even">
-                <td><code>DB_USER</code></td>
+                <td><code>SPRING_DATASOURCE_USERNAME</code></td>
                 <td>Database username</td>
                 <td>from secrets</td>
                 </tr>
                 <tr class="odd">
-                <td><code>DB_PASSWORD</code></td>
+                <td><code>SPRING_DATASOURCE_PASSWORD</code></td>
                 <td>Database password</td>
                 <td>from secrets</td>
                 </tr>
@@ -170,23 +178,15 @@ jwt.expiration=86400000</code></pre>
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td><code>DB_HOST</code></td>
-                <td>Runtime</td>
+                <td><code>SPRING_DATASOURCE_URL</code></td>
+                <td>Runtime (secret)</td>
                 </tr>
                 <tr class="even">
-                <td><code>DB_PORT</code></td>
-                <td>Runtime</td>
-                </tr>
-                <tr class="odd">
-                <td><code>DB_NAME</code></td>
-                <td>Runtime</td>
-                </tr>
-                <tr class="even">
-                <td><code>DB_USER</code></td>
+                <td><code>SPRING_DATASOURCE_USERNAME</code></td>
                 <td>Runtime (secret)</td>
                 </tr>
                 <tr class="odd">
-                <td><code>DB_PASSWORD</code></td>
+                <td><code>SPRING_DATASOURCE_PASSWORD</code></td>
                 <td>Runtime (secret)</td>
                 </tr>
                 <tr class="even">
@@ -204,11 +204,18 @@ jwt.expiration=86400000</code></pre>
                 </tbody>
                 </table>
                 <hr />
-                <h2 id="dataseeder-fixture-data">DataSeeder — Fixture
-                Data</h2>
-                <p><code>DataSeeder.java</code>
-                (<code>@Profile("!prod")</code>) seeds fixture users and
-                products on startup in all non-production profiles:</p>
+                <h2 id="seed-data-v3-migration-and-dataseeder">Seed Data
+                — V3 Migration and DataSeeder</h2>
+                <p>Fixture data is seeded by two mechanisms with
+                different scopes:</p>
+                <h3
+                id="v3-flyway-migration-all-flyway-enabled-environments-including-production">V3
+                Flyway Migration (all Flyway-enabled environments,
+                including production)</h3>
+                <p><code>V3__seed_data.java</code> (located at
+                <code>src/main/java/db/migration/</code>) runs as part
+                of the Flyway migration sequence in every environment
+                where Flyway is active. It seeds:</p>
                 <table>
                 <colgroup>
                 <col style="width: 42%" />
@@ -235,15 +242,29 @@ jwt.expiration=86400000</code></pre>
                 </tr>
                 </tbody>
                 </table>
-                <p>5 fixture products are also seeded (Product 1–5 with
-                varying quantities and prices).</p>
-                <p>Seed inserts are idempotent — guarded by
-                <code>count() == 0</code> checks, so restarting the
-                application never creates duplicates.
-                <code>DataSeeder</code> is <strong>not active</strong>
-                in the <code>prod</code> profile — the
-                <code>@Profile("!prod")</code> annotation prevents it
-                from running in production.</p>
+                <p>8 fixture products are also seeded: Alpha Widget,
+                Beta Gadget, Gamma Tool, Delta Device, Epsilon
+                Accessory, Zeta Instrument, Eta Apparatus, Theta
+                Machine.</p>
+                <p>All inserts are idempotent — each row is inserted
+                only if it does not already exist (checked by username
+                or product name), so re-running migrations never creates
+                duplicates.</p>
+                <h3 id="dataseeder-test-environment-fallback">DataSeeder
+                — Test Environment Fallback</h3>
+                <p><code>DataSeeder.java</code>
+                (<code>@Profile("!prod")</code>) runs at application
+                startup in non-production profiles. In all
+                Flyway-enabled environments, V3 populates the database
+                before <code>DataSeeder</code> runs, so
+                <code>DataSeeder</code>’s <code>count() == 0</code>
+                guards make it a no-op.</p>
+                <p><code>DataSeeder</code> only takes effect in
+                <strong>test environments</strong> where
+                <code>spring.flyway.enabled=false</code> (H2 in-memory,
+                DDL <code>create-drop</code>) and the database starts
+                empty. It is <strong>not active</strong> in the
+                <code>prod</code> profile.</p>
                 <hr />
                 <h2
                 id="flywayconfiguration-migration-ordering">FlywayConfiguration
@@ -316,14 +337,14 @@ jwt.expiration=86400000</code></pre>
                 <p><strong>Secrets are always environment
                 variables</strong> — never committed to the
                 repository.</p>
-                <div class="sourceCode" id="cb6"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Correct</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Never do this</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> abc123...</span></span></code></pre></div>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Correct</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Never do this</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> abc123...</span></span></code></pre></div>
                 <p><strong>JWT secret must be 32+ characters</strong>
                 and randomly generated. The dev placeholder must never
                 be used in production.</p>
@@ -355,7 +376,7 @@ jwt.expiration=86400000</code></pre>
                 data</label></li>
                 <li><label><input type="checkbox" />HikariCP pool
                 settings validated
-                (<code>maximumPoolSize=10</code>)</label></li>
+                (<code>maximumPoolSize=5</code>)</label></li>
                 <li><label><input type="checkbox" />Health check
                 endpoint responding at <code>/health</code></label></li>
                 </ul>

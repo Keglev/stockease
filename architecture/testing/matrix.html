@@ -79,13 +79,6 @@
                 <td>0%</td>
                 <td>Intentional</td>
                 </tr>
-                <tr class="even">
-                <td>Service</td>
-                <td>0</td>
-                <td>0 (mocked)</td>
-                <td>0%</td>
-                <td>Future</td>
-                </tr>
                 </tbody>
                 </table>
                 <hr />
@@ -137,30 +130,61 @@
                 <td>Done</td>
                 </tr>
                 <tr class="odd">
+                <td><code>/api/products/search</code></td>
+                <td>GET</td>
+                <td><code>ProductControllerTest</code></td>
+                <td>Slice</td>
+                <td>Done</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/total-stock-value</code></td>
+                <td>GET</td>
+                <td><code>ProductControllerTest</code></td>
+                <td>Slice</td>
+                <td>Done</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/paged</code></td>
+                <td>GET</td>
+                <td><code>ProductPaginationControllerTest</code></td>
+                <td>Slice</td>
+                <td>Done</td>
+                </tr>
+                <tr class="even">
                 <td><code>/api/products</code></td>
                 <td>POST</td>
                 <td><code>ProductCreateControllerTest</code></td>
                 <td>Slice</td>
                 <td>Done</td>
                 </tr>
-                <tr class="even">
-                <td><code>/api/products/{id}</code></td>
+                <tr class="odd">
+                <td><code>/api/products/{id}/quantity</code></td>
                 <td>PUT</td>
-                <td><code>ProductUpdateControllerTest</code></td>
+                <td><code>ProductUpdateControllerTest</code>,
+                <code>ProductInvalidUpdateControllerTest</code></td>
+                <td>Slice</td>
+                <td>Done</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/{id}/price</code></td>
+                <td>PUT</td>
+                <td><code>ProductUpdateControllerTest</code>,
+                <code>ProductInvalidUpdateControllerTest</code></td>
                 <td>Slice</td>
                 <td>Done</td>
                 </tr>
                 <tr class="odd">
-                <td><code>/api/products/{id}</code></td>
-                <td>DELETE</td>
-                <td><code>ProductDeleteControllerTest</code></td>
+                <td><code>/api/products/{id}/name</code></td>
+                <td>PUT</td>
+                <td><code>ProductUpdateControllerTest</code>,
+                <code>ProductInvalidUpdateControllerTest</code></td>
                 <td>Slice</td>
                 <td>Done</td>
                 </tr>
                 <tr class="even">
-                <td><code>/api/products?page&amp;size</code></td>
-                <td>GET</td>
-                <td><code>ProductPaginationControllerTest</code></td>
+                <td><code>/api/products/{id}</code></td>
+                <td>DELETE</td>
+                <td><code>ProductDeleteControllerTest</code></td>
                 <td>Slice</td>
                 <td>Done</td>
                 </tr>
@@ -201,23 +225,58 @@
                 <td>401</td>
                 </tr>
                 <tr class="even">
+                <td><code>/api/products/search</code></td>
+                <td>GET</td>
+                <td>200</td>
+                <td>200</td>
+                <td>401</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/total-stock-value</code></td>
+                <td>GET</td>
+                <td>200</td>
+                <td>200</td>
+                <td>401</td>
+                </tr>
+                <tr class="even">
+                <td><code>/api/products/paged</code></td>
+                <td>GET</td>
+                <td>200</td>
+                <td>200</td>
+                <td>401</td>
+                </tr>
+                <tr class="odd">
                 <td><code>/api/products</code></td>
                 <td>POST</td>
                 <td>200</td>
                 <td>403</td>
                 <td>401</td>
                 </tr>
-                <tr class="odd">
-                <td><code>/api/products/{id}</code></td>
+                <tr class="even">
+                <td><code>/api/products/{id}/quantity</code></td>
                 <td>PUT</td>
                 <td>200</td>
-                <td>403</td>
+                <td>200</td>
+                <td>401</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/api/products/{id}/price</code></td>
+                <td>PUT</td>
+                <td>200</td>
+                <td>200</td>
                 <td>401</td>
                 </tr>
                 <tr class="even">
+                <td><code>/api/products/{id}/name</code></td>
+                <td>PUT</td>
+                <td>200</td>
+                <td>200</td>
+                <td>401</td>
+                </tr>
+                <tr class="odd">
                 <td><code>/api/products/{id}</code></td>
                 <td>DELETE</td>
-                <td>204</td>
+                <td>200</td>
                 <td>403</td>
                 <td>401</td>
                 </tr>
@@ -230,71 +289,110 @@
                 <h3 id="authcontrollertest-unit">AuthControllerTest
                 (Unit)</h3>
                 <ul>
-                <li><code>testLoginSuccess</code></li>
-                <li><code>testAdminLoginSuccess</code></li>
-                <li><code>testLoginFailureWithInvalidCredentials</code></li>
-                <li><code>testLoginFailureWithUserNotFound</code></li>
+                <li><code>login_withValidUserCredentials_returns200</code></li>
+                <li><code>login_withValidAdminCredentials_returns200</code></li>
+                <li><code>login_withBlankUsername_returns400</code></li>
+                <li><code>login_withBlankPassword_returns400</code></li>
+                <li><code>login_withNonExistentUsername_returns401</code></li>
+                <li><code>login_withBadCredentials_returns401</code></li>
+                <li><code>login_whenServerError_returns500</code></li>
                 </ul>
                 <h3
                 id="productcontrollertest-slice">ProductControllerTest
                 (Slice)</h3>
                 <ul>
-                <li><code>testGetProductsSuccess</code></li>
-                <li><code>testLowStockProductsWithRoles</code>
+                <li><code>getLowStockProducts_withLowStockItems_returnsProducts</code>
                 <em>(parameterized: ADMIN, USER)</em></li>
-                <li><code>testLowStockProductsEmptyWithRoles</code>
+                <li><code>getLowStockProducts_withNoLowStockItems_returnsAllStockedMessage</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>searchProducts_withMatchingName_returnsProducts</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>searchProducts_withNoMatches_returns204</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>getTotalStockValue_withProducts_returnsCalculatedValue</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>getTotalStockValue_withNoProducts_returnsZero</code>
                 <em>(parameterized: ADMIN, USER)</em></li>
                 </ul>
                 <h3
                 id="productfetchcontrollertest-slice">ProductFetchControllerTest
                 (Slice)</h3>
                 <ul>
-                <li><code>testGetAllProducts</code></li>
-                <li><code>testGetProductByIdSuccess</code></li>
-                <li><code>testGetProductByIdNotFound</code></li>
+                <li><code>contextLoads_onApplicationStart_beansAreInjected</code></li>
+                <li><code>getAllProducts_withAdminOrUserRole_returns200</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>getProductById_withExistingId_returns200</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>getProductById_withNonExistentId_returns404</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
                 </ul>
                 <h3
                 id="productcreatecontrollertest-slice">ProductCreateControllerTest
                 (Slice)</h3>
                 <ul>
-                <li><code>testValidProductCreation</code></li>
-                <li><code>testProductCreationDeniedForUser</code></li>
-                <li><code>testProductCreationWithoutAuth</code></li>
+                <li><code>createProduct_withValidData_returns200</code></li>
+                <li><code>createProduct_asUserRole_returns403</code></li>
+                <li><code>createProduct_withMissingName_returns400</code></li>
+                <li><code>createProduct_withNegativeQuantity_returns400</code></li>
+                <li><code>createProduct_withZeroPrice_returns400</code></li>
+                <li><code>createProduct_withInvalidPriceType_returns400</code></li>
                 </ul>
                 <h3
                 id="productupdatecontrollertest-slice">ProductUpdateControllerTest
                 (Slice)</h3>
                 <ul>
-                <li><code>testValidProductUpdate</code></li>
-                <li><code>testProductUpdateQuantity</code></li>
-                <li><code>testProductUpdateDeniedForUser</code></li>
+                <li><code>updateQuantity_withValidData_returns200</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updatePrice_withValidData_returns200</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updateName_withSpecialCharacters_returns200</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
                 </ul>
                 <h3
                 id="productinvalidupdatecontrollertest-slice">ProductInvalidUpdateControllerTest
                 (Slice)</h3>
                 <ul>
-                <li><code>testInvalidUpdateNegativeQuantity</code></li>
-                <li><code>testInvalidUpdateNegativePrice</code></li>
+                <li><code>updateQuantity_withMissingField_returns400</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updateQuantity_withInvalidType_returns400</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updatePrice_withNegativeValue_returns400</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updatePrice_withInvalidType_returns400</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updatePrice_withZeroValue_returns400</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updateName_withWhitespaceOnly_returns400</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updateProduct_whenNotFound_returns404</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>updateProduct_withoutCsrfToken_returns403</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
                 </ul>
                 <h3
                 id="productdeletecontrollertest-slice">ProductDeleteControllerTest
                 (Slice)</h3>
                 <ul>
-                <li><code>testDeleteProductSuccess</code></li>
-                <li><code>testDeleteProductDeniedForUser</code></li>
+                <li><code>deleteProduct_asAdmin_returns200</code></li>
+                <li><code>deleteProduct_whenProductNotFound_returns404</code></li>
+                <li><code>deleteProduct_asUserRole_returns403</code></li>
                 </ul>
                 <h3
                 id="productpaginationcontrollertest-slice">ProductPaginationControllerTest
                 (Slice)</h3>
                 <ul>
-                <li><code>testPaginationWithValidParams</code></li>
-                <li><code>testPaginationWithInvalidParams</code></li>
+                <li><code>getProductsPaged_withValidParams_returns200</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>getProductsPaged_withEmptyPage_returnsEmptyContent</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
+                <li><code>getProductsPaged_withNegativeParams_returns400</code>
+                <em>(parameterized: ADMIN, USER)</em></li>
                 </ul>
                 <h3
                 id="stockeaseapplicationtests-integration">StockEaseApplicationTests
                 (Integration)</h3>
                 <ul>
-                <li><code>contextLoads</code></li>
+                <li><code>contextLoads_withTestProfile_applicationStartsSuccessfully</code></li>
                 </ul>
                 <hr />
                 <h2 id="coverage-gaps">Coverage Gaps</h2>
@@ -312,17 +410,6 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr class="odd">
-                <td>Service layer — no unit tests</td>
-                <td>Medium</td>
-                <td>Add <code>@ExtendWith(MockitoExtension)</code>
-                service tests</td>
-                </tr>
-                <tr class="even">
-                <td>Input validation — empty name, null fields</td>
-                <td>Medium</td>
-                <td>Add explicit validation tests</td>
-                </tr>
                 <tr class="odd">
                 <td>Repository queries — no
                 <code>@DataJpaTest</code></td>

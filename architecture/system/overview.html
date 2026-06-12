@@ -56,12 +56,10 @@
                 <div class="mermaid">
                 graph TB
                   subgraph Backend [StockEase Backend - Spring Boot]
-                    API[API Endpoints]
-                    BIZ[Business Logic Services]
+                    API[API Endpoints / Controllers]
                     DATA[Data Access / Repositories / Flyway]
                   end
-                  API --> BIZ
-                  BIZ --> DATA
+                  API --> DATA
                   DATA --> DB[(PostgreSQL / Neon)]
                   API -->|exposes| OpenAPI["/v3/api-docs"]
                   API -->|health| Health["/api/health"]
@@ -87,24 +85,27 @@
                 <code>HealthController</code></td>
                 </tr>
                 <tr class="even">
-                <td>Services</td>
-                <td><code>AuthService</code>,
-                <code>ProductService</code>,
-                <code>HealthService</code></td>
-                </tr>
-                <tr class="odd">
                 <td>Repositories</td>
                 <td><code>UserRepository</code>,
                 <code>ProductRepository</code></td>
                 </tr>
-                <tr class="even">
+                <tr class="odd">
                 <td>Security</td>
-                <td><code>JwtProvider</code>,
+                <td><code>JwtUtil</code>, <code>JwtFilter</code>,
                 <code>SecurityConfig</code>,
-                <code>JwtAuthenticationFilter</code>,
-                <code>BCrypt</code></td>
+                <code>CustomUserDetailsService</code>,
+                <code>CustomAuthenticationEntryPoint</code></td>
+                </tr>
+                <tr class="even">
+                <td>Exception Handling</td>
+                <td><code>GlobalExceptionHandler</code></td>
                 </tr>
                 <tr class="odd">
+                <td>Config</td>
+                <td><code>CorsConfig</code>, <code>DataSeeder</code>,
+                <code>FlywayConfiguration</code></td>
+                </tr>
+                <tr class="even">
                 <td>Data Access</td>
                 <td>Flyway migrations, PostgreSQL (prod), H2 (test)</td>
                 </tr>
@@ -202,7 +203,7 @@
                 easy auto-scaling, seamless CI/CD.</p>
                 <hr />
                 <h2 id="data-models">Data Models</h2>
-                <p><strong>AppUser</strong>: <code>id</code> (Long, PK
+                <p><strong>User</strong>: <code>id</code> (Long, PK
                 auto-increment), <code>username</code> (unique),
                 <code>password</code> (BCrypt), <code>role</code>
                 (ROLE_ADMIN/ROLE_USER)</p>

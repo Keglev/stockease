@@ -117,44 +117,39 @@
                 <code>com.stocks.stockease</code>, <code>WARN</code> for
                 root</p>
                 <p><strong>Example output</strong>:</p>
-                <pre><code>[2025-10-31 10:30:00] INFO  [ProductService] Product created (ID: abc-123)
-[2025-10-31 10:30:01] WARN  [AuthService] Failed login attempt for user: john
-[2025-10-31 10:30:02] ERROR [Database] Connection timeout</code></pre>
+                <pre><code>[2025-10-31 10:30:00] INFO  [ProductController] Product created (ID: 3)
+[2025-10-31 10:30:01] WARN  [AuthController] Failed login attempt for user: john
+[2025-10-31 10:30:02] ERROR [HealthController] Database connection timeout</code></pre>
                 <hr />
                 <h2 id="observability-practices">Observability
                 Practices</h2>
                 <h3 id="structured-logging">Structured Logging</h3>
                 <p>Log entries include relevant context rather than bare
-                messages:</p>
+                messages. Controllers use SLF4J with
+                <code>LoggerFactory</code>:</p>
                 <div class="sourceCode" id="cb2"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Good — includes actionable context</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>logger<span class="op">.</span><span class="fu">info</span><span class="op">(</span><span class="st">&quot;Product created&quot;</span><span class="op">,</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">Map</span><span class="op">.</span><span class="fu">of</span><span class="op">(</span><span class="st">&quot;productId&quot;</span><span class="op">,</span> id<span class="op">,</span> <span class="st">&quot;userId&quot;</span><span class="op">,</span> userId<span class="op">,</span> <span class="st">&quot;price&quot;</span><span class="op">,</span> price<span class="op">));</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Poor — no context for debugging</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>logger<span class="op">.</span><span class="fu">info</span><span class="op">(</span><span class="st">&quot;Product created&quot;</span><span class="op">);</span></span></code></pre></div>
+                class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="dt">static</span> <span class="dt">final</span> <span class="bu">Logger</span> log <span class="op">=</span> LoggerFactory<span class="op">.</span><span class="fu">getLogger</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">);</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Good — includes actionable context</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>log<span class="op">.</span><span class="fu">info</span><span class="op">(</span><span class="st">&quot;Entering deleteProduct method with ID: {}&quot;</span><span class="op">,</span> id<span class="op">);</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>log<span class="op">.</span><span class="fu">debug</span><span class="op">(</span><span class="st">&quot;Received request to create product: {}&quot;</span><span class="op">,</span> request<span class="op">);</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Poor — no context for debugging</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>log<span class="op">.</span><span class="fu">info</span><span class="op">(</span><span class="st">&quot;Product deleted&quot;</span><span class="op">);</span></span></code></pre></div>
                 <h3 id="error-tracking">Error Tracking</h3>
-                <p>Exceptions are logged with full context before being
-                translated into safe API responses:</p>
-                <div class="sourceCode" id="cb3"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span> <span class="op">{</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// business logic</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> <span class="cf">catch</span> <span class="op">(</span>DatabaseException e<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    logger<span class="op">.</span><span class="fu">error</span><span class="op">(</span><span class="st">&quot;Database error creating product&quot;</span><span class="op">,</span> e<span class="op">,</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">Map</span><span class="op">.</span><span class="fu">of</span><span class="op">(</span><span class="st">&quot;productId&quot;</span><span class="op">,</span> id<span class="op">));</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="fu">InternalServerException</span><span class="op">(</span><span class="st">&quot;Failed to create product&quot;</span><span class="op">,</span> e<span class="op">);</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p><code>GlobalExceptionHandler</code> centralises error
+                handling — uncaught exceptions are translated into safe
+                <code>ApiResponse&lt;T&gt;</code> bodies. Stack traces
+                are never exposed to clients. For debugging, exceptions
+                are available in the application log stream on
+                Koyeb.</p>
                 <h3 id="performance-tracing">Performance Tracing</h3>
-                <p>Critical service methods are timed using Micrometer’s
-                <code>@Timed</code> annotation:</p>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Timed</span><span class="op">(</span>value <span class="op">=</span> <span class="st">&quot;product.search.time&quot;</span><span class="op">,</span> description <span class="op">=</span> <span class="st">&quot;Time to search products&quot;</span><span class="op">)</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> Page<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">searchProducts</span><span class="op">(</span><span class="bu">String</span> query<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// implementation</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-                <p>The metric <code>product.search.time</code> is then
-                available at
-                <code>/actuator/metrics/product.search.time</code>.</p>
+                <p>Spring Boot Actuator exposes
+                <code>http.server.requests</code> metrics (count,
+                duration, status) via
+                <code>/actuator/metrics/http.server.requests</code> out
+                of the box — no <code>@Timed</code> annotation is
+                required for basic endpoint timing.</p>
                 <hr />
                 <h2 id="infrastructure-monitoring">Infrastructure
                 Monitoring</h2>

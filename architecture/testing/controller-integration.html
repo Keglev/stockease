@@ -79,7 +79,7 @@ MockMvc flow:       request → MockMvc → Controller → Response</code></pre>
 <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">delete</span><span class="op">(</span><span class="st">&quot;/api/products/1&quot;</span><span class="op">)</span></span>
 <span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span></span>
 <span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;admin&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">)))</span></span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isNoContent</span><span class="op">());</span></span></code></pre></div>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span></code></pre></div>
                 <hr />
                 <h2 id="response-assertions">Response Assertions</h2>
                 <h3 id="status-codes">Status Codes</h3>

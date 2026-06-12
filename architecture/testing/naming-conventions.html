@@ -64,14 +64,19 @@
                 <tr class="even">
                 <td><code>ProductUpdateControllerTest</code></td>
                 <td><code>ProductController</code></td>
-                <td>Slice — PUT endpoints</td>
+                <td>Slice — PUT happy-path updates</td>
                 </tr>
                 <tr class="odd">
+                <td><code>ProductInvalidUpdateControllerTest</code></td>
+                <td><code>ProductController</code></td>
+                <td>Slice — PUT validation and error paths</td>
+                </tr>
+                <tr class="even">
                 <td><code>ProductDeleteControllerTest</code></td>
                 <td><code>ProductController</code></td>
                 <td>Slice — DELETE endpoints</td>
                 </tr>
-                <tr class="even">
+                <tr class="odd">
                 <td><code>ProductPaginationControllerTest</code></td>
                 <td><code>ProductController</code></td>
                 <td>Slice — pagination</td>
@@ -81,38 +86,29 @@
                 <hr />
                 <h2 id="test-method-naming">Test Method Naming</h2>
                 <p><strong>Pattern</strong>:
-                <code>{action}_{expectedBehavior}_{givenCondition}</code></p>
-                <p>Shorter form when condition is obvious:
-                <code>{action}_{scenario}</code></p>
-                <h3 id="variants">Variants</h3>
-                <p><strong>Full descriptive</strong> (recommended for
-                complex scenarios):</p>
+                <code>{methodName}_{stateUnderTest}_{expectedBehavior}</code></p>
+                <p>All three segments are required. No <code>test</code>
+                prefix.</p>
                 <div class="sourceCode" id="cb1"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testLoginSuccess_WhenValidCredentialsProvided</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testProductCreation_Denied_WhenUserRoleAttempts</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
-                <p><strong>Concise</strong> (acceptable when condition
-                is clear from context):</p>
-                <div class="sourceCode" id="cb2"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testLoginSuccess</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testProductCreationDenied</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
-                <p><strong>BDD-style</strong> (use only if adopting a
-                BDD framework):</p>
-                <div class="sourceCode" id="cb3"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">should_LoginSuccessfully_WhenValidCredentialsProvided</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
+                class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">login_withValidUserCredentials_returns200</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">login_withBadCredentials_returns401</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">createProduct_asUserRole_returns403</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">updateQuantity_withMissingField_returns400</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">deleteProduct_asAdmin_returns200</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
                 <hr />
                 <h2 id="test-data-naming">Test Data Naming</h2>
                 <p><strong>Pattern</strong>:
                 <code>{semantic}_{characteristic}</code></p>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Good</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>User mockUser <span class="op">=</span> <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span><span class="dv">1L</span><span class="op">,</span> <span class="st">&quot;testuser&quot;</span><span class="op">,</span> <span class="st">&quot;password&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_USER&quot;</span><span class="op">);</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">String</span> jwtToken <span class="op">=</span> <span class="st">&quot;mockToken&quot;</span><span class="op">;</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> lowStockThreshold <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Bad</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>User u <span class="op">=</span> <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span><span class="dv">1L</span><span class="op">,</span> <span class="st">&quot;x&quot;</span><span class="op">,</span> <span class="st">&quot;y&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_X&quot;</span><span class="op">);</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="bu">String</span> t <span class="op">=</span> <span class="st">&quot;abc&quot;</span><span class="op">;</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> q <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span></code></pre></div>
+                <div class="sourceCode" id="cb2"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Good</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>User mockUser <span class="op">=</span> <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span><span class="dv">1L</span><span class="op">,</span> <span class="st">&quot;testuser&quot;</span><span class="op">,</span> <span class="st">&quot;password&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_USER&quot;</span><span class="op">);</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">String</span> jwtToken <span class="op">=</span> <span class="st">&quot;mockToken&quot;</span><span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> lowStockThreshold <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Bad</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>User u <span class="op">=</span> <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span><span class="dv">1L</span><span class="op">,</span> <span class="st">&quot;x&quot;</span><span class="op">,</span> <span class="st">&quot;y&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_X&quot;</span><span class="op">);</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">String</span> t <span class="op">=</span> <span class="st">&quot;abc&quot;</span><span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> q <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span></code></pre></div>
                 <table>
                 <thead>
                 <tr class="header">
@@ -145,28 +141,26 @@
                 </tbody>
                 </table>
                 <hr />
-                <h2 id="given-when-then-structure">Given-When-Then
-                Structure</h2>
-                <p>Every test method must follow Given-When-Then either
-                as inline comments or JavaDoc.</p>
-                <div class="sourceCode" id="cb5"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> Given<span class="co">:</span> A user with valid credentials exists</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> When<span class="co">:</span> Login request is submitted</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> Then<span class="co">:</span> JWT token is returned with success status</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a> <span class="co">*/</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testLoginSuccess</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Given</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>jwtUtil<span class="op">.</span><span class="fu">generateToken</span><span class="op">(</span>username<span class="op">,</span> role<span class="op">)).</span><span class="fu">thenReturn</span><span class="op">(</span>token<span class="op">);</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">// When</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    ResponseEntity<span class="op">&lt;</span>ApiResponse<span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;&gt;</span> response <span class="op">=</span> authController<span class="op">.</span><span class="fu">login</span><span class="op">(</span>loginRequest<span class="op">);</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Then</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getBody</span><span class="op">().</span><span class="fu">isSuccess</span><span class="op">()).</span><span class="fu">isTrue</span><span class="op">();</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getBody</span><span class="op">().</span><span class="fu">getData</span><span class="op">()).</span><span class="fu">isEqualTo</span><span class="op">(</span>token<span class="op">);</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <h2 id="inline-comments">Inline Comments</h2>
+                <p>AAA (Arrange / Act / Assert) section markers are
+                optional and only used when the test is long enough that
+                the sections are not immediately visible. Short tests
+                (under 10 lines) need no markers.</p>
+                <p>Inline comments are allowed only for non-obvious
+                setup — for example, explaining why a specific mock
+                value was chosen, or why a particular edge case
+                matters.</p>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">login_withNonExistentUsername_returns401</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>userRepository<span class="op">.</span><span class="fu">findByUsername</span><span class="op">(</span><span class="st">&quot;wronguser&quot;</span><span class="op">)).</span><span class="fu">thenReturn</span><span class="op">(</span>Optional<span class="op">.</span><span class="fu">empty</span><span class="op">());</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// auth passes (mocked) but the repo has no record — covers a deleted or externally-removed account</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>authenticationManager<span class="op">.</span><span class="fu">authenticate</span><span class="op">(</span><span class="fu">any</span><span class="op">())).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">null</span><span class="op">);</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    ResponseEntity<span class="op">&lt;</span>ApiResponse<span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;&gt;</span> response <span class="op">=</span> authController<span class="op">.</span><span class="fu">login</span><span class="op">(</span><span class="fu">buildLoginRequest</span><span class="op">(</span><span class="st">&quot;wronguser&quot;</span><span class="op">,</span> <span class="st">&quot;password&quot;</span><span class="op">));</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getStatusCode</span><span class="op">().</span><span class="fu">value</span><span class="op">()).</span><span class="fu">isEqualTo</span><span class="op">(</span><span class="dv">401</span><span class="op">);</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <hr />
                 <h2 id="anti-patterns">Anti-Patterns</h2>
                 <p><strong>Generic names</strong> —

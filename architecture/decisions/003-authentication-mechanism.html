@@ -33,17 +33,17 @@
                 the authentication mechanism: stateless JWT tokens or
                 server-side sessions.</p>
                 <p>Requirements: support cross-origin requests (frontend
-                on Render, backend on Koyeb), no shared session store
+                on Vercel, backend on Koyeb), no shared session store
                 between container replicas, work with auto-scaling,
                 support role-based authorization per request, and be
                 implementable with Spring Security.</p>
                 <hr />
                 <h2 id="decision">Decision</h2>
                 <p><strong>JWT (JSON Web Token) bearer tokens</strong>
-                with HS256 signing, 24-hour expiry, role claim embedded
-                in the payload, and validation via a custom
-                <code>JwtAuthenticationFilter</code> in the Spring
-                Security filter chain.</p>
+                with HS256 signing, 10-hour expiry, role claim embedded
+                in the payload, and validation via
+                <code>JwtFilter</code> in the Spring Security filter
+                chain.</p>
                 <hr />
                 <h2 id="rationale">Rationale</h2>
                 <h3
@@ -58,7 +58,7 @@
                 secret. No external session store is needed.</p>
                 <h3 id="cross-origin-compatibility">Cross-origin
                 compatibility</h3>
-                <p>The frontend (Render) and backend (Koyeb) are on
+                <p>The frontend (Vercel) and backend (Koyeb) are on
                 different domains. Browser session cookies do not work
                 reliably across origins without complex configuration.
                 JWT tokens sent as <code>Authorization: Bearer</code>
@@ -67,12 +67,12 @@
                 <h3 id="role-authorization-per-request">Role
                 authorization per request</h3>
                 <p>The JWT payload includes a <code>role</code> claim.
-                <code>JwtAuthenticationFilter</code> extracts the role
-                on every request and populates the Spring
-                <code>SecurityContext</code>, making
-                <code>@PreAuthorize("hasRole('ADMIN')")</code> and
-                <code>@Secured("ROLE_ADMIN")</code> work without any
-                database lookup per request.</p>
+                <code>JwtFilter</code> validates the token and calls
+                <code>CustomUserDetailsService.loadUserByUsername()</code>
+                on every authenticated request to populate the Spring
+                <code>SecurityContext</code>, enabling
+                <code>@PreAuthorize("hasRole('ADMIN')")</code>
+                enforcement without an extra authorization lookup.</p>
                 <h3 id="bcrypt-for-password-storage">BCrypt for password
                 storage</h3>
                 <p>Passwords are hashed with BCrypt (cost factor 10)
@@ -102,9 +102,10 @@
                 <h2 id="consequences">Consequences</h2>
                 <p><strong>Positive</strong>: stateless design supports
                 horizontal scaling with no shared state, cross-origin
-                requests work cleanly, role authorization requires no
-                database lookup per request, no session store
-                infrastructure needed.</p>
+                requests work cleanly, no session store infrastructure
+                needed. Role authorization is enforced per request via
+                the <code>SecurityContext</code> populated by
+                <code>JwtFilter</code>.</p>
                 <p><strong>Negative</strong>: tokens cannot be
                 invalidated before expiry without a token blacklist (not
                 currently implemented). If the JWT secret is
@@ -117,8 +118,8 @@
                 <ul>
                 <li>JWT secret must be 32+ characters, randomly
                 generated, stored only as an environment variable</li>
-                <li>Tokens expire after 24 hours
-                (<code>app.jwt.expiration=86400000</code>)</li>
+                <li>Tokens expire after 10 hours (hardcoded
+                <code>EXPIRATION_TIME = 36000000</code> ms)</li>
                 <li>HTTPS enforced in production — tokens must never
                 travel over plain HTTP</li>
                 <li>Failed authentication returns 401 with a generic
@@ -129,10 +130,10 @@
                 <h2 id="implementation-status">Implementation
                 Status</h2>
                 <ul>
-                <li><code>JwtTokenProvider</code> — token generation and
+                <li><code>JwtUtil</code> — token generation and
                 validation — implemented</li>
-                <li><code>JwtAuthenticationFilter</code> — filter chain
-                integration — implemented</li>
+                <li><code>JwtFilter</code> — filter chain integration —
+                implemented</li>
                 <li><code>SecurityConfig</code> — stateless session
                 policy, public/protected endpoint rules —
                 implemented</li>

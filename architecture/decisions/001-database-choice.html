@@ -61,12 +61,17 @@
                 Developers need no local PostgreSQL installation.</p>
                 <h3 id="flyway-for-migrations">Flyway for
                 Migrations</h3>
-                <p>SQL-based migration files are version-controlled in
-                Git alongside application code. Flyway validates and
+                <p>Migration files (SQL and Java) are version-controlled
+                in Git alongside application code. Flyway validates and
                 executes migrations in order on startup, making
                 deployments reproducible across H2 (tests) and
                 PostgreSQL (production). It prevents duplicate execution
-                and fails fast if a migration is inconsistent.</p>
+                and fails fast if a migration is inconsistent. Java
+                migrations (<code>BaseJavaMigration</code>) are used
+                when SQL alone is insufficient — for example,
+                <code>V3__seed_data.java</code> uses
+                <code>BCryptPasswordEncoder</code> to hash passwords at
+                migration time.</p>
                 <hr />
                 <h2 id="alternatives-considered">Alternatives
                 Considered</h2>
@@ -83,7 +88,7 @@
                 service during development and in CI, slows test
                 execution, and adds cost for test runs.</p>
                 <p><strong>Liquibase instead of Flyway</strong> —
-                rejected. Flyway is simpler: SQL-based migrations,
+                rejected. Flyway is simpler: SQL and Java migrations,
                 smaller learning curve, no YAML/JSON overhead.</p>
                 <hr />
                 <h2 id="consequences">Consequences</h2>
@@ -93,10 +98,13 @@
                 schema changes are version-controlled and
                 reproducible.</p>
                 <p><strong>Negative</strong>: H2 does not support all
-                PostgreSQL features, so migrations must use
-                database-agnostic SQL. Any PostgreSQL-specific syntax in
-                application queries must be tested carefully against H2
-                compatibility.</p>
+                PostgreSQL features, so SQL migrations must use
+                database-agnostic syntax. Any PostgreSQL-specific syntax
+                in application queries must be tested carefully against
+                H2 compatibility. Java migrations bypass this constraint
+                by using JDBC directly, but they require Spring
+                dependencies (e.g. <code>BCryptPasswordEncoder</code>)
+                to be on the classpath at migration time.</p>
                 <hr />
                 <h2 id="implementation-status">Implementation
                 Status</h2>
@@ -106,6 +114,90 @@
                 <li>Flyway 11.7.2 — all environments</li>
                 <li>HikariCP connection pooling — configured</li>
                 </ul>
+                <hr />
+                <h2 id="infrastructure-change">2025 Infrastructure
+                Change</h2>
+                <p>The project migrated from Render (both hosting and
+                managed PostgreSQL) to <strong>Koyeb</strong> (container
+                hosting) and <strong>Neon PostgreSQL</strong> (managed
+                serverless database). The primary driver was cost
+                reduction: Render’s free tier was deprecated, whereas
+                Koyeb and Neon both offer free tiers with pay-as-you-go
+                pricing that scales with actual usage.</p>
+                <p>Additional technical benefits:</p>
+                <ul>
+                <li><strong>Neon</strong> provides serverless PostgreSQL
+                with autoscaling compute, automatic daily backups,
+                point-in-time restore, and built-in connection pooling —
+                without a dedicated always-on server. The datasource
+                configuration changed from a
+                <code>DB_HOST</code>/<code>DB_PORT</code>/<code>DB_NAME</code>
+                triplet to a single <code>SPRING_DATASOURCE_URL</code>
+                environment variable containing the full JDBC connection
+                string (SSL enforced).</li>
+                <li><strong>Koyeb</strong> supports Docker-based
+                deployment with native HTTP/2, health-probe integration,
+                auto-scaling replicas, and a built-in HTTPS edge —
+                equivalent production infrastructure at lower cost.</li>
+                </ul>
+                <h3
+                id="why-flyway-with-a-java-migration-instead-of-pure-sql">Why
+                Flyway with a Java Migration Instead of Pure SQL</h3>
+                <p><code>V3__seed_data.java</code> extends
+                <code>BaseJavaMigration</code> rather than using a plain
+                SQL file for one unavoidable reason: <strong>passwords
+                must be BCrypt-hashed at migration time</strong>. A SQL
+                migration can only insert static string literals —
+                invoking <code>BCryptPasswordEncoder</code> requires
+                running application code from the Spring Security
+                classpath, which only a Java migration can do.</p>
+                <p>The Java migration also achieves cross-database
+                idempotence without relying on PostgreSQL-specific
+                syntax: rather than
+                <code>INSERT ... ON CONFLICT DO NOTHING</code> (which H2
+                does not support), the migration queries for row
+                existence first and skips the insert if the row is
+                already present. This keeps the test environment (H2
+                in-memory, <code>create-drop</code>) fully compatible
+                with the same migration code.</p>
+                <p>Alternatives considered and rejected:</p>
+                <table>
+                <colgroup>
+                <col style="width: 50%" />
+                <col style="width: 50%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Alternative</th>
+                <th>Why Rejected</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Pure SQL <code>INSERT</code> with plaintext
+                passwords</td>
+                <td>Passwords would be stored unhashed — security
+                violation</td>
+                </tr>
+                <tr class="even">
+                <td>PostgreSQL <code>ON CONFLICT DO NOTHING</code></td>
+                <td>Not supported by H2; breaks test environment
+                compatibility</td>
+                </tr>
+                <tr class="odd">
+                <td>Application-level <code>DataSeeder.java</code>
+                only</td>
+                <td>Only runs in non-production profiles; cannot seed
+                production on first deploy</td>
+                </tr>
+                <tr class="even">
+                <td>Liquibase custom task</td>
+                <td>Adds Liquibase as a second migration tool alongside
+                Flyway — rejected when Flyway was chosen over
+                Liquibase</td>
+                </tr>
+                </tbody>
+                </table>
                 <hr />
                 <p><a href="./index.html">Back to Decisions
                 Index</a></p>

@@ -100,26 +100,24 @@
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Replicas</span><span class="kw">:</span><span class="at"> 1–2 (auto-scaling)</span></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Environment Variables</span><span class="kw">:</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_PROFILES_ACTIVE</span><span class="kw">:</span><span class="at"> production</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_HOST</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">Neon endpoint</span><span class="kw">]</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_PORT</span><span class="kw">:</span><span class="at"> </span><span class="dv">5432</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_NAME</span><span class="kw">:</span><span class="at"> stockease</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_USER</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">DB_PASSWORD</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JWT_SECRET</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JAVA_OPTS</span><span class="kw">:</span><span class="at"> -Xmx512m -Xms256m</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">Port Mapping</span><span class="kw">:</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Container Port</span><span class="kw">:</span><span class="at"> </span><span class="dv">8081</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Public Port</span><span class="kw">:</span><span class="at"> 443 (HTTPS)</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Protocol</span><span class="kw">:</span><span class="at"> HTTP2</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">Health Check</span><span class="kw">:</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Endpoint</span><span class="kw">:</span><span class="at"> /health</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Interval</span><span class="kw">:</span><span class="at"> 30s</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Timeout</span><span class="kw">:</span><span class="at"> 5s</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Failures before unhealthy</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Successes before healthy</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span></code></pre></div>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_PROFILES_ACTIVE</span><span class="kw">:</span><span class="at"> prod</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_DATASOURCE_URL</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">Neon JDBC connection string with SSL — from secrets</span><span class="kw">]</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_DATASOURCE_USERNAME</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_DATASOURCE_PASSWORD</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JWT_SECRET</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JAVA_OPTS</span><span class="kw">:</span><span class="at"> -Xmx512m -Xms256m</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">Port Mapping</span><span class="kw">:</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Container Port</span><span class="kw">:</span><span class="at"> </span><span class="dv">8081</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Public Port</span><span class="kw">:</span><span class="at"> 443 (HTTPS)</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Protocol</span><span class="kw">:</span><span class="at"> HTTP2</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">Health Check</span><span class="kw">:</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Endpoint</span><span class="kw">:</span><span class="at"> /health</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Interval</span><span class="kw">:</span><span class="at"> 30s</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Timeout</span><span class="kw">:</span><span class="at"> 5s</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Failures before unhealthy</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Successes before healthy</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span></code></pre></div>
                 <h3 id="auto-scaling">Auto-Scaling</h3>
                 <div class="sourceCode" id="cb2"><pre
                 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Min Replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
@@ -159,36 +157,56 @@ Connection Pooling: enabled (limit: 100)</code></pre>
                         DOUBLE_PRECISION total_value
                     }
                 </div>
-                <p>Migration files in
-                <code>src/main/resources/db/migration/</code>:</p>
+                <p>Migration files span two locations on the classpath
+                (<code>classpath:db/migration</code>):</p>
                 <table>
                 <colgroup>
-                <col style="width: 42%" />
-                <col style="width: 57%" />
+                <col style="width: 25%" />
+                <col style="width: 41%" />
+                <col style="width: 33%" />
                 </colgroup>
                 <thead>
                 <tr class="header">
                 <th>File</th>
+                <th>Location</th>
                 <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr class="odd">
                 <td><code>V1__baseline.sql</code></td>
+                <td><code>src/main/resources/db/migration/</code></td>
                 <td>Empty Flyway baseline marker for existing
                 schema</td>
                 </tr>
                 <tr class="even">
                 <td><code>V2__create_schema.sql</code></td>
+                <td><code>src/main/resources/db/migration/</code></td>
                 <td>Creates <code>app_user</code> and
                 <code>product</code> tables with BIGSERIAL PKs</td>
                 </tr>
+                <tr class="odd">
+                <td><code>V3__seed_data.java</code></td>
+                <td><code>src/main/java/db/migration/</code></td>
+                <td>Seeds fixture users and 8 sample products with
+                BCrypt-hashed passwords</td>
+                </tr>
                 </tbody>
                 </table>
-                <p>Seed data (fixture users and products) is inserted at
-                application startup by <code>DataSeeder.java</code>,
-                which is active in all non-production profiles
-                (<code>@Profile("!prod")</code>). See <a
+                <p><code>V3__seed_data.java</code> is a Java migration
+                (extends <code>BaseJavaMigration</code>) rather than
+                SQL, so it can invoke <code>BCryptPasswordEncoder</code>
+                to hash passwords at migration time. All inserts are
+                idempotent — each row is only added if it does not
+                already exist. This migration runs in all environments
+                including production.</p>
+                <p><code>DataSeeder.java</code>
+                (<code>@Profile("!prod")</code>) remains in the codebase
+                as a fallback for test environments where Flyway is
+                disabled (<code>spring.flyway.enabled=false</code>). In
+                all Flyway-enabled environments, V3 populates the
+                database first and <code>DataSeeder</code>’s
+                <code>count() == 0</code> guards make it a no-op. See <a
                 href="./staging-config.html">Staging &amp;
                 Configuration</a> for details.</p>
                 <p>Flyway runs automatically on application startup via

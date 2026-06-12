@@ -43,16 +43,13 @@ Database Security (Parameterized SQL)</code></pre>
 
 Payload:
 {
-  &quot;sub&quot;: &quot;1&quot;,
-  &quot;username&quot;: &quot;john.doe&quot;,
-  &quot;role&quot;: &quot;ADMIN&quot;,
+  &quot;sub&quot;: &quot;john.doe&quot;,
+  &quot;role&quot;: &quot;ROLE_ADMIN&quot;,
   &quot;iat&quot;: 1701418200,
-  &quot;exp&quot;: 1701504600,
-  &quot;iss&quot;: &quot;stockease-backend&quot;,
-  &quot;aud&quot;: &quot;stockease-frontend&quot;
+  &quot;exp&quot;: 1701454200
 }</code></pre>
-                <p>Algorithm: HS256. Expiration: 24 hours
-                (<code>app.jwt.expiration=86400000</code>).</p>
+                <p>Algorithm: HS256. Expiration: 10 hours (hardcoded
+                <code>EXPIRATION_TIME = 36000000</code> ms).</p>
                 <h3 id="login-flow">Login Flow</h3>
                 <div class="mermaid">
                 sequenceDiagram
@@ -64,14 +61,14 @@ Payload:
                     BE->>BE: AuthenticationManager validates credentials
                     BE->>BE: UserRepository.findByUsername()
                     BE->>BE: BCrypt.matches(provided, stored)
-                    BE->>BE: JwtProvider.generateToken()
-                    BE-->>FE: 200 OK + { token, expiresIn }
+                    BE->>BE: JwtUtil.generateToken()
+                    BE-->>FE: 200 OK + ApiResponse { success: true, message: "Login successful", data: "<token>" }
                     FE-->>U: Store token in localStorage
                 </div>
                 <h3 id="token-validation-flow">Token Validation
                 Flow</h3>
                 <p>Every secured request passes through
-                <code>JwtAuthenticationFilter</code>:</p>
+                <code>JwtFilter</code>:</p>
                 <ol type="1">
                 <li>Extract token from
                 <code>Authorization: Bearer &lt;token&gt;</code>
@@ -79,42 +76,45 @@ Payload:
                 <li>Verify signature using secret key</li>
                 <li>Check expiration (<code>exp</code> claim vs current
                 time)</li>
-                <li>Extract claims (<code>userId</code>,
+                <li>Extract claims (<code>username</code>,
                 <code>role</code>)</li>
                 <li>Set <code>Authentication</code> in
                 <code>SecurityContext</code></li>
                 <li>If invalid or expired → 401 Unauthorized</li>
                 </ol>
-                <h3 id="jwttokenprovider">JwtTokenProvider</h3>
+                <h3 id="jwtutil">JwtUtil</h3>
+                <p><code>JwtUtil</code> generates and validates tokens.
+                Key behaviours:</p>
+                <ul>
+                <li>Token is signed with HS256 using a static secret
+                key</li>
+                <li>Token expires after 10 hours (hardcoded
+                <code>EXPIRATION_TIME = 36000000</code> ms)</li>
+                <li><code>sub</code> claim holds the username
+                string</li>
+                <li><code>role</code> claim holds the Spring role string
+                (e.g. <code>ROLE_ADMIN</code>)</li>
+                <li><code>validateToken()</code> catches
+                <code>JwtException</code> internally and returns
+                <code>false</code>; missing or invalid tokens cause
+                Spring Security to invoke
+                <code>CustomAuthenticationEntryPoint</code> → 401</li>
+                </ul>
                 <div class="sourceCode" id="cb3"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Component</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> JwtTokenProvider <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> JwtUtil <span class="op">{</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Value</span><span class="op">(</span><span class="st">&quot;${app.jwt.secret}&quot;</span><span class="op">)</span> <span class="kw">private</span> <span class="bu">String</span> jwtSecret<span class="op">;</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Value</span><span class="op">(</span><span class="st">&quot;${app.jwt.expiration:86400000}&quot;</span><span class="op">)</span> <span class="kw">private</span> <span class="dt">int</span> jwtExpiration<span class="op">;</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="bu">String</span> <span class="fu">generateToken</span><span class="op">(</span>Authentication authentication<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        AppUser user <span class="op">=</span> <span class="op">(</span>AppUser<span class="op">)</span> authentication<span class="op">.</span><span class="fu">getPrincipal</span><span class="op">();</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="bu">Date</span> now <span class="op">=</span> <span class="kw">new</span> <span class="bu">Date</span><span class="op">();</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Jwts<span class="op">.</span><span class="fu">builder</span><span class="op">()</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">setSubject</span><span class="op">(</span>user<span class="op">.</span><span class="fu">getId</span><span class="op">().</span><span class="fu">toString</span><span class="op">())</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">claim</span><span class="op">(</span><span class="st">&quot;username&quot;</span><span class="op">,</span> user<span class="op">.</span><span class="fu">getUsername</span><span class="op">())</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">claim</span><span class="op">(</span><span class="st">&quot;role&quot;</span><span class="op">,</span> user<span class="op">.</span><span class="fu">getRole</span><span class="op">())</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">setIssuedAt</span><span class="op">(</span>now<span class="op">)</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">setExpiration</span><span class="op">(</span><span class="kw">new</span> <span class="bu">Date</span><span class="op">(</span>now<span class="op">.</span><span class="fu">getTime</span><span class="op">()</span> <span class="op">+</span> jwtExpiration<span class="op">))</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">signWith</span><span class="op">(</span>SignatureAlgorithm<span class="op">.</span><span class="fu">HS512</span><span class="op">,</span> jwtSecret<span class="op">)</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">compact</span><span class="op">();</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">boolean</span> <span class="fu">validateToken</span><span class="op">(</span><span class="bu">String</span> token<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span> <span class="op">{</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>            Jwts<span class="op">.</span><span class="fu">parser</span><span class="op">().</span><span class="fu">setSigningKey</span><span class="op">(</span>jwtSecret<span class="op">).</span><span class="fu">parseClaimsJws</span><span class="op">(</span>token<span class="op">);</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">catch</span> <span class="op">(</span>JwtException <span class="op">|</span> <span class="bu">IllegalArgumentException</span> e<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="bu">String</span> <span class="fu">generateToken</span><span class="op">(</span><span class="bu">String</span> username<span class="op">,</span> <span class="bu">String</span> role<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="co">// builds JWT with sub=username, role claim, iat, exp</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="co">// signs with HS256 and the static secret key</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">boolean</span> <span class="fu">validateToken</span><span class="op">(</span><span class="bu">String</span> token<span class="op">)</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="bu">String</span> <span class="fu">extractUsername</span><span class="op">(</span><span class="bu">String</span> token<span class="op">)</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="bu">String</span> <span class="fu">extractRole</span><span class="op">(</span><span class="bu">String</span> token<span class="op">)</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <hr />
                 <h2 id="role-based-access-control-rbac">Role-Based
                 Access Control (RBAC)</h2>
@@ -123,7 +123,7 @@ Payload:
                 <div class="sourceCode" id="cb4"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@PostMapping</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">createProduct</span><span class="op">(</span><span class="at">@Valid</span> <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">createProduct</span><span class="op">(</span><span class="at">@Valid</span> <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
                 <p>Full authorization matrix is in <a
                 href="./layers.html">Service Layers</a>.</p>
                 <hr />
@@ -134,10 +134,11 @@ Payload:
                 <div class="sourceCode" id="cb5"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Bean</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> PasswordEncoder <span class="fu">passwordEncoder</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BCryptPasswordEncoder</span><span class="op">(</span><span class="dv">10</span><span class="op">);</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BCryptPasswordEncoder</span><span class="op">();</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <p>Verification at login:
-                <code>passwordEncoder.matches(providedRaw, storedHash)</code>.</p>
+                <code>passwordEncoder.matches(providedRaw, storedHash)</code>
+                (default cost factor 10).</p>
                 <hr />
                 <h2 id="cors-configuration">CORS Configuration</h2>
                 <div class="sourceCode" id="cb6"><pre
@@ -200,22 +201,40 @@ Payload:
                 all request DTOs:</p>
                 <div class="sourceCode" id="cb8"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> CreateProductRequest <span class="op">{</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span> <span class="at">@Size</span><span class="op">(</span>min <span class="op">=</span> <span class="dv">3</span><span class="op">,</span> max <span class="op">=</span> <span class="dv">255</span><span class="op">)</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> name<span class="op">;</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span> <span class="at">@DecimalMin</span><span class="op">(</span><span class="st">&quot;0.01&quot;</span><span class="op">)</span> <span class="at">@DecimalMax</span><span class="op">(</span><span class="st">&quot;999999.99&quot;</span><span class="op">)</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">BigDecimal</span> price<span class="op">;</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span> <span class="at">@Min</span><span class="op">(</span><span class="dv">0</span><span class="op">)</span> <span class="at">@Max</span><span class="op">(</span><span class="dv">1000000</span><span class="op">)</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Integer</span> quantity<span class="op">;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span> <span class="at">@NotBlank</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> name<span class="op">;</span>           <span class="co">// must not be blank</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span> <span class="at">@Min</span><span class="op">(</span><span class="dv">0</span><span class="op">)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Integer</span> quantity<span class="op">;</span>      <span class="co">// must be &gt;= 0</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span> <span class="at">@Positive</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Double</span> price<span class="op">;</span>          <span class="co">// must be &gt; 0</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span> <span class="at">@Pattern</span><span class="op">(</span>regexp <span class="op">=</span> <span class="st">&quot;^[A-Z0-9-]{3,50}$&quot;</span><span class="op">)</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> sku<span class="op">;</span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> UpdateQuantityRequest <span class="op">{</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span> <span class="at">@Min</span><span class="op">(</span><span class="dv">0</span><span class="op">)</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Integer</span> quantity<span class="op">;</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> UpdatePriceRequest <span class="op">{</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span> <span class="at">@Positive</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">Double</span> price<span class="op">;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> UpdateNameRequest <span class="op">{</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotNull</span> <span class="at">@NotBlank</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="bu">String</span> name<span class="op">;</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> LoginRequest <span class="op">{</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span> <span class="kw">private</span> <span class="bu">String</span> username<span class="op">;</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">@NotBlank</span> <span class="kw">private</span> <span class="bu">String</span> password<span class="op">;</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <p>Validation failures are caught by
-                <code>GlobalExceptionHandler</code> and returned as 400
-                with field-level error details.</p>
+                <code>GlobalExceptionHandler</code> and returned as
+                <code>ApiResponse&lt;Map&lt;String,String&gt;&gt;</code>
+                with HTTP 400 and a <code>data</code> map of field →
+                error message.</p>
                 <hr />
                 <h2 id="sql-injection-prevention">SQL Injection
                 Prevention</h2>
@@ -223,12 +242,12 @@ Payload:
                 exclusively. String concatenation in queries is
                 prohibited.</p>
                 <div class="sourceCode" id="cb9"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Safe — Spring Data parameterizes automatically</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>productRepository<span class="op">.</span><span class="fu">findBySku</span><span class="op">(</span>userProvidedSku<span class="op">);</span></span>
+                class="sourceCode java"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Safe — Spring Data derived query, parameterized automatically</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>productRepository<span class="op">.</span><span class="fu">findByNameContainingIgnoreCase</span><span class="op">(</span>userProvidedName<span class="op">);</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Safe — named parameter in custom query</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.sku = ?1&quot;</span><span class="op">)</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>Optional<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findBySku</span><span class="op">(</span><span class="bu">String</span> sku<span class="op">);</span></span></code></pre></div>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Safe — named parameter in custom JPQL query</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.quantity &lt; :threshold&quot;</span><span class="op">)</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="at">@Param</span><span class="op">(</span><span class="st">&quot;threshold&quot;</span><span class="op">)</span> <span class="dt">int</span> threshold<span class="op">);</span></span></code></pre></div>
                 <hr />
                 <h2 id="http-security-headers">HTTP Security
                 Headers</h2>
@@ -308,12 +327,15 @@ Payload:
                 environment variables in production.</p>
                 <hr />
                 <h2 id="audit-logging">Audit Logging</h2>
-                <p>Logged events: login attempts (success/failure),
-                product creation/modification/deletion, authorization
-                failures (403), server errors (500).</p>
-                <pre><code>[2025-10-31 10:30:45] INFO  [AuthService] User &#39;john.doe&#39; logged in successfully
-[2025-10-31 10:31:12] INFO  [ProductService] Product &#39;Widget&#39; created by admin
-[2025-10-31 10:32:00] WARN  [SecurityFilter] Unauthorized access attempt: invalid token</code></pre>
+                <p>Key events are logged at the controller level using
+                SLF4J. Logging is configured via
+                <code>application.properties</code>:</p>
+                <pre><code>logging.level.com.stocks.stockease=INFO
+logging.level.org.springframework=INFO</code></pre>
+                <p>Example log output:</p>
+                <pre><code>[2025-10-31 10:30:45] INFO  [AuthController] Login attempt for user &#39;john.doe&#39;
+[2025-10-31 10:31:12] INFO  [ProductController] Creating product: {name=Widget, quantity=10, price=9.99}
+[2025-10-31 10:32:00] DEBUG [JwtFilter] JWT validation failed for token</code></pre>
                 <hr />
                 <h2 id="production-deployment-checklist">Production
                 Deployment Checklist</h2>

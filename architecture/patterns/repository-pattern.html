@@ -28,7 +28,7 @@
                 <h2 id="pattern-structure">Pattern Structure</h2>
                 <div class="mermaid">
                 graph TD
-                    A[Service Layer] -->|uses| B[Repository Interface — Spring Data JPA]
+                    A[Controller Layer] -->|uses| B[Repository Interface — Spring Data JPA]
                     B -->|extends| C[JpaRepository T, ID]
                     C -->|Spring generates| D[Repository Proxy Implementation]
                     D -->|uses| E[EntityManager — Hibernate]
@@ -46,19 +46,25 @@
                 Interfaces</h2>
                 <h3 id="userrepository">UserRepository</h3>
                 <div class="sourceCode" id="cb1"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> UserRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>AppUser<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
+                class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> UserRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>User<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>AppUser<span class="op">&gt;</span> <span class="fu">findByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">boolean</span> <span class="fu">existsByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>User<span class="op">&gt;</span> <span class="fu">findByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <h3 id="productrepository">ProductRepository</h3>
                 <div class="sourceCode" id="cb2"><pre
                 class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> ProductRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>Product<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByNameContainingIgnoreCase</span><span class="op">(</span><span class="bu">String</span> name<span class="op">);</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="dt">int</span> threshold<span class="op">);</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    Page<span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAll</span><span class="op">(</span><span class="bu">Pageable</span> pageable<span class="op">);</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.quantity &lt; :threshold&quot;</span><span class="op">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="at">@Param</span><span class="op">(</span><span class="st">&quot;threshold&quot;</span><span class="op">)</span> <span class="dt">int</span> threshold<span class="op">);</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p ORDER BY p.id ASC&quot;</span><span class="op">)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAllOrderById</span><span class="op">();</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p&quot;</span><span class="op">)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> <span class="fu">calculateTotalStockValue</span><span class="op">();</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByNameContainingIgnoreCase</span><span class="op">(</span><span class="bu">String</span> name<span class="op">);</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <hr />
                 <h2 id="query-method-naming-convention">Query Method
                 Naming Convention</h2>
@@ -77,60 +83,44 @@
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td><code>findByNameContainingIgnoreCase(String name)</code></td>
-                <td><code>WHERE LOWER(name) LIKE LOWER(?)</code></td>
-                </tr>
-                <tr class="even">
-                <td><code>findByQuantityLessThan(int threshold)</code></td>
-                <td><code>WHERE quantity &lt; ?</code></td>
-                </tr>
-                <tr class="odd">
                 <td><code>findByUsername(String username)</code></td>
                 <td><code>WHERE username = ?</code></td>
                 </tr>
                 <tr class="even">
-                <td><code>existsByUsername(String username)</code></td>
-                <td><code>SELECT COUNT(*) &gt; 0 WHERE username = ?</code></td>
-                </tr>
-                <tr class="odd">
-                <td><code>findByPriceGreaterThan(BigDecimal)</code></td>
-                <td><code>WHERE price &gt; ?</code></td>
-                </tr>
-                <tr class="even">
-                <td><code>findByPriceLessThanEqual(BigDecimal)</code></td>
-                <td><code>WHERE price &lt;= ?</code></td>
+                <td><code>findByNameContainingIgnoreCase(String name)</code></td>
+                <td><code>WHERE LOWER(name) LIKE LOWER(?)</code></td>
                 </tr>
                 </tbody>
                 </table>
                 <hr />
-                <h2 id="usage-in-service-layer">Usage in Service
-                Layer</h2>
+                <h2 id="usage-in-controllers">Usage in Controllers</h2>
+                <p>Controllers inject repositories directly — there is
+                no intermediate service layer.</p>
                 <div class="sourceCode" id="cb3"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Service</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductService <span class="op">{</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Transactional</span><span class="op">(</span>readOnly <span class="op">=</span> <span class="kw">true</span><span class="op">)</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> Page<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">getProducts</span><span class="op">(</span><span class="dt">int</span> page<span class="op">,</span> <span class="dt">int</span> size<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">Pageable</span> pageable <span class="op">=</span> PageRequest<span class="op">.</span><span class="fu">of</span><span class="op">(</span>page<span class="op">,</span> size<span class="op">);</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> productRepository<span class="op">.</span><span class="fu">findAll</span><span class="op">(</span>pageable<span class="op">)</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">map</span><span class="op">(</span>ProductDTO<span class="op">::</span>fromEntity<span class="op">);</span></span>
+                class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@RestController</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">@RequestMapping</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductController <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">final</span> ProductRepository productRepository<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">getAllProducts</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> productRepository<span class="op">.</span><span class="fu">findAllOrderById</span><span class="op">();</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Transactional</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ProductDTO <span class="fu">createProduct</span><span class="op">(</span>CreateProductRequest request<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        Product product <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>            request<span class="op">.</span><span class="fu">getName</span><span class="op">(),</span> request<span class="op">.</span><span class="fu">getQuantity</span><span class="op">(),</span> request<span class="op">.</span><span class="fu">getPrice</span><span class="op">());</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        product<span class="op">.</span><span class="fu">setTotalValue</span><span class="op">(</span>request<span class="op">.</span><span class="fu">getPrice</span><span class="op">()</span> <span class="op">*</span> request<span class="op">.</span><span class="fu">getQuantity</span><span class="op">());</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ProductDTO<span class="op">.</span><span class="fu">fromEntity</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span>product<span class="op">));</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Transactional</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="bu">Long</span> id<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        Product product <span class="op">=</span> productRepository<span class="op">.</span><span class="fu">findById</span><span class="op">(</span>id<span class="op">)</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span><span class="fu">orElseThrow</span><span class="op">(()</span> <span class="op">-&gt;</span> <span class="kw">new</span> <span class="fu">EntityNotFoundException</span><span class="op">(</span><span class="st">&quot;Product not found&quot;</span><span class="op">));</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        productRepository<span class="op">.</span><span class="fu">delete</span><span class="op">(</span>product<span class="op">);</span></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">createProduct</span><span class="op">(</span><span class="at">@Valid</span> <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ResponseEntity<span class="op">.</span><span class="fu">ok</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>            <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span>req<span class="op">.</span><span class="fu">getName</span><span class="op">(),</span> req<span class="op">.</span><span class="fu">getQuantity</span><span class="op">(),</span> req<span class="op">.</span><span class="fu">getPrice</span><span class="op">())));</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="at">@PathVariable</span> <span class="dt">long</span> id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>productRepository<span class="op">.</span><span class="fu">existsById</span><span class="op">(</span>id<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> ResponseEntity<span class="op">.</span><span class="fu">status</span><span class="op">(</span>HttpStatus<span class="op">.</span><span class="fu">NOT_FOUND</span><span class="op">)</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">body</span><span class="op">(</span><span class="kw">new</span> ApiResponse<span class="op">&lt;&gt;(</span><span class="kw">false</span><span class="op">,</span> <span class="st">&quot;Cannot delete. Product with ID &quot;</span> <span class="op">+</span> id <span class="op">+</span> <span class="st">&quot; does not exist.&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">));</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        productRepository<span class="op">.</span><span class="fu">deleteById</span><span class="op">(</span>id<span class="op">);</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ResponseEntity<span class="op">.</span><span class="fu">ok</span><span class="op">(</span><span class="kw">new</span> ApiResponse<span class="op">&lt;&gt;(</span><span class="kw">true</span><span class="op">,</span> <span class="st">&quot;Product with ID &quot;</span> <span class="op">+</span> id <span class="op">+</span> <span class="st">&quot; has been successfully deleted.&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">));</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <hr />
                 <h2 id="pagination">Pagination</h2>
                 <div class="sourceCode" id="cb4"><pre
@@ -148,57 +138,43 @@
                 <code>PaginatedResponse&lt;T&gt;</code> DTO.</p>
                 <hr />
                 <h2 id="custom-queries">Custom Queries</h2>
-                <h3 id="jpql">JPQL</h3>
+                <p>StockEase uses <code>@Query</code> for three methods
+                that can’t be expressed with derived method names:</p>
                 <div class="sourceCode" id="cb5"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Named parameter</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.price &gt; :minPrice&quot;</span><span class="op">)</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findExpensiveProducts</span><span class="op">(</span><span class="at">@Param</span><span class="op">(</span><span class="st">&quot;minPrice&quot;</span><span class="op">)</span> <span class="bu">BigDecimal</span> minPrice<span class="op">);</span></span></code></pre></div>
-                <h3 id="native-sql">Native SQL</h3>
-                <div class="sourceCode" id="cb6"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> <span class="st">&quot;&quot;&quot;</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="st">        SELECT p.* FROM products p</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="st">        WHERE p.created_at &gt; NOW() - INTERVAL &#39;7 days&#39;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="st">        ORDER BY p.price DESC</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="st">        &quot;&quot;&quot;</span><span class="op">,</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    nativeQuery <span class="op">=</span> <span class="kw">true</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findRecentProducts</span><span class="op">();</span></span></code></pre></div>
+                class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Named parameter — explicit JPQL chosen over derived method for low-stock threshold queries</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.quantity &lt; :threshold&quot;</span><span class="op">)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="at">@Param</span><span class="op">(</span><span class="st">&quot;threshold&quot;</span><span class="op">)</span> <span class="dt">int</span> threshold<span class="op">);</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Explicit ORDER BY id (Spring Data&#39;s findAll(Sort) would also work, but this is self-documenting)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p ORDER BY p.id ASC&quot;</span><span class="op">)</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAllOrderById</span><span class="op">();</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Aggregate with COALESCE to return 0 instead of null when table is empty</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p&quot;</span><span class="op">)</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> <span class="fu">calculateTotalStockValue</span><span class="op">();</span></span></code></pre></div>
                 <hr />
                 <h2 id="transaction-management">Transaction
                 Management</h2>
-                <p><strong>Read operations</strong> use
-                <code>@Transactional(readOnly = true)</code> — the
-                database can apply read optimizations and no write locks
-                are held.</p>
-                <p><strong>Write operations</strong> use
-                <code>@Transactional</code> to ensure atomicity:</p>
-                <div class="sourceCode" id="cb7"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Transactional</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">createAndAudit</span><span class="op">(</span>CreateProductRequest request<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    Product product <span class="op">=</span> productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span><span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span>request<span class="op">));</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    auditRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span><span class="kw">new</span> <span class="fu">AuditEvent</span><span class="op">(</span>product<span class="op">.</span><span class="fu">getId</span><span class="op">(),</span> <span class="st">&quot;CREATE&quot;</span><span class="op">));</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// If either save throws, both roll back automatically</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+                <p>Spring Data JPA wraps each repository method call in
+                its own transaction automatically. There is no
+                application-level <code>@Transactional</code> in
+                StockEase because all write operations are single
+                <code>save()</code> or <code>delete()</code> calls —
+                each is inherently atomic. If multi-step write sequences
+                are added in the future, explicit
+                <code>@Transactional</code> on the calling controller
+                method would enforce atomicity across both steps.</p>
                 <hr />
                 <h2 id="n1-query-prevention">N+1 Query Prevention</h2>
-                <p>The current <code>Product</code> entity has no
-                associations (no <code>@ManyToOne</code> or
-                <code>@OneToMany</code> relationships), so N+1 is not a
-                current concern. If associations are added in the future
-                (e.g., <code>createdBy → AppUser</code>), use fetch
-                joins to prevent N+1 queries:</p>
-                <div class="sourceCode" id="cb8"><pre
-                class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Problem: N+1 queries with a hypothetical association</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;&quot;&quot;</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT DISTINCT p FROM Product p</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="st">    LEFT JOIN FETCH p.createdBy</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span><span class="op">)</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAllWithCreator</span><span class="op">();</span></span></code></pre></div>
-                <p>Use <code>FetchType.LAZY</code> by default on any
-                future associations. Switch to <code>EAGER</code> or use
-                fetch joins only when the association is always
-                needed.</p>
+                <p>Neither <code>Product</code> nor <code>User</code>
+                has JPA associations
+                (<code>@ManyToOne</code>/<code>@OneToMany</code>), so
+                N+1 is not a concern in the current schema. If
+                associations are added in the future, use
+                <code>FetchType.LAZY</code> by default and prefer fetch
+                joins (<code>LEFT JOIN FETCH</code>) in
+                <code>@Query</code> methods over <code>EAGER</code>
+                loading.</p>
                 <hr />
                 <p><a href="./index.html">Back to Patterns Index</a></p>
             </div>
