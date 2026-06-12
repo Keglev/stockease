@@ -20,195 +20,189 @@
         <aside id="sidebar"></aside>
         <main>
             <div class="content">
-                <h1 id="ci-pipeline-tests">CI Pipeline Tests</h1>
-                <p><strong>Purpose</strong>: Document how tests run in
-                GitHub Actions and what gates block a merge.</p>
+                <h1 id="contributing-to-documentation">Contributing to
+                Documentation</h1>
+                <p><strong>Purpose</strong>: Guide for writing,
+                updating, and maintaining StockEase architecture
+                documentation.</p>
                 <hr />
-                <h2 id="pipeline-overview">Pipeline Overview</h2>
-                <pre><code>Push to main or PR
-    ↓
-Checkout + Setup JDK 17
-    ↓
-[Gate 1] Build — mvn clean compile
-    ↓ fail → block merge
-[Gate 2] Tests — mvn test
-    ↓ fail → block merge
-[Gate 3] Coverage — mvn jacoco:report
-    ↓ &lt; 70% → block merge
-[Gate 4] Code Quality — mvn spotbugs:check
-    ↓ high priority issues → block merge
-    ↓
-SUCCESS</code></pre>
-                <p><strong>Estimated total time</strong>: ~60
-                seconds</p>
+                <h2 id="principles">Principles</h2>
+                <p>Documentation is a first-class artifact — treated the
+                same as code. It must be updated when the code it
+                describes changes, reviewed during code review, and kept
+                accurate enough that a new developer can onboard from it
+                alone.</p>
                 <hr />
-                <h2 id="quality-gates">Quality Gates</h2>
+                <h2 id="when-to-update-documentation">When to Update
+                Documentation</h2>
                 <table>
                 <colgroup>
-                <col style="width: 20%" />
-                <col style="width: 37%" />
-                <col style="width: 41%" />
+                <col style="width: 61%" />
+                <col style="width: 38%" />
                 </colgroup>
                 <thead>
                 <tr class="header">
-                <th>Gate</th>
-                <th>Condition</th>
-                <th>On Failure</th>
+                <th>Change Type</th>
+                <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td>Build</td>
-                <td>No compilation errors</td>
-                <td>Block merge</td>
+                <td>New feature or endpoint</td>
+                <td>Add or update the relevant architecture doc before
+                merging</td>
                 </tr>
                 <tr class="even">
-                <td>Tests</td>
-                <td>All test classes pass, 0 failures</td>
-                <td>Block merge</td>
+                <td>Bug fix that changes behavior</td>
+                <td>Update the doc that describes that behavior</td>
                 </tr>
                 <tr class="odd">
-                <td>Coverage</td>
-                <td>Line coverage ≥ 70%</td>
-                <td>Block merge</td>
+                <td>Refactor</td>
+                <td>Update affected docs to reflect the new
+                structure</td>
                 </tr>
                 <tr class="even">
-                <td>Code quality</td>
-                <td>No high-priority SpotBugs issues</td>
-                <td>Warn or block (configurable)</td>
+                <td>New test pattern</td>
+                <td>Document in the relevant <code>/testing/</code>
+                file</td>
+                </tr>
+                <tr class="odd">
+                <td>Infrastructure change</td>
+                <td>Update <code>/deployment/</code> docs</td>
+                </tr>
+                <tr class="even">
+                <td>Architecture decision</td>
+                <td>Add or update an ADR in
+                <code>/decisions/</code></td>
                 </tr>
                 </tbody>
                 </table>
                 <hr />
-                <h2 id="workflow-file-reference">Workflow File
-                Reference</h2>
-                <div class="sourceCode" id="cb2"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># .github/workflows/ci-build.yml</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> mvn clean compile</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Test</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> mvn test</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Coverage report</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> mvn jacoco:report</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Coverage gate</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> mvn jacoco:check -Djacoco.minimum=0.70</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Upload test reports</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-artifact@v3</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">if</span><span class="kw">:</span><span class="at"> always()</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> test-reports</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> backend/target/surefire-reports/</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">retention-days</span><span class="kw">:</span><span class="at"> </span><span class="dv">30</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Upload coverage report</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-artifact@v3</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">if</span><span class="kw">:</span><span class="at"> always()</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> jacoco-report</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> backend/target/site/jacoco/</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">retention-days</span><span class="kw">:</span><span class="at"> </span><span class="dv">30</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Publish coverage to GitHub Pages</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/upload-pages-artifact@v2</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> backend/target/site/jacoco/</span></span></code></pre></div>
-                <hr />
-                <h2 id="test-classes-run-in-ci">Test Classes Run in
-                CI</h2>
+                <h2 id="where-files-belong">Where Files Belong</h2>
                 <table>
+                <colgroup>
+                <col style="width: 54%" />
+                <col style="width: 45%" />
+                </colgroup>
                 <thead>
                 <tr class="header">
-                <th>Class</th>
-                <th>Type</th>
-                <th>Methods</th>
+                <th>Content Type</th>
+                <th>Directory</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td><code>AuthControllerTest</code></td>
-                <td>Unit</td>
-                <td>4</td>
+                <td>System architecture (layers, components,
+                security)</td>
+                <td><code>/architecture/system/</code></td>
                 </tr>
                 <tr class="even">
-                <td><code>ProductControllerTest</code></td>
-                <td>Slice</td>
-                <td>3+</td>
+                <td>Test strategy, patterns, coverage</td>
+                <td><code>/architecture/testing/</code></td>
                 </tr>
                 <tr class="odd">
-                <td><code>ProductCreateControllerTest</code></td>
-                <td>Slice</td>
-                <td>3</td>
+                <td>CI/CD, Docker, environments</td>
+                <td><code>/architecture/deployment/</code></td>
                 </tr>
                 <tr class="even">
-                <td><code>ProductFetchControllerTest</code></td>
-                <td>Slice</td>
-                <td>4</td>
+                <td>Why decisions were made</td>
+                <td><code>/architecture/decisions/</code></td>
                 </tr>
                 <tr class="odd">
-                <td><code>ProductUpdateControllerTest</code></td>
-                <td>Slice</td>
-                <td>3</td>
+                <td>How patterns are implemented</td>
+                <td><code>/architecture/patterns/</code></td>
                 </tr>
                 <tr class="even">
-                <td><code>ProductInvalidUpdateControllerTest</code></td>
-                <td>Slice</td>
-                <td>2</td>
+                <td>Specific component detail</td>
+                <td><code>/architecture/components/</code></td>
                 </tr>
                 <tr class="odd">
-                <td><code>ProductDeleteControllerTest</code></td>
-                <td>Slice</td>
-                <td>2</td>
-                </tr>
-                <tr class="even">
-                <td><code>ProductPaginationControllerTest</code></td>
-                <td>Slice</td>
-                <td>2</td>
-                </tr>
-                <tr class="odd">
-                <td><code>StockEaseApplicationTests</code></td>
-                <td>Integration</td>
-                <td>1</td>
+                <td>Pipeline and contribution guides</td>
+                <td><code>/docs/guides/</code></td>
                 </tr>
                 </tbody>
                 </table>
-                <p>Parameterized tests expand the total method count to
-                65+.</p>
                 <hr />
-                <h2 id="artifacts">Artifacts</h2>
-                <p>After each run, two artifacts are available in GitHub
-                Actions:</p>
-                <ul>
-                <li><code>test-reports</code> — Surefire XML and text
-                summaries</li>
-                <li><code>jacoco-report</code> — HTML coverage
-                report</li>
-                </ul>
-                <p>Coverage is also published to GitHub Pages:
-                <code>https://keglev.github.io/stockease/coverage/</code></p>
+                <h2 id="file-and-format-rules">File and Format
+                Rules</h2>
+                <p><strong>File naming</strong>: lowercase,
+                hyphen-separated. Example:
+                <code>security-patterns.md</code>.</p>
+                <p><strong>ADR naming</strong>:
+                <code>NNN-brief-description.md</code>. Example:
+                <code>003-authentication-mechanism.md</code>.</p>
+                <p><strong>File length</strong>: 150–250 lines per file.
+                If a file exceeds that, split by concern.</p>
+                <p><strong>Back links</strong>: every file must end with
+                a link back to its directory index.</p>
+                <p><strong>Mermaid diagrams</strong>: use Mermaid for
+                all diagrams — no ASCII art. Maximum 15–20 nodes per
+                diagram. Split into multiple diagrams if larger.</p>
+                <p><strong>Code examples</strong>: use only code that
+                exists in the actual codebase. No aspirational or
+                planned code in architecture docs.</p>
+                <p><strong>Future/planned content</strong>: does not
+                belong in architecture docs. Create an ADR if a
+                significant decision is pending, or track in the
+                backlog.</p>
                 <hr />
-                <h2 id="related-documentation">Related
-                Documentation</h2>
-                <ul>
-                <li><strong><a
-                href="./coverage-and-quality.html">Coverage &amp;
-                Quality</a></strong> — JaCoCo thresholds and pom.xml
-                config</li>
-                <li><strong><a href="./strategy.html">Testing
-                Strategy</a></strong> — What CI is gating against</li>
-                <li><strong><a
-                href="./troubleshooting.html">Troubleshooting</a></strong>
-                — CI failure diagnosis</li>
-                </ul>
+                <h2 id="writing-style">Writing Style</h2>
+                <p>Be direct. One file, one topic. No meta-sections
+                explaining how the document is structured. No “Best
+                Practices” sections that repeat content from other
+                files. No filler introductions.</p>
+                <p>Lead with what the document covers, then the content,
+                then the back link. Nothing else.</p>
                 <hr />
-                <p><strong>Last Updated</strong>: June 2026
-                <strong>Status</strong>: Current</p>
-                <p><a href="testing-architecture.html">Back to Testing
-                Architecture Index</a></p>
+                <h2 id="link-format">Link Format</h2>
+                <p>All links must be relative:</p>
+                <div class="sourceCode" id="cb1"><pre
+                class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">System Overview</span><span class="co">](./overview.md)</span>           ← same directory</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Backend</span><span class="co">](../system/backend.md)</span>            ← parent then child</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Decisions Index</span><span class="co">](../decisions/index.md)</span>   ← sibling directory</span></code></pre></div>
+                <p>The Lua filter in the pipeline converts
+                <code>.md</code> links to <code>.html</code>
+                automatically — always use <code>.md</code> extensions
+                in source files.</p>
+                <hr />
+                <h2 id="adding-a-new-document">Adding a New
+                Document</h2>
+                <ol type="1">
+                <li>Create the file in the correct directory following
+                naming rules</li>
+                <li>Add a back link at the bottom pointing to the
+                directory index</li>
+                <li>Add the file to the directory’s
+                <code>index.md</code></li>
+                <li>If it is a new ADR, follow the ADR format: Status,
+                Date, Context, Decision, Rationale, Alternatives
+                Considered, Consequences, Implementation Status</li>
+                <li>If the doc introduces a new directory, create an
+                <code>index.md</code> for that directory and add it to
+                the root <code>/docs/index.md</code></li>
+                </ol>
+                <hr />
+                <h2 id="maintenance-cadence">Maintenance Cadence</h2>
+                <p><strong>Before each release</strong>: verify that
+                <code>deployment/infrastructure.md</code> and
+                <code>system/overview.md</code> match the actual
+                production setup.</p>
+                <p><strong>After a refactor</strong>: update all
+                affected docs in the same PR as the code change.</p>
+                <p><strong>Monthly</strong>: scan for docs that
+                reference deleted files, non-existent components, or
+                outdated version numbers.</p>
+                <hr />
+                <h2 id="finding-things">Finding Things</h2>
+                <p>Each directory has an <code>index.md</code> with a
+                full document list. The root entry point is <a
+                href="../index.md"><code>/docs/index.md</code></a>. Use
+                GitHub’s file search (<code>t</code> key in the
+                repository) or VS Code (<code>Ctrl+P</code>) to find
+                files by name.</p>
+                <hr />
+                <p><a href="../index.md">Back to Documentation
+                Index</a></p>
             </div>
         </main>
     </div>

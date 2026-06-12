@@ -20,66 +20,129 @@
         <aside id="sidebar"></aside>
         <main>
             <div class="content">
-                <h1 id="architecture-decision-records">Architecture
-                Decision Records</h1>
-                <p>Architectural decisions made during the design and
-                implementation of StockEase, documented in ADR
-                format.</p>
+                <h1 id="testing-architecture">Testing Architecture</h1>
+                <p><strong>Purpose</strong>: Entry point for all testing
+                documentation in StockEase. Use this to orient yourself,
+                then follow the links to the relevant topic.</p>
                 <hr />
-                <h2 id="decision-records">Decision Records</h2>
+                <h2 id="quick-start">Quick Start</h2>
+                <p><strong>Prerequisites</strong>: JDK 17+, Maven 3.8+,
+                Spring Boot 3.5.7</p>
+                <div class="sourceCode" id="cb1"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run all tests</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend <span class="kw">&amp;&amp;</span> <span class="ex">mvn</span> clean test</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run a specific test class</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> test <span class="at">-Dtest</span><span class="op">=</span>AuthControllerTest</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Run tests with coverage report</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean test jacoco:report</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Open coverage report</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">open</span> backend/target/site/jacoco/index.html</span></code></pre></div>
+                <hr />
+                <h2 id="test-directory-layout">Test Directory
+                Layout</h2>
+                <pre><code>backend/src/test/
+├── java/com/stocks/stockease/
+│   ├── config/test/
+│   │   └── TestConfig.java
+│   ├── controller/
+│   │   ├── AuthControllerTest.java
+│   │   ├── ProductControllerTest.java
+│   │   ├── ProductCreateControllerTest.java
+│   │   ├── ProductDeleteControllerTest.java
+│   │   ├── ProductFetchControllerTest.java
+│   │   ├── ProductInvalidUpdateControllerTest.java
+│   │   ├── ProductPaginationControllerTest.java
+│   │   └── ProductUpdateControllerTest.java
+│   └── StockEaseApplicationTests.java
+└── resources/
+    └── application-test.properties</code></pre>
+                <hr />
+                <h2 id="navigation-by-role">Navigation by Role</h2>
+                <p><strong>Backend Developer</strong> Start with <a
+                href="./testing/spring-slices.html">Spring Slices</a>,
+                then <a href="./testing/security-tests.html">Security
+                Tests</a>, then <a
+                href="./testing/test-data-fixtures.html">Test Data &amp;
+                Fixtures</a>.</p>
+                <p><strong>DevOps / CI Engineer</strong> Start with <a
+                href="./testing/ci-pipeline-tests.html">CI Pipeline
+                Tests</a>, then <a
+                href="./testing/coverage-and-quality.html">Coverage
+                &amp; Quality</a>.</p>
+                <p><strong>QA / Test Engineer</strong> Start with <a
+                href="./testing/pyramid.html">Test Pyramid</a>, then <a
+                href="./testing/matrix.html">Coverage Matrix</a>, then
+                <a href="./testing/naming-conventions.html">Naming
+                Conventions</a>.</p>
+                <p><strong>New to the project</strong> Start with <a
+                href="./testing/strategy.html">Testing Strategy</a> for
+                goals and scope, then <a
+                href="./testing/matrix.html">Coverage Matrix</a> for
+                what is covered.</p>
+                <hr />
+                <h2 id="documentation-index">Documentation Index</h2>
+                <h3 id="strategy-and-coverage">Strategy and
+                Coverage</h3>
                 <ul>
-                <li><a href="./001-database-choice.html">ADR 001 —
-                Database Choice</a> — PostgreSQL for production, H2 for
-                tests, Flyway for migrations</li>
-                <li><a href="./002-validation-strategy.html">ADR 002 —
-                Validation Strategy</a> — Multi-layer validation with
-                JSR-303 annotations, service-level business rules, and
-                database constraints</li>
-                <li><a href="./003-authentication-mechanism.html">ADR
-                003 — Authentication Mechanism</a> — JWT stateless
-                tokens over session-based authentication</li>
+                <li><a href="./testing/strategy.html">Testing
+                Strategy</a> — Goals, philosophy, and scope</li>
+                <li><a href="./testing/pyramid.html">Test Pyramid</a> —
+                Test level distribution and rationale</li>
+                <li><a href="./testing/matrix.html">Coverage Matrix</a>
+                — Full test inventory by layer, endpoint, and role</li>
+                <li><a
+                href="./testing/coverage-and-quality.html">Coverage
+                &amp; Quality</a> — JaCoCo configuration and
+                thresholds</li>
+                </ul>
+                <h3 id="implementation-reference">Implementation
+                Reference</h3>
+                <ul>
+                <li><a href="./testing/spring-slices.html">Spring
+                Slices</a> — <code>@WebMvcTest</code>,
+                <code>@DataJpaTest</code>,
+                <code>@SpringBootTest</code></li>
+                <li><a
+                href="./testing/controller-integration.html">Controller
+                Integration Tests</a> — MockMvc request and assertion
+                patterns</li>
+                <li><a href="./testing/security-tests.html">Security
+                Tests</a> — JWT and role-based access control tests</li>
+                <li><a href="./testing/test-data-fixtures.html">Test
+                Data &amp; Fixtures</a> — TestConfig, mock setup,
+                builder pattern</li>
+                <li><a href="./testing/naming-conventions.html">Naming
+                Conventions</a> — Test class and method naming
+                rules</li>
+                </ul>
+                <h3 id="operations">Operations</h3>
+                <ul>
+                <li><a href="./testing/ci-pipeline-tests.html">CI
+                Pipeline Tests</a> — Pipeline gates and GitHub Actions
+                workflow</li>
+                <li><a
+                href="./testing/troubleshooting.html">Troubleshooting</a>
+                — Common errors and fixes</li>
                 </ul>
                 <hr />
-                <h2 id="adr-status-key">ADR Status Key</h2>
-                <table>
-                <thead>
-                <tr class="header">
-                <th>Status</th>
-                <th>Meaning</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="odd">
-                <td>Accepted</td>
-                <td>Decision is in effect</td>
-                </tr>
-                <tr class="even">
-                <td>Deprecated</td>
-                <td>Superseded by a newer decision</td>
-                </tr>
-                <tr class="odd">
-                <td>Proposed</td>
-                <td>Under review, not yet implemented</td>
-                </tr>
-                </tbody>
-                </table>
-                <hr />
-                <h2 id="related-documentation">Related
-                Documentation</h2>
+                <h2 id="related-architecture">Related Architecture</h2>
                 <ul>
-                <li><a href="../system/overview.html">System
-                Overview</a> — Design decisions in context</li>
-                <li><a href="../system/security.html">Security
-                Architecture</a> — JWT and BCrypt implementation</li>
-                <li><a href="../patterns/index.html">Patterns</a> —
-                Implementation patterns</li>
+                <li><a href="./system/overview.html">System
+                Overview</a></li>
+                <li><a href="./system/backend.html">Backend
+                Architecture</a></li>
+                <li><a href="./system/security.html">Security
+                Architecture</a></li>
                 <li><a
-                href="../components/index.html">Components</a></li>
+                href="./deployment/deployment.html">Deployment</a></li>
                 </ul>
                 <hr />
                 <p><strong>Last Updated</strong>: June 2026
                 <strong>Status</strong>: Current</p>
-                <p><a href="../index.html">Back to Architecture
+                <p><a href="./index.html">Back to Architecture
                 Index</a></p>
             </div>
         </main>

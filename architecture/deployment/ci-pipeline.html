@@ -20,21 +20,53 @@
         <aside id="sidebar"></aside>
         <main>
             <div class="content">
-                <h1 id="cicd-pipeline-architecture">CI/CD Pipeline
-                Architecture</h1>
-                <h2 id="overview">Overview</h2>
-                <p>The CI/CD pipeline automates building, testing, and
-                deploying StockEase to production. Two workflows manage
-                the process: - <strong>deploy-backend.yml</strong>:
-                Builds and deploys backend to Koyeb -
-                <strong>docs-pipeline.yml</strong> +
-                <strong>docs-coverage-deploy.yml</strong>: Generates
-                documentation, collects coverage, and publishes to
-                GitHub Pages</p>
-                <h2
-                id="deployment-workflow-deploy-backend.yml">Deployment
-                Workflow (deploy-backend.yml)</h2>
-                <h3 id="trigger-events">Trigger Events</h3>
+                <h1 id="cicd-pipeline">CI/CD Pipeline</h1>
+                <p><strong>Purpose</strong>: Document the GitHub Actions
+                workflows that build, test, deploy, and publish
+                documentation for StockEase.</p>
+                <hr />
+                <h2 id="workflows-overview">Workflows Overview</h2>
+                <table>
+                <colgroup>
+                <col style="width: 29%" />
+                <col style="width: 17%" />
+                <col style="width: 26%" />
+                <col style="width: 26%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Workflow</th>
+                <th>File</th>
+                <th>Trigger</th>
+                <th>Purpose</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Backend deploy</td>
+                <td><code>deploy-backend.yml</code></td>
+                <td>Push to <code>main</code> (excluding docs)</td>
+                <td>Build, test, deploy to Koyeb</td>
+                </tr>
+                <tr class="even">
+                <td>Docs generation</td>
+                <td><code>docs-pipeline.yml</code></td>
+                <td>Push to <code>main</code> (docs/pom.xml
+                changes)</td>
+                <td>Generate and publish documentation</td>
+                </tr>
+                <tr class="odd">
+                <td>Coverage deploy</td>
+                <td><code>docs-coverage-deploy.yml</code></td>
+                <td>On <code>docs-pipeline.yml</code> success</td>
+                <td>Run JaCoCo and publish coverage</td>
+                </tr>
+                </tbody>
+                </table>
+                <hr />
+                <h2 id="backend-deploy-workflow">Backend Deploy
+                Workflow</h2>
+                <h3 id="trigger">Trigger</h3>
                 <div class="sourceCode" id="cb1"><pre
                 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
@@ -44,468 +76,207 @@
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;.gitignore&#39;</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;.github/workflows/docs-pipeline.yml&#39;</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span></code></pre></div>
-                <p><strong>Triggers on</strong>: - Push to main branch
-                (excluding docs, .gitignore, and docs-pipeline.yml
-                changes) - Manual workflow dispatch</p>
-                <p><strong>Doesn’t trigger on</strong>: - Changes to
-                <code>/docs/</code> only - Changes to
-                <code>.gitignore</code> only - Changes to
-                <code>.github/workflows/docs-pipeline.yml</code>
-                only</p>
                 <h3 id="pipeline-stages">Pipeline Stages</h3>
                 <div class="mermaid">
                 graph TD
-                    A["1. Checkout Code<br/>Fetch repository from GitHub"] --> B["2. Detect project root<br/>detect-maven-project.sh"]
-                    B --> C["3. Validate Dockerfile<br/>validate-dockerfile.sh"]
-                    C --> D["4. Setup Java Environment<br/>JDK 17, Maven cache"]
-                    D --> E["5. Run Tests (conditional on RUN_TESTS)<br/>H2 in-memory, ~40 seconds"]
+                    A[1. Checkout + Detect root] --> B[2. Setup JDK 17 + Maven cache]
+                    B --> C[3. Run Tests — conditional]
+                    C --> D[4. Build — Maven verify]
+                    D --> E[5. Trigger Koyeb redeploy]
+                    E --> F[6. Wait for HEALTHY up to 10 min]
+                    F --> G[Success]
+                    C -->|fail| X[Stop — notify]
+                    F -->|timeout| Y[Fail — prior version stays live]
 
-                    E --> F["Tests Pass?"]
-                    F -->|Yes| G["6. Build Application<br/>Maven verify, create JAR"]
-                    F -->|No| H["Stop, notify"]
-
-                    G --> I["7. Trigger Koyeb Redeploy<br/>koyeb-redeploy.sh — POST API call"]
-                    I --> J["8. Wait for Healthy up to 10 min<br/>koyeb-wait-healthy.sh — poll every 10s"]
-
-                    J --> K["Deployment Healthy?"]
-                    K -->|Yes| L[Success]
-                    K -->|Timeout| M["Failure notification"]
-
-                    style A fill:#e3f2fd
-                    style B fill:#e3f2fd
-                    style C fill:#e3f2fd
-                    style D fill:#e3f2fd
-                    style E fill:#fff3e0
-                    style G fill:#e3f2fd
-                    style I fill:#fff3e0
-                    style J fill:#fff3e0
-                    style L fill:#c8e6c9
-                    style H fill:#ffcdd2
-                    style M fill:#ffcdd2
+                    style G fill:#c8e6c9
+                    style X fill:#ffcdd2
+                    style Y fill:#ffcdd2
                 </div>
                 <h3 id="stage-details">Stage Details</h3>
-                <h4 id="stage-1-checkout">Stage 1: Checkout</h4>
-                <div class="sourceCode" id="cb2"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Checkout repository</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span></code></pre></div>
-                <p><strong>Duration</strong>: ~5 seconds<br />
-                <strong>Purpose</strong>: Clone repository with full
-                history</p>
-                <h4 id="stage-2-setup-environment">Stage 2: Setup
-                Environment</h4>
-                <div class="sourceCode" id="cb3"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Set up JDK 17 with Maven cache</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/setup-java@v4</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">distribution</span><span class="kw">:</span><span class="at"> temurin</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">java-version</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;17&#39;</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">cache</span><span class="kw">:</span><span class="at"> maven</span></span></code></pre></div>
-                <p><strong>Duration</strong>: ~30 seconds (first run),
-                ~5 seconds (cached)<br />
-                <strong>Purpose</strong>: Install JDK 17 and Maven
-                dependencies</p>
-                <h4 id="stage-3-run-tests">Stage 3: Run Tests</h4>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Run tests</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">if</span><span class="kw">:</span><span class="at"> env.RUN_TESTS == &#39;true&#39;</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">working-directory</span><span class="kw">:</span><span class="at"> ${{ env.PROJECT_DIR }}</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> ./mvnw -B -ntp test</span></span></code></pre></div>
-                <p><strong>Duration</strong>: ~30-45 seconds<br />
-                <strong>Tests</strong>: 65+ unit and integration
-                tests<br />
-                <strong>Database</strong>: H2 in-memory<br />
-                <strong>Conditional</strong>: Controlled by
-                <code>RUN_TESTS</code> env var (default
-                <code>true</code>; set <code>false</code> only for
-                emergency hotfixes)<br />
-                <strong>Failure Handling</strong>: Stops pipeline if
-                tests fail</p>
-                <h4 id="stage-4-build-and-verify">Stage 4: Build and
-                Verify</h4>
-                <div class="sourceCode" id="cb5"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Build and verify</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">working-directory</span><span class="kw">:</span><span class="at"> ${{ env.PROJECT_DIR }}</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> ./mvnw -B -ntp -DskipTests -Dspringdoc.skip=true verify</span></span></code></pre></div>
-                <p><strong>Duration</strong>: ~20-30 seconds<br />
-                <strong>Purpose</strong>: Create JAR file, run verify
-                lifecycle; <code>-Dspringdoc.skip=true</code> prevents
-                redundant OpenAPI generation at build time</p>
-                <h4 id="stage-5-trigger-koyeb-redeploy">Stage 5: Trigger
-                Koyeb Redeploy</h4>
-                <div class="sourceCode" id="cb6"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Trigger Koyeb redeploy</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> bash .github/scripts/deploy/koyeb-redeploy.sh</span></span></code></pre></div>
-                <p><strong>Duration</strong>: ~5 seconds (API
-                call)<br />
-                <strong>Method</strong>:
-                <code>POST /v1/services/{id}/redeploy</code> — Koyeb
-                pulls the latest code and rebuilds from the
-                Dockerfile<br />
-                <strong>Success</strong>: HTTP 200, 201, or 202 response
-                from Koyeb API</p>
-                <h4 id="stage-6-wait-for-healthy">Stage 6: Wait for
-                Healthy</h4>
-                <div class="sourceCode" id="cb7"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wait for service healthy</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> bash .github/scripts/deploy/koyeb-wait-healthy.sh</span></span></code></pre></div>
-                <p><strong>Duration</strong>: Up to 10 minutes (60 polls
-                × 10-second interval)<br />
-                <strong>Success Criteria</strong>: Service reaches
-                <code>HEALTHY</code> or <code>READY</code> status<br />
-                <strong>Failure Handling</strong>: Pipeline fails;
-                previous healthy version remains running on Koyeb<br />
-                <strong>Env Overrides</strong>:
-                <code>POLL_ATTEMPTS</code> and
-                <code>POLL_INTERVAL</code> can override defaults</p>
-                <h3 id="total-pipeline-duration">Total Pipeline
-                Duration</h3>
                 <table>
+                <colgroup>
+                <col style="width: 17%" />
+                <col style="width: 41%" />
+                <col style="width: 24%" />
+                <col style="width: 17%" />
+                </colgroup>
                 <thead>
                 <tr class="header">
                 <th>Stage</th>
+                <th>Command / Action</th>
                 <th>Duration</th>
+                <th>Notes</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr class="odd">
                 <td>Checkout</td>
-                <td>5s</td>
+                <td><code>actions/checkout@v4</code></td>
+                <td>~5s</td>
+                <td>Full history</td>
                 </tr>
                 <tr class="even">
-                <td>Detect root + Validate</td>
+                <td>Detect root</td>
+                <td><code>detect-maven-project.sh</code></td>
                 <td>&lt;5s</td>
+                <td>Sets <code>PROJECT_DIR</code></td>
                 </tr>
                 <tr class="odd">
+                <td>Validate Dockerfile</td>
+                <td><code>validate-dockerfile.sh</code></td>
+                <td>&lt;5s</td>
+                <td>Fails fast if missing</td>
+                </tr>
+                <tr class="even">
                 <td>Setup JDK 17</td>
-                <td>30s</td>
-                </tr>
-                <tr class="even">
-                <td>Tests</td>
-                <td>40s</td>
-                </tr>
-                <tr class="odd">
-                <td>Build (verify)</td>
-                <td>25s</td>
-                </tr>
-                <tr class="even">
-                <td>Deploy (API)</td>
-                <td>5s</td>
+                <td><code>actions/setup-java@v4</code> (temurin, Maven
+                cache)</td>
+                <td>5–30s</td>
+                <td>Cached after first run</td>
                 </tr>
                 <tr class="odd">
-                <td>Health Check</td>
-                <td>10-120s</td>
+                <td>Run tests</td>
+                <td><code>./mvnw -B -ntp test</code></td>
+                <td>~40s</td>
+                <td>Controlled by <code>RUN_TESTS</code> env var
+                (default <code>true</code>)</td>
                 </tr>
                 <tr class="even">
-                <td><strong>Total</strong></td>
-                <td><strong>2-4 minutes</strong></td>
+                <td>Build</td>
+                <td><code>./mvnw -B -ntp -DskipTests -Dspringdoc.skip=true verify</code></td>
+                <td>~25s</td>
+                <td>Produces JAR</td>
+                </tr>
+                <tr class="odd">
+                <td>Koyeb redeploy</td>
+                <td><code>koyeb-redeploy.sh</code> —
+                <code>POST /v1/services/{id}/redeploy</code></td>
+                <td>~5s</td>
+                <td>Accepts 200/201/202</td>
+                </tr>
+                <tr class="even">
+                <td>Wait for healthy</td>
+                <td><code>koyeb-wait-healthy.sh</code> — polls every 10s
+                up to 60×</td>
+                <td>10–120s</td>
+                <td>HEALTHY or READY = success</td>
                 </tr>
                 </tbody>
                 </table>
-                <h2
-                id="documentation-workflow-docs-pipeline.yml-docs-coverage-deploy.yml">Documentation
-                Workflow (docs-pipeline.yml +
-                docs-coverage-deploy.yml)</h2>
-                <h3 id="trigger-events-1">Trigger Events</h3>
-                <div class="sourceCode" id="cb8"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">main</span><span class="kw">]</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">paths</span><span class="kw">:</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;docs/**&#39;</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;pom.xml&#39;</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;.github/workflows/docs-pipeline.yml&#39;</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span></code></pre></div>
-                <p><strong>Triggers on</strong>: - Push to main when
-                <code>docs/**</code>, <code>pom.xml</code>, or
-                <code>.github/workflows/docs-pipeline.yml</code> changes
-                - Manual workflow dispatch -
-                <code>docs-coverage-deploy.yml</code> additionally
-                triggers automatically when this workflow completes
-                successfully</p>
-                <h3 id="pipeline-stages-1">Pipeline Stages</h3>
-                <p>The documentation pipeline is split across two
-                workflows that run in sequence.</p>
-                <h4 id="docs-pipeline.yml">docs-pipeline.yml</h4>
-                <pre><code>┌──────────────────────────────────────┐
-│ 1. Checkout                          │
-│ fetch-depth: 0 (full history)        │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 2. Detect project root               │
-│ detect-maven-project.sh → PROJECT_DIR│
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 3. Set up Node.js 18                 │
-│ Install @redocly/cli                 │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 4. Generate API docs                 │
-│ generate-api-docs.sh                 │
-│ Reads docs/api/openapi.yaml (static) │
-│ Output: target/docs/api-docs.html    │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 5. Install Pandoc + generate docs    │
-│ generate-docs.sh (architecture/)     │
-│ generate-docs.sh (remaining docs)    │
-│ Pandoc + enterprise-docs.html tmpl   │
-│ Output: target/docs/**/*.html        │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 6. Fix directory links               │
-│ fix-directory-links.sh               │
-│ Rewrites href=&quot;path/&quot; → index.html   │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 7. Copy documentation index          │
-│ .github/scripts/templates/index.html │
-│ → target/docs/index.html             │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 8. Upload docs-site artifact         │
-│ Retained for docs-coverage-deploy    │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 9. Deploy to gh-pages                │
-│ peaceiris/actions-gh-pages@v3        │
-│ publish_dir: target/docs             │
-└──────────────┬───────────────────────┘
-               ↓
-         GitHub Pages auto-publishes
-    https://Keglev.github.io/stockease/</code></pre>
-                <h4
-                id="docs-coverage-deploy.yml-triggered-on-docs-pipeline-success">docs-coverage-deploy.yml
-                (triggered on docs-pipeline success)</h4>
-                <pre><code>┌──────────────────────────────────────┐
-│ 1. Checkout + Download artifact      │
-│ Downloads docs-site from docs-pipel. │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 2. Detect project root + JDK 17      │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 3. Run tests with JaCoCo             │
-│ mvn -B clean test                    │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 4. Generate coverage wrapper         │
-│ generate-coverage-wrapper.sh         │
-│ Creates index.html iframe + raw/     │
-└──────────────┬───────────────────────┘
-               ↓
-┌──────────────────────────────────────┐
-│ 5. Deploy coverage to gh-pages       │
-│ publish_dir: target/docs/coverage    │
-│ destination_dir: coverage            │
-│ (deploys to /coverage — not root)    │
-└──────────────────────────────────────┘</code></pre>
+                <p><strong>Total pipeline time</strong>: 2–4
+                minutes.</p>
+                <p><code>RUN_TESTS=false</code> is reserved for
+                emergency hotfixes only. Tests must pass on all normal
+                deployments.</p>
+                <hr />
+                <h2 id="documentation-workflow">Documentation
+                Workflow</h2>
+                <h3 id="docs-pipeline.yml">docs-pipeline.yml</h3>
+                <p><strong>Trigger</strong>: push to <code>main</code>
+                when <code>docs/**</code>, <code>pom.xml</code>, or
+                <code>.github/workflows/docs-pipeline.yml</code>
+                changes, or manual dispatch.</p>
+                <p><strong>Stages</strong>:</p>
+                <ol type="1">
+                <li>Checkout (full history) + detect project root</li>
+                <li>Setup Node.js 18 + install
+                <code>@redocly/cli</code></li>
+                <li><code>generate-api-docs.sh</code> — reads
+                <code>docs/api/openapi.yaml</code> → outputs
+                <code>target/docs/api-docs.html</code></li>
+                <li><code>generate-docs.sh</code> — Pandoc converts
+                <code>docs/architecture/</code> using enterprise
+                template + Lua filter</li>
+                <li><code>fix-directory-links.sh</code> — rewrites
+                <code>href="path/index.html"</code> to
+                <code>index.html</code></li>
+                <li>Copy <code>templates/index.html</code> →
+                <code>target/docs/index.html</code></li>
+                <li>Upload <code>docs-site</code> artifact</li>
+                <li>Deploy <code>target/docs</code> to
+                <code>gh-pages</code> via
+                <code>peaceiris/actions-gh-pages@v3</code></li>
+                </ol>
+                <h3
+                id="docs-coverage-deploy.yml">docs-coverage-deploy.yml</h3>
+                <p><strong>Trigger</strong>: automatically on
+                <code>docs-pipeline.yml</code> success.</p>
+                <p><strong>Stages</strong>:</p>
+                <ol type="1">
+                <li>Checkout + download <code>docs-site</code> artifact
+                + setup JDK 17</li>
+                <li><code>mvn -B clean test</code> — runs full test
+                suite with JaCoCo</li>
+                <li><code>generate-coverage-wrapper.sh</code> — creates
+                iframe wrapper over raw JaCoCo HTML</li>
+                <li>Deploy <code>target/docs/coverage</code> to
+                <code>gh-pages</code> at <code>/coverage</code>
+                subfolder (does not overwrite root docs)</li>
+                </ol>
+                <hr />
                 <h2 id="secret-management">Secret Management</h2>
-                <h3 id="required-github-secrets">Required GitHub
-                Secrets</h3>
                 <table>
                 <colgroup>
-                <col style="width: 23%" />
-                <col style="width: 26%" />
-                <col style="width: 23%" />
-                <col style="width: 26%" />
+                <col style="width: 30%" />
+                <col style="width: 34%" />
+                <col style="width: 34%" />
                 </colgroup>
                 <thead>
                 <tr class="header">
                 <th>Secret</th>
                 <th>Purpose</th>
-                <th>Set On</th>
                 <th>Used By</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr class="odd">
                 <td><code>KOYEB_API_KEY</code></td>
-                <td>Deploy to Koyeb</td>
-                <td>Settings → Secrets</td>
-                <td>deploy-backend.yml</td>
+                <td>Authenticate Koyeb API calls</td>
+                <td><code>deploy-backend.yml</code></td>
                 </tr>
                 <tr class="even">
                 <td><code>KOYEB_SERVICE_ID</code></td>
-                <td>Target service</td>
-                <td>Settings → Secrets</td>
-                <td>deploy-backend.yml</td>
+                <td>Target service for redeploy</td>
+                <td><code>deploy-backend.yml</code></td>
                 </tr>
                 <tr class="odd">
                 <td><code>GITHUB_TOKEN</code></td>
-                <td>CI/CD operations</td>
-                <td>Auto-provided</td>
-                <td>docs-pipeline.yml / docs-coverage-deploy.yml</td>
+                <td>CI/CD operations, gh-pages deploy</td>
+                <td>Auto-provided by GitHub</td>
                 </tr>
                 </tbody>
                 </table>
-                <h3 id="no-secrets-in-code">No Secrets in Code</h3>
-                <p>✅ <strong>Secrets in environment variables
-                only</strong>:</p>
-                <div class="sourceCode" id="cb11"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span></code></pre></div>
-                <p>❌ <strong>Never hardcode secrets</strong>:</p>
-                <div class="sourceCode" id="cb12"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> abc123...</span><span class="co"> # NEVER!</span></span></code></pre></div>
-                <h2 id="failure-handling">Failure Handling</h2>
-                <h3 id="test-failures">Test Failures</h3>
-                <pre><code>If tests fail:
-1. Pipeline stops immediately
-2. GitHub marks commit as failed
-3. Notification sent
-4. Manual review required before retry</code></pre>
-                <p><strong>Recovery</strong>: - Fix failing tests -
-                Commit fix to main - Pipeline automatically re-runs</p>
-                <h3 id="build-failures">Build Failures</h3>
-                <pre><code>If build fails:
-1. JAR creation fails
-2. Pipeline stops at build stage
-3. Notification sent
-4. Check compilation errors in logs</code></pre>
-                <h3 id="deployment-failures">Deployment Failures</h3>
-                <pre><code>If Koyeb health check fails:
-1. Service status remains UNHEALTHY
-2. Previous healthy version still running
-3. Auto-rollback (no manual intervention)
-4. Notification sent for investigation</code></pre>
-                <h3 id="health-check-timeout">Health Check Timeout</h3>
-                <pre><code>If service doesn&#39;t reach HEALTHY in 10 minutes:
-1. Deployment marked as failed
-2. Service remains in unhealthy state
-3. Manual investigation required
-4. Can manually trigger redeploy once fixed</code></pre>
-                <h2 id="rollback-strategy">Rollback Strategy</h2>
-                <h3 id="automatic-rollback">Automatic Rollback</h3>
-                <ul>
-                <li>Health checks fail → Previous version
-                auto-deployed</li>
-                <li>No manual intervention needed</li>
-                <li>Happens within 1-2 minutes</li>
-                </ul>
-                <h3 id="manual-rollback">Manual Rollback</h3>
-                <div class="sourceCode" id="cb17"><pre
-                class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Via Koyeb dashboard</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Or trigger auto_deploy on specific commit:</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin <span class="op">&lt;</span>commit-sha<span class="op">&gt;</span>:main</span></code></pre></div>
-                <h2 id="performance-optimization">Performance
-                Optimization</h2>
-                <h3 id="caching-strategy">Caching Strategy</h3>
-                <ul>
-                <li>Maven dependencies cached</li>
-                <li>Docker layer caching</li>
-                <li>GitHub Actions cache</li>
-                </ul>
-                <h3 id="parallel-execution-future">Parallel Execution
-                (Future)</h3>
-                <ul>
-                <li>Run tests in parallel</li>
-                <li>Build multiple artifacts simultaneously</li>
-                </ul>
-                <h2 id="monitoring-debugging">Monitoring &amp;
-                Debugging</h2>
-                <h3 id="workflow-logs">Workflow Logs</h3>
-                <ul>
-                <li>View at: GitHub Repo → Actions → Workflow runs</li>
-                <li>Click run → View all jobs</li>
-                <li>Expand any failed step to see logs</li>
-                </ul>
-                <h3 id="common-issues">Common Issues</h3>
-                <table>
-                <thead>
-                <tr class="header">
-                <th>Issue</th>
-                <th>Cause</th>
-                <th>Fix</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="odd">
-                <td>Tests fail</td>
-                <td>Code regression</td>
-                <td>Fix failing tests, commit</td>
-                </tr>
-                <tr class="even">
-                <td>Build timeout</td>
-                <td>Large dependencies</td>
-                <td>Increase timeout, optimize POM</td>
-                </tr>
-                <tr class="odd">
-                <td>Deploy timeout</td>
-                <td>Koyeb slow</td>
-                <td>Wait or check Koyeb status</td>
-                </tr>
-                <tr class="even">
-                <td>Health check fails</td>
-                <td>App crashed</td>
-                <td>Check application logs on Koyeb</td>
-                </tr>
-                <tr class="odd">
-                <td>Docker push fails</td>
-                <td>Registry auth</td>
-                <td>Verify <code>GITHUB_TOKEN</code> secret</td>
-                </tr>
-                </tbody>
-                </table>
-                <h2 id="best-practices">Best Practices</h2>
-                <ol type="1">
-                <li><strong>Keep workflows simple</strong> - One job per
-                workflow</li>
-                <li><strong>Fail fast</strong> - Stop on first
-                error</li>
-                <li><strong>Cache aggressively</strong> - Maven, Docker
-                layers</li>
-                <li><strong>Use environments</strong> - Secrets scoped
-                per environment</li>
-                <li><strong>Monitor carefully</strong> - Check logs
-                regularly</li>
-                <li><strong>Document changes</strong> - Update workflows
-                when code changes</li>
-                <li><strong>Test locally first</strong> - Run tests
-                before pushing</li>
-                <li><strong>Review secrets</strong> - Ensure no
-                hardcoded passwords</li>
-                </ol>
-                <h2 id="future-enhancements">Future Enhancements</h2>
-                <ol type="1">
-                <li><strong>Multi-region deployment</strong> - Deploy to
-                multiple Koyeb regions</li>
-                <li><strong>Staged rollout</strong> - Blue-green
-                deployment</li>
-                <li><strong>Canary releases</strong> - Deploy to small
-                percentage first</li>
-                <li><strong>Performance testing</strong> - Run load
-                tests pre-deployment</li>
-                <li><strong>Slack notifications</strong> - Alert team on
-                failures</li>
-                <li><strong>Artifact retention</strong> - Keep previous
-                deployments</li>
-                <li><strong>Database migrations</strong> - Automated
-                migration testing</li>
-                <li><strong>Security scanning</strong> - SAST/DAST in
-                pipeline</li>
-                </ol>
+                <p>Secrets are injected via
+                <code>${{ secrets.NAME }}</code> — never hardcoded in
+                workflow files.</p>
                 <hr />
-                <p><strong>Document Version</strong>: 1.0<br />
-                <strong>Last Updated</strong>: October 31, 2025<br />
-                <strong>Status</strong>: Production Ready</p>
+                <h2 id="failure-handling">Failure Handling</h2>
+                <h3 id="test-failure">Test Failure</h3>
+                <p>Pipeline stops immediately. GitHub marks the commit
+                as failed. Fix the failing tests, commit, and the
+                pipeline re-runs automatically.</p>
+                <h3 id="build-failure">Build Failure</h3>
+                <p>JAR creation fails. Check compilation errors in the
+                Actions log. Fix and push.</p>
+                <h3 id="koyeb-health-check-timeout">Koyeb Health Check
+                Timeout</h3>
+                <p>The pipeline fails after 10 minutes. The previous
+                healthy version remains live on Koyeb. Investigate
+                application logs on the Koyeb dashboard, fix the issue,
+                and trigger a new deployment.</p>
+                <hr />
+                <h2 id="rollback-strategy">Rollback Strategy</h2>
+                <p><strong>Automatic</strong>: if health checks fail,
+                Koyeb keeps the previous version running with no manual
+                intervention needed.</p>
+                <p><strong>Manual</strong>: trigger
+                <code>deploy-backend.yml</code> via
+                <code>workflow_dispatch</code> on a known-good commit,
+                or use the Koyeb dashboard to redeploy a previous
+                instance.</p>
+                <hr />
+                <p><a href="./index.html">Back to Deployment
+                Index</a></p>
             </div>
         </main>
     </div>
@@ -529,9 +300,9 @@
                 { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
                 { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
                 { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend.html' },
+                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
                 { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment.html' },
+                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
             ],
             'Design Decisions': [
                 { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
@@ -539,7 +310,6 @@
             'Components': [
                 { label: 'Index', href: '/stockease/architecture/components/index.html' },
                 { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
-                { label: 'Supplier Controller', href: '/stockease/architecture/components/supplier-controller.html' },
             ],
             'Patterns': [
                 { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
@@ -547,7 +317,7 @@
                 { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing-architecture.html' },
+                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
                 { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
                 { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
                 { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
@@ -566,8 +336,11 @@
                 { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
             ],
             'Reference': [
-                { label: 'Documentation Guide', href: '/stockease/generated/guides/DOCUMENTATION-GUIDE.html' },
-                { label: 'Documentation Generation', href: '/stockease/generated/guides/DOCUMENTATION-GENERATION.html' },
+                { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
+                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
+            ],
+            'Documentation Index': [
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
                 { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },

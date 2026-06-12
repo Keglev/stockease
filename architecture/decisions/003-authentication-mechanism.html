@@ -20,66 +20,129 @@
         <aside id="sidebar"></aside>
         <main>
             <div class="content">
-                <h1 id="architecture-decision-records">Architecture
-                Decision Records</h1>
-                <p>Architectural decisions made during the design and
-                implementation of StockEase, documented in ADR
-                format.</p>
+                <h1 id="adr-003-authentication-mechanism">ADR 003:
+                Authentication Mechanism</h1>
+                <p><strong>Status</strong>: Accepted
+                <strong>Date</strong>: October 31, 2025</p>
                 <hr />
-                <h2 id="decision-records">Decision Records</h2>
+                <h2 id="context">Context</h2>
+                <p>StockEase exposes REST APIs consumed by a separate
+                React frontend deployed on a different domain. Users
+                must authenticate and the system must enforce role-based
+                access control (ADMIN vs USER). A decision was needed on
+                the authentication mechanism: stateless JWT tokens or
+                server-side sessions.</p>
+                <p>Requirements: support cross-origin requests (frontend
+                on Render, backend on Koyeb), no shared session store
+                between container replicas, work with auto-scaling,
+                support role-based authorization per request, and be
+                implementable with Spring Security.</p>
+                <hr />
+                <h2 id="decision">Decision</h2>
+                <p><strong>JWT (JSON Web Token) bearer tokens</strong>
+                with HS256 signing, 24-hour expiry, role claim embedded
+                in the payload, and validation via a custom
+                <code>JwtAuthenticationFilter</code> in the Spring
+                Security filter chain.</p>
+                <hr />
+                <h2 id="rationale">Rationale</h2>
+                <h3
+                id="stateless-design-fits-the-deployment-model">Stateless
+                design fits the deployment model</h3>
+                <p>Koyeb scales the backend horizontally to 1–2
+                replicas. Session-based authentication requires a shared
+                session store (Redis or sticky sessions) so that any
+                replica can validate a session. JWT is self-contained —
+                each token carries the user identity and role, so any
+                replica can validate it independently using the shared
+                secret. No external session store is needed.</p>
+                <h3 id="cross-origin-compatibility">Cross-origin
+                compatibility</h3>
+                <p>The frontend (Render) and backend (Koyeb) are on
+                different domains. Browser session cookies do not work
+                reliably across origins without complex configuration.
+                JWT tokens sent as <code>Authorization: Bearer</code>
+                headers work cleanly across origins with standard CORS
+                configuration.</p>
+                <h3 id="role-authorization-per-request">Role
+                authorization per request</h3>
+                <p>The JWT payload includes a <code>role</code> claim.
+                <code>JwtAuthenticationFilter</code> extracts the role
+                on every request and populates the Spring
+                <code>SecurityContext</code>, making
+                <code>@PreAuthorize("hasRole('ADMIN')")</code> and
+                <code>@Secured("ROLE_ADMIN")</code> work without any
+                database lookup per request.</p>
+                <h3 id="bcrypt-for-password-storage">BCrypt for password
+                storage</h3>
+                <p>Passwords are hashed with BCrypt (cost factor 10)
+                before storage. The JWT secret and database credentials
+                are injected via environment variables — never
+                hardcoded.</p>
+                <hr />
+                <h2 id="alternatives-considered">Alternatives
+                Considered</h2>
+                <p><strong>Session-based authentication with Spring
+                Session</strong> — rejected. Requires a shared session
+                store (Redis) to support multiple replicas, adds
+                infrastructure complexity, and does not work well across
+                origins without sticky sessions or cookie
+                configuration.</p>
+                <p><strong>OAuth2 / OpenID Connect (e.g. Auth0,
+                Keycloak)</strong> — rejected for current scope. Adds
+                significant infrastructure and configuration overhead
+                that is not justified for a single-tenant inventory
+                application with two roles. Can be adopted later if
+                multi-tenancy or social login is needed.</p>
+                <p><strong>HTTP Basic Authentication</strong> —
+                rejected. Requires sending credentials on every request,
+                no expiry mechanism, no role embedding, not suitable for
+                SPA clients.</p>
+                <hr />
+                <h2 id="consequences">Consequences</h2>
+                <p><strong>Positive</strong>: stateless design supports
+                horizontal scaling with no shared state, cross-origin
+                requests work cleanly, role authorization requires no
+                database lookup per request, no session store
+                infrastructure needed.</p>
+                <p><strong>Negative</strong>: tokens cannot be
+                invalidated before expiry without a token blacklist (not
+                currently implemented). If the JWT secret is
+                compromised, all tokens are compromised until the secret
+                is rotated and all users re-authenticate. Token expiry
+                (24 hours) is a fixed trade-off between security and
+                user convenience.</p>
+                <hr />
+                <h2 id="security-constraints">Security Constraints</h2>
                 <ul>
-                <li><a href="./001-database-choice.html">ADR 001 —
-                Database Choice</a> — PostgreSQL for production, H2 for
-                tests, Flyway for migrations</li>
-                <li><a href="./002-validation-strategy.html">ADR 002 —
-                Validation Strategy</a> — Multi-layer validation with
-                JSR-303 annotations, service-level business rules, and
-                database constraints</li>
-                <li><a href="./003-authentication-mechanism.html">ADR
-                003 — Authentication Mechanism</a> — JWT stateless
-                tokens over session-based authentication</li>
+                <li>JWT secret must be 32+ characters, randomly
+                generated, stored only as an environment variable</li>
+                <li>Tokens expire after 24 hours
+                (<code>app.jwt.expiration=86400000</code>)</li>
+                <li>HTTPS enforced in production — tokens must never
+                travel over plain HTTP</li>
+                <li>Failed authentication returns 401 with a generic
+                message — no information about whether the username or
+                password was wrong</li>
                 </ul>
                 <hr />
-                <h2 id="adr-status-key">ADR Status Key</h2>
-                <table>
-                <thead>
-                <tr class="header">
-                <th>Status</th>
-                <th>Meaning</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="odd">
-                <td>Accepted</td>
-                <td>Decision is in effect</td>
-                </tr>
-                <tr class="even">
-                <td>Deprecated</td>
-                <td>Superseded by a newer decision</td>
-                </tr>
-                <tr class="odd">
-                <td>Proposed</td>
-                <td>Under review, not yet implemented</td>
-                </tr>
-                </tbody>
-                </table>
-                <hr />
-                <h2 id="related-documentation">Related
-                Documentation</h2>
+                <h2 id="implementation-status">Implementation
+                Status</h2>
                 <ul>
-                <li><a href="../system/overview.html">System
-                Overview</a> — Design decisions in context</li>
-                <li><a href="../system/security.html">Security
-                Architecture</a> — JWT and BCrypt implementation</li>
-                <li><a href="../patterns/index.html">Patterns</a> —
-                Implementation patterns</li>
-                <li><a
-                href="../components/index.html">Components</a></li>
+                <li><code>JwtTokenProvider</code> — token generation and
+                validation — implemented</li>
+                <li><code>JwtAuthenticationFilter</code> — filter chain
+                integration — implemented</li>
+                <li><code>SecurityConfig</code> — stateless session
+                policy, public/protected endpoint rules —
+                implemented</li>
+                <li>BCrypt password encoding (cost factor 10) —
+                implemented</li>
+                <li>Environment variable injection for JWT secret —
+                implemented</li>
                 </ul>
                 <hr />
-                <p><strong>Last Updated</strong>: June 2026
-                <strong>Status</strong>: Current</p>
-                <p><a href="../index.html">Back to Architecture
+                <p><a href="./index.html">Back to Decisions
                 Index</a></p>
             </div>
         </main>

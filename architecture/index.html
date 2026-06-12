@@ -20,66 +20,29 @@
         <aside id="sidebar"></aside>
         <main>
             <div class="content">
-                <h1 id="architecture-decision-records">Architecture
-                Decision Records</h1>
-                <p>Architectural decisions made during the design and
-                implementation of StockEase, documented in ADR
-                format.</p>
-                <hr />
-                <h2 id="decision-records">Decision Records</h2>
+                <h1 id="architecture-documentation">Architecture
+                Documentation</h1>
+                <p>Entry point for all StockEase architecture
+                documentation.</p>
+                <h2 id="sections">Sections</h2>
                 <ul>
-                <li><a href="./001-database-choice.html">ADR 001 —
-                Database Choice</a> — PostgreSQL for production, H2 for
-                tests, Flyway for migrations</li>
-                <li><a href="./002-validation-strategy.html">ADR 002 —
-                Validation Strategy</a> — Multi-layer validation with
-                JSR-303 annotations, service-level business rules, and
-                database constraints</li>
-                <li><a href="./003-authentication-mechanism.html">ADR
-                003 — Authentication Mechanism</a> — JWT stateless
-                tokens over session-based authentication</li>
-                </ul>
-                <hr />
-                <h2 id="adr-status-key">ADR Status Key</h2>
-                <table>
-                <thead>
-                <tr class="header">
-                <th>Status</th>
-                <th>Meaning</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="odd">
-                <td>Accepted</td>
-                <td>Decision is in effect</td>
-                </tr>
-                <tr class="even">
-                <td>Deprecated</td>
-                <td>Superseded by a newer decision</td>
-                </tr>
-                <tr class="odd">
-                <td>Proposed</td>
-                <td>Under review, not yet implemented</td>
-                </tr>
-                </tbody>
-                </table>
-                <hr />
-                <h2 id="related-documentation">Related
-                Documentation</h2>
-                <ul>
-                <li><a href="../system/overview.html">System
-                Overview</a> — Design decisions in context</li>
-                <li><a href="../system/security.html">Security
-                Architecture</a> — JWT and BCrypt implementation</li>
-                <li><a href="../patterns/index.html">Patterns</a> —
-                Implementation patterns</li>
+                <li><a href="./system/index.html">System</a> — overview,
+                backend, layers, security, frontend integration</li>
                 <li><a
-                href="../components/index.html">Components</a></li>
+                href="./testing/testing-architecture.html">Testing</a> —
+                test strategy, pyramid, matrix, MockMvc, security
+                tests</li>
+                <li><a href="./deployment/index.html">Deployment</a> —
+                infrastructure, CI/CD, Docker, configuration</li>
+                <li><a href="./decisions/index.html">Decisions</a> — ADR
+                001 database, ADR 002 validation, ADR 003
+                authentication</li>
+                <li><a href="./patterns/index.html">Patterns</a> —
+                repository pattern, security patterns</li>
+                <li><a href="./components/index.html">Components</a> —
+                analytics service</li>
                 </ul>
-                <hr />
-                <p><strong>Last Updated</strong>: June 2026
-                <strong>Status</strong>: Current</p>
-                <p><a href="../index.html">Back to Architecture
+                <p><a href="../index.html">Back to Documentation
                 Index</a></p>
             </div>
         </main>

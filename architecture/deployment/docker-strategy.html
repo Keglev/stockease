@@ -22,84 +22,125 @@
             <div class="content">
                 <h1 id="docker-containerization-strategy">Docker
                 Containerization Strategy</h1>
-                <h2 id="overview">Overview</h2>
-                <p>StockEase uses a multi-stage Docker build strategy to
-                create minimal, secure, and reproducible container
-                images for production deployment. The Dockerfile follows
-                enterprise best practices for layer caching, security
-                hardening, and runtime optimization.</p>
-                <h2 id="architecture">Architecture</h2>
-                <h3 id="multi-stage-build-pipeline">Multi-Stage Build
-                Pipeline</h3>
+                <p><strong>Purpose</strong>: Document the multi-stage
+                Dockerfile, layer caching strategy, security hardening,
+                and image registry configuration.</p>
+                <hr />
+                <h2 id="multi-stage-build">Multi-Stage Build</h2>
                 <div class="mermaid">
                 graph TD
-                    subgraph Stage1["Stage 1 - BUILD with maven 3.9.6 and eclipse-temurin-17"]
-                        B1["1. Copy Maven wrapper + pom.xml"] --> B2[2. Download dependencies]
-                        B2 --> B3[3. Copy application source code]
-                        B3 --> B4[4. Build JAR]
-                        
-                        B1 -.->|Enables| B1A[Dependency layer caching]
-                        B2 -.->|Cached unless| B2A[pom.xml changes]
-                        B3 -.->|Changes| B3A[frequently, runs last]
-                        B4 -.->|Output| B4A[JAR artifact in workspace/target]
-                        
-                        B4 --> Result1[Result - approximately 1.2GB image with JDK Maven build tools]
+                    subgraph Stage1["Stage 1 — BUILD (maven:3.9.6-eclipse-temurin-17 ~1.2GB)"]
+                        B1[Copy mvnw + pom.xml] --> B2[Download dependencies]
+                        B2 --> B3[Copy source code]
+                        B3 --> B4[Build JAR]
                     end
-                    
-                    Result1 -->|Extract artifact only| Stage2
-                    
-                    subgraph Stage2["Stage 2 - RUNTIME with eclipse-temurin 17-jre-jammy"]
-                        R1[1. Copy JAR from build stage] --> R2[2. Create non-root user]
-                        R2 --> R3[3. Set USER app]
-                        R3 --> R4[4. Expose port 8081]
-                        R4 --> R5[5. Set ENTRYPOINT]
-                        
-                        R1 -.->|Command| R1A[COPY from build stage to /app/app.jar]
-                        R2 -.->|Security| R2A[Run with limited permissions]
-                        R3 -.->|Effect| R3A[All processes run as non-root]
-                        R4 -.->|Matches| R4A[Spring Boot server.port]
-                        
-                        R5 --> Result2[Result - approximately 250MB image with JRE and application only]
+
+                    Stage1 -->|Extract JAR only| Stage2
+
+                    subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-jammy ~250MB)"]
+                        R1[Copy JAR from build stage] --> R2[Create non-root user]
+                        R2 --> R3[Set USER app]
+                        R3 --> R4[EXPOSE 8081]
+                        R4 --> R5[ENTRYPOINT]
                     end
-                    
+
                     style Stage1 fill:#e3f2fd
-                    style Stage2 fill:#fff3e0
-                    style Result1 fill:#ffcdd2
-                    style Result2 fill:#c8e6c9
+                    style Stage2 fill:#c8e6c9
                 </div>
-                <h2 id="build-configuration">Build Configuration</h2>
-                <h3 id="base-images">Base Images</h3>
-                <p><strong>Build Stage</strong>: - Image:
-                <code>maven:3.9.6-eclipse-temurin-17</code> - Purpose:
-                Full JDK + Maven for compilation - Size: ~850MB -
-                Contains: JDK 17, Maven 3.9.6, build tools</p>
-                <p><strong>Runtime Stage</strong>: - Image:
-                <code>eclipse-temurin:17-jre-jammy</code> - Purpose:
-                Minimal JRE for execution - Size: ~180MB base -
-                Contains: JRE 17 (headless), Ubuntu Jammy</p>
-                <h3 id="layer-caching-strategy">Layer Caching
-                Strategy</h3>
-                <p>Docker caches layers based on file changes. The
-                Dockerfile optimizes build speed:</p>
+                <p>Size reduction: 1.2GB → ~250MB (83% smaller).</p>
+                <hr />
+                <h2 id="dockerfile">Dockerfile</h2>
                 <div class="sourceCode" id="cb1"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 1: Maven wrapper (rarely changes)</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw pom.xml ./</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .mvn .mvn</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="fu">chmod</span> +x mvnw</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 2: Dependencies (changes when pom.xml changes)</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> dependency:go-offline</span>
+                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 1 — Build</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> maven:3.9.6-eclipse-temurin-17 <span class="kw">AS</span> builder</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw pom.xml ./</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .mvn .mvn</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="fu">chmod</span> +x mvnw</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 3: Application code (changes frequently)</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src ./src</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> <span class="at">-DskipTests</span> clean package</span></code></pre></div>
-                <p><strong>Caching Efficiency</strong>: - Source code
-                changes: Only Layer 3 rebuilds (~30s) - Dependency
-                changes: Layers 2-3 rebuild (~2-3 min) - Maven config
-                changes: All layers rebuild (~5 min)</p>
-                <h3 id="maven-build-arguments">Maven Build
-                Arguments</h3>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Dependency layer — cached unless pom.xml changes</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> dependency:go-offline</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Source layer — changes frequently</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src ./src</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> <span class="at">-DskipTests</span> clean package</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 2 — Runtime</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-jammy</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> <span class="op">--from=builder</span> /app/target/stockease-backend-*.jar app.jar</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">--system</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">--system</span> <span class="at">--ingroup</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> 8081</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>, <span class="st">&quot;--server.port=8081&quot;</span>]</span></code></pre></div>
+                <hr />
+                <h2 id="layer-caching-strategy">Layer Caching
+                Strategy</h2>
                 <table>
+                <colgroup>
+                <col style="width: 18%" />
+                <col style="width: 44%" />
+                <col style="width: 36%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Layer</th>
+                <th>Invalidated When</th>
+                <th>Rebuild Time</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td>Maven wrapper + pom.xml</td>
+                <td><code>pom.xml</code> or <code>.mvn</code>
+                changes</td>
+                <td>~3 min (re-downloads deps)</td>
+                </tr>
+                <tr class="even">
+                <td>Dependencies</td>
+                <td><code>pom.xml</code> changes</td>
+                <td>~2 min</td>
+                </tr>
+                <tr class="odd">
+                <td>Source code</td>
+                <td>Any <code>src/</code> change</td>
+                <td>~30s</td>
+                </tr>
+                </tbody>
+                </table>
+                <p>The Dockerfile copies <code>pom.xml</code> before
+                <code>src/</code> specifically to maximize cache hits on
+                the dependency layer.</p>
+                <hr />
+                <h2 id="security-hardening">Security Hardening</h2>
+                <p><strong>Non-root user execution</strong>: the
+                container runs as <code>app</code> (UID 1000), not root.
+                This limits privilege escalation and aligns with
+                Kubernetes security policies. The <code>|| true</code>
+                guard prevents build failure if the <code>app</code>
+                user already exists in the base image.</p>
+                <p><strong>Minimal runtime image</strong>: the final
+                stage uses JRE only — no JDK, no Maven, no source code,
+                no build tools. Attack surface is minimized.</p>
+                <p><strong>No hardcoded secrets</strong>: all sensitive
+                values are passed via environment variables at
+                runtime.</p>
+                <p><strong>Fixed ENTRYPOINT</strong>: prevents
+                accidental shell execution and enforces consistent
+                startup behavior.</p>
+                <hr />
+                <h2 id="maven-build-flags">Maven Build Flags</h2>
+                <table>
+                <colgroup>
+                <col style="width: 40%" />
+                <col style="width: 60%" />
+                </colgroup>
                 <thead>
                 <tr class="header">
                 <th>Flag</th>
@@ -109,19 +150,21 @@
                 <tbody>
                 <tr class="odd">
                 <td><code>-B</code></td>
-                <td>Batch mode (non-interactive)</td>
+                <td>Batch mode — non-interactive</td>
                 </tr>
                 <tr class="even">
                 <td><code>-ntp</code></td>
-                <td>No transfer progress (cleaner logs)</td>
+                <td>No transfer progress — cleaner CI logs</td>
                 </tr>
                 <tr class="odd">
                 <td><code>-DskipTests</code></td>
-                <td>Skip tests in container build</td>
+                <td>Tests run in CI before Docker build, not inside
+                it</td>
                 </tr>
                 <tr class="even">
                 <td><code>dependency:go-offline</code></td>
-                <td>Download all dependencies upfront</td>
+                <td>Downloads all dependencies upfront for reliable
+                caching</td>
                 </tr>
                 <tr class="odd">
                 <td><code>clean package</code></td>
@@ -129,136 +172,62 @@
                 </tr>
                 </tbody>
                 </table>
-                <p><strong>Why skip tests?</strong> - Tests run in CI
-                pipeline before Docker build - Keeps Docker build fast
-                (~1 min vs ~3 min) - Separates concerns: testing
-                vs. packaging</p>
-                <h2 id="security-hardening">Security Hardening</h2>
-                <h3 id="non-root-user-execution">Non-Root User
-                Execution</h3>
-                <div class="sourceCode" id="cb2"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">--system</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">--system</span> <span class="at">--ingroup</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span></code></pre></div>
-                <p><strong>Benefits</strong>: - Limits privilege
-                escalation attacks - Container runs with UID 1000
-                (non-root) - Aligns with Kubernetes security policies -
-                Reduces attack surface if container is compromised</p>
-                <p><strong>Why <code>|| true</code>?</strong> - Some
-                base images have <code>app</code> user pre-created -
-                Prevents build failure if user already exists -
-                Idempotent operation (safe to run multiple times)</p>
-                <h3 id="minimal-runtime-dependencies">Minimal Runtime
-                Dependencies</h3>
-                <p>Runtime image contains only: - JRE 17 (no compiler) -
-                Application JAR - Ubuntu Jammy base (~80MB)</p>
-                <p><strong>NOT included</strong>: - Maven, Gradle -
-                Development tools (gcc, make) - Source code - Test
-                dependencies</p>
-                <h3 id="fixed-entrypoint">Fixed Entrypoint</h3>
-                <div class="sourceCode" id="cb3"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>, <span class="st">&quot;--server.port=8081&quot;</span>]</span></code></pre></div>
-                <p><strong>Advantages</strong>: - Prevents accidental
-                shell execution - Forces consistent startup command -
-                Allows runtime argument overrides - Explicit port
-                configuration</p>
-                <h2 id="application-configuration">Application
-                Configuration</h2>
-                <h3 id="port-mapping">Port Mapping</h3>
+                <p>Tests are intentionally skipped in the Docker build.
+                They run in the CI pipeline before the build stage.</p>
+                <hr />
+                <h2 id="image-registry-ghcr">Image Registry (GHCR)</h2>
+                <pre><code>Registry: ghcr.io/keglev/stockease
+Visibility: Public
+
+Tags:
+  ghcr.io/keglev/stockease:latest      — updated on every main push
+  ghcr.io/keglev/stockease:v1.0.0      — semantic version tags
+  ghcr.io/keglev/stockease:sha-abc123  — commit hash tags</code></pre>
+                <hr />
+                <h2 id="port-configuration">Port Configuration</h2>
                 <table>
                 <thead>
                 <tr class="header">
                 <th>Context</th>
                 <th>Port</th>
-                <th>Purpose</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td>Dockerfile</td>
-                <td><code>EXPOSE 8081</code></td>
-                <td>Documentation + container metadata</td>
+                <td>Dockerfile <code>EXPOSE</code></td>
+                <td>8081</td>
                 </tr>
                 <tr class="even">
-                <td>Spring Boot</td>
-                <td><code>server.port=8081</code></td>
-                <td>Application listening port</td>
+                <td>Spring Boot <code>server.port</code></td>
+                <td>8081</td>
                 </tr>
                 <tr class="odd">
-                <td>Koyeb</td>
-                <td><code>8081</code></td>
-                <td>Container port mapping</td>
+                <td>Koyeb container port</td>
+                <td>8081</td>
                 </tr>
                 <tr class="even">
-                <td>CI/CD</td>
-                <td><code>8081</code></td>
-                <td>Health check endpoint</td>
+                <td>Health check</td>
+                <td>8081</td>
                 </tr>
                 </tbody>
                 </table>
-                <p><strong>Port Selection</strong>: 8081 avoids
-                conflicts with common services (8080, 8000, 3000).</p>
-                <h3 id="environment-variables">Environment
-                Variables</h3>
-                <p>The container supports runtime configuration via
-                environment variables:</p>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Database configuration</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_URL</span><span class="op">=</span>jdbc:postgresql://host:5432/db</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_USERNAME</span><span class="op">=</span>user</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="va">DATABASE_PASSWORD</span><span class="op">=</span>secret</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Spring profiles</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">SPRING_PROFILES_ACTIVE</span><span class="op">=</span>prod</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># JVM tuning</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="va">JAVA_OPTS</span><span class="op">=</span>-Xmx512m <span class="ex">-Xms256m</span></span></code></pre></div>
-                <p><strong>Current deployment (Koyeb)</strong>: -
-                Profile: <code>prod</code> - Database: Neon PostgreSQL
-                (serverless) - Memory: 512MB container limit</p>
-                <h2 id="build-deploy-workflow">Build &amp; Deploy
-                Workflow</h2>
-                <h3 id="local-build">Local Build</h3>
-                <div class="sourceCode" id="cb5"><pre
-                class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build image</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> stockease:local .</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run container</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-p</span> 8081:8081 <span class="dt">\</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_URL=jdbc:postgresql://localhost:5432/stockease <span class="dt">\</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_USERNAME=postgres <span class="dt">\</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> DATABASE_PASSWORD=postgres <span class="dt">\</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  stockease:local</span></code></pre></div>
-                <h3 id="cicd-pipeline-integration">CI/CD Pipeline
-                Integration</h3>
-                <p><strong>GitHub Actions</strong>
-                (<code>deploy-backend.yml</code>):</p>
-                <div class="sourceCode" id="cb6"><pre
-                class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Trigger Koyeb redeploy</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> bash .github/scripts/deploy/koyeb-redeploy.sh</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wait for service healthy</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">env</span><span class="kw">:</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_API_KEY</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_API_KEY }}</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">KOYEB_SERVICE_ID</span><span class="kw">:</span><span class="at"> ${{ secrets.KOYEB_SERVICE_ID }}</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">run</span><span class="kw">:</span><span class="at"> bash .github/scripts/deploy/koyeb-wait-healthy.sh</span></span></code></pre></div>
-                <p><strong>Deployment Flow</strong>: 1. Push to
-                <code>main</code> branch 2. GitHub Actions builds the
-                JAR (<code>mvn verify</code>) 3. Koyeb is triggered via
-                REST API (<code>POST /v1/services/{id}/redeploy</code>)
-                4. Koyeb pulls the latest source code and builds the
-                Docker image from the Dockerfile 5. Health checks verify
-                deployment (HEALTHY or READY status)</p>
-                <h3 id="image-registry">Image Registry</h3>
-                <p><strong>GitHub Container Registry (GHCR)</strong>: -
-                URL: <code>ghcr.io/keglev/stockease</code> - Tag:
-                <code>latest</code> (auto-updates on every main push) -
-                Visibility: Public - Size: ~250MB</p>
-                <h2 id="performance-characteristics">Performance
-                Characteristics</h2>
-                <h3 id="build-times">Build Times</h3>
+                <p>Port 8081 is used to avoid conflicts with common
+                default ports (8080, 3000, 8000).</p>
+                <hr />
+                <h2 id="local-build-run">Local Build &amp; Run</h2>
+                <div class="sourceCode" id="cb3"><pre
+                class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build image</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> stockease:local .</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run container</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-p</span> 8081:8081 <span class="dt">\</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/stockease <span class="dt">\</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_USERNAME=postgres <span class="dt">\</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_PASSWORD=postgres <span class="dt">\</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> JWT_SECRET=local-dev-secret-32-chars-min <span class="dt">\</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  stockease:local</span></code></pre></div>
+                <hr />
+                <h2 id="build-performance">Build Performance</h2>
                 <table>
                 <thead>
                 <tr class="header">
@@ -269,234 +238,25 @@
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td>First build</td>
+                <td>First build (no cache)</td>
                 <td>~5 min</td>
-                <td>All (download deps + compile)</td>
+                <td>All</td>
                 </tr>
                 <tr class="even">
-                <td>Code change only</td>
-                <td>~30 sec</td>
-                <td>Stage 1 Layer 3 only</td>
+                <td>Source code change only</td>
+                <td>~30s</td>
+                <td>Source + package</td>
                 </tr>
                 <tr class="odd">
                 <td>Dependency change</td>
                 <td>~3 min</td>
-                <td>Stage 1 Layers 2-3</td>
-                </tr>
-                <tr class="even">
-                <td>Full rebuild</td>
-                <td>~5 min</td>
-                <td>All layers (no cache)</td>
+                <td>Deps + source + package</td>
                 </tr>
                 </tbody>
                 </table>
-                <h3 id="image-sizes">Image Sizes</h3>
-                <table>
-                <thead>
-                <tr class="header">
-                <th>Stage</th>
-                <th>Size</th>
-                <th>Composition</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="odd">
-                <td>Build stage</td>
-                <td>~1.2GB</td>
-                <td>Maven (500MB) + JDK (350MB) + deps (350MB)</td>
-                </tr>
-                <tr class="even">
-                <td>Runtime image</td>
-                <td>~250MB</td>
-                <td>JRE (180MB) + JAR (70MB)</td>
-                </tr>
-                <tr class="odd">
-                <td>Compression</td>
-                <td>~85MB</td>
-                <td>GHCR compressed image</td>
-                </tr>
-                </tbody>
-                </table>
-                <p><strong>Size optimization achieved</strong>: 83%
-                reduction (1.2GB → 250MB)</p>
-                <h3 id="runtime-performance">Runtime Performance</h3>
-                <ul>
-                <li><strong>Startup time</strong>: ~8 seconds (Spring
-                Boot initialization)</li>
-                <li><strong>Memory footprint</strong>: ~200MB (idle),
-                ~400MB (under load)</li>
-                <li><strong>CPU usage</strong>: &lt;5% (idle), 20-40%
-                (moderate load)</li>
-                </ul>
-                <h2 id="technology-stack">Technology Stack</h2>
-                <h3 id="build-components">Build Components</h3>
-                <table>
-                <thead>
-                <tr class="header">
-                <th>Component</th>
-                <th>Version</th>
-                <th>Purpose</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="odd">
-                <td>Maven</td>
-                <td>3.9.6</td>
-                <td>Build tool</td>
-                </tr>
-                <tr class="even">
-                <td>JDK</td>
-                <td>Eclipse Temurin 17</td>
-                <td>Compilation</td>
-                </tr>
-                <tr class="odd">
-                <td>Spring Boot</td>
-                <td>3.5.7</td>
-                <td>Application framework</td>
-                </tr>
-                <tr class="even">
-                <td>Docker</td>
-                <td>20.10+</td>
-                <td>Container runtime</td>
-                </tr>
-                </tbody>
-                </table>
-                <h3 id="runtime-components">Runtime Components</h3>
-                <table>
-                <thead>
-                <tr class="header">
-                <th>Component</th>
-                <th>Version</th>
-                <th>Purpose</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="odd">
-                <td>JRE</td>
-                <td>Eclipse Temurin 17</td>
-                <td>Java runtime</td>
-                </tr>
-                <tr class="even">
-                <td>Ubuntu Jammy</td>
-                <td>22.04 LTS</td>
-                <td>Base OS</td>
-                </tr>
-                <tr class="odd">
-                <td>PostgreSQL Driver</td>
-                <td>(bundled)</td>
-                <td>Database connectivity</td>
-                </tr>
-                </tbody>
-                </table>
-                <h2 id="best-practices-applied">Best Practices
-                Applied</h2>
-                <p>✅ <strong>Multi-stage builds</strong>: Separate
-                build and runtime environments<br />
-                ✅ <strong>Layer caching</strong>: Dependencies
-                downloaded before source code<br />
-                ✅ <strong>Minimal base images</strong>: JRE instead of
-                JDK in production<br />
-                ✅ <strong>Non-root user</strong>: Security-hardened
-                container<br />
-                ✅ <strong>Explicit ports</strong>: Clear port mapping
-                documentation<br />
-                ✅ <strong>Fixed entrypoint</strong>: Consistent startup
-                behavior<br />
-                ✅ <strong>Batch mode flags</strong>: Clean,
-                reproducible builds<br />
-                ✅ <strong>Wildcard JAR copy</strong>: Version-agnostic
-                artifact extraction</p>
-                <h2 id="common-issues-solutions">Common Issues &amp;
-                Solutions</h2>
-                <h3 id="issue-build-cache-not-working">Issue: Build
-                Cache Not Working</h3>
-                <p><strong>Symptom</strong>: Every build downloads
-                dependencies<br />
-                <strong>Cause</strong>: <code>pom.xml</code> or
-                <code>.mvn</code> directory changed<br />
-                <strong>Solution</strong>: Ensure <code>pom.xml</code>
-                is stable; use <code>dependency:go-offline</code></p>
-                <h3 id="issue-port-already-in-use">Issue: Port Already
-                In Use</h3>
-                <p><strong>Symptom</strong>:
-                <code>Address already in use: bind</code><br />
-                <strong>Cause</strong>: Port 8081 occupied by another
-                process<br />
-                <strong>Solution</strong>: Use different host port:
-                <code>docker run -p 8082:8081 ...</code></p>
-                <h3 id="issue-database-connection-failed">Issue:
-                Database Connection Failed</h3>
-                <p><strong>Symptom</strong>:
-                <code>Connection refused</code> or
-                <code>Unknown host</code><br />
-                <strong>Cause</strong>: Database not accessible from
-                container<br />
-                <strong>Solution</strong>: Use
-                <code>host.docker.internal</code> for localhost
-                databases</p>
-                <h3 id="issue-image-size-too-large">Issue: Image Size
-                Too Large</h3>
-                <p><strong>Symptom</strong>: Slow push/pull times<br />
-                <strong>Cause</strong>: Build stage included in final
-                image<br />
-                <strong>Solution</strong>: Already mitigated by
-                multi-stage build</p>
-                <h2 id="future-enhancements">Future Enhancements</h2>
-                <h3 id="planned-improvements">Planned Improvements</h3>
-                <ol type="1">
-                <li><strong>JVM Optimization</strong>: Add
-                <code>-XX:+UseContainerSupport</code> for better memory
-                limits</li>
-                <li><strong>Health Checks</strong>: Add
-                <code>HEALTHCHECK</code> instruction to Dockerfile</li>
-                <li><strong>Build Arguments</strong>: Support custom JVM
-                flags via <code>ARG</code></li>
-                <li><strong>Distroless Base</strong>: Migrate to Google
-                distroless Java image (~50MB smaller)</li>
-                <li><strong>Image Scanning</strong>: Integrate
-                Trivy/Grype for vulnerability scanning</li>
-                </ol>
-                <h3 id="advanced-configurations">Advanced
-                Configurations</h3>
-                <div class="sourceCode" id="cb7"><pre
-                class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: JVM tuning for production</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="op">\</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:+UseContainerSupport&quot;</span>, <span class="op">\</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:MaxRAMPercentage=75.0&quot;</span>, <span class="op">\</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-XX:+UseG1GC&quot;</span>, <span class="op">\</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-Djava.security.egd=file:/dev/./urandom&quot;</span>, <span class="op">\</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>]</span></code></pre></div>
-                <h2 id="references">References</h2>
-                <ul>
-                <li><a href="../../Dockerfile">Dockerfile
-                Location</a></li>
-                <li><a href="./ci-pipeline.html">CI/CD Pipeline
-                Documentation</a></li>
-                <li><a href="../deployment.html">Deployment
-                Overview</a></li>
-                <li><a
-                href="https://spring.io/guides/topicals/spring-boot-docker/index.html">Spring
-                Boot Container Images</a></li>
-                <li><a
-                href="https://docs.docker.com/build/building/multi-stage/index.html">Docker
-                Multi-Stage Builds</a></li>
-                <li><a
-                href="https://hub.docker.com/_/eclipse-temurin">Eclipse
-                Temurin Images</a></li>
-                </ul>
-                <h2 id="related-documentation">Related
-                Documentation</h2>
-                <ul>
-                <li><strong><a
-                href="./ci-pipeline.html">ci-pipeline.md</a></strong> —
-                CI/CD workflow that builds this image</li>
-                <li><strong><a
-                href="./staging-config.html">staging-config.md</a></strong>
-                — Environment configuration</li>
-                <li><strong><a
-                href="../deployment.html">deployment.md</a></strong> —
-                Overall deployment architecture</li>
-                </ul>
+                <hr />
+                <p><a href="./index.html">Back to Deployment
+                Index</a></p>
             </div>
         </main>
     </div>
@@ -520,9 +280,9 @@
                 { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
                 { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
                 { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend.html' },
+                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
                 { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment.html' },
+                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
             ],
             'Design Decisions': [
                 { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
@@ -530,7 +290,6 @@
             'Components': [
                 { label: 'Index', href: '/stockease/architecture/components/index.html' },
                 { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
-                { label: 'Supplier Controller', href: '/stockease/architecture/components/supplier-controller.html' },
             ],
             'Patterns': [
                 { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
@@ -538,7 +297,7 @@
                 { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing-architecture.html' },
+                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
                 { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
                 { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
                 { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
@@ -557,8 +316,11 @@
                 { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
             ],
             'Reference': [
-                { label: 'Documentation Guide', href: '/stockease/generated/guides/DOCUMENTATION-GUIDE.html' },
-                { label: 'Documentation Generation', href: '/stockease/generated/guides/DOCUMENTATION-GENERATION.html' },
+                { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
+                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
+            ],
+            'Documentation Index': [
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
                 { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },

@@ -21,72 +21,44 @@
         <main>
             <div class="content">
                 <h1 id="design-patterns">Design Patterns</h1>
-                <p>Implementation patterns and best practices used
-                throughout the StockEase application.</p>
-                <h2 id="overview">Overview</h2>
-                <p>This section documents the design patterns employed
-                in the application to solve common problems and ensure
-                code quality, maintainability, and scalability.</p>
-                <h2 id="patterns">Patterns</h2>
-                <h3 id="repository-pattern"><a
-                href="./repository-pattern.html">Repository
-                Pattern</a></h3>
-                <p>Implementation of the Repository pattern for data
-                access abstraction and testability.</p>
-                <h3 id="security-patterns"><a
-                href="./security-patterns.html">Security
-                Patterns</a></h3>
-                <p>Security-related patterns and approaches used for
-                authentication, authorization, and data protection.</p>
-                <h2 id="pattern-categories">Pattern Categories</h2>
-                <h3 id="behavioral-patterns">Behavioral Patterns</h3>
-                <ul>
-                <li>Repository Pattern</li>
-                <li>Security Patterns</li>
-                <li>Service Layer Pattern</li>
-                <li>DTO Pattern</li>
-                </ul>
-                <h3 id="structural-patterns">Structural Patterns</h3>
-                <ul>
-                <li>Layered Architecture</li>
-                <li>Dependency Injection</li>
-                <li>Aspect-Oriented Programming (AOP)</li>
-                </ul>
-                <h3 id="concurrency-patterns">Concurrency Patterns</h3>
-                <ul>
-                <li>Database Transaction Management</li>
-                <li>Optimistic Locking</li>
-                <li>Cache Invalidation</li>
-                </ul>
-                <h2 id="pattern-selection-criteria">Pattern Selection
-                Criteria</h2>
-                <p>When selecting patterns for the application: 1.
-                <strong>Problem Domain</strong>: Does it solve our
-                specific problem? 2. <strong>Maintainability</strong>:
-                Will it make the code easier to maintain? 3.
-                <strong>Testability</strong>: Does it improve
-                testability? 4. <strong>Performance</strong>: What are
-                the performance implications? 5. <strong>Learning
-                Curve</strong>: How complex is it for the team?</p>
-                <h2 id="implementation-guidelines">Implementation
-                Guidelines</h2>
-                <p>Each pattern includes: - <strong>Intent</strong>:
-                What problem does it solve? -
-                <strong>Participants</strong>: Classes/components
-                involved - <strong>Collaboration</strong>: How
-                components interact - <strong>Consequences</strong>:
-                Advantages and disadvantages - <strong>Code
-                Examples</strong>: Real examples from StockEase -
-                <strong>Related Patterns</strong>: Other relevant
-                patterns</p>
+                <p>Implementation patterns used in StockEase for data
+                access, security, and authorization.</p>
                 <hr />
-                <p>For more information, see: - <a
-                href="../system/overview.html">Architecture Overview</a>
-                - <a href="../system/backend.html">Backend
-                Architecture</a> - <a
-                href="../components/index.html">Components
-                Documentation</a> - <a
-                href="../decisions/index.html">Design Decisions</a></p>
+                <h2 id="documents-in-this-directory">Documents in This
+                Directory</h2>
+                <ul>
+                <li><a href="./repository-pattern.html">Repository
+                Pattern</a> — Spring Data JPA repository interfaces,
+                query methods, pagination, custom <code>@Query</code>,
+                transaction boundaries, and N+1 prevention</li>
+                <li><a href="./security-patterns.html">Security
+                Patterns</a> — JWT bearer token flow, BCrypt password
+                hashing, RBAC implementation, input validation, SQL
+                injection prevention, exception handling, and audit
+                logging</li>
+                </ul>
+                <hr />
+                <h2 id="related-documentation">Related
+                Documentation</h2>
+                <ul>
+                <li><a href="../system/overview.html">System
+                Overview</a></li>
+                <li><a href="../system/backend.html">Backend
+                Architecture</a></li>
+                <li><a href="../system/security.html">Security
+                Architecture</a></li>
+                <li><a href="../system/layers.html">Service
+                Layers</a></li>
+                <li><a
+                href="../components/index.html">Components</a></li>
+                <li><a href="../decisions/index.html">Decisions
+                (ADRs)</a></li>
+                </ul>
+                <hr />
+                <p><strong>Last Updated</strong>: June 2026
+                <strong>Status</strong>: Current</p>
+                <p><a href="../index.html">Back to Architecture
+                Index</a></p>
             </div>
         </main>
     </div>
@@ -110,9 +82,9 @@
                 { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
                 { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
                 { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend.html' },
+                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
                 { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment.html' },
+                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
             ],
             'Design Decisions': [
                 { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
@@ -120,7 +92,6 @@
             'Components': [
                 { label: 'Index', href: '/stockease/architecture/components/index.html' },
                 { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
-                { label: 'Supplier Controller', href: '/stockease/architecture/components/supplier-controller.html' },
             ],
             'Patterns': [
                 { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
@@ -128,7 +99,7 @@
                 { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing-architecture.html' },
+                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
                 { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
                 { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
                 { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
@@ -147,8 +118,11 @@
                 { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
             ],
             'Reference': [
-                { label: 'Documentation Guide', href: '/stockease/generated/guides/DOCUMENTATION-GUIDE.html' },
-                { label: 'Documentation Generation', href: '/stockease/generated/guides/DOCUMENTATION-GENERATION.html' },
+                { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
+                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
+            ],
+            'Documentation Index': [
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
                 { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },
