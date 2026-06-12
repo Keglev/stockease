@@ -24,8 +24,8 @@
                 <p><strong>Tech Stack</strong>: Spring Boot 3.5.7 · Java
                 17 LTS · PostgreSQL 17.5 · Spring Security · JWT
                 <strong>Deployment</strong>:
-                https://stockease-backend-production.koyeb.app
-                <strong>API Spec</strong>: OpenAPI 3.0 via SpringDoc
+                https://stockeasebackend.koyeb.app <strong>API
+                Spec</strong>: OpenAPI 3.0 via SpringDoc
                 (<code>/v3/api-docs</code>)</p>
                 <hr />
                 <h2 id="layered-architecture">Layered Architecture</h2>
@@ -111,8 +111,8 @@
 │   └── GlobalExceptionHandler.java
 ├── config/
 │   ├── CorsConfig.java
-│   ├── JpaConfig.java
-│   └── OpenApiConfig.java
+│   ├── DataSeeder.java
+│   └── FlywayConfiguration.java
 └── StockEaseApplication.java
 
 src/main/resources/
@@ -163,16 +163,28 @@ src/main/resources/
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">createProduct</span><span class="op">(</span></span>
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Valid</span> <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span>
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PutMapping</span><span class="op">(</span><span class="st">&quot;/{id}&quot;</span><span class="op">)</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;</span>ProductDTO<span class="op">&gt;</span> <span class="fu">updateProduct</span><span class="op">(</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PutMapping</span><span class="op">(</span><span class="st">&quot;/{id}/quantity&quot;</span><span class="op">)</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasAnyRole(&#39;ADMIN&#39;, &#39;USER&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">updateQuantity</span><span class="op">(</span></span>
 <span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">@PathVariable</span> <span class="bu">Long</span> id<span class="op">,</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Valid</span> <span class="at">@RequestBody</span> UpdateProductRequest req<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Valid</span> <span class="at">@RequestBody</span> UpdateQuantityRequest req<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span>
 <span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DeleteMapping</span><span class="op">(</span><span class="st">&quot;/{id}&quot;</span><span class="op">)</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="at">@PathVariable</span> <span class="bu">Long</span> id<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PutMapping</span><span class="op">(</span><span class="st">&quot;/{id}/price&quot;</span><span class="op">)</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasAnyRole(&#39;ADMIN&#39;, &#39;USER&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">updatePrice</span><span class="op">(</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">@PathVariable</span> <span class="bu">Long</span> id<span class="op">,</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Valid</span> <span class="at">@RequestBody</span> UpdatePriceRequest req<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PutMapping</span><span class="op">(</span><span class="st">&quot;/{id}/name&quot;</span><span class="op">)</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasAnyRole(&#39;ADMIN&#39;, &#39;USER&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">updateName</span><span class="op">(</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">@PathVariable</span> <span class="bu">Long</span> id<span class="op">,</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Valid</span> <span class="at">@RequestBody</span> UpdateNameRequest req<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">@DeleteMapping</span><span class="op">(</span><span class="st">&quot;/{id}&quot;</span><span class="op">)</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">@PreAuthorize</span><span class="op">(</span><span class="st">&quot;hasRole(&#39;ADMIN&#39;)&quot;</span><span class="op">)</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="at">@PathVariable</span> <span class="bu">Long</span> id<span class="op">)</span> <span class="op">{</span> <span class="op">}</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
                 <hr />
                 <h2 id="service-layer">Service Layer</h2>
                 <h3
@@ -314,7 +326,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.datasource.hikari.maximumPoolSize=10
 spring.datasource.hikari.minimumIdle=2
 spring.datasource.hikari.connectionTimeout=60000
-spring.web.cors.allowed-origins=https://stockease-frontend.onrender.com,http://localhost:5173
+app.cors.allowed-origins=https://stockeasefrontend.vercel.app,http://localhost:5173
 app.jwt.secret=${JWT_SECRET}
 app.jwt.expiration=86400000
 logging.level.com.stocks.stockease=INFO

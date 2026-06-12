@@ -40,7 +40,7 @@
                     subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-jammy ~250MB)"]
                         R1[Copy JAR from build stage] --> R2[Create non-root user]
                         R2 --> R3[Set USER app]
-                        R3 --> R4[EXPOSE 8081]
+                        R3 --> R4[EXPOSE <port>]
                         R4 --> R5[ENTRYPOINT]
                     end
 
@@ -76,9 +76,9 @@
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">--system</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">--system</span> <span class="at">--ingroup</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> 8081</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> &lt;port&gt;</span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>, <span class="st">&quot;--server.port=8081&quot;</span>]</span></code></pre></div>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>, <span class="st">&quot;--server.port=&lt;port&gt;&quot;</span>]</span></code></pre></div>
                 <hr />
                 <h2 id="layer-caching-strategy">Layer Caching
                 Strategy</h2>
@@ -176,13 +176,13 @@
                 They run in the CI pipeline before the build stage.</p>
                 <hr />
                 <h2 id="image-registry-ghcr">Image Registry (GHCR)</h2>
-                <pre><code>Registry: ghcr.io/keglev/stockease
+                <pre><code>Registry: &lt;registry-rost&gt;/keglev/stockease
 Visibility: Public
 
 Tags:
-  ghcr.io/keglev/stockease:latest      — updated on every main push
-  ghcr.io/keglev/stockease:v1.0.0      — semantic version tags
-  ghcr.io/keglev/stockease:sha-abc123  — commit hash tags</code></pre>
+  &lt;registry-rost&gt;/keglev/stockease:latest      — updated on every main push
+  &lt;registry-rost&gt;/keglev/stockease:v1.0.0      — semantic version tags
+  &lt;registry-rost&gt;/keglev/stockease:sha-abc123  — commit hash tags</code></pre>
                 <hr />
                 <h2 id="port-configuration">Port Configuration</h2>
                 <table>
@@ -195,23 +195,23 @@ Tags:
                 <tbody>
                 <tr class="odd">
                 <td>Dockerfile <code>EXPOSE</code></td>
-                <td>8081</td>
+                <td><port></td>
                 </tr>
                 <tr class="even">
                 <td>Spring Boot <code>server.port</code></td>
-                <td>8081</td>
+                <td><port></td>
                 </tr>
                 <tr class="odd">
                 <td>Koyeb container port</td>
-                <td>8081</td>
+                <td><port></td>
                 </tr>
                 <tr class="even">
                 <td>Health check</td>
-                <td>8081</td>
+                <td><port></td>
                 </tr>
                 </tbody>
                 </table>
-                <p>Port 8081 is used to avoid conflicts with common
+                <p>Port <port> is used to avoid conflicts with common
                 default ports (8080, 3000, 8000).</p>
                 <hr />
                 <h2 id="local-build-run">Local Build &amp; Run</h2>
@@ -220,10 +220,10 @@ Tags:
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> stockease:local .</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run container</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-p</span> 8081:8081 <span class="dt">\</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-p</span> <span class="op">&lt;</span>port<span class="op">&gt;</span>:<span class="op">&lt;</span>port<span class="op">&gt;</span> <span class="dt">\</span></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/stockease <span class="dt">\</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_USERNAME=postgres <span class="dt">\</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_PASSWORD=postgres <span class="dt">\</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_USERNAME=<span class="va">${DB_USER}</span> <span class="dt">\</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_PASSWORD=<span class="va">${DB_PASSWORD}</span> <span class="dt">\</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> JWT_SECRET=local-dev-secret-32-chars-min <span class="dt">\</span></span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  stockease:local</span></code></pre></div>
                 <hr />

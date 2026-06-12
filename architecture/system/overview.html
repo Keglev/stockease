@@ -202,16 +202,14 @@
                 easy auto-scaling, seamless CI/CD.</p>
                 <hr />
                 <h2 id="data-models">Data Models</h2>
-                <p><strong>AppUser</strong>: <code>id</code> (UUID, PK),
-                <code>username</code> (unique), <code>password</code>
-                (BCrypt), <code>role</code> (ADMIN/USER),
-                <code>createdAt</code>, <code>updatedAt</code></p>
-                <p><strong>Product</strong>: <code>id</code> (UUID, PK),
-                <code>name</code>, <code>price</code> (BigDecimal),
-                <code>quantity</code>, <code>sku</code> (unique),
-                <code>totalValue</code>, <code>createdAt</code>,
-                <code>updatedAt</code>, <code>createdBy</code> (FK →
-                AppUser)</p>
+                <p><strong>AppUser</strong>: <code>id</code> (Long, PK
+                auto-increment), <code>username</code> (unique),
+                <code>password</code> (BCrypt), <code>role</code>
+                (ROLE_ADMIN/ROLE_USER)</p>
+                <p><strong>Product</strong>: <code>id</code> (Long, PK
+                auto-increment), <code>name</code>, <code>price</code>
+                (DOUBLE PRECISION), <code>quantity</code> (INTEGER),
+                <code>totalValue</code> (DOUBLE PRECISION)</p>
                 <hr />
                 <h2 id="api-endpoints">API Endpoints</h2>
                 <table>

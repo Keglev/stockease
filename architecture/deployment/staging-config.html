@@ -204,6 +204,99 @@ jwt.expiration=86400000</code></pre>
                 </tbody>
                 </table>
                 <hr />
+                <h2 id="dataseeder-fixture-data">DataSeeder — Fixture
+                Data</h2>
+                <p><code>DataSeeder.java</code>
+                (<code>@Profile("!prod")</code>) seeds fixture users and
+                products on startup in all non-production profiles:</p>
+                <table>
+                <colgroup>
+                <col style="width: 42%" />
+                <col style="width: 23%" />
+                <col style="width: 34%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Credential</th>
+                <th>Role</th>
+                <th>Purpose</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>admin</code> / <code>admin123</code></td>
+                <td><code>ROLE_ADMIN</code></td>
+                <td>Full access for development and testing</td>
+                </tr>
+                <tr class="even">
+                <td><code>user</code> / <code>user123</code></td>
+                <td><code>ROLE_USER</code></td>
+                <td>Read-only access for development and testing</td>
+                </tr>
+                </tbody>
+                </table>
+                <p>5 fixture products are also seeded (Product 1–5 with
+                varying quantities and prices).</p>
+                <p>Seed inserts are idempotent — guarded by
+                <code>count() == 0</code> checks, so restarting the
+                application never creates duplicates.
+                <code>DataSeeder</code> is <strong>not active</strong>
+                in the <code>prod</code> profile — the
+                <code>@Profile("!prod")</code> annotation prevents it
+                from running in production.</p>
+                <hr />
+                <h2
+                id="flywayconfiguration-migration-ordering">FlywayConfiguration
+                — Migration Ordering</h2>
+                <p><code>FlywayConfiguration.java</code> overrides
+                Spring Boot’s auto-configured Flyway bean to resolve a
+                startup ordering issue in <strong>Spring Boot
+                3.5.x</strong>: without explicit ordering,
+                <code>EntityManagerFactory</code> may attempt to
+                validate the schema before Flyway has had a chance to
+                create it.</p>
+                <p>Key settings:</p>
+                <table>
+                <colgroup>
+                <col style="width: 37%" />
+                <col style="width: 29%" />
+                <col style="width: 33%" />
+                </colgroup>
+                <thead>
+                <tr class="header">
+                <th>Setting</th>
+                <th>Value</th>
+                <th>Reason</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="odd">
+                <td><code>baselineOnMigrate</code></td>
+                <td><code>true</code></td>
+                <td>Handles databases that already have a schema</td>
+                </tr>
+                <tr class="even">
+                <td><code>cleanDisabled</code></td>
+                <td><code>true</code></td>
+                <td>Prevents accidental database wipe in production</td>
+                </tr>
+                <tr class="odd">
+                <td><code>outOfOrder</code></td>
+                <td><code>true</code></td>
+                <td>Allows applying migrations out of version order</td>
+                </tr>
+                <tr class="even">
+                <td><code>connectRetries</code></td>
+                <td><code>20</code> (every 2s)</td>
+                <td>Tolerates slow database availability at startup</td>
+                </tr>
+                </tbody>
+                </table>
+                <p>The <code>spring.flyway.enabled=false</code> property
+                (used in test profiles) disables migration entirely —
+                when disabled, <code>FlywayConfiguration</code> creates
+                a no-op Flyway instance and skips migration.</p>
+                <hr />
                 <h2 id="configuration-hierarchy">Configuration
                 Hierarchy</h2>
                 <p>Priority from highest to lowest:</p>

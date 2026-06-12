@@ -145,25 +145,19 @@ Connection Pooling: enabled (limit: 100)</code></pre>
                 (Flyway)</h3>
                 <div class="mermaid">
                 erDiagram
-                    users {
-                        UUID id PK
+                    app_user {
+                        BIGINT id PK
                         VARCHAR username UK
                         VARCHAR password
                         VARCHAR role
-                        TIMESTAMP created_at
-                        TIMESTAMP updated_at
                     }
-                    products {
-                        UUID id PK
+                    product {
+                        BIGINT id PK
                         VARCHAR name
-                        DECIMAL price
+                        DOUBLE_PRECISION price
                         INTEGER quantity
-                        VARCHAR sku UK
-                        TIMESTAMP created_at
-                        TIMESTAMP updated_at
-                        UUID created_by FK
+                        DOUBLE_PRECISION total_value
                     }
-                    users ||--o{ products : "creates"
                 </div>
                 <p>Migration files in
                 <code>src/main/resources/db/migration/</code>:</p>
@@ -180,39 +174,48 @@ Connection Pooling: enabled (limit: 100)</code></pre>
                 </thead>
                 <tbody>
                 <tr class="odd">
-                <td><code>V1__init_schema.sql</code></td>
-                <td>Creates <code>users</code> and <code>products</code>
-                tables</td>
+                <td><code>V1__baseline.sql</code></td>
+                <td>Empty Flyway baseline marker for existing
+                schema</td>
                 </tr>
                 <tr class="even">
-                <td><code>V2__add_indexes.sql</code></td>
-                <td>Adds indexes on <code>sku</code>,
-                <code>category</code>, <code>username</code>,
-                <code>created_by</code></td>
-                </tr>
-                <tr class="odd">
-                <td><code>V3__seed_data.sql</code></td>
-                <td>Inserts admin/user accounts and sample products
-                (H2-compatible)</td>
+                <td><code>V2__create_schema.sql</code></td>
+                <td>Creates <code>app_user</code> and
+                <code>product</code> tables with BIGSERIAL PKs</td>
                 </tr>
                 </tbody>
                 </table>
-                <p>Flyway runs automatically on application startup and
-                validates the schema version before allowing data
-                access.</p>
+                <p>Seed data (fixture users and products) is inserted at
+                application startup by <code>DataSeeder.java</code>,
+                which is active in all non-production profiles
+                (<code>@Profile("!prod")</code>). See <a
+                href="./staging-config.html">Staging &amp;
+                Configuration</a> for details.</p>
+                <p>Flyway runs automatically on application startup via
+                <code>FlywayConfiguration.java</code>, which forces
+                migrations to execute before JPA initializes — resolving
+                a Spring Boot 3.5.x startup ordering issue.</p>
                 <hr />
                 <h2 id="monitoring">Monitoring</h2>
-                <h3 id="health-endpoint">Health Endpoint</h3>
-                <p><code>GET /health</code> — public, used by Koyeb
-                health checks.</p>
-                <div class="sourceCode" id="cb4"><pre
-                class="sourceCode json"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;components&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;db&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span> <span class="dt">&quot;details&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;database&quot;</span><span class="fu">:</span> <span class="st">&quot;PostgreSQL&quot;</span> <span class="fu">}</span> <span class="fu">},</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;diskSpace&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span> <span class="fu">}</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+                <h3 id="health-endpoints">Health Endpoints</h3>
+                <p>Two health check paths exist:</p>
+                <p><strong><code>GET /api/health</code></strong> —
+                custom endpoint, returns <code>text/plain</code>. Used
+                by Koyeb health probes.</p>
+                <pre><code>Database is connected and API is running.</code></pre>
+                <p><strong><code>GET /actuator/health</code></strong>
+                and
+                <strong><code>GET /actuator/health/**</code></strong> —
+                Spring Boot Actuator endpoints, return JSON. Also public
+                per <code>SecurityConfig</code>.</p>
+                <div class="sourceCode" id="cb5"><pre
+                class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;components&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;db&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span> <span class="fu">},</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;diskSpace&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span> <span class="fu">}</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
                 <h3 id="application-logs">Application Logs</h3>
                 <p>Captured by Koyeb via stdout/stderr. Key startup
                 sequence:</p>
