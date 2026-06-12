@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.model</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * Domain entity representing a user account, persisted to the {@code app_user} table.
+ * The {@code username} field carries a unique database constraint to prevent duplicate accounts.
+ */
+@Data
+@Entity
+@Table(name = &quot;app_user&quot;)
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+
+    /** Unique user identifier. */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Login name used for authentication and displayed in API responses. */
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    /** BCrypt-hashed password; never exposed in API responses or logs. */
+    @Column(nullable = false)
+    private String password;
+
+    /** Authorization role ({@code ADMIN} or {@code USER}) that determines endpoint access permissions. */
+    @Column(nullable = false)
+    private String role;
+
+    /**
+     * Creates a user without an ID; the {@code password} argument must already be BCrypt-hashed.
+     *
+     * @param username unique login name (required)
+     * @param password BCrypt-hashed password (required, never plaintext)
+     * @param role authorization role (required, ADMIN or USER)
+     */
+<span class="fc" id="L48">    public User(String username, String password, String role) {</span>
+<span class="fc" id="L49">        this.username = username;</span>
+<span class="fc" id="L50">        this.password = password;</span>
+<span class="fc" id="L51">        this.role = role;</span>
+<span class="fc" id="L52">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
