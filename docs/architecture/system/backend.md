@@ -13,30 +13,27 @@ graph TD
     subgraph Controller["REST Controller Layer"]
         C1["AuthController · ProductController · HealthController"]
     end
-    subgraph Service["Service Layer"]
-        S1["AuthService · ProductService · HealthService"]
-    end
     subgraph Repository["Repository Layer"]
         R1["UserRepository · ProductRepository"]
     end
     subgraph Entity["Entity/Model Layer"]
-        E1["AppUser · Product · BaseEntity"]
+        E1["User · Product"]
     end
     subgraph Database["Database Layer"]
         D1["PostgreSQL · Flyway Migrations"]
     end
 
-    Controller --> Service
-    Service --> Repository
+    Controller --> Repository
     Repository --> Entity
     Entity --> Database
 
     style Controller fill:#e3f2fd
-    style Service fill:#fff3e0
     style Repository fill:#e8f5e9
     style Entity fill:#f3e5f5
     style Database fill:#fce4ec
 ```
+
+StockEase has no intermediate service layer — controllers call repositories directly.
 
 ---
 
@@ -49,15 +46,12 @@ graph TD
     C --> D{JWT valid?}
     D -->|No| X[401 Unauthorized]
     D -->|Yes| E[Controller Method]
-    E --> F[Service — business logic and authorization]
-    F --> G[Repository — query execution]
-    G --> H[Service — entity to DTO]
-    H --> I[Controller — ResponseEntity]
-    I --> J[Jackson — JSON serialization]
-    J --> K[HTTP Response]
-
+    E --> F[Repository — query execution]
+    F --> G[Controller — ResponseEntity]
+    G --> H[Jackson — JSON serialization]
+    H --> I[HTTP Response]
     style X fill:#ffcdd2
-    style K fill:#c8e6c9
+    style I fill:#c8e6c9
 ```
 
 ---
@@ -70,30 +64,27 @@ backend/src/main/java/com/stocks/stockease/
 │   ├── AuthController.java
 │   ├── ProductController.java
 │   └── HealthController.java
-├── service/
-│   ├── AuthService.java
-│   ├── ProductService.java
-│   └── HealthService.java
 ├── repository/
 │   ├── UserRepository.java
 │   └── ProductRepository.java
 ├── model/
-│   ├── AppUser.java
-│   ├── Product.java
-│   └── BaseEntity.java
+│   ├── User.java
+│   └── Product.java
 ├── dto/
-│   ├── AuthDTO.java
-│   ├── ProductDTO.java
-│   └── ErrorResponseDTO.java
+│   ├── ApiResponse.java
+│   ├── LoginRequest.java
+│   ├── PaginatedResponse.java
+│   ├── CreateProductRequest.java
+│   ├── UpdateQuantityRequest.java
+│   ├── UpdatePriceRequest.java
+│   └── UpdateNameRequest.java
 ├── security/
-│   ├── JwtTokenProvider.java
+│   ├── JwtUtil.java
+│   ├── JwtFilter.java
 │   ├── SecurityConfig.java
-│   ├── JwtAuthenticationFilter.java
+│   ├── CustomUserDetailsService.java
 │   └── CustomAuthenticationEntryPoint.java
 ├── exception/
-│   ├── ResourceNotFoundException.java
-│   ├── UnauthorizedException.java
-│   ├── ValidationException.java
 │   └── GlobalExceptionHandler.java
 ├── config/
 │   ├── CorsConfig.java
@@ -103,11 +94,13 @@ backend/src/main/java/com/stocks/stockease/
 
 src/main/resources/
 ├── application.properties
-├── application-dev.properties
-├── application-prod.properties
+├── application-prod.yml
 └── db/migration/
     ├── V1__baseline.sql
     └── V2__create_schema.sql
+
+src/main/java/db/migration/
+└── V3__seed_data.java
 ```
 
 ---
@@ -122,14 +115,8 @@ src/main/resources/
 public class AuthController {
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
-        // Authenticate user → generate JWT → return token + user info
-    }
-
-    @GetMapping("/validate")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> validateToken() {
-        // Return current user info if token valid
+    public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest req) {
+        // Authenticate → generate JWT → return ApiResponse wrapping token string
     }
 }
 ```
@@ -143,17 +130,18 @@ public class ProductController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<List<ProductDTO>> getAllProducts() { }
+    public List<Product> getAllProducts() { }  // returns raw list ordered by ID
 
     @GetMapping("/paged")
-    public ResponseEntity<Page<ProductDTO>> getProductsPaged(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size) { }
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<ApiResponse<PaginatedResponse<Product>>> getPagedProducts(
+        @RequestParam(defaultValue = "0") @Min(0) int page,
+        @RequestParam(defaultValue = "10") @Positive int size) { }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProductDTO> createProduct(
-        @Valid @RequestBody CreateProductRequest req) { }
+    public ResponseEntity<?> createProduct(
+        @Valid @RequestBody CreateProductRequest req) { }  // returns raw Product
 
     @PutMapping("/{id}/quantity")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -181,54 +169,27 @@ public class ProductController {
 
 ---
 
-## Service Layer
-
-### ProductService — key transactional methods
-
-```java
-@Service
-public class ProductService {
-
-    @Transactional(readOnly = true)
-    public Page<ProductDTO> getProductsPaged(int page, int size) {
-        return productRepository.findAll(PageRequest.of(page, size, Sort.by("name")))
-            .map(this::mapToDTO);
-    }
-
-    @Transactional
-    public ProductDTO createProduct(CreateProductRequest request) {
-        validateProductInput(request);
-        Product product = new Product();
-        product.setName(request.getName());
-        product.setQuantity(request.getQuantity());
-        product.setPrice(request.getPrice());
-        product.setTotalValue(request.getPrice() * request.getQuantity());
-        return mapToDTO(productRepository.save(product));
-    }
-
-    @Transactional
-    public void deleteProduct(Long id) {
-        if (!productRepository.existsById(id))
-            throw new ResourceNotFoundException("Product not found");
-        productRepository.deleteById(id);
-    }
-}
-```
-
----
-
 ## Repository Layer
 
+Controllers call repositories directly — there is no intermediate service layer. Spring Data JPA repositories handle transactions for single operations automatically.
+
 ```java
-public interface UserRepository extends JpaRepository<AppUser, Long> {
-    Optional<AppUser> findByUsername(String username);
-    boolean existsByUsername(String username);
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
 }
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
+
+    @Query("SELECT p FROM Product p WHERE p.quantity < :threshold")
+    List<Product> findByQuantityLessThan(@Param("threshold") int threshold);
+
+    @Query("SELECT p FROM Product p ORDER BY p.id ASC")
+    List<Product> findAllOrderById();
+
+    @Query("SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p")
+    double calculateTotalStockValue();
+
     List<Product> findByNameContainingIgnoreCase(String name);
-    Page<Product> findAll(Pageable pageable);
-    List<Product> findByQuantityLessThan(int threshold);
 }
 ```
 
@@ -237,34 +198,38 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 ## Entity Layer
 
 ```java
+@Data
 @Entity
 @Table(name = "app_user")
-public class AppUser {
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(unique = true, nullable = false) private String username;
     @Column(nullable = false) private String password; // BCrypt hashed
-    @Column(nullable = false) private String role;
-    @CreationTimestamp private LocalDateTime createdAt;
-    @UpdateTimestamp private LocalDateTime updatedAt;
+    @Column(nullable = false) private String role;     // "ROLE_ADMIN" or "ROLE_USER"
 }
 
+@Data
 @Entity
 @Table(name = "product")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Product {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(nullable = false) private String name;
     @Column(nullable = false) private Integer quantity;
-    @Column(nullable = false) private BigDecimal price;
-    @Column(nullable = false) private BigDecimal totalValue;
-    @CreationTimestamp private LocalDateTime createdAt;
-    @UpdateTimestamp private LocalDateTime updatedAt;
+    @Column(nullable = false) private Double price;
+    @Column(nullable = false) private Double totalValue;
 
-    @PrePersist @PreUpdate
-    private void calculateTotalValue() {
-        this.totalValue = price.multiply(new BigDecimal(quantity));
-    }
+    // Custom setters recalculate totalValue = quantity * price on every change
+    public void setQuantity(Integer quantity) { this.quantity = quantity; updateTotalValue(); }
+    public void setPrice(Double price)        { this.price = price;       updateTotalValue(); }
+
+    // Convenience constructor — totalValue is computed, not supplied by the caller
+    public Product(String name, int quantity, double price) { ... }
 }
 ```
 
@@ -272,27 +237,28 @@ public class Product {
 
 ## Exception Handling
 
-```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
+`GlobalExceptionHandler` (`@RestControllerAdvice`) catches exceptions and returns a consistent `ApiResponse<T>` shape. All error responses have `success: false`.
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(new ErrorResponse("NOT_FOUND", e.getMessage()));
-    }
+| Exception | HTTP Status | Triggered By |
+|-----------|-------------|-------------|
+| `EntityNotFoundException` | 404 | Product not found by ID |
+| `NoSuchElementException` | 404 | Stream `.get()` on empty Optional |
+| `IllegalArgumentException` | 400 | Business rule violation |
+| `MethodArgumentNotValidException` | 400 | `@Valid` bean validation failure |
+| `HttpMessageNotReadableException` | 400 | Malformed request body or type mismatch |
+| `HandlerMethodValidationException` | 400 | `@Min`/`@Positive` on path/query params |
+| `AccessDeniedException` | 403 | Insufficient role (Spring Security) |
+| `BadCredentialsException` | 401 | Wrong password during login |
+| `JwtException` | 401 | Invalid/expired JWT token |
+| `Exception` (catch-all) | 500 | Unexpected runtime error |
 
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(ValidationException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(new ErrorResponse("VALIDATION_ERROR", e.getMessage()));
-    }
+Validation 400 responses include a `data` map with field-level error messages:
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(new ErrorResponse("SERVER_ERROR", "An unexpected error occurred"));
-    }
+```json
+{
+  "success": false,
+  "message": "Validation failed for request parameters.",
+  "data": { "name": "must not be blank", "quantity": "must be greater than or equal to 0" }
 }
 ```
 
@@ -300,30 +266,31 @@ public class GlobalExceptionHandler {
 
 ## Database Migrations (Flyway)
 
+Three migrations exist:
+
+- **`V1__baseline.sql`** — empty baseline marker; establishes Flyway history on an existing schema
+- **`V2__create_schema.sql`** — creates the full schema
+- **`V3__seed_data.java`** — seeds fixture users (`admin`, `user`) and 8 sample products with BCrypt-hashed passwords; Java migration so `BCryptPasswordEncoder` can be used at migration time
+
 ```sql
 -- V2__create_schema.sql
 CREATE TABLE IF NOT EXISTS app_user (
-    id BIGSERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    role VARCHAR(255) NOT NULL DEFAULT 'ROLE_USER',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id        BIGSERIAL PRIMARY KEY,
+    username  VARCHAR(255) NOT NULL UNIQUE,
+    password  VARCHAR(255) NOT NULL,
+    role      VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS product (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    quantity INTEGER NOT NULL,
-    price NUMERIC(10, 2) NOT NULL,
-    total_value NUMERIC(10, 2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id          BIGSERIAL PRIMARY KEY,
+    name        VARCHAR(255) NOT NULL,
+    quantity    INTEGER NOT NULL,
+    price       DOUBLE PRECISION NOT NULL,
+    total_value DOUBLE PRECISION NOT NULL
 );
-
-CREATE INDEX idx_username ON app_user(username);
-CREATE INDEX idx_product_name ON product(name);
 ```
+
+No explicit indexes are defined in migrations — `app_user.username` uniqueness is enforced by the `UNIQUE` constraint, which PostgreSQL indexes automatically. Seed data is inserted by the V3 Flyway migration, which runs in all environments including production. `DataSeeder.java` (`@Profile("!prod")`) also exists but its `count() == 0` guards make it a no-op after V3 has populated the database — it only takes effect in test environments where Flyway is disabled.
 
 ---
 
@@ -332,21 +299,21 @@ CREATE INDEX idx_product_name ON product(name);
 ```properties
 # application.properties
 server.port=8081
-spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.url=${NEON_JDBC_URL:${DATABASE_URL:}}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
 spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 spring.datasource.driver-class-name=org.postgresql.Driver
-spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.hibernate.ddl-auto=update
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-spring.datasource.hikari.maximumPoolSize=10
-spring.datasource.hikari.minimumIdle=2
-spring.datasource.hikari.connectionTimeout=60000
-app.cors.allowed-origins=https://stockeasefrontend.vercel.app,http://localhost:5173
-app.jwt.secret=${JWT_SECRET}
-app.jwt.expiration=86400000
+spring.jpa.show-sql=true
+spring.jpa.open-in-view=false
 logging.level.com.stocks.stockease=INFO
-logging.level.org.springframework=WARN
+logging.level.org.springframework=INFO
+logging.level.org.hibernate.SQL=WARN
+logging.level.org.apache.catalina=WARN
 ```
+
+Warning: ddl-auto is set to update in the default profile and must be overridden to validate in production via application-prod.yml — never let update reach production.
 
 ---
 

@@ -53,6 +53,6 @@ spring:
 # ---- Additional settings ----
 logging:
   level:
-    '[org.flywaydb]': DEBUG
-
+    '[org.flywaydb]': INFO  # Reduce Flyway logging to INFO level
+    '[com.stocks.stockease]': INFO
 # (show-details is set above under management.endpoint.health.show-details)

@@ -1,4 +1,4 @@
-# Service Layers & Component Architecture
+# Component Architecture & Layers
 
 **Purpose**: Document the responsibilities of each layer, data flow, transaction boundaries, and component dependencies.
 
@@ -10,18 +10,15 @@
 graph TD
     A[REST Controllers — HTTP Layer]
     B[Security Layer — JWT and Spring Security]
-    C[Business Logic — Services]
     D[Data Access — Repositories and Entities]
     E[Database — PostgreSQL or H2]
 
     A --> B
-    B --> C
-    C --> D
+    B --> D
     D --> E
 
     style A fill:#e3f2fd
     style B fill:#fff3e0
-    style C fill:#e8f5e9
     style D fill:#f3e5f5
     style E fill:#fce4ec
 ```
@@ -31,7 +28,7 @@ graph TD
 ## Layer Responsibilities
 
 ### HTTP / Controller Layer
-Handles request/response mapping, input format validation, and routing. Calls service methods and formats `ResponseEntity` responses.
+Handles request/response mapping, input validation, and routing. Controllers call repositories directly — there is no intermediate service layer. Results are formatted into `ResponseEntity` responses.
 
 DTOs used:
 - `LoginRequest` — `{ username: String, password: String }` (validated with `@NotBlank`)
@@ -39,7 +36,7 @@ DTOs used:
 - `PaginatedResponse<T>` — Spring Page wrapper with `pageNumber`, `pageSize`, `totalElements`, `totalPages`
 
 ### Security Layer (Cross-cutting)
-Intercepts all requests. Validates JWT tokens, extracts user role, and enforces authorization before the request reaches the service layer.
+Intercepts all requests. Validates JWT tokens, extracts user role, and enforces authorization before the request reaches the controller.
 
 ```mermaid
 sequenceDiagram
@@ -54,21 +51,26 @@ sequenceDiagram
     FE-->>U: Store token; include in Authorization header
 ```
 
-### Business Logic Layer (Services)
-Implements business rules, validates domain constraints, manages transactions, and maps entities to DTOs.
-
-**AuthService** responsibilities: credential validation, JWT generation, BCrypt password comparison.
-
-**ProductService** responsibilities: CRUD orchestration, business rule validation (price > 0, quantity ≥ 0), `@Transactional` boundaries, entity-to-DTO mapping.
-
 ### Data Access Layer (Repositories)
 Spring Data JPA interfaces. Provides derived queries, custom `@Query` methods, and pagination support.
 
 ```java
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
+}
+
 public interface ProductRepository extends JpaRepository<Product, Long> {
+
+    @Query("SELECT p FROM Product p WHERE p.quantity < :threshold")
+    List<Product> findByQuantityLessThan(@Param("threshold") int threshold);
+
+    @Query("SELECT p FROM Product p ORDER BY p.id ASC")
+    List<Product> findAllOrderById();
+
+    @Query("SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p")
+    double calculateTotalStockValue();
+
     List<Product> findByNameContainingIgnoreCase(String name);
-    List<Product> findByQuantityLessThan(int threshold);
-    Page<Product> findAll(Pageable pageable);
 }
 ```
 
@@ -99,44 +101,41 @@ PostgreSQL 17.5 in production (Neon serverless). H2 in-memory for tests. Schema 
 
 ## Transaction Boundaries
 
-Read operations use `@Transactional(readOnly = true)`. Write operations use `@Transactional` to ensure atomicity.
-
-```java
-@Transactional
-public void createProduct(CreateProductRequest req) {
-    Product product = new Product(req);
-    productRepository.save(product);        // atomic with next line
-    auditLog.log("Product created", product.getId());
-    // Both succeed or both roll back
-}
-```
+There is no explicit service layer. Controllers call `JpaRepository` methods directly, which Spring Data JPA wraps in transactions automatically for each operation. There are no multi-step write sequences that require explicit `@Transactional` boundaries in application code — each `save()` or `delete()` is its own atomic unit.
 
 ---
 
 ## Component Dependencies
 
 ```
-AuthController       → AuthService → UserRepository, JwtProvider, PasswordEncoder
-ProductController    → ProductService → ProductRepository
+AuthController       → AuthenticationManager, JwtUtil, UserRepository
+ProductController    → ProductRepository
+HealthController     → DataSource (direct JDBC connection check)
 GlobalExceptionHandler (cross-cutting)
 
-SecurityConfig       → JwtProvider, UserDetailsService, PasswordEncoder
-JwtAuthenticationFilter → JwtProvider
+SecurityConfig             → JwtFilter, CustomUserDetailsService, PasswordEncoder
+JwtFilter                  → JwtUtil, CustomUserDetailsService
+CustomUserDetailsService   → UserRepository
 ```
 
 ---
 
 ## Error Handling Strategy
 
+All exceptions are caught by `GlobalExceptionHandler` (`@RestControllerAdvice`) and returned as a consistent `ApiResponse<T>` JSON body with `success: false`.
+
 | Exception | HTTP Status | When |
 |-----------|-------------|------|
-| `ResourceNotFoundException` | 404 | Entity not found by ID |
-| `ValidationException` | 400 | Business rule violation |
-| `UnauthorizedException` | 401 | Invalid or missing token |
-| `AuthorizationException` | 403 | Insufficient role |
+| `EntityNotFoundException` | 404 | Product not found by ID |
+| `NoSuchElementException` | 404 | `.get()` on empty Optional |
+| `IllegalArgumentException` | 400 | Business rule violation |
+| `MethodArgumentNotValidException` | 400 | `@Valid` bean validation failure |
+| `HttpMessageNotReadableException` | 400 | Malformed request body |
+| `HandlerMethodValidationException` | 400 | `@Min`/`@Positive` on path/query params |
+| `AccessDeniedException` | 403 | Insufficient role (Spring Security) |
+| `BadCredentialsException` | 401 | Wrong password during login |
+| `JwtException` | 401 | Invalid/expired JWT token |
 | `Exception` (catch-all) | 500 | Unexpected server error |
-
-All exceptions are caught by `GlobalExceptionHandler` (`@RestControllerAdvice`) and returned as a consistent `ErrorResponse` JSON body.
 
 ---
 

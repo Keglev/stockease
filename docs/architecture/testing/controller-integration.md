@@ -65,7 +65,7 @@ mockMvc.perform(put("/api/products/1")
 mockMvc.perform(delete("/api/products/1")
     .with(csrf())
     .with(user("admin").roles("ADMIN")))
-    .andExpect(status().isNoContent());
+    .andExpect(status().isOk());
 ```
 
 ---

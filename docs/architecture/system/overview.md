@@ -30,12 +30,10 @@ graph LR
 ```mermaid
 graph TB
   subgraph Backend [StockEase Backend - Spring Boot]
-    API[API Endpoints]
-    BIZ[Business Logic Services]
+    API[API Endpoints / Controllers]
     DATA[Data Access / Repositories / Flyway]
   end
-  API --> BIZ
-  BIZ --> DATA
+  API --> DATA
   DATA --> DB[(PostgreSQL / Neon)]
   API -->|exposes| OpenAPI["/v3/api-docs"]
   API -->|health| Health["/api/health"]
@@ -46,9 +44,10 @@ graph TB
 | Layer | Components |
 |-------|------------|
 | Controllers | `AuthController`, `ProductController`, `HealthController` |
-| Services | `AuthService`, `ProductService`, `HealthService` |
 | Repositories | `UserRepository`, `ProductRepository` |
-| Security | `JwtProvider`, `SecurityConfig`, `JwtAuthenticationFilter`, `BCrypt` |
+| Security | `JwtUtil`, `JwtFilter`, `SecurityConfig`, `CustomUserDetailsService`, `CustomAuthenticationEntryPoint` |
+| Exception Handling | `GlobalExceptionHandler` |
+| Config | `CorsConfig`, `DataSeeder`, `FlywayConfiguration` |
 | Data Access | Flyway migrations, PostgreSQL (prod), H2 (test) |
 
 ---
@@ -88,7 +87,7 @@ graph TB
 
 ## Data Models
 
-**AppUser**: `id` (Long, PK auto-increment), `username` (unique), `password` (BCrypt), `role` (ROLE_ADMIN/ROLE_USER)
+**User**: `id` (Long, PK auto-increment), `username` (unique), `password` (BCrypt), `role` (ROLE_ADMIN/ROLE_USER)
 
 **Product**: `id` (Long, PK auto-increment), `name`, `price` (DOUBLE PRECISION), `quantity` (INTEGER), `totalValue` (DOUBLE PRECISION)
 

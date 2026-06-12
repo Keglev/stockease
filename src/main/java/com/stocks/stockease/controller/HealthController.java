@@ -10,88 +10,43 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
+
 /**
- * Application health check endpoint for orchestration and monitoring.
- * 
- * Used by:
- * - Kubernetes (K8s liveness probes, readiness probes)
- * - Docker (healthcheck instruction)
- * - Load balancers (backend health checks)
- * - Monitoring systems (Prometheus, DataDog, etc.)
- * 
- * Design principles:
- * - Lightweight: Single DB connection validation, no expensive operations
- * - Fast response: ~10ms typical latency (10-second timeout for slow DB startups)
- * - Side-effect free: No state changes, safe to call frequently
- * - Minimal contract: Simple 200 OK or 500 error with short text message
- * 
- * Success criteria:
- * - HTTP 200 OK: Database is reachable and connection valid
- * - HTTP 500 Internal Error: Database unreachable or connection timeout
- * 
- * Endpoint: GET /api/health (public, no authentication required)
- * 
- * @author Team StockEase
- * @version 1.0
- * @since 2025-01-01
+ * Lightweight liveness probe for orchestrators and monitoring systems.
+ *
+ * <p>Performs a single JDBC {@link Connection#isValid} check against the primary
+ * {@link DataSource}. Returns HTTP 200 when the database is reachable, HTTP 500 otherwise.
+ * Intentionally avoids queries, writes, and schema operations so the probe is safe to
+ * call at high frequency (K8s liveness/readiness, load balancers, Docker healthcheck).
  */
 @RestController
 @RequestMapping("/api/health")
+@RequiredArgsConstructor
 public class HealthController {
 
-    /** Primary JDBC DataSource used by the application. Injected by Spring. */
     private final DataSource dataSource;
 
     /**
-     * Constructor for dependency injection.
+     * Checks database connectivity and reports application liveness.
      *
-     * @param dataSource the JDBC DataSource to check for connectivity
-     */
-    public HealthController(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    /**
-     * Simple health check endpoint for orchestrators and monitoring systems.
-     * 
-     * Implementation strategy:
-     * - Obtains connection from pool (validates JDBC driver is loaded)
-     * - Calls Connection.isValid(10) to verify database liveness
-     * - 10-second timeout balances startup latency vs probe responsiveness
-     * - Handles SQLException for database connection failures
-     * 
-     * Success response: 200 OK with "Database is connected and API is running."
-     * Failure response: 500 Internal Error with diagnostic message
-     * 
-     * Important: Keep this handler lightweight. Avoid:
-     * - SELECT COUNT(*) queries (expensive)
-     * - Schema migrations (causes cascading failures)
-     * - Logging detailed errors (expose internal state)
-     * - Caching responses (defeats real-time health checks)
+     * <p>Uses a 10-second timeout on {@link Connection#isValid} to tolerate slow database
+     * startups without blocking probes indefinitely. No authentication required.
      *
-     * @return ResponseEntity with HTTP 200 on success, 500 on failure
+     * @return HTTP 200 with a status message on success; HTTP 500 with {@code e.getMessage()}
+     *         if the connection cannot be established or validated
      */
     @GetMapping
     public ResponseEntity<String> healthCheck() {
-        // Probe the primary backing service (database). This call is intentionally
-        // lightweight and non-destructive: it only validates the connection socket
-        // and basic liveness using the JDBC isValid() method.
         try (Connection connection = dataSource.getConnection()) {
-            // Bound the liveness check so callers don't wait too long. A short
-            // timeout (10s) balances resilience for slow DB startups against probe
-            // latency for health check callers.
             if (connection.isValid(10)) {
                 return ResponseEntity.ok("Database is connected and API is running.");
             }
         } catch (SQLException e) {
-            // Return a concise error message. Avoid returning stack traces or
-            // detailed internal state to external callers for security reasons.
+            // e.getMessage() exposes enough detail for operators without leaking a full stack trace
             return ResponseEntity.status(500).body("Database is down: " + e.getMessage());
         }
 
-        // Fallback generic error when connection opened but did not validate
-        // within the expected bounds. This path is reachable if isValid() returns
-        // false for any reason.
         return ResponseEntity.status(500).body("Unknown issue with database connection.");
     }
 }

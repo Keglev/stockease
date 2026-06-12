@@ -17,73 +17,45 @@ import com.stocks.stockease.repository.UserRepository;
 import com.stocks.stockease.security.JwtUtil;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
- * REST controller for authentication operations.
- * 
- * Manages user login and JWT token generation for securing API access.
- * Integrates with Spring Security for credential validation and role-based access.
- * 
- * @author Team StockEase
- * @version 1.0
- * @since 2025-01-01
+ * REST controller for user authentication.
+ *
+ * <p>Exposes a single login endpoint that validates credentials via Spring Security
+ * and issues a signed JWT for subsequent API requests. Contract defined in
+ * {@code docs/api/paths/auth-login.yaml}.
  */
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    /**
-     * Spring Security AuthenticationManager for credential validation.
-     */
     private final AuthenticationManager authenticationManager;
-
-    /**
-     * JWT utility for token generation with role claims.
-     */
     private final JwtUtil jwtUtil;
-
-    /**
-     * Repository for loading user records and roles from database.
-     */
     private final UserRepository userRepository;
 
     /**
-     * Constructor for dependency injection via Spring.
-     * 
-     * @param authenticationManager Spring Security credential validator
-     * @param jwtUtil JWT token generator
-     * @param userRepository user data access
-     */
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserRepository userRepository) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
-    }
-
-    /**
-     * Authenticates user credentials and generates JWT token.
-     * 
-     * Validates username and password against stored user records via Spring Security.
-     * Upon successful authentication, issues a signed JWT token with user role embedded
-     * for subsequent API request authorization.
-     * 
-     * @param loginRequest contains username and password
-     * @return JWT token wrapped in ApiResponse if authentication succeeds
-     * @throws BadCredentialsException if username/password combination is invalid
-     * @throws UsernameNotFoundException if user account does not exist
-     * @throws org.springframework.validation.BindException if request validation fails
+     * Authenticates the supplied credentials and returns a signed JWT.
+     *
+     * <p>Behavior is defined in {@code docs/api/paths/auth-login.yaml},
+     * operation {@code loginUser}.
+     *
+     * @param loginRequest username and password payload
+     * @return {@link ApiResponse} wrapping the JWT string on success (HTTP 200),
+     *         or an error message on failure (HTTP 400, 401, or 500)
+     * @throws org.springframework.security.authentication.BadCredentialsException
+     *         if the password does not match — caught and mapped to HTTP 401
+     * @throws UsernameNotFoundException if the account does not exist — mapped to HTTP 401
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-            // Validate payload not empty (JSR-303 annotation handles format validation)
             if (loginRequest.getUsername().isBlank() || loginRequest.getPassword().isBlank()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(false, "Username and password cannot be blank", null));
             }
 
-            // Delegate to Spring Security AuthenticationManager for credential verification.
-            // Throws BadCredentialsException if password doesn't match stored hash.
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                     loginRequest.getUsername(),
@@ -91,30 +63,21 @@ public class AuthController {
                 )
             );
 
-            // Load user details from database for role extraction.
-            // Throws UsernameNotFoundException if user record missing (shouldn't happen if auth succeeded).
             User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            // Generate signed JWT token with username and role claims.
-            // Token includes expiration time; client must refresh after expiry.
             String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-
             return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", token));
+
         } catch (UsernameNotFoundException e) {
-            // User not found - return 401 Unauthorized with generic message for security.
-            // Avoid disclosing whether username exists (prevents user enumeration attacks).
+            // Generic message prevents user enumeration (do not reveal whether the username exists)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(false, e.getMessage(), null));
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            // Invalid credentials (wrong password) - return 401 with generic message.
-            // Do NOT reveal which part (username/password) was incorrect.
+            // Generic message prevents user enumeration (do not reveal which field was wrong)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(false, "Invalid username or password", null));
         } catch (RuntimeException e) {
-            // Catch unexpected server-side errors (e.g., database connection failures).
-            // Return 500 Internal Server Error with generic message to avoid information leakage.
-            // Stack trace is logged by GlobalExceptionHandler for debugging purposes.
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponse<>(false, "An unexpected error occurred", null));
         }

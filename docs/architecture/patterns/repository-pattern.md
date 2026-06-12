@@ -8,7 +8,7 @@
 
 ```mermaid
 graph TD
-    A[Service Layer] -->|uses| B[Repository Interface — Spring Data JPA]
+    A[Controller Layer] -->|uses| B[Repository Interface — Spring Data JPA]
     B -->|extends| C[JpaRepository T, ID]
     C -->|Spring generates| D[Repository Proxy Implementation]
     D -->|uses| E[EntityManager — Hibernate]
@@ -29,10 +29,9 @@ graph TD
 ### UserRepository
 
 ```java
-public interface UserRepository extends JpaRepository<AppUser, Long> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<AppUser> findByUsername(String username);
-    boolean existsByUsername(String username);
+    Optional<User> findByUsername(String username);
 }
 ```
 
@@ -41,9 +40,16 @@ public interface UserRepository extends JpaRepository<AppUser, Long> {
 ```java
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    @Query("SELECT p FROM Product p WHERE p.quantity < :threshold")
+    List<Product> findByQuantityLessThan(@Param("threshold") int threshold);
+
+    @Query("SELECT p FROM Product p ORDER BY p.id ASC")
+    List<Product> findAllOrderById();
+
+    @Query("SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p")
+    double calculateTotalStockValue();
+
     List<Product> findByNameContainingIgnoreCase(String name);
-    List<Product> findByQuantityLessThan(int threshold);
-    Page<Product> findAll(Pageable pageable);
 }
 ```
 
@@ -55,41 +61,38 @@ Spring Data JPA generates SQL from method names automatically:
 
 | Method Name | Generated Query |
 |-------------|----------------|
-| `findByNameContainingIgnoreCase(String name)` | `WHERE LOWER(name) LIKE LOWER(?)` |
-| `findByQuantityLessThan(int threshold)` | `WHERE quantity < ?` |
 | `findByUsername(String username)` | `WHERE username = ?` |
-| `existsByUsername(String username)` | `SELECT COUNT(*) > 0 WHERE username = ?` |
-| `findByPriceGreaterThan(BigDecimal)` | `WHERE price > ?` |
-| `findByPriceLessThanEqual(BigDecimal)` | `WHERE price <= ?` |
+| `findByNameContainingIgnoreCase(String name)` | `WHERE LOWER(name) LIKE LOWER(?)` |
 
 ---
 
-## Usage in Service Layer
+## Usage in Controllers
+
+Controllers inject repositories directly — there is no intermediate service layer.
 
 ```java
-@Service
-public class ProductService {
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
 
-    @Transactional(readOnly = true)
-    public Page<ProductDTO> getProducts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findAll(pageable)
-            .map(ProductDTO::fromEntity);
+    private final ProductRepository productRepository;
+
+    public List<Product> getAllProducts() {
+        return productRepository.findAllOrderById();
     }
 
-    @Transactional
-    public ProductDTO createProduct(CreateProductRequest request) {
-        Product product = new Product(
-            request.getName(), request.getQuantity(), request.getPrice());
-        product.setTotalValue(request.getPrice() * request.getQuantity());
-        return ProductDTO.fromEntity(productRepository.save(product));
+    public ResponseEntity<?> createProduct(@Valid @RequestBody CreateProductRequest req) {
+        return ResponseEntity.ok(productRepository.save(
+            new Product(req.getName(), req.getQuantity(), req.getPrice())));
     }
 
-    @Transactional
-    public void deleteProduct(Long id) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Product not found"));
-        productRepository.delete(product);
+    public ResponseEntity<?> deleteProduct(@PathVariable long id) {
+        if (!productRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "Cannot delete. Product with ID " + id + " does not exist.", null));
+        }
+        productRepository.deleteById(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Product with ID " + id + " has been successfully deleted.", null));
     }
 }
 ```
@@ -114,61 +117,33 @@ Spring returns a `Page<T>` with `content`, `totalElements`, `totalPages`, `pageN
 
 ## Custom Queries
 
-### JPQL
+StockEase uses `@Query` for three methods that can't be expressed with derived method names:
 
 ```java
-// Named parameter
-@Query("SELECT p FROM Product p WHERE p.price > :minPrice")
-List<Product> findExpensiveProducts(@Param("minPrice") BigDecimal minPrice);
-```
+// Named parameter — explicit JPQL chosen over derived method for low-stock threshold queries
+@Query("SELECT p FROM Product p WHERE p.quantity < :threshold")
+List<Product> findByQuantityLessThan(@Param("threshold") int threshold);
 
-### Native SQL
+// Explicit ORDER BY id (Spring Data's findAll(Sort) would also work, but this is self-documenting)
+@Query("SELECT p FROM Product p ORDER BY p.id ASC")
+List<Product> findAllOrderById();
 
-```java
-@Query(
-    value = """
-        SELECT p.* FROM products p
-        WHERE p.created_at > NOW() - INTERVAL '7 days'
-        ORDER BY p.price DESC
-        """,
-    nativeQuery = true
-)
-List<Product> findRecentProducts();
+// Aggregate with COALESCE to return 0 instead of null when table is empty
+@Query("SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p")
+double calculateTotalStockValue();
 ```
 
 ---
 
 ## Transaction Management
 
-**Read operations** use `@Transactional(readOnly = true)` — the database can apply read optimizations and no write locks are held.
-
-**Write operations** use `@Transactional` to ensure atomicity:
-
-```java
-@Transactional
-public void createAndAudit(CreateProductRequest request) {
-    Product product = productRepository.save(new Product(request));
-    auditRepository.save(new AuditEvent(product.getId(), "CREATE"));
-    // If either save throws, both roll back automatically
-}
-```
+Spring Data JPA wraps each repository method call in its own transaction automatically. There is no application-level `@Transactional` in StockEase because all write operations are single `save()` or `delete()` calls — each is inherently atomic. If multi-step write sequences are added in the future, explicit `@Transactional` on the calling controller method would enforce atomicity across both steps.
 
 ---
 
 ## N+1 Query Prevention
 
-The current `Product` entity has no associations (no `@ManyToOne` or `@OneToMany` relationships), so N+1 is not a current concern. If associations are added in the future (e.g., `createdBy → AppUser`), use fetch joins to prevent N+1 queries:
-
-```java
-// Problem: N+1 queries with a hypothetical association
-@Query("""
-    SELECT DISTINCT p FROM Product p
-    LEFT JOIN FETCH p.createdBy
-    """)
-List<Product> findAllWithCreator();
-```
-
-Use `FetchType.LAZY` by default on any future associations. Switch to `EAGER` or use fetch joins only when the association is always needed.
+Neither `Product` nor `User` has JPA associations (`@ManyToOne`/`@OneToMany`), so N+1 is not a concern in the current schema. If associations are added in the future, use `FetchType.LAZY` by default and prefer fetch joins (`LEFT JOIN FETCH`) in `@Query` methods over `EAGER` loading.
 
 ---
 

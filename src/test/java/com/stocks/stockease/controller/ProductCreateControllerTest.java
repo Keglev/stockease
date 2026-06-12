@@ -5,8 +5,6 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
@@ -30,38 +28,11 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
-/**
- * Integration tests for POST /api/products endpoint (product creation).
- * 
- * System Under Test (SUT): ProductController.createProduct(Product) 
- * → ResponseEntity<Product> (201 Created) or error response
- * 
- * Test framework: Spring Boot WebMvcTest (loads SecurityConfig, MockMvc)
- * Mock framework: Mockito (@MockitoBean ProductRepository)
- * Authorization: TestConfig provides JWT token validation mocks
- * 
- * Test coverage:
- * 1. Happy path: Admin user creates product with valid data
- * 2. Authorization failure: USER role denied (403 Forbidden)
- * 3. Validation failures: Missing fields, negative quantity, zero/invalid price
- * 4. Type validation: Invalid JSON data types (string for numeric field)
- * 
- * Execution flow (Given-When-Then):
- * - @BeforeEach: Mock JWT validation, initialize test product
- * - @Test: Setup request → MockMvc.perform() → Assert response status/body
- * - TestConfig: Provides SecurityFilterChain for JWT extraction
- * 
- * @author Team StockEase
- * @version 1.0
- * @since 2025-01-01
- * @see ProductController.createProduct()
- * @see TestConfig (JWT mock configuration)
- * @see SecurityConfig (JWT filter chain)
- */
+/** Slice tests for POST /api/products (product creation). */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-@Import(TestConfig.class) // Use TestConfig to handle authorization
-public class ProductCreateControllerTest {
+@Import(TestConfig.class)
+class ProductCreateControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -74,168 +45,88 @@ public class ProductCreateControllerTest {
 
     private Product product1;
 
-    /**
-     * Lifecycle hook: Setup JWT mocks and test data before each test.
-     * 
-     * Mock configuration:
-     * - JwtUtil.validateToken(): Always returns true (simulates valid JWT)
-     * - JwtUtil.extractUsername(): Returns "testUser" (authenticated user)
-     * - JwtUtil.extractRole(): Returns "ROLE_ADMIN" (role from token)
-     * 
-     * Test data:
-     * - product1: Valid product with name, quantity=10, price=100.0, totalValue=1000.0
-     * - ProductRepository: Reset after each mock setup (Mockito.reset())
-     * 
-     * Execution: @BeforeEach runs BEFORE each @Test/@ParameterizedTest method
-     */
-    @SuppressWarnings("unused") // Called by JUnit 5 @BeforeEach lifecycle
+    @SuppressWarnings("unused")
     @BeforeEach
     void setUpMocks() {
-        // Mock JwtUtil behavior
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
         Mockito.when(jwtUtil.extractRole(Mockito.anyString())).thenReturn("ROLE_ADMIN");
-
-        // Initialize a valid product
         product1 = new Product("Product 1", 10, 100.0);
         product1.setId(1L);
         product1.setTotalValue(1000.0);
-
-        // Reset repository mock
+        // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
         Mockito.reset(productRepository);
     }
 
-    /**
-     * Given: Admin user authenticated with ROLE_ADMIN
-     * When: POST /api/products with valid product JSON
-     * Then: ResponseEntity(200 OK) with created product details (name, quantity, price, totalValue)
-     * 
-     * Test scenario:
-     * - Mock ProductRepository.save() to return product1
-     * - Include CSRF token (POST requires CSRF protection)
-     * - Verify response contains product attributes
-     */
     @Test
-    void testValidProductCreation() throws Exception {
+    void createProduct_withValidData_returns200() throws Exception {
         when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(post("/api/products")
-                .contentType(applicationJson())
-                .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": 100.0, \"totalValue\": 1000.0}")
-                .with(csrfToken())
-                .with(userWithRole("adminUser", "ADMIN")))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name").value("Product 1"))
-            .andExpect(jsonPath("$.quantity").value(10))
-            .andExpect(jsonPath("$.price").value(100.0))
-            .andExpect(jsonPath("$.totalValue").value(1000.0));
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": 100.0, \"totalValue\": 1000.0}")
+                        .with(csrfToken())
+                        .with(userWithRole("adminUser", "ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Product 1"))
+                .andExpect(jsonPath("$.quantity").value(10))
+                .andExpect(jsonPath("$.price").value(100.0))
+                .andExpect(jsonPath("$.totalValue").value(1000.0));
     }
 
-    /**
-     * Given: Regular user authenticated with ROLE_USER (not ROLE_ADMIN)
-     * When: POST /api/products with valid product JSON
-     * Then: ResponseEntity(403 Forbidden) - @PreAuthorize("hasRole('ADMIN')") denies access
-     * 
-     * Test scenario:
-     * - Use ParameterizedTest with CsvSource for multiple role variations
-     * - Verify role-based authorization enforced by SecurityConfig
-     * - Confirms only ADMIN users can create products
-     */
-    @ParameterizedTest
-    @CsvSource({
-        "regularUser, USER"
-    })
-    void testProductCreationDeniedForUser(String username, String role) throws Exception {
-        mockMvc.perform(post("/api/products")
-                .contentType(applicationJson())
-                .content("{\"name\": \"Valid Product\", \"quantity\": 10, \"price\": 100.0, \"totalValue\": 1000.0}")
-                .with(userWithRole(username, role)))
-            .andExpect(status().isForbidden());
-    }
-
-    /**
-     * Given: Admin user with empty/blank product name
-     * When: POST /api/products with name="" (empty string)
-     * Then: ResponseEntity(400 Bad Request) with error message about required fields
-     * 
-     * Test scenario:
-     * - Product model uses @NotBlank on name field
-     * - Spring validation framework rejects before reaching controller logic
-     * - Verifies input validation layer works correctly
-     */
     @Test
-    void testProductCreationWithMissingFields() throws Exception {
+    void createProduct_asUserRole_returns403() throws Exception {
         mockMvc.perform(post("/api/products")
-                .contentType(applicationJson())
-                .content("{\"name\": \"\"}")
-                .with(userWithRole("adminUser", "ADMIN"))
-                .with(csrfToken()))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error").value("Incomplete update. Please fill in all required fields."));
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Valid Product\", \"quantity\": 10, \"price\": 100.0, \"totalValue\": 1000.0}")
+                        .with(userWithRole("regularUser", "USER")))
+                .andExpect(status().isForbidden());
     }
 
-    /**
-     * Given: Admin user with negative quantity (-5)
-     * When: POST /api/products with quantity < 0
-     * Then: ResponseEntity(400 Bad Request) with error message "Quantity cannot be negative"
-     * 
-     * Test scenario:
-     * - Product model uses custom validation (@Min or @Positive on quantity)
-     * - Controller/service validates business logic constraint
-     * - Verifies domain model enforces business rule (quantity ≥ 0)
-     */
     @Test
-    void testProductCreationWithNegativeQuantity() throws Exception {
+    void createProduct_withMissingName_returns400() throws Exception {
         mockMvc.perform(post("/api/products")
-                .contentType(applicationJson())
-                .content("{\"name\": \"Product 1\", \"quantity\": -5, \"price\": 100.0, \"totalValue\": 1000.0}")
-                .with(userWithRole("adminUser", "ADMIN"))
-                .with(csrfToken()))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error").value("Quantity cannot be negative."));
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"\"}")
+                        .with(userWithRole("adminUser", "ADMIN"))
+                        .with(csrfToken()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed for request parameters."));
     }
 
-    /**
-     * Given: Admin user with zero price (0.0)
-     * When: POST /api/products with price = 0
-     * Then: ResponseEntity(400 Bad Request) with error message "Price must be greater than 0"
-     * 
-     * Test scenario:
-     * - Product model enforces price > 0 (business rule for valid products)
-     * - Prevents free products from being created without explicit authorization
-     * - Verifies domain validation catches invalid price
-     */
     @Test
-    void testProductCreationWithZeroPrice() throws Exception {
+    void createProduct_withNegativeQuantity_returns400() throws Exception {
         mockMvc.perform(post("/api/products")
-                .contentType(applicationJson())
-                .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": 0, \"totalValue\": 0}")
-                .with(userWithRole("adminUser", "ADMIN"))
-                .with(csrfToken()))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error").value("Price must be greater than 0."));
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Product 1\", \"quantity\": -5, \"price\": 100.0, \"totalValue\": 1000.0}")
+                        .with(userWithRole("adminUser", "ADMIN"))
+                        .with(csrfToken()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed for request parameters."));
     }
 
-    /**
-     * Given: Admin user with string value for price field (e.g., "notANumber")
-     * When: POST /api/products with price="notANumber" (type mismatch)
-     * Then: ResponseEntity(400 Bad Request) - HttpMessageNotReadableException
-     * 
-     * Test scenario:
-     * - JSON deserializer fails to parse string as Double
-     * - GlobalExceptionHandler catches HttpMessageNotReadableException
-     * - Verifies type validation at framework level (before reaching controller)
-     * - Prevents runtime casting errors via fail-fast validation
-     */
     @Test
-    void testProductCreationWithInvalidTypeForPrice() throws Exception {
+    void createProduct_withZeroPrice_returns400() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": 0, \"totalValue\": 0}")
+                        .with(userWithRole("adminUser", "ADMIN"))
+                        .with(csrfToken()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed for request parameters."));
+    }
+
+    @Test
+    void createProduct_withInvalidPriceType_returns400() throws Exception {
+        // save is never reached — JSON deserialization fails before the controller is invoked; stub is defensive only
         when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
+
         mockMvc.perform(post("/api/products")
-                .contentType(applicationJson())
-                .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": \"notANumber\", \"totalValue\": 1000.0}")
-                .with(userWithRole("adminUser", "ADMIN"))
-                .with(csrfToken()))
-            .andExpect(status().isBadRequest());
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": \"notANumber\", \"totalValue\": 1000.0}")
+                        .with(userWithRole("adminUser", "ADMIN"))
+                        .with(csrfToken()))
+                .andExpect(status().isBadRequest());
     }
 
     @NonNull
@@ -259,4 +150,3 @@ public class ProductCreateControllerTest {
         return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }
-

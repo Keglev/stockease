@@ -18,83 +18,88 @@ No staging environment is currently active. A staging Koyeb service with a Postg
 
 ### Default — `application.properties`
 
-Inherited by all environments:
+Inherited by all environments (key properties shown):
 
 ```properties
-server.port=8081
-spring.application.name=stockease
-spring.jpa.show-sql=false
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-spring.flyway.locations=classpath:db/migration
-management.endpoints.web.exposure.include=health,metrics
-logging.level.root=INFO
-logging.level.com.stocks.stockease=DEBUG
-```
-
-### Development — local overrides in `application.properties`
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/stockease_dev
-spring.datasource.username=postgres
-spring.datasource.password=postgres
+spring.application.name=StockEase
+spring.datasource.url=${NEON_JDBC_URL:${DATABASE_URL:}}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 spring.datasource.driver-class-name=org.postgresql.Driver
+# WARNING: overridden to validate in application-prod.yml; must never reach production as update
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.show-sql=true
-logging.level.com.stocks.stockease=DEBUG
-logging.level.org.springframework.web=DEBUG
-jwt.secret=dev-secret-key-do-not-use-in-production
-jwt.expiration=86400000
-app.cors.allowed-origins=http://localhost:3000,http://localhost:5173
+spring.jpa.open-in-view=false
+server.port=8081
+logging.level.com.stocks.stockease=INFO
+logging.level.org.springframework=INFO
+logging.level.org.hibernate.SQL=WARN
+logging.level.org.apache.catalina=WARN
 ```
+
+### Development
+
+Development uses the same `application.properties` file. Environment variables (`SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `NEON_JDBC_URL`) are supplied via IDE run configuration or a local `.env` file. There is no separate `application-dev.properties`.
 
 ### Production — `application-prod.yml`
 
 ```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: "when_authorized"
+
 spring:
-  datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
+  main:
+    lazy-initialization: false
   jpa:
-    show-sql: false
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 5
+      idle-timeout: 120000
+      connection-timeout: 30000
+      max-lifetime: 1800000
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    clean-disabled: true
 
 logging:
   level:
-    root: WARN
-    com.stocks.stockease: INFO
-    org.springframework: WARN
-
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: 86400000
-
-app:
-  cors:
-    allowed-origins: https://stockease-frontend.onrender.com
+    '[org.flywaydb]': INFO
+    '[com.stocks.stockease]': INFO
 ```
 
 ### Test — `application-test.properties`
 
 ```properties
-spring.datasource.url=jdbc:h2:mem:stockease_test
+spring.datasource.url=jdbc:h2:mem:testdb
 spring.datasource.driver-class-name=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=
+
 spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 spring.jpa.hibernate.ddl-auto=create-drop
-spring.jpa.show-sql=false
-logging.level.root=WARN
-jwt.secret=test-secret-key
-jwt.expiration=86400000
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.open-in-view=false
+
+spring.datasource.hikari.connection-test-query=SELECT 1
+spring.datasource.hikari.maximum-pool-size=5
 ```
 
 ---
@@ -103,11 +108,9 @@ jwt.expiration=86400000
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `DB_HOST` | Neon database host | `[project].neon.tech` |
-| `DB_PORT` | Database port | `5432` |
-| `DB_NAME` | Database name | `stockease` |
-| `DB_USER` | Database username | from secrets |
-| `DB_PASSWORD` | Database password | from secrets |
+| `SPRING_DATASOURCE_URL` | Neon JDBC connection string (includes host, port, DB name, SSL mode) | from Neon dashboard |
+| `SPRING_DATASOURCE_USERNAME` | Database username | from secrets |
+| `SPRING_DATASOURCE_PASSWORD` | Database password | from secrets |
 | `JWT_SECRET` | JWT signing key (32+ chars) | from secrets |
 | `SPRING_PROFILES_ACTIVE` | Active profile | `prod` |
 | `JAVA_OPTS` | JVM tuning flags | `-Xmx512m -Xms256m` |
@@ -118,29 +121,37 @@ In Koyeb dashboard → Service → Variables:
 
 | Key | Scope |
 |-----|-------|
-| `DB_HOST` | Runtime |
-| `DB_PORT` | Runtime |
-| `DB_NAME` | Runtime |
-| `DB_USER` | Runtime (secret) |
-| `DB_PASSWORD` | Runtime (secret) |
+| `SPRING_DATASOURCE_URL` | Runtime (secret) |
+| `SPRING_DATASOURCE_USERNAME` | Runtime (secret) |
+| `SPRING_DATASOURCE_PASSWORD` | Runtime (secret) |
 | `JWT_SECRET` | Runtime (secret) |
 | `SPRING_PROFILES_ACTIVE` | Runtime |
 | `JAVA_OPTS` | Runtime |
 
 ---
 
-## DataSeeder — Fixture Data
+## Seed Data — V3 Migration and DataSeeder
 
-`DataSeeder.java` (`@Profile("!prod")`) seeds fixture users and products on startup in all non-production profiles:
+Fixture data is seeded by two mechanisms with different scopes:
+
+### V3 Flyway Migration (all Flyway-enabled environments, including production)
+
+`V3__seed_data.java` (located at `src/main/java/db/migration/`) runs as part of the Flyway migration sequence in every environment where Flyway is active. It seeds:
 
 | Credential | Role | Purpose |
 |-----------|------|---------|
 | `admin` / `admin123` | `ROLE_ADMIN` | Full access for development and testing |
 | `user` / `user123` | `ROLE_USER` | Read-only access for development and testing |
 
-5 fixture products are also seeded (Product 1–5 with varying quantities and prices).
+8 fixture products are also seeded: Alpha Widget, Beta Gadget, Gamma Tool, Delta Device, Epsilon Accessory, Zeta Instrument, Eta Apparatus, Theta Machine.
 
-Seed inserts are idempotent — guarded by `count() == 0` checks, so restarting the application never creates duplicates. `DataSeeder` is **not active** in the `prod` profile — the `@Profile("!prod")` annotation prevents it from running in production.
+All inserts are idempotent — each row is inserted only if it does not already exist (checked by username or product name), so re-running migrations never creates duplicates.
+
+### DataSeeder — Test Environment Fallback
+
+`DataSeeder.java` (`@Profile("!prod")`) runs at application startup in non-production profiles. In all Flyway-enabled environments, V3 populates the database before `DataSeeder` runs, so `DataSeeder`'s `count() == 0` guards make it a no-op.
+
+`DataSeeder` only takes effect in **test environments** where `spring.flyway.enabled=false` (H2 in-memory, DDL `create-drop`) and the database starts empty. It is **not active** in the `prod` profile.
 
 ---
 
@@ -204,7 +215,7 @@ env:
 - [ ] Logging level is WARN in production profile
 - [ ] No debug endpoints exposed
 - [ ] No default credentials (admin/admin123) in production seed data
-- [ ] HikariCP pool settings validated (`maximumPoolSize=10`)
+- [ ] HikariCP pool settings validated (`maximumPoolSize=5`)
 - [ ] Health check endpoint responding at `/health`
 
 ---

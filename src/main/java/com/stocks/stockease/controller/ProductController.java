@@ -1,4 +1,3 @@
-
 package com.stocks.stockease.controller;
 
 import java.util.List;
@@ -23,43 +22,43 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.dto.ApiResponse;
+import com.stocks.stockease.dto.CreateProductRequest;
 import com.stocks.stockease.dto.PaginatedResponse;
+import com.stocks.stockease.dto.UpdateNameRequest;
+import com.stocks.stockease.dto.UpdatePriceRequest;
+import com.stocks.stockease.dto.UpdateQuantityRequest;
 import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 
 /**
  * REST controller for product inventory management.
- * 
- * Provides endpoints for CRUD operations, pagination, searching, and stock analytics.
- * All non-admin endpoints require USER or ADMIN role authentication via JWT.
- * Admin-only endpoints (create, delete) require ADMIN role.
- * 
- * @author Team StockEase
- * @version 1.0
- * @since 2025-01-01
+ *
+ * <p>Covers CRUD, partial field updates, pagination, search, and stock analytics.
+ * Full contract for every operation is defined in {@code docs/api/paths/products.yaml}.
+ * All endpoints require at minimum ROLE_USER; create and delete require ROLE_ADMIN.
  */
 @RestController
 @RequestMapping("/api/products")
+@RequiredArgsConstructor
 public class ProductController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
     private final ProductRepository productRepository;
 
-    public ProductController(ProductRepository productRepository) {
-        this.productRepository = productRepository;
-    }
-
     /**
-     * Retrieves all products sorted by ID.
-     * 
-     * Loads entire inventory without pagination. Use {@link #getPagedProducts} for large datasets.
-     * 
-     * @return list of all products ordered by ID ascending
+     * Returns all products ordered by ID ascending.
+     *
+     * <p>Loads the entire catalogue into memory. Prefer {@link #getPagedProducts} for
+     * large datasets. Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @return list of all {@link Product} entities ordered by ID
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -68,21 +67,19 @@ public class ProductController {
     }
 
     /**
-     * Retrieves products with pagination support.
-     * 
-     * Prevents loading entire table into memory. Returns metadata including total count
-     * and page information for client-side pagination controls.
-     * 
-     * @param page zero-based page number (default: 0)
-     * @param size items per page (default: 10, must be positive)
-     * @return paginated response with product list and metadata
+     * Returns a paginated slice of the product catalogue.
+     *
+     * <p>Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param page zero-based page index (default 0)
+     * @param size items per page (default 10, must be positive)
+     * @return {@link PaginatedResponse} with product list and pagination metadata
      */
     @GetMapping("/paged")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<PaginatedResponse<Product>>> getPagedProducts(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Positive int size) {
-        // Validate parameters via @Min/@Positive annotations; invalid values trigger 400 error
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> products = productRepository.findAll(pageable);
         PaginatedResponse<Product> response = new PaginatedResponse<>(products);
@@ -90,12 +87,12 @@ public class ProductController {
     }
 
     /**
-     * Retrieves a single product by ID.
-     * 
-     * Returns 404 if product not found.
-     * 
+     * Returns a single product by its ID.
+     *
+     * <p>Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
      * @param id product identifier
-     * @return product details if found; 404 error response if not
+     * @return HTTP 200 with the {@link Product}, or HTTP 404 if not found
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -108,87 +105,57 @@ public class ProductController {
 
     /**
      * Creates a new product (ADMIN only).
-     * 
-     * Validates all required fields (name, quantity, price). Calculates total stock value
-     * as quantity * price. Returns 400 if validation fails.
-     * 
-     * @param product product data (name, quantity, price)
-     * @return created product with auto-generated ID
-     * @throws IllegalArgumentException if required fields missing or invalid
+     *
+     * <p>Validates that name is non-blank, quantity is non-negative, and price is positive.
+     * Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param request product fields (name, quantity, price)
+     * @return HTTP 200 with the persisted {@link Product} including its generated ID,
+     *         or HTTP 400 if validation fails
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createProduct(@RequestBody(required = false) Product product) {
-        log.debug("Received request to create product: {}", product);
-        try {
-            // Validate all required fields present and non-empty
-            if (product == null || product.getName() == null || product.getName().isBlank() ||
-                product.getQuantity() == null || product.getPrice() == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Incomplete update. Please fill in all required fields."));
-            }
-
-            // Business rule: quantity cannot be negative (invalid stock state)
-            if (product.getQuantity() < 0) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Quantity cannot be negative."));
-            }
-
-            // Business rule: price must be positive (prevents free/negative cost items)
-            if (product.getPrice() <= 0) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Price must be greater than 0."));
-            }
-
-            // Database saves product and generates auto-increment ID
-            Product savedProduct = productRepository.save(product);
-            return ResponseEntity.ok(savedProduct);
-
-        } catch (Exception ex) {
-            log.error("Unexpected error occurred: ", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "An unexpected error occurred. Please try again later."));
-        }
+    public ResponseEntity<?> createProduct(@Valid @RequestBody CreateProductRequest request) {
+        log.debug("Received request to create product: {}", request);
+        Product savedProduct = productRepository.save(
+                new Product(request.getName(), request.getQuantity(), request.getPrice()));
+        return ResponseEntity.ok(savedProduct);
     }
 
     /**
      * Deletes a product by ID (ADMIN only).
-     * 
-     * Returns 404 if product not found. Does not require product data in body.
-     * 
+     *
+     * <p>Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
      * @param id product identifier to delete
-     * @return success message if deleted; error response if not found
+     * @return HTTP 200 on success, HTTP 404 if the product does not exist
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable long id) {
         log.info("Entering deleteProduct method with ID: {}", id);
-
-        // Check if product exists before attempting deletion (avoids orphaned references)
         if (!productRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(false, "Cannot delete. Product with ID " + id + " does not exist.", null));
         }
-
         productRepository.deleteById(id);
-
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Product with ID " + id + " has been successfully deleted.", null)
         );
     }
 
     /**
-     * Retrieves products with critically low stock.
-     * 
-     * Returns products where quantity < 5 (reorder threshold).
-     * Returns success message if all products adequately stocked.
-     * 
-     * @return list of low-stock products; empty response if all stock levels sufficient
+     * Returns products with critically low stock.
+     *
+     * <p>Threshold is hardcoded at 5 units; consider externalising to
+     * {@code application.properties} if it needs to vary per environment.
+     * Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @return list of low-stock {@link Product} entities, or a status message if all levels are sufficient
      */
     @GetMapping("/low-stock")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<?> getLowStockProducts() {
-        // Hardcoded threshold (5 items) - consider making configurable via application.properties
         List<Product> lowStockProducts = productRepository.findByQuantityLessThan(5);
         if (lowStockProducts.isEmpty()) {
             return ResponseEntity.ok(Map.of("message", "All products are sufficiently stocked."));
@@ -197,18 +164,17 @@ public class ProductController {
     }
 
     /**
-     * Searches products by name (case-insensitive substring match).
-     * 
-     * Example: searching "apple" returns "Apple Juice", "APPLE", "Green Apple", etc.
-     * Returns 204 NO_CONTENT if no matches found.
-     * 
-     * @param name search term (substring)
-     * @return matching products; empty response if none found
+     * Searches products by name using a case-insensitive substring match.
+     *
+     * <p>For example, searching {@code "apple"} matches {@code "Apple Juice"}, {@code "APPLE"},
+     * and {@code "Green Apple"}. Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param name search term (substring, case-insensitive)
+     * @return HTTP 200 with matching products, or HTTP 204 if none found
      */
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<?> searchProductsByName(@RequestParam String name) {
-        // Case-insensitive LIKE query via repository
         List<Product> products = productRepository.findByNameContainingIgnoreCase(name);
         if (products.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT)
@@ -218,175 +184,78 @@ public class ProductController {
     }
 
     /**
-     * Updates product quantity for a specific product.
-     * 
-     * Accepts quantity in request body. Automatically recalculates total stock value
-     * (quantity * price). Prevents negative quantities.
-     * 
-     * @param id product identifier
-     * @param request Map containing "quantity" field (integer)
-     * @return updated product; error if quantity invalid or product not found
+     * Updates the stock quantity of a specific product.
+     *
+     * <p>{@link Product#setQuantity} automatically recalculates {@code totalValue}
+     * (quantity × price). Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param id      product identifier
+     * @param request request body containing an integer {@code quantity} field
+     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
      */
     @PutMapping("/{id}/quantity")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable long id, @RequestBody(required = false) Map<String, Object> request) {
-        try {
-            // Validate request payload structure
-            if (request == null || !request.containsKey("quantity") || request.get("quantity") == null) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse<>(false, "Quantity field is missing or null.", null));
-            }
-
-            // Type check: quantity must be integer (prevents string/decimal injection)
-            Object quantityObj = request.get("quantity");
-            if (!(quantityObj instanceof Integer)) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse<>(false, "Quantity must be a valid integer.", null));
-            }
-
-            // Business rule: quantity cannot be negative (invalid inventory state)
-            int newQuantity = (int) quantityObj;
-            if (newQuantity < 0) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse<>(false, "Quantity cannot be negative.", null));
-            }
-
-            // Load product from DB; throws EntityNotFoundException if not found
-            Product product = productRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-
-            // Setter automatically recalculates totalValue = quantity * price
-            product.setQuantity(newQuantity);
-            Product updatedProduct = productRepository.save(product);
-
-            return ResponseEntity.ok(new ApiResponse<>(true, "Quantity updated successfully", updatedProduct));
-        } catch (EntityNotFoundException ex) {
-            log.error("Product not found for ID: " + id, ex);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, "Product not found.", null));
-        } catch (Exception ex) {
-            log.error("Unexpected error occurred while updating quantity for product with ID: " + id, ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "An unexpected error occurred. Please try again later.", null));
-        }
+    public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable long id, @Valid @RequestBody UpdateQuantityRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+        product.setQuantity(request.getQuantity());
+        Product updatedProduct = productRepository.save(product);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Quantity updated successfully", updatedProduct));
     }
 
     /**
-     * Updates product price for a specific product.
-     * 
-     * Accepts price in request body (decimal). Automatically recalculates total stock value
-     * (quantity * price). Prevents zero or negative prices.
-     * 
-     * @param id product identifier
-     * @param request Map containing "price" field (number)
-     * @return updated product; error if price invalid or product not found
+     * Updates the price of a specific product.
+     *
+     * <p>{@link Product#setPrice} automatically recalculates {@code totalValue}
+     * (quantity × price). Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param id      product identifier
+     * @param request request body containing a numeric {@code price} field
+     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
      */
     @PutMapping("/{id}/price")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable long id, @RequestBody(required = false) Map<String, Object> request) {
-        try {
-            // Validate request payload structure
-            if (request == null || !request.containsKey("price") || request.get("price") == null) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse<>(false, "Price field is missing or null.", null));
-            }
-
-            // Type check: price must be numeric (handles Integer, Double, BigDecimal via Number interface)
-            Object priceObj = request.get("price");
-            if (!(priceObj instanceof Number)) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse<>(false, "Price must be a valid number.", null));
-            }
-
-            // Business rule: price must be positive (prevents free or negative cost items)
-            double newPrice = ((Number) priceObj).doubleValue();
-            if (newPrice <= 0) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse<>(false, "Price must be greater than 0.", null));
-            }
-
-            // Load product from DB; throws EntityNotFoundException if not found
-            Product product = productRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-
-            // Setter automatically recalculates totalValue = quantity * price
-            product.setPrice(newPrice);
-            Product updatedProduct = productRepository.save(product);
-
-            return ResponseEntity.ok(new ApiResponse<>(true, "Price updated successfully", updatedProduct));
-        } catch (EntityNotFoundException ex) {
-            log.error("Product not found for ID: " + id, ex);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, "Product not found.", null));
-        } catch (Exception ex) {
-            log.error("Unexpected error occurred while updating price for product with ID: " + id, ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "An unexpected error occurred. Please try again later.", null));
-        }
+    public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+        product.setPrice(request.getPrice());
+        Product updatedProduct = productRepository.save(product);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Price updated successfully", updatedProduct));
     }
 
     /**
-     * Updates product name for a specific product.
-     * 
-     * Validates that name is non-empty. Uniqueness constraint enforced at database level.
-     * 
-     * @param id product identifier
-     * @param request Map containing "name" field (string)
-     * @return updated product; error if name empty or product not found
+     * Updates the name of a specific product.
+     *
+     * <p>Uniqueness is enforced at the database level. Behavior defined in
+     * {@code docs/api/paths/products.yaml}.
+     *
+     * @param id      product identifier
+     * @param request request body containing a non-blank {@code name} field
+     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
      */
     @PutMapping("/{id}/name")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable long id, @RequestBody Map<String, String> request) {
-        try {
-            // Validate name field: must be present and non-empty
-            if (!request.containsKey("name") || request.get("name").isBlank()) {
-                throw new IllegalArgumentException("Name is required and cannot be empty.");
-            }
-
-            String newName = request.get("name");
-
-            // Load product from DB; throws EntityNotFoundException if not found
-            Product product = productRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-
-            product.setName(newName);
-            Product updatedProduct = productRepository.save(product);
-
-            return ResponseEntity.ok(new ApiResponse<>(true, "Name updated successfully", updatedProduct));
-        } catch (EntityNotFoundException ex) {
-            log.error("Product not found for ID: " + id, ex);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, ex.getMessage(), null));
-        } catch (IllegalArgumentException ex) {
-            log.error("Invalid name provided for product with ID: " + id, ex);
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, ex.getMessage(), null));
-        } catch (Exception ex) {
-            log.error("Unexpected error occurred while updating name for product with ID: " + id, ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "An unexpected error occurred. Please try again later.", null));
-        }
+    public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+        product.setName(request.getName());
+        Product updatedProduct = productRepository.save(product);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Name updated successfully", updatedProduct));
     }
 
     /**
-     * Calculates total inventory value across all products.
-     * 
-     * Computes sum of (quantity * price) for all products.
-     * Useful for financial reporting and inventory valuation.
-     * 
-     * @return total stock value as double
+     * Calculates the aggregate inventory value across all products.
+     *
+     * <p>Executes a database-level aggregate ({@code SUM(quantity * price)}) via
+     * {@link ProductRepository#calculateTotalStockValue()}. Behavior defined in
+     * {@code docs/api/paths/products.yaml}.
+     *
+     * @return HTTP 200 with the total stock value as a {@link Double}
      */
     @GetMapping("/total-stock-value")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Double>> getTotalStockValue() {
-        try {
-            // Custom aggregate query from repository - optimized at database level
-            double totalStockValue = productRepository.calculateTotalStockValue();
-            return ResponseEntity.ok(new ApiResponse<>(true, "Total stock value fetched successfully", totalStockValue));
-        } catch (Exception ex) {
-            log.error("Error calculating total stock value:", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "Failed to fetch total stock value.", null));
-        }
+        double totalStockValue = productRepository.calculateTotalStockValue();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Total stock value fetched successfully", totalStockValue));
     }
 }

@@ -7,23 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.stocks.stockease.model.User;
 
 /**
- * Spring Data JPA repository for User entity persistence.
- * 
- * Provides database access methods for CRUD operations
- * and custom queries for user authentication and authorization.
- * 
- * @author Team StockEase
- * @version 1.0
- * @since 2025-01-01
+ * Spring Data JPA repository for {@link User} entities, used for authentication and user management.
  */
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
-     * Retrieves user by unique username.
-     * 
-     * Used for authentication during login and user detail loading.
-     * Username is unique at database level, so result is deterministic.
-     * 
+     * Looks up a user by their unique username, used during authentication.
+     *
      * @param username user account name to look up
      * @return Optional containing User if found; empty Optional if not found
      */

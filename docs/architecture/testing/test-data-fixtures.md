@@ -12,19 +12,33 @@
 
 ```java
 @Configuration
+@SuppressWarnings("unused") // @Bean methods are invoked by Spring's CGLIB proxy at runtime
 public class TestConfig {
 
     @Bean
-    public JwtUtil jwtUtil() {
-        JwtUtil mock = Mockito.mock(JwtUtil.class);
-        when(mock.validateToken(anyString())).thenReturn(true);
-        when(mock.extractUsername(anyString())).thenReturn("testUser");
-        return mock;
+    public JwtUtil jwtUtil() { return Mockito.mock(JwtUtil.class); }
+
+    @Bean
+    public UserDetailsService userDetailsService() { return Mockito.mock(UserDetailsService.class); }
+
+    @Bean
+    public JwtFilter jwtFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+        return new JwtFilter(jwtUtil, userDetailsService);
+    }
+
+    @Bean
+    public SecurityContext securityContext() {
+        // Both roles so tests cover ADMIN-only and USER-only @PreAuthorize paths without separate configs.
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(new UsernamePasswordAuthenticationToken(
+                "testUser", "password",
+                AuthorityUtils.createAuthorityList("ROLE_ADMIN", "ROLE_USER")));
+        return context;
     }
 }
 ```
 
-Import in each test class with `@Import(TestConfig.class)`.
+JwtUtil stubs (`validateToken`, `extractUsername`) are set in each test's `@BeforeEach`, not in the factory method. Import in each test class with `@Import(TestConfig.class)`.
 
 ---
 
@@ -61,6 +75,7 @@ spring.datasource.password=
 spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
 spring.jpa.open-in-view=false
 
 spring.datasource.hikari.connection-test-query=SELECT 1

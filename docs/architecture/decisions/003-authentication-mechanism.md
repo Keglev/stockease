@@ -9,13 +9,13 @@
 
 StockEase exposes REST APIs consumed by a separate React frontend deployed on a different domain. Users must authenticate and the system must enforce role-based access control (ADMIN vs USER). A decision was needed on the authentication mechanism: stateless JWT tokens or server-side sessions.
 
-Requirements: support cross-origin requests (frontend on Render, backend on Koyeb), no shared session store between container replicas, work with auto-scaling, support role-based authorization per request, and be implementable with Spring Security.
+Requirements: support cross-origin requests (frontend on Vercel, backend on Koyeb), no shared session store between container replicas, work with auto-scaling, support role-based authorization per request, and be implementable with Spring Security.
 
 ---
 
 ## Decision
 
-**JWT (JSON Web Token) bearer tokens** with HS256 signing, 24-hour expiry, role claim embedded in the payload, and validation via a custom `JwtAuthenticationFilter` in the Spring Security filter chain.
+**JWT (JSON Web Token) bearer tokens** with HS256 signing, 10-hour expiry, role claim embedded in the payload, and validation via `JwtFilter` in the Spring Security filter chain.
 
 ---
 
@@ -27,11 +27,11 @@ Koyeb scales the backend horizontally to 1–2 replicas. Session-based authentic
 
 ### Cross-origin compatibility
 
-The frontend (Render) and backend (Koyeb) are on different domains. Browser session cookies do not work reliably across origins without complex configuration. JWT tokens sent as `Authorization: Bearer` headers work cleanly across origins with standard CORS configuration.
+The frontend (Vercel) and backend (Koyeb) are on different domains. Browser session cookies do not work reliably across origins without complex configuration. JWT tokens sent as `Authorization: Bearer` headers work cleanly across origins with standard CORS configuration.
 
 ### Role authorization per request
 
-The JWT payload includes a `role` claim. `JwtAuthenticationFilter` extracts the role on every request and populates the Spring `SecurityContext`, making `@PreAuthorize("hasRole('ADMIN')")` and `@Secured("ROLE_ADMIN")` work without any database lookup per request.
+The JWT payload includes a `role` claim. `JwtFilter` validates the token and calls `CustomUserDetailsService.loadUserByUsername()` on every authenticated request to populate the Spring `SecurityContext`, enabling `@PreAuthorize("hasRole('ADMIN')")` enforcement without an extra authorization lookup.
 
 ### BCrypt for password storage
 
@@ -51,7 +51,7 @@ Passwords are hashed with BCrypt (cost factor 10) before storage. The JWT secret
 
 ## Consequences
 
-**Positive**: stateless design supports horizontal scaling with no shared state, cross-origin requests work cleanly, role authorization requires no database lookup per request, no session store infrastructure needed.
+**Positive**: stateless design supports horizontal scaling with no shared state, cross-origin requests work cleanly, no session store infrastructure needed. Role authorization is enforced per request via the `SecurityContext` populated by `JwtFilter`.
 
 **Negative**: tokens cannot be invalidated before expiry without a token blacklist (not currently implemented). If the JWT secret is compromised, all tokens are compromised until the secret is rotated and all users re-authenticate. Token expiry (24 hours) is a fixed trade-off between security and user convenience.
 
@@ -60,7 +60,7 @@ Passwords are hashed with BCrypt (cost factor 10) before storage. The JWT secret
 ## Security Constraints
 
 - JWT secret must be 32+ characters, randomly generated, stored only as an environment variable
-- Tokens expire after 24 hours (`app.jwt.expiration=86400000`)
+- Tokens expire after 10 hours (hardcoded `EXPIRATION_TIME = 36000000` ms)
 - HTTPS enforced in production — tokens must never travel over plain HTTP
 - Failed authentication returns 401 with a generic message — no information about whether the username or password was wrong
 
@@ -68,8 +68,8 @@ Passwords are hashed with BCrypt (cost factor 10) before storage. The JWT secret
 
 ## Implementation Status
 
-- `JwtTokenProvider` — token generation and validation — implemented
-- `JwtAuthenticationFilter` — filter chain integration — implemented
+- `JwtUtil` — token generation and validation — implemented
+- `JwtFilter` — filter chain integration — implemented
 - `SecurityConfig` — stateless session policy, public/protected endpoint rules — implemented
 - BCrypt password encoding (cost factor 10) — implemented
 - Environment variable injection for JWT secret — implemented

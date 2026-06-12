@@ -32,8 +32,10 @@ void testLoginSuccess() {
     when(jwtUtil.generateToken("testuser", "ROLE_USER")).thenReturn("mockToken");
 
     // When
-    ResponseEntity<ApiResponse<String>> response =
-        authController.login(new LoginRequest("testuser", "password"));
+    LoginRequest request = new LoginRequest();
+    request.setUsername("testuser");
+    request.setPassword("password");
+    ResponseEntity<ApiResponse<String>> response = authController.login(request);
 
     // Then
     assertThat(response.getBody().isSuccess()).isTrue();
@@ -49,8 +51,10 @@ void testLoginFailureWithInvalidCredentials() {
     when(authenticationManager.authenticate(any()))
         .thenThrow(new BadCredentialsException("Bad credentials"));
 
-    ResponseEntity<ApiResponse<String>> response =
-        authController.login(new LoginRequest("user", "wrongpassword"));
+    LoginRequest request = new LoginRequest();
+    request.setUsername("user");
+    request.setPassword("wrongpassword");
+    ResponseEntity<ApiResponse<String>> response = authController.login(request);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(response.getBody().isSuccess()).isFalse();

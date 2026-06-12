@@ -19,7 +19,8 @@ Rules:
 | `AuthControllerTest` | `AuthController` | Unit — login logic |
 | `ProductCreateControllerTest` | `ProductController` | Slice — POST /api/products |
 | `ProductFetchControllerTest` | `ProductController` | Slice — GET endpoints |
-| `ProductUpdateControllerTest` | `ProductController` | Slice — PUT endpoints |
+| `ProductUpdateControllerTest` | `ProductController` | Slice — PUT happy-path updates |
+| `ProductInvalidUpdateControllerTest` | `ProductController` | Slice — PUT validation and error paths |
 | `ProductDeleteControllerTest` | `ProductController` | Slice — DELETE endpoints |
 | `ProductPaginationControllerTest` | `ProductController` | Slice — pagination |
 
@@ -27,27 +28,16 @@ Rules:
 
 ## Test Method Naming
 
-**Pattern**: `{action}_{expectedBehavior}_{givenCondition}`
+**Pattern**: `{methodName}_{stateUnderTest}_{expectedBehavior}`
 
-Shorter form when condition is obvious: `{action}_{scenario}`
+All three segments are required. No `test` prefix.
 
-### Variants
-
-**Full descriptive** (recommended for complex scenarios):
 ```java
-void testLoginSuccess_WhenValidCredentialsProvided() { }
-void testProductCreation_Denied_WhenUserRoleAttempts() { }
-```
-
-**Concise** (acceptable when condition is clear from context):
-```java
-void testLoginSuccess() { }
-void testProductCreationDenied() { }
-```
-
-**BDD-style** (use only if adopting a BDD framework):
-```java
-void should_LoginSuccessfully_WhenValidCredentialsProvided() { }
+void login_withValidUserCredentials_returns200() { }
+void login_withBadCredentials_returns401() { }
+void createProduct_asUserRole_returns403() { }
+void updateQuantity_withMissingField_returns400() { }
+void deleteProduct_asAdmin_returns200() { }
 ```
 
 ---
@@ -78,27 +68,22 @@ int q = 5;
 
 ---
 
-## Given-When-Then Structure
+## Inline Comments
 
-Every test method must follow Given-When-Then either as inline comments or JavaDoc.
+AAA (Arrange / Act / Assert) section markers are optional and only used when the test is long enough that the sections are not immediately visible. Short tests (under 10 lines) need no markers.
+
+Inline comments are allowed only for non-obvious setup — for example, explaining why a specific mock value was chosen, or why a particular edge case matters.
 
 ```java
-/**
- * Given: A user with valid credentials exists
- * When: Login request is submitted
- * Then: JWT token is returned with success status
- */
 @Test
-void testLoginSuccess() {
-    // Given
-    when(jwtUtil.generateToken(username, role)).thenReturn(token);
+void login_withNonExistentUsername_returns401() {
+    when(userRepository.findByUsername("wronguser")).thenReturn(Optional.empty());
+    // auth passes (mocked) but the repo has no record — covers a deleted or externally-removed account
+    when(authenticationManager.authenticate(any())).thenReturn(null);
 
-    // When
-    ResponseEntity<ApiResponse<String>> response = authController.login(loginRequest);
+    ResponseEntity<ApiResponse<String>> response = authController.login(buildLoginRequest("wronguser", "password"));
 
-    // Then
-    assertThat(response.getBody().isSuccess()).isTrue();
-    assertThat(response.getBody().getData()).isEqualTo(token);
+    assertThat(response.getStatusCode().value()).isEqualTo(401);
 }
 ```
 

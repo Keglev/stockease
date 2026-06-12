@@ -31,3 +31,11 @@ get:
       description: Unauthorized - missing or invalid JWT token
     '500':
       description: Server error calculating total stock value
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: An unexpected error occurred. Please try again later.
+            data: null

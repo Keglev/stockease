@@ -142,7 +142,7 @@ Loads the full application context. Use only for:
 class StockEaseApplicationTests {
 
     @Test
-    void contextLoads() { }
+    void contextLoads_withTestProfile_applicationStartsSuccessfully() { }
 }
 ```
 
@@ -168,17 +168,33 @@ Centralizes shared mock beans to avoid repeating the same `@MockitoBean` setup i
 // backend/src/test/java/com/stocks/stockease/config/test/TestConfig.java
 
 @Configuration
+@SuppressWarnings("unused") // @Bean methods are invoked by Spring's CGLIB proxy at runtime
 public class TestConfig {
 
     @Bean
-    public JwtUtil jwtUtil() {
-        JwtUtil mock = Mockito.mock(JwtUtil.class);
-        when(mock.validateToken(anyString())).thenReturn(true);
-        when(mock.extractUsername(anyString())).thenReturn("testUser");
-        return mock;
+    public JwtUtil jwtUtil() { return Mockito.mock(JwtUtil.class); }
+
+    @Bean
+    public UserDetailsService userDetailsService() { return Mockito.mock(UserDetailsService.class); }
+
+    @Bean
+    public JwtFilter jwtFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+        return new JwtFilter(jwtUtil, userDetailsService);
+    }
+
+    @Bean
+    public SecurityContext securityContext() {
+        // Both roles so tests cover ADMIN-only and USER-only @PreAuthorize paths without separate configs.
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(new UsernamePasswordAuthenticationToken(
+                "testUser", "password",
+                AuthorityUtils.createAuthorityList("ROLE_ADMIN", "ROLE_USER")));
+        return context;
     }
 }
 ```
+
+JwtUtil stubs (`validateToken`, `extractUsername`) are set in `@BeforeEach` of each test class — not in the bean factory — so each test controls its own mock behavior independently.
 
 Import in each test class:
 

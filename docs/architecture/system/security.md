@@ -28,17 +28,14 @@ Header.Payload.Signature
 
 Payload:
 {
-  "sub": "1",
-  "username": "john.doe",
-  "role": "ADMIN",
+  "sub": "john.doe",
+  "role": "ROLE_ADMIN",
   "iat": 1701418200,
-  "exp": 1701504600,
-  "iss": "stockease-backend",
-  "aud": "stockease-frontend"
+  "exp": 1701454200
 }
 ```
 
-Algorithm: HS256. Expiration: 24 hours (`app.jwt.expiration=86400000`).
+Algorithm: HS256. Expiration: 10 hours (hardcoded `EXPIRATION_TIME = 36000000` ms).
 
 ### Login Flow
 
@@ -52,52 +49,46 @@ sequenceDiagram
     BE->>BE: AuthenticationManager validates credentials
     BE->>BE: UserRepository.findByUsername()
     BE->>BE: BCrypt.matches(provided, stored)
-    BE->>BE: JwtProvider.generateToken()
-    BE-->>FE: 200 OK + { token, expiresIn }
+    BE->>BE: JwtUtil.generateToken()
+    BE-->>FE: 200 OK + ApiResponse { success: true, message: "Login successful", data: "<token>" }
     FE-->>U: Store token in localStorage
 ```
 
 ### Token Validation Flow
 
-Every secured request passes through `JwtAuthenticationFilter`:
+Every secured request passes through `JwtFilter`:
 
 1. Extract token from `Authorization: Bearer <token>` header
 2. Verify signature using secret key
 3. Check expiration (`exp` claim vs current time)
-4. Extract claims (`userId`, `role`)
+4. Extract claims (`username`, `role`)
 5. Set `Authentication` in `SecurityContext`
 6. If invalid or expired → 401 Unauthorized
 
-### JwtTokenProvider
+### JwtUtil
+
+`JwtUtil` generates and validates tokens. Key behaviours:
+
+- Token is signed with HS256 using a static secret key
+- Token expires after 10 hours (hardcoded `EXPIRATION_TIME = 36000000` ms)
+- `sub` claim holds the username string
+- `role` claim holds the Spring role string (e.g. `ROLE_ADMIN`)
+- `validateToken()` catches `JwtException` internally and returns `false`; missing or invalid tokens cause Spring Security to invoke `CustomAuthenticationEntryPoint` → 401
 
 ```java
 @Component
-public class JwtTokenProvider {
+public class JwtUtil {
 
-    @Value("${app.jwt.secret}") private String jwtSecret;
-    @Value("${app.jwt.expiration:86400000}") private int jwtExpiration;
-
-    public String generateToken(Authentication authentication) {
-        AppUser user = (AppUser) authentication.getPrincipal();
-        Date now = new Date();
-        return Jwts.builder()
-            .setSubject(user.getId().toString())
-            .claim("username", user.getUsername())
-            .claim("role", user.getRole())
-            .setIssuedAt(now)
-            .setExpiration(new Date(now.getTime() + jwtExpiration))
-            .signWith(SignatureAlgorithm.HS512, jwtSecret)
-            .compact();
+    public String generateToken(String username, String role) {
+        // builds JWT with sub=username, role claim, iat, exp
+        // signs with HS256 and the static secret key
     }
 
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
-        }
-    }
+    public boolean validateToken(String token) { ... }
+
+    public String extractUsername(String token) { ... }
+
+    public String extractRole(String token) { ... }
 }
 ```
 
@@ -110,7 +101,7 @@ Two roles: `ROLE_ADMIN` (full access) and `ROLE_USER` (read + limited update).
 ```java
 @PostMapping
 @PreAuthorize("hasRole('ADMIN')")
-public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody CreateProductRequest req) { }
+public ResponseEntity<?> createProduct(@Valid @RequestBody CreateProductRequest req) { }
 ```
 
 Full authorization matrix is in [Service Layers](./layers.md).
@@ -124,11 +115,11 @@ Cost factor: 10. BCrypt is one-way — passwords are never stored or logged in p
 ```java
 @Bean
 public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder(10);
+    return new BCryptPasswordEncoder();
 }
 ```
 
-Verification at login: `passwordEncoder.matches(providedRaw, storedHash)`.
+Verification at login: `passwordEncoder.matches(providedRaw, storedHash)` (default cost factor 10).
 
 ---
 
@@ -196,22 +187,38 @@ Bean Validation (`@Valid` + JSR-303) on all request DTOs:
 
 ```java
 public class CreateProductRequest {
+    @NotNull @NotBlank
+    private String name;           // must not be blank
 
-    @NotBlank @Size(min = 3, max = 255)
-    private String name;
+    @NotNull @Min(0)
+    private Integer quantity;      // must be >= 0
 
-    @NotNull @DecimalMin("0.01") @DecimalMax("999999.99")
-    private BigDecimal price;
+    @NotNull @Positive
+    private Double price;          // must be > 0
+}
 
-    @NotNull @Min(0) @Max(1000000)
+public class UpdateQuantityRequest {
+    @NotNull @Min(0)
     private Integer quantity;
+}
 
-    @NotBlank @Pattern(regexp = "^[A-Z0-9-]{3,50}$")
-    private String sku;
+public class UpdatePriceRequest {
+    @NotNull @Positive
+    private Double price;
+}
+
+public class UpdateNameRequest {
+    @NotNull @NotBlank
+    private String name;
+}
+
+public class LoginRequest {
+    @NotBlank private String username;
+    @NotBlank private String password;
 }
 ```
 
-Validation failures are caught by `GlobalExceptionHandler` and returned as 400 with field-level error details.
+Validation failures are caught by `GlobalExceptionHandler` and returned as `ApiResponse<Map<String,String>>` with HTTP 400 and a `data` map of field → error message.
 
 ---
 
@@ -220,12 +227,12 @@ Validation failures are caught by `GlobalExceptionHandler` and returned as 400 w
 Spring Data JPA uses parameterized queries exclusively. String concatenation in queries is prohibited.
 
 ```java
-// Safe — Spring Data parameterizes automatically
-productRepository.findBySku(userProvidedSku);
+// Safe — Spring Data derived query, parameterized automatically
+productRepository.findByNameContainingIgnoreCase(userProvidedName);
 
-// Safe — named parameter in custom query
-@Query("SELECT p FROM Product p WHERE p.sku = ?1")
-Optional<Product> findBySku(String sku);
+// Safe — named parameter in custom JPQL query
+@Query("SELECT p FROM Product p WHERE p.quantity < :threshold")
+List<Product> findByQuantityLessThan(@Param("threshold") int threshold);
 ```
 
 ---
@@ -261,12 +268,18 @@ Managed via GitHub Secrets in CI/CD and Koyeb environment variables in productio
 
 ## Audit Logging
 
-Logged events: login attempts (success/failure), product creation/modification/deletion, authorization failures (403), server errors (500).
+Key events are logged at the controller level using SLF4J. Logging is configured via `application.properties`:
 
 ```
-[2025-10-31 10:30:45] INFO  [AuthService] User 'john.doe' logged in successfully
-[2025-10-31 10:31:12] INFO  [ProductService] Product 'Widget' created by admin
-[2025-10-31 10:32:00] WARN  [SecurityFilter] Unauthorized access attempt: invalid token
+logging.level.com.stocks.stockease=INFO
+logging.level.org.springframework=INFO
+```
+
+Example log output:
+```
+[2025-10-31 10:30:45] INFO  [AuthController] Login attempt for user 'john.doe'
+[2025-10-31 10:31:12] INFO  [ProductController] Creating product: {name=Widget, quantity=10, price=9.99}
+[2025-10-31 10:32:00] DEBUG [JwtFilter] JWT validation failed for token
 ```
 
 ---

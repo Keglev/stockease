@@ -57,12 +57,10 @@ Region: US (Auto)
 Replicas: 1–2 (auto-scaling)
 
 Environment Variables:
-  SPRING_PROFILES_ACTIVE: production
-  DB_HOST: [Neon endpoint]
-  DB_PORT: 5432
-  DB_NAME: stockease
-  DB_USER: [from secrets]
-  DB_PASSWORD: [from secrets]
+  SPRING_PROFILES_ACTIVE: prod
+  SPRING_DATASOURCE_URL: [Neon JDBC connection string with SSL — from secrets]
+  SPRING_DATASOURCE_USERNAME: [from secrets]
+  SPRING_DATASOURCE_PASSWORD: [from secrets]
   JWT_SECRET: [from secrets]
   JAVA_OPTS: -Xmx512m -Xms256m
 
@@ -125,14 +123,17 @@ erDiagram
     }
 ```
 
-Migration files in `src/main/resources/db/migration/`:
+Migration files span two locations on the classpath (`classpath:db/migration`):
 
-| File | Action |
-|------|--------|
-| `V1__baseline.sql` | Empty Flyway baseline marker for existing schema |
-| `V2__create_schema.sql` | Creates `app_user` and `product` tables with BIGSERIAL PKs |
+| File | Location | Action |
+|------|----------|--------|
+| `V1__baseline.sql` | `src/main/resources/db/migration/` | Empty Flyway baseline marker for existing schema |
+| `V2__create_schema.sql` | `src/main/resources/db/migration/` | Creates `app_user` and `product` tables with BIGSERIAL PKs |
+| `V3__seed_data.java` | `src/main/java/db/migration/` | Seeds fixture users and 8 sample products with BCrypt-hashed passwords |
 
-Seed data (fixture users and products) is inserted at application startup by `DataSeeder.java`, which is active in all non-production profiles (`@Profile("!prod")`). See [Staging & Configuration](./staging-config.md) for details.
+`V3__seed_data.java` is a Java migration (extends `BaseJavaMigration`) rather than SQL, so it can invoke `BCryptPasswordEncoder` to hash passwords at migration time. All inserts are idempotent — each row is only added if it does not already exist. This migration runs in all environments including production.
+
+`DataSeeder.java` (`@Profile("!prod")`) remains in the codebase as a fallback for test environments where Flyway is disabled (`spring.flyway.enabled=false`). In all Flyway-enabled environments, V3 populates the database first and `DataSeeder`'s `count() == 0` guards make it a no-op. See [Staging & Configuration](./staging-config.md) for details.
 
 Flyway runs automatically on application startup via `FlywayConfiguration.java`, which forces migrations to execute before JPA initializes — resolving a Spring Boot 3.5.x startup ordering issue.
 

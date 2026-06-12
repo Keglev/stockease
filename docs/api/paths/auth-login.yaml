@@ -29,15 +29,17 @@ post:
             message: Login successful
             data: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTcwMDAwMDAwMH0.signature
     '400':
-      description: Invalid request - missing or blank username/password
+      description: Validation error - missing or blank username/password
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiResponseError'
           example:
             success: false
-            message: Username and password cannot be blank
-            data: null
+            message: "Validation failed for request parameters."
+            data:
+              username: must not be blank
+              password: must not be blank
     '401':
       description: Authentication failed - invalid credentials
       content:
@@ -46,5 +48,15 @@ post:
             $ref: '#/components/schemas/ApiResponseError'
           example:
             success: false
-            message: Bad credentials
+            message: Invalid username or password
+            data: null
+    '500':
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: An unexpected error occurred
             data: null

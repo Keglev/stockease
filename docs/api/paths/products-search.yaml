@@ -31,6 +31,17 @@ get:
               price: 999.99
               totalValue: 49999.50
     '204':
-      description: No matching products found
+      description: |
+        No matching products found.
+        Note: despite using HTTP 204, this response includes a body (unconventional by HTTP spec).
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+          example:
+            message: "No products found matching the name: laptop"
     '401':
       description: Unauthorized - missing or invalid JWT token

@@ -21,45 +21,15 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 
 /**
- * Centralized exception handler for REST API error responses.
- * 
- * Design pattern: @RestControllerAdvice (AOP-based exception interception)
- * - Intercepts exceptions thrown in @RestController methods
- * - Converts exceptions to standardized HTTP responses (JSON)
- * - Decouples exception handling from business logic
- * 
- * Response format (all handlers):
- * {
- *   "success": false,
- *   "message": "Human-readable error description",
- *   "data": null or validation errors map
- * }
- * 
- * HTTP status mapping:
- * - 400 Bad Request: Invalid input, validation failures, malformed JSON
- * - 401 Unauthorized: Invalid/expired JWT, bad credentials
- * - 403 Forbidden: User lacks required role/permission
- * - 404 Not Found: Resource doesn't exist (product ID not found)
- * - 500 Internal Server Error: Unexpected runtime exceptions
- * 
- * Security considerations:
- * - Never expose stack traces to clients (prevents reconnaissance)
- * - Generic messages for auth failures (prevents username enumeration)
- * - Detailed validation errors for client-side form rendering
- * 
- * @author Team StockEase
- * @version 1.0
- * @since 2025-01-01
+ * Centralized exception handler that intercepts exceptions from {@code @RestController} methods and converts them to HTTP responses.
+ * All responses follow the {@link ApiResponse} envelope format with {@code success: false} and an appropriate HTTP status.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * Handles NoSuchElementException (Collection operations like Stream.get()).
-     * 
-     * Scenario: Business logic calls stream.findFirst().get() without Optional wrapping.
-     * Response: 404 with user-friendly "Resource not found" message.
-     * 
+     * Handles {@link NoSuchElementException} thrown by collection operations and returns a 404 Not Found response.
+     *
      * @param ex the caught exception
      * @return 404 response with error details
      */
@@ -70,11 +40,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles JPA EntityNotFoundException (database queries on non-existent records).
-     * 
-     * Scenario: Service calls productRepository.getReferenceById() then accesses lazy fields.
-     * Response: 404 with entity-specific message.
-     * 
+     * Handles {@link EntityNotFoundException} from JPA queries on non-existent records and returns a 404 Not Found response.
+     *
      * @param ex the caught exception
      * @return 404 response with error details
      */
@@ -85,11 +52,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles IllegalArgumentException (business logic validation failures).
-     * 
-     * Scenario: Service validates input (e.g., quantity > 0) and throws with custom message.
-     * Response: 400 with validation message (preserves business semantics).
-     * 
+     * Handles {@link IllegalArgumentException} from business logic validation and returns a 400 Bad Request response.
+     *
      * @param ex the caught exception
      * @return 400 response with error message
      */
@@ -100,11 +64,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles AccessDeniedException (Spring Security authorization failures).
-     * 
-     * Scenario: User with USER role attempts DELETE /api/products/123 (ADMIN only).
-     * Response: 403 with permission denial message (complements SecurityConfig exception handler).
-     * 
+     * Handles {@link AccessDeniedException} from Spring Security authorization failures and returns a 403 Forbidden response.
+     *
      * @param ex the caught exception
      * @return 403 response with permission error
      */
@@ -115,11 +76,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles JwtException (invalid/expired JWT tokens).
-     * 
-     * Scenario: JwtFilter detects malformed or expired token signature.
-     * Response: 401 with security-appropriate message (doesn't expose token structure).
-     * 
+     * Handles {@link io.jsonwebtoken.JwtException} for invalid or expired JWT tokens and returns a 401 Unauthorized response.
+     *
      * @param ex the caught exception
      * @return 401 response with authentication error
      */
@@ -130,11 +88,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles BadCredentialsException (login with wrong password).
-     * 
-     * Scenario: AuthController authenticate(username, password) fails during login.
-     * Response: 401 with generic message (prevents username enumeration).
-     * 
+     * Handles {@link org.springframework.security.authentication.BadCredentialsException} for failed login attempts and returns a 401 Unauthorized response.
+     *
      * @param ex the caught exception
      * @return 401 response with generic auth error
      */
@@ -146,11 +101,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles MethodArgumentNotValidException (@Valid bean validation failures).
-     * 
-     * Scenario: POST /api/products with missing @NotNull fields or @Size violations.
-     * Response: 400 with field-level validation errors (enables frontend form highlighting).
-     * 
+     * Handles {@link MethodArgumentNotValidException} from {@code @Valid} bean validation failures and returns a 400 Bad Request response with field-level errors.
+     *
      * @param ex the caught exception
      * @return 400 response with field errors map
      */
@@ -165,11 +117,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles HttpMessageNotReadableException (malformed request body).
-     * 
-     * Scenario: POST /api/products with invalid JSON or type mismatch (e.g., string for price).
-     * Response: 400 with user-friendly parsing error message.
-     * 
+     * Handles {@link org.springframework.http.converter.HttpMessageNotReadableException} for malformed or unreadable request bodies and returns a 400 Bad Request response.
+     *
      * @param ex the caught exception
      * @return 400 response with parsing error
      */
@@ -185,13 +134,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles HandlerMethodValidationException (path variable/request param validation).
-     * 
-     * Scenario: GET /api/products/{id} with id="invalid" (expects Long) or @Min violation.
-     * Response: 400 with validation error details extracted from cause chain.
-     * 
-     * Note: Uses if-else pattern matching (Java 16+). Switch pattern matching (Java 21+) not yet available.
-     * 
+     * Handles {@link HandlerMethodValidationException} for path variable and request parameter validation failures and returns a 400 Bad Request response.
+     *
      * @param ex the caught exception
      * @return 400 response with constraint violation details
      */
@@ -203,17 +147,14 @@ public class GlobalExceptionHandler {
         // Pattern matching with if-else (Java 16+): cleaner than instanceof + cast
         Throwable cause = ex.getCause();
         if (cause instanceof ConstraintViolationException constraintViolationException) {
-            // Extract constraint violations (e.g., @Min, @NotNull on path variables)
-            constraintViolationException.getConstraintViolations().forEach(violation -> 
+            constraintViolationException.getConstraintViolations().forEach(violation ->
                 errors.put(violation.getPropertyPath().toString(), violation.getMessage())
             );
         } else if (cause instanceof BindException bindException) {
-           // Extract field binding errors (type mismatches)
-           bindException.getBindingResult().getFieldErrors().forEach(fieldError -> 
+           bindException.getBindingResult().getFieldErrors().forEach(fieldError ->
                 errors.put(fieldError.getField(), fieldError.getDefaultMessage())
            );
         } else {
-           // Fallback for null or unknown validation errors
            errors.put("Unknown", "Unable to extract detailed validation error.");
         }
 
@@ -222,13 +163,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles all other uncaught exceptions (safety net).
-     * 
-     * Scenario: Unexpected RuntimeException or database deadlock.
-     * Response: 500 with generic message (never expose stack traces to clients).
-     * 
-     * Recommendation: Log full exception and stack trace server-side for debugging.
-     * 
+     * Catches all uncaught exceptions as a safety net and returns a 500 Internal Server Error response.
+     *
      * @param ex the caught exception
      * @return 500 response with generic error message
      */

@@ -44,9 +44,9 @@ Logs are written to stdout and captured by Koyeb.
 
 **Example output**:
 ```
-[2025-10-31 10:30:00] INFO  [ProductService] Product created (ID: abc-123)
-[2025-10-31 10:30:01] WARN  [AuthService] Failed login attempt for user: john
-[2025-10-31 10:30:02] ERROR [Database] Connection timeout
+[2025-10-31 10:30:00] INFO  [ProductController] Product created (ID: 3)
+[2025-10-31 10:30:01] WARN  [AuthController] Failed login attempt for user: john
+[2025-10-31 10:30:02] ERROR [HealthController] Database connection timeout
 ```
 
 ---
@@ -55,43 +55,26 @@ Logs are written to stdout and captured by Koyeb.
 
 ### Structured Logging
 
-Log entries include relevant context rather than bare messages:
+Log entries include relevant context rather than bare messages. Controllers use SLF4J with `LoggerFactory`:
 
 ```java
+private static final Logger log = LoggerFactory.getLogger(ProductController.class);
+
 // Good — includes actionable context
-logger.info("Product created",
-    Map.of("productId", id, "userId", userId, "price", price));
+log.info("Entering deleteProduct method with ID: {}", id);
+log.debug("Received request to create product: {}", request);
 
 // Poor — no context for debugging
-logger.info("Product created");
+log.info("Product deleted");
 ```
 
 ### Error Tracking
 
-Exceptions are logged with full context before being translated into safe API responses:
-
-```java
-try {
-    // business logic
-} catch (DatabaseException e) {
-    logger.error("Database error creating product", e,
-        Map.of("productId", id));
-    throw new InternalServerException("Failed to create product", e);
-}
-```
+`GlobalExceptionHandler` centralises error handling — uncaught exceptions are translated into safe `ApiResponse<T>` bodies. Stack traces are never exposed to clients. For debugging, exceptions are available in the application log stream on Koyeb.
 
 ### Performance Tracing
 
-Critical service methods are timed using Micrometer's `@Timed` annotation:
-
-```java
-@Timed(value = "product.search.time", description = "Time to search products")
-public Page<ProductDTO> searchProducts(String query) {
-    // implementation
-}
-```
-
-The metric `product.search.time` is then available at `/actuator/metrics/product.search.time`.
+Spring Boot Actuator exposes `http.server.requests` metrics (count, duration, status) via `/actuator/metrics/http.server.requests` out of the box — no `@Timed` annotation is required for basic endpoint timing.
 
 ---
 

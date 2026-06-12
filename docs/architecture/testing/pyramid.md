@@ -10,7 +10,7 @@
 graph TD
     A["E2E — 0 tests — Not yet implemented"]
     B["Integration — 1 test — @SpringBootTest context load"]
-    C["Unit and Slice — 18 tests — @WebMvcTest and plain Mockito"]
+    C["Unit and Slice — 63 tests — @WebMvcTest and plain Mockito"]
 
     C --- B
     B --- A
@@ -22,8 +22,8 @@ graph TD
 
 | Level | Count | Annotation | Target % |
 |-------|-------|------------|----------|
-| Unit | 4 | Plain Mockito | 20% |
-| Slice | 14 | `@WebMvcTest` | 75% |
+| Unit | 7 | Plain Mockito | 20% |
+| Slice | 56 | `@WebMvcTest` | 75% |
 | Integration | 1 | `@SpringBootTest` | 5% |
 | E2E | 0 | — | 0% (future) |
 

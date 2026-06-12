@@ -30,37 +30,11 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
 
-/**
- * Integration tests for PUT /api/products/{id}/* endpoints (product updates).
- * 
- * System Under Test (SUT): ProductController.updateQuantity(), updatePrice(), updateName()
- * → ResponseEntity<ApiResponse<Product>> (200 OK) or error response
- * 
- * Test framework: Spring Boot WebMvcTest (loads SecurityConfig, MockMvc)
- * Authorization: SecurityMockMvcRequestPostProcessors.user() with roles
- * Mock framework: Mockito (@MockitoBean ProductRepository)
- * 
- * Test coverage (parameterized):
- * 1. Update quantity: Both ADMIN and USER roles allowed (shared endpoint)
- * 2. Update price: Both ADMIN and USER roles allowed
- * 3. Update name: Both ADMIN and USER roles allowed, including special characters
- * 
- * Execution flow (Given-When-Then):
- * - @BeforeEach: Mock JWT validation, ProductRepository behavior
- * - @ParameterizedTest: Run same test with multiple role combinations
- * - TestConfig: Provides SecurityFilterChain for authorization checks
- * 
- * @author Team StockEase
- * @version 1.0
- * @since 2025-01-01
- * @see ProductController.updateQuantity()
- * @see ProductController.updatePrice()
- * @see ProductController.updateName()
- */
+/** Slice tests for PUT /api/products/{id}/quantity|price|name (happy-path updates). */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-@Import(TestConfig.class) // Use TestConfig to handle authorization
-public class ProductUpdateControllerTest {
+@Import(TestConfig.class)
+class ProductUpdateControllerTest {
 
     @MockitoBean
     private ProductRepository productRepository;
@@ -71,127 +45,66 @@ public class ProductUpdateControllerTest {
     @Autowired
     private JwtUtil jwtUtil;
 
-    /**
-     * Lifecycle hook: Setup JWT mocks before each test.
-     * 
-     * Mock configuration:
-     * - JwtUtil.validateToken(): Always returns true
-     * - JwtUtil.extractUsername(): Returns "testUser"
-     * - ProductRepository: Reset to clear stubs between tests
-     * 
-     * Execution: @BeforeEach runs BEFORE each @ParameterizedTest
-     */
-    @SuppressWarnings("unused") // Called by JUnit 5 @BeforeEach lifecycle
+    @SuppressWarnings("unused")
     @BeforeEach
     void setUpJwtMock() {
-        // Mock JwtUtil behavior for consistent authorization
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
-        Mockito.reset(productRepository); // Reset repository mock to avoid interference between tests
+        // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
+        Mockito.reset(productRepository);
     }
 
-    /**
-     * Given: Authenticated user (ADMIN or USER) with valid product ID
-     * When: PUT /api/products/{id}/quantity with new quantity value
-     * Then: ResponseEntity(200 OK) with updated quantity in response body
-     * 
-     * Test scenario (parameterized):
-     * - Test both ADMIN and USER roles (both can update quantity)
-     * - Mock ProductRepository.findById() to return existing product
-     * - Mock ProductRepository.save() to persist update
-     * - Verify response contains updated quantity value
-     */
     @ParameterizedTest
-    @CsvSource({
-        "adminUser, ADMIN",
-        "regularUser, USER"
-    })
-    void testUpdateQuantityWithRoles(String username, String role) throws Exception {
+    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
+    void updateQuantity_withValidData_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(anyNonNull(Product.class))).thenReturn(product);
 
-        // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product)));
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product));
-
-        // Perform the PUT request to update quantity
         mockMvc.perform(put("/api/products/1/quantity")
-                .contentType(applicationJson())
-                .with(userWithRole(username, role))
-                .with(csrfToken())
-                .content("{\"quantity\": 50}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.message").value("Quantity updated successfully"))
-            .andExpect(jsonPath("$.data.quantity").value(50));
+                        .contentType(applicationJson())
+                        .with(userWithRole(username, role))
+                        .with(csrfToken())
+                        .content("{\"quantity\": 50}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Quantity updated successfully"))
+                .andExpect(jsonPath("$.data.quantity").value(50));
     }
 
-    /**
-     * Given: Authenticated user (ADMIN or USER) with valid product ID
-     * When: PUT /api/products/{id}/price with new price value
-     * Then: ResponseEntity(200 OK) with "Price updated successfully" message
-     * 
-     * Test scenario (parameterized):
-     * - Test both ADMIN and USER roles (both can update price)
-     * - Mock ProductRepository for lookup and persistence
-     * - Verify response includes success message
-     * - Price update recalculates total_value (qty × price)
-     */
     @ParameterizedTest
-    @CsvSource({
-        "adminUser, ADMIN",
-        "regularUser, USER"
-    })
-    void testUpdatePriceWithRoles(String username, String role) throws Exception {
+    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
+    void updatePrice_withValidData_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(anyNonNull(Product.class))).thenReturn(product);
 
-        // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product)));
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product));
-
-        // Perform the PUT request to update price
         mockMvc.perform(put("/api/products/1/price")
-                .contentType(applicationJson())
-                .with(userWithRole(username, role))
-                .with(csrfToken())
-                .content("{\"price\": 150.0}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.message").value("Price updated successfully"));
+                        .contentType(applicationJson())
+                        .with(userWithRole(username, role))
+                        .with(csrfToken())
+                        .content("{\"price\": 150.0}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Price updated successfully"));
     }
 
-    /**
-     * Given: Authenticated user (ADMIN or USER) updating product name with special characters
-     * When: PUT /api/products/{id}/name with name containing !@#$%
-     * Then: ResponseEntity(200 OK) with updated name echoed in response
-     * 
-     * Test scenario (parameterized):
-     * - Verify special characters (!, @, #, $, %) preserved in name field
-     * - Test XSS protection: special chars should NOT be HTML-encoded on save
-     * - Mock repository persistence and retrieval
-     * - Confirm response mirrors back provided special characters
-     */
     @ParameterizedTest
-    @CsvSource({
-        "adminUser, ADMIN",
-        "regularUser, USER"
-    })
-    void testUpdateNameWithSpecialCharacters(String username, String role) throws Exception {
+    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
+    void updateName_withSpecialCharacters_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(anyNonNull(Product.class))).thenReturn(product);
 
-        // Mock repository behavior
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product)));
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product));
-
-        // Perform the PUT request to update name with special characters
         mockMvc.perform(put("/api/products/1/name")
-                .contentType(applicationJson())
-                .with(userWithRole(username, role))
-                .with(csrfToken())
-                .content("{\"name\": \"Updated!@#$%\"}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.message").value("Name updated successfully"))
-            .andExpect(jsonPath("$.data.name").value("Updated!@#$%"));
+                        .contentType(applicationJson())
+                        .with(userWithRole(username, role))
+                        .with(csrfToken())
+                        .content("{\"name\": \"Updated!@#$%\"}")) // special characters verify the API stores names without sanitizing or encoding them
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Name updated successfully"))
+                .andExpect(jsonPath("$.data.name").value("Updated!@#$%"));
     }
 
     @NonNull

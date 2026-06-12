@@ -25,15 +25,13 @@ sequenceDiagram
 
 ```java
 @PostMapping("/login")
-public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-    User user = userRepository.findByUsername(request.getUsername())
-        .orElseThrow(() -> new AuthenticationException("Invalid credentials"));
-
-    if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
-        throw new AuthenticationException("Invalid credentials");
-
-    String token = jwtProvider.generateToken(user);
-    return ResponseEntity.ok(new LoginResponse(token, user.getUsername()));
+public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest request) {
+    UsernamePasswordAuthenticationToken authToken =
+        new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+    authenticationManager.authenticate(authToken);
+    User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
+    String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+    return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", token));
 }
 ```
 
@@ -58,7 +56,7 @@ Cost factor 10 produces ~100ms per hash — fast enough for users, slow enough t
 ```java
 @Bean
 public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder(10);
+    return new BCryptPasswordEncoder(); // default cost factor 10
 }
 
 // Registration

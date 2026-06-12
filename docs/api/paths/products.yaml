@@ -31,11 +31,9 @@ get:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseError'
+            $ref: '#/components/schemas/SecurityErrorResponse'
           example:
-            success: false
-            message: Unauthorized
-            data: null
+            error: Invalid username or password
 
 post:
   summary: Create a new product (ADMIN only)
@@ -76,28 +74,29 @@ post:
               example: 1299.99
   responses:
     '200':
-      description: Product created successfully
+      description: Product created successfully - returns the persisted Product entity
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseProduct'
+            $ref: '#/components/schemas/Product'
           example:
-            success: true
-            message: Product created successfully
-            data:
-              id: 3
-              name: New Laptop
-              quantity: 25
-              price: 1299.99
-              totalValue: 32499.75
+            id: 3
+            name: New Laptop
+            quantity: 25
+            price: 1299.99
+            totalValue: 32499.75
     '400':
-      description: Validation error - missing fields or invalid values
+      description: Validation error - missing or invalid fields
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: '#/components/schemas/ApiResponseError'
           example:
-            error: Incomplete update. Please fill in all required fields.
+            success: false
+            message: "Validation failed for request parameters."
+            data:
+              name: must not be blank
+              quantity: must be greater than or equal to 0
     '401':
       description: Unauthorized - missing or invalid JWT token
       content:

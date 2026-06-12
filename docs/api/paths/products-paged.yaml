@@ -51,7 +51,7 @@ get:
                   totalValue: 5198.00
               totalElements: 100
               totalPages: 10
-              currentPage: 0
+              pageNumber: 0
               pageSize: 10
     '400':
       description: Invalid parameters

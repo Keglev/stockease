@@ -2,7 +2,6 @@ put:
   summary: Update product name
   description: |
     Updates name for a specific product. Name must be non-empty.
-    Uniqueness constraint enforced at database level.
   operationId: updateName
   tags:
     - Products

@@ -90,3 +90,7 @@ delete:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: Cannot delete. Product with ID 999 does not exist.
+            data: null
