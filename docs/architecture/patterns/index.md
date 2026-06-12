@@ -1,60 +1,28 @@
 # Design Patterns
 
-Implementation patterns and best practices used throughout the StockEase application.
-
-## Overview
-
-This section documents the design patterns employed in the application to solve common problems and ensure code quality, maintainability, and scalability.
-
-## Patterns
-
-### [Repository Pattern](./repository-pattern.md)
-Implementation of the Repository pattern for data access abstraction and testability.
-
-### [Security Patterns](./security-patterns.md)
-Security-related patterns and approaches used for authentication, authorization, and data protection.
-
-## Pattern Categories
-
-### Behavioral Patterns
-- Repository Pattern
-- Security Patterns
-- Service Layer Pattern
-- DTO Pattern
-
-### Structural Patterns
-- Layered Architecture
-- Dependency Injection
-- Aspect-Oriented Programming (AOP)
-
-### Concurrency Patterns
-- Database Transaction Management
-- Optimistic Locking
-- Cache Invalidation
-
-## Pattern Selection Criteria
-
-When selecting patterns for the application:
-1. **Problem Domain**: Does it solve our specific problem?
-2. **Maintainability**: Will it make the code easier to maintain?
-3. **Testability**: Does it improve testability?
-4. **Performance**: What are the performance implications?
-5. **Learning Curve**: How complex is it for the team?
-
-## Implementation Guidelines
-
-Each pattern includes:
-- **Intent**: What problem does it solve?
-- **Participants**: Classes/components involved
-- **Collaboration**: How components interact
-- **Consequences**: Advantages and disadvantages
-- **Code Examples**: Real examples from StockEase
-- **Related Patterns**: Other relevant patterns
+Implementation patterns used in StockEase for data access, security, and authorization.
 
 ---
 
-For more information, see:
-- [Architecture Overview](../system/overview.md)
+## Documents in This Directory
+
+- [Repository Pattern](./repository-pattern.md) — Spring Data JPA repository interfaces, query methods, pagination, custom `@Query`, transaction boundaries, and N+1 prevention
+- [Security Patterns](./security-patterns.md) — JWT bearer token flow, BCrypt password hashing, RBAC implementation, input validation, SQL injection prevention, exception handling, and audit logging
+
+---
+
+## Related Documentation
+
+- [System Overview](../system/overview.md)
 - [Backend Architecture](../system/backend.md)
-- [Components Documentation](../components/index.md)
-- [Design Decisions](../decisions/index.md)
+- [Security Architecture](../system/security.md)
+- [Service Layers](../system/layers.md)
+- [Components](../components/index.md)
+- [Decisions (ADRs)](../decisions/index.md)
+
+---
+
+**Last Updated**: June 2026
+**Status**: Current
+
+[Back to Architecture Index](../index.md)

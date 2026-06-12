@@ -1,223 +1,122 @@
-# Architecture Documentation Generation & Deployment Guide
+# Documentation Generation
 
-## Overview
-
-The StockEase project now has a complete automated documentation pipeline that:
-
-1. **Converts Markdown to HTML** - All 31 markdown files in `/docs/architecture/` are converted to HTML
-2. **Applies Enterprise Template** - Uses a professional, navigable HTML template with sidebar, TOC, and responsive design
-3. **Deploys to GitHub Pages** - Publishes to `gh-pages` branch automatically on push to `main`
+**Purpose**: Document how the automated pipeline converts markdown to HTML and publishes to GitHub Pages.
 
 ---
 
-## Documentation Structure
+## Overview
 
-### Input Files
+The documentation pipeline:
+1. Reads all `.md` files from `backend/docs/architecture/`
+2. Converts them to HTML using Pandoc and the enterprise template
+3. Generates interactive API docs from `openapi.yaml` using Redocly
+4. Deploys everything to the `gh-pages` branch via GitHub Actions
 
-Located in: `backend/docs/architecture/`
+**Published URL**: https://keglev.github.io/stockease/
 
-```
-architecture/
-├── index.md                          # Main entry point
-├── overview.md                       # System overview
-├── layers.md                         # Architectural layers
-├── backend.md                        # Backend architecture
-├── frontend.md                       # Frontend architecture
-├── security.md                       # Security architecture
-├── deployment.md                     # Deployment strategy
-├── testing-architecture.md           # Testing strategy
-├── components/
-│   ├── index.md
-│   ├── authentication.md
-│   ├── authorization.md
-│   ├── database.md
-│   ├── caching.md
-│   └── ...
-├── decisions/
-│   ├── index.md
-│   ├── adr-001-*.md
-│   └── ...
-├── patterns/
-│   ├── index.md
-│   └── ...
-├── testing/
-│   ├── strategy.md
-│   ├── pyramid.md
-│   ├── test-data-fixtures.md
-│   └── ...
-└── deployment/
-    ├── ci-pipeline.md
-    ├── docker-strategy.md
-    └── ...
-```
+---
 
-**Total: 31 markdown files**
+## How the Pipeline Works
 
-### Output Files
+### Workflow Files
 
-Generated in: `target/docs/architecture/`
+| Workflow | File | Trigger |
+|----------|------|---------|
+| Docs generation | `.github/workflows/docs-pipeline.yml` | Push to `main` when `docs/**` or `pom.xml` changes; manual dispatch |
+| Coverage deploy | `.github/workflows/docs-coverage-deploy.yml` | Automatically on `docs-pipeline.yml` success |
 
-All `.md` files are converted to `.html` files with the same directory structure.
+### Pipeline Stages (docs-pipeline.yml)
+
+1. **Checkout** — full history (`fetch-depth: 0`)
+2. **Detect project root** — `detect-maven-project.sh` sets `PROJECT_DIR`
+3. **Setup Node.js 18** — install `@redocly/cli`
+4. **Generate API docs** — reads `docs/api/openapi.yaml` → outputs `target/docs/api-docs.html`
+5. **Install Pandoc** — converts architecture markdown to HTML using `enterprise-docs.html` template + Lua filter
+6. **Fix directory links** — `fix-directory-links.sh` rewrites `href="path/"` to `index.html`
+7. **Copy landing page** — `.github/scripts/templates/index.html` → `target/docs/index.html`
+8. **Upload artifact** — `docs-site` artifact retained for coverage deploy
+9. **Deploy to gh-pages** — `peaceiris/actions-gh-pages@v3` publishes `target/docs/`
+
+### Coverage Deploy (docs-coverage-deploy.yml)
+
+Runs after docs-pipeline.yml succeeds:
+1. Downloads `docs-site` artifact
+2. Runs `mvn -B clean test` with JaCoCo
+3. `generate-coverage-wrapper.sh` creates iframe wrapper
+4. Deploys to `gh-pages` at `/coverage/` subfolder without overwriting root docs
 
 ---
 
 ## Enterprise HTML Template
 
-**File:** `backend/.github/scripts/templates/enterprise-docs.html`
+**File**: `.github/scripts/templates/enterprise-docs.html`
 
-### Features
-
-- **Professional Branding** - StockEase header with navigation breadcrumbs
-- **Responsive Sidebar** - Auto-generated navigation menu from predefined structure
-- **Table of Contents** - Auto-generated from markdown headers (H2, H3)
-- **Enterprise Styling**
-  - Modern color scheme (primary blue #0066cc)
-  - Clear typography hierarchy
-  - Code syntax highlighting
-  - Alert boxes (info, warning, success, danger)
-  - Tables with alternating row colors
-  - Responsive grid layout
-- **Navigation Structure**
-  - API Documentation section
-  - Architecture section
-  - Design Decisions
-  - Components
-  - Patterns
-  - Testing
-  - Deployment
-  - Reference
+Features: responsive sidebar, auto-generated table of contents from H2/H3 headers, code syntax highlighting, enterprise color scheme, mobile-friendly layout.
 
 ### Template Variables
 
-- `$title$` - Document title
-- `$body$` - Converted markdown content
-- Navigation is built via JavaScript (hardcoded structure in template)
+| Variable | Source |
+|----------|--------|
+| `$title$` | Markdown file H1 heading |
+| `$body$` | Converted markdown content |
 
-### Customization
+Navigation sidebar is built via JavaScript with a hardcoded structure in the template.
 
-To add new navigation items, edit the `navigation` object in the template:
+### Adding Navigation Items
+
+Edit the `navigation` object inside the template:
 
 ```javascript
 const navigation = {
     'Section Name': [
         { label: 'Item Label', href: './path/to/file.html' },
-        // more items...
     ],
-    // more sections...
 };
 ```
 
----
-
-## CI/CD Pipeline Integration
-
-### Workflow File
-
-**File:** `.github/workflows/docs-pipeline.yml`
-
-### Trigger Events
-
-- **On Push to `main`** with changes in:
-  - `docs/**` - Any documentation files
-  - `pom.xml` - Maven project file
-  - `.github/workflows/docs-pipeline.yml` - Workflow file itself
-- **Manual Trigger** - Via GitHub Actions UI (workflow_dispatch)
-
-### Pipeline Steps
-
-#### 1. Detect Project Root
-- Checks for `openapi.yaml` and `pom.xml`
-- Determines if root project or backend subdirectory
-
-#### 2. Install Dependencies
-- Node.js 18
-- @redocly/cli (for API docs generation)
-- pandoc (for markdown conversion)
-
-#### 3. Generate API Documentation
-- Input: `backend/docs/api/openapi.yaml` (modular structure)
-- Output: `target/docs/api-docs.html` (Redocly interactive docs)
-- Uses: @redocly/cli `build-docs` command
-
-#### 4. Convert Architecture Markdown to HTML
-- Input: All `.md` files in `backend/docs/architecture/`
-- Template: `backend/.github/scripts/templates/enterprise-docs.html`
-- Output: Matching `.html` files in `target/docs/architecture/`
-- Command: `pandoc --template <template> --toc --toc-depth=3`
-
-#### 5. Create Documentation Index
-- Generates main `target/docs/index.html`
-- Landing page with cards linking to:
-  - API Documentation
-  - Architecture Overview
-  - Backend Architecture
-  - Frontend Architecture
-  - Security Architecture
-  - Deployment Strategy
-  - Testing Architecture
-  - Design Decisions
-
-#### 6. Verify Generation
-- Counts generated HTML/JSON files
-- Shows directory size
-- Confirms completion
-
-#### 7. Deploy to GitHub Pages
-- Uses: `peaceiris/actions-gh-pages@v3`
-- Publishes: `target/docs/` directory
-- Branch: `gh-pages`
-- Automatic on successful build
+After editing, push to `main` and the pipeline regenerates all pages with the updated sidebar.
 
 ---
 
-## Accessing Generated Documentation
+## Pandoc Conversion
 
-### Before First Deployment
-
-The workflow must run at least once (automatically when code is pushed to `main`).
-
-### After Deployment
-
-**URL:** `https://keglev.github.io/stockease/`
-
-Structure:
-- `/` - Main documentation index (landing page)
-- `/index.html` - API documentation (ReDoc)
-- `/architecture/` - Architecture documentation
-- `/architecture/overview.html` - Architecture overview
-- `/architecture/backend.html` - Backend architecture
-- `/architecture/frontend.html` - Frontend architecture
-- etc.
-
-### GitHub Pages Settings
-
-The `gh-pages` branch is created automatically by the workflow.
-
-To verify/configure:
-
-1. Go to GitHub repo → Settings → Pages
-2. Source: `Deploy from a branch`
-3. Branch: `gh-pages` / `/ (root)`
-
----
-
-## Local Testing (Optional)
-
-### Prerequisites
+**Command used** (simplified):
 
 ```bash
-# Install pandoc (on Windows via Chocolatey)
-choco install pandoc
+pandoc "$md" \
+  --template "$TEMPLATE" \
+  --toc \
+  --toc-depth=3 \
+  --lua-filter=md-to-html-links.lua \
+  -o "$out"
+```
 
-# Install @redocly/cli
+The Lua filter converts `.md` links to `.html` links automatically — no manual link changes needed in source files.
+
+---
+
+## Local Build
+
+Use this to preview the generated site before pushing.
+
+**Prerequisites**:
+
+```bash
+# macOS
+brew install pandoc
+npm install -g @redocly/cli
+
+# Windows (Chocolatey)
+choco install pandoc
 npm install -g @redocly/cli
 ```
 
-### Manual Local Build
+**Build commands**:
 
 ```bash
-# Generate ReDoc docs
-redocly build-docs backend/docs/api/openapi.yaml -o backend/target/docs/index.html
+# Generate API docs
+redocly build-docs backend/docs/api/openapi.yaml \
+  -o backend/target/docs/api-docs.html
 
 # Generate architecture docs
 TEMPLATE="backend/.github/scripts/templates/enterprise-docs.html"
@@ -228,266 +127,29 @@ find backend/docs/architecture -name "*.md" | while read md; do
   pandoc "$md" --template "$TEMPLATE" --toc -o "$out"
 done
 
-# View locally
+# Serve locally
 python -m http.server -d backend/target/docs/
-# Then open http://localhost:8000/
+# Open: http://localhost:8000/
 ```
 
 ---
 
-## File Manifest
+## GitHub Pages Setup
 
-### New/Modified Files
+The `gh-pages` branch is created automatically on first workflow run.
 
-| File | Purpose | Status |
-|------|---------|--------|
-| `.github/scripts/templates/enterprise-docs.html` | Enterprise HTML template | ✅ Created |
-| `.github/workflows/docs-pipeline.yml` | CI/CD workflow | ✅ Updated |
+To verify in GitHub: **Settings → Pages → Source: Deploy from branch → Branch: gh-pages / root**
 
-### Documentation Sources
-
-- `docs/architecture/*.md` - 31 markdown files (existing)
-- `docs/api/openapi.yaml` - API specification (existing)
-- `docs/api/paths/*.yaml` - Modular API paths (existing)
-
-### Generated (on GitHub Pages)
-
-- `target/docs/index.html` - Landing page
-- `target/docs/index.html` (from ReDoc) - API docs
-- `target/docs/architecture/*.html` - 31 architecture docs
-
----
-
-## Navigation Map
-
-### Main Entry Point
-
-**`https://keglev.github.io/stockease/`**
-
-Landing page with 8 cards linking to:
-
-1. **API Documentation** → ReDoc interactive specification
-2. **Architecture Overview** → System design and layers
-3. **Backend Architecture** → Spring Boot application structure
-4. **Frontend Architecture** → React/TypeScript structure
-5. **Security Architecture** → JWT, auth, access control
-6. **Deployment Strategy** → Docker, CI/CD, cloud
-7. **Testing Architecture** → Test pyramid and strategies
-8. **Design Decisions** → ADRs and technical justifications
-
-### Sidebar Navigation (in each doc)
-
-Each HTML page has a sidebar with sections:
-
-- **API Documentation** - Link to API docs
-- **Architecture** - 6 main architecture pages
-- **Design Decisions** - Link to decisions index
-- **Components** - Link to components index
-- **Patterns** - Link to patterns index
-- **Testing** - 4 testing-related pages
-- **Deployment** - 2 deployment pages
-- **Reference** - 3 reference documents
-
----
-
-## Deployment Status
-
-| Component | Status | Details |
-|-----------|--------|---------|
-| Template | ✅ Ready | Enterprise design, responsive, professional |
-| Workflow | ✅ Ready | Runs on push, converts all docs, deploys to gh-pages |
-| API Docs | ✅ Ready | ReDoc interactive spec (index.html) |
-| Architecture Docs | ✅ Ready | 31 files converted to HTML with navigation |
-| GitHub Pages | ⏳ Ready | Configured, will activate on first workflow run |
-| Landing Page | ✅ Ready | Custom HTML with card layout |
-
----
-
-## Next Steps
-
-1. **Trigger Workflow** (Automatic on next push to `main`)
-   - Or manually via GitHub Actions UI
-   - Converts all docs to HTML with template
-   - Deploys to gh-pages branch
-
-2. **Verify GitHub Pages** (After workflow completes ~2-3 min)
-   - Check: Settings → Pages
-   - Visit: https://keglev.github.io/stockease/
-
-3. **Monitor Workflow**
-   - Go to: Actions tab on GitHub
-   - Watch "Docs Pipeline" workflow
-   - Check logs for any errors
-
-4. **Iterate** (if needed)
-   - Edit markdown files
-   - Push to main
-   - Workflow auto-runs
-   - Changes appear on gh-pages in ~3-5 minutes
-
----
-
-## Architecture
+Published structure:
 
 ```
-GitHub Repository
-├── main branch
-│   ├── backend/docs/architecture/ (31 .md files)
-│   ├── backend/docs/api/ (openapi.yaml + modular paths)
-│   ├── backend/.github/scripts/templates/ (enterprise-docs.html)
-│   └── .github/workflows/docs-pipeline.yml
-│
-├── [Workflow Triggers on Push]
-│   ├── Install deps (pandoc, redocly)
-│   ├── Generate API docs (ReDoc)
-│   ├── Convert architecture docs (Markdown → HTML)
-│   ├── Create landing page
-│   └── Deploy to gh-pages
-│
-└── gh-pages branch
-    └── target/docs/ (published to GitHub Pages)
-        ├── index.html (landing page)
-        ├── index.html (API docs from ReDoc)
-        ├── architecture/
-        │   ├── overview.html
-        │   ├── backend.html
-        │   ├── frontend.html
-        │   ├── security.html
-        │   ├── deployment.html
-        │   ├── testing-architecture.html
-        │   ├── components/
-        │   ├── decisions/
-        │   ├── patterns/
-        │   ├── testing/
-        │   └── deployment/
-        └── ... (all other converted docs)
-
-Live at: https://keglev.github.io/stockease/
+https://keglev.github.io/stockease/
+  /                     ← Landing page
+  /api-docs.html        ← ReDoc interactive API spec
+  /architecture/        ← All architecture HTML docs
+  /coverage/            ← JaCoCo coverage report
 ```
 
 ---
 
-## Link Verification and Cross-Reference Matrix
-
-### Link Coverage Analysis
-
-All architecture documentation files are fully cross-linked to ensure seamless navigation in the generated HTML documentation.
-
-#### Main Documentation Files Status
-
-| Document | Outgoing Links | Link Coverage | Status |
-|----------|----------------|---------------|--------|
-| index.md | 8+ | Navigation hub | ✅ Complete |
-| overview.md | 11 | Primary source | ✅ Complete |
-| backend.md | 11 | Architecture | ✅ Complete |
-| frontend.md | 8 | React/TypeScript | ✅ Complete |
-| layers.md | 8 | Service layers | ✅ Complete |
-| security.md | 10 | JWT & Auth | ✅ Complete |
-| deployment.md | 10 | Infrastructure | ✅ Complete |
-
-### Categories of Links
-
-#### Horizontal Links (Main docs ↔ Main docs)
-```
-index.md ←→ overview.md ←→ backend.md
-         ←→ frontend.md ←→ layers.md
-         ←→ security.md ←→ deployment.md
-```
-**Status**: ✅ COMPLETE - All main docs link to each other
-
-#### Vertical Links (Main docs → Subdirectories)
-```
-overview.md  ↓
-backend.md   ↓→ decisions/
-layers.md    ↓  patterns/
-security.md  ↓  deployment/
-deployment.md ↓  components/
-frontend.md  ↓
-```
-**Status**: ✅ COMPLETE - All main docs reference subdirectories
-
-### Link Format Requirements
-
-For HTML generation, all links must follow these conventions:
-
-1. **Relative paths**: Use `./file.md` for same directory
-2. **Subdirectory paths**: Use `./subdir/file.md` format
-3. **Parent paths**: Use `../file.md` when linking up
-4. **Anchors**: Use `#section-name` for section links
-
-**All links are verified to follow these conventions** ✅
-
-### Cross-Reference Statistics
-
-- **Horizontal links** (doc ↔ doc): 120+
-- **Vertical links** (main ↔ subdirectory): 50+
-- **Total unique cross-references**: 170+
-- **Link coverage**: 100% (all docs interconnected)
-
-### Link Density by Document
-
-| Document | Outgoing Links | Incoming Links | Hub Score |
-|----------|----------------|----------------|-----------|
-| overview.md | 11 | 6 | ⭐⭐⭐ High |
-| backend.md | 11 | 5 | ⭐⭐ Medium |
-| security.md | 10 | 6 | ⭐⭐⭐ High |
-| deployment.md | 10 | 5 | ⭐⭐ Medium |
-| layers.md | 8 | 5 | ⭐⭐ Medium |
-| frontend.md | 8 | 4 | ⭐⭐ Medium |
-| index.md | 8+ | 1 | ⭐⭐⭐ Hub |
-
-### Expected HTML Navigation Structure
-
-When converted to HTML, the documentation will have this structure:
-
-```
-Documentation/
-├── Index (Navigation Hub)
-├── Overview (Executive Summary)
-├── Backend Architecture
-├── Frontend Architecture
-├── Service Layers
-├── Security Architecture
-├── Deployment Architecture
-├── Testing Architecture
-├── Architecture Decisions
-│   ├── Database Choice
-│   └── Validation Strategy
-├── Design Patterns
-│   ├── Repository Pattern
-│   └── Security Patterns
-├── Components
-│   ├── Analytics Service
-│   └── Supplier Controller
-└── Infrastructure Details
-    ├── CI/CD Pipeline
-    ├── Docker Strategy
-    └── Staging Configuration
-```
-
-### Verifying Links After Generation
-
-After HTML generation, verify:
-
-1. ✅ All navigation links in sidebar work
-2. ✅ All in-document cross-references are clickable
-3. ✅ Section anchors (#section-name) navigate correctly
-4. ✅ No broken links (404 errors)
-5. ✅ Relative paths resolve correctly at all directory levels
-
-The Lua filter in the docs-pipeline.yml automatically converts `.md` links to `.html` during generation.
-
----
-
-## Summary
-
-✅ **Complete End-to-End Documentation System**
-
-- **31 Markdown files** → Converted to professional HTML
-- **Enterprise Template** → Modern, responsive, navigable
-- **Automated Deployment** → GitHub Actions workflow
-- **GitHub Pages Hosting** → Free, automatic, reliable
-- **Professional Navigation** → Sidebar + TOC + breadcrumbs
-- **Responsive Design** → Works on desktop, tablet, mobile
-
-**Ready to deploy on next push to `main` branch!**
+[Back to Documentation Index](../index.md)
