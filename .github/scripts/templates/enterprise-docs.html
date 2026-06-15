@@ -28,6 +28,50 @@
     -->
     <link rel="stylesheet" href="$root$/templates/base.css">
     <link rel="stylesheet" href="$root$/templates/component.css">
+    <style>
+        /* Collapsible sidebar sections */
+        .nav-section details {
+            border: none;
+        }
+
+        .nav-section summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--color-text-muted, #6b7280);
+            user-select: none;
+        }
+
+        .nav-section summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .nav-section summary::after {
+            content: '▸';
+            font-size: 0.65rem;
+            transition: transform 0.2s ease;
+            color: var(--color-text-muted, #6b7280);
+        }
+
+        .nav-section details[open] summary::after {
+            transform: rotate(90deg);
+        }
+
+        .nav-section details[open] summary {
+            color: var(--color-primary, #1d4ed8);
+        }
+
+        .nav-section summary:hover {
+            color: var(--color-primary, #1d4ed8);
+        }
+    </style>
 </head>
 <body>
 
@@ -69,6 +113,9 @@
         Sidebar navigation
         ==================
         Built dynamically so a single source of truth covers all pages.
+        Sections are collapsible via <details>/<summary>. The section
+        containing the active page is expanded automatically on load.
+
         To add or remove a section, edit the navigation object below.
         Active link is highlighted based on the current page URL.
     -->
@@ -121,12 +168,12 @@
                 { label: 'Staging Config',          href: '/stockease/architecture/deployment/staging-config.html' },
             ],
             'Guides': [
-                { label: 'Contributing',            href: '/stockease/generated/guides/contributing.html' },
+                { label: 'Contributing',             href: '/stockease/generated/guides/contributing.html' },
                 { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
             ],
             'Quality & Coverage': [
-                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
-                { label: 'Test Coverage Report',   href: '/stockease/coverage/index.html' },
+                { label: 'Full Documentation Map',  href: '/stockease/generated/index.html' },
+                { label: 'Test Coverage Report',    href: '/stockease/coverage/index.html' },
             ],
         };
 
@@ -137,35 +184,46 @@
             const currentPath = window.location.pathname;
 
             Object.entries(navigation).forEach(([section, links]) => {
+                // Determine if any link in this section matches the current page
+                const isActiveSection = links.some(link =>
+                    currentPath === link.href ||
+                    currentPath.endsWith(link.href) ||
+                    currentPath.includes(link.href.replace('.html', ''))
+                );
+
                 const sectionEl = document.createElement('div');
                 sectionEl.className = 'nav-section';
 
-                const titleEl = document.createElement('div');
-                titleEl.className = 'nav-section__title';
-                titleEl.textContent = section;
-                sectionEl.appendChild(titleEl);
+                // Wrap in <details>, open if this section contains the active page
+                const details = document.createElement('details');
+                if (isActiveSection) details.open = true;
+
+                const summary = document.createElement('summary');
+                summary.textContent = section;
+                details.appendChild(summary);
 
                 const ul = document.createElement('ul');
                 ul.className = 'nav-section__list';
 
                 links.forEach(link => {
+                    const isActive =
+                        currentPath === link.href ||
+                        currentPath.endsWith(link.href) ||
+                        currentPath.includes(link.href.replace('.html', ''));
+
                     const li = document.createElement('li');
                     const a = document.createElement('a');
                     a.href = link.href;
                     a.textContent = link.label;
                     a.className = 'nav-section__link';
-
-                    // Highlight the active page
-                    if (currentPath.endsWith(link.href) ||
-                        currentPath.includes(link.href.replace('.html', ''))) {
-                        a.classList.add('nav-section__link--active');
-                    }
+                    if (isActive) a.classList.add('nav-section__link--active');
 
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
 
-                sectionEl.appendChild(ul);
+                details.appendChild(ul);
+                sectionEl.appendChild(details);
                 sidebar.appendChild(sectionEl);
             });
         }
