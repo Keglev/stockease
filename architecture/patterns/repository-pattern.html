@@ -4,22 +4,195 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> - StockEase Architecture Documentation</title>
-    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+    <!--
+        StockEase Page Template
+        =======================
+        Pandoc HTML template used by the docs pipeline to render all
+        individual architecture documentation pages.
+
+        Variables injected by Pandoc at build time:
+            — page title from the Markdown front matter
+          <h1 id="repository-pattern">Repository Pattern</h1>
+<p><strong>Purpose</strong>: Document how the Repository pattern is
+implemented in StockEase using Spring Data JPA to abstract data access
+from business logic.</p>
+<hr />
+<h2 id="pattern-structure">Pattern Structure</h2>
+<div class="mermaid">
+graph TD
+    A[Controller Layer] -->|uses| B[Repository Interface — Spring Data JPA]
+    B -->|extends| C[JpaRepository T, ID]
+    C -->|Spring generates| D[Repository Proxy Implementation]
+    D -->|uses| E[EntityManager — Hibernate]
+    E -->|executes| F[SQL Queries]
+    F -->|accesses| G[PostgreSQL / H2]
+
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+    style D fill:#f3e5f5
+    style G fill:#fce4ec
+</div>
+<hr />
+<h2 id="repository-interfaces">Repository Interfaces</h2>
+<h3 id="userrepository">UserRepository</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> UserRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>User<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    Optional<span class="op">&lt;</span>User<span class="op">&gt;</span> <span class="fu">findByUsername</span><span class="op">(</span><span class="bu">String</span> username<span class="op">);</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="productrepository">ProductRepository</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">interface</span> ProductRepository <span class="kw">extends</span> JpaRepository<span class="op">&lt;</span>Product<span class="op">,</span> <span class="bu">Long</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.quantity &lt; :threshold&quot;</span><span class="op">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="at">@Param</span><span class="op">(</span><span class="st">&quot;threshold&quot;</span><span class="op">)</span> <span class="dt">int</span> threshold<span class="op">);</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p ORDER BY p.id ASC&quot;</span><span class="op">)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAllOrderById</span><span class="op">();</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p&quot;</span><span class="op">)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> <span class="fu">calculateTotalStockValue</span><span class="op">();</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByNameContainingIgnoreCase</span><span class="op">(</span><span class="bu">String</span> name<span class="op">);</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="query-method-naming-convention">Query Method Naming
+Convention</h2>
+<p>Spring Data JPA generates SQL from method names automatically:</p>
+<table>
+<colgroup>
+<col style="width: 44%" />
+<col style="width: 55%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method Name</th>
+<th>Generated Query</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>findByUsername(String username)</code></td>
+<td><code>WHERE username = ?</code></td>
+</tr>
+<tr class="even">
+<td><code>findByNameContainingIgnoreCase(String name)</code></td>
+<td><code>WHERE LOWER(name) LIKE LOWER(?)</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="usage-in-controllers">Usage in Controllers</h2>
+<p>Controllers inject repositories directly — there is no intermediate
+service layer.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@RestController</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">@RequestMapping</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductController <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">final</span> ProductRepository productRepository<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">getAllProducts</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> productRepository<span class="op">.</span><span class="fu">findAllOrderById</span><span class="op">();</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">createProduct</span><span class="op">(</span><span class="at">@Valid</span> <span class="at">@RequestBody</span> CreateProductRequest req<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ResponseEntity<span class="op">.</span><span class="fu">ok</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">save</span><span class="op">(</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>            <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span>req<span class="op">.</span><span class="fu">getName</span><span class="op">(),</span> req<span class="op">.</span><span class="fu">getQuantity</span><span class="op">(),</span> req<span class="op">.</span><span class="fu">getPrice</span><span class="op">())));</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> ResponseEntity<span class="op">&lt;?&gt;</span> <span class="fu">deleteProduct</span><span class="op">(</span><span class="at">@PathVariable</span> <span class="dt">long</span> id<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>productRepository<span class="op">.</span><span class="fu">existsById</span><span class="op">(</span>id<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> ResponseEntity<span class="op">.</span><span class="fu">status</span><span class="op">(</span>HttpStatus<span class="op">.</span><span class="fu">NOT_FOUND</span><span class="op">)</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">body</span><span class="op">(</span><span class="kw">new</span> ApiResponse<span class="op">&lt;&gt;(</span><span class="kw">false</span><span class="op">,</span> <span class="st">&quot;Cannot delete. Product with ID &quot;</span> <span class="op">+</span> id <span class="op">+</span> <span class="st">&quot; does not exist.&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">));</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        productRepository<span class="op">.</span><span class="fu">deleteById</span><span class="op">(</span>id<span class="op">);</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ResponseEntity<span class="op">.</span><span class="fu">ok</span><span class="op">(</span><span class="kw">new</span> ApiResponse<span class="op">&lt;&gt;(</span><span class="kw">true</span><span class="op">,</span> <span class="st">&quot;Product with ID &quot;</span> <span class="op">+</span> id <span class="op">+</span> <span class="st">&quot; has been successfully deleted.&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">));</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="pagination">Pagination</h2>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Basic pagination</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">Pageable</span> pageable <span class="op">=</span> PageRequest<span class="op">.</span><span class="fu">of</span><span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">20</span><span class="op">);</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>Page<span class="op">&lt;</span>Product<span class="op">&gt;</span> page <span class="op">=</span> productRepository<span class="op">.</span><span class="fu">findAll</span><span class="op">(</span>pageable<span class="op">);</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">// With sorting</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">Pageable</span> pageable <span class="op">=</span> PageRequest<span class="op">.</span><span class="fu">of</span><span class="op">(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">20</span><span class="op">,</span> Sort<span class="op">.</span><span class="fu">by</span><span class="op">(</span>Sort<span class="op">.</span><span class="fu">Order</span><span class="op">.</span><span class="fu">asc</span><span class="op">(</span><span class="st">&quot;name&quot;</span><span class="op">)));</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>Page<span class="op">&lt;</span>Product<span class="op">&gt;</span> page <span class="op">=</span> productRepository<span class="op">.</span><span class="fu">findAll</span><span class="op">(</span>pageable<span class="op">);</span></span></code></pre></div>
+<p>Spring returns a <code>Page&lt;T&gt;</code> with
+<code>content</code>, <code>totalElements</code>,
+<code>totalPages</code>, <code>pageNumber</code>, and
+<code>pageSize</code> — mapped directly to the
+<code>PaginatedResponse&lt;T&gt;</code> DTO.</p>
+<hr />
+<h2 id="custom-queries">Custom Queries</h2>
+<p>StockEase uses <code>@Query</code> for three methods that can’t be
+expressed with derived method names:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Named parameter — explicit JPQL chosen over derived method for low-stock threshold queries</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p WHERE p.quantity &lt; :threshold&quot;</span><span class="op">)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="at">@Param</span><span class="op">(</span><span class="st">&quot;threshold&quot;</span><span class="op">)</span> <span class="dt">int</span> threshold<span class="op">);</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Explicit ORDER BY id (Spring Data&#39;s findAll(Sort) would also work, but this is self-documenting)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT p FROM Product p ORDER BY p.id ASC&quot;</span><span class="op">)</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> <span class="fu">findAllOrderById</span><span class="op">();</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Aggregate with COALESCE to return 0 instead of null when table is empty</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="at">@Query</span><span class="op">(</span><span class="st">&quot;SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p&quot;</span><span class="op">)</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> <span class="fu">calculateTotalStockValue</span><span class="op">();</span></span></code></pre></div>
+<hr />
+<h2 id="transaction-management">Transaction Management</h2>
+<p>Spring Data JPA wraps each repository method call in its own
+transaction automatically. There is no application-level
+<code>@Transactional</code> in StockEase because all write operations
+are single <code>save()</code> or <code>delete()</code> calls — each is
+inherently atomic. If multi-step write sequences are added in the
+future, explicit <code>@Transactional</code> on the calling controller
+method would enforce atomicity across both steps.</p>
+<hr />
+<h2 id="n1-query-prevention">N+1 Query Prevention</h2>
+<p>Neither <code>Product</code> nor <code>User</code> has JPA
+associations (<code>@ManyToOne</code>/<code>@OneToMany</code>), so N+1
+is not a concern in the current schema. If associations are added in the
+future, use <code>FetchType.LAZY</code> by default and prefer fetch
+joins (<code>LEFT JOIN FETCH</code>) in <code>@Query</code> methods over
+<code>EAGER</code> loading.</p>
+<hr />
+<p><a href="./index.html">Back to Patterns
+Index</a></p>   — rendered HTML content from the Markdown source
+
+        Layout: sticky header + two-column grid (sidebar | content) + footer.
+        Sidebar is built dynamically from the navigation map in the script below.
+
+        Stylesheets:
+          base.css       — CSS variables, reset, typography, layout
+          component.css  — sidebar, cards, code, tables, mermaid, print
+
+        Dependencies:
+          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
+    -->
+    <link rel="stylesheet" href="/stockease/templates/base.css">
+    <link rel="stylesheet" href="/stockease/templates/component.css">
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
-            <nav class="nav-breadcrumb">
+
+    <!-- Sticky header with logo and breadcrumb -->
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a href="/stockease/index.html" class="site-header__logo">StockEase Docs</a>
+            <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
                 <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
             </nav>
         </div>
     </header>
 
-    <div class="container">
-        <aside id="sidebar"></aside>
-        <main>
-            <div class="content">
+    <!-- Two-column layout: sidebar + content -->
+    <div class="page-layout">
+        <aside id="sidebar" class="page-sidebar" aria-label="Site navigation"></aside>
+        <main class="page-content">
+            <div class="content-body">
                 <h1 id="repository-pattern">Repository Pattern</h1>
                 <p><strong>Purpose</strong>: Document how the Repository
                 pattern is implemented in StockEase using Spring Data
@@ -181,189 +354,178 @@
         </main>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <p><strong>StockEase</strong> - Inventory Management System</p>
-            <p>Architecture Documentation | Generated with Enterprise Standards</p>
-            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p><strong>StockEase</strong> — Inventory Management System</p>
+            <p>Architecture Documentation</p>
         </div>
     </footer>
 
+    <!--
+        Sidebar navigation
+        ==================
+        Built dynamically so a single source of truth covers all pages.
+        To add or remove a section, edit the navigation object below.
+        Active link is highlighted based on the current page URL.
+    -->
     <script>
-        // Navigation Menu (absolute paths from site root)
         const navigation = {
             'API Documentation': [
-                { label: 'Overview', href: '/stockease/api-docs.html' },
+                { label: 'Interactive API Reference', href: '/stockease/api-docs.html' },
             ],
             'Architecture': [
-                { label: 'Overview', href: '/stockease/architecture/system/overview.html' },
-                { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
-                { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
-                { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
-                { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Overview',                href: '/stockease/architecture/system/overview.html' },
+                { label: 'Übersicht (Deutsch)',     href: '/stockease/architecture/system/overview.de.html' },
+                { label: 'System Layers',           href: '/stockease/architecture/system/layers.html' },
+                { label: 'Backend Architecture',    href: '/stockease/architecture/system/backend.html' },
+                { label: 'Security Architecture',   href: '/stockease/architecture/system/security.html' },
+                { label: 'Frontend Integration',    href: '/stockease/architecture/system/frontend-integration.html' },
             ],
             'Design Decisions': [
-                { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
+                { label: 'ADR Index',               href: '/stockease/architecture/decisions/index.html' },
+                { label: 'Database Choice',         href: '/stockease/architecture/decisions/001-db.html' },
+                { label: 'Validation Strategy',     href: '/stockease/architecture/decisions/002-validation.html' },
+                { label: 'Auth Strategy',           href: '/stockease/architecture/decisions/003-auth.html' },
             ],
             'Components': [
-                { label: 'Index', href: '/stockease/architecture/components/index.html' },
-                { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
+                { label: 'Index',                   href: '/stockease/architecture/components/index.html' },
+                { label: 'Analytics Service',       href: '/stockease/architecture/components/analytics-service.html' },
             ],
             'Patterns': [
-                { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
-                { label: 'Repository Pattern', href: '/stockease/architecture/patterns/repository-pattern.html' },
-                { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
+                { label: 'Index',                   href: '/stockease/architecture/patterns/index.html' },
+                { label: 'Repository Pattern',      href: '/stockease/architecture/patterns/repository-pattern.html' },
+                { label: 'Security Patterns',       href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
-                { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
-                { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
-                { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
-                { label: 'Test Data Fixtures', href: '/stockease/architecture/testing/test-data-fixtures.html' },
-                { label: 'Security Tests', href: '/stockease/architecture/testing/security-tests.html' },
-                { label: 'Naming Conventions', href: '/stockease/architecture/testing/naming-conventions.html' },
-                { label: 'Test Matrix', href: '/stockease/architecture/testing/matrix.html' },
-                { label: 'Coverage & Quality', href: '/stockease/architecture/testing/coverage-and-quality.html' },
-                { label: 'Controller Integration', href: '/stockease/architecture/testing/controller-integration.html' },
-                { label: 'CI Pipeline Tests', href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
+                { label: 'Architecture',            href: '/stockease/architecture/testing/testing-architecture.html' },
+                { label: 'Test Pyramid',            href: '/stockease/architecture/testing/pyramid.html' },
+                { label: 'Strategy',                href: '/stockease/architecture/testing/strategy.html' },
+                { label: 'Spring Slices',           href: '/stockease/architecture/testing/spring-slices.html' },
+                { label: 'Test Data Fixtures',      href: '/stockease/architecture/testing/test-data-fixtures.html' },
+                { label: 'Security Tests',          href: '/stockease/architecture/testing/security-tests.html' },
+                { label: 'Naming Conventions',      href: '/stockease/architecture/testing/naming-conventions.html' },
+                { label: 'Test Matrix',             href: '/stockease/architecture/testing/matrix.html' },
+                { label: 'Coverage & Quality',      href: '/stockease/architecture/testing/coverage-and-quality.html' },
+                { label: 'Controller Integration',  href: '/stockease/architecture/testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests',       href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
             ],
             'Deployment': [
-                { label: 'Overview', href: '/stockease/architecture/deployment.html' },
-                { label: 'CI/CD Pipeline', href: '/stockease/architecture/deployment/ci-pipeline.html' },
-                { label: 'Docker Strategy', href: '/stockease/architecture/deployment/docker-strategy.html' },
-                { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
+                { label: 'Overview',                href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Infrastructure',          href: '/stockease/architecture/deployment/infrastructure.html' },
+                { label: 'CI/CD Pipeline',          href: '/stockease/architecture/deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy',         href: '/stockease/architecture/deployment/docker-strategy.html' },
+                { label: 'Staging Config',          href: '/stockease/architecture/deployment/staging-config.html' },
             ],
-            'Reference': [
+            'Guides': [
+                { label: 'Contributing',            href: '/stockease/generated/guides/contributing.html' },
                 { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
-                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
-            ],
-            'Documentation Index': [
-                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
-                { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
+                { label: 'Test Coverage Report',   href: '/stockease/coverage/index.html' },
             ],
         };
 
-        // Build sidebar
         function buildSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
 
-            Object.entries(navigation).forEach(([section, links]) => {
-                const navSection = document.createElement('div');
-                navSection.className = 'nav-section';
+            const currentPath = window.location.pathname;
 
-                const title = document.createElement('div');
-                title.className = 'nav-section-title';
-                title.textContent = section;
-                navSection.appendChild(title);
+            Object.entries(navigation).forEach(([section, links]) => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'nav-section';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'nav-section__title';
+                titleEl.textContent = section;
+                sectionEl.appendChild(titleEl);
 
                 const ul = document.createElement('ul');
+                ul.className = 'nav-section__list';
+
                 links.forEach(link => {
                     const li = document.createElement('li');
                     const a = document.createElement('a');
-
                     a.href = link.href;
                     a.textContent = link.label;
+                    a.className = 'nav-section__link';
 
-                    // Highlight current page
-                    const currentPath = window.location.pathname;
-                    const linkPath = link.href.replace('.html', '');
-                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
-                        a.className = 'active';
+                    // Highlight the active page
+                    if (currentPath.endsWith(link.href) ||
+                        currentPath.includes(link.href.replace('.html', ''))) {
+                        a.classList.add('nav-section__link--active');
                     }
 
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
 
-                navSection.appendChild(ul);
-                sidebar.appendChild(navSection);
+                sectionEl.appendChild(ul);
+                sidebar.appendChild(sectionEl);
             });
         }
 
-        // Build table of contents highlight
-        function initTableOfContents() {
+        // Highlight TOC link matching the visible heading on scroll
+        function initTocHighlight() {
             const tocLinks = document.querySelectorAll('nav.toc a');
             const headings = document.querySelectorAll('h2, h3');
 
+            if (!tocLinks.length || !headings.length) return;
+
             window.addEventListener('scroll', () => {
-                let currentHeading = null;
-                headings.forEach(heading => {
-                    if (heading.getBoundingClientRect().top <= 100) {
-                        currentHeading = heading;
-                    }
+                let current = null;
+                headings.forEach(h => {
+                    if (h.getBoundingClientRect().top <= 120) current = h;
                 });
 
                 tocLinks.forEach(link => {
                     link.classList.remove('active');
-                    if (currentHeading) {
-                        const href = link.getAttribute('href');
-                        if (href === '#' + currentHeading.id) {
-                            link.classList.add('active');
-                        }
+                    if (current && link.getAttribute('href') === '#' + current.id) {
+                        link.classList.add('active');
                     }
                 });
             });
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
-            initTableOfContents();
+            initTocHighlight();
         });
     </script>
 
+    <!--
+        Mermaid diagram rendering
+        =========================
+        Renders architecture diagrams written as fenced mermaid code blocks
+        in Markdown. The Lua filter in the docs pipeline converts them to
+        <div class="mermaid"> elements before Pandoc processes the HTML.
+    -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
+
+        mermaid.initialize({
             startOnLoad: false,
             theme: 'default',
             securityLevel: 'loose',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
-        
-        // Look for mermaid divs that were generated by Pandoc Lua filter
-        const mermaidDivs = document.querySelectorAll('div.mermaid');
-        
-        mermaidDivs.forEach((div) => {
-            // Verify mermaid content is present
-            if (div.textContent.trim()) {
-                // Content is ready for rendering
-            }
+
+        // Pandoc fallback: convert code.language-mermaid blocks to .mermaid divs
+        document.querySelectorAll('code.language-mermaid').forEach(code => {
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code.textContent;
+            code.closest('pre')?.replaceWith(div);
         });
-        
-        // Also look for any code.language-mermaid blocks (fallback for compatibility)
-        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        
-        codeMermaidBlocks.forEach((code) => {
-            code.classList.remove('language-mermaid');
-            code.classList.add('mermaid');
-            // If wrapped in pre, mark pre as mermaid too
-            if (code.parentElement.tagName === 'PRE') {
-                code.parentElement.classList.add('mermaid-block');
-            }
-        });
-        
-        // Wait for DOM to be fully loaded, then render all mermaid diagrams
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                    await mermaid.run();
-                } catch (err) {
-                    console.error('Mermaid rendering error:', err);
-                }
-            });
-        } else {
-            // Already loaded
-            mermaid.run().catch(err => {
-                console.error('Mermaid rendering error:', err);
-            });
+
+        // Render all mermaid blocks
+        try {
+            await mermaid.run();
+        } catch (err) {
+            console.error('Mermaid rendering error:', err);
         }
     </script>
+
 </body>
 </html>

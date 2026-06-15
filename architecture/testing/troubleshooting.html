@@ -4,22 +4,179 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> - StockEase Architecture Documentation</title>
-    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+    <!--
+        StockEase Page Template
+        =======================
+        Pandoc HTML template used by the docs pipeline to render all
+        individual architecture documentation pages.
+
+        Variables injected by Pandoc at build time:
+            — page title from the Markdown front matter
+          <h1 id="troubleshooting">Troubleshooting</h1>
+<p><strong>Purpose</strong>: Common test failures, CI errors, and their
+fixes.</p>
+<hr />
+<h2 id="spring-slice-errors">Spring Slice Errors</h2>
+<h3 id="no-qualifying-bean-of-type-jwtutil">No qualifying bean of type
+‘JwtUtil’</h3>
+<pre><code>Error: No qualifying bean of type &#39;JwtUtil&#39; found
+Cause: @WebMvcTest does not load @Service or @Component beans
+Fix:   Add @Import(TestConfig.class) to the test class</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Import</span><span class="op">(</span>TestConfig<span class="op">.</span><span class="fu">class</span><span class="op">)</span>  <span class="co">// add this</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductControllerTest <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
+<hr />
+<h3 id="on-post-when-expecting-200">403 on POST when Expecting 200</h3>
+<pre><code>Error: Expected 200, got 403
+Cause: CSRF token missing
+Fix:   Add .with(csrf()) to POST, PUT, DELETE requests</code></pre>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span>                          <span class="co">// add this</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;admin&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">)))</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span></code></pre></div>
+<hr />
+<h3 id="on-request-when-expecting-403">401 on Request when Expecting
+403</h3>
+<pre><code>Error: Expected 403 Forbidden, got 401 Unauthorized
+Cause: .with(user(...)) is missing — request is anonymous
+Fix:   Add user context to the request</code></pre>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;regularUser&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;USER&quot;</span><span class="op">)))</span>  <span class="co">// add this</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isForbidden</span><span class="op">());</span></span></code></pre></div>
+<hr />
+<h3 id="mockbean-vs-mockitobean"><span class="citation"
+data-cites="MockBean">@MockBean</span> vs <span class="citation"
+data-cites="MockitoBean">@MockitoBean</span></h3>
+<pre><code>Error: @MockBean not found or deprecated warning
+Cause: Spring Boot 3.4+ replaced @MockBean with @MockitoBean
+Fix:   Use @MockitoBean in Spring Boot 3.4+</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Spring Boot &lt; 3.4</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">@MockBean</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Spring Boot 3.4+</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="at">@MockitoBean</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span></code></pre></div>
+<hr />
+<h2 id="ci-failures">CI Failures</h2>
+<h3 id="reproducing-a-ci-failure-locally">Reproducing a CI Failure
+Locally</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean test</span></code></pre></div>
+<p>If it passes locally but fails in CI, check: - JDK version mismatch
+(CI uses JDK 17) - Missing environment variables in the workflow file -
+Timing or state issues between tests (flaky test)</p>
+<hr />
+<h3 id="coverage-gate-failure">Coverage Gate Failure</h3>
+<pre><code>Error: Coverage below minimum threshold (e.g. 65% &lt; 70%)
+Fix options:
+  1. Add tests for uncovered lines (preferred)
+  2. Exclude generated code (entities, config) from threshold</code></pre>
+<p>To find uncovered lines after running
+<code>mvn clean test jacoco:report</code>:</p>
+<pre><code>open backend/target/site/jacoco/index.html</code></pre>
+<p>Red lines = not executed. Yellow = branch not fully covered.</p>
+<hr />
+<h3 id="flaky-tests">Flaky Tests</h3>
+<p>Symptoms: test passes locally and sometimes in CI, fails
+intermittently.</p>
+<p>Causes and fixes:</p>
+<table>
+<colgroup>
+<col style="width: 58%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Shared mutable state between tests</td>
+<td>Use <code>@BeforeEach</code> to reset mocks</td>
+</tr>
+<tr class="even">
+<td>Timing assumptions (<code>Thread.sleep</code>)</td>
+<td>Remove sleeps; use deterministic mocks</td>
+</tr>
+<tr class="odd">
+<td>Test order dependency</td>
+<td>Ensure each test sets up its own data</td>
+</tr>
+<tr class="even">
+<td>Inconsistent mock behavior</td>
+<td>Reset all mocks in <code>@BeforeEach</code></td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@BeforeEach</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">resetMocks</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    Mockito<span class="op">.</span><span class="fu">reset</span><span class="op">(</span>productRepository<span class="op">,</span> jwtUtil<span class="op">);</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>jwtUtil<span class="op">.</span><span class="fu">validateToken</span><span class="op">(</span><span class="fu">anyString</span><span class="op">())).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">true</span><span class="op">);</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h3 id="viewing-ci-artifacts">Viewing CI Artifacts</h3>
+<ol type="1">
+<li>Go to GitHub → Actions → select the failed run</li>
+<li>Scroll to the Artifacts section</li>
+<li>Download <code>test-reports.zip</code> for Surefire output</li>
+<li>Download <code>jacoco-report.zip</code> for coverage HTML</li>
+</ol>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><strong><a href="./spring-slices.html">Spring Slices</a></strong> —
+Slice annotation reference</li>
+<li><strong><a href="./ci-pipeline-tests.html">CI Pipeline
+Tests</a></strong> — Pipeline gates and workflow config</li>
+<li><strong><a href="./coverage-and-quality.html">Coverage &amp;
+Quality</a></strong> — JaCoCo thresholds</li>
+</ul>
+<hr />
+<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
+Current</p>
+<p><a href="testing-architecture.html">Back to Testing Architecture
+Index</a></p>   — rendered HTML content from the Markdown source
+
+        Layout: sticky header + two-column grid (sidebar | content) + footer.
+        Sidebar is built dynamically from the navigation map in the script below.
+
+        Stylesheets:
+          base.css       — CSS variables, reset, typography, layout
+          component.css  — sidebar, cards, code, tables, mermaid, print
+
+        Dependencies:
+          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
+    -->
+    <link rel="stylesheet" href="/stockease/templates/base.css">
+    <link rel="stylesheet" href="/stockease/templates/component.css">
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
-            <nav class="nav-breadcrumb">
+
+    <!-- Sticky header with logo and breadcrumb -->
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a href="/stockease/index.html" class="site-header__logo">StockEase Docs</a>
+            <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
                 <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
             </nav>
         </div>
     </header>
 
-    <div class="container">
-        <aside id="sidebar"></aside>
-        <main>
-            <div class="content">
+    <!-- Two-column layout: sidebar + content -->
+    <div class="page-layout">
+        <aside id="sidebar" class="page-sidebar" aria-label="Site navigation"></aside>
+        <main class="page-content">
+            <div class="content-body">
                 <h1 id="troubleshooting">Troubleshooting</h1>
                 <p><strong>Purpose</strong>: Common test failures, CI
                 errors, and their fixes.</p>
@@ -168,189 +325,178 @@ Fix options:
         </main>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <p><strong>StockEase</strong> - Inventory Management System</p>
-            <p>Architecture Documentation | Generated with Enterprise Standards</p>
-            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p><strong>StockEase</strong> — Inventory Management System</p>
+            <p>Architecture Documentation</p>
         </div>
     </footer>
 
+    <!--
+        Sidebar navigation
+        ==================
+        Built dynamically so a single source of truth covers all pages.
+        To add or remove a section, edit the navigation object below.
+        Active link is highlighted based on the current page URL.
+    -->
     <script>
-        // Navigation Menu (absolute paths from site root)
         const navigation = {
             'API Documentation': [
-                { label: 'Overview', href: '/stockease/api-docs.html' },
+                { label: 'Interactive API Reference', href: '/stockease/api-docs.html' },
             ],
             'Architecture': [
-                { label: 'Overview', href: '/stockease/architecture/system/overview.html' },
-                { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
-                { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
-                { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
-                { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Overview',                href: '/stockease/architecture/system/overview.html' },
+                { label: 'Übersicht (Deutsch)',     href: '/stockease/architecture/system/overview.de.html' },
+                { label: 'System Layers',           href: '/stockease/architecture/system/layers.html' },
+                { label: 'Backend Architecture',    href: '/stockease/architecture/system/backend.html' },
+                { label: 'Security Architecture',   href: '/stockease/architecture/system/security.html' },
+                { label: 'Frontend Integration',    href: '/stockease/architecture/system/frontend-integration.html' },
             ],
             'Design Decisions': [
-                { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
+                { label: 'ADR Index',               href: '/stockease/architecture/decisions/index.html' },
+                { label: 'Database Choice',         href: '/stockease/architecture/decisions/001-db.html' },
+                { label: 'Validation Strategy',     href: '/stockease/architecture/decisions/002-validation.html' },
+                { label: 'Auth Strategy',           href: '/stockease/architecture/decisions/003-auth.html' },
             ],
             'Components': [
-                { label: 'Index', href: '/stockease/architecture/components/index.html' },
-                { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
+                { label: 'Index',                   href: '/stockease/architecture/components/index.html' },
+                { label: 'Analytics Service',       href: '/stockease/architecture/components/analytics-service.html' },
             ],
             'Patterns': [
-                { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
-                { label: 'Repository Pattern', href: '/stockease/architecture/patterns/repository-pattern.html' },
-                { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
+                { label: 'Index',                   href: '/stockease/architecture/patterns/index.html' },
+                { label: 'Repository Pattern',      href: '/stockease/architecture/patterns/repository-pattern.html' },
+                { label: 'Security Patterns',       href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
-                { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
-                { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
-                { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
-                { label: 'Test Data Fixtures', href: '/stockease/architecture/testing/test-data-fixtures.html' },
-                { label: 'Security Tests', href: '/stockease/architecture/testing/security-tests.html' },
-                { label: 'Naming Conventions', href: '/stockease/architecture/testing/naming-conventions.html' },
-                { label: 'Test Matrix', href: '/stockease/architecture/testing/matrix.html' },
-                { label: 'Coverage & Quality', href: '/stockease/architecture/testing/coverage-and-quality.html' },
-                { label: 'Controller Integration', href: '/stockease/architecture/testing/controller-integration.html' },
-                { label: 'CI Pipeline Tests', href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
+                { label: 'Architecture',            href: '/stockease/architecture/testing/testing-architecture.html' },
+                { label: 'Test Pyramid',            href: '/stockease/architecture/testing/pyramid.html' },
+                { label: 'Strategy',                href: '/stockease/architecture/testing/strategy.html' },
+                { label: 'Spring Slices',           href: '/stockease/architecture/testing/spring-slices.html' },
+                { label: 'Test Data Fixtures',      href: '/stockease/architecture/testing/test-data-fixtures.html' },
+                { label: 'Security Tests',          href: '/stockease/architecture/testing/security-tests.html' },
+                { label: 'Naming Conventions',      href: '/stockease/architecture/testing/naming-conventions.html' },
+                { label: 'Test Matrix',             href: '/stockease/architecture/testing/matrix.html' },
+                { label: 'Coverage & Quality',      href: '/stockease/architecture/testing/coverage-and-quality.html' },
+                { label: 'Controller Integration',  href: '/stockease/architecture/testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests',       href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
             ],
             'Deployment': [
-                { label: 'Overview', href: '/stockease/architecture/deployment.html' },
-                { label: 'CI/CD Pipeline', href: '/stockease/architecture/deployment/ci-pipeline.html' },
-                { label: 'Docker Strategy', href: '/stockease/architecture/deployment/docker-strategy.html' },
-                { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
+                { label: 'Overview',                href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Infrastructure',          href: '/stockease/architecture/deployment/infrastructure.html' },
+                { label: 'CI/CD Pipeline',          href: '/stockease/architecture/deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy',         href: '/stockease/architecture/deployment/docker-strategy.html' },
+                { label: 'Staging Config',          href: '/stockease/architecture/deployment/staging-config.html' },
             ],
-            'Reference': [
+            'Guides': [
+                { label: 'Contributing',            href: '/stockease/generated/guides/contributing.html' },
                 { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
-                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
-            ],
-            'Documentation Index': [
-                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
-                { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
+                { label: 'Test Coverage Report',   href: '/stockease/coverage/index.html' },
             ],
         };
 
-        // Build sidebar
         function buildSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
 
-            Object.entries(navigation).forEach(([section, links]) => {
-                const navSection = document.createElement('div');
-                navSection.className = 'nav-section';
+            const currentPath = window.location.pathname;
 
-                const title = document.createElement('div');
-                title.className = 'nav-section-title';
-                title.textContent = section;
-                navSection.appendChild(title);
+            Object.entries(navigation).forEach(([section, links]) => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'nav-section';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'nav-section__title';
+                titleEl.textContent = section;
+                sectionEl.appendChild(titleEl);
 
                 const ul = document.createElement('ul');
+                ul.className = 'nav-section__list';
+
                 links.forEach(link => {
                     const li = document.createElement('li');
                     const a = document.createElement('a');
-
                     a.href = link.href;
                     a.textContent = link.label;
+                    a.className = 'nav-section__link';
 
-                    // Highlight current page
-                    const currentPath = window.location.pathname;
-                    const linkPath = link.href.replace('.html', '');
-                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
-                        a.className = 'active';
+                    // Highlight the active page
+                    if (currentPath.endsWith(link.href) ||
+                        currentPath.includes(link.href.replace('.html', ''))) {
+                        a.classList.add('nav-section__link--active');
                     }
 
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
 
-                navSection.appendChild(ul);
-                sidebar.appendChild(navSection);
+                sectionEl.appendChild(ul);
+                sidebar.appendChild(sectionEl);
             });
         }
 
-        // Build table of contents highlight
-        function initTableOfContents() {
+        // Highlight TOC link matching the visible heading on scroll
+        function initTocHighlight() {
             const tocLinks = document.querySelectorAll('nav.toc a');
             const headings = document.querySelectorAll('h2, h3');
 
+            if (!tocLinks.length || !headings.length) return;
+
             window.addEventListener('scroll', () => {
-                let currentHeading = null;
-                headings.forEach(heading => {
-                    if (heading.getBoundingClientRect().top <= 100) {
-                        currentHeading = heading;
-                    }
+                let current = null;
+                headings.forEach(h => {
+                    if (h.getBoundingClientRect().top <= 120) current = h;
                 });
 
                 tocLinks.forEach(link => {
                     link.classList.remove('active');
-                    if (currentHeading) {
-                        const href = link.getAttribute('href');
-                        if (href === '#' + currentHeading.id) {
-                            link.classList.add('active');
-                        }
+                    if (current && link.getAttribute('href') === '#' + current.id) {
+                        link.classList.add('active');
                     }
                 });
             });
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
-            initTableOfContents();
+            initTocHighlight();
         });
     </script>
 
+    <!--
+        Mermaid diagram rendering
+        =========================
+        Renders architecture diagrams written as fenced mermaid code blocks
+        in Markdown. The Lua filter in the docs pipeline converts them to
+        <div class="mermaid"> elements before Pandoc processes the HTML.
+    -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
+
+        mermaid.initialize({
             startOnLoad: false,
             theme: 'default',
             securityLevel: 'loose',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
-        
-        // Look for mermaid divs that were generated by Pandoc Lua filter
-        const mermaidDivs = document.querySelectorAll('div.mermaid');
-        
-        mermaidDivs.forEach((div) => {
-            // Verify mermaid content is present
-            if (div.textContent.trim()) {
-                // Content is ready for rendering
-            }
+
+        // Pandoc fallback: convert code.language-mermaid blocks to .mermaid divs
+        document.querySelectorAll('code.language-mermaid').forEach(code => {
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code.textContent;
+            code.closest('pre')?.replaceWith(div);
         });
-        
-        // Also look for any code.language-mermaid blocks (fallback for compatibility)
-        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        
-        codeMermaidBlocks.forEach((code) => {
-            code.classList.remove('language-mermaid');
-            code.classList.add('mermaid');
-            // If wrapped in pre, mark pre as mermaid too
-            if (code.parentElement.tagName === 'PRE') {
-                code.parentElement.classList.add('mermaid-block');
-            }
-        });
-        
-        // Wait for DOM to be fully loaded, then render all mermaid diagrams
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                    await mermaid.run();
-                } catch (err) {
-                    console.error('Mermaid rendering error:', err);
-                }
-            });
-        } else {
-            // Already loaded
-            mermaid.run().catch(err => {
-                console.error('Mermaid rendering error:', err);
-            });
+
+        // Render all mermaid blocks
+        try {
+            await mermaid.run();
+        } catch (err) {
+            console.error('Mermaid rendering error:', err);
         }
     </script>
+
 </body>
 </html>

@@ -4,22 +4,457 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> - StockEase Architecture Documentation</title>
-    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+    <!--
+        StockEase Page Template
+        =======================
+        Pandoc HTML template used by the docs pipeline to render all
+        individual architecture documentation pages.
+
+        Variables injected by Pandoc at build time:
+            — page title from the Markdown front matter
+          <h1 id="coverage-matrix">Coverage Matrix</h1>
+<p><strong>Purpose</strong>: Single source of truth for test coverage by
+layer, feature, and authorization role.</p>
+<hr />
+<h2 id="layer-coverage">Layer Coverage</h2>
+<table>
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 18%" />
+<col style="width: 29%" />
+<col style="width: 20%" />
+<col style="width: 16%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Classes</th>
+<th>Test Classes</th>
+<th>Coverage</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Controller</td>
+<td>2</td>
+<td>8</td>
+<td>~85%</td>
+<td>Current</td>
+</tr>
+<tr class="even">
+<td>Security</td>
+<td>2</td>
+<td>Distributed across controller tests</td>
+<td>~75%</td>
+<td>Current</td>
+</tr>
+<tr class="odd">
+<td>Config</td>
+<td>1</td>
+<td>1 (bootstrap)</td>
+<td>~50%</td>
+<td>Adequate</td>
+</tr>
+<tr class="even">
+<td>Model / Entity</td>
+<td>2</td>
+<td>0 (tested via API responses)</td>
+<td>~30%</td>
+<td>Acceptable</td>
+</tr>
+<tr class="odd">
+<td>Repository</td>
+<td>1</td>
+<td>0 (mocked)</td>
+<td>0%</td>
+<td>Intentional</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="endpoint-coverage">Endpoint Coverage</h2>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 18%" />
+<col style="width: 27%" />
+<col style="width: 13%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endpoint</th>
+<th>Method</th>
+<th>Test Class</th>
+<th>Type</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>/api/auth/login</code></td>
+<td>POST</td>
+<td><code>AuthControllerTest</code></td>
+<td>Unit</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td><code>/api/products</code></td>
+<td>GET</td>
+<td><code>ProductFetchControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}</code></td>
+<td>GET</td>
+<td><code>ProductFetchControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/low-stock</code></td>
+<td>GET</td>
+<td><code>ProductControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/search</code></td>
+<td>GET</td>
+<td><code>ProductControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/total-stock-value</code></td>
+<td>GET</td>
+<td><code>ProductControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/paged</code></td>
+<td>GET</td>
+<td><code>ProductPaginationControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td><code>/api/products</code></td>
+<td>POST</td>
+<td><code>ProductCreateControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}/quantity</code></td>
+<td>PUT</td>
+<td><code>ProductUpdateControllerTest</code>,
+<code>ProductInvalidUpdateControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/{id}/price</code></td>
+<td>PUT</td>
+<td><code>ProductUpdateControllerTest</code>,
+<code>ProductInvalidUpdateControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}/name</code></td>
+<td>PUT</td>
+<td><code>ProductUpdateControllerTest</code>,
+<code>ProductInvalidUpdateControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/{id}</code></td>
+<td>DELETE</td>
+<td><code>ProductDeleteControllerTest</code></td>
+<td>Slice</td>
+<td>Done</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="authorization-matrix">Authorization Matrix</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Endpoint</th>
+<th>Method</th>
+<th>ADMIN</th>
+<th>USER</th>
+<th>Anonymous</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>/api/products</code></td>
+<td>GET</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/{id}</code></td>
+<td>GET</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/low-stock</code></td>
+<td>GET</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/search</code></td>
+<td>GET</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/total-stock-value</code></td>
+<td>GET</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/paged</code></td>
+<td>GET</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products</code></td>
+<td>POST</td>
+<td>200</td>
+<td>403</td>
+<td>401</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/{id}/quantity</code></td>
+<td>PUT</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}/price</code></td>
+<td>PUT</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="even">
+<td><code>/api/products/{id}/name</code></td>
+<td>PUT</td>
+<td>200</td>
+<td>200</td>
+<td>401</td>
+</tr>
+<tr class="odd">
+<td><code>/api/products/{id}</code></td>
+<td>DELETE</td>
+<td>200</td>
+<td>403</td>
+<td>401</td>
+</tr>
+</tbody>
+</table>
+<p>All cells above are covered by existing tests.</p>
+<hr />
+<h2 id="test-method-inventory">Test Method Inventory</h2>
+<h3 id="authcontrollertest-unit">AuthControllerTest (Unit)</h3>
+<ul>
+<li><code>login_withValidUserCredentials_returns200</code></li>
+<li><code>login_withValidAdminCredentials_returns200</code></li>
+<li><code>login_withBlankUsername_returns400</code></li>
+<li><code>login_withBlankPassword_returns400</code></li>
+<li><code>login_withNonExistentUsername_returns401</code></li>
+<li><code>login_withBadCredentials_returns401</code></li>
+<li><code>login_whenServerError_returns500</code></li>
+</ul>
+<h3 id="productcontrollertest-slice">ProductControllerTest (Slice)</h3>
+<ul>
+<li><code>getLowStockProducts_withLowStockItems_returnsProducts</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>getLowStockProducts_withNoLowStockItems_returnsAllStockedMessage</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>searchProducts_withMatchingName_returnsProducts</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>searchProducts_withNoMatches_returns204</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>getTotalStockValue_withProducts_returnsCalculatedValue</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>getTotalStockValue_withNoProducts_returnsZero</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+</ul>
+<h3 id="productfetchcontrollertest-slice">ProductFetchControllerTest
+(Slice)</h3>
+<ul>
+<li><code>contextLoads_onApplicationStart_beansAreInjected</code></li>
+<li><code>getAllProducts_withAdminOrUserRole_returns200</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>getProductById_withExistingId_returns200</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>getProductById_withNonExistentId_returns404</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+</ul>
+<h3 id="productcreatecontrollertest-slice">ProductCreateControllerTest
+(Slice)</h3>
+<ul>
+<li><code>createProduct_withValidData_returns200</code></li>
+<li><code>createProduct_asUserRole_returns403</code></li>
+<li><code>createProduct_withMissingName_returns400</code></li>
+<li><code>createProduct_withNegativeQuantity_returns400</code></li>
+<li><code>createProduct_withZeroPrice_returns400</code></li>
+<li><code>createProduct_withInvalidPriceType_returns400</code></li>
+</ul>
+<h3 id="productupdatecontrollertest-slice">ProductUpdateControllerTest
+(Slice)</h3>
+<ul>
+<li><code>updateQuantity_withValidData_returns200</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updatePrice_withValidData_returns200</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updateName_withSpecialCharacters_returns200</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+</ul>
+<h3
+id="productinvalidupdatecontrollertest-slice">ProductInvalidUpdateControllerTest
+(Slice)</h3>
+<ul>
+<li><code>updateQuantity_withMissingField_returns400</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updateQuantity_withInvalidType_returns400</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updatePrice_withNegativeValue_returns400</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updatePrice_withInvalidType_returns400</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updatePrice_withZeroValue_returns400</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updateName_withWhitespaceOnly_returns400</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updateProduct_whenNotFound_returns404</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>updateProduct_withoutCsrfToken_returns403</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+</ul>
+<h3 id="productdeletecontrollertest-slice">ProductDeleteControllerTest
+(Slice)</h3>
+<ul>
+<li><code>deleteProduct_asAdmin_returns200</code></li>
+<li><code>deleteProduct_whenProductNotFound_returns404</code></li>
+<li><code>deleteProduct_asUserRole_returns403</code></li>
+</ul>
+<h3
+id="productpaginationcontrollertest-slice">ProductPaginationControllerTest
+(Slice)</h3>
+<ul>
+<li><code>getProductsPaged_withValidParams_returns200</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>getProductsPaged_withEmptyPage_returnsEmptyContent</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+<li><code>getProductsPaged_withNegativeParams_returns400</code>
+<em>(parameterized: ADMIN, USER)</em></li>
+</ul>
+<h3 id="stockeaseapplicationtests-integration">StockEaseApplicationTests
+(Integration)</h3>
+<ul>
+<li><code>contextLoads_withTestProfile_applicationStartsSuccessfully</code></li>
+</ul>
+<hr />
+<h2 id="coverage-gaps">Coverage Gaps</h2>
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 43%" />
+<col style="width: 34%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Gap</th>
+<th>Priority</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Repository queries — no <code>@DataJpaTest</code></td>
+<td>Low</td>
+<td>Add when queries become complex</td>
+</tr>
+<tr class="even">
+<td>JWT expiry and token tampering</td>
+<td>Low</td>
+<td>Add when security hardening is prioritized</td>
+</tr>
+<tr class="odd">
+<td>E2E user flows</td>
+<td>Future</td>
+<td>Out of scope for this repo</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><strong><a href="./strategy.html">Testing Strategy</a></strong> —
+Goals and scope</li>
+<li><strong><a href="./pyramid.html">Test Pyramid</a></strong> —
+Distribution rationale</li>
+<li><strong><a href="./coverage-and-quality.html">Coverage &amp;
+Quality</a></strong> — JaCoCo configuration and thresholds</li>
+</ul>
+<hr />
+<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
+Current</p>
+<p><a href="testing-architecture.html">Back to Testing Architecture
+Index</a></p>   — rendered HTML content from the Markdown source
+
+        Layout: sticky header + two-column grid (sidebar | content) + footer.
+        Sidebar is built dynamically from the navigation map in the script below.
+
+        Stylesheets:
+          base.css       — CSS variables, reset, typography, layout
+          component.css  — sidebar, cards, code, tables, mermaid, print
+
+        Dependencies:
+          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
+    -->
+    <link rel="stylesheet" href="/stockease/templates/base.css">
+    <link rel="stylesheet" href="/stockease/templates/component.css">
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
-            <nav class="nav-breadcrumb">
+
+    <!-- Sticky header with logo and breadcrumb -->
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a href="/stockease/index.html" class="site-header__logo">StockEase Docs</a>
+            <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
                 <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
             </nav>
         </div>
     </header>
 
-    <div class="container">
-        <aside id="sidebar"></aside>
-        <main>
-            <div class="content">
+    <!-- Two-column layout: sidebar + content -->
+    <div class="page-layout">
+        <aside id="sidebar" class="page-sidebar" aria-label="Site navigation"></aside>
+        <main class="page-content">
+            <div class="content-body">
                 <h1 id="coverage-matrix">Coverage Matrix</h1>
                 <p><strong>Purpose</strong>: Single source of truth for
                 test coverage by layer, feature, and authorization
@@ -450,189 +885,178 @@
         </main>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <p><strong>StockEase</strong> - Inventory Management System</p>
-            <p>Architecture Documentation | Generated with Enterprise Standards</p>
-            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p><strong>StockEase</strong> — Inventory Management System</p>
+            <p>Architecture Documentation</p>
         </div>
     </footer>
 
+    <!--
+        Sidebar navigation
+        ==================
+        Built dynamically so a single source of truth covers all pages.
+        To add or remove a section, edit the navigation object below.
+        Active link is highlighted based on the current page URL.
+    -->
     <script>
-        // Navigation Menu (absolute paths from site root)
         const navigation = {
             'API Documentation': [
-                { label: 'Overview', href: '/stockease/api-docs.html' },
+                { label: 'Interactive API Reference', href: '/stockease/api-docs.html' },
             ],
             'Architecture': [
-                { label: 'Overview', href: '/stockease/architecture/system/overview.html' },
-                { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
-                { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
-                { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
-                { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Overview',                href: '/stockease/architecture/system/overview.html' },
+                { label: 'Übersicht (Deutsch)',     href: '/stockease/architecture/system/overview.de.html' },
+                { label: 'System Layers',           href: '/stockease/architecture/system/layers.html' },
+                { label: 'Backend Architecture',    href: '/stockease/architecture/system/backend.html' },
+                { label: 'Security Architecture',   href: '/stockease/architecture/system/security.html' },
+                { label: 'Frontend Integration',    href: '/stockease/architecture/system/frontend-integration.html' },
             ],
             'Design Decisions': [
-                { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
+                { label: 'ADR Index',               href: '/stockease/architecture/decisions/index.html' },
+                { label: 'Database Choice',         href: '/stockease/architecture/decisions/001-db.html' },
+                { label: 'Validation Strategy',     href: '/stockease/architecture/decisions/002-validation.html' },
+                { label: 'Auth Strategy',           href: '/stockease/architecture/decisions/003-auth.html' },
             ],
             'Components': [
-                { label: 'Index', href: '/stockease/architecture/components/index.html' },
-                { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
+                { label: 'Index',                   href: '/stockease/architecture/components/index.html' },
+                { label: 'Analytics Service',       href: '/stockease/architecture/components/analytics-service.html' },
             ],
             'Patterns': [
-                { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
-                { label: 'Repository Pattern', href: '/stockease/architecture/patterns/repository-pattern.html' },
-                { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
+                { label: 'Index',                   href: '/stockease/architecture/patterns/index.html' },
+                { label: 'Repository Pattern',      href: '/stockease/architecture/patterns/repository-pattern.html' },
+                { label: 'Security Patterns',       href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
-                { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
-                { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
-                { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
-                { label: 'Test Data Fixtures', href: '/stockease/architecture/testing/test-data-fixtures.html' },
-                { label: 'Security Tests', href: '/stockease/architecture/testing/security-tests.html' },
-                { label: 'Naming Conventions', href: '/stockease/architecture/testing/naming-conventions.html' },
-                { label: 'Test Matrix', href: '/stockease/architecture/testing/matrix.html' },
-                { label: 'Coverage & Quality', href: '/stockease/architecture/testing/coverage-and-quality.html' },
-                { label: 'Controller Integration', href: '/stockease/architecture/testing/controller-integration.html' },
-                { label: 'CI Pipeline Tests', href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
+                { label: 'Architecture',            href: '/stockease/architecture/testing/testing-architecture.html' },
+                { label: 'Test Pyramid',            href: '/stockease/architecture/testing/pyramid.html' },
+                { label: 'Strategy',                href: '/stockease/architecture/testing/strategy.html' },
+                { label: 'Spring Slices',           href: '/stockease/architecture/testing/spring-slices.html' },
+                { label: 'Test Data Fixtures',      href: '/stockease/architecture/testing/test-data-fixtures.html' },
+                { label: 'Security Tests',          href: '/stockease/architecture/testing/security-tests.html' },
+                { label: 'Naming Conventions',      href: '/stockease/architecture/testing/naming-conventions.html' },
+                { label: 'Test Matrix',             href: '/stockease/architecture/testing/matrix.html' },
+                { label: 'Coverage & Quality',      href: '/stockease/architecture/testing/coverage-and-quality.html' },
+                { label: 'Controller Integration',  href: '/stockease/architecture/testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests',       href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
             ],
             'Deployment': [
-                { label: 'Overview', href: '/stockease/architecture/deployment.html' },
-                { label: 'CI/CD Pipeline', href: '/stockease/architecture/deployment/ci-pipeline.html' },
-                { label: 'Docker Strategy', href: '/stockease/architecture/deployment/docker-strategy.html' },
-                { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
+                { label: 'Overview',                href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Infrastructure',          href: '/stockease/architecture/deployment/infrastructure.html' },
+                { label: 'CI/CD Pipeline',          href: '/stockease/architecture/deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy',         href: '/stockease/architecture/deployment/docker-strategy.html' },
+                { label: 'Staging Config',          href: '/stockease/architecture/deployment/staging-config.html' },
             ],
-            'Reference': [
+            'Guides': [
+                { label: 'Contributing',            href: '/stockease/generated/guides/contributing.html' },
                 { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
-                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
-            ],
-            'Documentation Index': [
-                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
-                { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
+                { label: 'Test Coverage Report',   href: '/stockease/coverage/index.html' },
             ],
         };
 
-        // Build sidebar
         function buildSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
 
-            Object.entries(navigation).forEach(([section, links]) => {
-                const navSection = document.createElement('div');
-                navSection.className = 'nav-section';
+            const currentPath = window.location.pathname;
 
-                const title = document.createElement('div');
-                title.className = 'nav-section-title';
-                title.textContent = section;
-                navSection.appendChild(title);
+            Object.entries(navigation).forEach(([section, links]) => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'nav-section';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'nav-section__title';
+                titleEl.textContent = section;
+                sectionEl.appendChild(titleEl);
 
                 const ul = document.createElement('ul');
+                ul.className = 'nav-section__list';
+
                 links.forEach(link => {
                     const li = document.createElement('li');
                     const a = document.createElement('a');
-
                     a.href = link.href;
                     a.textContent = link.label;
+                    a.className = 'nav-section__link';
 
-                    // Highlight current page
-                    const currentPath = window.location.pathname;
-                    const linkPath = link.href.replace('.html', '');
-                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
-                        a.className = 'active';
+                    // Highlight the active page
+                    if (currentPath.endsWith(link.href) ||
+                        currentPath.includes(link.href.replace('.html', ''))) {
+                        a.classList.add('nav-section__link--active');
                     }
 
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
 
-                navSection.appendChild(ul);
-                sidebar.appendChild(navSection);
+                sectionEl.appendChild(ul);
+                sidebar.appendChild(sectionEl);
             });
         }
 
-        // Build table of contents highlight
-        function initTableOfContents() {
+        // Highlight TOC link matching the visible heading on scroll
+        function initTocHighlight() {
             const tocLinks = document.querySelectorAll('nav.toc a');
             const headings = document.querySelectorAll('h2, h3');
 
+            if (!tocLinks.length || !headings.length) return;
+
             window.addEventListener('scroll', () => {
-                let currentHeading = null;
-                headings.forEach(heading => {
-                    if (heading.getBoundingClientRect().top <= 100) {
-                        currentHeading = heading;
-                    }
+                let current = null;
+                headings.forEach(h => {
+                    if (h.getBoundingClientRect().top <= 120) current = h;
                 });
 
                 tocLinks.forEach(link => {
                     link.classList.remove('active');
-                    if (currentHeading) {
-                        const href = link.getAttribute('href');
-                        if (href === '#' + currentHeading.id) {
-                            link.classList.add('active');
-                        }
+                    if (current && link.getAttribute('href') === '#' + current.id) {
+                        link.classList.add('active');
                     }
                 });
             });
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
-            initTableOfContents();
+            initTocHighlight();
         });
     </script>
 
+    <!--
+        Mermaid diagram rendering
+        =========================
+        Renders architecture diagrams written as fenced mermaid code blocks
+        in Markdown. The Lua filter in the docs pipeline converts them to
+        <div class="mermaid"> elements before Pandoc processes the HTML.
+    -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
+
+        mermaid.initialize({
             startOnLoad: false,
             theme: 'default',
             securityLevel: 'loose',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
-        
-        // Look for mermaid divs that were generated by Pandoc Lua filter
-        const mermaidDivs = document.querySelectorAll('div.mermaid');
-        
-        mermaidDivs.forEach((div) => {
-            // Verify mermaid content is present
-            if (div.textContent.trim()) {
-                // Content is ready for rendering
-            }
+
+        // Pandoc fallback: convert code.language-mermaid blocks to .mermaid divs
+        document.querySelectorAll('code.language-mermaid').forEach(code => {
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code.textContent;
+            code.closest('pre')?.replaceWith(div);
         });
-        
-        // Also look for any code.language-mermaid blocks (fallback for compatibility)
-        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        
-        codeMermaidBlocks.forEach((code) => {
-            code.classList.remove('language-mermaid');
-            code.classList.add('mermaid');
-            // If wrapped in pre, mark pre as mermaid too
-            if (code.parentElement.tagName === 'PRE') {
-                code.parentElement.classList.add('mermaid-block');
-            }
-        });
-        
-        // Wait for DOM to be fully loaded, then render all mermaid diagrams
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                    await mermaid.run();
-                } catch (err) {
-                    console.error('Mermaid rendering error:', err);
-                }
-            });
-        } else {
-            // Already loaded
-            mermaid.run().catch(err => {
-                console.error('Mermaid rendering error:', err);
-            });
+
+        // Render all mermaid blocks
+        try {
+            await mermaid.run();
+        } catch (err) {
+            console.error('Mermaid rendering error:', err);
         }
     </script>
+
 </body>
 </html>

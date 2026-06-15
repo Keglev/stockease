@@ -4,22 +4,230 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> - StockEase Architecture Documentation</title>
-    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+    <!--
+        StockEase Page Template
+        =======================
+        Pandoc HTML template used by the docs pipeline to render all
+        individual architecture documentation pages.
+
+        Variables injected by Pandoc at build time:
+            — page title from the Markdown front matter
+          <h1 id="security-tests">Security Tests</h1>
+<p><strong>Purpose</strong>: Document how authentication and
+authorization are tested in StockEase.</p>
+<hr />
+<h2 id="security-test-scope">Security Test Scope</h2>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 19%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>What</th>
+<th>How</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>JWT Generation</td>
+<td>Token created on login</td>
+<td><code>AuthControllerTest</code></td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td>JWT Validation</td>
+<td>Token accepted by filter</td>
+<td>MockMvc with mocked <code>JwtUtil</code></td>
+<td>Done</td>
+</tr>
+<tr class="odd">
+<td>Role enforcement</td>
+<td>ADMIN vs USER access</td>
+<td>MockMvc with <code>.roles()</code></td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td>Anonymous access</td>
+<td>No token → 401</td>
+<td>MockMvc without auth</td>
+<td>Done</td>
+</tr>
+<tr class="odd">
+<td>CSRF</td>
+<td>Token required on mutations</td>
+<td><code>.with(csrf())</code></td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td>Token expiry</td>
+<td>Expired token → 401</td>
+<td>Not yet tested</td>
+<td>Future</td>
+</tr>
+<tr class="odd">
+<td>Token tampering</td>
+<td>Modified token → 401</td>
+<td>Not yet tested</td>
+<td>Future</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="jwt-authentication-tests">JWT Authentication Tests</h2>
+<h3 id="login-returns-jwt">Login Returns JWT</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testLoginSuccess</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Given</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    User mockUser <span class="op">=</span> <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span><span class="dv">1L</span><span class="op">,</span> <span class="st">&quot;testuser&quot;</span><span class="op">,</span> <span class="st">&quot;password&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_USER&quot;</span><span class="op">);</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>userRepository<span class="op">.</span><span class="fu">findByUsername</span><span class="op">(</span><span class="st">&quot;testuser&quot;</span><span class="op">)).</span><span class="fu">thenReturn</span><span class="op">(</span>Optional<span class="op">.</span><span class="fu">of</span><span class="op">(</span>mockUser<span class="op">));</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>authenticationManager<span class="op">.</span><span class="fu">authenticate</span><span class="op">(</span><span class="fu">any</span><span class="op">())).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">null</span><span class="op">);</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>jwtUtil<span class="op">.</span><span class="fu">generateToken</span><span class="op">(</span><span class="st">&quot;testuser&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_USER&quot;</span><span class="op">)).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="st">&quot;mockToken&quot;</span><span class="op">);</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// When</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    LoginRequest request <span class="op">=</span> <span class="kw">new</span> <span class="fu">LoginRequest</span><span class="op">();</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    request<span class="op">.</span><span class="fu">setUsername</span><span class="op">(</span><span class="st">&quot;testuser&quot;</span><span class="op">);</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    request<span class="op">.</span><span class="fu">setPassword</span><span class="op">(</span><span class="st">&quot;password&quot;</span><span class="op">);</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    ResponseEntity<span class="op">&lt;</span>ApiResponse<span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;&gt;</span> response <span class="op">=</span> authController<span class="op">.</span><span class="fu">login</span><span class="op">(</span>request<span class="op">);</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Then</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getBody</span><span class="op">().</span><span class="fu">isSuccess</span><span class="op">()).</span><span class="fu">isTrue</span><span class="op">();</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getBody</span><span class="op">().</span><span class="fu">getData</span><span class="op">()).</span><span class="fu">isEqualTo</span><span class="op">(</span><span class="st">&quot;mockToken&quot;</span><span class="op">);</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="login-fails-invalid-credentials">Login Fails — Invalid
+Credentials</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testLoginFailureWithInvalidCredentials</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>authenticationManager<span class="op">.</span><span class="fu">authenticate</span><span class="op">(</span><span class="fu">any</span><span class="op">()))</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">thenThrow</span><span class="op">(</span><span class="kw">new</span> <span class="fu">BadCredentialsException</span><span class="op">(</span><span class="st">&quot;Bad credentials&quot;</span><span class="op">));</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    LoginRequest request <span class="op">=</span> <span class="kw">new</span> <span class="fu">LoginRequest</span><span class="op">();</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    request<span class="op">.</span><span class="fu">setUsername</span><span class="op">(</span><span class="st">&quot;user&quot;</span><span class="op">);</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    request<span class="op">.</span><span class="fu">setPassword</span><span class="op">(</span><span class="st">&quot;wrongpassword&quot;</span><span class="op">);</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    ResponseEntity<span class="op">&lt;</span>ApiResponse<span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;&gt;</span> response <span class="op">=</span> authController<span class="op">.</span><span class="fu">login</span><span class="op">(</span>request<span class="op">);</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getStatusCode</span><span class="op">()).</span><span class="fu">isEqualTo</span><span class="op">(</span>HttpStatus<span class="op">.</span><span class="fu">UNAUTHORIZED</span><span class="op">);</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getBody</span><span class="op">().</span><span class="fu">isSuccess</span><span class="op">()).</span><span class="fu">isFalse</span><span class="op">();</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="role-based-access-control-tests">Role-Based Access Control
+Tests</h2>
+<h3 id="admin-allowed-user-forbidden">Admin Allowed, User Forbidden</h3>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testProductCreationDeniedForUser</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">contentType</span><span class="op">(</span>APPLICATION_JSON<span class="op">)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">content</span><span class="op">(</span><span class="st">&quot;{</span><span class="sc">\&quot;</span><span class="st">name</span><span class="sc">\&quot;</span><span class="st">: </span><span class="sc">\&quot;</span><span class="st">Product</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">quantity</span><span class="sc">\&quot;</span><span class="st">: 10, </span><span class="sc">\&quot;</span><span class="st">price</span><span class="sc">\&quot;</span><span class="st">: 100.0}&quot;</span><span class="op">)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;regularUser&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;USER&quot;</span><span class="op">)))</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isForbidden</span><span class="op">());</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testProductCreationWithoutAuth</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">contentType</span><span class="op">(</span>APPLICATION_JSON<span class="op">)</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">content</span><span class="op">(</span><span class="st">&quot;{</span><span class="sc">\&quot;</span><span class="st">name</span><span class="sc">\&quot;</span><span class="st">: </span><span class="sc">\&quot;</span><span class="st">Product</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">quantity</span><span class="sc">\&quot;</span><span class="st">: 10, </span><span class="sc">\&quot;</span><span class="st">price</span><span class="sc">\&quot;</span><span class="st">: 100.0}&quot;</span><span class="op">)</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">()))</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isUnauthorized</span><span class="op">());</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="both-roles-allowed-parameterized">Both Roles Allowed
+(Parameterized)</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@ParameterizedTest</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">@CsvSource</span><span class="op">({</span><span class="st">&quot;adminUser, ADMIN&quot;</span><span class="op">,</span> <span class="st">&quot;regularUser, USER&quot;</span><span class="op">})</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">testLowStockProductsWithRoles</span><span class="op">(</span><span class="bu">String</span> username<span class="op">,</span> <span class="bu">String</span> role<span class="op">)</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>productRepository<span class="op">.</span><span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="dv">5</span><span class="op">))</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">thenReturn</span><span class="op">(</span><span class="bu">Arrays</span><span class="op">.</span><span class="fu">asList</span><span class="op">(</span>lowStockProduct<span class="op">));</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/products/low-stock&quot;</span><span class="op">)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">with</span><span class="op">(</span>SecurityMockMvcRequestPostProcessors<span class="op">.</span><span class="fu">user</span><span class="op">(</span>username<span class="op">).</span><span class="fu">roles</span><span class="op">(</span>role<span class="op">)))</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="csrf-in-tests">CSRF in Tests</h2>
+<p>CSRF protection is active in <code>@WebMvcTest</code>. All POST, PUT,
+and DELETE requests require <code>.with(csrf())</code>.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Missing csrf() → 403 even with correct role</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;admin&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">)))</span>  <span class="co">// No csrf → 403</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isForbidden</span><span class="op">());</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Correct</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;admin&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">)))</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span></code></pre></div>
+<hr />
+<h2 id="security-anti-patterns">Security Anti-Patterns</h2>
+<p><strong>Disabling security filters</strong> —
+<code>@AutoConfigureMockMvc(addFilters = false)</code> skips the entire
+security layer. Tests pass but nothing is verified. Use
+<code>.with(user(...))</code> instead.</p>
+<p><strong>Real JWT tokens in tests</strong> — hardcoded tokens are
+fragile and environment-dependent. Mock
+<code>JwtUtil.validateToken()</code> to return <code>true</code> for all
+tokens in tests.</p>
+<p><strong>Only testing the happy path</strong> — every secured endpoint
+must have three tests: admin allowed, user forbidden, anonymous
+unauthorized.</p>
+<hr />
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><strong><a href="./spring-slices.html">Spring Slices</a></strong> —
+How <code>@WebMvcTest</code> loads security</li>
+<li><strong><a href="./controller-integration.html">Controller
+Integration Tests</a></strong> — MockMvc request patterns</li>
+<li><strong><a href="./matrix.html">Coverage Matrix</a></strong> — Full
+authorization matrix</li>
+<li><strong><a
+href="./troubleshooting.html">Troubleshooting</a></strong> —
+Auth-related test errors</li>
+</ul>
+<hr />
+<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
+Current</p>
+<p><a href="testing-architecture.html">Back to Testing Architecture
+Index</a></p>   — rendered HTML content from the Markdown source
+
+        Layout: sticky header + two-column grid (sidebar | content) + footer.
+        Sidebar is built dynamically from the navigation map in the script below.
+
+        Stylesheets:
+          base.css       — CSS variables, reset, typography, layout
+          component.css  — sidebar, cards, code, tables, mermaid, print
+
+        Dependencies:
+          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
+    -->
+    <link rel="stylesheet" href="/stockease/templates/base.css">
+    <link rel="stylesheet" href="/stockease/templates/component.css">
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
-            <nav class="nav-breadcrumb">
+
+    <!-- Sticky header with logo and breadcrumb -->
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a href="/stockease/index.html" class="site-header__logo">StockEase Docs</a>
+            <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
                 <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
             </nav>
         </div>
     </header>
 
-    <div class="container">
-        <aside id="sidebar"></aside>
-        <main>
-            <div class="content">
+    <!-- Two-column layout: sidebar + content -->
+    <div class="page-layout">
+        <aside id="sidebar" class="page-sidebar" aria-label="Site navigation"></aside>
+        <main class="page-content">
+            <div class="content-body">
                 <h1 id="security-tests">Security Tests</h1>
                 <p><strong>Purpose</strong>: Document how authentication
                 and authorization are tested in StockEase.</p>
@@ -218,189 +426,178 @@
         </main>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <p><strong>StockEase</strong> - Inventory Management System</p>
-            <p>Architecture Documentation | Generated with Enterprise Standards</p>
-            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p><strong>StockEase</strong> — Inventory Management System</p>
+            <p>Architecture Documentation</p>
         </div>
     </footer>
 
+    <!--
+        Sidebar navigation
+        ==================
+        Built dynamically so a single source of truth covers all pages.
+        To add or remove a section, edit the navigation object below.
+        Active link is highlighted based on the current page URL.
+    -->
     <script>
-        // Navigation Menu (absolute paths from site root)
         const navigation = {
             'API Documentation': [
-                { label: 'Overview', href: '/stockease/api-docs.html' },
+                { label: 'Interactive API Reference', href: '/stockease/api-docs.html' },
             ],
             'Architecture': [
-                { label: 'Overview', href: '/stockease/architecture/system/overview.html' },
-                { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
-                { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
-                { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
-                { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Overview',                href: '/stockease/architecture/system/overview.html' },
+                { label: 'Übersicht (Deutsch)',     href: '/stockease/architecture/system/overview.de.html' },
+                { label: 'System Layers',           href: '/stockease/architecture/system/layers.html' },
+                { label: 'Backend Architecture',    href: '/stockease/architecture/system/backend.html' },
+                { label: 'Security Architecture',   href: '/stockease/architecture/system/security.html' },
+                { label: 'Frontend Integration',    href: '/stockease/architecture/system/frontend-integration.html' },
             ],
             'Design Decisions': [
-                { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
+                { label: 'ADR Index',               href: '/stockease/architecture/decisions/index.html' },
+                { label: 'Database Choice',         href: '/stockease/architecture/decisions/001-db.html' },
+                { label: 'Validation Strategy',     href: '/stockease/architecture/decisions/002-validation.html' },
+                { label: 'Auth Strategy',           href: '/stockease/architecture/decisions/003-auth.html' },
             ],
             'Components': [
-                { label: 'Index', href: '/stockease/architecture/components/index.html' },
-                { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
+                { label: 'Index',                   href: '/stockease/architecture/components/index.html' },
+                { label: 'Analytics Service',       href: '/stockease/architecture/components/analytics-service.html' },
             ],
             'Patterns': [
-                { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
-                { label: 'Repository Pattern', href: '/stockease/architecture/patterns/repository-pattern.html' },
-                { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
+                { label: 'Index',                   href: '/stockease/architecture/patterns/index.html' },
+                { label: 'Repository Pattern',      href: '/stockease/architecture/patterns/repository-pattern.html' },
+                { label: 'Security Patterns',       href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
-                { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
-                { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
-                { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
-                { label: 'Test Data Fixtures', href: '/stockease/architecture/testing/test-data-fixtures.html' },
-                { label: 'Security Tests', href: '/stockease/architecture/testing/security-tests.html' },
-                { label: 'Naming Conventions', href: '/stockease/architecture/testing/naming-conventions.html' },
-                { label: 'Test Matrix', href: '/stockease/architecture/testing/matrix.html' },
-                { label: 'Coverage & Quality', href: '/stockease/architecture/testing/coverage-and-quality.html' },
-                { label: 'Controller Integration', href: '/stockease/architecture/testing/controller-integration.html' },
-                { label: 'CI Pipeline Tests', href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
+                { label: 'Architecture',            href: '/stockease/architecture/testing/testing-architecture.html' },
+                { label: 'Test Pyramid',            href: '/stockease/architecture/testing/pyramid.html' },
+                { label: 'Strategy',                href: '/stockease/architecture/testing/strategy.html' },
+                { label: 'Spring Slices',           href: '/stockease/architecture/testing/spring-slices.html' },
+                { label: 'Test Data Fixtures',      href: '/stockease/architecture/testing/test-data-fixtures.html' },
+                { label: 'Security Tests',          href: '/stockease/architecture/testing/security-tests.html' },
+                { label: 'Naming Conventions',      href: '/stockease/architecture/testing/naming-conventions.html' },
+                { label: 'Test Matrix',             href: '/stockease/architecture/testing/matrix.html' },
+                { label: 'Coverage & Quality',      href: '/stockease/architecture/testing/coverage-and-quality.html' },
+                { label: 'Controller Integration',  href: '/stockease/architecture/testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests',       href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
             ],
             'Deployment': [
-                { label: 'Overview', href: '/stockease/architecture/deployment.html' },
-                { label: 'CI/CD Pipeline', href: '/stockease/architecture/deployment/ci-pipeline.html' },
-                { label: 'Docker Strategy', href: '/stockease/architecture/deployment/docker-strategy.html' },
-                { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
+                { label: 'Overview',                href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Infrastructure',          href: '/stockease/architecture/deployment/infrastructure.html' },
+                { label: 'CI/CD Pipeline',          href: '/stockease/architecture/deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy',         href: '/stockease/architecture/deployment/docker-strategy.html' },
+                { label: 'Staging Config',          href: '/stockease/architecture/deployment/staging-config.html' },
             ],
-            'Reference': [
+            'Guides': [
+                { label: 'Contributing',            href: '/stockease/generated/guides/contributing.html' },
                 { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
-                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
-            ],
-            'Documentation Index': [
-                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
-                { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
+                { label: 'Test Coverage Report',   href: '/stockease/coverage/index.html' },
             ],
         };
 
-        // Build sidebar
         function buildSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
 
-            Object.entries(navigation).forEach(([section, links]) => {
-                const navSection = document.createElement('div');
-                navSection.className = 'nav-section';
+            const currentPath = window.location.pathname;
 
-                const title = document.createElement('div');
-                title.className = 'nav-section-title';
-                title.textContent = section;
-                navSection.appendChild(title);
+            Object.entries(navigation).forEach(([section, links]) => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'nav-section';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'nav-section__title';
+                titleEl.textContent = section;
+                sectionEl.appendChild(titleEl);
 
                 const ul = document.createElement('ul');
+                ul.className = 'nav-section__list';
+
                 links.forEach(link => {
                     const li = document.createElement('li');
                     const a = document.createElement('a');
-
                     a.href = link.href;
                     a.textContent = link.label;
+                    a.className = 'nav-section__link';
 
-                    // Highlight current page
-                    const currentPath = window.location.pathname;
-                    const linkPath = link.href.replace('.html', '');
-                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
-                        a.className = 'active';
+                    // Highlight the active page
+                    if (currentPath.endsWith(link.href) ||
+                        currentPath.includes(link.href.replace('.html', ''))) {
+                        a.classList.add('nav-section__link--active');
                     }
 
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
 
-                navSection.appendChild(ul);
-                sidebar.appendChild(navSection);
+                sectionEl.appendChild(ul);
+                sidebar.appendChild(sectionEl);
             });
         }
 
-        // Build table of contents highlight
-        function initTableOfContents() {
+        // Highlight TOC link matching the visible heading on scroll
+        function initTocHighlight() {
             const tocLinks = document.querySelectorAll('nav.toc a');
             const headings = document.querySelectorAll('h2, h3');
 
+            if (!tocLinks.length || !headings.length) return;
+
             window.addEventListener('scroll', () => {
-                let currentHeading = null;
-                headings.forEach(heading => {
-                    if (heading.getBoundingClientRect().top <= 100) {
-                        currentHeading = heading;
-                    }
+                let current = null;
+                headings.forEach(h => {
+                    if (h.getBoundingClientRect().top <= 120) current = h;
                 });
 
                 tocLinks.forEach(link => {
                     link.classList.remove('active');
-                    if (currentHeading) {
-                        const href = link.getAttribute('href');
-                        if (href === '#' + currentHeading.id) {
-                            link.classList.add('active');
-                        }
+                    if (current && link.getAttribute('href') === '#' + current.id) {
+                        link.classList.add('active');
                     }
                 });
             });
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
-            initTableOfContents();
+            initTocHighlight();
         });
     </script>
 
+    <!--
+        Mermaid diagram rendering
+        =========================
+        Renders architecture diagrams written as fenced mermaid code blocks
+        in Markdown. The Lua filter in the docs pipeline converts them to
+        <div class="mermaid"> elements before Pandoc processes the HTML.
+    -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
+
+        mermaid.initialize({
             startOnLoad: false,
             theme: 'default',
             securityLevel: 'loose',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
-        
-        // Look for mermaid divs that were generated by Pandoc Lua filter
-        const mermaidDivs = document.querySelectorAll('div.mermaid');
-        
-        mermaidDivs.forEach((div) => {
-            // Verify mermaid content is present
-            if (div.textContent.trim()) {
-                // Content is ready for rendering
-            }
+
+        // Pandoc fallback: convert code.language-mermaid blocks to .mermaid divs
+        document.querySelectorAll('code.language-mermaid').forEach(code => {
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code.textContent;
+            code.closest('pre')?.replaceWith(div);
         });
-        
-        // Also look for any code.language-mermaid blocks (fallback for compatibility)
-        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        
-        codeMermaidBlocks.forEach((code) => {
-            code.classList.remove('language-mermaid');
-            code.classList.add('mermaid');
-            // If wrapped in pre, mark pre as mermaid too
-            if (code.parentElement.tagName === 'PRE') {
-                code.parentElement.classList.add('mermaid-block');
-            }
-        });
-        
-        // Wait for DOM to be fully loaded, then render all mermaid diagrams
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                    await mermaid.run();
-                } catch (err) {
-                    console.error('Mermaid rendering error:', err);
-                }
-            });
-        } else {
-            // Already loaded
-            mermaid.run().catch(err => {
-                console.error('Mermaid rendering error:', err);
-            });
+
+        // Render all mermaid blocks
+        try {
+            await mermaid.run();
+        } catch (err) {
+            console.error('Mermaid rendering error:', err);
         }
     </script>
+
 </body>
 </html>

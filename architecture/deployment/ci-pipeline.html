@@ -4,22 +4,286 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> - StockEase Architecture Documentation</title>
-    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+    <!--
+        StockEase Page Template
+        =======================
+        Pandoc HTML template used by the docs pipeline to render all
+        individual architecture documentation pages.
+
+        Variables injected by Pandoc at build time:
+            — page title from the Markdown front matter
+          <h1 id="cicd-pipeline">CI/CD Pipeline</h1>
+<p><strong>Purpose</strong>: Document the GitHub Actions workflows that
+build, test, deploy, and publish documentation for StockEase.</p>
+<hr />
+<h2 id="workflows-overview">Workflows Overview</h2>
+<table>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 17%" />
+<col style="width: 26%" />
+<col style="width: 26%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Workflow</th>
+<th>File</th>
+<th>Trigger</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Backend deploy</td>
+<td><code>deploy-backend.yml</code></td>
+<td>Push to <code>main</code> (excluding docs)</td>
+<td>Build, test, deploy to Koyeb</td>
+</tr>
+<tr class="even">
+<td>Docs generation</td>
+<td><code>docs-pipeline.yml</code></td>
+<td>Push to <code>main</code> (docs/pom.xml changes)</td>
+<td>Generate and publish documentation</td>
+</tr>
+<tr class="odd">
+<td>Coverage deploy</td>
+<td><code>docs-coverage-deploy.yml</code></td>
+<td>On <code>docs-pipeline.yml</code> success</td>
+<td>Run JaCoCo and publish coverage</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="backend-deploy-workflow">Backend Deploy Workflow</h2>
+<h3 id="trigger">Trigger</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">main</span><span class="kw">]</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">paths-ignore</span><span class="kw">:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;docs/**&#39;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;.gitignore&#39;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&#39;.github/workflows/docs-pipeline.yml&#39;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span></code></pre></div>
+<h3 id="pipeline-stages">Pipeline Stages</h3>
+<div class="mermaid">
+graph TD
+    A[1. Checkout + Detect root] --> B[2. Setup JDK 17 + Maven cache]
+    B --> C[3. Run Tests — conditional]
+    C --> D[4. Build — Maven verify]
+    D --> E[5. Trigger Koyeb redeploy]
+    E --> F[6. Wait for HEALTHY up to 10 min]
+    F --> G[Success]
+    C -->|fail| X[Stop — notify]
+    F -->|timeout| Y[Fail — prior version stays live]
+
+    style G fill:#c8e6c9
+    style X fill:#ffcdd2
+    style Y fill:#ffcdd2
+</div>
+<h3 id="stage-details">Stage Details</h3>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 41%" />
+<col style="width: 24%" />
+<col style="width: 17%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Command / Action</th>
+<th>Duration</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Checkout</td>
+<td><code>actions/checkout@v4</code></td>
+<td>~5s</td>
+<td>Full history</td>
+</tr>
+<tr class="even">
+<td>Detect root</td>
+<td><code>detect-maven-project.sh</code></td>
+<td>&lt;5s</td>
+<td>Sets <code>PROJECT_DIR</code></td>
+</tr>
+<tr class="odd">
+<td>Validate Dockerfile</td>
+<td><code>validate-dockerfile.sh</code></td>
+<td>&lt;5s</td>
+<td>Fails fast if missing</td>
+</tr>
+<tr class="even">
+<td>Setup JDK 17</td>
+<td><code>actions/setup-java@v4</code> (temurin, Maven cache)</td>
+<td>5–30s</td>
+<td>Cached after first run</td>
+</tr>
+<tr class="odd">
+<td>Run tests</td>
+<td><code>./mvnw -B -ntp test</code></td>
+<td>~40s</td>
+<td>Controlled by <code>RUN_TESTS</code> env var (default
+<code>true</code>)</td>
+</tr>
+<tr class="even">
+<td>Build</td>
+<td><code>./mvnw -B -ntp -DskipTests -Dspringdoc.skip=true verify</code></td>
+<td>~25s</td>
+<td>Produces JAR</td>
+</tr>
+<tr class="odd">
+<td>Koyeb redeploy</td>
+<td><code>koyeb-redeploy.sh</code> —
+<code>POST /v1/services/{id}/redeploy</code></td>
+<td>~5s</td>
+<td>Accepts 200/201/202</td>
+</tr>
+<tr class="even">
+<td>Wait for healthy</td>
+<td><code>koyeb-wait-healthy.sh</code> — polls every 10s up to 60×</td>
+<td>10–120s</td>
+<td>HEALTHY or READY = success</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total pipeline time</strong>: 2–4 minutes.</p>
+<p><code>RUN_TESTS=false</code> is reserved for emergency hotfixes only.
+Tests must pass on all normal deployments.</p>
+<hr />
+<h2 id="documentation-workflow">Documentation Workflow</h2>
+<h3 id="docs-pipeline.yml">docs-pipeline.yml</h3>
+<p><strong>Trigger</strong>: push to <code>main</code> when
+<code>docs/**</code>, <code>pom.xml</code>, or
+<code>.github/workflows/docs-pipeline.yml</code> changes, or manual
+dispatch.</p>
+<p><strong>Stages</strong>:</p>
+<ol type="1">
+<li>Checkout (full history) + detect project root</li>
+<li>Setup Node.js 18 + install <code>@redocly/cli</code></li>
+<li><code>generate-api-docs.sh</code> — reads
+<code>docs/api/openapi.yaml</code> → outputs
+<code>target/docs/api-docs.html</code></li>
+<li><code>generate-docs.sh</code> — Pandoc converts
+<code>docs/architecture/</code> using <code>enterprise-docs.html</code>
+template + Lua filter</li>
+<li><code>generate-docs.sh</code> — Pandoc converts all other
+<code>docs/</code> markdown (guides, patterns, components)</li>
+<li><code>fix-directory-links.sh</code> — rewrites
+<code>href="path/index.html"</code> to <code>index.html</code></li>
+<li>Copy site templates — <code>index.html</code> +
+<code>base.css</code>, <code>component.css</code>, <code>hub.css</code>
+→ <code>target/docs/templates/</code></li>
+<li>Verify output — counts generated files, reports disk usage</li>
+<li>Upload <code>docs-site</code> artifact</li>
+<li>Deploy <code>target/docs</code> to <code>gh-pages</code> via
+<code>peaceiris/actions-gh-pages@v3</code></li>
+</ol>
+<h3 id="docs-coverage-deploy.yml">docs-coverage-deploy.yml</h3>
+<p><strong>Trigger</strong>: automatically on
+<code>docs-pipeline.yml</code> success.</p>
+<p><strong>Stages</strong>:</p>
+<ol type="1">
+<li>Checkout + download <code>docs-site</code> artifact + setup JDK
+17</li>
+<li><code>mvn -B clean test</code> — runs full test suite with
+JaCoCo</li>
+<li><code>generate-coverage-wrapper.sh</code> — creates iframe wrapper
+over raw JaCoCo HTML</li>
+<li>Deploy <code>target/docs/coverage</code> to <code>gh-pages</code> at
+<code>/coverage</code> subfolder (does not overwrite root docs)</li>
+</ol>
+<hr />
+<h2 id="secret-management">Secret Management</h2>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 34%" />
+<col style="width: 34%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Secret</th>
+<th>Purpose</th>
+<th>Used By</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>KOYEB_API_KEY</code></td>
+<td>Authenticate Koyeb API calls</td>
+<td><code>deploy-backend.yml</code></td>
+</tr>
+<tr class="even">
+<td><code>KOYEB_SERVICE_ID</code></td>
+<td>Target service for redeploy</td>
+<td><code>deploy-backend.yml</code></td>
+</tr>
+<tr class="odd">
+<td><code>GITHUB_TOKEN</code></td>
+<td>CI/CD operations, gh-pages deploy</td>
+<td>Auto-provided by GitHub</td>
+</tr>
+</tbody>
+</table>
+<p>Secrets are injected via <code>${{ secrets.NAME }}</code> — never
+hardcoded in workflow files.</p>
+<hr />
+<h2 id="failure-handling">Failure Handling</h2>
+<h3 id="test-failure">Test Failure</h3>
+<p>Pipeline stops immediately. GitHub marks the commit as failed. Fix
+the failing tests, commit, and the pipeline re-runs automatically.</p>
+<h3 id="build-failure">Build Failure</h3>
+<p>JAR creation fails. Check compilation errors in the Actions log. Fix
+and push.</p>
+<h3 id="koyeb-health-check-timeout">Koyeb Health Check Timeout</h3>
+<p>The pipeline fails after 10 minutes. The previous healthy version
+remains live on Koyeb. Investigate application logs on the Koyeb
+dashboard, fix the issue, and trigger a new deployment.</p>
+<hr />
+<h2 id="rollback-strategy">Rollback Strategy</h2>
+<p><strong>Automatic</strong>: if health checks fail, Koyeb keeps the
+previous version running with no manual intervention needed.</p>
+<p><strong>Manual</strong>: trigger <code>deploy-backend.yml</code> via
+<code>workflow_dispatch</code> on a known-good commit, or use the Koyeb
+dashboard to redeploy a previous instance.</p>
+<hr />
+<p><a href="./index.html">Back to Deployment
+Index</a></p>   — rendered HTML content from the Markdown source
+
+        Layout: sticky header + two-column grid (sidebar | content) + footer.
+        Sidebar is built dynamically from the navigation map in the script below.
+
+        Stylesheets:
+          base.css       — CSS variables, reset, typography, layout
+          component.css  — sidebar, cards, code, tables, mermaid, print
+
+        Dependencies:
+          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
+    -->
+    <link rel="stylesheet" href="/stockease/templates/base.css">
+    <link rel="stylesheet" href="/stockease/templates/component.css">
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
-            <nav class="nav-breadcrumb">
+
+    <!-- Sticky header with logo and breadcrumb -->
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a href="/stockease/index.html" class="site-header__logo">StockEase Docs</a>
+            <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
                 <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
             </nav>
         </div>
     </header>
 
-    <div class="container">
-        <aside id="sidebar"></aside>
-        <main>
-            <div class="content">
+    <!-- Two-column layout: sidebar + content -->
+    <div class="page-layout">
+        <aside id="sidebar" class="page-sidebar" aria-label="Site navigation"></aside>
+        <main class="page-content">
+            <div class="content-body">
                 <h1 id="cicd-pipeline">CI/CD Pipeline</h1>
                 <p><strong>Purpose</strong>: Document the GitHub Actions
                 workflows that build, test, deploy, and publish
@@ -185,13 +449,21 @@
                 <code>docs/api/openapi.yaml</code> → outputs
                 <code>target/docs/api-docs.html</code></li>
                 <li><code>generate-docs.sh</code> — Pandoc converts
-                <code>docs/architecture/</code> using enterprise
-                template + Lua filter</li>
+                <code>docs/architecture/</code> using
+                <code>enterprise-docs.html</code> template + Lua
+                filter</li>
+                <li><code>generate-docs.sh</code> — Pandoc converts all
+                other <code>docs/</code> markdown (guides, patterns,
+                components)</li>
                 <li><code>fix-directory-links.sh</code> — rewrites
                 <code>href="path/index.html"</code> to
                 <code>index.html</code></li>
-                <li>Copy <code>templates/index.html</code> →
-                <code>target/docs/index.html</code></li>
+                <li>Copy site templates — <code>index.html</code> +
+                <code>base.css</code>, <code>component.css</code>,
+                <code>hub.css</code> →
+                <code>target/docs/templates/</code></li>
+                <li>Verify output — counts generated files, reports disk
+                usage</li>
                 <li>Upload <code>docs-site</code> artifact</li>
                 <li>Deploy <code>target/docs</code> to
                 <code>gh-pages</code> via
@@ -281,189 +553,178 @@
         </main>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <p><strong>StockEase</strong> - Inventory Management System</p>
-            <p>Architecture Documentation | Generated with Enterprise Standards</p>
-            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p><strong>StockEase</strong> — Inventory Management System</p>
+            <p>Architecture Documentation</p>
         </div>
     </footer>
 
+    <!--
+        Sidebar navigation
+        ==================
+        Built dynamically so a single source of truth covers all pages.
+        To add or remove a section, edit the navigation object below.
+        Active link is highlighted based on the current page URL.
+    -->
     <script>
-        // Navigation Menu (absolute paths from site root)
         const navigation = {
             'API Documentation': [
-                { label: 'Overview', href: '/stockease/api-docs.html' },
+                { label: 'Interactive API Reference', href: '/stockease/api-docs.html' },
             ],
             'Architecture': [
-                { label: 'Overview', href: '/stockease/architecture/system/overview.html' },
-                { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
-                { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
-                { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
-                { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Overview',                href: '/stockease/architecture/system/overview.html' },
+                { label: 'Übersicht (Deutsch)',     href: '/stockease/architecture/system/overview.de.html' },
+                { label: 'System Layers',           href: '/stockease/architecture/system/layers.html' },
+                { label: 'Backend Architecture',    href: '/stockease/architecture/system/backend.html' },
+                { label: 'Security Architecture',   href: '/stockease/architecture/system/security.html' },
+                { label: 'Frontend Integration',    href: '/stockease/architecture/system/frontend-integration.html' },
             ],
             'Design Decisions': [
-                { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
+                { label: 'ADR Index',               href: '/stockease/architecture/decisions/index.html' },
+                { label: 'Database Choice',         href: '/stockease/architecture/decisions/001-db.html' },
+                { label: 'Validation Strategy',     href: '/stockease/architecture/decisions/002-validation.html' },
+                { label: 'Auth Strategy',           href: '/stockease/architecture/decisions/003-auth.html' },
             ],
             'Components': [
-                { label: 'Index', href: '/stockease/architecture/components/index.html' },
-                { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
+                { label: 'Index',                   href: '/stockease/architecture/components/index.html' },
+                { label: 'Analytics Service',       href: '/stockease/architecture/components/analytics-service.html' },
             ],
             'Patterns': [
-                { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
-                { label: 'Repository Pattern', href: '/stockease/architecture/patterns/repository-pattern.html' },
-                { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
+                { label: 'Index',                   href: '/stockease/architecture/patterns/index.html' },
+                { label: 'Repository Pattern',      href: '/stockease/architecture/patterns/repository-pattern.html' },
+                { label: 'Security Patterns',       href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
-                { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
-                { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
-                { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
-                { label: 'Test Data Fixtures', href: '/stockease/architecture/testing/test-data-fixtures.html' },
-                { label: 'Security Tests', href: '/stockease/architecture/testing/security-tests.html' },
-                { label: 'Naming Conventions', href: '/stockease/architecture/testing/naming-conventions.html' },
-                { label: 'Test Matrix', href: '/stockease/architecture/testing/matrix.html' },
-                { label: 'Coverage & Quality', href: '/stockease/architecture/testing/coverage-and-quality.html' },
-                { label: 'Controller Integration', href: '/stockease/architecture/testing/controller-integration.html' },
-                { label: 'CI Pipeline Tests', href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
+                { label: 'Architecture',            href: '/stockease/architecture/testing/testing-architecture.html' },
+                { label: 'Test Pyramid',            href: '/stockease/architecture/testing/pyramid.html' },
+                { label: 'Strategy',                href: '/stockease/architecture/testing/strategy.html' },
+                { label: 'Spring Slices',           href: '/stockease/architecture/testing/spring-slices.html' },
+                { label: 'Test Data Fixtures',      href: '/stockease/architecture/testing/test-data-fixtures.html' },
+                { label: 'Security Tests',          href: '/stockease/architecture/testing/security-tests.html' },
+                { label: 'Naming Conventions',      href: '/stockease/architecture/testing/naming-conventions.html' },
+                { label: 'Test Matrix',             href: '/stockease/architecture/testing/matrix.html' },
+                { label: 'Coverage & Quality',      href: '/stockease/architecture/testing/coverage-and-quality.html' },
+                { label: 'Controller Integration',  href: '/stockease/architecture/testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests',       href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
             ],
             'Deployment': [
-                { label: 'Overview', href: '/stockease/architecture/deployment.html' },
-                { label: 'CI/CD Pipeline', href: '/stockease/architecture/deployment/ci-pipeline.html' },
-                { label: 'Docker Strategy', href: '/stockease/architecture/deployment/docker-strategy.html' },
-                { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
+                { label: 'Overview',                href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Infrastructure',          href: '/stockease/architecture/deployment/infrastructure.html' },
+                { label: 'CI/CD Pipeline',          href: '/stockease/architecture/deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy',         href: '/stockease/architecture/deployment/docker-strategy.html' },
+                { label: 'Staging Config',          href: '/stockease/architecture/deployment/staging-config.html' },
             ],
-            'Reference': [
+            'Guides': [
+                { label: 'Contributing',            href: '/stockease/generated/guides/contributing.html' },
                 { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
-                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
-            ],
-            'Documentation Index': [
-                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
-                { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
+                { label: 'Test Coverage Report',   href: '/stockease/coverage/index.html' },
             ],
         };
 
-        // Build sidebar
         function buildSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
 
-            Object.entries(navigation).forEach(([section, links]) => {
-                const navSection = document.createElement('div');
-                navSection.className = 'nav-section';
+            const currentPath = window.location.pathname;
 
-                const title = document.createElement('div');
-                title.className = 'nav-section-title';
-                title.textContent = section;
-                navSection.appendChild(title);
+            Object.entries(navigation).forEach(([section, links]) => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'nav-section';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'nav-section__title';
+                titleEl.textContent = section;
+                sectionEl.appendChild(titleEl);
 
                 const ul = document.createElement('ul');
+                ul.className = 'nav-section__list';
+
                 links.forEach(link => {
                     const li = document.createElement('li');
                     const a = document.createElement('a');
-
                     a.href = link.href;
                     a.textContent = link.label;
+                    a.className = 'nav-section__link';
 
-                    // Highlight current page
-                    const currentPath = window.location.pathname;
-                    const linkPath = link.href.replace('.html', '');
-                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
-                        a.className = 'active';
+                    // Highlight the active page
+                    if (currentPath.endsWith(link.href) ||
+                        currentPath.includes(link.href.replace('.html', ''))) {
+                        a.classList.add('nav-section__link--active');
                     }
 
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
 
-                navSection.appendChild(ul);
-                sidebar.appendChild(navSection);
+                sectionEl.appendChild(ul);
+                sidebar.appendChild(sectionEl);
             });
         }
 
-        // Build table of contents highlight
-        function initTableOfContents() {
+        // Highlight TOC link matching the visible heading on scroll
+        function initTocHighlight() {
             const tocLinks = document.querySelectorAll('nav.toc a');
             const headings = document.querySelectorAll('h2, h3');
 
+            if (!tocLinks.length || !headings.length) return;
+
             window.addEventListener('scroll', () => {
-                let currentHeading = null;
-                headings.forEach(heading => {
-                    if (heading.getBoundingClientRect().top <= 100) {
-                        currentHeading = heading;
-                    }
+                let current = null;
+                headings.forEach(h => {
+                    if (h.getBoundingClientRect().top <= 120) current = h;
                 });
 
                 tocLinks.forEach(link => {
                     link.classList.remove('active');
-                    if (currentHeading) {
-                        const href = link.getAttribute('href');
-                        if (href === '#' + currentHeading.id) {
-                            link.classList.add('active');
-                        }
+                    if (current && link.getAttribute('href') === '#' + current.id) {
+                        link.classList.add('active');
                     }
                 });
             });
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
-            initTableOfContents();
+            initTocHighlight();
         });
     </script>
 
+    <!--
+        Mermaid diagram rendering
+        =========================
+        Renders architecture diagrams written as fenced mermaid code blocks
+        in Markdown. The Lua filter in the docs pipeline converts them to
+        <div class="mermaid"> elements before Pandoc processes the HTML.
+    -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
+
+        mermaid.initialize({
             startOnLoad: false,
             theme: 'default',
             securityLevel: 'loose',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
-        
-        // Look for mermaid divs that were generated by Pandoc Lua filter
-        const mermaidDivs = document.querySelectorAll('div.mermaid');
-        
-        mermaidDivs.forEach((div) => {
-            // Verify mermaid content is present
-            if (div.textContent.trim()) {
-                // Content is ready for rendering
-            }
+
+        // Pandoc fallback: convert code.language-mermaid blocks to .mermaid divs
+        document.querySelectorAll('code.language-mermaid').forEach(code => {
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code.textContent;
+            code.closest('pre')?.replaceWith(div);
         });
-        
-        // Also look for any code.language-mermaid blocks (fallback for compatibility)
-        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        
-        codeMermaidBlocks.forEach((code) => {
-            code.classList.remove('language-mermaid');
-            code.classList.add('mermaid');
-            // If wrapped in pre, mark pre as mermaid too
-            if (code.parentElement.tagName === 'PRE') {
-                code.parentElement.classList.add('mermaid-block');
-            }
-        });
-        
-        // Wait for DOM to be fully loaded, then render all mermaid diagrams
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                    await mermaid.run();
-                } catch (err) {
-                    console.error('Mermaid rendering error:', err);
-                }
-            });
-        } else {
-            // Already loaded
-            mermaid.run().catch(err => {
-                console.error('Mermaid rendering error:', err);
-            });
+
+        // Render all mermaid blocks
+        try {
+            await mermaid.run();
+        } catch (err) {
+            console.error('Mermaid rendering error:', err);
         }
     </script>
+
 </body>
 </html>

@@ -4,22 +4,301 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> - StockEase Architecture Documentation</title>
-    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+    <!--
+        StockEase Page Template
+        =======================
+        Pandoc HTML template used by the docs pipeline to render all
+        individual architecture documentation pages.
+
+        Variables injected by Pandoc at build time:
+            — page title from the Markdown front matter
+          <h1 id="infrastructure">Infrastructure</h1>
+<p><strong>Purpose</strong>: Document the production deployment
+topology, Koyeb service configuration, database management, monitoring,
+and disaster recovery.</p>
+<hr />
+<h2 id="deployment-topology">Deployment Topology</h2>
+<div class="mermaid">
+graph TB
+    subgraph GitHub["GitHub Repository"]
+        MainBranch["main branch — Source Code"]
+        DocsBranch["gh-pages branch — Published Docs"]
+    end
+
+    MainBranch -->|Push triggers| Actions
+
+    subgraph Actions["GitHub Actions"]
+        Build["deploy-backend.yml — Build, test, deploy to Koyeb"]
+        Docs["docs-pipeline.yml — Generate and publish documentation"]
+    end
+
+    Build -->|Triggers redeploy| Koyeb
+    Docs -->|Deploys HTML| Pages
+
+    Koyeb["Koyeb — Container Service (Production)"]
+    Pages["GitHub Pages — https://keglev.github.io/stockease/"]
+
+    Koyeb -->|JDBC SSL| Neon["Neon PostgreSQL 17.5 — Serverless Database"]
+
+    style GitHub fill:#f9f9f9
+    style Actions fill:#e3f2fd
+    style Koyeb fill:#fff3e0
+    style Pages fill:#e8f5e9
+    style Neon fill:#fce4ec
+</div>
+<hr />
+<h2 id="deployment-environments">Deployment Environments</h2>
+<table>
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 22%" />
+<col style="width: 27%" />
+<col style="width: 13%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Branch</th>
+<th>Database</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Development</td>
+<td>Any feature branch</td>
+<td>H2 in-memory</td>
+<td>localhost:8081</td>
+</tr>
+<tr class="even">
+<td>Production</td>
+<td>main</td>
+<td>Neon PostgreSQL</td>
+<td>stockease-backend-production.koyeb.app</td>
+</tr>
+</tbody>
+</table>
+<p>Staging (separate Koyeb service + PostgreSQL test instance) is
+available but not currently active.</p>
+<hr />
+<h2 id="koyeb-service-configuration">Koyeb Service Configuration</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Service Name</span><span class="kw">:</span><span class="at"> stockease-backend-production</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Runtime</span><span class="kw">:</span><span class="at"> Docker (built from Dockerfile in repo)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">Region</span><span class="kw">:</span><span class="at"> US (Auto)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Replicas</span><span class="kw">:</span><span class="at"> 1–2 (auto-scaling)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Environment Variables</span><span class="kw">:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_PROFILES_ACTIVE</span><span class="kw">:</span><span class="at"> prod</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_DATASOURCE_URL</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">Neon JDBC connection string with SSL — from secrets</span><span class="kw">]</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_DATASOURCE_USERNAME</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">SPRING_DATASOURCE_PASSWORD</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JWT_SECRET</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">from secrets</span><span class="kw">]</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">JAVA_OPTS</span><span class="kw">:</span><span class="at"> -Xmx512m -Xms256m</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">Port Mapping</span><span class="kw">:</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Container Port</span><span class="kw">:</span><span class="at"> </span><span class="dv">8081</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Public Port</span><span class="kw">:</span><span class="at"> 443 (HTTPS)</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Protocol</span><span class="kw">:</span><span class="at"> HTTP2</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">Health Check</span><span class="kw">:</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Endpoint</span><span class="kw">:</span><span class="at"> /health</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Interval</span><span class="kw">:</span><span class="at"> 30s</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Timeout</span><span class="kw">:</span><span class="at"> 5s</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Failures before unhealthy</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">Consecutive Successes before healthy</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span></code></pre></div>
+<h3 id="auto-scaling">Auto-Scaling</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Min Replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Max Replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">Target CPU</span><span class="kw">:</span><span class="at"> 70%</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">Target Memory</span><span class="kw">:</span><span class="at"> 80%</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">Scale Up Delay</span><span class="kw">:</span><span class="at"> 60s</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Scale Down Delay</span><span class="kw">:</span><span class="at"> 300s</span></span></code></pre></div>
+<hr />
+<h2 id="neon-postgresql-production-database">Neon PostgreSQL (Production
+Database)</h2>
+<pre><code>Host: [neon-project].neon.tech
+Port: 5432
+SSL Mode: require
+Connection Pooling: enabled (limit: 100)</code></pre>
+<h3 id="automated-backups">Automated Backups</h3>
+<ul>
+<li>Frequency: daily (automatic)</li>
+<li>Retention: 7 days</li>
+<li>Recovery: point-in-time restore available</li>
+</ul>
+<h3 id="database-migrations-flyway">Database Migrations (Flyway)</h3>
+<div class="mermaid">
+erDiagram
+    app_user {
+        BIGINT id PK
+        VARCHAR username UK
+        VARCHAR password
+        VARCHAR role
+    }
+    product {
+        BIGINT id PK
+        VARCHAR name
+        DOUBLE_PRECISION price
+        INTEGER quantity
+        DOUBLE_PRECISION total_value
+    }
+</div>
+<p>Migration files span two locations on the classpath
+(<code>classpath:db/migration</code>):</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 41%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Location</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>V1__baseline.sql</code></td>
+<td><code>src/main/resources/db/migration/</code></td>
+<td>Empty Flyway baseline marker for existing schema</td>
+</tr>
+<tr class="even">
+<td><code>V2__create_schema.sql</code></td>
+<td><code>src/main/resources/db/migration/</code></td>
+<td>Creates <code>app_user</code> and <code>product</code> tables with
+BIGSERIAL PKs</td>
+</tr>
+<tr class="odd">
+<td><code>V3__seed_data.java</code></td>
+<td><code>src/main/java/db/migration/</code></td>
+<td>Seeds fixture users and 8 sample products with BCrypt-hashed
+passwords</td>
+</tr>
+</tbody>
+</table>
+<p><code>V3__seed_data.java</code> is a Java migration (extends
+<code>BaseJavaMigration</code>) rather than SQL, so it can invoke
+<code>BCryptPasswordEncoder</code> to hash passwords at migration time.
+All inserts are idempotent — each row is only added if it does not
+already exist. This migration runs in all environments including
+production.</p>
+<p><code>DataSeeder.java</code> (<code>@Profile("!prod")</code>) remains
+in the codebase as a fallback for test environments where Flyway is
+disabled (<code>spring.flyway.enabled=false</code>). In all
+Flyway-enabled environments, V3 populates the database first and
+<code>DataSeeder</code>’s <code>count() == 0</code> guards make it a
+no-op. See <a href="./staging-config.html">Staging &amp;
+Configuration</a> for details.</p>
+<p>Flyway runs automatically on application startup via
+<code>FlywayConfiguration.java</code>, which forces migrations to
+execute before JPA initializes — resolving a Spring Boot 3.5.x startup
+ordering issue.</p>
+<hr />
+<h2 id="monitoring">Monitoring</h2>
+<h3 id="health-endpoints">Health Endpoints</h3>
+<p>Two health check paths exist:</p>
+<p><strong><code>GET /api/health</code></strong> — custom endpoint,
+returns <code>text/plain</code>. Used by Koyeb health probes.</p>
+<pre><code>Database is connected and API is running.</code></pre>
+<p><strong><code>GET /actuator/health</code></strong> and
+<strong><code>GET /actuator/health/**</code></strong> — Spring Boot
+Actuator endpoints, return JSON. Also public per
+<code>SecurityConfig</code>.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;components&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;db&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span> <span class="fu">},</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;diskSpace&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;UP&quot;</span> <span class="fu">}</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h3 id="application-logs">Application Logs</h3>
+<p>Captured by Koyeb via stdout/stderr. Key startup sequence:</p>
+<pre><code>INFO  Flyway Community Edition — Database: PostgreSQL 17.5
+INFO  Successfully validated 3 migrations — Current version: 3
+INFO  Will secure any request
+INFO  Tomcat started on port(s): 8081
+INFO  Started StockEaseApplication in 4.1s</code></pre>
+<h3 id="tracked-metrics">Tracked Metrics</h3>
+<p>Request count, response time (avg, P95, P99), error rate (4xx, 5xx),
+database connections (active/idle), memory (heap/non-heap), container
+CPU.</p>
+<hr />
+<h2 id="disaster-recovery">Disaster Recovery</h2>
+<h3 id="if-deployment-fails">If Deployment Fails</h3>
+<p>Koyeb automatically keeps the previous healthy version running. The
+pipeline marks the run as failed. Review logs on Koyeb and re-trigger
+once the issue is resolved.</p>
+<h3 id="if-database-is-corrupted">If Database Is Corrupted</h3>
+<ol type="1">
+<li>Identify recovery point from Neon backups</li>
+<li>Restore to a staging instance first</li>
+<li>Verify application functionality against restored DB</li>
+<li>Switch production connection to restored instance</li>
+</ol>
+<h3 id="if-koyeb-service-goes-down">If Koyeb Service Goes Down</h3>
+<p>Manually trigger <code>deploy-backend.yml</code> via
+<code>workflow_dispatch</code>. Verify health checks pass before
+considering the issue resolved.</p>
+<hr />
+<h2 id="deployment-checklist">Deployment Checklist</h2>
+<p>Before every production deployment:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" />All tests passing (65+
+tests)</label></li>
+<li><label><input type="checkbox" />Code reviewed and
+approved</label></li>
+<li><label><input type="checkbox" />Secrets configured in GitHub and
+Koyeb</label></li>
+<li><label><input type="checkbox" />Database migrations validated
+against staging</label></li>
+<li><label><input type="checkbox" />Health check endpoint
+responding</label></li>
+<li><label><input type="checkbox" />CORS configured for production
+domain only</label></li>
+<li><label><input type="checkbox" />SSL certificate active</label></li>
+<li><label><input type="checkbox" />Backups verified</label></li>
+<li><label><input type="checkbox" />Rollback plan confirmed (previous
+version available on Koyeb)</label></li>
+</ul>
+<hr />
+<p><a href="./index.html">Back to Deployment
+Index</a></p>   — rendered HTML content from the Markdown source
+
+        Layout: sticky header + two-column grid (sidebar | content) + footer.
+        Sidebar is built dynamically from the navigation map in the script below.
+
+        Stylesheets:
+          base.css       — CSS variables, reset, typography, layout
+          component.css  — sidebar, cards, code, tables, mermaid, print
+
+        Dependencies:
+          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
+    -->
+    <link rel="stylesheet" href="/stockease/templates/base.css">
+    <link rel="stylesheet" href="/stockease/templates/component.css">
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="/stockease/index.html" class="logo">📚 StockEase Architecture Docs</a>
-            <nav class="nav-breadcrumb">
+
+    <!-- Sticky header with logo and breadcrumb -->
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a href="/stockease/index.html" class="site-header__logo">StockEase Docs</a>
+            <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
                 <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
             </nav>
         </div>
     </header>
 
-    <div class="container">
-        <aside id="sidebar"></aside>
-        <main>
-            <div class="content">
+    <!-- Two-column layout: sidebar + content -->
+    <div class="page-layout">
+        <aside id="sidebar" class="page-sidebar" aria-label="Site navigation"></aside>
+        <main class="page-content">
+            <div class="content-body">
                 <h1 id="infrastructure">Infrastructure</h1>
                 <p><strong>Purpose</strong>: Document the production
                 deployment topology, Koyeb service configuration,
@@ -299,189 +578,178 @@ INFO  Started StockEaseApplication in 4.1s</code></pre>
         </main>
     </div>
 
-    <footer>
-        <div class="footer-content">
-            <p><strong>StockEase</strong> - Inventory Management System</p>
-            <p>Architecture Documentation | Generated with Enterprise Standards</p>
-            <p style="opacity: 0.7; font-size: 0.85rem;">© 2025 Team StockEase. All rights reserved.</p>
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p><strong>StockEase</strong> — Inventory Management System</p>
+            <p>Architecture Documentation</p>
         </div>
     </footer>
 
+    <!--
+        Sidebar navigation
+        ==================
+        Built dynamically so a single source of truth covers all pages.
+        To add or remove a section, edit the navigation object below.
+        Active link is highlighted based on the current page URL.
+    -->
     <script>
-        // Navigation Menu (absolute paths from site root)
         const navigation = {
             'API Documentation': [
-                { label: 'Overview', href: '/stockease/api-docs.html' },
+                { label: 'Interactive API Reference', href: '/stockease/api-docs.html' },
             ],
             'Architecture': [
-                { label: 'Overview', href: '/stockease/architecture/system/overview.html' },
-                { label: 'Übersicht (Deutsch)', href: '/stockease/architecture/system/overview.de.html' },
-                { label: 'System Layers', href: '/stockease/architecture/system/layers.html' },
-                { label: 'Backend Architecture', href: '/stockease/architecture/system/backend.html' },
-                { label: 'Frontend Architecture', href: '/stockease/architecture/system/frontend-integration.html' },
-                { label: 'Security Architecture', href: '/stockease/architecture/system/security.html' },
-                { label: 'Deployment Strategy', href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Overview',                href: '/stockease/architecture/system/overview.html' },
+                { label: 'Übersicht (Deutsch)',     href: '/stockease/architecture/system/overview.de.html' },
+                { label: 'System Layers',           href: '/stockease/architecture/system/layers.html' },
+                { label: 'Backend Architecture',    href: '/stockease/architecture/system/backend.html' },
+                { label: 'Security Architecture',   href: '/stockease/architecture/system/security.html' },
+                { label: 'Frontend Integration',    href: '/stockease/architecture/system/frontend-integration.html' },
             ],
             'Design Decisions': [
-                { label: 'Index', href: '/stockease/architecture/decisions/index.html' },
+                { label: 'ADR Index',               href: '/stockease/architecture/decisions/index.html' },
+                { label: 'Database Choice',         href: '/stockease/architecture/decisions/001-db.html' },
+                { label: 'Validation Strategy',     href: '/stockease/architecture/decisions/002-validation.html' },
+                { label: 'Auth Strategy',           href: '/stockease/architecture/decisions/003-auth.html' },
             ],
             'Components': [
-                { label: 'Index', href: '/stockease/architecture/components/index.html' },
-                { label: 'Analytics Service', href: '/stockease/architecture/components/analytics-service.html' },
+                { label: 'Index',                   href: '/stockease/architecture/components/index.html' },
+                { label: 'Analytics Service',       href: '/stockease/architecture/components/analytics-service.html' },
             ],
             'Patterns': [
-                { label: 'Index', href: '/stockease/architecture/patterns/index.html' },
-                { label: 'Repository Pattern', href: '/stockease/architecture/patterns/repository-pattern.html' },
-                { label: 'Security Patterns', href: '/stockease/architecture/patterns/security-patterns.html' },
+                { label: 'Index',                   href: '/stockease/architecture/patterns/index.html' },
+                { label: 'Repository Pattern',      href: '/stockease/architecture/patterns/repository-pattern.html' },
+                { label: 'Security Patterns',       href: '/stockease/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture', href: '/stockease/architecture/testing/testing-architecture.html' },
-                { label: 'Test Pyramid', href: '/stockease/architecture/testing/pyramid.html' },
-                { label: 'Strategy', href: '/stockease/architecture/testing/strategy.html' },
-                { label: 'Spring Slices', href: '/stockease/architecture/testing/spring-slices.html' },
-                { label: 'Test Data Fixtures', href: '/stockease/architecture/testing/test-data-fixtures.html' },
-                { label: 'Security Tests', href: '/stockease/architecture/testing/security-tests.html' },
-                { label: 'Naming Conventions', href: '/stockease/architecture/testing/naming-conventions.html' },
-                { label: 'Test Matrix', href: '/stockease/architecture/testing/matrix.html' },
-                { label: 'Coverage & Quality', href: '/stockease/architecture/testing/coverage-and-quality.html' },
-                { label: 'Controller Integration', href: '/stockease/architecture/testing/controller-integration.html' },
-                { label: 'CI Pipeline Tests', href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
+                { label: 'Architecture',            href: '/stockease/architecture/testing/testing-architecture.html' },
+                { label: 'Test Pyramid',            href: '/stockease/architecture/testing/pyramid.html' },
+                { label: 'Strategy',                href: '/stockease/architecture/testing/strategy.html' },
+                { label: 'Spring Slices',           href: '/stockease/architecture/testing/spring-slices.html' },
+                { label: 'Test Data Fixtures',      href: '/stockease/architecture/testing/test-data-fixtures.html' },
+                { label: 'Security Tests',          href: '/stockease/architecture/testing/security-tests.html' },
+                { label: 'Naming Conventions',      href: '/stockease/architecture/testing/naming-conventions.html' },
+                { label: 'Test Matrix',             href: '/stockease/architecture/testing/matrix.html' },
+                { label: 'Coverage & Quality',      href: '/stockease/architecture/testing/coverage-and-quality.html' },
+                { label: 'Controller Integration',  href: '/stockease/architecture/testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests',       href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
             ],
             'Deployment': [
-                { label: 'Overview', href: '/stockease/architecture/deployment.html' },
-                { label: 'CI/CD Pipeline', href: '/stockease/architecture/deployment/ci-pipeline.html' },
-                { label: 'Docker Strategy', href: '/stockease/architecture/deployment/docker-strategy.html' },
-                { label: 'Staging Config', href: '/stockease/architecture/deployment/staging-config.html' },
+                { label: 'Overview',                href: '/stockease/architecture/deployment/index.html' },
+                { label: 'Infrastructure',          href: '/stockease/architecture/deployment/infrastructure.html' },
+                { label: 'CI/CD Pipeline',          href: '/stockease/architecture/deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy',         href: '/stockease/architecture/deployment/docker-strategy.html' },
+                { label: 'Staging Config',          href: '/stockease/architecture/deployment/staging-config.html' },
             ],
-            'Reference': [
+            'Guides': [
+                { label: 'Contributing',            href: '/stockease/generated/guides/contributing.html' },
                 { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
-                { label: 'Contributing', href: '/stockease/generated/guides/contributing.html' },
-            ],
-            'Documentation Index': [
-                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
             ],
             'Quality & Coverage': [
-                { label: 'Test Coverage Report', href: '/stockease/coverage/index.html' },
+                { label: 'Full Documentation Map', href: '/stockease/generated/index.html' },
+                { label: 'Test Coverage Report',   href: '/stockease/coverage/index.html' },
             ],
         };
 
-        // Build sidebar
         function buildSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
 
-            Object.entries(navigation).forEach(([section, links]) => {
-                const navSection = document.createElement('div');
-                navSection.className = 'nav-section';
+            const currentPath = window.location.pathname;
 
-                const title = document.createElement('div');
-                title.className = 'nav-section-title';
-                title.textContent = section;
-                navSection.appendChild(title);
+            Object.entries(navigation).forEach(([section, links]) => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'nav-section';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'nav-section__title';
+                titleEl.textContent = section;
+                sectionEl.appendChild(titleEl);
 
                 const ul = document.createElement('ul');
+                ul.className = 'nav-section__list';
+
                 links.forEach(link => {
                     const li = document.createElement('li');
                     const a = document.createElement('a');
-
                     a.href = link.href;
                     a.textContent = link.label;
+                    a.className = 'nav-section__link';
 
-                    // Highlight current page
-                    const currentPath = window.location.pathname;
-                    const linkPath = link.href.replace('.html', '');
-                    if (currentPath.endsWith(link.href) || currentPath.includes(linkPath)) {
-                        a.className = 'active';
+                    // Highlight the active page
+                    if (currentPath.endsWith(link.href) ||
+                        currentPath.includes(link.href.replace('.html', ''))) {
+                        a.classList.add('nav-section__link--active');
                     }
 
                     li.appendChild(a);
                     ul.appendChild(li);
                 });
 
-                navSection.appendChild(ul);
-                sidebar.appendChild(navSection);
+                sectionEl.appendChild(ul);
+                sidebar.appendChild(sectionEl);
             });
         }
 
-        // Build table of contents highlight
-        function initTableOfContents() {
+        // Highlight TOC link matching the visible heading on scroll
+        function initTocHighlight() {
             const tocLinks = document.querySelectorAll('nav.toc a');
             const headings = document.querySelectorAll('h2, h3');
 
+            if (!tocLinks.length || !headings.length) return;
+
             window.addEventListener('scroll', () => {
-                let currentHeading = null;
-                headings.forEach(heading => {
-                    if (heading.getBoundingClientRect().top <= 100) {
-                        currentHeading = heading;
-                    }
+                let current = null;
+                headings.forEach(h => {
+                    if (h.getBoundingClientRect().top <= 120) current = h;
                 });
 
                 tocLinks.forEach(link => {
                     link.classList.remove('active');
-                    if (currentHeading) {
-                        const href = link.getAttribute('href');
-                        if (href === '#' + currentHeading.id) {
-                            link.classList.add('active');
-                        }
+                    if (current && link.getAttribute('href') === '#' + current.id) {
+                        link.classList.add('active');
                     }
                 });
             });
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             buildSidebar();
-            initTableOfContents();
+            initTocHighlight();
         });
     </script>
 
+    <!--
+        Mermaid diagram rendering
+        =========================
+        Renders architecture diagrams written as fenced mermaid code blocks
+        in Markdown. The Lua filter in the docs pipeline converts them to
+        <div class="mermaid"> elements before Pandoc processes the HTML.
+    -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        mermaid.initialize({ 
+
+        mermaid.initialize({
             startOnLoad: false,
             theme: 'default',
             securityLevel: 'loose',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         });
-        
-        // Look for mermaid divs that were generated by Pandoc Lua filter
-        const mermaidDivs = document.querySelectorAll('div.mermaid');
-        
-        mermaidDivs.forEach((div) => {
-            // Verify mermaid content is present
-            if (div.textContent.trim()) {
-                // Content is ready for rendering
-            }
+
+        // Pandoc fallback: convert code.language-mermaid blocks to .mermaid divs
+        document.querySelectorAll('code.language-mermaid').forEach(code => {
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code.textContent;
+            code.closest('pre')?.replaceWith(div);
         });
-        
-        // Also look for any code.language-mermaid blocks (fallback for compatibility)
-        const codeMermaidBlocks = document.querySelectorAll('code.language-mermaid');
-        
-        codeMermaidBlocks.forEach((code) => {
-            code.classList.remove('language-mermaid');
-            code.classList.add('mermaid');
-            // If wrapped in pre, mark pre as mermaid too
-            if (code.parentElement.tagName === 'PRE') {
-                code.parentElement.classList.add('mermaid-block');
-            }
-        });
-        
-        // Wait for DOM to be fully loaded, then render all mermaid diagrams
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                    await mermaid.run();
-                } catch (err) {
-                    console.error('Mermaid rendering error:', err);
-                }
-            });
-        } else {
-            // Already loaded
-            mermaid.run().catch(err => {
-                console.error('Mermaid rendering error:', err);
-            });
+
+        // Render all mermaid blocks
+        try {
+            await mermaid.run();
+        } catch (err) {
+            console.error('Mermaid rendering error:', err);
         }
     </script>
+
 </body>
 </html>

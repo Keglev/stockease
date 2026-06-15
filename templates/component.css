@@ -1,0 +1,340 @@
+/*
+ * component.css — StockEase Documentation
+ * ==========================================
+ * Scope: All reusable UI components used inside documentation pages.
+ * Imported by: enterprise-docs.html (all doc pages).
+ * Depends on:  base.css (must be loaded first for CSS variables).
+ *
+ * Sections:
+ *   1. Sidebar navigation
+ *   2. Content typography (headings, paragraphs, lists)
+ *   3. Inline code and code blocks
+ *   4. Tables
+ *   5. Blockquotes
+ *   6. Alert/info boxes
+ *   7. Table of contents (in-page nav)
+ *   8. Mermaid diagram containers
+ *   9. Syntax highlighting (basic, no external dependency)
+ */
+
+/* ============================================================================
+   1. SIDEBAR NAVIGATION
+   ========================================================================= */
+
+/* Each navigation group (e.g. "Architecture", "Testing") */
+.nav-section {
+    margin-bottom: 1.75rem;
+}
+
+/* Section label — uppercase, muted, small */
+.nav-section__title {
+    font-size:      0.78rem;
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color:          var(--color-text-light);
+    padding:        0.4rem 0;
+    margin-bottom:  0.25rem;
+}
+
+.nav-section__list {
+    list-style: none;
+}
+
+.nav-section__list li {
+    margin: 0.15rem 0;
+}
+
+/* Individual nav link */
+.nav-section__link {
+    display:       block;
+    padding:       0.4rem 0.75rem;
+    color:         var(--color-text);
+    border-radius: var(--radius-sm);
+    font-size:     var(--font-size-sm);
+    transition:    background-color 0.15s, color 0.15s;
+    text-decoration: none;
+}
+
+.nav-section__link:hover {
+    background-color: var(--color-primary-light);
+    color:            var(--color-primary-dark);
+    text-decoration:  none;
+}
+
+/* Active page highlight */
+.nav-section__link--active {
+    background-color: var(--color-primary);
+    color:            white;
+    font-weight:      600;
+}
+
+.nav-section__link--active:hover {
+    background-color: var(--color-primary-dark);
+    color:            white;
+}
+
+/* ============================================================================
+   2. CONTENT TYPOGRAPHY
+   Applies inside .content-body only to avoid leaking into the sidebar.
+   ========================================================================= */
+
+.content-body h1 {
+    font-size:     2rem;
+    color:         var(--color-primary-dark);
+    border-bottom: 3px solid var(--color-primary);
+    padding-bottom: 0.5rem;
+    margin-bottom:  0.75rem;
+}
+
+.content-body h2 {
+    font-size:    1.5rem;
+    color:        var(--color-primary-dark);
+    margin-top:   1.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.content-body h3 {
+    font-size:    1.2rem;
+    color:        var(--color-text);
+    margin-top:   1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.content-body h4,
+.content-body h5,
+.content-body h6 {
+    margin-top:    1rem;
+    margin-bottom: 0.5rem;
+}
+
+.content-body p {
+    margin-bottom: 1rem;
+}
+
+.content-body ul,
+.content-body ol {
+    margin-left:   1.5rem;
+    margin-bottom: 1rem;
+}
+
+.content-body li {
+    margin-bottom: 0.4rem;
+}
+
+/* ============================================================================
+   3. CODE
+   ========================================================================= */
+
+/* Inline code — e.g. `@RestControllerAdvice` */
+.content-body code {
+    background-color: var(--color-bg);
+    padding:          0.15rem 0.35rem;
+    border-radius:    var(--radius-sm);
+    font-family:      var(--font-family-mono);
+    font-size:        0.9em;
+    color:            var(--color-danger);
+}
+
+/* Fenced code blocks */
+.content-body pre {
+    background-color: #1e1e1e;
+    color:            #d4d4d4;
+    padding:          1.25rem;
+    border-radius:    var(--radius-md);
+    overflow-x:       auto;
+    margin-bottom:    1.25rem;
+    border-left:      3px solid var(--color-primary);
+}
+
+/* Reset inline code styles inside pre blocks */
+.content-body pre code {
+    background: none;
+    color:      inherit;
+    padding:    0;
+    font-size:  0.9rem;
+}
+
+/* ============================================================================
+   4. TABLES
+   ========================================================================= */
+
+.content-body table {
+    width:          100%;
+    border-collapse: collapse;
+    margin-bottom:  1.25rem;
+    font-size:      var(--font-size-sm);
+}
+
+.content-body table thead {
+    background-color: var(--color-primary);
+    color:            white;
+}
+
+.content-body table th {
+    padding:    0.75rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.content-body table td {
+    padding:     0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.content-body table tbody tr:nth-child(even) {
+    background-color: var(--color-bg);
+}
+
+.content-body table tbody tr:hover {
+    background-color: var(--color-primary-light);
+}
+
+/* ============================================================================
+   5. BLOCKQUOTES
+   ========================================================================= */
+
+.content-body blockquote {
+    border-left:  4px solid var(--color-primary);
+    padding-left: 1rem;
+    margin-left:  0;
+    margin-bottom: 1rem;
+    color:        var(--color-text-light);
+    font-style:   italic;
+}
+
+/* ============================================================================
+   6. ALERT / INFO BOXES
+   Use these classes on <div> elements in Markdown via HTML passthrough.
+   Example: <div class="info-box">Note: ...</div>
+   ========================================================================= */
+
+.info-box,
+.warning-box,
+.success-box,
+.danger-box {
+    padding:       1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    border-left:   4px solid;
+}
+
+.info-box {
+    background-color: #e7f3ff;
+    border-color:     var(--color-info);
+    color:            #004a87;
+}
+
+.warning-box {
+    background-color: #fff3cd;
+    border-color:     var(--color-warning);
+    color:            #856404;
+}
+
+.success-box {
+    background-color: #d4edda;
+    border-color:     var(--color-success);
+    color:            #155724;
+}
+
+.danger-box {
+    background-color: #f8d7da;
+    border-color:     var(--color-danger);
+    color:            #721c24;
+}
+
+/* ============================================================================
+   7. TABLE OF CONTENTS (in-page)
+   Rendered by Pandoc when --toc flag is set. Displayed at the top of
+   content pages as a compact scrollable box.
+   ========================================================================= */
+
+nav.toc {
+    background-color: var(--color-bg);
+    padding:          1rem;
+    border-radius:    var(--radius-sm);
+    margin-bottom:    2rem;
+    max-height:       350px;
+    overflow-y:       auto;
+    border-left:      3px solid var(--color-primary);
+}
+
+nav.toc ul {
+    list-style: none;
+    margin-left: 0;
+}
+
+nav.toc li {
+    margin: 0.2rem 0;
+}
+
+nav.toc a {
+    font-size: var(--font-size-sm);
+    color:     var(--color-primary);
+}
+
+nav.toc > ul > li > a {
+    font-weight: 600;
+}
+
+nav.toc a.active {
+    color:       var(--color-primary-dark);
+    font-weight: 700;
+}
+
+/* ============================================================================
+   8. MERMAID DIAGRAM CONTAINERS
+   Architecture diagrams are written as fenced mermaid blocks in Markdown.
+   The Lua filter converts them to <div class="mermaid"> before Pandoc renders.
+   ========================================================================= */
+
+/* Primary mermaid container */
+.mermaid {
+    display:          flex;
+    justify-content:  center;
+    align-items:      center;
+    margin:           2rem 0;
+    padding:          1rem;
+    background-color: var(--color-bg-white);
+    border-radius:    var(--radius-md);
+    border:           1px solid var(--color-border);
+}
+
+/* Prevent overflow on large diagrams */
+.mermaid svg {
+    max-width: 100%;
+    height:    auto;
+}
+
+/* Pandoc fallback class before JS conversion */
+code.language-mermaid {
+    display:    block;
+    background: transparent;
+    padding:    0;
+    border:     none;
+    color:      inherit;
+}
+
+pre code.language-mermaid {
+    background: transparent;
+    padding:    0;
+}
+
+/* Prevent pre styling from showing around mermaid blocks */
+pre.mermaid-block {
+    background: transparent;
+    border:     none;
+    padding:    0;
+    margin:     2rem 0;
+}
+
+/* ============================================================================
+   9. SYNTAX HIGHLIGHTING (basic)
+   Applied to code blocks when no external highlighter is loaded.
+   ========================================================================= */
+
+.hljs-keyword { color: #569cd6; }
+.hljs-string  { color: #ce9178; }
+.hljs-number  { color: #b5cea8; }
+.hljs-attr    { color: #9cdcfe; }
+.hljs-comment { color: #6a9955; font-style: italic; }
