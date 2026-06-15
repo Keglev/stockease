@@ -14,11 +14,11 @@ import io.jsonwebtoken.security.Keys;
 /**
  * Tests for {@link JwtUtil} covering token generation, validation, and claim extraction.
  */
-@SuppressWarnings("unused") // @BeforeEach method is invoked by JUnit via reflection; IDE does not detect the indirect call
 class JwtUtilTest {
 
     private JwtUtil jwtUtil;
 
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUp() {
         jwtUtil = new JwtUtil();

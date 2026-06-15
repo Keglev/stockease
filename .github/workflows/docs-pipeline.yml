@@ -7,6 +7,8 @@ on:
       - 'docs/**'
       - 'pom.xml'
       - '.github/workflows/docs-pipeline.yml'
+      - '.github/scripts/templates/**'
+      - '.github/scripts/docs/**'
   workflow_dispatch:
 
 permissions:

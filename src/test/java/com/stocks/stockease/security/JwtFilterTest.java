@@ -26,7 +26,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
  * Tests for {@link JwtFilter} covering all branch paths of the Bearer token filter.
  */
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("unused") // @BeforeEach and @AfterEach methods are invoked by JUnit via reflection; IDE does not detect the indirect call
 class JwtFilterTest {
 
     @Mock
@@ -37,12 +36,14 @@ class JwtFilterTest {
 
     private JwtFilter jwtFilter;
 
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUp() {
         jwtFilter = new JwtFilter(jwtUtil, userDetailsService);
         SecurityContextHolder.clearContext();
     }
 
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();

@@ -20,7 +20,6 @@ import com.stocks.stockease.repository.UserRepository;
  * Tests for {@link CustomUserDetailsService} covering user lookup, authority mapping, and not-found behavior.
  */
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("unused") // @BeforeEach method is invoked by JUnit via reflection; IDE does not detect the indirect call
 class CustomUserDetailsServiceTest {
 
     @Mock
@@ -28,6 +27,7 @@ class CustomUserDetailsServiceTest {
 
     private CustomUserDetailsService userDetailsService;
 
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUp() {
         userDetailsService = new CustomUserDetailsService(userRepository);
