@@ -56,11 +56,15 @@ void testLowStockProductsWithRoles(String username, String role) { }
 ## Scope
 
 ### In Scope
-- REST endpoints: `AuthController`, `ProductController`
+- REST endpoints: `AuthController`, `HealthController`, `ProductController`
 - Authentication and JWT token flow
 - Role-based access control (ADMIN vs USER)
 - Request validation (quantity, price, required fields)
 - Application bootstrap (Spring context loads)
+- Security utilities: `JwtUtil`, `JwtFilter`, `CustomUserDetailsService`, `CustomAuthenticationEntryPoint`
+- Config layer idempotency guards: `DataSeeder`, `FlywayConfiguration`
+- Model null-guard branches: `Product`
+- Exception handler coverage: `GlobalExceptionHandler`
 
 ### Out of Scope
 

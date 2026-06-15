@@ -83,17 +83,26 @@ SUCCESS
 
 | Class | Type | Methods |
 |-------|------|---------|
-| `AuthControllerTest` | Unit | 4 |
-| `ProductControllerTest` | Slice | 3+ |
-| `ProductCreateControllerTest` | Slice | 3 |
+| `AuthControllerTest` | Unit | 7 |
+| `HealthControllerTest` | Unit | 3 |
+| `GlobalExceptionHandlerTest` | Unit | 14 |
+| `DataSeederTest` | Unit | 1 |
+| `FlywayConfigurationTest` | Unit | 1 |
+| `ProductTest` | Unit | 2 |
+| `JwtUtilTest` | Unit | 8 |
+| `JwtFilterTest` | Unit | 4 |
+| `CustomUserDetailsServiceTest` | Unit | 3 |
+| `CustomAuthenticationEntryPointTest` | Unit | 1 |
+| `ProductControllerTest` | Slice | 6 |
+| `ProductCreateControllerTest` | Slice | 6 |
 | `ProductFetchControllerTest` | Slice | 4 |
 | `ProductUpdateControllerTest` | Slice | 3 |
-| `ProductInvalidUpdateControllerTest` | Slice | 2 |
-| `ProductDeleteControllerTest` | Slice | 2 |
-| `ProductPaginationControllerTest` | Slice | 2 |
+| `ProductInvalidUpdateControllerTest` | Slice | 8 |
+| `ProductDeleteControllerTest` | Slice | 3 |
+| `ProductPaginationControllerTest` | Slice | 3 |
 | `StockEaseApplicationTests` | Integration | 1 |
 
-Parameterized tests expand the total method count to 65+.
+Parameterized slice tests expand to 56 invocations; total test invocations across all classes is ~101.
 
 ---
 

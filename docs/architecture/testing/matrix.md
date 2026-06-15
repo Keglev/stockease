@@ -8,10 +8,11 @@
 
 | Layer | Classes | Test Classes | Coverage | Status |
 |-------|---------|--------------|----------|--------|
-| Controller | 2 | 8 | ~85% | Current |
-| Security | 2 | Distributed across controller tests | ~75% | Current |
-| Config | 1 | 1 (bootstrap) | ~50% | Adequate |
-| Model / Entity | 2 | 0 (tested via API responses) | ~30% | Acceptable |
+| Controller | 3 | 9 | ~85% | Current |
+| Security | 4 | 4 dedicated test classes | ~90% | Current |
+| Exception | 1 | 1 (GlobalExceptionHandlerTest) | ~90% | Current |
+| Config | 3+ | 2 (DataSeederTest, FlywayConfigurationTest) | ~65% | Current |
+| Model / Entity | 2 | 1 (ProductTest) | ~55% | Current |
 | Repository | 1 | 0 (mocked) | 0% | Intentional |
 
 ---
@@ -32,6 +33,7 @@
 | `/api/products/{id}/price` | PUT | `ProductUpdateControllerTest`, `ProductInvalidUpdateControllerTest` | Slice | Done |
 | `/api/products/{id}/name` | PUT | `ProductUpdateControllerTest`, `ProductInvalidUpdateControllerTest` | Slice | Done |
 | `/api/products/{id}` | DELETE | `ProductDeleteControllerTest` | Slice | Done |
+| `/health` | GET | `HealthControllerTest` | Unit | Done |
 
 ---
 
@@ -116,6 +118,61 @@ All cells above are covered by existing tests.
 ### StockEaseApplicationTests (Integration)
 - `contextLoads_withTestProfile_applicationStartsSuccessfully`
 
+### HealthControllerTest (Unit)
+- `healthCheck_whenConnectionIsValid_returns200`
+- `healthCheck_whenConnectionIsNotValid_returns500WithUnknownMessage`
+- `healthCheck_whenGetConnectionThrowsSQLException_returns500WithErrorMessage`
+
+### GlobalExceptionHandlerTest (Unit)
+- `handleNoSuchElementException_returns404WithExceptionMessage`
+- `handleEntityNotFoundException_returns404WithExceptionMessage`
+- `handleJwtException_returns401`
+- `handleBadCredentialsException_returns401`
+- `handleAccessDeniedException_returns403`
+- `handleIllegalArgumentException_returns400WithOriginalMessage`
+- `handleValidationException_returns400WithFieldErrors`
+- `handleHttpMessageNotReadableException_withNullMessage_returnsDefaultMessage`
+- `handleHttpMessageNotReadableException_withGenericError_returnsDefaultMessage`
+- `handleHttpMessageNotReadableException_withDeserializeError_returnsSpecificMessage`
+- `handleHandlerMethodValidationException_withConstraintViolationCause_returns400WithViolationDetails`
+- `handleHandlerMethodValidationException_withBindExceptionCause_returns400WithFieldErrors`
+- `handleHandlerMethodValidationException_withUnknownCause_returns400WithUnknownKey`
+- `handleGeneralException_returns500`
+
+### DataSeederTest (Unit)
+- `seedData_whenUsersAndProductsAlreadyExist_skipsAllInsertions`
+
+### FlywayConfigurationTest (Unit)
+- `flyway_whenFlywayDisabled_returnsFlywayInstanceWithoutMigrating`
+
+### ProductTest (Unit)
+- `setQuantity_withNullQuantity_setsTotalValueToZero`
+- `setPrice_withNullPrice_setsTotalValueToZero`
+
+### JwtUtilTest (Unit)
+- `generateToken_returnsCompactJwtString`
+- `generateToken_embeddedClaimsMatchInputs`
+- `validateToken_withValidToken_returnsTrue`
+- `validateToken_withMalformedToken_returnsFalse`
+- `validateToken_withExpiredToken_returnsFalse`
+- `extractUsername_returnsCorrectSubjectClaim`
+- `extractRole_returnsCorrectRoleClaim`
+- `extractClaim_withCustomResolver_returnsExpectedValue`
+
+### JwtFilterTest (Unit)
+- `doFilterInternal_withNoAuthorizationHeader_doesNotSetAuthentication`
+- `doFilterInternal_withNonBearerAuthorizationHeader_doesNotSetAuthentication`
+- `doFilterInternal_withValidBearerToken_populatesSecurityContext`
+- `doFilterInternal_withInvalidBearerToken_doesNotSetAuthentication`
+
+### CustomUserDetailsServiceTest (Unit)
+- `loadUserByUsername_withExistingUser_returnsUserDetailsWithCorrectFields`
+- `loadUserByUsername_withAdminUser_returnsAdminAuthority`
+- `loadUserByUsername_withUnknownUsername_throwsUsernameNotFoundException`
+
+### CustomAuthenticationEntryPointTest (Unit)
+- `commence_writesUnauthorizedJsonResponse`
+
 ---
 
 ## Coverage Gaps
@@ -123,7 +180,6 @@ All cells above are covered by existing tests.
 | Gap | Priority | Action |
 |-----|----------|--------|
 | Repository queries — no `@DataJpaTest` | Low | Add when queries become complex |
-| JWT expiry and token tampering | Low | Add when security hardening is prioritized |
 | E2E user flows | Future | Out of scope for this repo |
 
 ---

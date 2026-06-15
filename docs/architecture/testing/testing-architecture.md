@@ -29,10 +29,14 @@ open backend/target/site/jacoco/index.html
 ```
 backend/src/test/
 ├── java/com/stocks/stockease/
-│   ├── config/test/
-│   │   └── TestConfig.java
+│   ├── config/
+│   │   ├── test/
+│   │   │   └── TestConfig.java
+│   │   ├── DataSeederTest.java
+│   │   └── FlywayConfigurationTest.java
 │   ├── controller/
 │   │   ├── AuthControllerTest.java
+│   │   ├── HealthControllerTest.java
 │   │   ├── ProductControllerTest.java
 │   │   ├── ProductCreateControllerTest.java
 │   │   ├── ProductDeleteControllerTest.java
@@ -40,6 +44,15 @@ backend/src/test/
 │   │   ├── ProductInvalidUpdateControllerTest.java
 │   │   ├── ProductPaginationControllerTest.java
 │   │   └── ProductUpdateControllerTest.java
+│   ├── exception/
+│   │   └── GlobalExceptionHandlerTest.java
+│   ├── model/
+│   │   └── ProductTest.java
+│   ├── security/
+│   │   ├── CustomAuthenticationEntryPointTest.java
+│   │   ├── CustomUserDetailsServiceTest.java
+│   │   ├── JwtFilterTest.java
+│   │   └── JwtUtilTest.java
 │   └── StockEaseApplicationTests.java
 └── resources/
     └── application-test.properties

@@ -17,12 +17,21 @@ Rules:
 | Test Class | Production Class | Scope |
 |------------|-----------------|-------|
 | `AuthControllerTest` | `AuthController` | Unit — login logic |
+| `HealthControllerTest` | `HealthController` | Unit — DB liveness probe branches |
 | `ProductCreateControllerTest` | `ProductController` | Slice — POST /api/products |
 | `ProductFetchControllerTest` | `ProductController` | Slice — GET endpoints |
 | `ProductUpdateControllerTest` | `ProductController` | Slice — PUT happy-path updates |
 | `ProductInvalidUpdateControllerTest` | `ProductController` | Slice — PUT validation and error paths |
 | `ProductDeleteControllerTest` | `ProductController` | Slice — DELETE endpoints |
 | `ProductPaginationControllerTest` | `ProductController` | Slice — pagination |
+| `GlobalExceptionHandlerTest` | `GlobalExceptionHandler` | Unit — all exception handler methods |
+| `ProductTest` | `Product` | Unit — null-guard branches in updateTotalValue |
+| `DataSeederTest` | `DataSeeder` | Unit — idempotency guards |
+| `FlywayConfigurationTest` | `FlywayConfiguration` | Unit — disabled-flyway branch |
+| `JwtUtilTest` | `JwtUtil` | Unit — token generation, validation, claim extraction |
+| `JwtFilterTest` | `JwtFilter` | Unit — all Bearer token filter branch paths |
+| `CustomUserDetailsServiceTest` | `CustomUserDetailsService` | Unit — user lookup and not-found behavior |
+| `CustomAuthenticationEntryPointTest` | `CustomAuthenticationEntryPoint` | Unit — 401 JSON error response |
 
 ---
 

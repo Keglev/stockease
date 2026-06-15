@@ -10,11 +10,15 @@
 |-------|------|-----|--------|
 | JWT Generation | Token created on login | `AuthControllerTest` | Done |
 | JWT Validation | Token accepted by filter | MockMvc with mocked `JwtUtil` | Done |
+| JWT Utilities | Token generation, validation, claim extraction | `JwtUtilTest` (plain unit) | Done |
+| JWT Filter | Bearer header parsing, SecurityContext population | `JwtFilterTest` (plain unit) | Done |
+| User details loading | User lookup and authority mapping | `CustomUserDetailsServiceTest` | Done |
+| Auth entry point | 401 JSON error response | `CustomAuthenticationEntryPointTest` | Done |
 | Role enforcement | ADMIN vs USER access | MockMvc with `.roles()` | Done |
 | Anonymous access | No token → 401 | MockMvc without auth | Done |
 | CSRF | Token required on mutations | `.with(csrf())` | Done |
-| Token expiry | Expired token → 401 | Not yet tested | Future |
-| Token tampering | Modified token → 401 | Not yet tested | Future |
+| Token expiry | Expired token → `validateToken` returns false | `JwtUtilTest.validateToken_withExpiredToken_returnsFalse` | Done |
+| Token tampering | Malformed token → `validateToken` returns false | `JwtUtilTest.validateToken_withMalformedToken_returnsFalse` | Done |
 
 ---
 

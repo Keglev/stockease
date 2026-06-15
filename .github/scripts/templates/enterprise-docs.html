@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>$title$ - StockEase Architecture Documentation</title>
-    <!--
+    $--
         StockEase Page Template
         =======================
         Pandoc HTML template used by the docs pipeline to render all
@@ -25,7 +25,7 @@
 
         Dependencies:
           Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    $
     <link rel="stylesheet" href="$root$/templates/base.css">
     <link rel="stylesheet" href="$root$/templates/component.css">
     <style>
@@ -109,7 +109,7 @@
         </div>
     </footer>
 
-    <!--
+    $--
         Sidebar navigation
         ==================
         Built dynamically so a single source of truth covers all pages.
@@ -118,7 +118,7 @@
 
         To add or remove a section, edit the navigation object below.
         Active link is highlighted based on the current page URL.
-    -->
+    $
     <script>
         const navigation = {
             'API Documentation': [
@@ -256,13 +256,13 @@
         });
     </script>
 
-    <!--
+    $--
         Mermaid diagram rendering
         =========================
         Renders architecture diagrams written as fenced mermaid code blocks
         in Markdown. The Lua filter in the docs pipeline converts them to
         <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    $
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 
