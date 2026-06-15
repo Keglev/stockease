@@ -15,7 +15,7 @@ StockEase is an enterprise-grade inventory management system built with Spring B
 
 ```mermaid
 graph TD
-    Root(["docs/index.md - You are here"])
+    Root["docs/index.md - You are here"]
 
     Root --> Arch["architecture/"]
     Arch --> System["system/ - Overview, Backend, Layers, Security, Frontend"]

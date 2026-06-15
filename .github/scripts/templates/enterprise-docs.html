@@ -12,22 +12,22 @@
 
         Variables injected by Pandoc at build time:
           $title$  — page title from the Markdown front matter
-          [body]   — rendered HTML content from the Markdown source
-          [root]   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
+          $body$   — rendered HTML content from the Markdown source
+          $root$   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
                      calculated per file by generate-docs.sh and passed via --metadata=root:
 
         Layout: sticky header + two-column grid (sidebar | content) + footer.
         Sidebar is built dynamically from the navigation map in the script below.
 
-        Stylesheets (paths are relative via [root] so they resolve at any nesting depth):
+        Stylesheets (paths are relative via $root$ so they resolve at any nesting depth):
           base.css       — CSS variables, reset, typography, layout
           component.css  — sidebar, cards, code, tables, mermaid, print
 
         Dependencies:
           Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
     -->
-    <link rel="stylesheet" href="[root]/templates/base.css">
-    <link rel="stylesheet" href="[root]/templates/component.css">
+    <link rel="stylesheet" href="$root$/templates/base.css">
+    <link rel="stylesheet" href="$root$/templates/component.css">
 </head>
 <body>
 
@@ -52,7 +52,7 @@
         <aside id="sidebar" class="page-sidebar" aria-label="Site navigation"></aside>
         <main class="page-content">
             <div class="content-body">
-                [body]
+                $body$
             </div>
         </main>
     </div>

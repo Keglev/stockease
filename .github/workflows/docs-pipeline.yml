@@ -53,7 +53,8 @@ jobs:
             --source . \
             --output generated \
             --exclude "*/architecture/*" \
-            --exclude "*/templates/*"
+            --exclude "*/templates/*" \
+            --lua-filter
 
       - name: Fix directory links
         run: bash .github/scripts/docs/fix-directory-links.sh
