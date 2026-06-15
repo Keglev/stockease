@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Product.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.model</a> &gt; <span class="el_source">Product.java</span></div><h1>Product.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * Domain entity representing a product in the inventory system, persisted to the {@code product} table.
+ * Maintains a computed {@code totalValue} field that is automatically recalculated whenever {@code quantity} or {@code price} changes.
+ */
+@Data
+@Entity
+@Table(name = &quot;product&quot;)
+@NoArgsConstructor
+@AllArgsConstructor
+public class Product {
+
+    /** Unique product identifier used for API lookups. */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Human-readable product name used for display and search. */
+    @Column(nullable = false)
+    private String name;
+
+    /** Number of units in stock; triggers a {@code totalValue} recalculation when changed. */
+    @Column(nullable = false)
+    private Integer quantity;
+
+    /** Unit price of the product; triggers a {@code totalValue} recalculation when changed. */
+    @Column(nullable = false)
+    private Double price;
+
+    /** Total stock value computed as {@code quantity * price}, maintained automatically by the custom setters. */
+    @Column(nullable = false)
+    private Double totalValue;
+
+    /**
+     * Sets the quantity and recalculates {@code totalValue}.
+     *
+     * @param quantity new quantity in stock (must be non-negative)
+     */
+    public void setQuantity(Integer quantity) {
+<span class="fc" id="L51">        this.quantity = quantity;</span>
+<span class="fc" id="L52">        updateTotalValue();</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Sets the unit price and recalculates {@code totalValue}.
+     *
+     * @param price new unit price (must be positive)
+     */
+    public void setPrice(Double price) {
+<span class="fc" id="L61">        this.price = price;</span>
+<span class="fc" id="L62">        updateTotalValue();</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * Recalculates {@code totalValue} as {@code quantity * price}, defaulting to {@code 0.0} if either field is null.
+     */
+    private void updateTotalValue() {
+        // Prevent null arithmetic; use 0 if either quantity or price is null
+<span class="pc bpc" id="L70" title="2 of 4 branches missed.">        this.totalValue = (this.quantity != null &amp;&amp; this.price != null) ? this.quantity * this.price : 0.0;</span>
+<span class="fc" id="L71">    }</span>
+
+    /**
+     * Creates a product without an ID, computing {@code totalValue} from the given {@code quantity} and {@code price}.
+     *
+     * @param name product name (required)
+     * @param quantity stock quantity (required, non-negative)
+     * @param price unit price (required, positive)
+     */
+<span class="fc" id="L80">    public Product(String name, int quantity, double price) {</span>
+<span class="fc" id="L81">        this.name = name;</span>
+<span class="fc" id="L82">        this.quantity = quantity;</span>
+<span class="fc" id="L83">        this.price = price;</span>
+<span class="fc" id="L84">        this.totalValue = quantity * price;</span>
+<span class="fc" id="L85">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
