@@ -183,12 +183,14 @@ a:hover {
 }
 
 .page-sidebar {
-    padding: 2rem 0;
+    padding:   2rem 0;
+    min-width: 0;  /* prevent grid item from overflowing its column */
 }
 
 .page-content {
     padding:    2rem 0;
     min-height: calc(100vh - 200px);
+    min-width:  0;  /* prevent grid item from overflowing its column */
 }
 
 .content-body {
@@ -196,6 +198,8 @@ a:hover {
     border-radius: var(--radius-md);
     padding:       2rem;
     box-shadow:    var(--shadow-sm);
+    overflow-x:    auto;  /* wide tables / code blocks scroll inside the card, not the page */
+    min-width:     0;
 }
 
 /* ============================================================================

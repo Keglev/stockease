@@ -332,61 +332,65 @@ Documentation - StockEase Architecture Documentation</title>
     
     
     <script>
+        // Resolve the site base so links work both on GitHub Pages (/stockease)
+        // and when served locally with: python -m http.server -d target/docs/
+        const BASE = window.location.pathname.startsWith('/stockease/') ? '/stockease' : '';
+
         const navigation = {
             'API Documentation': [
-                { label: 'Interactive API Reference', href: '/stockease/api-docs.html' },
+                { label: 'Interactive API Reference', href: BASE + '/api-docs.html' },
             ],
             'Architecture': [
-                { label: 'Overview',                href: '/stockease/architecture/system/overview.html' },
-                { label: 'Übersicht (Deutsch)',     href: '/stockease/architecture/system/overview.de.html' },
-                { label: 'System Layers',           href: '/stockease/architecture/system/layers.html' },
-                { label: 'Backend Architecture',    href: '/stockease/architecture/system/backend.html' },
-                { label: 'Security Architecture',   href: '/stockease/architecture/system/security.html' },
-                { label: 'Frontend Integration',    href: '/stockease/architecture/system/frontend-integration.html' },
+                { label: 'Overview',                href: BASE + '/architecture/system/overview.html' },
+                { label: 'Übersicht (Deutsch)',     href: BASE + '/architecture/system/overview.de.html' },
+                { label: 'System Layers',           href: BASE + '/architecture/system/layers.html' },
+                { label: 'Backend Architecture',    href: BASE + '/architecture/system/backend.html' },
+                { label: 'Security Architecture',   href: BASE + '/architecture/system/security.html' },
+                { label: 'Frontend Integration',    href: BASE + '/architecture/system/frontend-integration.html' },
             ],
             'Design Decisions': [
-                { label: 'Index',                   href: '/stockease/architecture/decisions/index.html' },
-                { label: 'Database Choice',         href: '/stockease/architecture/decisions/001-database-choice.html' },
-                { label: 'Validation Strategy',     href: '/stockease/architecture/decisions/002-validation-strategy.html' },
-                { label: 'Auth Strategy',           href: '/stockease/architecture/decisions/003-authentication-mechanism.html' },
+                { label: 'Index',                   href: BASE + '/architecture/decisions/index.html' },
+                { label: 'Database Choice',         href: BASE + '/architecture/decisions/001-database-choice.html' },
+                { label: 'Validation Strategy',     href: BASE + '/architecture/decisions/002-validation-strategy.html' },
+                { label: 'Auth Strategy',           href: BASE + '/architecture/decisions/003-authentication-mechanism.html' },
             ],
             'Components': [
-                { label: 'Index',                   href: '/stockease/architecture/components/index.html' },
-                { label: 'Analytics Service',       href: '/stockease/architecture/components/analytics-service.html' },
+                { label: 'Index',                   href: BASE + '/architecture/components/index.html' },
+                { label: 'Analytics Service',       href: BASE + '/architecture/components/analytics-service.html' },
             ],
             'Patterns': [
-                { label: 'Index',                   href: '/stockease/architecture/patterns/index.html' },
-                { label: 'Repository Pattern',      href: '/stockease/architecture/patterns/repository-pattern.html' },
-                { label: 'Security Patterns',       href: '/stockease/architecture/patterns/security-patterns.html' },
+                { label: 'Index',                   href: BASE + '/architecture/patterns/index.html' },
+                { label: 'Repository Pattern',      href: BASE + '/architecture/patterns/repository-pattern.html' },
+                { label: 'Security Patterns',       href: BASE + '/architecture/patterns/security-patterns.html' },
             ],
             'Testing': [
-                { label: 'Architecture',            href: '/stockease/architecture/testing/testing-architecture.html' },
-                { label: 'Test Pyramid',            href: '/stockease/architecture/testing/pyramid.html' },
-                { label: 'Strategy',                href: '/stockease/architecture/testing/strategy.html' },
-                { label: 'Spring Slices',           href: '/stockease/architecture/testing/spring-slices.html' },
-                { label: 'Test Data Fixtures',      href: '/stockease/architecture/testing/test-data-fixtures.html' },
-                { label: 'Security Tests',          href: '/stockease/architecture/testing/security-tests.html' },
-                { label: 'Naming Conventions',      href: '/stockease/architecture/testing/naming-conventions.html' },
-                { label: 'Test Matrix',             href: '/stockease/architecture/testing/matrix.html' },
-                { label: 'Coverage & Quality',      href: '/stockease/architecture/testing/coverage-and-quality.html' },
-                { label: 'Controller Integration',  href: '/stockease/architecture/testing/controller-integration.html' },
-                { label: 'CI Pipeline Tests',       href: '/stockease/architecture/testing/ci-pipeline-tests.html' },
+                { label: 'Architecture',            href: BASE + '/architecture/testing/testing-architecture.html' },
+                { label: 'Test Pyramid',            href: BASE + '/architecture/testing/pyramid.html' },
+                { label: 'Strategy',                href: BASE + '/architecture/testing/strategy.html' },
+                { label: 'Spring Slices',           href: BASE + '/architecture/testing/spring-slices.html' },
+                { label: 'Test Data Fixtures',      href: BASE + '/architecture/testing/test-data-fixtures.html' },
+                { label: 'Security Tests',          href: BASE + '/architecture/testing/security-tests.html' },
+                { label: 'Naming Conventions',      href: BASE + '/architecture/testing/naming-conventions.html' },
+                { label: 'Test Matrix',             href: BASE + '/architecture/testing/matrix.html' },
+                { label: 'Coverage & Quality',      href: BASE + '/architecture/testing/coverage-and-quality.html' },
+                { label: 'Controller Integration',  href: BASE + '/architecture/testing/controller-integration.html' },
+                { label: 'CI Pipeline Tests',       href: BASE + '/architecture/testing/ci-pipeline-tests.html' },
             ],
             'Deployment': [
-                { label: 'Overview',                href: '/stockease/architecture/deployment/index.html' },
-                { label: 'Infrastructure',          href: '/stockease/architecture/deployment/infrastructure.html' },
-                { label: 'CI/CD Pipeline',          href: '/stockease/architecture/deployment/ci-pipeline.html' },
-                { label: 'Docker Strategy',         href: '/stockease/architecture/deployment/docker-strategy.html' },
-                { label: 'Staging Config',          href: '/stockease/architecture/deployment/staging-config.html' },
+                { label: 'Overview',                href: BASE + '/architecture/deployment/index.html' },
+                { label: 'Infrastructure',          href: BASE + '/architecture/deployment/infrastructure.html' },
+                { label: 'CI/CD Pipeline',          href: BASE + '/architecture/deployment/ci-pipeline.html' },
+                { label: 'Docker Strategy',         href: BASE + '/architecture/deployment/docker-strategy.html' },
+                { label: 'Staging Config',          href: BASE + '/architecture/deployment/staging-config.html' },
             ],
             'Guides': [
-                { label: 'Index',                   href: '/stockease/generated/guides/index.html' },
-                { label: 'Contributing',             href: '/stockease/generated/guides/contributing.html' },
-                { label: 'Documentation Generation', href: '/stockease/generated/guides/documentation-generation.html' },
+                { label: 'Index',                   href: BASE + '/generated/guides/index.html' },
+                { label: 'Contributing',            href: BASE + '/generated/guides/contributing.html' },
+                { label: 'Documentation Generation', href: BASE + '/generated/guides/documentation-generation.html' },
             ],
             'Quality & Coverage': [
-                { label: 'Full Documentation Map',  href: '/stockease/generated/index.html' },
-                { label: 'Test Coverage Report',    href: '/stockease/coverage/index.html' },
+                { label: 'Full Documentation Map',  href: BASE + '/generated/index.html' },
+                { label: 'Test Coverage Report',    href: BASE + '/coverage/index.html' },
             ],
         };
 
