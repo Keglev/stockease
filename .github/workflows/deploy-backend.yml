@@ -1,6 +1,8 @@
 name: Deploy Backend
 
 on:
+  schedule:
+    - cron: '0 6 1,15 * *'  # rebuild every two weeks to pick up patched base images
   push:
     branches: [main]
     paths-ignore:

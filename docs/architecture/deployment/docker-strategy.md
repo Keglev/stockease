@@ -16,7 +16,7 @@ graph TD
 
     Stage1 -->|Extract JAR only| Stage2
 
-    subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-jammy ~250MB)"]
+    subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-alpine ~175MB)"]
         R1[Copy JAR from build stage] --> R2[Create non-root user]
         R2 --> R3[Set USER app]
         R3 --> R4[EXPOSE <port>]
@@ -27,7 +27,7 @@ graph TD
     style Stage2 fill:#c8e6c9
 ```
 
-Size reduction: 1.2GB → ~250MB (83% smaller).
+Size reduction: 1.2GB → ~175MB (86% smaller).
 
 ---
 
@@ -35,9 +35,9 @@ Size reduction: 1.2GB → ~250MB (83% smaller).
 
 ```dockerfile
 # Stage 1 — Build
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
-WORKDIR /app
+WORKDIR /workspace
 COPY mvnw pom.xml ./
 COPY .mvn .mvn
 RUN chmod +x mvnw
@@ -50,13 +50,13 @@ COPY src ./src
 RUN ./mvnw -B -ntp -DskipTests clean package
 
 # Stage 2 — Runtime
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/target/stockease-backend-*.jar app.jar
+COPY --from=build /workspace/target/*.jar /app/app.jar
 
-RUN addgroup --system app && adduser --system --ingroup app app || true
+RUN addgroup -S app && adduser -S -G app app || true
 USER app
 
 EXPOSE <port>

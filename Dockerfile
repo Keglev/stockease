@@ -31,7 +31,7 @@ RUN ./mvnw -B -ntp -DskipTests clean package
 ## Notes:
 ## - Use a slim JRE base image to minimize attack surface and image size.
 ## - Copy only the built artifact from the builder stage.
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
 # Copy jar from build stage (use wildcard to avoid hardcoding artifact name)
@@ -41,7 +41,7 @@ COPY --from=build /workspace/target/*.jar /app/app.jar
 # Create a non-root user for running the app (defense-in-depth)
 # Some base images may not have adduser/addgroup; the `|| true` prevents CI failure
 # if the user already exists or the commands are not available.
-RUN addgroup -S app && adduser -S -G app app || true
+RUN addgroup --system app && adduser --system --ingroup app app || true
 USER app
 
 # Expose application port — must match Spring `server.port` or container port mapping
