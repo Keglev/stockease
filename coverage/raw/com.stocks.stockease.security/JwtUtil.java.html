@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.security</a> &gt; <span class="el_source">JwtUtil.java</span></div><h1>JwtUtil.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.security;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.function.Function;
+
+import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
+/**
+ * Handles JWT token generation, validation, and claims extraction.
+ * Uses HMAC-SHA256 signing with a 10-hour expiration window.
+ */
+@Component
+<span class="nc" id="L20">public class JwtUtil {</span>
+
+    /**
+     * SECURITY: In production, move to environment variables or a secure vault;
+     * must be at least 256 bits for HS256.
+     */
+    private static final String SECRET_KEY = &quot;your-secret-key-which-must-be-very-secure-and-long&quot;;
+
+    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
+
+<span class="nc" id="L30">    private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());</span>
+
+    /**
+     * Generates a signed JWT with username as the subject and role as a custom claim.
+     *
+     * @param username authenticated user's username (becomes JWT &quot;sub&quot; claim)
+     * @param role user's authorization role (custom &quot;role&quot; claim)
+     * @return compact signed JWT string
+     */
+    public String generateToken(String username, String role) {
+<span class="nc" id="L40">        return Jwts.builder()</span>
+<span class="nc" id="L41">                .setSubject(username)</span>
+<span class="nc" id="L42">                .claim(&quot;role&quot;, role)</span>
+<span class="nc" id="L43">                .setIssuedAt(new Date())</span>
+<span class="nc" id="L44">                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))</span>
+<span class="nc" id="L45">                .signWith(key, SignatureAlgorithm.HS256)</span>
+<span class="nc" id="L46">                .compact();</span>
+    }
+
+    /**
+     * Validates a JWT token's signature and expiration, returning false on any failure.
+     *
+     * @param token JWT string to validate
+     * @return true if valid and unexpired, false otherwise
+     */
+    public boolean validateToken(String token) {
+        try {
+<span class="nc" id="L57">            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);</span>
+<span class="nc" id="L58">            return true;</span>
+<span class="nc" id="L59">        } catch (JwtException e) {</span>
+<span class="nc" id="L60">            return false;</span>
+        }
+    }
+
+    /**
+     * Extracts a single claim from the token using the provided resolver function.
+     *
+     * @param token JWT string
+     * @param claimsResolver function to extract the desired claim
+     * @return extracted claim value
+     */
+    public &lt;T&gt; T extractClaim(String token, Function&lt;Claims, T&gt; claimsResolver) {
+<span class="nc" id="L72">        final Claims claims = extractAllClaims(token);</span>
+<span class="nc" id="L73">        return claimsResolver.apply(claims);</span>
+    }
+
+    /**
+     * Parses and returns all claims from the token, validating the signature in the process.
+     *
+     * @param token JWT string
+     * @return Claims object containing all embedded claims
+     */
+    private Claims extractAllClaims(String token) {
+<span class="nc" id="L83">        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();</span>
+    }
+
+    /**
+     * Extracts the username from the token's subject claim.
+     *
+     * @param token JWT string
+     * @return username string
+     */
+    public String extractUsername(String token) {
+<span class="nc" id="L93">        return extractClaim(token, Claims::getSubject);</span>
+    }
+
+    /**
+     * Extracts the role from the token's custom &quot;role&quot; claim.
+     *
+     * @param token JWT string
+     * @return role string
+     */
+    public String extractRole(String token) {
+<span class="nc" id="L103">        return extractClaim(token, claims -&gt; claims.get(&quot;role&quot;, String.class));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
