@@ -97,6 +97,7 @@ done
     --template "$TEMPLATE"
     --metadata=baseurl:/stockease
     "--metadata=root:$root"
+    "--metadata=title:StockEase Documentation"
     --toc
     --toc-depth="$TOC_DEPTH"
     --standalone

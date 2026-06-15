@@ -20,6 +20,11 @@ fi
 
 mkdir -p "$OUTPUT_DIR/templates"
 
+TEMPLATES="$PROJECT_DIR/.github/scripts/templates"
+cp "$TEMPLATES/base.css"       "$PROJECT_DIR/target/docs/templates/"
+cp "$TEMPLATES/components.css" "$PROJECT_DIR/target/docs/templates/"
+cp "$TEMPLATES/hub.css"        "$PROJECT_DIR/target/docs/templates/"
+
 npm install -g @redocly/cli
 redocly build-docs "$SPEC" -o "$OUTPUT_DIR/api-docs.html"
 
