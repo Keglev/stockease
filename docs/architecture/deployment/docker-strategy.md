@@ -19,7 +19,7 @@ graph TD
     subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-alpine ~175MB)"]
         R1[Copy JAR from build stage] --> R2[Create non-root user]
         R2 --> R3[Set USER app]
-        R3 --> R4[EXPOSE <port>]
+        R3 --> R4["EXPOSE port"]
         R4 --> R5[ENTRYPOINT]
     end
 

@@ -290,9 +290,9 @@ nav.toc a.active {
 
 /* Primary mermaid container */
 .mermaid {
-    display:          flex;
-    justify-content:  center;
-    align-items:      center;
+    display:          block;
+    text-align:       center;
+    overflow-x:       auto;   /* large diagrams scroll instead of scaling down */
     margin:           2rem 0;
     padding:          1rem;
     background-color: var(--color-bg-white);
@@ -300,10 +300,10 @@ nav.toc a.active {
     border:           1px solid var(--color-border);
 }
 
-/* Prevent overflow on large diagrams */
+/* Render at Mermaid's computed natural size; container handles overflow */
 .mermaid svg {
-    max-width: 100%;
-    height:    auto;
+    display: inline-block;
+    height:  auto;
 }
 
 /* Pandoc fallback class before JS conversion */
