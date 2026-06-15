@@ -37,7 +37,7 @@
 
                     Stage1 -->|Extract JAR only| Stage2
 
-                    subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-jammy ~250MB)"]
+                    subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-alpine ~175MB)"]
                         R1[Copy JAR from build stage] --> R2[Create non-root user]
                         R2 --> R3[Set USER app]
                         R3 --> R4[EXPOSE <port>]
@@ -47,14 +47,14 @@
                     style Stage1 fill:#e3f2fd
                     style Stage2 fill:#c8e6c9
                 </div>
-                <p>Size reduction: 1.2GB → ~250MB (83% smaller).</p>
+                <p>Size reduction: 1.2GB → ~175MB (86% smaller).</p>
                 <hr />
                 <h2 id="dockerfile">Dockerfile</h2>
                 <div class="sourceCode" id="cb1"><pre
                 class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 1 — Build</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> maven:3.9.6-eclipse-temurin-17 <span class="kw">AS</span> builder</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> maven:3.9.6-eclipse-temurin-17 <span class="kw">AS</span> build</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /workspace</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw pom.xml ./</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .mvn .mvn</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="fu">chmod</span> +x mvnw</span>
@@ -67,13 +67,13 @@
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> <span class="at">-DskipTests</span> clean package</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 2 — Runtime</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-jammy</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-alpine</span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> <span class="op">--from=builder</span> /app/target/stockease-backend-*.jar app.jar</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> <span class="op">--from=build</span> /workspace/target/*.jar /app/app.jar</span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">--system</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">--system</span> <span class="at">--ingroup</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">-S</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">-S</span> <span class="at">-G</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> &lt;port&gt;</span>
