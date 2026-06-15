@@ -55,8 +55,13 @@ jobs:
       - name: Fix directory links
         run: bash .github/scripts/docs/fix-directory-links.sh
 
-      - name: Copy documentation index
-        run: cp "$PROJECT_DIR/.github/scripts/templates/index.html" "$PROJECT_DIR/target/docs/index.html"
+      - name: Copy site templates
+        run: |
+          cp "$PROJECT_DIR/.github/scripts/templates/index.html" "$PROJECT_DIR/target/docs/index.html"
+          mkdir -p "$PROJECT_DIR/target/docs/templates"
+          cp "$PROJECT_DIR/.github/scripts/templates/base.css"      "$PROJECT_DIR/target/docs/templates/"
+          cp "$PROJECT_DIR/.github/scripts/templates/component.css" "$PROJECT_DIR/target/docs/templates/"
+          cp "$PROJECT_DIR/.github/scripts/templates/hub.css"       "$PROJECT_DIR/target/docs/templates/"
 
       - name: Verify output
         run: |

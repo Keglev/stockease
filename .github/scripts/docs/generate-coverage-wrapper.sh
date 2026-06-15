@@ -23,7 +23,8 @@ cat > "$COVERAGE_OUT/index.html" << 'EOF'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase - Code Coverage Report</title>
-    <link rel="stylesheet" href="/stockease/templates/enterprise-docs.css">
+    <link rel="stylesheet" href="/stockease/templates/base.css">
+    <link rel="stylesheet" href="/stockease/templates/component.css">
     <style>
         .coverage-iframe { width: 100%; height: 80vh; border: 1px solid #ddd; border-radius: 4px; }
         .coverage-container { padding: 1.5rem; background: #fff; border-radius: 6px; }

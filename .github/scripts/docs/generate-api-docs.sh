@@ -19,8 +19,6 @@ if [ ! -f "$SPEC" ]; then
 fi
 
 mkdir -p "$OUTPUT_DIR/templates"
-cp "$TEMPLATES/enterprise-docs.css" "$OUTPUT_DIR/templates/" || true
-cp "$TEMPLATES/enterprise-docs.html" "$OUTPUT_DIR/templates/" || true
 
 npm install -g @redocly/cli
 redocly build-docs "$SPEC" -o "$OUTPUT_DIR/api-docs.html"

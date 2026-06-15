@@ -4,106 +4,133 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase Documentation</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
-        .hero {
-            background: linear-gradient(135deg, #0066cc 0%, #004a99 100%);
-            color: white;
-            padding: 2rem 1.5rem;
-            text-align: center;
-        }
-        .hero h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
-        .hero p  { font-size: 0.95rem; opacity: 0.9; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .docs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            padding: 3rem 1.5rem;
-        }
-        .doc-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            color: inherit;
-            border-top: 3px solid #0066cc;
-        }
-        .doc-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
-        .doc-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; color: #0066cc; }
-        .doc-card p  { color: #666; font-size: 0.95rem; }
-        footer {
-            background: #f8f9fa;
-            padding: 2rem;
-            text-align: center;
-            color: #666;
-            font-size: 0.9rem;
-        }
-    </style>
+    <!--
+        StockEase Documentation Hub
+        ===========================
+        Landing page for the GitHub Pages documentation site.
+        Displays a card grid linking to all architecture, API, and
+        testing documentation sections.
+
+        This file is static — it does not use the enterprise-docs.html
+        template because it has no sidebar navigation. The template is
+        used only for individual documentation pages.
+
+        Stylesheet: /stockease/templates/base.css + hub.css
+        Hosted at:  https://keglev.github.io/stockease/
+    -->
+    <link rel="stylesheet" href="/stockease/templates/base.css">
+    <link rel="stylesheet" href="/stockease/templates/hub.css">
 </head>
 <body>
-    <div class="hero">
-        <div class="container">
-            <h1>StockEase Documentation</h1>
-            <p>API Reference and Architecture Documentation</p>
+
+    <!-- Hero banner -->
+    <header class="hub-hero">
+        <div class="hub-hero__inner">
+            <h1 class="hub-hero__title">StockEase Documentation</h1>
+            <p class="hub-hero__subtitle">API Reference and Architecture Documentation</p>
         </div>
-    </div>
-    <div class="container">
-        <div class="docs-grid">
-            <a href="architecture/system/overview.de.html" class="doc-card">
-                <h3>Architektur Übersicht (Deutsch)</h3>
-                <p>Systemdesign, Schichten, Komponenten und Technologie-Stack auf Deutsch.</p>
+    </header>
+
+    <!-- Card grid -->
+    <main class="hub-main">
+        <div class="hub-grid">
+
+            <!-- API -->
+            <a href="api-docs.html" class="hub-card">
+                <h3 class="hub-card__title">API Documentation</h3>
+                <p class="hub-card__desc">
+                    Interactive OpenAPI specification — explore all endpoints,
+                    request/response schemas, authentication flows, and error codes.
+                </p>
             </a>
-            <a href="api-docs.html" class="doc-card">
-                <h3>API Documentation</h3>
-                <p>Interactive API specification with endpoints, request/response schemas, and security details.</p>
+
+            <!-- Architecture Overview -->
+            <a href="architecture/system/overview.html" class="hub-card">
+                <h3 class="hub-card__title">Architecture Overview</h3>
+                <p class="hub-card__desc">
+                    End-to-end system design — technology choices, layer responsibilities,
+                    component boundaries, and data flow diagrams.
+                </p>
             </a>
-            <a href="architecture/system/overview.html" class="doc-card">
-                <h3>Architecture Overview</h3>
-                <p>System design, layers, components, and technology stack.</p>
+
+            <!-- Architecture Overview German -->
+            <a href="architecture/system/overview.de.html" class="hub-card">
+                <h3 class="hub-card__title">Architektur Übersicht (Deutsch)</h3>
+                <p class="hub-card__desc">
+                    Systemdesign, Schichten, Komponenten und Technologie-Stack
+                    auf Deutsch — für deutschsprachige Leser und Recruiter.
+                </p>
             </a>
-            <a href="architecture/system/backend.html" class="doc-card">
-                <h3>Backend Architecture</h3>
-                <p>Spring Boot structure, controllers, services, and data layers.</p>
+
+            <!-- Backend Architecture -->
+            <a href="architecture/system/backend.html" class="hub-card">
+                <h3 class="hub-card__title">Backend Architecture</h3>
+                <p class="hub-card__desc">
+                    Spring Boot internals — controller, service, and repository layers,
+                    JPA entity design, Flyway migration strategy, and configuration management.
+                </p>
             </a>
-            <a href="architecture/system/frontend-integration.html" class="doc-card">
-                <h3>Frontend Architecture</h3>
-                <p>React/TypeScript structure, components, and state management.</p>
+
+            <!-- Security Architecture -->
+            <a href="architecture/system/security.html" class="hub-card">
+                <h3 class="hub-card__title">Security Architecture</h3>
+                <p class="hub-card__desc">
+                    JWT stateless authentication, Spring Security filter chain,
+                    role-based access control with @PreAuthorize, and endpoint protection strategy.
+                </p>
             </a>
-            <a href="architecture/system/security.html" class="doc-card">
-                <h3>Security Architecture</h3>
-                <p>Authentication, authorization, JWT, and role-based access control.</p>
+
+            <!-- Design Decisions -->
+            <a href="architecture/decisions/index.html" class="hub-card">
+                <h3 class="hub-card__title">Design Decisions</h3>
+                <p class="hub-card__desc">
+                    Architectural Decision Records (ADRs) — documented technical choices
+                    with context, rationale, and trade-offs for database, validation, and auth strategy.
+                </p>
             </a>
-            <a href="architecture/deployment/index.html" class="doc-card">
-                <h3>Deployment Strategy</h3>
-                <p>Docker containerization, CI/CD pipelines, and cloud deployment.</p>
+
+            <!-- Deployment Strategy -->
+            <a href="architecture/deployment/index.html" class="hub-card">
+                <h3 class="hub-card__title">Deployment Strategy</h3>
+                <p class="hub-card__desc">
+                    Docker multi-stage builds, Koyeb serverless deployment,
+                    Neon managed PostgreSQL, and environment profile configuration.
+                </p>
             </a>
-            <a href="architecture/testing/testing-architecture.html" class="doc-card">
-                <h3>Testing Architecture</h3>
-                <p>Test pyramid, unit tests, integration tests, and security testing.</p>
+
+            <!-- Testing Architecture -->
+            <a href="architecture/testing/testing-architecture.html" class="hub-card">
+                <h3 class="hub-card__title">Testing Architecture</h3>
+                <p class="hub-card__desc">
+                    Test pyramid strategy — JUnit 5 unit tests, MockMvc controller
+                    integration tests, Testcontainers, and JaCoCo coverage thresholds.
+                </p>
             </a>
-            <a href="architecture/decisions/index.html" class="doc-card">
-                <h3>Design Decisions</h3>
-                <p>Architectural Decision Records (ADRs) and technical justifications.</p>
+
+            <!-- Code Coverage -->
+            <a href="coverage/index.html" class="hub-card">
+                <h3 class="hub-card__title">Code Coverage Report</h3>
+                <p class="hub-card__desc">
+                    JaCoCo coverage analysis — line, branch, and method coverage
+                    across all application layers, generated on every CI run.
+                </p>
             </a>
-            <a href="coverage/index.html" class="doc-card">
-                <h3>Code Coverage Report</h3>
-                <p>JaCoCo coverage analysis showing test execution breadth and quality metrics.</p>
+
+            <!-- Documentation Index -->
+            <a href="generated/index.html" class="hub-card">
+                <h3 class="hub-card__title">Documentation Index</h3>
+                <p class="hub-card__desc">
+                    Full documentation map with role-based reading paths
+                    for developers, architects, and reviewers.
+                </p>
             </a>
-            <a href="generated/index.html" class="doc-card">
-                <h3>Documentation Index</h3>
-                <p>Full documentation map with role-based reading paths across all sections.</p>
-            </a>
+
         </div>
-    </div>
-    <footer>
-        <p><strong>StockEase</strong> - Inventory Management System</p>
+    </main>
+
+    <footer class="hub-footer">
+        <p><strong>StockEase</strong> — Inventory Management System</p>
     </footer>
+
 </body>
 </html>

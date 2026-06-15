@@ -77,11 +77,13 @@ graph TD
 1. Checkout (full history) + detect project root
 2. Setup Node.js 18 + install `@redocly/cli`
 3. `generate-api-docs.sh` — reads `docs/api/openapi.yaml` → outputs `target/docs/api-docs.html`
-4. `generate-docs.sh` — Pandoc converts `docs/architecture/` using enterprise template + Lua filter
-5. `fix-directory-links.sh` — rewrites `href="path/"` to `index.html`
-6. Copy `templates/index.html` → `target/docs/index.html`
-7. Upload `docs-site` artifact
-8. Deploy `target/docs` to `gh-pages` via `peaceiris/actions-gh-pages@v3`
+4. `generate-docs.sh` — Pandoc converts `docs/architecture/` using `enterprise-docs.html` template + Lua filter
+5. `generate-docs.sh` — Pandoc converts all other `docs/` markdown (guides, patterns, components)
+6. `fix-directory-links.sh` — rewrites `href="path/"` to `index.html`
+7. Copy site templates — `index.html` + `base.css`, `component.css`, `hub.css` → `target/docs/templates/`
+8. Verify output — counts generated files, reports disk usage
+9. Upload `docs-site` artifact
+10. Deploy `target/docs` to `gh-pages` via `peaceiris/actions-gh-pages@v3`
 
 ### docs-coverage-deploy.yml
 

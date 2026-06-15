@@ -1,285 +1,150 @@
 # StockEase Backend
 
-**Enterprise Stock Management System - Java Spring Boot & PostgreSQL**
+**Enterprise Inventory Management System — Java Spring Boot & PostgreSQL**
 
-## About
+![CI Backend](https://github.com/Keglev/stockease/actions/workflows/ci-build.yml/badge.svg)
 
-StockEase is a backend service for managing stock-related data efficiently. Built with Spring Boot and integrated with PostgreSQL, this project showcases authentication, role-based access control, and CRUD operations for products.
+Managing inventory manually in manufacturing environments leads to stock discrepancies, delayed decisions, and lost revenue. StockEase is a production-ready REST API built to replace that with structured, role-controlled access to real-time stock data — backed by JWT authentication, Flyway-managed schema versioning, and a full CI/CD pipeline. Built to enterprise standards as a portfolio project, with complete architecture documentation, OpenAPI specifications, and automated test coverage.
 
-## Description 
-
-This project demonstrates a production-ready backend system for stock inventory management with comprehensive documentation, security architecture, and CI/CD integration. It includes modern technologies, JWT authentication, automated CI/CD pipelines, comprehensive testing, and enterprise-level architectural patterns.
-
-![CI Backend](https://github.com/Keglev/inventory-service/actions/workflows/ci-build.yml/badge.svg) 
-
-**📅 Last Updated:** November 4, 2025 - Updates in Architecture documents
+---
 
 ## 📖 Table of Contents
 
-1. [Screenshots](#screenshots)  
+1. [Technical Highlights](#technical-highlights)
+2. [Screenshots](#screenshots)
+3. [Tech Stack](#tech-stack)
+4. [API Documentation](#api-documentation)
+5. [Architecture & Documentation](#architecture--documentation)
+6. [Testing & Coverage](#testing--coverage)
+7. [CI/CD](#cicd)
+8. [Available Scripts](#available-scripts)
+9. [Deployment](#deployment)
+10. [Contributing](#contributing)
 
-2. [Project Status](#project-status)  
+---
 
-3. [Features](#features)  
+<a id="technical-highlights"></a>
+## ⚙️ Technical Highlights
 
-4. [Security](#security)  
-
-5. [Documentation](#documentation)  
-
-   - [Architecture Overview](#architecture-overview) 
-
-   - [API Integration Guides](#api-integration-guides)
-
-   - [API Documentation Hub](#api-documentation-hub)
-
-6. [Testing & Code Quality](#testing-code-quality)
-
-7. [Tech Stack](#tech-stack)
-
-8. [Environment Profiles](#environment-profiles)
-
-9. [CI/CD](#cicd)
-
-10. [Available Scripts](#available-scripts)
-
-11. [Deployment](#deployment)
-
-12. [Contributing](#contributing)
+- **Flyway for schema versioning** instead of Hibernate DDL auto — gives full, auditable control over production migrations with no surprises on deploy
+- **Stateless JWT authentication** — no server-side session storage; tokens are validated on every request via a custom `JwtFilter`, keeping the service horizontally scalable
+- **Role-based access control** with Spring Security `@PreAuthorize` — Admin and User roles enforced at the method level, not just at the route level
+- **Global exception handling** via `@RestControllerAdvice` — all error responses are structured and consistent; no try/catch blocks in controllers
+- **Bean Validation on DTOs** with `@Valid` — input validation is declared at the DTO layer, keeping controllers clean
+- **Custom `FlywayConfiguration`** — Flyway is wired manually to run before JPA context initialization, preventing startup failures on a cold database
 
 ---
 
 <a id="screenshots"></a>
-## Screenshots
+## 📸 Screenshots
 
-Here are some screenshots from Postman showing API responses:
+### Authentication Flow — 401 Unauthorized vs. 200 OK
 
-### Adding a Product
+<img src="./docs/assets/imgs/auth-flow.png" alt="401 Unauthorized then 200 OK after login" width="600"/>
 
-<img src="./src/assets/imgs/project-image.png" alt="Adding Product" width="600" height="300"/>
+### Validation Error Response
 
-### Example of a missing input from the user.
-
-<img src="./src/assets/imgs/Missingquantity.png" alt="Missing quantity" width="600" height="300"/>
-
-### Updating Product Quantity
-
-<img src="./src/assets/imgs/updateQuantity.png" alt="Update Quantity" width="600" height="300"/>
+<img src="./docs/assets/imgs/Missingquantity.png" alt="Structured validation error on missing quantity field" width="600"/>
 
 ---
 
-<a id="project-status"></a>
-## Project Status 
-
-### ✅ Backend Development - Complete 
-
-- ✅ Enterprise-level documentation with architecture diagrams 
-
-- ✅ Professional API documentation with OpenAPI specifications
-
-- ✅ Complete backend architecture with security patternsReplace placeholders with actual values.
-
-- ✅ Working CI/CD pipeline for build, test, and deployment
-
-- ✅ Controller layer testing architecture complete
-
-- ✅ JWT authentication with role-based access controlUse Maven to build and start the application:
-
-### 📚 Documentation Status 
-
-- ✅ Complete backend architecture documentation
-
-- ✅ Security architecture and patterns
-
-- ✅ Testing strategy documentation
-
-- ✅ Deployment and CI/CD documentation
-
----
-
-<a id="features"></a>
-## 🚀 Features
-
-### 🎯 Core Modules## 🧑‍💻 Available Scripts
-
-- ✅ **Authentication** with JWT (JSON Web Tokens)- `mvn spring-boot:run` - Runs the application.
-
-- ✅ **Role-Based Access Control** (Admin & User roles)- `mvn test` - Runs unit tests with **Mockito**.
-
-- ✅ **Product Management** – CRUD operations, quantity tracking- `mvn package` - Builds the application.
-
-- ✅ **Advanced Querying** – Pagination, filtering, sorting
-
-- ✅ **Stock Calculations** – Total stock value computation 
-
----
-
-<a id="security"></a>
-## 🛡️ Security- 
-
-- **JWT** (JSON Web Token) 
-
-StockEase implements enterprise-grade security with JWT authentication, role-based access control, and secure endpoint protection. All API endpoints are secured with Spring Security, and fine-grained access control uses `@PreAuthorize` annotations for authorization.- **Mockito**  
-
-📖 **[View Security Architecture Documentation](https://keglev.github.io/stockease/architecture/security.html)
-
----
-
-<a id="documentation"></a>
-## 📘 Documentation 
-
-<a id="architecture-overview"></a>
-### 🏗️ Architecture Overview 
-
-- [Index for Backend Architecture Documentation](https://keglev.github.io/stockease/) — Complete architecture documentation with service catalog and design patterns
-
-- [Deployment Overview](https://keglev.github.io/stockease/architecture/deployment.html) — Infrastructure, deployment strategy, and environment configuration
-
----
-
-## 🔗 API Integration
-
-<a id="api-integration-guides"></a>
-### 📡 API Integration Guides
-
-This backend provides compreensive documentation for interacting with stock data. 
-
-It also provides: 
-
-- Service patterns and abstractions
-
-- Exception handling and error management
-
-- Data mapping and DTO patterns
-
-- Configuration best practices
-
-- Security patterns and JWT integration
-
----
-
-<a id="api-documentation-hub"></a>
-### 🚀 API Documentation Hub
-
-- **[Complete API Interactive Documentation](https://keglev.github.io/stockease/api-docs.html)** — Complete OpenAPI specification
-
-- **[Authentication Endpoints](https://keglev.github.io/stockease/api-docs.html#tag/Authentication)** — Login, registration, token management
-
-- **[Product Management Endpoints](https://keglev.github.io/stockease/api-docs.html#tag/Products)** — CRUD operations and product queries
-
----
-
-<a id="testing-code-quality"></a>
-## 🧪 Testing & Code Quality
-
-StockEase includes comprehensive testing architecture with automated test execution and code quality analysis:
-
-- **JUnit 5** with Mockito for unit testing
-- **Spring MockMvc** for controller layer testing with Spring Security integration
-- **Testcontainers** for integration testing with PostgreSQL
-- **JaCoCo** for code coverage analysis
-
-📚 **[View Testing Architecture Documentation](https://keglev.github.io/stockease/architecture/testing-architecture.html)**
-
-**📊 Coverage Reports**: [Coverage Testing Report from JaCoCo](https://keglev.github.io/stockease/coverage/index.html) 
-
----
 <a id="tech-stack"></a>
 ## 🧰 Tech Stack
 
-### Backend
-- **Java 17+** with **Spring Boot 3.x**
-- **Spring Security** (JWT Authentication + Role-Based Access Control)
-- **PostgreSQL** for data persistence
-- **REST APIs** documented via OpenAPI YAML specifications
-- **Docker** containerization with multi-stage builds
-- **JUnit 5** + **Mockito** for comprehensive testing
-- **JaCoCo** for code coverage reporting
+**Backend**
+- Java 17 with Spring Boot 3.x
+- Spring Security — JWT authentication and role-based access control
+- PostgreSQL — data persistence via JPA/Hibernate and Flyway migrations
+- REST APIs documented via OpenAPI YAML specifications
+- Docker — multi-stage containerized builds
+- JUnit 5 + Mockito — unit and integration testing
+- JaCoCo — code coverage reporting
 
-### DevOps & Infrastructure
-- **GitHub Actions** for automated CI/CD pipelines
-- **Docker** for containerization
-- **Koyeb** for serverless container deployment
-- **GitHub Pages** for documentation and coverage reporting
+**DevOps & Infrastructure**
+- GitHub Actions — automated CI/CD pipelines
+- Koyeb — serverless container deployment
+- Neon — managed PostgreSQL (production)
+- GitHub Pages — architecture documentation and coverage reporting
 
 ---
 
-<a id="environment-profiles"></a>
-## 🌐 Environment Profiles
+<a id="api-documentation"></a>
+## 📡 API Documentation
 
-StockEase supports multiple environment configurations:
+- [Interactive API Reference](https://keglev.github.io/stockease/api-docs.html) — full OpenAPI specification with live endpoint explorer
+- [Authentication Endpoints](https://keglev.github.io/stockease/api-docs.html#tag/Authentication) — login, registration, token handling
+- [Product Management Endpoints](https://keglev.github.io/stockease/api-docs.html#tag/Products) — CRUD operations, pagination, filtering
 
-- `application.properties` — Default configuration for development
-- `application-prod.yml` — Production deployment profile (Docker + CI/CD)
-- `application-docs.yml` — For updating the docs in gh-branch
+---
+
+<a id="architecture--documentation"></a>
+## 🏗️ Architecture & Documentation
+
+- [Architecture Overview](https://keglev.github.io/stockease/) — service catalog, layer structure, and design patterns
+- [Security Architecture](https://keglev.github.io/stockease/architecture/security.html) — JWT flow, filter chain, and role enforcement
+- [Deployment & Infrastructure](https://keglev.github.io/stockease/architecture/deployment/infrastructure.html) — environment configuration and deployment strategy
+
+---
+
+<a id="testing--coverage"></a>
+## 🧪 Testing & Coverage
+
+- JUnit 5 with Mockito for unit testing
+- Spring MockMvc for controller layer testing with Spring Security integration
+- Testcontainers for integration testing with a real PostgreSQL instance
+- JaCoCo for code coverage analysis
+
+📚 [Testing Architecture Documentation](https://keglev.github.io/stockease/architecture/testing-architecture.html)
+
+📊 [Coverage Report (JaCoCo)](https://keglev.github.io/stockease/coverage/index.html)
 
 ---
 
 <a id="cicd"></a>
-## CI/CD
+## ⚙️ CI/CD
 
-StockEase includes automated CI/CD pipelines for continuous integration and deployment:
+Each push to `main` triggers the full pipeline:
 
-### 🔄 Automated Pipelines
+- Maven build and test suite execution with coverage reporting
+- Docker image build and push to registry
+- Automated deployment to Koyeb
+- Health check verification before marking the deployment live
 
-**Backend Build & Deployment:**
-- ✅ Builds and tests Spring Boot application using Maven
-- ✅ Runs comprehensive test suite with code coverage
-- ✅ Generates and publishes documentation to GitHub Pages
-- ✅ Builds Docker image and deploys to Koyeb
-- ✅ Automated health checks and service verification
-
-> 📖 **[View CI/CD Pipeline Documentation](https://keglev.github.io/stockease/architecture/deployment/ci-pipeline.html)**
+📖 [CI/CD Pipeline Documentation](https://keglev.github.io/stockease/architecture/deployment/ci-pipeline.html)
 
 ---
 
 <a id="available-scripts"></a>
 ## 🧑‍💻 Available Scripts
 
-Common commands for development and deployment:
-
-- **`./mvnw spring-boot:run`** — Runs the application in development mode
-- **`./mvnw test`** — Executes the complete test suite with coverage
-- **`./mvnw verify`** — Builds and verifies the application package
-- **`./mvnw clean package`** — Creates production-ready JAR file
+- `./mvnw spring-boot:run` — runs the application in development mode
+- `./mvnw test` — executes the complete test suite with coverage
+- `./mvnw verify` — builds and verifies the application package
+- `./mvnw clean package` — creates production-ready JAR file
 
 ---
 
 <a id="deployment"></a>
-## Deployment
+## 🚀 Deployment
 
-### Production Deployment
+StockEase backend is deployed to Koyeb using a Docker container built by GitHub Actions. The production database is hosted on Neon (managed PostgreSQL).
 
-StockEase is deployed to Koyeb, a serverless container platform:
-
-**Deployment Features:**
-- ✅ **Automated CI/CD**: Push to main → Automatic build, test, and deployment
-- ✅ **Container Deployment**: Docker image builds and deploys via GitHub Actions
-- ✅ **Health Checks**: Automated service verification after deployment
-
-### Live Application
-
-🌍 **Production URL**:[https://stockeasefrontend.vercel.app/](https://stockeasefrontend.vercel.app/)
-
-**Deployment Architecture:**
-
-GitHub Push → Build & Test → Docker Build → Push to Registry → Koyeb Deploy → Health Verification
-
-> 📖 **[View Complete Deployment Strategy](https://keglev.github.io/stockease/architecture/deployment.html)**
+🌍 **Live Application (Frontend):** [https://stockeasefrontend.vercel.app](https://stockeasefrontend.vercel.app)
 
 ---
+
 <a id="contributing"></a>
 ## 🤝 Contributing
 
-Contributions are welcome! To improve this project:
+Contributions are welcome. To contribute:
 
 1. Fork the repository
-2. Create a new branch for your feature
+2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
 
-For issues or feature requests, please [open a GitHub issue](https://github.com/Keglev/stockease/issues).
+For issues or feature requests, [open a GitHub issue](https://github.com/Keglev/stockease/issues).
 
 ---
 
-**Last Updated:** November 4, 2025  
 **Repository:** [Keglev/stockease](https://github.com/Keglev/stockease)

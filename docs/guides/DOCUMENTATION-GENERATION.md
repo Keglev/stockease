@@ -31,11 +31,14 @@ The documentation pipeline:
 2. **Detect project root** — `detect-maven-project.sh` sets `PROJECT_DIR`
 3. **Setup Node.js 18** — install `@redocly/cli`
 4. **Generate API docs** — reads `docs/api/openapi.yaml` → outputs `target/docs/api-docs.html`
-5. **Install Pandoc** — converts architecture markdown to HTML using `enterprise-docs.html` template + Lua filter
-6. **Fix directory links** — `fix-directory-links.sh` rewrites `href="path/"` to `index.html`
-7. **Copy landing page** — `.github/scripts/templates/index.html` → `target/docs/index.html`
-8. **Upload artifact** — `docs-site` artifact retained for coverage deploy
-9. **Deploy to gh-pages** — `peaceiris/actions-gh-pages@v3` publishes `target/docs/`
+5. **Install Pandoc** — `apt-get install pandoc`
+6. **Generate architecture docs** — Pandoc converts `docs/architecture/` using `enterprise-docs.html` template + Lua filter
+7. **Generate additional docs** — Pandoc converts all other `docs/` markdown (guides, patterns, components)
+8. **Fix directory links** — `fix-directory-links.sh` rewrites `href="path/"` to `index.html`
+9. **Copy site templates** — `index.html` + `base.css`, `component.css`, `hub.css` → `target/docs/templates/`
+10. **Verify output** — counts generated files and reports disk usage
+11. **Upload artifact** — `docs-site` artifact retained for coverage deploy
+12. **Deploy to gh-pages** — `peaceiris/actions-gh-pages@v3` publishes `target/docs/`
 
 ### Coverage Deploy (docs-coverage-deploy.yml)
 
