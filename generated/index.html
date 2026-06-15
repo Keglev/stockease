@@ -25,19 +25,19 @@ via GitHub Actions.</p>
 <hr />
 <h2 id="documentation-map">Documentation Map</h2>
 <pre class="mermaid"><code>graph TD
-    Root([docs/index.md — You are here])
+    Root([&quot;docs/index.md - You are here&quot;])
 
-    Root --&gt; Arch[architecture/]
-    Arch --&gt; System[system/ — Overview, Backend, Layers, Security, Frontend]
-    Arch --&gt; Testing[testing/ — Strategy, Pyramid, Matrix, MockMvc, Security Tests]
-    Arch --&gt; Deployment[deployment/ — Infrastructure, CI-CD, Docker, Config]
-    Arch --&gt; Decisions[decisions/ — ADR 001 DB, ADR 002 Validation, ADR 003 Auth]
-    Arch --&gt; Patterns[patterns/ — Repository Pattern, Security Patterns]
-    Arch --&gt; Components[components/ — Analytics Service]
+    Root --&gt; Arch[&quot;architecture/&quot;]
+    Arch --&gt; System[&quot;system/ - Overview, Backend, Layers, Security, Frontend&quot;]
+    Arch --&gt; Testing[&quot;testing/ - Strategy, Pyramid, Matrix, MockMvc, Security Tests&quot;]
+    Arch --&gt; Deployment[&quot;deployment/ - Infrastructure, CI-CD, Docker, Config&quot;]
+    Arch --&gt; Decisions[&quot;decisions/ - ADR 001 DB, ADR 002 Validation, ADR 003 Auth&quot;]
+    Arch --&gt; Patterns[&quot;patterns/ - Repository Pattern, Security Patterns&quot;]
+    Arch --&gt; Components[&quot;components/ - Analytics Service&quot;]
 
-    Root --&gt; Guides[guides/]
-    Guides --&gt; Gen[documentation-generation.md]
-    Guides --&gt; Contributing[contributing.md]</code></pre>
+    Root --&gt; Guides[&quot;guides/&quot;]
+    Guides --&gt; Gen[&quot;documentation-generation.md&quot;]
+    Guides --&gt; Contributing[&quot;contributing.md&quot;]</code></pre>
 <hr />
 <h2 id="start-here-by-role">Start Here by Role</h2>
 <p><strong>New to the project</strong> — <a
@@ -124,29 +124,37 @@ update, and maintain documentation</li>
 <hr />
 <p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
 Current</p>   — rendered HTML content from the Markdown source
+          ..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
+                     calculated per file by generate-docs.sh and passed via --metadata=root:
 
         Layout: sticky header + two-column grid (sidebar | content) + footer.
         Sidebar is built dynamically from the navigation map in the script below.
 
-        Stylesheets:
+        Stylesheets (paths are relative via .. so they resolve at any nesting depth):
           base.css       — CSS variables, reset, typography, layout
           component.css  — sidebar, cards, code, tables, mermaid, print
 
         Dependencies:
           Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
     -->
-    <link rel="stylesheet" href="/stockease/templates/base.css">
-    <link rel="stylesheet" href="/stockease/templates/component.css">
+    <link rel="stylesheet" href="../templates/base.css">
+    <link rel="stylesheet" href="../templates/component.css">
 </head>
 <body>
 
-    <!-- Sticky header with logo and breadcrumb -->
+    <!-- Sticky header: logo (left), breadcrumb + external nav links (right) -->
     <header class="site-header">
         <div class="site-header__inner">
             <a href="/stockease/index.html" class="site-header__logo">StockEase Docs</a>
-            <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
-                <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
-            </nav>
+            <div class="site-header__right">
+                <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
+                    <a href="/stockease/index.html">Home</a> / <span id="breadcrumb">Documentation</span>
+                </nav>
+                <nav class="site-header__nav" aria-label="Site links">
+                    <a href="https://github.com/Keglev/stockease" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    <a href="https://keglev.github.io/stockease/index.html">Docs Home</a>
+                </nav>
+            </div>
         </div>
     </header>
 
@@ -172,19 +180,19 @@ Current</p>   — rendered HTML content from the Markdown source
                 <hr />
                 <h2 id="documentation-map">Documentation Map</h2>
                 <pre class="mermaid"><code>graph TD
-    Root([docs/index.md — You are here])
+    Root([&quot;docs/index.md - You are here&quot;])
 
-    Root --&gt; Arch[architecture/]
-    Arch --&gt; System[system/ — Overview, Backend, Layers, Security, Frontend]
-    Arch --&gt; Testing[testing/ — Strategy, Pyramid, Matrix, MockMvc, Security Tests]
-    Arch --&gt; Deployment[deployment/ — Infrastructure, CI-CD, Docker, Config]
-    Arch --&gt; Decisions[decisions/ — ADR 001 DB, ADR 002 Validation, ADR 003 Auth]
-    Arch --&gt; Patterns[patterns/ — Repository Pattern, Security Patterns]
-    Arch --&gt; Components[components/ — Analytics Service]
+    Root --&gt; Arch[&quot;architecture/&quot;]
+    Arch --&gt; System[&quot;system/ - Overview, Backend, Layers, Security, Frontend&quot;]
+    Arch --&gt; Testing[&quot;testing/ - Strategy, Pyramid, Matrix, MockMvc, Security Tests&quot;]
+    Arch --&gt; Deployment[&quot;deployment/ - Infrastructure, CI-CD, Docker, Config&quot;]
+    Arch --&gt; Decisions[&quot;decisions/ - ADR 001 DB, ADR 002 Validation, ADR 003 Auth&quot;]
+    Arch --&gt; Patterns[&quot;patterns/ - Repository Pattern, Security Patterns&quot;]
+    Arch --&gt; Components[&quot;components/ - Analytics Service&quot;]
 
-    Root --&gt; Guides[guides/]
-    Guides --&gt; Gen[documentation-generation.md]
-    Guides --&gt; Contributing[contributing.md]</code></pre>
+    Root --&gt; Guides[&quot;guides/&quot;]
+    Guides --&gt; Gen[&quot;documentation-generation.md&quot;]
+    Guides --&gt; Contributing[&quot;contributing.md&quot;]</code></pre>
                 <hr />
                 <h2 id="start-here-by-role">Start Here by Role</h2>
                 <p><strong>New to the project</strong> — <a
@@ -306,8 +314,9 @@ Current</p>   — rendered HTML content from the Markdown source
 
     <footer class="site-footer">
         <div class="site-footer__inner">
-            <p><strong>StockEase</strong> — Inventory Management System</p>
-            <p>Architecture Documentation</p>
+            <span>StockEase — Inventory Management System</span>
+            <a href="https://github.com/Keglev/stockease" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+            <a href="https://keglev.github.io/stockease/index.html">Documentation Home</a>
         </div>
     </footer>
 

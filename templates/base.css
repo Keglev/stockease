@@ -146,6 +146,28 @@ a:hover {
     opacity: 0.8;
 }
 
+.site-header__right {
+    display:     flex;
+    align-items: center;
+    gap:         1.5rem;
+}
+
+.site-header__nav {
+    display:   flex;
+    gap:       1rem;
+    font-size: var(--font-size-sm);
+    opacity:   0.9;
+}
+
+.site-header__nav a {
+    color:           white;
+    text-decoration: none;
+}
+
+.site-header__nav a:hover {
+    opacity: 0.8;
+}
+
 /* ============================================================================
    PAGE LAYOUT — two-column grid (sidebar | content)
    Used by documentation pages rendered from the enterprise-docs.html template.
@@ -185,17 +207,26 @@ a:hover {
     color:            white;
     padding:          2rem;
     margin-top:       2rem;
-    text-align:       center;
 }
 
 .site-footer__inner {
-    max-width: var(--content-max-width);
-    margin:    0 auto;
+    max-width:       var(--content-max-width);
+    margin:          0 auto;
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    gap:             1rem;
+    font-size:       var(--font-size-sm);
 }
 
-.site-footer__inner p {
-    margin:    0.25rem 0;
-    font-size: var(--font-size-sm);
+.site-footer__inner a {
+    color:           rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+}
+
+.site-footer__inner a:hover {
+    color:           white;
+    text-decoration: underline;
 }
 
 /* ============================================================================
@@ -214,6 +245,18 @@ a:hover {
     .site-header__inner {
         flex-direction: column;
         gap:            0.5rem;
+    }
+
+    .site-header__right {
+        flex-wrap:       wrap;
+        justify-content: center;
+        gap:             0.5rem;
+    }
+
+    .site-footer__inner {
+        flex-direction: column;
+        gap:            0.75rem;
+        text-align:     center;
     }
 }
 

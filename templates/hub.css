@@ -99,11 +99,28 @@
 
 .hub-footer {
     background-color: var(--color-bg);
-    padding:          2rem;
-    text-align:       center;
+    padding:          2rem 1.5rem;
     color:            var(--color-text-light);
     font-size:        var(--font-size-sm);
     border-top:       1px solid var(--color-border);
+}
+
+.hub-footer__inner {
+    max-width:       var(--content-max-width);
+    margin:          0 auto;
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    gap:             1rem;
+}
+
+.hub-footer__inner a {
+    color:           var(--color-primary);
+    text-decoration: none;
+}
+
+.hub-footer__inner a:hover {
+    text-decoration: underline;
 }
 
 /* ============================================================================
@@ -117,5 +134,11 @@
 
     .hub-grid {
         grid-template-columns: 1fr;
+    }
+
+    .hub-footer__inner {
+        flex-direction: column;
+        gap:            0.5rem;
+        text-align:     center;
     }
 }
