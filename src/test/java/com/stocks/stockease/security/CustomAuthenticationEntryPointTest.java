@@ -8,7 +8,9 @@ import org.springframework.security.core.AuthenticationException;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-/** Unit tests for {@link CustomAuthenticationEntryPoint} 401 error response. */
+/**
+ * Tests for {@link CustomAuthenticationEntryPoint} verifying the 401 JSON error response.
+ */
 class CustomAuthenticationEntryPointTest {
 
     private final CustomAuthenticationEntryPoint entryPoint = new CustomAuthenticationEntryPoint();

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,10 +22,11 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import static org.mockito.ArgumentMatchers.anyString;
-
-/** Unit tests for {@link JwtFilter} covering all branch paths in doFilterInternal. */
+/**
+ * Tests for {@link JwtFilter} covering all branch paths of the Bearer token filter.
+ */
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("unused") // @BeforeEach and @AfterEach methods are invoked by JUnit via reflection; IDE does not detect the indirect call
 class JwtFilterTest {
 
     @Mock
@@ -73,20 +75,22 @@ class JwtFilterTest {
 
     @Test
     void doFilterInternal_withValidBearerToken_populatesSecurityContext() throws Exception {
+        // Arrange
         String token = "valid.jwt.token";
         UserDetails userDetails = new User("alice", "password",
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
         when(jwtUtil.validateToken(token)).thenReturn(true);
         when(jwtUtil.extractUsername(token)).thenReturn("alice");
         when(userDetailsService.loadUserByUsername("alice")).thenReturn(userDetails);
-
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer " + token);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
 
+        // Act
         jwtFilter.doFilterInternal(request, response, chain);
 
+        // Assert
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("alice");
     }

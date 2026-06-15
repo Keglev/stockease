@@ -11,7 +11,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
-/** Unit tests for {@link JwtUtil} token generation, validation, and claim extraction. */
+/**
+ * Tests for {@link JwtUtil} covering token generation, validation, and claim extraction.
+ */
+@SuppressWarnings("unused") // @BeforeEach method is invoked by JUnit via reflection; IDE does not detect the indirect call
 class JwtUtilTest {
 
     private JwtUtil jwtUtil;
@@ -21,14 +24,26 @@ class JwtUtilTest {
         jwtUtil = new JwtUtil();
     }
 
+    // --- generate ---
+
     @Test
     void generateToken_returnsCompactJwtString() {
         String token = jwtUtil.generateToken("alice", "ROLE_USER");
 
         assertThat(token).isNotNull().isNotEmpty();
-        // A compact JWT always has exactly two dots separating header, payload, signature
+        // A compact JWT has exactly two dots: header.payload.signature
         assertThat(token.chars().filter(c -> c == '.').count()).isEqualTo(2);
     }
+
+    @Test
+    void generateToken_embeddedClaimsMatchInputs() {
+        String token = jwtUtil.generateToken("carol", "ROLE_USER");
+
+        assertThat(jwtUtil.extractUsername(token)).isEqualTo("carol");
+        assertThat(jwtUtil.extractRole(token)).isEqualTo("ROLE_USER");
+    }
+
+    // --- validate ---
 
     @Test
     void validateToken_withValidToken_returnsTrue() {
@@ -48,6 +63,8 @@ class JwtUtilTest {
 
         assertThat(jwtUtil.validateToken(expiredToken)).isFalse();
     }
+
+    // --- extract ---
 
     @Test
     void extractUsername_returnsCorrectSubjectClaim() {
@@ -72,15 +89,7 @@ class JwtUtilTest {
         assertThat(subject).isEqualTo("bob");
     }
 
-    @Test
-    void generateToken_embeddedClaimsMatchInputs() {
-        String token = jwtUtil.generateToken("carol", "ROLE_USER");
-
-        assertThat(jwtUtil.extractUsername(token)).isEqualTo("carol");
-        assertThat(jwtUtil.extractRole(token)).isEqualTo("ROLE_USER");
-    }
-
-    /** Builds a validly signed token that is already past its expiration date. */
+    /** Signed with the same key as {@link JwtUtil} so the signature is valid; only the expiry triggers rejection. */
     private String buildExpiredToken(String username) {
         Key key = Keys.hmacShaKeyFor("your-secret-key-which-must-be-very-secure-and-long".getBytes());
         return Jwts.builder()

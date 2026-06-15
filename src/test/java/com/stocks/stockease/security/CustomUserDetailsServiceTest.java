@@ -16,8 +16,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.stocks.stockease.model.User;
 import com.stocks.stockease.repository.UserRepository;
 
-/** Unit tests for {@link CustomUserDetailsService} user lookup and authority mapping. */
+/**
+ * Tests for {@link CustomUserDetailsService} covering user lookup, authority mapping, and not-found behavior.
+ */
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("unused") // @BeforeEach method is invoked by JUnit via reflection; IDE does not detect the indirect call
 class CustomUserDetailsServiceTest {
 
     @Mock
