@@ -78,12 +78,25 @@ done
   out_file="$OUT_DIR/${rel_path%.md}.html"
   mkdir -p "$(dirname "$out_file")"
 
+  # Calculate relative path from this output file back to target/docs/.
+  # OUTPUT itself is one directory level; rel_path may add more.
+  output_depth=$(( $(echo "$OUTPUT" | tr -cd '/' | wc -c) + 1 ))
+  rel_depth=$(echo "${rel_path%.md}" | tr -cd '/' | wc -c)
+  total_depth=$(( output_depth + rel_depth ))
+
+  root=""
+  for (( i = 0; i < total_depth; i++ )); do
+    root="${root}../"
+  done
+  root="${root%/}"
+
   PANDOC_ARGS=(
     "$md_file"
     --from markdown
     --to html
     --template "$TEMPLATE"
     --metadata=baseurl:/stockease
+    "--metadata=root:$root"
     --toc
     --toc-depth="$TOC_DEPTH"
     --standalone

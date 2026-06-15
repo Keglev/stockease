@@ -13,29 +13,37 @@
         Variables injected by Pandoc at build time:
           $title$  — page title from the Markdown front matter
           $body$   — rendered HTML content from the Markdown source
+          $root$   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
+                     calculated per file by generate-docs.sh and passed via --metadata=root:
 
         Layout: sticky header + two-column grid (sidebar | content) + footer.
         Sidebar is built dynamically from the navigation map in the script below.
 
-        Stylesheets:
+        Stylesheets (paths are relative via $root$ so they resolve at any nesting depth):
           base.css       — CSS variables, reset, typography, layout
           component.css  — sidebar, cards, code, tables, mermaid, print
 
         Dependencies:
           Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
     -->
-    <link rel="stylesheet" href="/stockease/templates/base.css">
-    <link rel="stylesheet" href="/stockease/templates/component.css">
+    <link rel="stylesheet" href="$root$/templates/base.css">
+    <link rel="stylesheet" href="$root$/templates/component.css">
 </head>
 <body>
 
-    <!-- Sticky header with logo and breadcrumb -->
+    <!-- Sticky header: logo (left), breadcrumb + external nav links (right) -->
     <header class="site-header">
         <div class="site-header__inner">
             <a href="/stockease/" class="site-header__logo">StockEase Docs</a>
-            <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
-                <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
-            </nav>
+            <div class="site-header__right">
+                <nav class="site-header__breadcrumb" aria-label="Breadcrumb">
+                    <a href="/stockease/">Home</a> / <span id="breadcrumb">Documentation</span>
+                </nav>
+                <nav class="site-header__nav" aria-label="Site links">
+                    <a href="https://github.com/Keglev/stockease" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    <a href="https://keglev.github.io/stockease/">Docs Home</a>
+                </nav>
+            </div>
         </div>
     </header>
 
@@ -51,8 +59,9 @@
 
     <footer class="site-footer">
         <div class="site-footer__inner">
-            <p><strong>StockEase</strong> — Inventory Management System</p>
-            <p>Architecture Documentation</p>
+            <span>StockEase — Inventory Management System</span>
+            <a href="https://github.com/Keglev/stockease" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+            <a href="https://keglev.github.io/stockease/">Documentation Home</a>
         </div>
     </footer>
 

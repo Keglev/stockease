@@ -15,19 +15,19 @@ StockEase is an enterprise-grade inventory management system built with Spring B
 
 ```mermaid
 graph TD
-    Root([docs/index.md — You are here])
+    Root(["docs/index.md - You are here"])
 
-    Root --> Arch[architecture/]
-    Arch --> System[system/ — Overview, Backend, Layers, Security, Frontend]
-    Arch --> Testing[testing/ — Strategy, Pyramid, Matrix, MockMvc, Security Tests]
-    Arch --> Deployment[deployment/ — Infrastructure, CI-CD, Docker, Config]
-    Arch --> Decisions[decisions/ — ADR 001 DB, ADR 002 Validation, ADR 003 Auth]
-    Arch --> Patterns[patterns/ — Repository Pattern, Security Patterns]
-    Arch --> Components[components/ — Analytics Service]
+    Root --> Arch["architecture/"]
+    Arch --> System["system/ - Overview, Backend, Layers, Security, Frontend"]
+    Arch --> Testing["testing/ - Strategy, Pyramid, Matrix, MockMvc, Security Tests"]
+    Arch --> Deployment["deployment/ - Infrastructure, CI-CD, Docker, Config"]
+    Arch --> Decisions["decisions/ - ADR 001 DB, ADR 002 Validation, ADR 003 Auth"]
+    Arch --> Patterns["patterns/ - Repository Pattern, Security Patterns"]
+    Arch --> Components["components/ - Analytics Service"]
 
-    Root --> Guides[guides/]
-    Guides --> Gen[documentation-generation.md]
-    Guides --> Contributing[contributing.md]
+    Root --> Guides["guides/"]
+    Guides --> Gen["documentation-generation.md"]
+    Guides --> Contributing["contributing.md"]
 ```
 
 ---
