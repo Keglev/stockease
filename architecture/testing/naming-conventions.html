@@ -5,209 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase
 Documentation - StockEase Architecture Documentation</title>
-    <!--
-        StockEase Page Template
-        =======================
-        Pandoc HTML template used by the docs pipeline to render all
-        individual architecture documentation pages.
-
-        Variables injected by Pandoc at build time:
-          StockEase
-Documentation  — page title from the Markdown front matter
-          <h1 id="test-naming-conventions">Test Naming Conventions</h1>
-<p><strong>Purpose</strong>: Establish consistent naming patterns for
-test classes and methods.</p>
-<hr />
-<h2 id="test-class-naming">Test Class Naming</h2>
-<p><strong>Pattern</strong>: <code>{ClassName}Test.java</code></p>
-<p>Rules: - Always end with <code>Test</code> (singular) - Match the
-class under test in CamelCase - One test class per production class -
-Same package structure as production code</p>
-<table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 47%" />
-<col style="width: 19%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Test Class</th>
-<th>Production Class</th>
-<th>Scope</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>AuthControllerTest</code></td>
-<td><code>AuthController</code></td>
-<td>Unit — login logic</td>
-</tr>
-<tr class="even">
-<td><code>ProductCreateControllerTest</code></td>
-<td><code>ProductController</code></td>
-<td>Slice — POST /api/products</td>
-</tr>
-<tr class="odd">
-<td><code>ProductFetchControllerTest</code></td>
-<td><code>ProductController</code></td>
-<td>Slice — GET endpoints</td>
-</tr>
-<tr class="even">
-<td><code>ProductUpdateControllerTest</code></td>
-<td><code>ProductController</code></td>
-<td>Slice — PUT happy-path updates</td>
-</tr>
-<tr class="odd">
-<td><code>ProductInvalidUpdateControllerTest</code></td>
-<td><code>ProductController</code></td>
-<td>Slice — PUT validation and error paths</td>
-</tr>
-<tr class="even">
-<td><code>ProductDeleteControllerTest</code></td>
-<td><code>ProductController</code></td>
-<td>Slice — DELETE endpoints</td>
-</tr>
-<tr class="odd">
-<td><code>ProductPaginationControllerTest</code></td>
-<td><code>ProductController</code></td>
-<td>Slice — pagination</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="test-method-naming">Test Method Naming</h2>
-<p><strong>Pattern</strong>:
-<code>{methodName}_{stateUnderTest}_{expectedBehavior}</code></p>
-<p>All three segments are required. No <code>test</code> prefix.</p>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">login_withValidUserCredentials_returns200</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">login_withBadCredentials_returns401</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">createProduct_asUserRole_returns403</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">updateQuantity_withMissingField_returns400</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">deleteProduct_asAdmin_returns200</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
-<hr />
-<h2 id="test-data-naming">Test Data Naming</h2>
-<p><strong>Pattern</strong>:
-<code>{semantic}_{characteristic}</code></p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Good</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>User mockUser <span class="op">=</span> <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span><span class="dv">1L</span><span class="op">,</span> <span class="st">&quot;testuser&quot;</span><span class="op">,</span> <span class="st">&quot;password&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_USER&quot;</span><span class="op">);</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">String</span> jwtToken <span class="op">=</span> <span class="st">&quot;mockToken&quot;</span><span class="op">;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> lowStockThreshold <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Bad</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>User u <span class="op">=</span> <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span><span class="dv">1L</span><span class="op">,</span> <span class="st">&quot;x&quot;</span><span class="op">,</span> <span class="st">&quot;y&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_X&quot;</span><span class="op">);</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">String</span> t <span class="op">=</span> <span class="st">&quot;abc&quot;</span><span class="op">;</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> q <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span></code></pre></div>
-<table>
-<thead>
-<tr class="header">
-<th>Characteristic</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>mock</code></td>
-<td><code>mockUser</code>, <code>mockToken</code></td>
-</tr>
-<tr class="even">
-<td><code>valid</code></td>
-<td><code>validProduct</code>, <code>validPassword</code></td>
-</tr>
-<tr class="odd">
-<td><code>invalid</code></td>
-<td><code>invalidQuantity = -1</code></td>
-</tr>
-<tr class="even">
-<td><code>empty</code></td>
-<td><code>emptyProductList</code></td>
-</tr>
-<tr class="odd">
-<td><code>expected</code></td>
-<td><code>expectedStatus</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="inline-comments">Inline Comments</h2>
-<p>AAA (Arrange / Act / Assert) section markers are optional and only
-used when the test is long enough that the sections are not immediately
-visible. Short tests (under 10 lines) need no markers.</p>
-<p>Inline comments are allowed only for non-obvious setup — for example,
-explaining why a specific mock value was chosen, or why a particular
-edge case matters.</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Test</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">login_withNonExistentUsername_returns401</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>userRepository<span class="op">.</span><span class="fu">findByUsername</span><span class="op">(</span><span class="st">&quot;wronguser&quot;</span><span class="op">)).</span><span class="fu">thenReturn</span><span class="op">(</span>Optional<span class="op">.</span><span class="fu">empty</span><span class="op">());</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// auth passes (mocked) but the repo has no record — covers a deleted or externally-removed account</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>authenticationManager<span class="op">.</span><span class="fu">authenticate</span><span class="op">(</span><span class="fu">any</span><span class="op">())).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">null</span><span class="op">);</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    ResponseEntity<span class="op">&lt;</span>ApiResponse<span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;&gt;</span> response <span class="op">=</span> authController<span class="op">.</span><span class="fu">login</span><span class="op">(</span><span class="fu">buildLoginRequest</span><span class="op">(</span><span class="st">&quot;wronguser&quot;</span><span class="op">,</span> <span class="st">&quot;password&quot;</span><span class="op">));</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">getStatusCode</span><span class="op">().</span><span class="fu">value</span><span class="op">()).</span><span class="fu">isEqualTo</span><span class="op">(</span><span class="dv">401</span><span class="op">);</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<hr />
-<h2 id="anti-patterns">Anti-Patterns</h2>
-<p><strong>Generic names</strong> — <code>testMethod1()</code>,
-<code>test()</code>, <code>checkController()</code> give no information
-about intent.</p>
-<p><strong>Ambiguous names</strong> — <code>testUserLogin()</code> does
-not say whether the test expects success or failure.</p>
-<p><strong>Mixed concerns</strong> — one test method that logs in and
-also creates a product tests two behaviors; split it.</p>
-<p><strong>Magic numbers</strong> —
-<code>findByQuantityLessThan(5)</code> should use a named constant
-<code>LOW_STOCK_THRESHOLD = 5</code>.</p>
-<hr />
-<h2 id="new-test-checklist">New Test Checklist</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" />Class name ends with
-<code>Test</code></label></li>
-<li><label><input type="checkbox" />Method name describes action +
-outcome</label></li>
-<li><label><input type="checkbox" />Failure cases include
-<code>Denied</code>, <code>Invalid</code>, or <code>Failure</code> in
-the name</label></li>
-<li><label><input type="checkbox" />Given-When-Then structure
-present</label></li>
-<li><label><input type="checkbox" />Variable names are
-descriptive</label></li>
-<li><label><input type="checkbox" /><code>@BeforeEach</code> resets
-mocks and state</label></li>
-<li><label><input type="checkbox" />Parameterized variants use
-<code>@ParameterizedTest</code> with
-<code>@CsvSource</code></label></li>
-</ul>
-<hr />
-<h2 id="related-documentation">Related Documentation</h2>
-<ul>
-<li><strong><a href="./matrix.html">Coverage Matrix</a></strong> — Full
-test method inventory</li>
-<li><strong><a href="./strategy.html">Testing Strategy</a></strong> —
-Philosophy behind these conventions</li>
-<li><strong><a href="./controller-integration.html">Controller
-Integration Tests</a></strong> — MockMvc naming examples</li>
-</ul>
-<hr />
-<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
-Current</p>
-<p><a href="testing-architecture.html">Back to Testing Architecture
-Index</a></p>   — rendered HTML content from the Markdown source
-          ../..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
-                     calculated per file by generate-docs.sh and passed via --metadata=root:
-
-        Layout: sticky header + two-column grid (sidebar | content) + footer.
-        Sidebar is built dynamically from the navigation map in the script below.
-
-        Stylesheets (paths are relative via ../.. so they resolve at any nesting depth):
-          base.css       — CSS variables, reset, typography, layout
-          component.css  — sidebar, cards, code, tables, mermaid, print
-
-        Dependencies:
-          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <link rel="stylesheet" href="../../templates/base.css">
     <link rel="stylesheet" href="../../templates/component.css">
     <style>
@@ -310,34 +126,80 @@ Index</a></p>   — rendered HTML content from the Markdown source
                 <td>Unit — login logic</td>
                 </tr>
                 <tr class="even">
+                <td><code>HealthControllerTest</code></td>
+                <td><code>HealthController</code></td>
+                <td>Unit — DB liveness probe branches</td>
+                </tr>
+                <tr class="odd">
                 <td><code>ProductCreateControllerTest</code></td>
                 <td><code>ProductController</code></td>
                 <td>Slice — POST /api/products</td>
                 </tr>
-                <tr class="odd">
+                <tr class="even">
                 <td><code>ProductFetchControllerTest</code></td>
                 <td><code>ProductController</code></td>
                 <td>Slice — GET endpoints</td>
                 </tr>
-                <tr class="even">
+                <tr class="odd">
                 <td><code>ProductUpdateControllerTest</code></td>
                 <td><code>ProductController</code></td>
                 <td>Slice — PUT happy-path updates</td>
                 </tr>
-                <tr class="odd">
+                <tr class="even">
                 <td><code>ProductInvalidUpdateControllerTest</code></td>
                 <td><code>ProductController</code></td>
                 <td>Slice — PUT validation and error paths</td>
                 </tr>
-                <tr class="even">
+                <tr class="odd">
                 <td><code>ProductDeleteControllerTest</code></td>
                 <td><code>ProductController</code></td>
                 <td>Slice — DELETE endpoints</td>
                 </tr>
-                <tr class="odd">
+                <tr class="even">
                 <td><code>ProductPaginationControllerTest</code></td>
                 <td><code>ProductController</code></td>
                 <td>Slice — pagination</td>
+                </tr>
+                <tr class="odd">
+                <td><code>GlobalExceptionHandlerTest</code></td>
+                <td><code>GlobalExceptionHandler</code></td>
+                <td>Unit — all exception handler methods</td>
+                </tr>
+                <tr class="even">
+                <td><code>ProductTest</code></td>
+                <td><code>Product</code></td>
+                <td>Unit — null-guard branches in updateTotalValue</td>
+                </tr>
+                <tr class="odd">
+                <td><code>DataSeederTest</code></td>
+                <td><code>DataSeeder</code></td>
+                <td>Unit — idempotency guards</td>
+                </tr>
+                <tr class="even">
+                <td><code>FlywayConfigurationTest</code></td>
+                <td><code>FlywayConfiguration</code></td>
+                <td>Unit — disabled-flyway branch</td>
+                </tr>
+                <tr class="odd">
+                <td><code>JwtUtilTest</code></td>
+                <td><code>JwtUtil</code></td>
+                <td>Unit — token generation, validation, claim
+                extraction</td>
+                </tr>
+                <tr class="even">
+                <td><code>JwtFilterTest</code></td>
+                <td><code>JwtFilter</code></td>
+                <td>Unit — all Bearer token filter branch paths</td>
+                </tr>
+                <tr class="odd">
+                <td><code>CustomUserDetailsServiceTest</code></td>
+                <td><code>CustomUserDetailsService</code></td>
+                <td>Unit — user lookup and not-found behavior</td>
+                </tr>
+                <tr class="even">
+                <td><code>CustomAuthenticationEntryPointTest</code></td>
+                <td><code>CustomAuthenticationEntryPoint</code></td>
+                <td>Unit — 401 JSON error response</td>
                 </tr>
                 </tbody>
                 </table>
@@ -486,16 +348,10 @@ Index</a></p>   — rendered HTML content from the Markdown source
         </div>
     </footer>
 
-    <!--
-        Sidebar navigation
-        ==================
-        Built dynamically so a single source of truth covers all pages.
-        Sections are collapsible via <details>/<summary>. The section
-        containing the active page is expanded automatically on load.
-
-        To add or remove a section, edit the navigation object below.
-        Active link is highlighted based on the current page URL.
-    -->
+    
+    
+    
+    
     <script>
         const navigation = {
             'API Documentation': [
@@ -633,13 +489,8 @@ Index</a></p>   — rendered HTML content from the Markdown source
         });
     </script>
 
-    <!--
-        Mermaid diagram rendering
-        =========================
-        Renders architecture diagrams written as fenced mermaid code blocks
-        in Markdown. The Lua filter in the docs pipeline converts them to
-        <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    
+    
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 

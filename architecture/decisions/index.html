@@ -5,84 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase
 Documentation - StockEase Architecture Documentation</title>
-    <!--
-        StockEase Page Template
-        =======================
-        Pandoc HTML template used by the docs pipeline to render all
-        individual architecture documentation pages.
-
-        Variables injected by Pandoc at build time:
-          StockEase
-Documentation  — page title from the Markdown front matter
-          <h1 id="architecture-decision-records">Architecture Decision
-Records</h1>
-<p>Architectural decisions made during the design and implementation of
-StockEase, documented in ADR format.</p>
-<hr />
-<h2 id="decision-records">Decision Records</h2>
-<ul>
-<li><a href="./001-database-choice.html">ADR 001 — Database Choice</a> —
-PostgreSQL for production, H2 for tests, Flyway for migrations</li>
-<li><a href="./002-validation-strategy.html">ADR 002 — Validation
-Strategy</a> — Multi-layer validation with JSR-303 annotations,
-service-level business rules, and database constraints</li>
-<li><a href="./003-authentication-mechanism.html">ADR 003 —
-Authentication Mechanism</a> — JWT stateless tokens over session-based
-authentication</li>
-</ul>
-<hr />
-<h2 id="adr-status-key">ADR Status Key</h2>
-<table>
-<thead>
-<tr class="header">
-<th>Status</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Accepted</td>
-<td>Decision is in effect</td>
-</tr>
-<tr class="even">
-<td>Deprecated</td>
-<td>Superseded by a newer decision</td>
-</tr>
-<tr class="odd">
-<td>Proposed</td>
-<td>Under review, not yet implemented</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="related-documentation">Related Documentation</h2>
-<ul>
-<li><a href="../system/overview.html">System Overview</a> — Design
-decisions in context</li>
-<li><a href="../system/security.html">Security Architecture</a> — JWT
-and BCrypt implementation</li>
-<li><a href="../patterns/index.html">Patterns</a> — Implementation
-patterns</li>
-<li><a href="../components/index.html">Components</a></li>
-</ul>
-<hr />
-<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
-Current</p>
-<p><a href="../index.html">Back to Architecture
-Index</a></p>   — rendered HTML content from the Markdown source
-          ../..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
-                     calculated per file by generate-docs.sh and passed via --metadata=root:
-
-        Layout: sticky header + two-column grid (sidebar | content) + footer.
-        Sidebar is built dynamically from the navigation map in the script below.
-
-        Stylesheets (paths are relative via ../.. so they resolve at any nesting depth):
-          base.css       — CSS variables, reset, typography, layout
-          component.css  — sidebar, cards, code, tables, mermaid, print
-
-        Dependencies:
-          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <link rel="stylesheet" href="../../templates/base.css">
     <link rel="stylesheet" href="../../templates/component.css">
     <style>
@@ -226,16 +167,10 @@ Index</a></p>   — rendered HTML content from the Markdown source
         </div>
     </footer>
 
-    <!--
-        Sidebar navigation
-        ==================
-        Built dynamically so a single source of truth covers all pages.
-        Sections are collapsible via <details>/<summary>. The section
-        containing the active page is expanded automatically on load.
-
-        To add or remove a section, edit the navigation object below.
-        Active link is highlighted based on the current page URL.
-    -->
+    
+    
+    
+    
     <script>
         const navigation = {
             'API Documentation': [
@@ -373,13 +308,8 @@ Index</a></p>   — rendered HTML content from the Markdown source
         });
     </script>
 
-    <!--
-        Mermaid diagram rendering
-        =========================
-        Renders architecture diagrams written as fenced mermaid code blocks
-        in Markdown. The Lua filter in the docs pipeline converts them to
-        <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    
+    
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 

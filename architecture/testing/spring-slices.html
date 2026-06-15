@@ -5,247 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase
 Documentation - StockEase Architecture Documentation</title>
-    <!--
-        StockEase Page Template
-        =======================
-        Pandoc HTML template used by the docs pipeline to render all
-        individual architecture documentation pages.
-
-        Variables injected by Pandoc at build time:
-          StockEase
-Documentation  — page title from the Markdown front matter
-          <h1 id="spring-test-slices">Spring Test Slices</h1>
-<p><strong>Purpose</strong>: Document the Spring Boot test slice
-annotations used in StockEase.</p>
-<hr />
-<h2 id="what-are-test-slices">What Are Test Slices?</h2>
-<p>A test slice loads only the part of the application context needed
-for a specific layer.</p>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Without slices — loads everything, slow</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">@SpringBootTest</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductControllerTest <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">// With slices — loads only controller + security, fast</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductControllerTest <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
-<table>
-<thead>
-<tr class="header">
-<th>Annotation</th>
-<th>Loads</th>
-<th>Speed</th>
-<th>Use For</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>@WebMvcTest</code></td>
-<td>Controllers + Security</td>
-<td>Fast</td>
-<td>HTTP endpoint tests</td>
-</tr>
-<tr class="even">
-<td><code>@DataJpaTest</code></td>
-<td>Repositories + JPA + H2</td>
-<td>Medium</td>
-<td>Query tests</td>
-</tr>
-<tr class="odd">
-<td><code>@SpringBootTest</code></td>
-<td>Full context</td>
-<td>Slow</td>
-<td>Integration / bootstrap</td>
-</tr>
-<tr class="even">
-<td>None</td>
-<td>Nothing</td>
-<td>Fastest</td>
-<td>Pure unit tests</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="webmvctest"><span class="citation"
-data-cites="WebMvcTest">@WebMvcTest</span></h2>
-<h3 id="what-it-loads">What It Loads</h3>
-<pre><code>@WebMvcTest(ProductController.class)
-├── ProductController
-├── MockMvc (auto-configured)
-├── Spring Security filter chain
-├── Jackson (JSON serialization)
-├── ControllerAdvice
-├── (mocked) Services
-└── (mocked) Repositories</code></pre>
-<h3 id="setup-pattern">Setup Pattern</h3>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Import</span><span class="op">(</span>TestConfig<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> ProductFetchControllerTest <span class="op">{</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> MockMvc mockMvc<span class="op">;</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">@MockitoBean</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> JwtUtil jwtUtil<span class="op">;</span>  <span class="co">// From TestConfig</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@BeforeEach</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">setup</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        Mockito<span class="op">.</span><span class="fu">reset</span><span class="op">(</span>productRepository<span class="op">,</span> jwtUtil<span class="op">);</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">when</span><span class="op">(</span>jwtUtil<span class="op">.</span><span class="fu">validateToken</span><span class="op">(</span><span class="fu">anyString</span><span class="op">())).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">true</span><span class="op">);</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<h3 id="security-in-webmvctest">Security in <span class="citation"
-data-cites="WebMvcTest">@WebMvcTest</span></h3>
-<p>Spring Security is active by default in <code>@WebMvcTest</code>. Use
-<code>SecurityMockMvcRequestPostProcessors</code> to provide test
-users:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Authenticated user with role</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;admin&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">))</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Anonymous (no auth) — omit .with(user(...))</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Full UserDetails</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;admin&quot;</span><span class="op">).</span><span class="fu">password</span><span class="op">(</span><span class="st">&quot;password&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">,</span> <span class="st">&quot;USER&quot;</span><span class="op">))</span></span></code></pre></div>
-<hr />
-<h2 id="datajpatest"><span class="citation"
-data-cites="DataJpaTest">@DataJpaTest</span></h2>
-<h3 id="what-it-loads-1">What It Loads</h3>
-<pre><code>@DataJpaTest
-├── Repository interfaces
-├── H2 in-memory database
-├── @Entity classes
-├── TestEntityManager
-└── (not loaded) Controllers, Services, Security</code></pre>
-<h3 id="when-to-use">When to Use</h3>
-<p>Use <code>@DataJpaTest</code> when testing custom <code>@Query</code>
-methods or derived query methods that need real SQL execution.</p>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">@DataJpaTest</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductRepositoryTest <span class="op">{</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> TestEntityManager entityManager<span class="op">;</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">@BeforeEach</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">setup</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        Product p <span class="op">=</span> <span class="kw">new</span> <span class="fu">Product</span><span class="op">(</span><span class="st">&quot;Test Product&quot;</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="fl">50.0</span><span class="op">);</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        entityManager<span class="op">.</span><span class="fu">persist</span><span class="op">(</span>p<span class="op">);</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        entityManager<span class="op">.</span><span class="fu">flush</span><span class="op">();</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">testFindByQuantityLessThan</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="bu">List</span><span class="op">&lt;</span>Product<span class="op">&gt;</span> lowStock <span class="op">=</span> productRepository<span class="op">.</span><span class="fu">findByQuantityLessThan</span><span class="op">(</span><span class="dv">5</span><span class="op">);</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="fu">assertThat</span><span class="op">(</span>lowStock<span class="op">).</span><span class="fu">hasSize</span><span class="op">(</span><span class="dv">1</span><span class="op">);</span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="fu">assertThat</span><span class="op">(</span>lowStock<span class="op">.</span><span class="fu">get</span><span class="op">(</span><span class="dv">0</span><span class="op">).</span><span class="fu">getName</span><span class="op">()).</span><span class="fu">isEqualTo</span><span class="op">(</span><span class="st">&quot;Test Product&quot;</span><span class="op">);</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p><strong>Current status</strong>: Not yet used in StockEase.
-Repositories are mocked in slice tests. <strong>When to add</strong>:
-Once custom queries grow in complexity.</p>
-<hr />
-<h2 id="springboottest"><span class="citation"
-data-cites="SpringBootTest">@SpringBootTest</span></h2>
-<p>Loads the full application context. Use only for: - Verifying that
-all beans wire correctly on startup - Multi-layer integration scenarios
-(rare)</p>
-<div class="sourceCode" id="cb7"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="at">@SpringBootTest</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">@ActiveProfiles</span><span class="op">(</span><span class="st">&quot;test&quot;</span><span class="op">)</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> StockEaseApplicationTests <span class="op">{</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">contextLoads_withTestProfile_applicationStartsSuccessfully</span><span class="op">()</span> <span class="op">{</span> <span class="op">}</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<hr />
-<h2 id="choosing-the-right-annotation">Choosing the Right
-Annotation</h2>
-<pre><code>What do I want to test?
-├── HTTP endpoint behavior? → @WebMvcTest
-├── Database query methods? → @DataJpaTest
-├── Full bean wiring?       → @SpringBootTest
-└── Pure business logic?    → No annotation + @ExtendWith(MockitoExtension.class)</code></pre>
-<hr />
-<h2 id="testconfig-pattern">TestConfig Pattern</h2>
-<p>Centralizes shared mock beans to avoid repeating the same
-<code>@MockitoBean</code> setup in every test class.</p>
-<div class="sourceCode" id="cb9"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">// backend/src/test/java/com/stocks/stockease/config/test/TestConfig.java</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">@Configuration</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">@SuppressWarnings</span><span class="op">(</span><span class="st">&quot;unused&quot;</span><span class="op">)</span> <span class="co">// @Bean methods are invoked by Spring&#39;s CGLIB proxy at runtime</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> TestConfig <span class="op">{</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> JwtUtil <span class="fu">jwtUtil</span><span class="op">()</span> <span class="op">{</span> <span class="cf">return</span> Mockito<span class="op">.</span><span class="fu">mock</span><span class="op">(</span>JwtUtil<span class="op">.</span><span class="fu">class</span><span class="op">);</span> <span class="op">}</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> UserDetailsService <span class="fu">userDetailsService</span><span class="op">()</span> <span class="op">{</span> <span class="cf">return</span> Mockito<span class="op">.</span><span class="fu">mock</span><span class="op">(</span>UserDetailsService<span class="op">.</span><span class="fu">class</span><span class="op">);</span> <span class="op">}</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> JwtFilter <span class="fu">jwtFilter</span><span class="op">(</span>JwtUtil jwtUtil<span class="op">,</span> UserDetailsService userDetailsService<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">JwtFilter</span><span class="op">(</span>jwtUtil<span class="op">,</span> userDetailsService<span class="op">);</span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Bean</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> SecurityContext <span class="fu">securityContext</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Both roles so tests cover ADMIN-only and USER-only @PreAuthorize paths without separate configs.</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>        SecurityContext context <span class="op">=</span> SecurityContextHolder<span class="op">.</span><span class="fu">createEmptyContext</span><span class="op">();</span></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>        context<span class="op">.</span><span class="fu">setAuthentication</span><span class="op">(</span><span class="kw">new</span> <span class="fu">UsernamePasswordAuthenticationToken</span><span class="op">(</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;testUser&quot;</span><span class="op">,</span> <span class="st">&quot;password&quot;</span><span class="op">,</span></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>                AuthorityUtils<span class="op">.</span><span class="fu">createAuthorityList</span><span class="op">(</span><span class="st">&quot;ROLE_ADMIN&quot;</span><span class="op">,</span> <span class="st">&quot;ROLE_USER&quot;</span><span class="op">)));</span></span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> context<span class="op">;</span></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>JwtUtil stubs (<code>validateToken</code>,
-<code>extractUsername</code>) are set in <code>@BeforeEach</code> of
-each test class — not in the bean factory — so each test controls its
-own mock behavior independently.</p>
-<p>Import in each test class:</p>
-<div class="sourceCode" id="cb10"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Import</span><span class="op">(</span>TestConfig<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductFetchControllerTest <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
-<hr />
-<h2 id="related-documentation">Related Documentation</h2>
-<ul>
-<li><strong><a href="./controller-integration.html">Controller
-Integration Tests</a></strong> — MockMvc request and assertion
-patterns</li>
-<li><strong><a href="./security-tests.html">Security Tests</a></strong>
-— Security setup in slices</li>
-<li><strong><a href="./test-data-fixtures.html">Test Data &amp;
-Fixtures</a></strong> — TestConfig and mock data</li>
-<li><strong><a
-href="./troubleshooting.html">Troubleshooting</a></strong> — Common
-slice errors and fixes</li>
-</ul>
-<hr />
-<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
-Current</p>
-<p><a href="testing-architecture.html">Back to Testing Architecture
-Index</a></p>   — rendered HTML content from the Markdown source
-          ../..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
-                     calculated per file by generate-docs.sh and passed via --metadata=root:
-
-        Layout: sticky header + two-column grid (sidebar | content) + footer.
-        Sidebar is built dynamically from the navigation map in the script below.
-
-        Stylesheets (paths are relative via ../.. so they resolve at any nesting depth):
-          base.css       — CSS variables, reset, typography, layout
-          component.css  — sidebar, cards, code, tables, mermaid, print
-
-        Dependencies:
-          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <link rel="stylesheet" href="../../templates/base.css">
     <link rel="stylesheet" href="../../templates/component.css">
     <style>
@@ -556,16 +334,10 @@ Index</a></p>   — rendered HTML content from the Markdown source
         </div>
     </footer>
 
-    <!--
-        Sidebar navigation
-        ==================
-        Built dynamically so a single source of truth covers all pages.
-        Sections are collapsible via <details>/<summary>. The section
-        containing the active page is expanded automatically on load.
-
-        To add or remove a section, edit the navigation object below.
-        Active link is highlighted based on the current page URL.
-    -->
+    
+    
+    
+    
     <script>
         const navigation = {
             'API Documentation': [
@@ -703,13 +475,8 @@ Index</a></p>   — rendered HTML content from the Markdown source
         });
     </script>
 
-    <!--
-        Mermaid diagram rendering
-        =========================
-        Renders architecture diagrams written as fenced mermaid code blocks
-        in Markdown. The Lua filter in the docs pipeline converts them to
-        <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    
+    
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 

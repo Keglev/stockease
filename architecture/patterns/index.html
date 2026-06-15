@@ -5,57 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase
 Documentation - StockEase Architecture Documentation</title>
-    <!--
-        StockEase Page Template
-        =======================
-        Pandoc HTML template used by the docs pipeline to render all
-        individual architecture documentation pages.
-
-        Variables injected by Pandoc at build time:
-          StockEase
-Documentation  — page title from the Markdown front matter
-          <h1 id="design-patterns">Design Patterns</h1>
-<p>Implementation patterns used in StockEase for data access, security,
-and authorization.</p>
-<hr />
-<h2 id="documents-in-this-directory">Documents in This Directory</h2>
-<ul>
-<li><a href="./repository-pattern.html">Repository Pattern</a> — Spring
-Data JPA repository interfaces, query methods, pagination, custom
-<code>@Query</code>, transaction boundaries, and N+1 prevention</li>
-<li><a href="./security-patterns.html">Security Patterns</a> — JWT
-bearer token flow, BCrypt password hashing, RBAC implementation, input
-validation, SQL injection prevention, exception handling, and audit
-logging</li>
-</ul>
-<hr />
-<h2 id="related-documentation">Related Documentation</h2>
-<ul>
-<li><a href="../system/overview.html">System Overview</a></li>
-<li><a href="../system/backend.html">Backend Architecture</a></li>
-<li><a href="../system/security.html">Security Architecture</a></li>
-<li><a href="../system/layers.html">Service Layers</a></li>
-<li><a href="../components/index.html">Components</a></li>
-<li><a href="../decisions/index.html">Decisions (ADRs)</a></li>
-</ul>
-<hr />
-<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
-Current</p>
-<p><a href="../index.html">Back to Architecture
-Index</a></p>   — rendered HTML content from the Markdown source
-          ../..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
-                     calculated per file by generate-docs.sh and passed via --metadata=root:
-
-        Layout: sticky header + two-column grid (sidebar | content) + footer.
-        Sidebar is built dynamically from the navigation map in the script below.
-
-        Stylesheets (paths are relative via ../.. so they resolve at any nesting depth):
-          base.css       — CSS variables, reset, typography, layout
-          component.css  — sidebar, cards, code, tables, mermaid, print
-
-        Dependencies:
-          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <link rel="stylesheet" href="../../templates/base.css">
     <link rel="stylesheet" href="../../templates/component.css">
     <style>
@@ -177,16 +145,10 @@ Index</a></p>   — rendered HTML content from the Markdown source
         </div>
     </footer>
 
-    <!--
-        Sidebar navigation
-        ==================
-        Built dynamically so a single source of truth covers all pages.
-        Sections are collapsible via <details>/<summary>. The section
-        containing the active page is expanded automatically on load.
-
-        To add or remove a section, edit the navigation object below.
-        Active link is highlighted based on the current page URL.
-    -->
+    
+    
+    
+    
     <script>
         const navigation = {
             'API Documentation': [
@@ -324,13 +286,8 @@ Index</a></p>   — rendered HTML content from the Markdown source
         });
     </script>
 
-    <!--
-        Mermaid diagram rendering
-        =========================
-        Renders architecture diagrams written as fenced mermaid code blocks
-        in Markdown. The Lua filter in the docs pipeline converts them to
-        <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    
+    
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 

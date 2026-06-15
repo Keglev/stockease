@@ -5,162 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase
 Documentation - StockEase Architecture Documentation</title>
-    <!--
-        StockEase Page Template
-        =======================
-        Pandoc HTML template used by the docs pipeline to render all
-        individual architecture documentation pages.
-
-        Variables injected by Pandoc at build time:
-          StockEase
-Documentation  — page title from the Markdown front matter
-          <h1 id="troubleshooting">Troubleshooting</h1>
-<p><strong>Purpose</strong>: Common test failures, CI errors, and their
-fixes.</p>
-<hr />
-<h2 id="spring-slice-errors">Spring Slice Errors</h2>
-<h3 id="no-qualifying-bean-of-type-jwtutil">No qualifying bean of type
-‘JwtUtil’</h3>
-<pre><code>Error: No qualifying bean of type &#39;JwtUtil&#39; found
-Cause: @WebMvcTest does not load @Service or @Component beans
-Fix:   Add @Import(TestConfig.class) to the test class</code></pre>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="at">@WebMvcTest</span><span class="op">(</span>ProductController<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Import</span><span class="op">(</span>TestConfig<span class="op">.</span><span class="fu">class</span><span class="op">)</span>  <span class="co">// add this</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProductControllerTest <span class="op">{</span> <span class="op">}</span></span></code></pre></div>
-<hr />
-<h3 id="on-post-when-expecting-200">403 on POST when Expecting 200</h3>
-<pre><code>Error: Expected 200, got 403
-Cause: CSRF token missing
-Fix:   Add .with(csrf()) to POST, PUT, DELETE requests</code></pre>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span>                          <span class="co">// add this</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;admin&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;ADMIN&quot;</span><span class="op">)))</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isOk</span><span class="op">());</span></span></code></pre></div>
-<hr />
-<h3 id="on-request-when-expecting-403">401 on Request when Expecting
-403</h3>
-<pre><code>Error: Expected 403 Forbidden, got 401 Unauthorized
-Cause: .with(user(...)) is missing — request is anonymous
-Fix:   Add user context to the request</code></pre>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>mockMvc<span class="op">.</span><span class="fu">perform</span><span class="op">(</span><span class="fu">post</span><span class="op">(</span><span class="st">&quot;/api/products&quot;</span><span class="op">)</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">csrf</span><span class="op">())</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">with</span><span class="op">(</span><span class="fu">user</span><span class="op">(</span><span class="st">&quot;regularUser&quot;</span><span class="op">).</span><span class="fu">roles</span><span class="op">(</span><span class="st">&quot;USER&quot;</span><span class="op">)))</span>  <span class="co">// add this</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">andExpect</span><span class="op">(</span><span class="fu">status</span><span class="op">().</span><span class="fu">isForbidden</span><span class="op">());</span></span></code></pre></div>
-<hr />
-<h3 id="mockbean-vs-mockitobean"><span class="citation"
-data-cites="MockBean">@MockBean</span> vs <span class="citation"
-data-cites="MockitoBean">@MockitoBean</span></h3>
-<pre><code>Error: @MockBean not found or deprecated warning
-Cause: Spring Boot 3.4+ replaced @MockBean with @MockitoBean
-Fix:   Use @MockitoBean in Spring Boot 3.4+</code></pre>
-<div class="sourceCode" id="cb8"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Spring Boot &lt; 3.4</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">@MockBean</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Spring Boot 3.4+</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="at">@MockitoBean</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> ProductRepository productRepository<span class="op">;</span></span></code></pre></div>
-<hr />
-<h2 id="ci-failures">CI Failures</h2>
-<h3 id="reproducing-a-ci-failure-locally">Reproducing a CI Failure
-Locally</h3>
-<div class="sourceCode" id="cb9"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean test</span></code></pre></div>
-<p>If it passes locally but fails in CI, check: - JDK version mismatch
-(CI uses JDK 17) - Missing environment variables in the workflow file -
-Timing or state issues between tests (flaky test)</p>
-<hr />
-<h3 id="coverage-gate-failure">Coverage Gate Failure</h3>
-<pre><code>Error: Coverage below minimum threshold (e.g. 65% &lt; 70%)
-Fix options:
-  1. Add tests for uncovered lines (preferred)
-  2. Exclude generated code (entities, config) from threshold</code></pre>
-<p>To find uncovered lines after running
-<code>mvn clean test jacoco:report</code>:</p>
-<pre><code>open backend/target/site/jacoco/index.html</code></pre>
-<p>Red lines = not executed. Yellow = branch not fully covered.</p>
-<hr />
-<h3 id="flaky-tests">Flaky Tests</h3>
-<p>Symptoms: test passes locally and sometimes in CI, fails
-intermittently.</p>
-<p>Causes and fixes:</p>
-<table>
-<colgroup>
-<col style="width: 58%" />
-<col style="width: 41%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Cause</th>
-<th>Fix</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Shared mutable state between tests</td>
-<td>Use <code>@BeforeEach</code> to reset mocks</td>
-</tr>
-<tr class="even">
-<td>Timing assumptions (<code>Thread.sleep</code>)</td>
-<td>Remove sleeps; use deterministic mocks</td>
-</tr>
-<tr class="odd">
-<td>Test order dependency</td>
-<td>Ensure each test sets up its own data</td>
-</tr>
-<tr class="even">
-<td>Inconsistent mock behavior</td>
-<td>Reset all mocks in <code>@BeforeEach</code></td>
-</tr>
-</tbody>
-</table>
-<div class="sourceCode" id="cb12"><pre
-class="sourceCode java"><code class="sourceCode java"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@BeforeEach</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">resetMocks</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    Mockito<span class="op">.</span><span class="fu">reset</span><span class="op">(</span>productRepository<span class="op">,</span> jwtUtil<span class="op">);</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">when</span><span class="op">(</span>jwtUtil<span class="op">.</span><span class="fu">validateToken</span><span class="op">(</span><span class="fu">anyString</span><span class="op">())).</span><span class="fu">thenReturn</span><span class="op">(</span><span class="kw">true</span><span class="op">);</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<hr />
-<h3 id="viewing-ci-artifacts">Viewing CI Artifacts</h3>
-<ol type="1">
-<li>Go to GitHub → Actions → select the failed run</li>
-<li>Scroll to the Artifacts section</li>
-<li>Download <code>test-reports.zip</code> for Surefire output</li>
-<li>Download <code>jacoco-report.zip</code> for coverage HTML</li>
-</ol>
-<hr />
-<h2 id="related-documentation">Related Documentation</h2>
-<ul>
-<li><strong><a href="./spring-slices.html">Spring Slices</a></strong> —
-Slice annotation reference</li>
-<li><strong><a href="./ci-pipeline-tests.html">CI Pipeline
-Tests</a></strong> — Pipeline gates and workflow config</li>
-<li><strong><a href="./coverage-and-quality.html">Coverage &amp;
-Quality</a></strong> — JaCoCo thresholds</li>
-</ul>
-<hr />
-<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
-Current</p>
-<p><a href="testing-architecture.html">Back to Testing Architecture
-Index</a></p>   — rendered HTML content from the Markdown source
-          ../..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
-                     calculated per file by generate-docs.sh and passed via --metadata=root:
-
-        Layout: sticky header + two-column grid (sidebar | content) + footer.
-        Sidebar is built dynamically from the navigation map in the script below.
-
-        Stylesheets (paths are relative via ../.. so they resolve at any nesting depth):
-          base.css       — CSS variables, reset, typography, layout
-          component.css  — sidebar, cards, code, tables, mermaid, print
-
-        Dependencies:
-          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <link rel="stylesheet" href="../../templates/base.css">
     <link rel="stylesheet" href="../../templates/component.css">
     <style>
@@ -387,16 +250,10 @@ Fix options:
         </div>
     </footer>
 
-    <!--
-        Sidebar navigation
-        ==================
-        Built dynamically so a single source of truth covers all pages.
-        Sections are collapsible via <details>/<summary>. The section
-        containing the active page is expanded automatically on load.
-
-        To add or remove a section, edit the navigation object below.
-        Active link is highlighted based on the current page URL.
-    -->
+    
+    
+    
+    
     <script>
         const navigation = {
             'API Documentation': [
@@ -534,13 +391,8 @@ Fix options:
         });
     </script>
 
-    <!--
-        Mermaid diagram rendering
-        =========================
-        Renders architecture diagrams written as fenced mermaid code blocks
-        in Markdown. The Lua filter in the docs pipeline converts them to
-        <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    
+    
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 

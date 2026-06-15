@@ -5,440 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase
 Documentation - StockEase Architecture Documentation</title>
-    <!--
-        StockEase Page Template
-        =======================
-        Pandoc HTML template used by the docs pipeline to render all
-        individual architecture documentation pages.
-
-        Variables injected by Pandoc at build time:
-          StockEase
-Documentation  — page title from the Markdown front matter
-          <h1 id="coverage-matrix">Coverage Matrix</h1>
-<p><strong>Purpose</strong>: Single source of truth for test coverage by
-layer, feature, and authorization role.</p>
-<hr />
-<h2 id="layer-coverage">Layer Coverage</h2>
-<table>
-<colgroup>
-<col style="width: 14%" />
-<col style="width: 18%" />
-<col style="width: 29%" />
-<col style="width: 20%" />
-<col style="width: 16%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Layer</th>
-<th>Classes</th>
-<th>Test Classes</th>
-<th>Coverage</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Controller</td>
-<td>2</td>
-<td>8</td>
-<td>~85%</td>
-<td>Current</td>
-</tr>
-<tr class="even">
-<td>Security</td>
-<td>2</td>
-<td>Distributed across controller tests</td>
-<td>~75%</td>
-<td>Current</td>
-</tr>
-<tr class="odd">
-<td>Config</td>
-<td>1</td>
-<td>1 (bootstrap)</td>
-<td>~50%</td>
-<td>Adequate</td>
-</tr>
-<tr class="even">
-<td>Model / Entity</td>
-<td>2</td>
-<td>0 (tested via API responses)</td>
-<td>~30%</td>
-<td>Acceptable</td>
-</tr>
-<tr class="odd">
-<td>Repository</td>
-<td>1</td>
-<td>0 (mocked)</td>
-<td>0%</td>
-<td>Intentional</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="endpoint-coverage">Endpoint Coverage</h2>
-<table>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 18%" />
-<col style="width: 27%" />
-<col style="width: 13%" />
-<col style="width: 18%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Endpoint</th>
-<th>Method</th>
-<th>Test Class</th>
-<th>Type</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>/api/auth/login</code></td>
-<td>POST</td>
-<td><code>AuthControllerTest</code></td>
-<td>Unit</td>
-<td>Done</td>
-</tr>
-<tr class="even">
-<td><code>/api/products</code></td>
-<td>GET</td>
-<td><code>ProductFetchControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/{id}</code></td>
-<td>GET</td>
-<td><code>ProductFetchControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/low-stock</code></td>
-<td>GET</td>
-<td><code>ProductControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/search</code></td>
-<td>GET</td>
-<td><code>ProductControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/total-stock-value</code></td>
-<td>GET</td>
-<td><code>ProductControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/paged</code></td>
-<td>GET</td>
-<td><code>ProductPaginationControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="even">
-<td><code>/api/products</code></td>
-<td>POST</td>
-<td><code>ProductCreateControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/{id}/quantity</code></td>
-<td>PUT</td>
-<td><code>ProductUpdateControllerTest</code>,
-<code>ProductInvalidUpdateControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/{id}/price</code></td>
-<td>PUT</td>
-<td><code>ProductUpdateControllerTest</code>,
-<code>ProductInvalidUpdateControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/{id}/name</code></td>
-<td>PUT</td>
-<td><code>ProductUpdateControllerTest</code>,
-<code>ProductInvalidUpdateControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/{id}</code></td>
-<td>DELETE</td>
-<td><code>ProductDeleteControllerTest</code></td>
-<td>Slice</td>
-<td>Done</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="authorization-matrix">Authorization Matrix</h2>
-<table>
-<thead>
-<tr class="header">
-<th>Endpoint</th>
-<th>Method</th>
-<th>ADMIN</th>
-<th>USER</th>
-<th>Anonymous</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>/api/products</code></td>
-<td>GET</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/{id}</code></td>
-<td>GET</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/low-stock</code></td>
-<td>GET</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/search</code></td>
-<td>GET</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/total-stock-value</code></td>
-<td>GET</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/paged</code></td>
-<td>GET</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products</code></td>
-<td>POST</td>
-<td>200</td>
-<td>403</td>
-<td>401</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/{id}/quantity</code></td>
-<td>PUT</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/{id}/price</code></td>
-<td>PUT</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="even">
-<td><code>/api/products/{id}/name</code></td>
-<td>PUT</td>
-<td>200</td>
-<td>200</td>
-<td>401</td>
-</tr>
-<tr class="odd">
-<td><code>/api/products/{id}</code></td>
-<td>DELETE</td>
-<td>200</td>
-<td>403</td>
-<td>401</td>
-</tr>
-</tbody>
-</table>
-<p>All cells above are covered by existing tests.</p>
-<hr />
-<h2 id="test-method-inventory">Test Method Inventory</h2>
-<h3 id="authcontrollertest-unit">AuthControllerTest (Unit)</h3>
-<ul>
-<li><code>login_withValidUserCredentials_returns200</code></li>
-<li><code>login_withValidAdminCredentials_returns200</code></li>
-<li><code>login_withBlankUsername_returns400</code></li>
-<li><code>login_withBlankPassword_returns400</code></li>
-<li><code>login_withNonExistentUsername_returns401</code></li>
-<li><code>login_withBadCredentials_returns401</code></li>
-<li><code>login_whenServerError_returns500</code></li>
-</ul>
-<h3 id="productcontrollertest-slice">ProductControllerTest (Slice)</h3>
-<ul>
-<li><code>getLowStockProducts_withLowStockItems_returnsProducts</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>getLowStockProducts_withNoLowStockItems_returnsAllStockedMessage</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>searchProducts_withMatchingName_returnsProducts</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>searchProducts_withNoMatches_returns204</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>getTotalStockValue_withProducts_returnsCalculatedValue</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>getTotalStockValue_withNoProducts_returnsZero</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-</ul>
-<h3 id="productfetchcontrollertest-slice">ProductFetchControllerTest
-(Slice)</h3>
-<ul>
-<li><code>contextLoads_onApplicationStart_beansAreInjected</code></li>
-<li><code>getAllProducts_withAdminOrUserRole_returns200</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>getProductById_withExistingId_returns200</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>getProductById_withNonExistentId_returns404</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-</ul>
-<h3 id="productcreatecontrollertest-slice">ProductCreateControllerTest
-(Slice)</h3>
-<ul>
-<li><code>createProduct_withValidData_returns200</code></li>
-<li><code>createProduct_asUserRole_returns403</code></li>
-<li><code>createProduct_withMissingName_returns400</code></li>
-<li><code>createProduct_withNegativeQuantity_returns400</code></li>
-<li><code>createProduct_withZeroPrice_returns400</code></li>
-<li><code>createProduct_withInvalidPriceType_returns400</code></li>
-</ul>
-<h3 id="productupdatecontrollertest-slice">ProductUpdateControllerTest
-(Slice)</h3>
-<ul>
-<li><code>updateQuantity_withValidData_returns200</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updatePrice_withValidData_returns200</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updateName_withSpecialCharacters_returns200</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-</ul>
-<h3
-id="productinvalidupdatecontrollertest-slice">ProductInvalidUpdateControllerTest
-(Slice)</h3>
-<ul>
-<li><code>updateQuantity_withMissingField_returns400</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updateQuantity_withInvalidType_returns400</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updatePrice_withNegativeValue_returns400</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updatePrice_withInvalidType_returns400</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updatePrice_withZeroValue_returns400</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updateName_withWhitespaceOnly_returns400</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updateProduct_whenNotFound_returns404</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>updateProduct_withoutCsrfToken_returns403</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-</ul>
-<h3 id="productdeletecontrollertest-slice">ProductDeleteControllerTest
-(Slice)</h3>
-<ul>
-<li><code>deleteProduct_asAdmin_returns200</code></li>
-<li><code>deleteProduct_whenProductNotFound_returns404</code></li>
-<li><code>deleteProduct_asUserRole_returns403</code></li>
-</ul>
-<h3
-id="productpaginationcontrollertest-slice">ProductPaginationControllerTest
-(Slice)</h3>
-<ul>
-<li><code>getProductsPaged_withValidParams_returns200</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>getProductsPaged_withEmptyPage_returnsEmptyContent</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-<li><code>getProductsPaged_withNegativeParams_returns400</code>
-<em>(parameterized: ADMIN, USER)</em></li>
-</ul>
-<h3 id="stockeaseapplicationtests-integration">StockEaseApplicationTests
-(Integration)</h3>
-<ul>
-<li><code>contextLoads_withTestProfile_applicationStartsSuccessfully</code></li>
-</ul>
-<hr />
-<h2 id="coverage-gaps">Coverage Gaps</h2>
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 43%" />
-<col style="width: 34%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Gap</th>
-<th>Priority</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Repository queries — no <code>@DataJpaTest</code></td>
-<td>Low</td>
-<td>Add when queries become complex</td>
-</tr>
-<tr class="even">
-<td>JWT expiry and token tampering</td>
-<td>Low</td>
-<td>Add when security hardening is prioritized</td>
-</tr>
-<tr class="odd">
-<td>E2E user flows</td>
-<td>Future</td>
-<td>Out of scope for this repo</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="related-documentation">Related Documentation</h2>
-<ul>
-<li><strong><a href="./strategy.html">Testing Strategy</a></strong> —
-Goals and scope</li>
-<li><strong><a href="./pyramid.html">Test Pyramid</a></strong> —
-Distribution rationale</li>
-<li><strong><a href="./coverage-and-quality.html">Coverage &amp;
-Quality</a></strong> — JaCoCo configuration and thresholds</li>
-</ul>
-<hr />
-<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
-Current</p>
-<p><a href="testing-architecture.html">Back to Testing Architecture
-Index</a></p>   — rendered HTML content from the Markdown source
-          ../..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
-                     calculated per file by generate-docs.sh and passed via --metadata=root:
-
-        Layout: sticky header + two-column grid (sidebar | content) + footer.
-        Sidebar is built dynamically from the navigation map in the script below.
-
-        Stylesheets (paths are relative via ../.. so they resolve at any nesting depth):
-          base.css       — CSS variables, reset, typography, layout
-          component.css  — sidebar, cards, code, tables, mermaid, print
-
-        Dependencies:
-          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <link rel="stylesheet" href="../../templates/base.css">
     <link rel="stylesheet" href="../../templates/component.css">
     <style>
@@ -535,33 +120,40 @@ Index</a></p>   — rendered HTML content from the Markdown source
                 <tbody>
                 <tr class="odd">
                 <td>Controller</td>
-                <td>2</td>
-                <td>8</td>
+                <td>3</td>
+                <td>9</td>
                 <td>~85%</td>
                 <td>Current</td>
                 </tr>
                 <tr class="even">
                 <td>Security</td>
-                <td>2</td>
-                <td>Distributed across controller tests</td>
-                <td>~75%</td>
+                <td>4</td>
+                <td>4 dedicated test classes</td>
+                <td>~90%</td>
                 <td>Current</td>
                 </tr>
                 <tr class="odd">
-                <td>Config</td>
+                <td>Exception</td>
                 <td>1</td>
-                <td>1 (bootstrap)</td>
-                <td>~50%</td>
-                <td>Adequate</td>
+                <td>1 (GlobalExceptionHandlerTest)</td>
+                <td>~90%</td>
+                <td>Current</td>
                 </tr>
                 <tr class="even">
-                <td>Model / Entity</td>
-                <td>2</td>
-                <td>0 (tested via API responses)</td>
-                <td>~30%</td>
-                <td>Acceptable</td>
+                <td>Config</td>
+                <td>3+</td>
+                <td>2 (DataSeederTest, FlywayConfigurationTest)</td>
+                <td>~65%</td>
+                <td>Current</td>
                 </tr>
                 <tr class="odd">
+                <td>Model / Entity</td>
+                <td>2</td>
+                <td>1 (ProductTest)</td>
+                <td>~55%</td>
+                <td>Current</td>
+                </tr>
+                <tr class="even">
                 <td>Repository</td>
                 <td>1</td>
                 <td>0 (mocked)</td>
@@ -675,6 +267,13 @@ Index</a></p>   — rendered HTML content from the Markdown source
                 <td>DELETE</td>
                 <td><code>ProductDeleteControllerTest</code></td>
                 <td>Slice</td>
+                <td>Done</td>
+                </tr>
+                <tr class="odd">
+                <td><code>/health</code></td>
+                <td>GET</td>
+                <td><code>HealthControllerTest</code></td>
+                <td>Unit</td>
                 <td>Done</td>
                 </tr>
                 </tbody>
@@ -883,6 +482,79 @@ Index</a></p>   — rendered HTML content from the Markdown source
                 <ul>
                 <li><code>contextLoads_withTestProfile_applicationStartsSuccessfully</code></li>
                 </ul>
+                <h3 id="healthcontrollertest-unit">HealthControllerTest
+                (Unit)</h3>
+                <ul>
+                <li><code>healthCheck_whenConnectionIsValid_returns200</code></li>
+                <li><code>healthCheck_whenConnectionIsNotValid_returns500WithUnknownMessage</code></li>
+                <li><code>healthCheck_whenGetConnectionThrowsSQLException_returns500WithErrorMessage</code></li>
+                </ul>
+                <h3
+                id="globalexceptionhandlertest-unit">GlobalExceptionHandlerTest
+                (Unit)</h3>
+                <ul>
+                <li><code>handleNoSuchElementException_returns404WithExceptionMessage</code></li>
+                <li><code>handleEntityNotFoundException_returns404WithExceptionMessage</code></li>
+                <li><code>handleJwtException_returns401</code></li>
+                <li><code>handleBadCredentialsException_returns401</code></li>
+                <li><code>handleAccessDeniedException_returns403</code></li>
+                <li><code>handleIllegalArgumentException_returns400WithOriginalMessage</code></li>
+                <li><code>handleValidationException_returns400WithFieldErrors</code></li>
+                <li><code>handleHttpMessageNotReadableException_withNullMessage_returnsDefaultMessage</code></li>
+                <li><code>handleHttpMessageNotReadableException_withGenericError_returnsDefaultMessage</code></li>
+                <li><code>handleHttpMessageNotReadableException_withDeserializeError_returnsSpecificMessage</code></li>
+                <li><code>handleHandlerMethodValidationException_withConstraintViolationCause_returns400WithViolationDetails</code></li>
+                <li><code>handleHandlerMethodValidationException_withBindExceptionCause_returns400WithFieldErrors</code></li>
+                <li><code>handleHandlerMethodValidationException_withUnknownCause_returns400WithUnknownKey</code></li>
+                <li><code>handleGeneralException_returns500</code></li>
+                </ul>
+                <h3 id="dataseedertest-unit">DataSeederTest (Unit)</h3>
+                <ul>
+                <li><code>seedData_whenUsersAndProductsAlreadyExist_skipsAllInsertions</code></li>
+                </ul>
+                <h3
+                id="flywayconfigurationtest-unit">FlywayConfigurationTest
+                (Unit)</h3>
+                <ul>
+                <li><code>flyway_whenFlywayDisabled_returnsFlywayInstanceWithoutMigrating</code></li>
+                </ul>
+                <h3 id="producttest-unit">ProductTest (Unit)</h3>
+                <ul>
+                <li><code>setQuantity_withNullQuantity_setsTotalValueToZero</code></li>
+                <li><code>setPrice_withNullPrice_setsTotalValueToZero</code></li>
+                </ul>
+                <h3 id="jwtutiltest-unit">JwtUtilTest (Unit)</h3>
+                <ul>
+                <li><code>generateToken_returnsCompactJwtString</code></li>
+                <li><code>generateToken_embeddedClaimsMatchInputs</code></li>
+                <li><code>validateToken_withValidToken_returnsTrue</code></li>
+                <li><code>validateToken_withMalformedToken_returnsFalse</code></li>
+                <li><code>validateToken_withExpiredToken_returnsFalse</code></li>
+                <li><code>extractUsername_returnsCorrectSubjectClaim</code></li>
+                <li><code>extractRole_returnsCorrectRoleClaim</code></li>
+                <li><code>extractClaim_withCustomResolver_returnsExpectedValue</code></li>
+                </ul>
+                <h3 id="jwtfiltertest-unit">JwtFilterTest (Unit)</h3>
+                <ul>
+                <li><code>doFilterInternal_withNoAuthorizationHeader_doesNotSetAuthentication</code></li>
+                <li><code>doFilterInternal_withNonBearerAuthorizationHeader_doesNotSetAuthentication</code></li>
+                <li><code>doFilterInternal_withValidBearerToken_populatesSecurityContext</code></li>
+                <li><code>doFilterInternal_withInvalidBearerToken_doesNotSetAuthentication</code></li>
+                </ul>
+                <h3
+                id="customuserdetailsservicetest-unit">CustomUserDetailsServiceTest
+                (Unit)</h3>
+                <ul>
+                <li><code>loadUserByUsername_withExistingUser_returnsUserDetailsWithCorrectFields</code></li>
+                <li><code>loadUserByUsername_withAdminUser_returnsAdminAuthority</code></li>
+                <li><code>loadUserByUsername_withUnknownUsername_throwsUsernameNotFoundException</code></li>
+                </ul>
+                <h3
+                id="customauthenticationentrypointtest-unit">CustomAuthenticationEntryPointTest
+                (Unit)</h3>
+                <ul>
+                <li><code>commence_writesUnauthorizedJsonResponse</code></li>
+                </ul>
                 <hr />
                 <h2 id="coverage-gaps">Coverage Gaps</h2>
                 <table>
@@ -906,11 +578,6 @@ Index</a></p>   — rendered HTML content from the Markdown source
                 <td>Add when queries become complex</td>
                 </tr>
                 <tr class="even">
-                <td>JWT expiry and token tampering</td>
-                <td>Low</td>
-                <td>Add when security hardening is prioritized</td>
-                </tr>
-                <tr class="odd">
                 <td>E2E user flows</td>
                 <td>Future</td>
                 <td>Out of scope for this repo</td>
@@ -947,16 +614,10 @@ Index</a></p>   — rendered HTML content from the Markdown source
         </div>
     </footer>
 
-    <!--
-        Sidebar navigation
-        ==================
-        Built dynamically so a single source of truth covers all pages.
-        Sections are collapsible via <details>/<summary>. The section
-        containing the active page is expanded automatically on load.
-
-        To add or remove a section, edit the navigation object below.
-        Active link is highlighted based on the current page URL.
-    -->
+    
+    
+    
+    
     <script>
         const navigation = {
             'API Documentation': [
@@ -1094,13 +755,8 @@ Index</a></p>   — rendered HTML content from the Markdown source
         });
     </script>
 
-    <!--
-        Mermaid diagram rendering
-        =========================
-        Renders architecture diagrams written as fenced mermaid code blocks
-        in Markdown. The Lua filter in the docs pipeline converts them to
-        <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    
+    
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 

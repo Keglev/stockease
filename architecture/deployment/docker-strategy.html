@@ -5,257 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase
 Documentation - StockEase Architecture Documentation</title>
-    <!--
-        StockEase Page Template
-        =======================
-        Pandoc HTML template used by the docs pipeline to render all
-        individual architecture documentation pages.
-
-        Variables injected by Pandoc at build time:
-          StockEase
-Documentation  — page title from the Markdown front matter
-          <h1 id="docker-containerization-strategy">Docker
-Containerization Strategy</h1>
-<p><strong>Purpose</strong>: Document the multi-stage Dockerfile, layer
-caching strategy, security hardening, and image registry
-configuration.</p>
-<hr />
-<h2 id="multi-stage-build">Multi-Stage Build</h2>
-<div class="mermaid">
-graph TD
-    subgraph Stage1["Stage 1 — BUILD (maven:3.9.6-eclipse-temurin-17 ~1.2GB)"]
-        B1[Copy mvnw + pom.xml] --> B2[Download dependencies]
-        B2 --> B3[Copy source code]
-        B3 --> B4[Build JAR]
-    end
-
-    Stage1 -->|Extract JAR only| Stage2
-
-    subgraph Stage2["Stage 2 — RUNTIME (eclipse-temurin:17-jre-alpine ~175MB)"]
-        R1[Copy JAR from build stage] --> R2[Create non-root user]
-        R2 --> R3[Set USER app]
-        R3 --> R4[EXPOSE <port>]
-        R4 --> R5[ENTRYPOINT]
-    end
-
-    style Stage1 fill:#e3f2fd
-    style Stage2 fill:#c8e6c9
-</div>
-<p>Size reduction: 1.2GB → ~175MB (86% smaller).</p>
-<hr />
-<h2 id="dockerfile">Dockerfile</h2>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 1 — Build</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> maven:3.9.6-eclipse-temurin-17 <span class="kw">AS</span> build</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /workspace</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> mvnw pom.xml ./</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> .mvn .mvn</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="fu">chmod</span> +x mvnw</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Dependency layer — cached unless pom.xml changes</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> dependency:go-offline</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Source layer — changes frequently</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src ./src</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">./mvnw</span> <span class="at">-B</span> <span class="at">-ntp</span> <span class="at">-DskipTests</span> clean package</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage 2 — Runtime</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> eclipse-temurin:17-jre-alpine</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> <span class="op">--from=build</span> /workspace/target/*.jar /app/app.jar</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">addgroup</span> <span class="at">-S</span> app <span class="kw">&amp;&amp;</span> <span class="ex">adduser</span> <span class="at">-S</span> <span class="at">-G</span> app app <span class="kw">||</span> <span class="fu">true</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> &lt;port&gt;</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="kw">ENTRYPOINT</span> [<span class="st">&quot;java&quot;</span>, <span class="st">&quot;-jar&quot;</span>, <span class="st">&quot;/app/app.jar&quot;</span>, <span class="st">&quot;--server.port=&lt;port&gt;&quot;</span>]</span></code></pre></div>
-<hr />
-<h2 id="layer-caching-strategy">Layer Caching Strategy</h2>
-<table>
-<colgroup>
-<col style="width: 18%" />
-<col style="width: 44%" />
-<col style="width: 36%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Layer</th>
-<th>Invalidated When</th>
-<th>Rebuild Time</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Maven wrapper + pom.xml</td>
-<td><code>pom.xml</code> or <code>.mvn</code> changes</td>
-<td>~3 min (re-downloads deps)</td>
-</tr>
-<tr class="even">
-<td>Dependencies</td>
-<td><code>pom.xml</code> changes</td>
-<td>~2 min</td>
-</tr>
-<tr class="odd">
-<td>Source code</td>
-<td>Any <code>src/</code> change</td>
-<td>~30s</td>
-</tr>
-</tbody>
-</table>
-<p>The Dockerfile copies <code>pom.xml</code> before <code>src/</code>
-specifically to maximize cache hits on the dependency layer.</p>
-<hr />
-<h2 id="security-hardening">Security Hardening</h2>
-<p><strong>Non-root user execution</strong>: the container runs as
-<code>app</code> (UID 1000), not root. This limits privilege escalation
-and aligns with Kubernetes security policies. The <code>|| true</code>
-guard prevents build failure if the <code>app</code> user already exists
-in the base image.</p>
-<p><strong>Minimal runtime image</strong>: the final stage uses JRE only
-— no JDK, no Maven, no source code, no build tools. Attack surface is
-minimized.</p>
-<p><strong>No hardcoded secrets</strong>: all sensitive values are
-passed via environment variables at runtime.</p>
-<p><strong>Fixed ENTRYPOINT</strong>: prevents accidental shell
-execution and enforces consistent startup behavior.</p>
-<hr />
-<h2 id="maven-build-flags">Maven Build Flags</h2>
-<table>
-<colgroup>
-<col style="width: 40%" />
-<col style="width: 60%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Flag</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>-B</code></td>
-<td>Batch mode — non-interactive</td>
-</tr>
-<tr class="even">
-<td><code>-ntp</code></td>
-<td>No transfer progress — cleaner CI logs</td>
-</tr>
-<tr class="odd">
-<td><code>-DskipTests</code></td>
-<td>Tests run in CI before Docker build, not inside it</td>
-</tr>
-<tr class="even">
-<td><code>dependency:go-offline</code></td>
-<td>Downloads all dependencies upfront for reliable caching</td>
-</tr>
-<tr class="odd">
-<td><code>clean package</code></td>
-<td>Clean + compile + package JAR</td>
-</tr>
-</tbody>
-</table>
-<p>Tests are intentionally skipped in the Docker build. They run in the
-CI pipeline before the build stage.</p>
-<hr />
-<h2 id="image-registry-ghcr">Image Registry (GHCR)</h2>
-<pre><code>Registry: &lt;registry-rost&gt;/keglev/stockease
-Visibility: Public
-
-Tags:
-  &lt;registry-rost&gt;/keglev/stockease:latest      — updated on every main push
-  &lt;registry-rost&gt;/keglev/stockease:v1.0.0      — semantic version tags
-  &lt;registry-rost&gt;/keglev/stockease:sha-abc123  — commit hash tags</code></pre>
-<hr />
-<h2 id="port-configuration">Port Configuration</h2>
-<table>
-<thead>
-<tr class="header">
-<th>Context</th>
-<th>Port</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Dockerfile <code>EXPOSE</code></td>
-<td><port></td>
-</tr>
-<tr class="even">
-<td>Spring Boot <code>server.port</code></td>
-<td><port></td>
-</tr>
-<tr class="odd">
-<td>Koyeb container port</td>
-<td><port></td>
-</tr>
-<tr class="even">
-<td>Health check</td>
-<td><port></td>
-</tr>
-</tbody>
-</table>
-<p>Port <port> is used to avoid conflicts with common default ports
-(8080, 3000, 8000).</p>
-<hr />
-<h2 id="local-build-run">Local Build &amp; Run</h2>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build image</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> stockease:local .</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run container</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-p</span> <span class="op">&lt;</span>port<span class="op">&gt;</span>:<span class="op">&lt;</span>port<span class="op">&gt;</span> <span class="dt">\</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/stockease <span class="dt">\</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_USERNAME=<span class="va">${DB_USER}</span> <span class="dt">\</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> SPRING_DATASOURCE_PASSWORD=<span class="va">${DB_PASSWORD}</span> <span class="dt">\</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">-e</span> JWT_SECRET=local-dev-secret-32-chars-min <span class="dt">\</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  stockease:local</span></code></pre></div>
-<hr />
-<h2 id="build-performance">Build Performance</h2>
-<table>
-<thead>
-<tr class="header">
-<th>Scenario</th>
-<th>Duration</th>
-<th>Layers Rebuilt</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>First build (no cache)</td>
-<td>~5 min</td>
-<td>All</td>
-</tr>
-<tr class="even">
-<td>Source code change only</td>
-<td>~30s</td>
-<td>Source + package</td>
-</tr>
-<tr class="odd">
-<td>Dependency change</td>
-<td>~3 min</td>
-<td>Deps + source + package</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<p><a href="./index.html">Back to Deployment
-Index</a></p>   — rendered HTML content from the Markdown source
-          ../..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
-                     calculated per file by generate-docs.sh and passed via --metadata=root:
-
-        Layout: sticky header + two-column grid (sidebar | content) + footer.
-        Sidebar is built dynamically from the navigation map in the script below.
-
-        Stylesheets (paths are relative via ../.. so they resolve at any nesting depth):
-          base.css       — CSS variables, reset, typography, layout
-          component.css  — sidebar, cards, code, tables, mermaid, print
-
-        Dependencies:
-          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <link rel="stylesheet" href="../../templates/base.css">
     <link rel="stylesheet" href="../../templates/component.css">
     <style>
@@ -575,16 +343,10 @@ Tags:
         </div>
     </footer>
 
-    <!--
-        Sidebar navigation
-        ==================
-        Built dynamically so a single source of truth covers all pages.
-        Sections are collapsible via <details>/<summary>. The section
-        containing the active page is expanded automatically on load.
-
-        To add or remove a section, edit the navigation object below.
-        Active link is highlighted based on the current page URL.
-    -->
+    
+    
+    
+    
     <script>
         const navigation = {
             'API Documentation': [
@@ -722,13 +484,8 @@ Tags:
         });
     </script>
 
-    <!--
-        Mermaid diagram rendering
-        =========================
-        Renders architecture diagrams written as fenced mermaid code blocks
-        in Markdown. The Lua filter in the docs pipeline converts them to
-        <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    
+    
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 

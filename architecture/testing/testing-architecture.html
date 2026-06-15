@@ -5,129 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockEase
 Documentation - StockEase Architecture Documentation</title>
-    <!--
-        StockEase Page Template
-        =======================
-        Pandoc HTML template used by the docs pipeline to render all
-        individual architecture documentation pages.
-
-        Variables injected by Pandoc at build time:
-          StockEase
-Documentation  — page title from the Markdown front matter
-          <h1 id="testing-architecture">Testing Architecture</h1>
-<p><strong>Purpose</strong>: Entry point for all testing documentation
-in StockEase. Use this to orient yourself, then follow the links to the
-relevant topic.</p>
-<hr />
-<h2 id="quick-start">Quick Start</h2>
-<p><strong>Prerequisites</strong>: JDK 17+, Maven 3.8+, Spring Boot
-3.5.7</p>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run all tests</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> backend <span class="kw">&amp;&amp;</span> <span class="ex">mvn</span> clean test</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run a specific test class</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> test <span class="at">-Dtest</span><span class="op">=</span>AuthControllerTest</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Run tests with coverage report</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean test jacoco:report</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Open coverage report</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">open</span> backend/target/site/jacoco/index.html</span></code></pre></div>
-<hr />
-<h2 id="test-directory-layout">Test Directory Layout</h2>
-<pre><code>backend/src/test/
-├── java/com/stocks/stockease/
-│   ├── config/test/
-│   │   └── TestConfig.java
-│   ├── controller/
-│   │   ├── AuthControllerTest.java
-│   │   ├── ProductControllerTest.java
-│   │   ├── ProductCreateControllerTest.java
-│   │   ├── ProductDeleteControllerTest.java
-│   │   ├── ProductFetchControllerTest.java
-│   │   ├── ProductInvalidUpdateControllerTest.java
-│   │   ├── ProductPaginationControllerTest.java
-│   │   └── ProductUpdateControllerTest.java
-│   └── StockEaseApplicationTests.java
-└── resources/
-    └── application-test.properties</code></pre>
-<hr />
-<h2 id="navigation-by-role">Navigation by Role</h2>
-<p><strong>Backend Developer</strong> Start with <a
-href="./spring-slices.html">Spring Slices</a>, then <a
-href="./security-tests.html">Security Tests</a>, then <a
-href="./test-data-fixtures.html">Test Data &amp; Fixtures</a>.</p>
-<p><strong>DevOps / CI Engineer</strong> Start with <a
-href="./ci-pipeline-tests.html">CI Pipeline Tests</a>, then <a
-href="./coverage-and-quality.html">Coverage &amp; Quality</a>.</p>
-<p><strong>QA / Test Engineer</strong> Start with <a
-href="./pyramid.html">Test Pyramid</a>, then <a
-href="./matrix.html">Coverage Matrix</a>, then <a
-href="./naming-conventions.html">Naming Conventions</a>.</p>
-<p><strong>New to the project</strong> Start with <a
-href="./strategy.html">Testing Strategy</a> for goals and scope, then <a
-href="./matrix.html">Coverage Matrix</a> for what is covered.</p>
-<hr />
-<h2 id="documentation-index">Documentation Index</h2>
-<h3 id="strategy-and-coverage">Strategy and Coverage</h3>
-<ul>
-<li><a href="./strategy.html">Testing Strategy</a> — Goals, philosophy,
-and scope</li>
-<li><a href="./pyramid.html">Test Pyramid</a> — Test level distribution
-and rationale</li>
-<li><a href="./matrix.html">Coverage Matrix</a> — Full test inventory by
-layer, endpoint, and role</li>
-<li><a href="./coverage-and-quality.html">Coverage &amp; Quality</a> —
-JaCoCo configuration and thresholds</li>
-</ul>
-<h3 id="implementation-reference">Implementation Reference</h3>
-<ul>
-<li><a href="./spring-slices.html">Spring Slices</a> —
-<code>@WebMvcTest</code>, <code>@DataJpaTest</code>,
-<code>@SpringBootTest</code></li>
-<li><a href="./controller-integration.html">Controller Integration
-Tests</a> — MockMvc request and assertion patterns</li>
-<li><a href="./security-tests.html">Security Tests</a> — JWT and
-role-based access control tests</li>
-<li><a href="./test-data-fixtures.html">Test Data &amp; Fixtures</a> —
-TestConfig, mock setup, builder pattern</li>
-<li><a href="./naming-conventions.html">Naming Conventions</a> — Test
-class and method naming rules</li>
-</ul>
-<h3 id="operations">Operations</h3>
-<ul>
-<li><a href="./ci-pipeline-tests.html">CI Pipeline Tests</a> — Pipeline
-gates and GitHub Actions workflow</li>
-<li><a href="./troubleshooting.html">Troubleshooting</a> — Common errors
-and fixes</li>
-</ul>
-<hr />
-<h2 id="related-architecture">Related Architecture</h2>
-<ul>
-<li><a href="../system/overview.html">System Overview</a></li>
-<li><a href="../system/backend.html">Backend Architecture</a></li>
-<li><a href="../system/security.html">Security Architecture</a></li>
-<li><a href="../deployment/infrastructure.html">Deployment</a></li>
-</ul>
-<hr />
-<p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
-Current</p>
-<p><a href="../index.html">Back to Architecture
-Index</a></p>   — rendered HTML content from the Markdown source
-          ../..   — relative path back to target/docs/ root (e.g. "../.." for depth-2 pages)
-                     calculated per file by generate-docs.sh and passed via --metadata=root:
-
-        Layout: sticky header + two-column grid (sidebar | content) + footer.
-        Sidebar is built dynamically from the navigation map in the script below.
-
-        Stylesheets (paths are relative via ../.. so they resolve at any nesting depth):
-          base.css       — CSS variables, reset, typography, layout
-          component.css  — sidebar, cards, code, tables, mermaid, print
-
-        Dependencies:
-          Mermaid.js v10 (CDN) — renders architecture diagrams from fenced code blocks
-    -->
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     <link rel="stylesheet" href="../../templates/base.css">
     <link rel="stylesheet" href="../../templates/component.css">
     <style>
@@ -223,10 +119,14 @@ Index</a></p>   — rendered HTML content from the Markdown source
                 Layout</h2>
                 <pre><code>backend/src/test/
 ├── java/com/stocks/stockease/
-│   ├── config/test/
-│   │   └── TestConfig.java
+│   ├── config/
+│   │   ├── test/
+│   │   │   └── TestConfig.java
+│   │   ├── DataSeederTest.java
+│   │   └── FlywayConfigurationTest.java
 │   ├── controller/
 │   │   ├── AuthControllerTest.java
+│   │   ├── HealthControllerTest.java
 │   │   ├── ProductControllerTest.java
 │   │   ├── ProductCreateControllerTest.java
 │   │   ├── ProductDeleteControllerTest.java
@@ -234,6 +134,15 @@ Index</a></p>   — rendered HTML content from the Markdown source
 │   │   ├── ProductInvalidUpdateControllerTest.java
 │   │   ├── ProductPaginationControllerTest.java
 │   │   └── ProductUpdateControllerTest.java
+│   ├── exception/
+│   │   └── GlobalExceptionHandlerTest.java
+│   ├── model/
+│   │   └── ProductTest.java
+│   ├── security/
+│   │   ├── CustomAuthenticationEntryPointTest.java
+│   │   ├── CustomUserDetailsServiceTest.java
+│   │   ├── JwtFilterTest.java
+│   │   └── JwtUtilTest.java
 │   └── StockEaseApplicationTests.java
 └── resources/
     └── application-test.properties</code></pre>
@@ -326,16 +235,10 @@ Index</a></p>   — rendered HTML content from the Markdown source
         </div>
     </footer>
 
-    <!--
-        Sidebar navigation
-        ==================
-        Built dynamically so a single source of truth covers all pages.
-        Sections are collapsible via <details>/<summary>. The section
-        containing the active page is expanded automatically on load.
-
-        To add or remove a section, edit the navigation object below.
-        Active link is highlighted based on the current page URL.
-    -->
+    
+    
+    
+    
     <script>
         const navigation = {
             'API Documentation': [
@@ -473,13 +376,8 @@ Index</a></p>   — rendered HTML content from the Markdown source
         });
     </script>
 
-    <!--
-        Mermaid diagram rendering
-        =========================
-        Renders architecture diagrams written as fenced mermaid code blocks
-        in Markdown. The Lua filter in the docs pipeline converts them to
-        <div class="mermaid"> elements before Pandoc processes the HTML.
-    -->
+    
+    
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 
