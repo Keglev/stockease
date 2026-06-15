@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'pom.xml'
+      - 'src/test/**'
       - '.github/workflows/docs-pipeline.yml'
       - '.github/scripts/templates/**'
       - '.github/scripts/docs/**'

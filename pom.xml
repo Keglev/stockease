@@ -210,6 +210,12 @@
 						<configuration>
 							<dataFile>${project.build.directory}/jacoco.exec</dataFile>
 							<outputDirectory>${project.basedir}/docs/coverage</outputDirectory>
+							<excludes>
+								<!-- Flyway Java migrations are infrastructure seed code; idempotency
+								     guard branches (already-exists checks) are only exercised on
+								     production re-runs, not in unit tests. -->
+								<exclude>db/migration/**</exclude>
+							</excludes>
 						</configuration>
 					</execution>
 				</executions>
