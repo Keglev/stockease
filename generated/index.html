@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> - StockEase Architecture Documentation</title>
+    <title>StockEase
+Documentation - StockEase Architecture Documentation</title>
     <!--
         StockEase Page Template
         =======================
@@ -11,7 +12,8 @@
         individual architecture documentation pages.
 
         Variables injected by Pandoc at build time:
-            — page title from the Markdown front matter
+          StockEase
+Documentation  — page title from the Markdown front matter
           <h1 id="stockease-documentation">StockEase Documentation</h1>
 <p><strong>Live site</strong>: https://keglev.github.io/stockease/
 <strong>Repository</strong>: https://github.com/keglev/stockease</p>
@@ -24,102 +26,107 @@ authentication, containerized deployment on Koyeb, and automated CI/CD
 via GitHub Actions.</p>
 <hr />
 <h2 id="documentation-map">Documentation Map</h2>
-<pre class="mermaid"><code>graph TD
-    Root([&quot;docs/index.md - You are here&quot;])
+<div class="mermaid">
+graph TD
+    Root["docs/index.md - You are here"]
 
-    Root --&gt; Arch[&quot;architecture/&quot;]
-    Arch --&gt; System[&quot;system/ - Overview, Backend, Layers, Security, Frontend&quot;]
-    Arch --&gt; Testing[&quot;testing/ - Strategy, Pyramid, Matrix, MockMvc, Security Tests&quot;]
-    Arch --&gt; Deployment[&quot;deployment/ - Infrastructure, CI-CD, Docker, Config&quot;]
-    Arch --&gt; Decisions[&quot;decisions/ - ADR 001 DB, ADR 002 Validation, ADR 003 Auth&quot;]
-    Arch --&gt; Patterns[&quot;patterns/ - Repository Pattern, Security Patterns&quot;]
-    Arch --&gt; Components[&quot;components/ - Analytics Service&quot;]
+    Root --> Arch["architecture/"]
+    Arch --> System["system/ - Overview, Backend, Layers, Security, Frontend"]
+    Arch --> Testing["testing/ - Strategy, Pyramid, Matrix, MockMvc, Security Tests"]
+    Arch --> Deployment["deployment/ - Infrastructure, CI-CD, Docker, Config"]
+    Arch --> Decisions["decisions/ - ADR 001 DB, ADR 002 Validation, ADR 003 Auth"]
+    Arch --> Patterns["patterns/ - Repository Pattern, Security Patterns"]
+    Arch --> Components["components/ - Analytics Service"]
 
-    Root --&gt; Guides[&quot;guides/&quot;]
-    Guides --&gt; Gen[&quot;documentation-generation.md&quot;]
-    Guides --&gt; Contributing[&quot;contributing.md&quot;]</code></pre>
+    Root --> Guides["guides/"]
+    Guides --> Gen["documentation-generation.md"]
+    Guides --> Contributing["contributing.md"]
+</div>
 <hr />
 <h2 id="start-here-by-role">Start Here by Role</h2>
 <p><strong>New to the project</strong> — <a
-href="./architecture/system/overview.md">System Overview</a> → <a
-href="./architecture/system/backend.md">Backend Architecture</a></p>
+href="./architecture/system/overview.html">System Overview</a> → <a
+href="./architecture/system/backend.html">Backend Architecture</a></p>
 <p><strong>Backend Developer</strong> — <a
-href="./architecture/system/backend.md">Backend Architecture</a> → <a
-href="./architecture/system/layers.md">Service Layers</a> → <a
-href="./architecture/testing/testing-architecture.md">Testing
+href="./architecture/system/backend.html">Backend Architecture</a> → <a
+href="./architecture/system/layers.html">Service Layers</a> → <a
+href="./architecture/testing/testing-architecture.html">Testing
 Architecture</a></p>
 <p><strong>Frontend Developer</strong> — <a
-href="./architecture/system/frontend-integration.md">Frontend
-Integration</a> → <a href="./architecture/system/security.md">Security
+href="./architecture/system/frontend-integration.html">Frontend
+Integration</a> → <a href="./architecture/system/security.html">Security
 Architecture</a></p>
 <p><strong>DevOps / CI Engineer</strong> — <a
-href="./architecture/deployment/infrastructure.md">Infrastructure</a> →
-<a href="./architecture/deployment/ci-pipeline.md">CI/CD Pipeline</a> →
-<a href="./architecture/deployment/docker-strategy.md">Docker
+href="./architecture/deployment/infrastructure.html">Infrastructure</a>
+→ <a href="./architecture/deployment/ci-pipeline.html">CI/CD
+Pipeline</a> → <a
+href="./architecture/deployment/docker-strategy.html">Docker
 Strategy</a></p>
 <p><strong>QA / Test Engineer</strong> — <a
-href="./architecture/testing/pyramid.md">Test Pyramid</a> → <a
-href="./architecture/testing/matrix.md">Coverage Matrix</a> → <a
-href="./architecture/testing/naming-conventions.md">Naming
+href="./architecture/testing/pyramid.html">Test Pyramid</a> → <a
+href="./architecture/testing/matrix.html">Coverage Matrix</a> → <a
+href="./architecture/testing/naming-conventions.html">Naming
 Conventions</a></p>
 <p><strong>Security reviewer</strong> — <a
-href="./architecture/system/security.md">Security Architecture</a> → <a
-href="./architecture/patterns/security-patterns.md">Security
+href="./architecture/system/security.html">Security Architecture</a> →
+<a href="./architecture/patterns/security-patterns.html">Security
 Patterns</a> → <a
-href="./architecture/decisions/003-authentication-mechanism.md">ADR 003
-Authentication</a></p>
+href="./architecture/decisions/003-authentication-mechanism.html">ADR
+003 Authentication</a></p>
 <hr />
 <h2 id="topic-flows">Topic Flows</h2>
 <p><strong>Authentication &amp; Security</strong> <a
-href="./architecture/system/overview.md">System Overview</a> → <a
-href="./architecture/system/security.md">Security Architecture</a> → <a
-href="./architecture/patterns/security-patterns.md">Security
+href="./architecture/system/overview.html">System Overview</a> → <a
+href="./architecture/system/security.html">Security Architecture</a> →
+<a href="./architecture/patterns/security-patterns.html">Security
 Patterns</a> → <a
-href="./architecture/decisions/003-authentication-mechanism.md">ADR
+href="./architecture/decisions/003-authentication-mechanism.html">ADR
 003</a></p>
 <p><strong>Database &amp; Data Access</strong> <a
-href="./architecture/system/overview.md">System Overview</a> → <a
-href="./architecture/system/layers.md">Service Layers</a> → <a
-href="./architecture/patterns/repository-pattern.md">Repository
+href="./architecture/system/overview.html">System Overview</a> → <a
+href="./architecture/system/layers.html">Service Layers</a> → <a
+href="./architecture/patterns/repository-pattern.html">Repository
 Pattern</a> → <a
-href="./architecture/decisions/001-database-choice.md">ADR 001</a></p>
+href="./architecture/decisions/001-database-choice.html">ADR 001</a></p>
 <p><strong>Testing</strong> <a
-href="./architecture/testing/testing-architecture.md">Testing
-Architecture</a> → <a href="./architecture/testing/pyramid.md">Test
-Pyramid</a> → <a href="./architecture/testing/matrix.md">Coverage
-Matrix</a> → <a href="./architecture/testing/ci-pipeline-tests.md">CI
+href="./architecture/testing/testing-architecture.html">Testing
+Architecture</a> → <a href="./architecture/testing/pyramid.html">Test
+Pyramid</a> → <a href="./architecture/testing/matrix.html">Coverage
+Matrix</a> → <a href="./architecture/testing/ci-pipeline-tests.html">CI
 Pipeline Tests</a></p>
 <p><strong>Deployment</strong> <a
-href="./architecture/deployment/infrastructure.md">Infrastructure</a> →
-<a href="./architecture/deployment/ci-pipeline.md">CI/CD Pipeline</a> →
-<a href="./architecture/deployment/docker-strategy.md">Docker
+href="./architecture/deployment/infrastructure.html">Infrastructure</a>
+→ <a href="./architecture/deployment/ci-pipeline.html">CI/CD
+Pipeline</a> → <a
+href="./architecture/deployment/docker-strategy.html">Docker
 Strategy</a> → <a
-href="./architecture/deployment/staging-config.md">Staging &amp;
+href="./architecture/deployment/staging-config.html">Staging &amp;
 Config</a></p>
 <hr />
 <h2 id="directory-indexes">Directory Indexes</h2>
 <p>Each directory has its own index with full document lists and
 role-based reading paths:</p>
 <ul>
-<li><a href="./architecture/index.md">Architecture root index</a></li>
-<li><a href="./architecture/system/index.md">System index</a></li>
-<li><a href="./architecture/testing/testing-architecture.md">Testing
+<li><a href="./architecture/index.html">Architecture root index</a></li>
+<li><a href="./architecture/system/index.html">System index</a></li>
+<li><a href="./architecture/testing/testing-architecture.html">Testing
 index</a></li>
-<li><a href="./architecture/deployment/index.md">Deployment
+<li><a href="./architecture/deployment/index.html">Deployment
 index</a></li>
-<li><a href="./architecture/decisions/index.md">Decisions index</a></li>
-<li><a href="./architecture/patterns/index.md">Patterns index</a></li>
-<li><a href="./architecture/components/index.md">Components
+<li><a href="./architecture/decisions/index.html">Decisions
+index</a></li>
+<li><a href="./architecture/patterns/index.html">Patterns index</a></li>
+<li><a href="./architecture/components/index.html">Components
 index</a></li>
 </ul>
 <hr />
 <h2 id="guides">Guides</h2>
 <ul>
-<li><a href="./guides/documentation-generation.md">Documentation
+<li><a href="./guides/documentation-generation.html">Documentation
 Generation</a> — how the pipeline converts markdown to HTML and deploys
 to GitHub Pages</li>
-<li><a href="./guides/contributing.md">Contributing</a> — how to write,
-update, and maintain documentation</li>
+<li><a href="./guides/contributing.html">Contributing</a> — how to
+write, update, and maintain documentation</li>
 </ul>
 <hr />
 <p><strong>Last Updated</strong>: June 2026 <strong>Status</strong>:
@@ -179,131 +186,135 @@ Current</p>   — rendered HTML content from the Markdown source
                 via GitHub Actions.</p>
                 <hr />
                 <h2 id="documentation-map">Documentation Map</h2>
-                <pre class="mermaid"><code>graph TD
-    Root([&quot;docs/index.md - You are here&quot;])
+                <div class="mermaid">
+                graph TD
+                    Root["docs/index.md - You are here"]
 
-    Root --&gt; Arch[&quot;architecture/&quot;]
-    Arch --&gt; System[&quot;system/ - Overview, Backend, Layers, Security, Frontend&quot;]
-    Arch --&gt; Testing[&quot;testing/ - Strategy, Pyramid, Matrix, MockMvc, Security Tests&quot;]
-    Arch --&gt; Deployment[&quot;deployment/ - Infrastructure, CI-CD, Docker, Config&quot;]
-    Arch --&gt; Decisions[&quot;decisions/ - ADR 001 DB, ADR 002 Validation, ADR 003 Auth&quot;]
-    Arch --&gt; Patterns[&quot;patterns/ - Repository Pattern, Security Patterns&quot;]
-    Arch --&gt; Components[&quot;components/ - Analytics Service&quot;]
+                    Root --> Arch["architecture/"]
+                    Arch --> System["system/ - Overview, Backend, Layers, Security, Frontend"]
+                    Arch --> Testing["testing/ - Strategy, Pyramid, Matrix, MockMvc, Security Tests"]
+                    Arch --> Deployment["deployment/ - Infrastructure, CI-CD, Docker, Config"]
+                    Arch --> Decisions["decisions/ - ADR 001 DB, ADR 002 Validation, ADR 003 Auth"]
+                    Arch --> Patterns["patterns/ - Repository Pattern, Security Patterns"]
+                    Arch --> Components["components/ - Analytics Service"]
 
-    Root --&gt; Guides[&quot;guides/&quot;]
-    Guides --&gt; Gen[&quot;documentation-generation.md&quot;]
-    Guides --&gt; Contributing[&quot;contributing.md&quot;]</code></pre>
+                    Root --> Guides["guides/"]
+                    Guides --> Gen["documentation-generation.md"]
+                    Guides --> Contributing["contributing.md"]
+                </div>
                 <hr />
                 <h2 id="start-here-by-role">Start Here by Role</h2>
                 <p><strong>New to the project</strong> — <a
-                href="./architecture/system/overview.md">System
+                href="./architecture/system/overview.html">System
                 Overview</a> → <a
-                href="./architecture/system/backend.md">Backend
+                href="./architecture/system/backend.html">Backend
                 Architecture</a></p>
                 <p><strong>Backend Developer</strong> — <a
-                href="./architecture/system/backend.md">Backend
+                href="./architecture/system/backend.html">Backend
                 Architecture</a> → <a
-                href="./architecture/system/layers.md">Service
+                href="./architecture/system/layers.html">Service
                 Layers</a> → <a
-                href="./architecture/testing/testing-architecture.md">Testing
+                href="./architecture/testing/testing-architecture.html">Testing
                 Architecture</a></p>
                 <p><strong>Frontend Developer</strong> — <a
-                href="./architecture/system/frontend-integration.md">Frontend
+                href="./architecture/system/frontend-integration.html">Frontend
                 Integration</a> → <a
-                href="./architecture/system/security.md">Security
+                href="./architecture/system/security.html">Security
                 Architecture</a></p>
                 <p><strong>DevOps / CI Engineer</strong> — <a
-                href="./architecture/deployment/infrastructure.md">Infrastructure</a>
+                href="./architecture/deployment/infrastructure.html">Infrastructure</a>
                 → <a
-                href="./architecture/deployment/ci-pipeline.md">CI/CD
+                href="./architecture/deployment/ci-pipeline.html">CI/CD
                 Pipeline</a> → <a
-                href="./architecture/deployment/docker-strategy.md">Docker
+                href="./architecture/deployment/docker-strategy.html">Docker
                 Strategy</a></p>
                 <p><strong>QA / Test Engineer</strong> — <a
-                href="./architecture/testing/pyramid.md">Test
+                href="./architecture/testing/pyramid.html">Test
                 Pyramid</a> → <a
-                href="./architecture/testing/matrix.md">Coverage
+                href="./architecture/testing/matrix.html">Coverage
                 Matrix</a> → <a
-                href="./architecture/testing/naming-conventions.md">Naming
+                href="./architecture/testing/naming-conventions.html">Naming
                 Conventions</a></p>
                 <p><strong>Security reviewer</strong> — <a
-                href="./architecture/system/security.md">Security
+                href="./architecture/system/security.html">Security
                 Architecture</a> → <a
-                href="./architecture/patterns/security-patterns.md">Security
+                href="./architecture/patterns/security-patterns.html">Security
                 Patterns</a> → <a
-                href="./architecture/decisions/003-authentication-mechanism.md">ADR
+                href="./architecture/decisions/003-authentication-mechanism.html">ADR
                 003 Authentication</a></p>
                 <hr />
                 <h2 id="topic-flows">Topic Flows</h2>
                 <p><strong>Authentication &amp; Security</strong> <a
-                href="./architecture/system/overview.md">System
+                href="./architecture/system/overview.html">System
                 Overview</a> → <a
-                href="./architecture/system/security.md">Security
+                href="./architecture/system/security.html">Security
                 Architecture</a> → <a
-                href="./architecture/patterns/security-patterns.md">Security
+                href="./architecture/patterns/security-patterns.html">Security
                 Patterns</a> → <a
-                href="./architecture/decisions/003-authentication-mechanism.md">ADR
+                href="./architecture/decisions/003-authentication-mechanism.html">ADR
                 003</a></p>
                 <p><strong>Database &amp; Data Access</strong> <a
-                href="./architecture/system/overview.md">System
+                href="./architecture/system/overview.html">System
                 Overview</a> → <a
-                href="./architecture/system/layers.md">Service
+                href="./architecture/system/layers.html">Service
                 Layers</a> → <a
-                href="./architecture/patterns/repository-pattern.md">Repository
+                href="./architecture/patterns/repository-pattern.html">Repository
                 Pattern</a> → <a
-                href="./architecture/decisions/001-database-choice.md">ADR
+                href="./architecture/decisions/001-database-choice.html">ADR
                 001</a></p>
                 <p><strong>Testing</strong> <a
-                href="./architecture/testing/testing-architecture.md">Testing
+                href="./architecture/testing/testing-architecture.html">Testing
                 Architecture</a> → <a
-                href="./architecture/testing/pyramid.md">Test
+                href="./architecture/testing/pyramid.html">Test
                 Pyramid</a> → <a
-                href="./architecture/testing/matrix.md">Coverage
+                href="./architecture/testing/matrix.html">Coverage
                 Matrix</a> → <a
-                href="./architecture/testing/ci-pipeline-tests.md">CI
+                href="./architecture/testing/ci-pipeline-tests.html">CI
                 Pipeline Tests</a></p>
                 <p><strong>Deployment</strong> <a
-                href="./architecture/deployment/infrastructure.md">Infrastructure</a>
+                href="./architecture/deployment/infrastructure.html">Infrastructure</a>
                 → <a
-                href="./architecture/deployment/ci-pipeline.md">CI/CD
+                href="./architecture/deployment/ci-pipeline.html">CI/CD
                 Pipeline</a> → <a
-                href="./architecture/deployment/docker-strategy.md">Docker
+                href="./architecture/deployment/docker-strategy.html">Docker
                 Strategy</a> → <a
-                href="./architecture/deployment/staging-config.md">Staging
+                href="./architecture/deployment/staging-config.html">Staging
                 &amp; Config</a></p>
                 <hr />
                 <h2 id="directory-indexes">Directory Indexes</h2>
                 <p>Each directory has its own index with full document
                 lists and role-based reading paths:</p>
                 <ul>
-                <li><a href="./architecture/index.md">Architecture root
-                index</a></li>
-                <li><a href="./architecture/system/index.md">System
-                index</a></li>
-                <li><a
-                href="./architecture/testing/testing-architecture.md">Testing
+                <li><a href="./architecture/index.html">Architecture
+                root index</a></li>
+                <li><a href="./architecture/system/index.html">System
                 index</a></li>
                 <li><a
-                href="./architecture/deployment/index.md">Deployment
+                href="./architecture/testing/testing-architecture.html">Testing
                 index</a></li>
                 <li><a
-                href="./architecture/decisions/index.md">Decisions
-                index</a></li>
-                <li><a href="./architecture/patterns/index.md">Patterns
+                href="./architecture/deployment/index.html">Deployment
                 index</a></li>
                 <li><a
-                href="./architecture/components/index.md">Components
+                href="./architecture/decisions/index.html">Decisions
+                index</a></li>
+                <li><a
+                href="./architecture/patterns/index.html">Patterns
+                index</a></li>
+                <li><a
+                href="./architecture/components/index.html">Components
                 index</a></li>
                 </ul>
                 <hr />
                 <h2 id="guides">Guides</h2>
                 <ul>
                 <li><a
-                href="./guides/documentation-generation.md">Documentation
+                href="./guides/documentation-generation.html">Documentation
                 Generation</a> — how the pipeline converts markdown to
                 HTML and deploys to GitHub Pages</li>
-                <li><a href="./guides/contributing.md">Contributing</a>
-                — how to write, update, and maintain documentation</li>
+                <li><a
+                href="./guides/contributing.html">Contributing</a> — how
+                to write, update, and maintain documentation</li>
                 </ul>
                 <hr />
                 <p><strong>Last Updated</strong>: June 2026
