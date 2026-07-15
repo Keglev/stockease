@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
  * Intentionally separate from Spring Actuator so it can be exposed publicly without extra configuration.
  */
 @RestController
-@RequestMapping("/health")
 public class HealthController {
 
     private static final Logger log = LoggerFactory.getLogger(HealthController.class);
@@ -31,7 +29,7 @@ public class HealthController {
      *
      * @return HTTP 200 with an UP status body on success; HTTP 503 with a DOWN status body otherwise
      */
-    @GetMapping
+    @GetMapping("/health")
     public ResponseEntity<Map<String, String>> healthCheck() {
         try {
             jdbcTemplate.queryForObject("SELECT 1", Integer.class);
