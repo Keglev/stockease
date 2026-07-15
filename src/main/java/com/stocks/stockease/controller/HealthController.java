@@ -1,52 +1,45 @@
 package com.stocks.stockease.controller;
 
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.Map;
 
-import javax.sql.DataSource;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * Lightweight liveness probe for orchestrators and monitoring systems.
- *
- * <p>Performs a single JDBC {@link Connection#isValid} check against the primary
- * {@link DataSource}. Returns HTTP 200 when the database is reachable, HTTP 500 otherwise.
- * Intentionally avoids queries, writes, and schema operations so the probe is safe to
- * call at high frequency (K8s liveness/readiness, load balancers, Docker healthcheck).
+ * Database-backed health endpoint used by uptime monitors to keep the Supabase instance active.
+ * Intentionally separate from Spring Actuator so it can be exposed publicly without extra configuration.
  */
 @RestController
-@RequestMapping("/api/health")
-@RequiredArgsConstructor
+@RequestMapping("/health")
 public class HealthController {
 
-    private final DataSource dataSource;
+    private static final Logger log = LoggerFactory.getLogger(HealthController.class);
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public HealthController(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     /**
-     * Checks database connectivity and reports application liveness.
+     * Probes the database with a trivial query and reports combined liveness.
      *
-     * <p>Uses a 10-second timeout on {@link Connection#isValid} to tolerate slow database
-     * startups without blocking probes indefinitely. No authentication required.
-     *
-     * @return HTTP 200 with a status message on success; HTTP 500 with {@code e.getMessage()}
-     *         if the connection cannot be established or validated
+     * @return HTTP 200 with an UP status body on success; HTTP 503 with a DOWN status body otherwise
      */
     @GetMapping
-    public ResponseEntity<String> healthCheck() {
-        try (Connection connection = dataSource.getConnection()) {
-            if (connection.isValid(10)) {
-                return ResponseEntity.ok("Database is connected and API is running.");
-            }
-        } catch (SQLException e) {
-            // e.getMessage() exposes enough detail for operators without leaking a full stack trace
-            return ResponseEntity.status(500).body("Database is down: " + e.getMessage());
+    public ResponseEntity<Map<String, String>> healthCheck() {
+        try {
+            jdbcTemplate.queryForObject("SELECT 1", Integer.class);
+            return ResponseEntity.ok(Map.of("status", "UP", "db", "UP"));
+        } catch (Exception e) {
+            // 503 rather than a 500 signals a transient dependency outage, not an application bug
+            log.warn("Database health probe failed", e);
+            return ResponseEntity.status(503).body(Map.of("status", "DOWN", "db", "DOWN"));
         }
-
-        return ResponseEntity.status(500).body("Unknown issue with database connection.");
     }
 }
