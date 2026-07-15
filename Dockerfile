@@ -10,7 +10,7 @@
 ## - We use the official Maven image with Temurin JDK to build the fat JAR.
 ## - Copying the wrapper and pom files separately enables Docker layer caching for
 ##   dependencies (faster CI runs when sources change but dependencies do not).
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 
 # Copy Maven wrapper and maven files first to cache dependencies
@@ -31,7 +31,7 @@ RUN ./mvnw -B -ntp -DskipTests clean package
 ## Notes:
 ## - Use a slim JRE base image to minimize attack surface and image size.
 ## - Copy only the built artifact from the builder stage.
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # Copy jar from build stage (use wildcard to avoid hardcoding artifact name)
