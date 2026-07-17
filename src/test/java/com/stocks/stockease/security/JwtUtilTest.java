@@ -1,14 +1,14 @@
 package com.stocks.stockease.security;
 
-import java.security.Key;
 import java.util.Date;
+
+import javax.crypto.SecretKey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 /**
@@ -16,12 +16,14 @@ import io.jsonwebtoken.security.Keys;
  */
 class JwtUtilTest {
 
+    private static final String TEST_SECRET = "your-secret-key-which-must-be-very-secure-and-long";
+
     private JwtUtil jwtUtil;
 
     @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil();
+        jwtUtil = new JwtUtil(TEST_SECRET);
     }
 
     // --- generate ---
@@ -91,11 +93,11 @@ class JwtUtilTest {
 
     /** Signed with the same key as {@link JwtUtil} so the signature is valid; only the expiry triggers rejection. */
     private String buildExpiredToken(String username) {
-        Key key = Keys.hmacShaKeyFor("your-secret-key-which-must-be-very-secure-and-long".getBytes());
+        SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes());
         return Jwts.builder()
-                .setSubject(username)
-                .setExpiration(new Date(System.currentTimeMillis() - 1000))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .subject(username)
+                .expiration(new Date(System.currentTimeMillis() - 1000))
+                .signWith(key)
                 .compact();
     }
 }

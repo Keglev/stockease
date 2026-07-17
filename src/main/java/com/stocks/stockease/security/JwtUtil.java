@@ -1,15 +1,17 @@
 package com.stocks.stockease.security;
 
-import java.security.Key;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.function.Function;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 /**
@@ -19,15 +21,13 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtil {
 
-    /**
-     * SECURITY: In production, move to environment variables or a secure vault;
-     * must be at least 256 bits for HS256.
-     */
-    private static final String SECRET_KEY = "your-secret-key-which-must-be-very-secure-and-long";
-
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
 
-    private final Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    private final SecretKey key;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     /**
      * Generates a signed JWT with username as the subject and role as a custom claim.
@@ -38,11 +38,11 @@ public class JwtUtil {
      */
     public String generateToken(String username, String role) {
         return Jwts.builder()
-                .setSubject(username)
+                .subject(username)
                 .claim("role", role)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(key)
                 .compact();
     }
 
@@ -54,7 +54,7 @@ public class JwtUtil {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
         } catch (JwtException e) {
             return false;
@@ -80,7 +80,7 @@ public class JwtUtil {
      * @return Claims object containing all embedded claims
      */
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
     }
 
     /**
