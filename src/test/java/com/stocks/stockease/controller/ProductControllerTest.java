@@ -12,7 +12,8 @@ import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.lang.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.model.Product;
 import com.stocks.stockease.repository.ProductRepository;
 import com.stocks.stockease.security.JwtUtil;
@@ -29,6 +31,7 @@ import com.stocks.stockease.security.JwtUtil;
 /** Slice tests for ProductController read endpoints: low-stock, search, total-stock-value. */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
+@Import(TestConfig.class)
 class ProductControllerTest {
 
     @Autowired
