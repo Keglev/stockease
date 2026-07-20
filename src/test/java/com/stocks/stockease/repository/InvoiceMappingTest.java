@@ -1,6 +1,7 @@
 package com.stocks.stockease.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -53,5 +54,15 @@ class InvoiceMappingTest {
         InvoiceItem item = new InvoiceItem();
 
         assertThat(item.getReturnedQty()).isEqualTo(0);
+    }
+
+    @Test
+    void invoiceToString_withItems_doesNotRecurse() {
+        Invoice invoice = new Invoice(null, null, InvoiceStatus.OPEN, LocalDate.now(),
+                BigDecimal.ZERO, BigDecimal.ZERO, null, null, null, new ArrayList<>());
+        InvoiceItem item = new InvoiceItem(null, invoice, null, 1, BigDecimal.ONE, 0);
+        invoice.getItems().add(item);
+
+        assertThatCode(invoice::toString).doesNotThrowAnyException();
     }
 }

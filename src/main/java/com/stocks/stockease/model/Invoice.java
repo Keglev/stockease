@@ -27,7 +27,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Domain entity representing a supplier invoice, persisted to the {@code invoice} table.
@@ -47,6 +49,7 @@ public class Invoice {
     private Long id;
 
     /** Supplier this invoice was issued by. */
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id", nullable = false)
     private Supplier supplier;
@@ -69,6 +72,7 @@ public class Invoice {
     private BigDecimal fineValue;
 
     /** Admin user who closed the invoice; {@code null} while still open. */
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "closed_by")
     private User closedBy;
@@ -83,6 +87,9 @@ public class Invoice {
     private LocalDateTime createdAt;
 
     /** Line items purchased on this invoice. */
+    // excluded from equals/toString: bidirectional link would recurse
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.PERSIST, orphanRemoval = false)
     private List<InvoiceItem> items = new ArrayList<>();
 }
