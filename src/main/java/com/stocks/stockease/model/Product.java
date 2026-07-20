@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -30,6 +32,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+// repository deletes become soft deletes; operational queries
+// auto-exclude deleted rows. Reports bypass this via native queries.
+@SQLDelete(sql = "UPDATE product SET deleted_at = now() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Product {
 
     /** Unique product identifier used for API lookups. */
@@ -57,6 +63,10 @@ public class Product {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    /** Timestamp the row was soft-deleted; {@code null} while still live. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     /**
      * Creates a product without an ID, converting {@code purchasePrice} to {@link BigDecimal}.

@@ -37,11 +37,11 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
 
     @Test
     void persistInvoice_withOneItem_cascadesItem() {
-        Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", "1 Main St", null));
+        Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", "1 Main St", null, null));
         Product product = productRepository.saveAndFlush(new Product("Widget", 10, 5.0));
 
         Invoice invoice = new Invoice(null, supplier, InvoiceStatus.OPEN, LocalDate.now(),
-                BigDecimal.ZERO, BigDecimal.ZERO, null, null, null, new ArrayList<>());
+                BigDecimal.ZERO, BigDecimal.ZERO, null, null, null, null, new ArrayList<>());
         InvoiceItem item = new InvoiceItem(null, invoice, product, 5, BigDecimal.TEN, 0);
         invoice.getItems().add(item);
 
@@ -60,7 +60,7 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
     @Test
     void invoiceToString_withItems_doesNotRecurse() {
         Invoice invoice = new Invoice(null, null, InvoiceStatus.OPEN, LocalDate.now(),
-                BigDecimal.ZERO, BigDecimal.ZERO, null, null, null, new ArrayList<>());
+                BigDecimal.ZERO, BigDecimal.ZERO, null, null, null, null, new ArrayList<>());
         InvoiceItem item = new InvoiceItem(null, invoice, null, 1, BigDecimal.ONE, 0);
         invoice.getItems().add(item);
 
