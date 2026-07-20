@@ -53,7 +53,6 @@ class ProductCreateControllerTest {
         Mockito.when(jwtUtil.extractRole(Mockito.anyString())).thenReturn("ROLE_ADMIN");
         product1 = new Product("Product 1", 10, 100.0);
         product1.setId(1L);
-        product1.setTotalValue(1000.0);
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
         Mockito.reset(productRepository);
     }
@@ -64,13 +63,13 @@ class ProductCreateControllerTest {
 
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": 100.0, \"totalValue\": 1000.0}")
+                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"purchasePrice\": 100.0}")
                         .with(csrfToken())
                         .with(userWithRole("adminUser", "ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Product 1"))
                 .andExpect(jsonPath("$.quantity").value(10))
-                .andExpect(jsonPath("$.price").value(100.0))
+                .andExpect(jsonPath("$.purchasePrice").value(100.0))
                 .andExpect(jsonPath("$.totalValue").value(1000.0));
     }
 
@@ -78,7 +77,7 @@ class ProductCreateControllerTest {
     void createProduct_asUserRole_returns403() throws Exception {
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Valid Product\", \"quantity\": 10, \"price\": 100.0, \"totalValue\": 1000.0}")
+                        .content("{\"name\": \"Valid Product\", \"quantity\": 10, \"purchasePrice\": 100.0}")
                         .with(userWithRole("regularUser", "USER")))
                 .andExpect(status().isForbidden());
     }
@@ -98,7 +97,7 @@ class ProductCreateControllerTest {
     void createProduct_withNegativeQuantity_returns400() throws Exception {
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Product 1\", \"quantity\": -5, \"price\": 100.0, \"totalValue\": 1000.0}")
+                        .content("{\"name\": \"Product 1\", \"quantity\": -5, \"purchasePrice\": 100.0}")
                         .with(userWithRole("adminUser", "ADMIN"))
                         .with(csrfToken()))
                 .andExpect(status().isBadRequest())
@@ -109,7 +108,7 @@ class ProductCreateControllerTest {
     void createProduct_withZeroPrice_returns400() throws Exception {
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": 0, \"totalValue\": 0}")
+                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"purchasePrice\": 0}")
                         .with(userWithRole("adminUser", "ADMIN"))
                         .with(csrfToken()))
                 .andExpect(status().isBadRequest())
@@ -123,7 +122,7 @@ class ProductCreateControllerTest {
 
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"price\": \"notANumber\", \"totalValue\": 1000.0}")
+                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"purchasePrice\": \"notANumber\"}")
                         .with(userWithRole("adminUser", "ADMIN"))
                         .with(csrfToken()))
                 .andExpect(status().isBadRequest());

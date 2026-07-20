@@ -1,5 +1,6 @@
 package com.stocks.stockease.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -106,10 +107,10 @@ public class ProductController {
     /**
      * Creates a new product (ADMIN only).
      *
-     * <p>Validates that name is non-blank, quantity is non-negative, and price is positive.
+     * <p>Validates that name is non-blank, quantity is non-negative, and purchasePrice is positive.
      * Behavior defined in {@code docs/api/paths/products.yaml}.
      *
-     * @param request product fields (name, quantity, price)
+     * @param request product fields (name, quantity, purchasePrice)
      * @return HTTP 200 with the persisted {@link Product} including its generated ID,
      *         or HTTP 400 if validation fails
      */
@@ -118,7 +119,7 @@ public class ProductController {
     public ResponseEntity<?> createProduct(@Valid @RequestBody CreateProductRequest request) {
         log.debug("Received request to create product: {}", request);
         Product savedProduct = productRepository.save(
-                new Product(request.getName(), request.getQuantity(), request.getPrice()));
+                new Product(request.getName(), request.getQuantity(), request.getPurchasePrice()));
         return ResponseEntity.ok(savedProduct);
     }
 
@@ -186,8 +187,8 @@ public class ProductController {
     /**
      * Updates the stock quantity of a specific product.
      *
-     * <p>{@link Product#setQuantity} automatically recalculates {@code totalValue}
-     * (quantity × price). Behavior defined in {@code docs/api/paths/products.yaml}.
+     * <p>{@code totalValue} in the response is computed from the updated quantity.
+     * Behavior defined in {@code docs/api/paths/products.yaml}.
      *
      * @param id      product identifier
      * @param request request body containing an integer {@code quantity} field
@@ -204,13 +205,13 @@ public class ProductController {
     }
 
     /**
-     * Updates the price of a specific product.
+     * Updates the purchase price of a specific product.
      *
-     * <p>{@link Product#setPrice} automatically recalculates {@code totalValue}
-     * (quantity × price). Behavior defined in {@code docs/api/paths/products.yaml}.
+     * <p>{@code totalValue} in the response is computed from the updated price.
+     * Behavior defined in {@code docs/api/paths/products.yaml}.
      *
      * @param id      product identifier
-     * @param request request body containing a numeric {@code price} field
+     * @param request request body containing a numeric {@code purchasePrice} field
      * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
      */
     @PutMapping("/{id}/price")
@@ -218,7 +219,7 @@ public class ProductController {
     public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-        product.setPrice(request.getPrice());
+        product.setPurchasePrice(BigDecimal.valueOf(request.getPurchasePrice()));
         Product updatedProduct = productRepository.save(product);
         return ResponseEntity.ok(new ApiResponse<>(true, "Price updated successfully", updatedProduct));
     }
@@ -246,7 +247,7 @@ public class ProductController {
     /**
      * Calculates the aggregate inventory value across all products.
      *
-     * <p>Executes a database-level aggregate ({@code SUM(quantity * price)}) via
+     * <p>Executes a database-level aggregate ({@code SUM(quantity * purchasePrice)}) via
      * {@link ProductRepository#calculateTotalStockValue()}. Behavior defined in
      * {@code docs/api/paths/products.yaml}.
      *

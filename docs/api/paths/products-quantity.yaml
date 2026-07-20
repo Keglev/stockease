@@ -45,7 +45,8 @@ put:
               id: 1
               name: Laptop
               quantity: 75
-              price: 999.99
+              purchasePrice: 999.99
+              sku: SKU-A1B2C3D4
               totalValue: 74999.25
     '400':
       description: Validation error - invalid quantity or missing field

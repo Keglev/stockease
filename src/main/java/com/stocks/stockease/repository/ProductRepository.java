@@ -31,11 +31,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findAllOrderById();
 
     /**
-     * Returns the sum of all {@code totalValue} fields across the inventory; {@code COALESCE} ensures {@code 0.0} is returned when no products exist rather than {@code null}.
+     * Returns the sum of {@code quantity * purchasePrice} across the inventory; {@code COALESCE} ensures {@code 0.0} is returned when no products exist rather than {@code null}.
      *
-     * @return sum of all product totalValue fields
+     * @return sum of all product stock values (quantity times purchase price)
      */
-    @Query("SELECT COALESCE(SUM(p.totalValue), 0) FROM Product p")
+    @Query("SELECT COALESCE(SUM(p.quantity * p.purchasePrice), 0) FROM Product p")
     double calculateTotalStockValue();
 
     /**

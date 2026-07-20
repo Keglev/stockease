@@ -54,7 +54,6 @@ class ProductInvalidUpdateControllerTest {
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
         product1 = new Product("Product 1", 10, 100.0);
         product1.setId(1L);
-        product1.setTotalValue(1000.0);
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
         Mockito.reset(productRepository);
     }
@@ -98,7 +97,7 @@ class ProductInvalidUpdateControllerTest {
                         .contentType(applicationJson())
                         .with(userWithRole(username, role))
                         .with(csrfToken())
-                        .content("{\"price\": -10.0}"))
+                        .content("{\"purchasePrice\": -10.0}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed for request parameters."));
     }
@@ -112,7 +111,7 @@ class ProductInvalidUpdateControllerTest {
                         .contentType(applicationJson())
                         .with(userWithRole(username, role))
                         .with(csrfToken())
-                        .content("{\"price\": \"notANumber\"}"))
+                        .content("{\"purchasePrice\": \"notANumber\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Invalid request format or data type."));
     }
@@ -126,7 +125,7 @@ class ProductInvalidUpdateControllerTest {
                         .contentType(applicationJson())
                         .with(userWithRole(username, role))
                         .with(csrfToken())
-                        .content("{\"price\": 0}"))
+                        .content("{\"purchasePrice\": 0}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed for request parameters."));
     }

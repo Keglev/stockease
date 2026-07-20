@@ -1,7 +1,7 @@
 put:
-  summary: Update product price
+  summary: Update product purchase price
   description: |
-    Updates price for a specific product. Automatically recalculates total stock value.
+    Updates purchasePrice for a specific product. totalValue in the response is recomputed.
     Prevents zero or negative prices.
   operationId: updatePrice
   tags:
@@ -24,13 +24,13 @@ put:
         schema:
           type: object
           required:
-            - price
+            - purchasePrice
           properties:
-            price:
+            purchasePrice:
               type: number
               format: double
               minimum: 0.01
-              description: New price (must be positive)
+              description: New purchase price (must be positive)
               example: 1199.99
   responses:
     '200':
@@ -46,7 +46,8 @@ put:
               id: 1
               name: Laptop
               quantity: 50
-              price: 1199.99
+              purchasePrice: 1199.99
+              sku: SKU-A1B2C3D4
               totalValue: 59999.50
     '400':
       description: Validation error - invalid price or missing field
