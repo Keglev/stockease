@@ -84,7 +84,7 @@ class ProductUpdateControllerTest {
                         .contentType(applicationJson())
                         .with(userWithRole(username, role))
                         .with(csrfToken())
-                        .content("{\"price\": 150.0}"))
+                        .content("{\"purchasePrice\": 150.0}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Price updated successfully"));
     }

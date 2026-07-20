@@ -56,11 +56,9 @@ class ProductFetchControllerTest {
 
         Product product1 = new Product("Product 1", 10, 100.0);
         product1.setId(1L);
-        product1.setTotalValue(1000.0);
 
         Product product2 = new Product("Product 2", 5, 50.0);
         product2.setId(2L);
-        product2.setTotalValue(250.0);
 
         when(productRepository.findAllOrderById()).thenReturn(Arrays.asList(product1, product2));
     }
@@ -87,7 +85,6 @@ class ProductFetchControllerTest {
     void getProductById_withExistingId_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
-        product.setTotalValue(1000.0);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         mockMvc.perform(get("/api/products/1").with(userWithRole(username, role)))

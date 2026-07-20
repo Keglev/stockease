@@ -42,12 +42,14 @@ get:
                 - id: 1
                   name: Laptop
                   quantity: 50
-                  price: 999.99
+                  purchasePrice: 999.99
+                  sku: SKU-A1B2C3D4
                   totalValue: 49999.50
                 - id: 2
                   name: Mouse
                   quantity: 200
-                  price: 25.99
+                  purchasePrice: 25.99
+                  sku: SKU-B2C3D4E5
                   totalValue: 5198.00
               totalElements: 100
               totalPages: 10

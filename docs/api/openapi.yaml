@@ -94,7 +94,8 @@ components:
         - id
         - name
         - quantity
-        - price
+        - purchasePrice
+        - sku
         - totalValue
       properties:
         id:
@@ -112,16 +113,21 @@ components:
           minimum: 0
           description: Current stock quantity (cannot be negative)
           example: 50
-        price:
+        purchasePrice:
           type: number
           format: double
           minimum: 0.01
           description: Unit price (must be positive)
           example: 999.99
+        sku:
+          type: string
+          description: Stock keeping unit identifier (auto-generated if not supplied)
+          example: SKU-A1B2C3D4
         totalValue:
           type: number
           format: double
-          description: Total inventory value (auto-calculated as quantity * price)
+          readOnly: true
+          description: Total inventory value, computed as quantity * purchasePrice; not stored
           example: 49999.50
       description: Product inventory item with stock and pricing information
 

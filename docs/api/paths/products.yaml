@@ -19,12 +19,14 @@ get:
             - id: 1
               name: Laptop
               quantity: 50
-              price: 999.99
+              purchasePrice: 999.99
+              sku: SKU-A1B2C3D4
               totalValue: 49999.50
             - id: 2
               name: Mouse
               quantity: 200
-              price: 25.99
+              purchasePrice: 25.99
+              sku: SKU-B2C3D4E5
               totalValue: 5198.00
     '401':
       description: Unauthorized - missing or invalid JWT token
@@ -38,12 +40,13 @@ get:
 post:
   summary: Create a new product (ADMIN only)
   description: |
-    Creates a new product with provided name, quantity, and price.
+    Creates a new product with provided name, quantity, and purchasePrice.
     Validates all required fields and business rules:
     - Name must be non-empty
     - Quantity cannot be negative
-    - Price must be positive (> 0)
-    Automatically calculates totalValue = quantity * price
+    - purchasePrice must be positive (> 0)
+    Automatically calculates totalValue = quantity * purchasePrice.
+    A sku is generated automatically if not supplied.
   operationId: createProduct
   tags:
     - Products
@@ -58,7 +61,7 @@ post:
           required:
             - name
             - quantity
-            - price
+            - purchasePrice
           properties:
             name:
               type: string
@@ -67,7 +70,7 @@ post:
               type: integer
               minimum: 0
               example: 25
-            price:
+            purchasePrice:
               type: number
               format: double
               minimum: 0.01
@@ -83,7 +86,8 @@ post:
             id: 3
             name: New Laptop
             quantity: 25
-            price: 1299.99
+            purchasePrice: 1299.99
+            sku: SKU-C3D4E5F6
             totalValue: 32499.75
     '400':
       description: Validation error - missing or invalid fields

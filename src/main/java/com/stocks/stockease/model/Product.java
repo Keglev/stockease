@@ -1,24 +1,35 @@
 package com.stocks.stockease.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
  * Domain entity representing a product in the inventory system, persisted to the {@code product} table.
- * Maintains a computed {@code totalValue} field that is automatically recalculated whenever {@code quantity} or {@code price} changes.
+ * {@code totalValue} is computed on read from {@code quantity} and {@code purchasePrice}, never stored.
  */
 @Data
 @Entity
 @Table(name = "product")
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Product {
 
     /** Unique product identifier used for API lookups. */
@@ -30,57 +41,52 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-    /** Number of units in stock; triggers a {@code totalValue} recalculation when changed. */
+    /** Number of units in stock. */
     @Column(nullable = false)
     private Integer quantity;
 
-    /** Unit price of the product; triggers a {@code totalValue} recalculation when changed. */
+    /** Unit price of the product, stored as exact decimal money. */
     @Column(nullable = false)
-    private Double price;
+    private BigDecimal purchasePrice;
 
-    /** Total stock value computed as {@code quantity * price}, maintained automatically by the custom setters. */
+    /** Stock keeping unit identifier; generated on creation if not supplied. */
     @Column(nullable = false)
-    private Double totalValue;
+    private String sku;
+
+    /** Timestamp the row was first persisted, populated by JPA auditing. */
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     /**
-     * Sets the quantity and recalculates {@code totalValue}.
-     *
-     * @param quantity new quantity in stock (must be non-negative)
-     */
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-        updateTotalValue();
-    }
-
-    /**
-     * Sets the unit price and recalculates {@code totalValue}.
-     *
-     * @param price new unit price (must be positive)
-     */
-    public void setPrice(Double price) {
-        this.price = price;
-        updateTotalValue();
-    }
-
-    /**
-     * Recalculates {@code totalValue} as {@code quantity * price}, defaulting to {@code 0.0} if either field is null.
-     */
-    private void updateTotalValue() {
-        // Prevent null arithmetic; use 0 if either quantity or price is null
-        this.totalValue = (this.quantity != null && this.price != null) ? this.quantity * this.price : 0.0;
-    }
-
-    /**
-     * Creates a product without an ID, computing {@code totalValue} from the given {@code quantity} and {@code price}.
+     * Creates a product without an ID, converting {@code purchasePrice} to {@link BigDecimal}.
      *
      * @param name product name (required)
      * @param quantity stock quantity (required, non-negative)
-     * @param price unit price (required, positive)
+     * @param purchasePrice unit price (required, positive)
      */
-    public Product(String name, int quantity, double price) {
+    public Product(String name, int quantity, double purchasePrice) {
         this.name = name;
         this.quantity = quantity;
-        this.price = price;
-        this.totalValue = quantity * price;
+        this.purchasePrice = BigDecimal.valueOf(purchasePrice);
+    }
+
+    @PrePersist
+    private void ensureSku() {
+        if (sku == null || sku.isBlank()) {
+            // interim generator; real SKU convention arrives with demo data
+            sku = "SKU-" + UUID.randomUUID().toString()
+                    .substring(0, 8).toUpperCase();
+        }
+    }
+
+    /**
+     * Computes the total stock value as {@code quantity * purchasePrice}; never persisted.
+     *
+     * @return the product of {@code quantity} and {@code purchasePrice}
+     */
+    @Transient
+    public BigDecimal getTotalValue() {
+        return purchasePrice.multiply(BigDecimal.valueOf(quantity));
     }
 }

@@ -28,7 +28,8 @@ get:
             - id: 1
               name: Laptop
               quantity: 50
-              price: 999.99
+              purchasePrice: 999.99
+              sku: SKU-A1B2C3D4
               totalValue: 49999.50
     '204':
       description: |

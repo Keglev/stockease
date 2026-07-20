@@ -27,5 +27,5 @@ public class CreateProductRequest {
     /** Unit price in the configured currency. Must be greater than zero. */
     @NotNull
     @Positive
-    private Double price;
+    private Double purchasePrice;
 }
