@@ -9,12 +9,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.model.Product;
+import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /** Tests for {@link ProductRepository} covering the sku lifecycle callback on persist. */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-class ProductRepositoryTest {
+class ProductRepositoryTest extends AbstractIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;

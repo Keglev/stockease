@@ -18,12 +18,13 @@ import com.stocks.stockease.model.InvoiceItem;
 import com.stocks.stockease.model.Product;
 import com.stocks.stockease.model.Supplier;
 import com.stocks.stockease.model.enums.InvoiceStatus;
+import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /** Tests for {@link Invoice}/{@link InvoiceItem} JPA mapping, including the item cascade. */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-class InvoiceMappingTest {
+class InvoiceMappingTest extends AbstractIntegrationTest {
 
     @Autowired
     private SupplierRepository supplierRepository;

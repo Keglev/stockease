@@ -12,12 +12,13 @@ import com.stocks.stockease.model.Product;
 import com.stocks.stockease.model.ProductChangeLog;
 import com.stocks.stockease.model.User;
 import com.stocks.stockease.model.enums.ChangedField;
+import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /** Tests for {@link ProductChangeLog} JPA mapping. */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-class ProductChangeLogMappingTest {
+class ProductChangeLogMappingTest extends AbstractIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;

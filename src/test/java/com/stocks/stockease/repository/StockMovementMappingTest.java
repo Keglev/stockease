@@ -15,12 +15,13 @@ import com.stocks.stockease.model.StockMovement;
 import com.stocks.stockease.model.User;
 import com.stocks.stockease.model.enums.MovementReason;
 import com.stocks.stockease.model.enums.MovementType;
+import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /** Tests for {@link StockMovement} JPA mapping and {@link MovementReason} direction binding. */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-class StockMovementMappingTest {
+class StockMovementMappingTest extends AbstractIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;
