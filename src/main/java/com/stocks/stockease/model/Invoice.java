@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -41,6 +43,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@SQLDelete(sql = "UPDATE invoice SET deleted_at = now() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Invoice {
 
     /** Unique invoice identifier. */
@@ -85,6 +89,10 @@ public class Invoice {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    /** Timestamp the row was soft-deleted; {@code null} while still live. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     /** Line items purchased on this invoice. */
     // excluded from equals/toString: bidirectional link would recurse

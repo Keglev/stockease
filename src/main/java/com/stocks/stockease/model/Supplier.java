@@ -2,6 +2,8 @@ package com.stocks.stockease.model;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -23,6 +25,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@SQLDelete(sql = "UPDATE supplier SET deleted_at = now() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class Supplier {
 
     /** Unique supplier identifier. */
@@ -42,4 +46,8 @@ public class Supplier {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    /** Timestamp the row was soft-deleted; {@code null} while still live. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
