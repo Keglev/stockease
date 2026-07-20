@@ -25,7 +25,7 @@ env:
   RUN_TESTS: 'true'
 
 jobs:
-  deploy-backend:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,9 +34,6 @@ jobs:
 
       - name: Detect project root
         run: bash .github/scripts/shared/detect-maven-project.sh
-
-      - name: Validate Dockerfile
-        run: bash .github/scripts/deploy/validate-dockerfile.sh
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -59,15 +56,28 @@ jobs:
         # -Dspringdoc.skip=true: skips OpenAPI doc generation at build time
         run: ./mvnw -B -ntp -DskipTests -Dspringdoc.skip=true verify
 
+  deploy:
+    if: github.event_name != 'pull_request' # pull requests must not deploy
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect project root
+        run: bash .github/scripts/shared/detect-maven-project.sh
+
+      - name: Validate Dockerfile
+        run: bash .github/scripts/deploy/validate-dockerfile.sh
+
       - name: Trigger Koyeb redeploy
-        if: github.event_name != 'pull_request' # pull requests must not deploy
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
           KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
         run: bash .github/scripts/deploy/koyeb-redeploy.sh
 
       - name: Wait for service healthy
-        if: github.event_name != 'pull_request'
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
           KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
