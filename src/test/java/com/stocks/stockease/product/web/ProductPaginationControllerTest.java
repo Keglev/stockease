@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
-import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.JwtUtil;
 
 /** Slice tests for GET /api/products/paged (paginated product queries). */
@@ -45,7 +45,7 @@ import com.stocks.stockease.security.JwtUtil;
 class ProductPaginationControllerTest {
 
     @MockitoBean
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -65,7 +65,7 @@ class ProductPaginationControllerTest {
 
         Page<Product> productPage = new PageImpl<>(
                 Objects.requireNonNull(products.subList(0, 10)), PageRequest.of(0, 10), products.size());
-        Mockito.when(productRepository.findAll(anyNonNull(Pageable.class))).thenReturn(productPage);
+        Mockito.when(productService.getPagedProducts(anyNonNull(Pageable.class))).thenReturn(productPage);
     }
 
     @ParameterizedTest
@@ -87,7 +87,7 @@ class ProductPaginationControllerTest {
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void getProductsPaged_withEmptyPage_returnsEmptyContent(String username, String role) throws Exception {
         Page<Product> emptyPage = new PageImpl<>(Objects.requireNonNull(Collections.emptyList()));
-        Mockito.when(productRepository.findAll(anyNonNull(Pageable.class))).thenReturn(emptyPage);
+        Mockito.when(productService.getPagedProducts(anyNonNull(Pageable.class))).thenReturn(emptyPage);
 
         mockMvc.perform(get("/api/products/paged")
                         .with(userWithRole(username, role))

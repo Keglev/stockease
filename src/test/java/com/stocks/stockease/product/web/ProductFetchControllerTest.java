@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
-import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.JwtUtil;
 
 /** Slice tests for GET /api/products and GET /api/products/{id} endpoints. */
@@ -40,7 +40,7 @@ import com.stocks.stockease.security.JwtUtil;
 class ProductFetchControllerTest {
 
     @MockitoBean
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -60,12 +60,12 @@ class ProductFetchControllerTest {
         Product product2 = new Product("Product 2", 5, 50.0);
         product2.setId(2L);
 
-        when(productRepository.findAllOrderById()).thenReturn(Arrays.asList(product1, product2));
+        when(productService.getAllProducts()).thenReturn(Arrays.asList(product1, product2));
     }
 
     @Test
     void contextLoads_onApplicationStart_beansAreInjected() {
-        assertNotNull(productRepository);
+        assertNotNull(productService);
         assertNotNull(mockMvc);
     }
 
@@ -85,7 +85,7 @@ class ProductFetchControllerTest {
     void getProductById_withExistingId_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productService.findById(1L)).thenReturn(Optional.of(product));
 
         mockMvc.perform(get("/api/products/1").with(userWithRole(username, role)))
                 .andExpect(status().isOk())
@@ -96,7 +96,7 @@ class ProductFetchControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void getProductById_withNonExistentId_returns404(String username, String role) throws Exception {
-        when(productRepository.findById(999L)).thenReturn(Optional.empty());
+        when(productService.findById(999L)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/products/999").with(userWithRole(username, role)))
                 .andExpect(status().isNotFound())

@@ -25,9 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.stocks.stockease.shared.ApiResponse;
 import com.stocks.stockease.shared.PaginatedResponse;
 import com.stocks.stockease.product.Product;
-import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.product.ProductService;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -47,7 +46,7 @@ public class ProductController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
     /**
      * Returns all products ordered by ID ascending.
@@ -60,7 +59,7 @@ public class ProductController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<Product> getAllProducts() {
-        return productRepository.findAllOrderById();
+        return productService.getAllProducts();
     }
 
     /**
@@ -78,7 +77,7 @@ public class ProductController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Positive int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Product> products = productRepository.findAll(pageable);
+        Page<Product> products = productService.getPagedProducts(pageable);
         PaginatedResponse<Product> response = new PaginatedResponse<>(products);
         return ResponseEntity.ok(new ApiResponse<>(true, "Paged products fetched successfully", response));
     }
@@ -94,7 +93,7 @@ public class ProductController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Product>> getProductById(@PathVariable long id) {
-        return productRepository.findById(id)
+        return productService.findById(id)
                 .map(product -> ResponseEntity.ok(new ApiResponse<>(true, "Product fetched successfully", product)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(false, "The product with ID " + id + " does not exist.", null)));
@@ -114,8 +113,7 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createProduct(@Valid @RequestBody CreateProductRequest request) {
         log.debug("Received request to create product: {}", request);
-        Product savedProduct = productRepository.save(
-                new Product(request.getName(), request.getQuantity(), request.getPurchasePrice()));
+        Product savedProduct = productService.create(request.getName(), request.getQuantity(), request.getPurchasePrice());
         return ResponseEntity.ok(savedProduct);
     }
 
@@ -131,11 +129,10 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable long id) {
         log.info("Entering deleteProduct method with ID: {}", id);
-        if (!productRepository.existsById(id)) {
+        if (!productService.deleteById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(false, "Cannot delete. Product with ID " + id + " does not exist.", null));
         }
-        productRepository.deleteById(id);
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Product with ID " + id + " has been successfully deleted.", null)
         );
@@ -153,7 +150,7 @@ public class ProductController {
     @GetMapping("/low-stock")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<?> getLowStockProducts() {
-        List<Product> lowStockProducts = productRepository.findByQuantityLessThan(5);
+        List<Product> lowStockProducts = productService.findLowStock(5);
         if (lowStockProducts.isEmpty()) {
             return ResponseEntity.ok(Map.of("message", "All products are sufficiently stocked."));
         }
@@ -172,7 +169,7 @@ public class ProductController {
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<?> searchProductsByName(@RequestParam String name) {
-        List<Product> products = productRepository.findByNameContainingIgnoreCase(name);
+        List<Product> products = productService.searchByName(name);
         if (products.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT)
                     .body(Map.of("message", "No products found matching the name: " + name));
@@ -193,10 +190,7 @@ public class ProductController {
     @PutMapping("/{id}/quantity")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable long id, @Valid @RequestBody UpdateQuantityRequest request) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-        product.setQuantity(request.getQuantity());
-        Product updatedProduct = productRepository.save(product);
+        Product updatedProduct = productService.updateQuantity(id, request.getQuantity());
         return ResponseEntity.ok(new ApiResponse<>(true, "Quantity updated successfully", updatedProduct));
     }
 
@@ -213,10 +207,7 @@ public class ProductController {
     @PutMapping("/{id}/price")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-        product.setPurchasePrice(BigDecimal.valueOf(request.getPurchasePrice()));
-        Product updatedProduct = productRepository.save(product);
+        Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()));
         return ResponseEntity.ok(new ApiResponse<>(true, "Price updated successfully", updatedProduct));
     }
 
@@ -233,10 +224,7 @@ public class ProductController {
     @PutMapping("/{id}/name")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-        product.setName(request.getName());
-        Product updatedProduct = productRepository.save(product);
+        Product updatedProduct = productService.updateName(id, request.getName());
         return ResponseEntity.ok(new ApiResponse<>(true, "Name updated successfully", updatedProduct));
     }
 
@@ -244,7 +232,7 @@ public class ProductController {
      * Calculates the aggregate inventory value across all products.
      *
      * <p>Executes a database-level aggregate ({@code SUM(quantity * purchasePrice)}) via
-     * {@link ProductRepository#calculateTotalStockValue()}. Behavior defined in
+     * {@link ProductService#getTotalStockValue()}. Behavior defined in
      * {@code docs/api/paths/products.yaml}.
      *
      * @return HTTP 200 with the total stock value as a {@link Double}
@@ -252,7 +240,7 @@ public class ProductController {
     @GetMapping("/total-stock-value")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Double>> getTotalStockValue() {
-        double totalStockValue = productRepository.calculateTotalStockValue();
+        double totalStockValue = productService.getTotalStockValue();
         return ResponseEntity.ok(new ApiResponse<>(true, "Total stock value fetched successfully", totalStockValue));
     }
 }

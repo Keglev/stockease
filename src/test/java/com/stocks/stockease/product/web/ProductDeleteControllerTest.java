@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.stocks.stockease.config.test.TestConfig;
-import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.product.ProductService;
 
 /** Slice tests for DELETE /api/products/{id} endpoint. */
 @ExtendWith(MockitoExtension.class)
@@ -34,7 +34,7 @@ import com.stocks.stockease.product.internal.ProductRepository;
 class ProductDeleteControllerTest {
 
     @MockitoBean
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,7 +42,7 @@ class ProductDeleteControllerTest {
     @SuppressWarnings("unused")
     @BeforeEach
     void setUpMocks() {
-        Mockito.when(productRepository.existsById(1L)).thenReturn(true);
+        Mockito.when(productService.deleteById(1L)).thenReturn(true);
     }
 
     @Test
@@ -53,20 +53,20 @@ class ProductDeleteControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Product with ID 1 has been successfully deleted."));
 
-        Mockito.verify(productRepository, Mockito.times(1)).deleteById(1L);
+        Mockito.verify(productService, Mockito.times(1)).deleteById(1L);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void deleteProduct_whenProductNotFound_returns404() throws Exception {
-        Mockito.when(productRepository.existsById(1L)).thenReturn(false);
+        Mockito.when(productService.deleteById(1L)).thenReturn(false);
 
         mockMvc.perform(delete("/api/products/1").with(csrfToken()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Cannot delete. Product with ID 1 does not exist."));
 
-        Mockito.verify(productRepository, Mockito.never()).deleteById(Mockito.anyLong());
+        Mockito.verify(productService, Mockito.times(1)).deleteById(1L);
     }
 
     @Test

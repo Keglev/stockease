@@ -1,13 +1,16 @@
 package com.stocks.stockease.product.web;
 
+import java.math.BigDecimal;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,8 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
-import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.JwtUtil;
+
+import jakarta.persistence.EntityNotFoundException;
 
 /** Slice tests for validation and error scenarios in PUT /api/products/{id}/quantity|price|name. */
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +48,7 @@ class ProductInvalidUpdateControllerTest {
     private JwtUtil jwtUtil;
 
     @MockitoBean
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     private Product product1;
 
@@ -55,14 +60,13 @@ class ProductInvalidUpdateControllerTest {
         product1 = new Product("Product 1", 10, 100.0);
         product1.setId(1L);
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
-        Mockito.reset(productRepository);
+        Mockito.reset(productService);
     }
 
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updateQuantity_withMissingField_returns400(String username, String role) throws Exception {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
+        when(productService.updateQuantity(eq(1L), anyInt())).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/quantity")
                         .contentType(applicationJson())
@@ -76,7 +80,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updateQuantity_withInvalidType_returns400(String username, String role) throws Exception {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
+        when(productService.updateQuantity(eq(1L), anyInt())).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/quantity")
                         .contentType(applicationJson())
@@ -90,8 +94,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updatePrice_withNegativeValue_returns400(String username, String role) throws Exception {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
@@ -105,7 +108,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updatePrice_withInvalidType_returns400(String username, String role) throws Exception {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
@@ -119,7 +122,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updatePrice_withZeroValue_returns400(String username, String role) throws Exception {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
@@ -133,7 +136,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updateName_withWhitespaceOnly_returns400(String username, String role) throws Exception {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
+        when(productService.updateName(eq(1L), anyString())).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/name")
                         .contentType(applicationJson())
@@ -147,7 +150,8 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updateProduct_whenNotFound_returns404(String username, String role) throws Exception {
-        when(productRepository.findById(999L)).thenReturn(Optional.empty());
+        when(productService.updateQuantity(eq(999L), anyInt()))
+                .thenThrow(new EntityNotFoundException("Product with ID 999 not found."));
 
         mockMvc.perform(put("/api/products/999/quantity")
                         .contentType(applicationJson())
@@ -161,7 +165,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updateProduct_withoutCsrfToken_returns403(String username, String role) throws Exception {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(Objects.requireNonNull(product1)));
+        when(productService.updateQuantity(eq(1L), anyInt())).thenReturn(Objects.requireNonNull(product1));
 
         // 403 is issued by the CSRF filter, not the authorization layer; both roles are rejected equally
         mockMvc.perform(put("/api/products/1/quantity")
@@ -177,11 +181,6 @@ class ProductInvalidUpdateControllerTest {
 
     private static @NonNull RequestPostProcessor csrfToken() {
         return Objects.requireNonNull(csrf());
-    }
-
-    @SuppressWarnings("null")
-    private static <T> @NonNull T anyNonNull(Class<T> clazz) {
-        return any(clazz);
     }
 
     private static @NonNull RequestPostProcessor userWithRole(String username, String role) {

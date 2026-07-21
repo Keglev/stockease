@@ -5,7 +5,9 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
-import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.JwtUtil;
 
 /** Slice tests for POST /api/products (product creation). */
@@ -41,7 +43,7 @@ class ProductCreateControllerTest {
     private JwtUtil jwtUtil;
 
     @MockitoBean
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     private Product product1;
 
@@ -54,12 +56,12 @@ class ProductCreateControllerTest {
         product1 = new Product("Product 1", 10, 100.0);
         product1.setId(1L);
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
-        Mockito.reset(productRepository);
+        Mockito.reset(productService);
     }
 
     @Test
     void createProduct_withValidData_returns200() throws Exception {
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
+        when(productService.create(anyString(), anyInt(), anyDouble())).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
@@ -118,7 +120,7 @@ class ProductCreateControllerTest {
     @Test
     void createProduct_withInvalidPriceType_returns400() throws Exception {
         // save is never reached — JSON deserialization fails before the controller is invoked; stub is defensive only
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(Objects.requireNonNull(product1));
+        when(productService.create(anyString(), anyInt(), anyDouble())).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
@@ -134,11 +136,6 @@ class ProductCreateControllerTest {
 
     private static @NonNull RequestPostProcessor csrfToken() {
         return Objects.requireNonNull(csrf());
-    }
-
-    @SuppressWarnings("null")
-    private static <T> @NonNull T anyNonNull(Class<T> clazz) {
-        return any(clazz);
     }
 
     private static @NonNull RequestPostProcessor userWithRole(String username, String role) {
