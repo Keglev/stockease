@@ -13,8 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.stocks.stockease.model.User;
-import com.stocks.stockease.repository.UserRepository;
+import com.stocks.stockease.security.User;
+import com.stocks.stockease.security.internal.UserRepository;
 
 /**
  * Tests for {@link CustomUserDetailsService} covering user lookup, authority mapping, and not-found behavior.

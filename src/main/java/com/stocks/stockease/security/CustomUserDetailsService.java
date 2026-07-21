@@ -8,8 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.stocks.stockease.model.User;
-import com.stocks.stockease.repository.UserRepository;
+import com.stocks.stockease.security.internal.UserRepository;
 
 /**
  * UserDetailsService implementation that loads Spring Security user details from the database.
