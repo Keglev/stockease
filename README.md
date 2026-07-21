@@ -63,7 +63,7 @@ Managing inventory manually in manufacturing environments leads to stock discrep
 **DevOps & Infrastructure**
 - GitHub Actions — automated CI/CD pipelines
 - Koyeb — serverless container deployment
-- Neon — managed PostgreSQL (production)
+- Supabase — managed PostgreSQL (production)
 - GitHub Pages — architecture documentation and coverage reporting
 
 ---
@@ -127,7 +127,7 @@ Each push to `main` triggers the full pipeline:
 <a id="deployment"></a>
 ## 🚀 Deployment
 
-StockEase backend is deployed to Koyeb using a Docker container built by GitHub Actions. The production database is hosted on Neon (managed PostgreSQL).
+StockEase backend is deployed to Koyeb using a Docker container built by GitHub Actions. The production database is hosted on Supabase (managed PostgreSQL).
 
 🌍 **Live Application (Frontend):** [https://stockeasefrontend.vercel.app](https://stockeasefrontend.vercel.app)
 
