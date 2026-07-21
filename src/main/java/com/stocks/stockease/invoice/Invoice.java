@@ -11,6 +11,7 @@ import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.stocks.stockease.customer.Customer;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.supplier.Supplier;
 
@@ -53,11 +54,22 @@ public class Invoice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Supplier this invoice was issued by. */
+    /** Whether this invoice records a purchase from a supplier or a sale to a customer. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "invoice_type", nullable = false, length = 16)
+    private InvoiceType type;
+
+    /** Supplier this invoice was issued by; {@code null} for sale invoices. */
     @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supplier_id", nullable = false)
+    @JoinColumn(name = "supplier_id")
     private Supplier supplier;
+
+    /** Customer this invoice was issued to; {@code null} for purchase invoices and anonymous cash sales. */
+    @ToString.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     /** Current lifecycle state. */
     @Enumerated(EnumType.STRING)
