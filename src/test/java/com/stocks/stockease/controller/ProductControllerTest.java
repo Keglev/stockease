@@ -14,7 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -121,8 +121,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.message").value("Total stock value fetched successfully"));
     }
 
-    @NonNull
-    private static RequestPostProcessor userWithRole(String username, String role) {
+    private static @NonNull RequestPostProcessor userWithRole(String username, String role) {
         return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }

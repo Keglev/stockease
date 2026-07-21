@@ -21,7 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -111,13 +111,11 @@ class ProductPaginationControllerTest {
     }
 
     @SuppressWarnings("null")
-    @NonNull
-    private static <T> T anyNonNull(Class<T> clazz) {
+    private static <T> @NonNull T anyNonNull(Class<T> clazz) {
         return any(clazz);
     }
 
-    @NonNull
-    private static RequestPostProcessor userWithRole(String username, String role) {
+    private static @NonNull RequestPostProcessor userWithRole(String username, String role) {
         return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }

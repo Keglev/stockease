@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -107,24 +107,20 @@ class ProductUpdateControllerTest {
                 .andExpect(jsonPath("$.data.name").value("Updated!@#$%"));
     }
 
-    @NonNull
-    private static MediaType applicationJson() {
+    private static @NonNull MediaType applicationJson() {
         return Objects.requireNonNull(MediaType.APPLICATION_JSON);
     }
 
-    @NonNull
-    private static RequestPostProcessor csrfToken() {
+    private static @NonNull RequestPostProcessor csrfToken() {
         return Objects.requireNonNull(csrf());
     }
 
     @SuppressWarnings("null")
-    @NonNull
-    private static <T> T anyNonNull(Class<T> clazz) {
+    private static <T> @NonNull T anyNonNull(Class<T> clazz) {
         return any(clazz);
     }
 
-    @NonNull
-    private static RequestPostProcessor userWithRole(String username, String role) {
+    private static @NonNull RequestPostProcessor userWithRole(String username, String role) {
         return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }
