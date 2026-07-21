@@ -1,13 +1,14 @@
 package com.stocks.stockease.product.web;
 
+import java.math.BigDecimal;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
-import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.JwtUtil;
 
 /** Slice tests for PUT /api/products/{id}/quantity|price|name (happy-path updates). */
@@ -37,7 +38,7 @@ import com.stocks.stockease.security.JwtUtil;
 class ProductUpdateControllerTest {
 
     @MockitoBean
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,7 +52,7 @@ class ProductUpdateControllerTest {
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
-        Mockito.reset(productRepository);
+        Mockito.reset(productService);
     }
 
     @ParameterizedTest
@@ -59,8 +60,8 @@ class ProductUpdateControllerTest {
     void updateQuantity_withValidData_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(product);
+        product.setQuantity(50);
+        when(productService.updateQuantity(eq(1L), eq(50))).thenReturn(product);
 
         mockMvc.perform(put("/api/products/1/quantity")
                         .contentType(applicationJson())
@@ -77,8 +78,7 @@ class ProductUpdateControllerTest {
     void updatePrice_withValidData_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(product);
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class))).thenReturn(product);
 
         mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
@@ -94,8 +94,8 @@ class ProductUpdateControllerTest {
     void updateName_withSpecialCharacters_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.save(anyNonNull(Product.class))).thenReturn(product);
+        product.setName("Updated!@#$%");
+        when(productService.updateName(eq(1L), eq("Updated!@#$%"))).thenReturn(product);
 
         mockMvc.perform(put("/api/products/1/name")
                         .contentType(applicationJson())
@@ -113,11 +113,6 @@ class ProductUpdateControllerTest {
 
     private static @NonNull RequestPostProcessor csrfToken() {
         return Objects.requireNonNull(csrf());
-    }
-
-    @SuppressWarnings("null")
-    private static <T> @NonNull T anyNonNull(Class<T> clazz) {
-        return any(clazz);
     }
 
     private static @NonNull RequestPostProcessor userWithRole(String username, String role) {
