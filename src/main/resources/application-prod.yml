@@ -40,8 +40,8 @@ spring:
     hikari:
       minimum-idle: 0
       maximum-pool-size: 5
-      idle-timeout: 120000        # 2 min; allows pool to drain so Neon can sleep
-      connection-timeout: 30000   # 30 seconds (increased from 10s for Neon reliability)
+      idle-timeout: 120000        # 2 min; allows pool to drain so the free-tier database can pause
+      connection-timeout: 30000   # 30 seconds; tolerates free-tier database cold starts
       max-lifetime: 1800000       # 30 min
       connection-test-query: "SELECT 1"  # Validate connections with a test query
   flyway:
