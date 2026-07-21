@@ -105,8 +105,7 @@ class ProductFetchControllerTest {
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 
-    @NonNull
-    private static RequestPostProcessor userWithRole(String username, String role) {
+    private static @NonNull RequestPostProcessor userWithRole(String username, String role) {
         return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }

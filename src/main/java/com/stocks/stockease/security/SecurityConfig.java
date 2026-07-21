@@ -110,8 +110,7 @@ public class SecurityConfig {
      *
      * @return CorsConfiguration with policy rules
      */
-    @NonNull
-    private CorsConfiguration corsConfiguration() {
+    private @NonNull CorsConfiguration corsConfiguration() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",

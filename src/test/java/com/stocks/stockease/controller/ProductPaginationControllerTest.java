@@ -111,13 +111,11 @@ class ProductPaginationControllerTest {
     }
 
     @SuppressWarnings("null")
-    @NonNull
-    private static <T> T anyNonNull(Class<T> clazz) {
+    private static <T> @NonNull T anyNonNull(Class<T> clazz) {
         return any(clazz);
     }
 
-    @NonNull
-    private static RequestPostProcessor userWithRole(String username, String role) {
+    private static @NonNull RequestPostProcessor userWithRole(String username, String role) {
         return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }

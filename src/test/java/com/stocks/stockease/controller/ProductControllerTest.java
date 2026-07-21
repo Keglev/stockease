@@ -121,8 +121,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.message").value("Total stock value fetched successfully"));
     }
 
-    @NonNull
-    private static RequestPostProcessor userWithRole(String username, String role) {
+    private static @NonNull RequestPostProcessor userWithRole(String username, String role) {
         return Objects.requireNonNull(SecurityMockMvcRequestPostProcessors.user(username).roles(role));
     }
 }

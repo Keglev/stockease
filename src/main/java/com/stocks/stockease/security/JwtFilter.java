@@ -9,6 +9,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * JWT token extraction and validation filter that runs once per request.
  * Validates the Authorization header token, loads user details, and populates the SecurityContext.
@@ -45,9 +49,9 @@ public class JwtFilter extends OncePerRequestFilter {
      */
     @Override
     protected void doFilterInternal(
-        @NonNull jakarta.servlet.http.HttpServletRequest request,
-        @NonNull jakarta.servlet.http.HttpServletResponse response,
-        @NonNull jakarta.servlet.FilterChain filterChain
+        @NonNull HttpServletRequest request,
+        @NonNull HttpServletResponse response,
+        @NonNull FilterChain filterChain
     ) throws java.io.IOException, jakarta.servlet.ServletException {
 
         String authHeader = request.getHeader("Authorization");

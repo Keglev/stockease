@@ -82,8 +82,7 @@ class ProductDeleteControllerTest {
                 .andExpect(jsonPath("$.error").doesNotExist());
     }
 
-    @NonNull
-    private static RequestPostProcessor csrfToken() {
+    private static @NonNull RequestPostProcessor csrfToken() {
         return Objects.requireNonNull(csrf());
     }
 }
