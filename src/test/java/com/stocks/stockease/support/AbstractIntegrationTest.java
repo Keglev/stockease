@@ -2,7 +2,7 @@ package com.stocks.stockease.support;
 
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * Base class for tests needing a real database; one shared PostgreSQL container
@@ -11,7 +11,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 public abstract class AbstractIntegrationTest {
 
     @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+    // Singleton container is intentionally never closed; Testcontainers' Ryuk reaps it at JVM exit.
+    @SuppressWarnings("resource")
+    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:16-alpine");
 
     static {
         // guard: without it a stopped Docker yields an opaque connection error
