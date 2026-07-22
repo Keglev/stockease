@@ -96,8 +96,8 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void createInvoice_purchaseWithTwoLines_persistsGraph() {
-        Product first = newProduct("Widget", 10);
-        Product second = newProduct("Gadget", 10);
+        Product first = newProduct("Lifecycle Create A", 10);
+        Product second = newProduct("Lifecycle Create B", 10);
 
         Invoice created = invoiceService.createInvoice(
                 purchaseCommand(newSupplier(), line(first, 2), line(second, 3)));
@@ -113,7 +113,7 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void closeInvoice_saleWithSufficientStock_booksMovementsAndDecreasesStock() {
-        Product product = newProduct("Widget", 10);
+        Product product = newProduct("Lifecycle Close Sufficient", 10);
         Invoice invoice = invoiceService.createInvoice(saleCommand(line(product, 4)));
         Long itemId = invoice.getItems().get(0).getId();
 
@@ -129,7 +129,7 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void closeInvoice_saleExceedingStock_rollsBackEverything() {
-        Product product = newProduct("Widget", 3);
+        Product product = newProduct("Lifecycle Close Exceeding", 3);
         Invoice invoice = invoiceService.createInvoice(saleCommand(line(product, 5)));
         Long itemId = invoice.getItems().get(0).getId();
 
@@ -147,7 +147,7 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void registerReturn_lastOutstandingItem_flipsInvoiceToFullyReturned() {
-        Product product = newProduct("Widget", 10);
+        Product product = newProduct("Lifecycle Full Return", 10);
         Invoice invoice = invoiceService.createInvoice(purchaseCommand(newSupplier(), line(product, 4)));
         invoiceService.close(invoice.getId(), user);
 

@@ -113,7 +113,7 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void recordMovement_soldAgainstSaleInvoice_decreasesStockAndSnapshotsPrice() {
-        Product product = productRepository.saveAndFlush(new Product("Widget", 10, 5.0));
+        Product product = productRepository.saveAndFlush(new Product("Movement Sold", 10, 5.0));
         InvoiceItem item = saleItemFor(product, 5);
 
         StockMovement saved = stockMovementService
@@ -127,7 +127,7 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void recordMovement_returnFromCustomer_incrementsReturnedQty() {
-        Product product = productRepository.saveAndFlush(new Product("Widget", 10, 5.0));
+        Product product = productRepository.saveAndFlush(new Product("Movement Return From Customer", 10, 5.0));
         InvoiceItem item = saleItemFor(product, 5);
         stockMovementService.recordMovement(command(MovementReason.SOLD, product, 5, item.getId()), user);
 
@@ -142,7 +142,7 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void recordMovement_decreaseBelowZero_rejectsAndRollsBack() {
-        Product product = productRepository.saveAndFlush(new Product("Widget", 3, 5.0));
+        Product product = productRepository.saveAndFlush(new Product("Movement Below Zero", 3, 5.0));
         InvoiceItem item = saleItemFor(product, 5);
         long movementsBefore = stockMovementRepository.count();
 
@@ -164,7 +164,7 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void recordMovement_returnToSupplierExceedingStock_rollsBackReturnedQtyIncrement() {
-        Product product = productRepository.saveAndFlush(new Product("Widget", 3, 5.0));
+        Product product = productRepository.saveAndFlush(new Product("Movement Return To Supplier", 3, 5.0));
         InvoiceItem item = purchaseItemFor(product, 10);
 
         assertThatThrownBy(() -> stockMovementService

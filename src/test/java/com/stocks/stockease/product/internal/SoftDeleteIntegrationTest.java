@@ -46,7 +46,8 @@ class SoftDeleteIntegrationTest extends AbstractIntegrationTest {
         first.setSku("SKU-DUP-1");
         productRepository.saveAndFlush(first);
 
-        Product second = new Product("Widget", 10, 5.0);
+        // distinct name so the violation can only come from the SKU index, not the name index
+        Product second = new Product("Widget Two", 10, 5.0);
         second.setSku("SKU-DUP-1");
 
         assertThatThrownBy(() -> productRepository.saveAndFlush(second))

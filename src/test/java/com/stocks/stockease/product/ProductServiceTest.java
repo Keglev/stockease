@@ -75,11 +75,57 @@ class ProductServiceTest {
     @Test
     void create_withValidFields_savesAndReturnsProduct() {
         Product saved = new Product("Widget", 10, 5.0);
+        when(productRepository.existsByNameIgnoreCase("Widget")).thenReturn(false);
         when(productRepository.save(any(Product.class))).thenReturn(saved);
 
         Product result = productService.create("Widget", 10, 5.0);
 
         assertThat(result).isSameAs(saved);
+    }
+
+    @Test
+    void create_withDuplicateName_throwsIllegalStateExceptionWithoutSaving() {
+        when(productRepository.existsByNameIgnoreCase("widget")).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.create("widget", 10, 5.0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("A product named 'widget' already exists.");
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    void updateName_toAnotherProductsName_throwsIllegalStateException() {
+        Product product = new Product("Widget", 10, 5.0);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.existsByNameIgnoreCaseAndIdNot("Gadget", 1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.updateName(1L, "Gadget"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("A product named 'Gadget' already exists.");
+        verify(productRepository, never()).save(product);
+    }
+
+    @Test
+    void updateName_toCaseVariantOfAnotherProductsName_throwsIllegalStateException() {
+        Product product = new Product("Widget", 10, 5.0);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.existsByNameIgnoreCaseAndIdNot("GADGET", 1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.updateName(1L, "GADGET"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("A product named 'GADGET' already exists.");
+    }
+
+    @Test
+    void updateName_fixingOwnCapitalisation_succeeds() {
+        Product product = new Product("widget", 10, 5.0);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.existsByNameIgnoreCaseAndIdNot("Widget", 1L)).thenReturn(false);
+        when(productRepository.save(product)).thenReturn(product);
+
+        Product result = productService.updateName(1L, "Widget");
+
+        assertThat(result.getName()).isEqualTo("Widget");
     }
 
     @Test
