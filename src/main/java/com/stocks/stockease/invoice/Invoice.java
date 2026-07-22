@@ -98,6 +98,10 @@ public class Invoice {
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
 
+    /** Timestamp the invoice was paid; {@code null} while unpaid. Independent of {@code status}. */
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     /** Timestamp the row was first persisted, populated by JPA auditing. */
     @CreatedDate
     @Column(nullable = false, updatable = false)

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,9 @@ import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.invoice.InvoiceType;
 import com.stocks.stockease.support.AbstractIntegrationTest;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 /** Tests for {@link Invoice}/{@link InvoiceItem} JPA mapping, including the item cascade. */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,6 +47,9 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
 
     @Autowired
     private CustomerRepository customerRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private static Invoice newInvoice(InvoiceType type) {
         Invoice invoice = new Invoice();
@@ -132,5 +139,29 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
 
         assertThatThrownBy(() -> invoiceRepository.saveAndFlush(invoice))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void persistInvoice_withPaidAt_roundTripsTimestamp() {
+        LocalDateTime paidAt = LocalDateTime.of(2026, 3, 4, 10, 15, 30);
+        Invoice invoice = newInvoice(InvoiceType.SALE);
+        invoice.setPaidAt(paidAt);
+        Long id = invoiceRepository.saveAndFlush(invoice).getId();
+        // clear first: without it findById returns the managed instance and proves nothing about the column
+        entityManager.clear();
+
+        Invoice reloaded = invoiceRepository.findById(id).orElseThrow();
+
+        assertThat(reloaded.getPaidAt()).isEqualTo(paidAt);
+    }
+
+    @Test
+    void persistInvoice_withoutPaidAt_leavesTimestampNull() {
+        Long id = invoiceRepository.saveAndFlush(newInvoice(InvoiceType.SALE)).getId();
+        entityManager.clear();
+
+        Invoice reloaded = invoiceRepository.findById(id).orElseThrow();
+
+        assertThat(reloaded.getPaidAt()).isNull();
     }
 }

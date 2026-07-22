@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -397,6 +398,51 @@ class InvoiceServiceTest {
         assertThatThrownBy(() -> invoiceService.registerReturn(1L, 1))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Invoice item with ID 1 not found.");
+    }
+
+    @Test
+    void markAsPaid_unpaidInvoice_stampsPaidAtAndSaves() {
+        Invoice invoice = invoiceWith(InvoiceStatus.CLOSED, InvoiceType.SALE);
+        when(invoiceRepository.findById(1L)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.save(invoice)).thenReturn(invoice);
+
+        Invoice result = invoiceService.markAsPaid(1L);
+
+        assertThat(result.getPaidAt()).isNotNull();
+        verify(invoiceRepository).save(invoice);
+    }
+
+    @Test
+    void markAsPaid_openInvoice_succeedsIndependentlyOfStatus() {
+        Invoice invoice = invoiceWith(InvoiceStatus.OPEN, InvoiceType.SALE);
+        when(invoiceRepository.findById(1L)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.save(invoice)).thenReturn(invoice);
+
+        Invoice result = invoiceService.markAsPaid(1L);
+
+        assertThat(result.getPaidAt()).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(InvoiceStatus.OPEN);
+    }
+
+    @Test
+    void markAsPaid_alreadyPaidInvoice_throwsIllegalStateException() {
+        Invoice invoice = invoiceWith(InvoiceStatus.CLOSED, InvoiceType.SALE);
+        invoice.setPaidAt(LocalDateTime.now());
+        when(invoiceRepository.findById(1L)).thenReturn(Optional.of(invoice));
+
+        assertThatThrownBy(() -> invoiceService.markAsPaid(1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Invoice is already marked as paid.");
+        verify(invoiceRepository, never()).save(invoice);
+    }
+
+    @Test
+    void markAsPaid_withMissingInvoice_throwsEntityNotFoundException() {
+        when(invoiceRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> invoiceService.markAsPaid(1L))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Invoice with ID 1 not found.");
     }
 
     @Test
