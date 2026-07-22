@@ -57,13 +57,19 @@ public class ProductService {
     /**
      * Creates and persists a new product.
      *
-     * @param name product name
+     * @param name product name; must not duplicate a live product's name, ignoring case
      * @param quantity stock quantity
      * @param purchasePrice unit purchase price
      * @return the persisted product including its generated ID
+     * @throws IllegalStateException if a live product already carries that name
      */
     @Transactional
     public Product create(String name, int quantity, double purchasePrice) {
+        // service check gives the friendly message, the partial unique index in the database is the
+        // concurrency backstop
+        if (productRepository.existsByNameIgnoreCase(name)) {
+            throw new IllegalStateException("A product named '" + name + "' already exists.");
+        }
         return productRepository.save(new Product(name, quantity, purchasePrice));
     }
 
@@ -161,14 +167,19 @@ public class ProductService {
      * Updates a product's name.
      *
      * @param id product identifier
-     * @param name new name
+     * @param name new name; must not duplicate another live product's name, ignoring case
      * @return the updated product
      * @throws EntityNotFoundException if no product exists with the given ID
+     * @throws IllegalStateException if a different live product already carries that name
      */
     @Transactional
     public Product updateName(long id, String name) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+        // excluding this product's own row is what lets a rename fix only the capitalization of its own name
+        if (productRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
+            throw new IllegalStateException("A product named '" + name + "' already exists.");
+        }
         product.setName(name);
         return productRepository.save(product);
     }

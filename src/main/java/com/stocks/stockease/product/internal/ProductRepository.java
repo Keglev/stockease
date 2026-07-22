@@ -52,6 +52,25 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByNameContainingIgnoreCase(String name);
 
     /**
+     * Reports whether a live product already carries {@code name}, ignoring case; the entity's
+     * {@code @SQLRestriction} keeps soft-deleted rows out of the check.
+     *
+     * @param name product name to look for (case-insensitive)
+     * @return {@code true} if a live product already has that name
+     */
+    boolean existsByNameIgnoreCase(String name);
+
+    /**
+     * Reports whether a live product other than {@code id} already carries {@code name}, ignoring case;
+     * used when renaming so a product does not collide with itself.
+     *
+     * @param name product name to look for (case-insensitive)
+     * @param id product to exclude from the check
+     * @return {@code true} if a different live product already has that name
+     */
+    boolean existsByNameIgnoreCaseAndIdNot(String name, long id);
+
+    /**
      * Loads a product for update, holding a pessimistic write lock until the surrounding transaction commits
      * so concurrent stock adjustments serialize rather than interleave on a stale quantity.
      *
