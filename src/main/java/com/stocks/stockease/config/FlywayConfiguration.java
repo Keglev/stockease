@@ -11,12 +11,13 @@ import org.springframework.context.annotation.Primary;
 import org.jspecify.annotations.NonNull;
 
 /**
- * Runs Flyway migrations before JPA initializes, resolving a circular dependency
- * in Spring Boot 3.5.x where {@code EntityManagerFactory} tries to validate the schema
- * before migrations have had a chance to create it.
+ * Runs Flyway migrations before JPA initializes, so that Hibernate's schema validation
+ * ({@code ddl-auto=validate}) never runs against an unmigrated database.
  *
- * <p>Migration scripts live in {@code classpath:db/migration/} and follow the
- * {@code V{VERSION}__{DESCRIPTION}.sql} naming convention (e.g. {@code V1__init_schema.sql}).
+ * <p>Introduced for an initialization-order conflict in Spring Boot 3.5 and retained after
+ * the Spring Boot 4 upgrade. Migration scripts live in {@code classpath:db/migration/} and
+ * follow the {@code V{VERSION}__{DESCRIPTION}.sql} naming convention
+ * (e.g. {@code V1__init_schema.sql}).
  */
 @Configuration
 @ConditionalOnClass(Flyway.class)
@@ -30,7 +31,7 @@ public class FlywayConfiguration {
      * Creates a {@link Flyway} instance and executes pending migrations immediately.
      *
      * <p>{@code initMethod="migrate"} forces Spring to run migrations <em>before</em>
-     * {@code EntityManagerFactory} is created — the only reliable ordering in Spring Boot 3.5.x.
+     * {@code EntityManagerFactory} is created, guaranteeing the schema exists when validation runs.
      * {@code @Primary} prevents ambiguity if another {@link Flyway} bean exists on the classpath.
      *
      * @param dataSource the application {@link DataSource} injected by Spring
