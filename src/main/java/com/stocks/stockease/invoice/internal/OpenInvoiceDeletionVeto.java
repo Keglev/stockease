@@ -1,6 +1,8 @@
 package com.stocks.stockease.invoice.internal;
 
 import org.springframework.context.event.EventListener;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.stocks.stockease.invoice.InvoiceStatus;
@@ -14,6 +16,9 @@ import lombok.RequiredArgsConstructor;
  * may disappear while the invoice is unsettled. These synchronous listeners veto supplier and product
  * deletions inside the deleting transaction.
  */
+// vetoes are validations and run before any other listener does work - fail fast; ordering is pinned
+// so behavior cannot shift with classpath or JVM changes
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
 @RequiredArgsConstructor
 public class OpenInvoiceDeletionVeto {

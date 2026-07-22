@@ -128,7 +128,7 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void deleteProduct_onOpenInvoice_vetoedAndRolledBack() {
+    void deleteProduct_onOpenInvoice_vetoedAndLeavesNoTrace() {
         Product product = productRepository.saveAndFlush(new Product("Guard Open Invoice Widget", 10, 5.0));
         newInvoice(newSupplier(), InvoiceStatus.OPEN, product);
 
@@ -136,8 +136,9 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("it appears on an open invoice");
 
+        // the veto runs first, so the audit listener never runs: zero log rows deterministically proves
+        // the short-circuit, while the product still being live proves the delete itself rolled back
         assertThat(productRepository.findById(product.getId())).isPresent();
-        // the veto must roll back the audit row the listener had already written
         assertThat(deletedLogRows(product.getId())).isEqualTo(0);
     }
 
