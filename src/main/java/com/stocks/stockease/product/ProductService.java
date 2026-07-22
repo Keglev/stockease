@@ -119,6 +119,29 @@ public class ProductService {
     }
 
     /**
+     * Applies a relative change to a product's stock quantity.
+     *
+     * @param id product identifier
+     * @param delta signed number of units to add to the current quantity
+     * @return the updated product
+     * @throws EntityNotFoundException if no product exists with the given ID
+     * @throws IllegalStateException if the adjustment would drive the quantity below zero
+     */
+    @Transactional
+    public Product adjustQuantity(long id, int delta) {
+        // pessimistic lock serializes concurrent adjustments so the negative-stock check cannot race
+        Product product = productRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+        int newQuantity = product.getQuantity() + delta;
+        if (newQuantity < 0) {
+            throw new IllegalStateException("Adjustment of " + delta + " would result in negative stock for product "
+                    + id + " (current: " + product.getQuantity() + ").");
+        }
+        product.setQuantity(newQuantity);
+        return productRepository.save(product);
+    }
+
+    /**
      * Updates a product's purchase price.
      *
      * @param id product identifier
