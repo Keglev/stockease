@@ -1,15 +1,18 @@
 package com.stocks.stockease.product;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.security.User;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Returns all products ordered by ID ascending.
@@ -74,18 +78,57 @@ public class ProductService {
     }
 
     /**
-     * Deletes a product by ID.
+     * Soft-deletes a product by ID and records the deletion in the change log.
      *
      * @param id product identifier
+     * @param user user performing the deletion
      * @return {@code true} if the product existed and was deleted, {@code false} if no such product exists
      */
     @Transactional
-    public boolean deleteById(long id) {
-        if (!productRepository.existsById(id)) {
+    public boolean deleteById(long id, User user) {
+        Optional<Product> found = productRepository.findById(id);
+        if (found.isEmpty()) {
             return false;
         }
-        productRepository.deleteById(id);
+        // stamped explicitly rather than via repository.deleteById: that marks the entity removed, and the
+        // change log row written by the listener may not reference a removed instance. Same soft-delete
+        // result, and symmetric with restore below.
+        Product product = found.get();
+        product.setDeletedAt(LocalDateTime.now());
+        productRepository.save(product);
+        eventPublisher.publishEvent(
+                new ProductChangedEvent(product, user, ProductChangedEvent.Field.DELETED, null, null));
         return true;
+    }
+
+    /**
+     * Revives a soft-deleted product, provided no live product has since taken its name or SKU.
+     *
+     * @param id product identifier
+     * @param user user performing the restore
+     * @return the restored product
+     * @throws EntityNotFoundException if no soft-deleted product exists with the given ID
+     * @throws IllegalStateException if a live product already carries the same name or SKU
+     */
+    @Transactional
+    public Product restore(long id, User user) {
+        Product product = productRepository.findDeletedById(id)
+                .orElseThrow(() -> new EntityNotFoundException("No soft-deleted product with ID " + id + " found."));
+        // live rows only - @SQLRestriction scopes both exists queries; the partial unique indexes are the
+        // concurrency backstop
+        if (productRepository.existsByNameIgnoreCase(product.getName())) {
+            throw new IllegalStateException(
+                    "Cannot restore: a live product named '" + product.getName() + "' already exists.");
+        }
+        if (productRepository.existsBySku(product.getSku())) {
+            throw new IllegalStateException(
+                    "Cannot restore: a live product with SKU '" + product.getSku() + "' already exists.");
+        }
+        product.setDeletedAt(null);
+        Product saved = productRepository.save(product);
+        eventPublisher.publishEvent(
+                new ProductChangedEvent(saved, user, ProductChangedEvent.Field.RESTORED, null, null));
+        return saved;
     }
 
     /**
@@ -118,6 +161,7 @@ public class ProductService {
      */
     @Transactional
     public Product updateQuantity(long id, int quantity) {
+        // quantity history lives exclusively in stock movements; never logged to the change log
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
         product.setQuantity(quantity);
@@ -148,40 +192,57 @@ public class ProductService {
     }
 
     /**
-     * Updates a product's purchase price.
+     * Updates a product's purchase price and records the change in the change log.
      *
      * @param id product identifier
      * @param purchasePrice new purchase price
+     * @param user user making the change
      * @return the updated product
      * @throws EntityNotFoundException if no product exists with the given ID
      */
     @Transactional
-    public Product updatePrice(long id, BigDecimal purchasePrice) {
+    public Product updatePrice(long id, BigDecimal purchasePrice, User user) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+        BigDecimal oldPrice = product.getPurchasePrice();
         product.setPurchasePrice(purchasePrice);
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+        // compareTo, not equals: 2.50 and 2.5 are the same price at different scales and are not a change
+        if (oldPrice.compareTo(purchasePrice) != 0) {
+            eventPublisher.publishEvent(new ProductChangedEvent(saved, user,
+                    ProductChangedEvent.Field.PURCHASE_PRICE, oldPrice.toPlainString(),
+                    purchasePrice.toPlainString()));
+        }
+        return saved;
     }
 
     /**
-     * Updates a product's name.
+     * Updates a product's name and records the change in the change log.
      *
      * @param id product identifier
      * @param name new name; must not duplicate another live product's name, ignoring case
+     * @param user user making the change
      * @return the updated product
      * @throws EntityNotFoundException if no product exists with the given ID
      * @throws IllegalStateException if a different live product already carries that name
      */
     @Transactional
-    public Product updateName(long id, String name) {
+    public Product updateName(long id, String name, User user) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
         // excluding this product's own row is what lets a rename fix only the capitalization of its own name
         if (productRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
             throw new IllegalStateException("A product named '" + name + "' already exists.");
         }
+        String oldName = product.getName();
         product.setName(name);
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+        // exact comparison: a pure capitalization fix IS a change and is logged
+        if (!name.equals(oldName)) {
+            eventPublisher.publishEvent(
+                    new ProductChangedEvent(saved, user, ProductChangedEvent.Field.NAME, oldName, name));
+        }
+        return saved;
     }
 
     /**

@@ -2,6 +2,7 @@ package com.stocks.stockease.product.web;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.User;
+import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.security.JwtUtil;
 
 /** Slice tests for PUT /api/products/{id}/quantity|price|name (happy-path updates). */
@@ -39,6 +42,9 @@ class ProductUpdateControllerTest {
 
     @MockitoBean
     private ProductService productService;
+
+    @MockitoBean
+    private UserService userService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -52,6 +58,8 @@ class ProductUpdateControllerTest {
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
+        Mockito.when(userService.findByUsername(Mockito.anyString()))
+                .thenReturn(Optional.of(new User("testUser", "hash", "ROLE_ADMIN")));
         Mockito.reset(productService);
     }
 
@@ -78,7 +86,7 @@ class ProductUpdateControllerTest {
     void updatePrice_withValidData_returns200(String username, String role) throws Exception {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
-        when(productService.updatePrice(eq(1L), any(BigDecimal.class))).thenReturn(product);
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class), any(User.class))).thenReturn(product);
 
         mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
@@ -95,7 +103,7 @@ class ProductUpdateControllerTest {
         Product product = new Product("Product 1", 10, 100.0);
         product.setId(1L);
         product.setName("Updated!@#$%");
-        when(productService.updateName(eq(1L), eq("Updated!@#$%"))).thenReturn(product);
+        when(productService.updateName(eq(1L), eq("Updated!@#$%"), any(User.class))).thenReturn(product);
 
         mockMvc.perform(put("/api/products/1/name")
                         .contentType(applicationJson())

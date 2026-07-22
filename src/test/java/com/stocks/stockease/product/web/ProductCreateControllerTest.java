@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.security.JwtUtil;
 
 /** Slice tests for POST /api/products (product creation). */
@@ -44,6 +45,9 @@ class ProductCreateControllerTest {
 
     @MockitoBean
     private ProductService productService;
+
+    @MockitoBean
+    private UserService userService;
 
     private Product product1;
 

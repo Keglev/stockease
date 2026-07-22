@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.security.JwtUtil;
 
 /** Slice tests for ProductController read endpoints: low-stock, search, total-stock-value. */
@@ -39,6 +40,9 @@ class ProductControllerTest {
 
     @MockitoBean
     private ProductService productService;
+
+    @MockitoBean
+    private UserService userService;
 
     @MockitoBean
     private JwtUtil jwtUtil;

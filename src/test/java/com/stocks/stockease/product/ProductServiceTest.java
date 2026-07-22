@@ -10,19 +10,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.security.User;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -31,12 +35,32 @@ import jakarta.persistence.EntityNotFoundException;
 class ProductServiceTest {
 
     private ProductRepository productRepository;
+    private ApplicationEventPublisher eventPublisher;
     private ProductService productService;
+    private User user;
 
     @BeforeEach
     void setUp() {
         productRepository = mock(ProductRepository.class);
-        productService = new ProductService(productRepository);
+        eventPublisher = mock(ApplicationEventPublisher.class);
+        productService = new ProductService(productRepository, eventPublisher);
+        user = new User("editor", "hash", "ROLE_ADMIN");
+    }
+
+    /** A soft-deleted product as {@code findDeletedById} would return it. */
+    private static Product deletedProduct() {
+        Product product = new Product("Widget", 10, 5.0);
+        product.setId(1L);
+        product.setSku("SKU-1");
+        product.setDeletedAt(LocalDateTime.now());
+        return product;
+    }
+
+    /** Captures the single event handed to the publisher. */
+    private ProductChangedEvent publishedEvent() {
+        ArgumentCaptor<ProductChangedEvent> captor = ArgumentCaptor.forClass(ProductChangedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        return captor.getValue();
     }
 
     @Test
@@ -99,7 +123,7 @@ class ProductServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.existsByNameIgnoreCaseAndIdNot("Gadget", 1L)).thenReturn(true);
 
-        assertThatThrownBy(() -> productService.updateName(1L, "Gadget"))
+        assertThatThrownBy(() -> productService.updateName(1L, "Gadget", user))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("A product named 'Gadget' already exists.");
         verify(productRepository, never()).save(product);
@@ -111,7 +135,7 @@ class ProductServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.existsByNameIgnoreCaseAndIdNot("GADGET", 1L)).thenReturn(true);
 
-        assertThatThrownBy(() -> productService.updateName(1L, "GADGET"))
+        assertThatThrownBy(() -> productService.updateName(1L, "GADGET", user))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("A product named 'GADGET' already exists.");
     }
@@ -123,29 +147,32 @@ class ProductServiceTest {
         when(productRepository.existsByNameIgnoreCaseAndIdNot("Widget", 1L)).thenReturn(false);
         when(productRepository.save(product)).thenReturn(product);
 
-        Product result = productService.updateName(1L, "Widget");
+        Product result = productService.updateName(1L, "Widget", user);
 
         assertThat(result.getName()).isEqualTo("Widget");
     }
 
     @Test
     void deleteById_withExistingId_deletesAndReturnsTrue() {
-        when(productRepository.existsById(1L)).thenReturn(true);
+        Product product = new Product("Widget", 10, 5.0);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-        boolean result = productService.deleteById(1L);
+        boolean result = productService.deleteById(1L, user);
 
         assertThat(result).isTrue();
-        verify(productRepository, times(1)).deleteById(1L);
+        // soft delete is stamped on the entity rather than routed through repository.deleteById
+        assertThat(product.getDeletedAt()).isNotNull();
+        verify(productRepository, times(1)).save(product);
     }
 
     @Test
     void deleteById_withMissingId_returnsFalseWithoutDeleting() {
-        when(productRepository.existsById(1L)).thenReturn(false);
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
-        boolean result = productService.deleteById(1L);
+        boolean result = productService.deleteById(1L, user);
 
         assertThat(result).isFalse();
-        verify(productRepository, never()).deleteById(1L);
+        verify(productRepository, never()).save(any(Product.class));
     }
 
     @Test
@@ -231,7 +258,7 @@ class ProductServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);
 
-        Product result = productService.updatePrice(1L, BigDecimal.TEN);
+        Product result = productService.updatePrice(1L, BigDecimal.TEN, user);
 
         assertThat(result.getPurchasePrice()).isEqualByComparingTo(BigDecimal.TEN);
     }
@@ -240,7 +267,7 @@ class ProductServiceTest {
     void updatePrice_withMissingId_throwsEntityNotFoundException() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> productService.updatePrice(1L, BigDecimal.TEN))
+        assertThatThrownBy(() -> productService.updatePrice(1L, BigDecimal.TEN, user))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Product with ID 1 not found.");
     }
@@ -251,7 +278,7 @@ class ProductServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);
 
-        Product result = productService.updateName(1L, "Gadget");
+        Product result = productService.updateName(1L, "Gadget", user);
 
         assertThat(result.getName()).isEqualTo("Gadget");
     }
@@ -260,9 +287,118 @@ class ProductServiceTest {
     void updateName_withMissingId_throwsEntityNotFoundException() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> productService.updateName(1L, "Gadget"))
+        assertThatThrownBy(() -> productService.updateName(1L, "Gadget", user))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Product with ID 1 not found.");
+    }
+
+    @Test
+    void updateName_withChangedName_publishesEventWithOldAndNewValues() {
+        Product product = new Product("Widget", 10, 5.0);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(product)).thenReturn(product);
+
+        productService.updateName(1L, "Gadget", user);
+
+        ProductChangedEvent event = publishedEvent();
+        assertThat(event.field()).isEqualTo(ProductChangedEvent.Field.NAME);
+        assertThat(event.oldValue()).isEqualTo("Widget");
+        assertThat(event.newValue()).isEqualTo("Gadget");
+        assertThat(event.user()).isSameAs(user);
+    }
+
+    @Test
+    void updateName_withIdenticalName_publishesNothing() {
+        Product product = new Product("Widget", 10, 5.0);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(product)).thenReturn(product);
+
+        productService.updateName(1L, "Widget", user);
+
+        verify(eventPublisher, never()).publishEvent(any(ProductChangedEvent.class));
+    }
+
+    @Test
+    void updatePrice_withChangedPrice_publishesEventWithPlainStringValues() {
+        Product product = new Product("Widget", 10, 5.0);
+        product.setPurchasePrice(new BigDecimal("5.00"));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(product)).thenReturn(product);
+
+        productService.updatePrice(1L, new BigDecimal("7.25"), user);
+
+        ProductChangedEvent event = publishedEvent();
+        assertThat(event.field()).isEqualTo(ProductChangedEvent.Field.PURCHASE_PRICE);
+        assertThat(event.oldValue()).isEqualTo("5.00");
+        assertThat(event.newValue()).isEqualTo("7.25");
+    }
+
+    @Test
+    void updatePrice_withEqualValueAtDifferentScale_publishesNothing() {
+        Product product = new Product("Widget", 10, 5.0);
+        product.setPurchasePrice(new BigDecimal("2.50"));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(product)).thenReturn(product);
+
+        productService.updatePrice(1L, new BigDecimal("2.5"), user);
+
+        verify(eventPublisher, never()).publishEvent(any(ProductChangedEvent.class));
+    }
+
+    @Test
+    void deleteById_withExistingId_publishesDeletedEventWithNullValues() {
+        Product product = new Product("Widget", 10, 5.0);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        productService.deleteById(1L, user);
+
+        ProductChangedEvent event = publishedEvent();
+        assertThat(event.field()).isEqualTo(ProductChangedEvent.Field.DELETED);
+        assertThat(event.oldValue()).isNull();
+        assertThat(event.newValue()).isNull();
+        assertThat(event.product()).isSameAs(product);
+    }
+
+    @Test
+    void restore_withFreeNameAndSku_clearsDeletedAtAndPublishesRestored() {
+        Product product = deletedProduct();
+        when(productRepository.findDeletedById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(product)).thenReturn(product);
+
+        Product result = productService.restore(1L, user);
+
+        assertThat(result.getDeletedAt()).isNull();
+        assertThat(publishedEvent().field()).isEqualTo(ProductChangedEvent.Field.RESTORED);
+    }
+
+    @Test
+    void restore_withLiveNameConflict_throwsIllegalStateException() {
+        when(productRepository.findDeletedById(1L)).thenReturn(Optional.of(deletedProduct()));
+        when(productRepository.existsByNameIgnoreCase("Widget")).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.restore(1L, user))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Cannot restore: a live product named 'Widget' already exists.");
+    }
+
+    @Test
+    void restore_withLiveSkuConflict_throwsIllegalStateException() {
+        when(productRepository.findDeletedById(1L)).thenReturn(Optional.of(deletedProduct()));
+        when(productRepository.existsByNameIgnoreCase("Widget")).thenReturn(false);
+        when(productRepository.existsBySku("SKU-1")).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.restore(1L, user))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Cannot restore: a live product with SKU 'SKU-1' already exists.");
+    }
+
+    @Test
+    void restore_withNoSoftDeletedRow_throwsEntityNotFoundException() {
+        when(productRepository.findDeletedById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.restore(1L, user))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("No soft-deleted product with ID 1 found.");
     }
 
     @Test
