@@ -69,7 +69,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
     private InvoiceItem saleItemFor(Product product, int itemQty) {
         Invoice invoice = new Invoice();
         invoice.setType(InvoiceType.SALE);
-        invoice.setStatus(InvoiceStatus.OPEN);
+        // these fixtures stand in for already-booked invoices; movements are rejected against open ones
+        invoice.setStatus(InvoiceStatus.CLOSED);
         invoice.setDueDate(LocalDate.now());
         invoice.setInterestRate(BigDecimal.ZERO);
         invoice.setFineValue(BigDecimal.ZERO);
@@ -90,7 +91,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
         Invoice invoice = new Invoice();
         invoice.setType(InvoiceType.PURCHASE);
         invoice.setSupplier(supplier);
-        invoice.setStatus(InvoiceStatus.OPEN);
+        // these fixtures stand in for already-booked invoices; movements are rejected against open ones
+        invoice.setStatus(InvoiceStatus.CLOSED);
         invoice.setDueDate(LocalDate.now());
         invoice.setInterestRate(BigDecimal.ZERO);
         invoice.setFineValue(BigDecimal.ZERO);
