@@ -136,7 +136,9 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(invoiceItemRepository.findById(item.getId()).orElseThrow().getReturnedQty()).isEqualTo(2);
     }
 
+    /** Runs outside the class-level test transaction so the reloads below observe committed state, not the session. */
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void recordMovement_decreaseBelowZero_rejectsAndRollsBack() {
         Product product = productRepository.saveAndFlush(new Product("Widget", 3, 5.0));
         InvoiceItem item = saleItemFor(product, 5);
@@ -148,8 +150,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
                 .hasMessageContaining("would result in negative stock");
 
         assertThat(stockMovementRepository.count()).isEqualTo(movementsBefore);
-        assertThat(product.getQuantity()).isEqualTo(3);
-        assertThat(item.getReturnedQty()).isEqualTo(0);
+        assertThat(productRepository.findById(product.getId()).orElseThrow().getQuantity()).isEqualTo(3);
+        assertThat(invoiceItemRepository.findById(item.getId()).orElseThrow().getReturnedQty()).isEqualTo(0);
     }
 
     /**
