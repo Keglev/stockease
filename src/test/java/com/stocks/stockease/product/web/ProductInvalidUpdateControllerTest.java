@@ -2,6 +2,7 @@ package com.stocks.stockease.product.web;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.User;
+import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.security.JwtUtil;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -50,6 +53,9 @@ class ProductInvalidUpdateControllerTest {
     @MockitoBean
     private ProductService productService;
 
+    @MockitoBean
+    private UserService userService;
+
     private Product product1;
 
     @SuppressWarnings("unused")
@@ -60,6 +66,8 @@ class ProductInvalidUpdateControllerTest {
         product1 = new Product("Product 1", 10, 100.0);
         product1.setId(1L);
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
+        Mockito.when(userService.findByUsername(Mockito.anyString()))
+                .thenReturn(Optional.of(new User("testUser", "hash", "ROLE_ADMIN")));
         Mockito.reset(productService);
     }
 
@@ -94,7 +102,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updatePrice_withNegativeValue_returns400(String username, String role) throws Exception {
-        when(productService.updatePrice(eq(1L), any(BigDecimal.class))).thenReturn(Objects.requireNonNull(product1));
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class), any(User.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
@@ -108,7 +116,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updatePrice_withInvalidType_returns400(String username, String role) throws Exception {
-        when(productService.updatePrice(eq(1L), any(BigDecimal.class))).thenReturn(Objects.requireNonNull(product1));
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class), any(User.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
@@ -122,7 +130,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updatePrice_withZeroValue_returns400(String username, String role) throws Exception {
-        when(productService.updatePrice(eq(1L), any(BigDecimal.class))).thenReturn(Objects.requireNonNull(product1));
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class), any(User.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
@@ -136,7 +144,7 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updateName_withWhitespaceOnly_returns400(String username, String role) throws Exception {
-        when(productService.updateName(eq(1L), anyString())).thenReturn(Objects.requireNonNull(product1));
+        when(productService.updateName(eq(1L), anyString(), any(User.class))).thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(put("/api/products/1/name")
                         .contentType(applicationJson())

@@ -1,6 +1,7 @@
 package com.stocks.stockease.product.web;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +27,8 @@ import com.stocks.stockease.shared.ApiResponse;
 import com.stocks.stockease.shared.PaginatedResponse;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.User;
+import com.stocks.stockease.security.UserService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -47,6 +50,13 @@ public class ProductController {
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
     private final ProductService productService;
+    private final UserService userService;
+
+    /** Resolves the authenticated principal to the user recorded against product changes. */
+    private User currentUser(Principal principal) {
+        return userService.findByUsername(principal.getName())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found."));
+    }
 
     /**
      * Returns all products ordered by ID ascending.
@@ -123,13 +133,14 @@ public class ProductController {
      * <p>Behavior defined in {@code docs/api/paths/products.yaml}.
      *
      * @param id product identifier to delete
+     * @param principal authenticated user, recorded against the deletion in the change log
      * @return HTTP 200 on success, HTTP 404 if the product does not exist
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable long id) {
+    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable long id, Principal principal) {
         log.info("Entering deleteProduct method with ID: {}", id);
-        if (!productService.deleteById(id)) {
+        if (!productService.deleteById(id, currentUser(principal))) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(false, "Cannot delete. Product with ID " + id + " does not exist.", null));
         }
@@ -202,12 +213,13 @@ public class ProductController {
      *
      * @param id      product identifier
      * @param request request body containing a numeric {@code purchasePrice} field
+     * @param principal authenticated user, recorded against the change in the change log
      * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
      */
     @PutMapping("/{id}/price")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request) {
-        Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()));
+    public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request, Principal principal) {
+        Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()), currentUser(principal));
         return ResponseEntity.ok(new ApiResponse<>(true, "Price updated successfully", updatedProduct));
     }
 
@@ -219,12 +231,13 @@ public class ProductController {
      *
      * @param id      product identifier
      * @param request request body containing a non-blank {@code name} field
+     * @param principal authenticated user, recorded against the change in the change log
      * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
      */
     @PutMapping("/{id}/name")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request) {
-        Product updatedProduct = productService.updateName(id, request.getName());
+    public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request, Principal principal) {
+        Product updatedProduct = productService.updateName(id, request.getName(), currentUser(principal));
         return ResponseEntity.ok(new ApiResponse<>(true, "Name updated successfully", updatedProduct));
     }
 

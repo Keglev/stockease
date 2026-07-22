@@ -34,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.security.JwtUtil;
 
 /** Slice tests for GET /api/products/paged (paginated product queries). */
@@ -46,6 +47,9 @@ class ProductPaginationControllerTest {
 
     @MockitoBean
     private ProductService productService;
+
+    @MockitoBean
+    private UserService userService;
 
     @Autowired
     private MockMvc mockMvc;

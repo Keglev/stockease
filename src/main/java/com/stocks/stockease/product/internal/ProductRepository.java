@@ -71,6 +71,25 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsByNameIgnoreCaseAndIdNot(String name, long id);
 
     /**
+     * Reports whether a live product already carries {@code sku}; the entity's {@code @SQLRestriction}
+     * keeps soft-deleted rows out of the check.
+     *
+     * @param sku stock keeping unit to look for
+     * @return {@code true} if a live product already has that SKU
+     */
+    boolean existsBySku(String sku);
+
+    /**
+     * Loads a soft-deleted product by ID. Native because {@code @SQLRestriction} hides soft-deleted rows
+     * from every mapped query, so restoring one needs an explicit bypass.
+     *
+     * @param id product identifier
+     * @return the soft-deleted product, or empty if no such row exists or it is still live
+     */
+    @Query(value = "SELECT * FROM product WHERE id = :id AND deleted_at IS NOT NULL", nativeQuery = true)
+    Optional<Product> findDeletedById(@Param("id") long id);
+
+    /**
      * Loads a product for update, holding a pessimistic write lock until the surrounding transaction commits
      * so concurrent stock adjustments serialize rather than interleave on a stale quantity.
      *
