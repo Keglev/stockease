@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.stocks.stockease.invoice.Invoice;
 import com.stocks.stockease.invoice.InvoiceItem;
 import com.stocks.stockease.invoice.InvoiceService;
+import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.invoice.InvoiceType;
 import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.product.Product;
@@ -61,6 +62,8 @@ class StockMovementServiceTest {
     private static InvoiceItem item(InvoiceType type, int quantity) {
         Invoice invoice = new Invoice();
         invoice.setType(type);
+        // movements are only bookable against a closed invoice; the open case is its own test
+        invoice.setStatus(InvoiceStatus.CLOSED);
         InvoiceItem item = new InvoiceItem();
         item.setId(ITEM_ID);
         item.setInvoice(invoice);
@@ -273,6 +276,18 @@ class StockMovementServiceTest {
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("SOLD movements must reference a SALE invoice item.");
+    }
+
+    @Test
+    void recordMovement_soldAgainstOpenInvoice_throwsIllegalStateException() {
+        InvoiceItem item = item(InvoiceType.SALE, 5);
+        item.getInvoice().setStatus(InvoiceStatus.OPEN);
+        when(invoiceService.findItemById(ITEM_ID)).thenReturn(Optional.of(item));
+
+        assertThatThrownBy(() -> stockMovementService
+                .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Movements cannot be recorded against an open invoice.");
     }
 
     @Test

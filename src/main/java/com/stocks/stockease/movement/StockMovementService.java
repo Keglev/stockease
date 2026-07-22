@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.invoice.InvoiceItem;
 import com.stocks.stockease.invoice.InvoiceService;
+import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.invoice.InvoiceType;
 import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.product.Product;
@@ -107,6 +108,9 @@ public class StockMovementService {
         if (item.getInvoice().getType() != requiredType) {
             throw new IllegalStateException(
                     reason + " movements must reference a " + requiredType + " invoice item.");
+        }
+        if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {
+            throw new IllegalStateException("Movements cannot be recorded against an open invoice.");
         }
         if (!item.getProduct().getId().equals(command.productId())) {
             throw new IllegalStateException(
