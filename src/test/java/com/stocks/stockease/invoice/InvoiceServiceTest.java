@@ -357,6 +357,20 @@ class InvoiceServiceTest {
     }
 
     @Test
+    void registerReturn_withItemlessInvoice_leavesStatusUnchanged() {
+        Invoice invoice = invoiceWith(InvoiceStatus.CLOSED, InvoiceType.PURCHASE);
+        InvoiceItem detached = itemOn(invoice, 1L, 1L, 5, 4);
+        invoice.getItems().clear();
+        when(invoiceItemRepository.findById(1L)).thenReturn(Optional.of(detached));
+        when(invoiceItemRepository.save(detached)).thenReturn(detached);
+
+        invoiceService.registerReturn(1L, 1);
+
+        assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.CLOSED);
+        verify(invoiceRepository, never()).save(invoice);
+    }
+
+    @Test
     void registerReturn_exceedingRemainingQuantity_throwsIllegalStateException() {
         InvoiceItem item = itemWith(5, 4);
         when(invoiceItemRepository.findById(1L)).thenReturn(Optional.of(item));

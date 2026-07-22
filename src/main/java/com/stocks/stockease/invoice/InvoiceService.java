@@ -186,7 +186,10 @@ public class InvoiceService {
         InvoiceItem saved = invoiceItemRepository.save(item);
 
         Invoice invoice = item.getInvoice();
-        if (invoice.getItems().stream().allMatch(line -> line.getReturnedQty().equals(line.getQuantity()))) {
+        // allMatch over an empty collection is vacuously true - guard against any future creation
+        // path that could yield an itemless invoice
+        if (!invoice.getItems().isEmpty()
+                && invoice.getItems().stream().allMatch(line -> line.getReturnedQty().equals(line.getQuantity()))) {
             invoice.setStatus(InvoiceStatus.FULLY_RETURNED);
             invoiceRepository.save(invoice);
         }
