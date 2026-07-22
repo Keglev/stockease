@@ -49,6 +49,18 @@ public class InvoiceService {
     }
 
     /**
+     * Returns every invoice a user closed, most recently closed first.
+     *
+     * @param userId user identifier
+     * @return the invoices that user closed, ordered by closing time descending
+     */
+    public List<Invoice> findClosedBy(long userId) {
+        // closed invoices are never soft-deleted (deletion is vetoed for non-open invoices), so no
+        // restriction bypass is needed here
+        return invoiceRepository.findByClosedByIdOrderByClosedAtDesc(userId);
+    }
+
+    /**
      * Creates an invoice together with all of its lines in one transaction.
      *
      * @param command the invoice and lines to create

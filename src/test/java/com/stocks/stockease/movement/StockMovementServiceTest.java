@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -90,6 +91,14 @@ class StockMovementServiceTest {
         ArgumentCaptor<StockMovement> captor = ArgumentCaptor.forClass(StockMovement.class);
         verify(stockMovementRepository).save(captor.capture());
         return captor.getValue();
+    }
+
+    @Test
+    void findByUser_withMovements_returnsRepositoryResult() {
+        StockMovement movement = new StockMovement();
+        when(stockMovementRepository.findByUserIdOrderByCreatedAtDesc(3L)).thenReturn(List.of(movement));
+
+        assertThat(stockMovementService.findByUser(3L)).containsExactly(movement);
     }
 
     @Test

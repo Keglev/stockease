@@ -1,5 +1,7 @@
 package com.stocks.stockease.invoice.internal;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.stocks.stockease.invoice.Invoice;
@@ -16,4 +18,12 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
      * @return {@code true} if such an invoice exists
      */
     boolean existsBySupplierIdAndStatus(Long supplierId, InvoiceStatus status);
+
+    /**
+     * Returns every invoice a user closed, most recently closed first.
+     *
+     * @param userId user identifier
+     * @return the invoices that user closed, ordered by closing time descending
+     */
+    List<Invoice> findByClosedByIdOrderByClosedAtDesc(Long userId);
 }
