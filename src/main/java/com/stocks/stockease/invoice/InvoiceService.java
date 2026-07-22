@@ -197,6 +197,27 @@ public class InvoiceService {
     }
 
     /**
+     * Records that an invoice has been paid, stamping the moment of payment.
+     * Payment is independent of the invoice lifecycle status: an invoice may be paid before or after
+     * it is closed, so no status precondition applies.
+     *
+     * @param invoiceId invoice identifier
+     * @return the paid invoice
+     * @throws EntityNotFoundException if no invoice exists with the given ID
+     * @throws IllegalStateException if the invoice is already marked as paid
+     */
+    @Transactional
+    public Invoice markAsPaid(long invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
+        if (invoice.getPaidAt() != null) {
+            throw new IllegalStateException("Invoice is already marked as paid.");
+        }
+        invoice.setPaidAt(LocalDateTime.now());
+        return invoiceRepository.save(invoice);
+    }
+
+    /**
      * Deletes an open invoice; the entity's soft-delete mapping applies.
      *
      * @param invoiceId invoice identifier
