@@ -1,5 +1,7 @@
 package com.stocks.stockease.movement;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,17 @@ public class StockMovementService {
     private final StockMovementRepository stockMovementRepository;
     private final ProductService productService;
     private final InvoiceService invoiceService;
+
+    /**
+     * Returns every stock movement a user triggered, newest first.
+     *
+     * @param userId user identifier
+     * @return that user's movements ordered by creation time descending
+     */
+    @Transactional(readOnly = true)
+    public List<StockMovement> findByUser(long userId) {
+        return stockMovementRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
 
     /**
      * Records a stock movement and applies its quantity change to the product atomically.

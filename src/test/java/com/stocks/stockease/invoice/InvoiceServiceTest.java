@@ -121,6 +121,14 @@ class InvoiceServiceTest {
     }
 
     @Test
+    void findClosedBy_withInvoices_returnsRepositoryResult() {
+        Invoice invoice = invoiceWith(InvoiceStatus.CLOSED, InvoiceType.SALE);
+        when(invoiceRepository.findByClosedByIdOrderByClosedAtDesc(4L)).thenReturn(List.of(invoice));
+
+        assertThat(invoiceService.findClosedBy(4L)).containsExactly(invoice);
+    }
+
+    @Test
     void createInvoice_purchaseWithSupplier_buildsOpenInvoiceWithItems() {
         when(supplierService.findById(2L)).thenReturn(Optional.of(new Supplier()));
         when(productService.findById(3L)).thenReturn(Optional.of(product(3L)));
