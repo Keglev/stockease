@@ -2,11 +2,16 @@ package com.stocks.stockease.product.internal;
 
 import java.util.List;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.stocks.stockease.product.Product;
+
+import jakarta.persistence.LockModeType;
 
 /**
  * Spring Data JPA repository for {@link Product} entities, providing inventory queries and aggregate calculations.
@@ -45,5 +50,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @return list of products where name contains substring
      */
     List<Product> findByNameContainingIgnoreCase(String name);
+
+    /**
+     * Loads a product for update, holding a pessimistic write lock until the surrounding transaction commits
+     * so concurrent stock adjustments serialize rather than interleave on a stale quantity.
+     *
+     * @param id product identifier
+     * @return the locked product, or empty if none exists with that ID
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Product p WHERE p.id = :id")
+    Optional<Product> findByIdForUpdate(@Param("id") long id);
 }
 

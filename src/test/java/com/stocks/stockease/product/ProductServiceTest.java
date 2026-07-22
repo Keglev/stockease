@@ -139,6 +139,47 @@ class ProductServiceTest {
     }
 
     @Test
+    void adjustQuantity_withPositiveDelta_increasesAndReturnsProduct() {
+        Product product = new Product("Widget", 10, 5.0);
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(product)).thenReturn(product);
+
+        Product result = productService.adjustQuantity(1L, 5);
+
+        assertThat(result.getQuantity()).isEqualTo(15);
+    }
+
+    @Test
+    void adjustQuantity_withNegativeDelta_decreasesAndReturnsProduct() {
+        Product product = new Product("Widget", 10, 5.0);
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(product)).thenReturn(product);
+
+        Product result = productService.adjustQuantity(1L, -4);
+
+        assertThat(result.getQuantity()).isEqualTo(6);
+    }
+
+    @Test
+    void adjustQuantity_withDeltaBelowZero_throwsIllegalStateException() {
+        Product product = new Product("Widget", 3, 5.0);
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> productService.adjustQuantity(1L, -5))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Adjustment of -5 would result in negative stock for product 1 (current: 3).");
+    }
+
+    @Test
+    void adjustQuantity_withMissingId_throwsEntityNotFoundException() {
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.adjustQuantity(1L, 5))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Product with ID 1 not found.");
+    }
+
+    @Test
     void updatePrice_withExistingId_updatesAndReturnsProduct() {
         Product product = new Product("Widget", 10, 5.0);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
