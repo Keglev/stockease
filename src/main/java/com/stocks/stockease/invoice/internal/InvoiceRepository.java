@@ -3,7 +3,17 @@ package com.stocks.stockease.invoice.internal;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.stocks.stockease.invoice.Invoice;
+import com.stocks.stockease.invoice.InvoiceStatus;
 
 /** Spring Data JPA repository for {@link Invoice} entities. */
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
+
+    /**
+     * Reports whether a supplier has any invoice in the given status, used to veto its deletion.
+     *
+     * @param supplierId supplier identifier
+     * @param status lifecycle state to look for
+     * @return {@code true} if such an invoice exists
+     */
+    boolean existsBySupplierIdAndStatus(Long supplierId, InvoiceStatus status);
 }
