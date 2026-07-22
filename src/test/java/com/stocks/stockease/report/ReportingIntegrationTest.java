@@ -179,6 +179,34 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void profitPerSupplier_productFromTwoSuppliers_countsFullyForEach() {
+        Supplier first = supplierService.create("RPT Shared Supplier X", "1 Main St");
+        Supplier second = supplierService.create("RPT Shared Supplier Y", "2 Side St");
+        Product product = newProduct("RPT Shared Two Suppliers", "10.00");
+        closedPurchase(first.getId(), product.getId(), 5, "10.00");
+        closedPurchase(second.getId(), product.getId(), 5, "12.00");
+        closedSale(product.getId(), 4, "30.00");
+
+        List<SupplierProfitReport> rows = reportingService.profitPerSupplier();
+
+        // pins the intended double-counting: a product bought from several suppliers counts fully for
+        // each. Changing this to per-supplier cost allocation would be a design change requiring an ADR
+        // update, not a bug fix.
+        assertFullAttribution(rows, first.getId());
+        assertFullAttribution(rows, second.getId());
+    }
+
+    /** Asserts the supplier carries the shared product's whole revenue, cost and gross profit. */
+    private static void assertFullAttribution(List<SupplierProfitReport> rows, Long supplierId) {
+        SupplierProfitReport row = rows.stream()
+                .filter(entry -> entry.supplierId().equals(supplierId)).findFirst().orElseThrow();
+        assertThat(row.revenue()).isEqualByComparingTo("120.00");
+        assertThat(row.cost()).isEqualByComparingTo("110.00");
+        assertThat(row.grossProfit()).isEqualByComparingTo("10.00");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void stockStatus_excludesSoftDeletedProducts() {
         Scenario scenario = scenarioA("RPT Alpha Stock View");
         Product deleted = newProduct("RPT Stock Deleted", "10.00");
