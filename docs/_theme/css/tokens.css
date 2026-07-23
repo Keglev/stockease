@@ -1,0 +1,67 @@
+/* =============================================================================
+   StockEase Docs - Design Tokens
+   Single source of truth for color, spacing, and theme values.
+
+   Theme contract: the inline boot script in each template sets
+   data-theme="light|dark" on <html> before first paint, so the cascade never
+   needs a prefers-color-scheme media query and the page never flashes. With
+   JS disabled the attribute is absent and the page falls back to the light
+   :root defaults below.
+   ========================================================================== */
+
+:root {
+  /* --- Light theme (default) --- */
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-3: rgba(255, 255, 255, 0.85);
+  --border: rgba(15, 23, 42, 0.12);
+  --border-strong: rgba(15, 23, 42, 0.28);
+
+  --text: #1e293b;
+  --muted: #64748b;
+  --heading: #0f172a;
+
+  --accent: #0284c7;
+  --link: #0369a1;
+
+  --code-bg: #f1f5f9;
+  --code-border: rgba(2, 132, 199, 0.18);
+
+  /* Diagram edge/arrow color. Node fills are set per-layer in each diagram's
+     classDef (medium tones that read on both themes), not via tokens. */
+  --layer-edge: #0284c7;
+
+  /* --- Layout --- */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --maxw: 1400px;
+  --content-maxw: 820px;
+  --sidebar-w: 260px;
+  --toc-w: 220px;
+  --topbar-h: 56px;
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b1220;
+  --surface: #0f1b2d;
+  --surface-2: #0c1626;
+  --surface-3: rgba(9, 14, 25, 0.72);
+  --border: rgba(148, 163, 184, 0.18);
+  --border-strong: rgba(148, 163, 184, 0.38);
+
+  --text: #e5e7eb;
+  --muted: #a7b0c0;
+  --heading: #f3f4f6;
+
+  --accent: #38bdf8;
+  --link: #7dd3fc;
+
+  --code-bg: #0b1424;
+  --code-border: rgba(125, 211, 252, 0.18);
+
+  --layer-edge: #7dd3fc;
+
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
