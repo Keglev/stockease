@@ -16,7 +16,7 @@ if (toggle) {
   toggle.addEventListener("click", function () {
     var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem("ssp-theme", next); } catch (e) {}
+    try { localStorage.setItem("stockease-theme", next); } catch (e) {}
   });
 }
 

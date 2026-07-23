@@ -9,7 +9,7 @@
   <script>
     (function () {
       try {
-        var t = localStorage.getItem("ssp-theme") ||
+        var t = localStorage.getItem("stockease-theme") ||
           (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
         document.documentElement.setAttribute("data-theme", t);
       } catch (e) {
@@ -53,8 +53,7 @@
       <p>Ein modulares Warenwirtschaftssystem - Produkte, Lieferanten, Kunden, Rechnungen und Lagerbewegungen in einer Spring-Boot-Anwendung.</p>
       <div class="stack">
         <span>Java · Spring Boot</span>
-        <span>React · TypeScript</span>
-        <span>Oracle ADB</span>
+        <span>PostgreSQL</span>
         <span>Docker</span>
         <span>GitHub Actions</span>
       </div>
