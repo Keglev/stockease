@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.product</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.product;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.stocks.stockease.product.internal.ProductRepository;
+import com.stocks.stockease.security.User;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Product module's public API for querying and mutating products.
+ * Other modules depend on this service rather than reaching into the module's repository.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class ProductService {
+
+    private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    /**
+     * Returns all products ordered by ID ascending.
+     *
+     * @return list of all products
+     */
+    public List&lt;Product&gt; getAllProducts() {
+<span class="fc" id="L38">        return productRepository.findAllOrderById();</span>
+    }
+
+    /**
+     * Returns a paginated slice of the product catalogue.
+     *
+     * @param pageable page and size parameters
+     * @return the requested page of products
+     */
+    public Page&lt;Product&gt; getPagedProducts(Pageable pageable) {
+<span class="fc" id="L48">        return productRepository.findAll(pageable);</span>
+    }
+
+    /**
+     * Finds a product by its ID.
+     *
+     * @param id product identifier
+     * @return the product, or empty if none exists with that ID
+     */
+    public Optional&lt;Product&gt; findById(long id) {
+<span class="fc" id="L58">        return productRepository.findById(id);</span>
+    }
+
+    /**
+     * Creates and persists a new product.
+     *
+     * @param name product name; must not duplicate a live product's name, ignoring case
+     * @param quantity stock quantity
+     * @param purchasePrice unit purchase price
+     * @return the persisted product including its generated ID
+     * @throws IllegalStateException if a live product already carries that name
+     */
+    @Transactional
+    public Product create(String name, int quantity, double purchasePrice) {
+        // service check gives the friendly message, the partial unique index in the database is the
+        // concurrency backstop
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (productRepository.existsByNameIgnoreCase(name)) {</span>
+<span class="fc" id="L75">            throw new IllegalStateException(&quot;A product named '&quot; + name + &quot;' already exists.&quot;);</span>
+        }
+<span class="fc" id="L77">        return productRepository.save(new Product(name, quantity, purchasePrice));</span>
+    }
+
+    /**
+     * Soft-deletes a product by ID and records the deletion in the change log.
+     *
+     * @param id product identifier
+     * @param user user performing the deletion
+     * @return {@code true} if the product existed and was deleted, {@code false} if no such product exists
+     */
+    @Transactional
+    public boolean deleteById(long id, User user) {
+<span class="fc" id="L89">        Optional&lt;Product&gt; found = productRepository.findById(id);</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if (found.isEmpty()) {</span>
+<span class="fc" id="L91">            return false;</span>
+        }
+        // stamped explicitly rather than via repository.deleteById: that marks the entity removed, and the
+        // change log row written by the listener may not reference a removed instance. Same soft-delete
+        // result, and symmetric with restore below.
+<span class="fc" id="L96">        Product product = found.get();</span>
+<span class="fc" id="L97">        product.setDeletedAt(LocalDateTime.now());</span>
+<span class="fc" id="L98">        productRepository.save(product);</span>
+<span class="fc" id="L99">        eventPublisher.publishEvent(</span>
+                new ProductChangedEvent(product, user, ProductChangedEvent.Field.DELETED, null, null));
+<span class="fc" id="L101">        return true;</span>
+    }
+
+    /**
+     * Revives a soft-deleted product, provided no live product has since taken its name or SKU.
+     *
+     * @param id product identifier
+     * @param user user performing the restore
+     * @return the restored product
+     * @throws EntityNotFoundException if no soft-deleted product exists with the given ID
+     * @throws IllegalStateException if a live product already carries the same name or SKU
+     */
+    @Transactional
+    public Product restore(long id, User user) {
+<span class="fc" id="L115">        Product product = productRepository.findDeletedById(id)</span>
+<span class="fc" id="L116">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;No soft-deleted product with ID &quot; + id + &quot; found.&quot;));</span>
+        // live rows only - @SQLRestriction scopes both exists queries; the partial unique indexes are the
+        // concurrency backstop
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        if (productRepository.existsByNameIgnoreCase(product.getName())) {</span>
+<span class="fc" id="L120">            throw new IllegalStateException(</span>
+<span class="fc" id="L121">                    &quot;Cannot restore: a live product named '&quot; + product.getName() + &quot;' already exists.&quot;);</span>
+        }
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (productRepository.existsBySku(product.getSku())) {</span>
+<span class="fc" id="L124">            throw new IllegalStateException(</span>
+<span class="fc" id="L125">                    &quot;Cannot restore: a live product with SKU '&quot; + product.getSku() + &quot;' already exists.&quot;);</span>
+        }
+<span class="fc" id="L127">        product.setDeletedAt(null);</span>
+<span class="fc" id="L128">        Product saved = productRepository.save(product);</span>
+<span class="fc" id="L129">        eventPublisher.publishEvent(</span>
+                new ProductChangedEvent(saved, user, ProductChangedEvent.Field.RESTORED, null, null));
+<span class="fc" id="L131">        return saved;</span>
+    }
+
+    /**
+     * Returns products whose stock quantity falls below {@code threshold}.
+     *
+     * @param threshold quantity boundary (exclusive)
+     * @return list of products below the threshold
+     */
+    public List&lt;Product&gt; findLowStock(int threshold) {
+<span class="fc" id="L141">        return productRepository.findByQuantityLessThan(threshold);</span>
+    }
+
+    /**
+     * Searches products by a case-insensitive substring match on name.
+     *
+     * @param name search substring
+     * @return list of matching products
+     */
+    public List&lt;Product&gt; searchByName(String name) {
+<span class="fc" id="L151">        return productRepository.findByNameContainingIgnoreCase(name);</span>
+    }
+
+    /**
+     * Updates a product's stock quantity.
+     *
+     * @param id product identifier
+     * @param quantity new quantity
+     * @return the updated product
+     * @throws EntityNotFoundException if no product exists with the given ID
+     */
+    @Transactional
+    public Product updateQuantity(long id, int quantity) {
+        // quantity history lives exclusively in stock movements; never logged to the change log
+<span class="fc" id="L165">        Product product = productRepository.findById(id)</span>
+<span class="fc" id="L166">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L167">        product.setQuantity(quantity);</span>
+<span class="fc" id="L168">        return productRepository.save(product);</span>
+    }
+
+    /**
+     * Applies a relative change to a product's stock quantity.
+     *
+     * @param id product identifier
+     * @param delta signed number of units to add to the current quantity
+     * @return the updated product
+     * @throws EntityNotFoundException if no product exists with the given ID
+     * @throws IllegalStateException if the adjustment would drive the quantity below zero
+     */
+    @Transactional
+    public Product adjustQuantity(long id, int delta) {
+        // pessimistic lock serializes concurrent adjustments so the negative-stock check cannot race
+<span class="fc" id="L183">        Product product = productRepository.findByIdForUpdate(id)</span>
+<span class="fc" id="L184">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L185">        int newQuantity = product.getQuantity() + delta;</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">        if (newQuantity &lt; 0) {</span>
+<span class="fc" id="L187">            throw new IllegalStateException(&quot;Adjustment of &quot; + delta + &quot; would result in negative stock for product &quot;</span>
+<span class="fc" id="L188">                    + id + &quot; (current: &quot; + product.getQuantity() + &quot;).&quot;);</span>
+        }
+<span class="fc" id="L190">        product.setQuantity(newQuantity);</span>
+<span class="fc" id="L191">        return productRepository.save(product);</span>
+    }
+
+    /**
+     * Updates a product's purchase price and records the change in the change log.
+     *
+     * @param id product identifier
+     * @param purchasePrice new purchase price
+     * @param user user making the change
+     * @return the updated product
+     * @throws EntityNotFoundException if no product exists with the given ID
+     */
+    @Transactional
+    public Product updatePrice(long id, BigDecimal purchasePrice, User user) {
+<span class="fc" id="L205">        Product product = productRepository.findById(id)</span>
+<span class="fc" id="L206">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L207">        BigDecimal oldPrice = product.getPurchasePrice();</span>
+<span class="fc" id="L208">        product.setPurchasePrice(purchasePrice);</span>
+<span class="fc" id="L209">        Product saved = productRepository.save(product);</span>
+        // compareTo, not equals: 2.50 and 2.5 are the same price at different scales and are not a change
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        if (oldPrice.compareTo(purchasePrice) != 0) {</span>
+<span class="fc" id="L212">            eventPublisher.publishEvent(new ProductChangedEvent(saved, user,</span>
+<span class="fc" id="L213">                    ProductChangedEvent.Field.PURCHASE_PRICE, oldPrice.toPlainString(),</span>
+<span class="fc" id="L214">                    purchasePrice.toPlainString()));</span>
+        }
+<span class="fc" id="L216">        return saved;</span>
+    }
+
+    /**
+     * Updates a product's name and records the change in the change log.
+     *
+     * @param id product identifier
+     * @param name new name; must not duplicate another live product's name, ignoring case
+     * @param user user making the change
+     * @return the updated product
+     * @throws EntityNotFoundException if no product exists with the given ID
+     * @throws IllegalStateException if a different live product already carries that name
+     */
+    @Transactional
+    public Product updateName(long id, String name, User user) {
+<span class="fc" id="L231">        Product product = productRepository.findById(id)</span>
+<span class="fc" id="L232">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
+        // excluding this product's own row is what lets a rename fix only the capitalization of its own name
+<span class="fc bfc" id="L234" title="All 2 branches covered.">        if (productRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {</span>
+<span class="fc" id="L235">            throw new IllegalStateException(&quot;A product named '&quot; + name + &quot;' already exists.&quot;);</span>
+        }
+<span class="fc" id="L237">        String oldName = product.getName();</span>
+<span class="fc" id="L238">        product.setName(name);</span>
+<span class="fc" id="L239">        Product saved = productRepository.save(product);</span>
+        // exact comparison: a pure capitalization fix IS a change and is logged
+<span class="fc bfc" id="L241" title="All 2 branches covered.">        if (!name.equals(oldName)) {</span>
+<span class="fc" id="L242">            eventPublisher.publishEvent(</span>
+                    new ProductChangedEvent(saved, user, ProductChangedEvent.Field.NAME, oldName, name));
+        }
+<span class="fc" id="L245">        return saved;</span>
+    }
+
+    /**
+     * Calculates the aggregate inventory value across all products.
+     *
+     * @return sum of quantity times purchase price across all products
+     */
+    public double getTotalStockValue() {
+<span class="fc" id="L254">        return productRepository.calculateTotalStockValue();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

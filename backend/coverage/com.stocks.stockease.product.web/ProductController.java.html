@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.product.web</a> &gt; <span class="el_source">ProductController.java</span></div><h1>ProductController.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.product.web;
+
+import java.math.BigDecimal;
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.stocks.stockease.shared.ApiResponse;
+import com.stocks.stockease.shared.PaginatedResponse;
+import com.stocks.stockease.product.Product;
+import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.User;
+import com.stocks.stockease.security.UserService;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * REST controller for product inventory management.
+ *
+ * &lt;p&gt;Covers CRUD, partial field updates, pagination, search, and stock analytics.
+ * Full contract for every operation is defined in {@code docs/api/paths/products.yaml}.
+ * All endpoints require at minimum ROLE_USER; create and delete require ROLE_ADMIN.
+ */
+@RestController
+@RequestMapping(&quot;/api/products&quot;)
+@RequiredArgsConstructor
+public class ProductController {
+
+<span class="fc" id="L50">    private static final Logger log = LoggerFactory.getLogger(ProductController.class);</span>
+
+    private final ProductService productService;
+    private final UserService userService;
+
+    /** Resolves the authenticated principal to the user recorded against product changes. */
+    private User currentUser(Principal principal) {
+<span class="fc" id="L57">        return userService.findByUsername(principal.getName())</span>
+<span class="pc" id="L58">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Authenticated user not found.&quot;));</span>
+    }
+
+    /**
+     * Returns all products ordered by ID ascending.
+     *
+     * &lt;p&gt;Loads the entire catalogue into memory. Prefer {@link #getPagedProducts} for
+     * large datasets. Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @return list of all {@link Product} entities ordered by ID
+     */
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;Product&gt; getAllProducts() {
+<span class="fc" id="L72">        return productService.getAllProducts();</span>
+    }
+
+    /**
+     * Returns a paginated slice of the product catalogue.
+     *
+     * &lt;p&gt;Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param page zero-based page index (default 0)
+     * @param size items per page (default 10, must be positive)
+     * @return {@link PaginatedResponse} with product list and pagination metadata
+     */
+    @GetMapping(&quot;/paged&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;PaginatedResponse&lt;Product&gt;&gt;&gt; getPagedProducts(
+            @RequestParam(defaultValue = &quot;0&quot;) @Min(0) int page,
+            @RequestParam(defaultValue = &quot;10&quot;) @Positive int size) {
+<span class="fc" id="L89">        Pageable pageable = PageRequest.of(page, size);</span>
+<span class="fc" id="L90">        Page&lt;Product&gt; products = productService.getPagedProducts(pageable);</span>
+<span class="fc" id="L91">        PaginatedResponse&lt;Product&gt; response = new PaginatedResponse&lt;&gt;(products);</span>
+<span class="fc" id="L92">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Paged products fetched successfully&quot;, response));</span>
+    }
+
+    /**
+     * Returns a single product by its ID.
+     *
+     * &lt;p&gt;Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param id product identifier
+     * @return HTTP 200 with the {@link Product}, or HTTP 404 if not found
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Product&gt;&gt; getProductById(@PathVariable long id) {
+<span class="fc" id="L106">        return productService.findById(id)</span>
+<span class="fc" id="L107">                .map(product -&gt; ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Product fetched successfully&quot;, product)))</span>
+<span class="fc" id="L108">                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L109">                        .body(new ApiResponse&lt;&gt;(false, &quot;The product with ID &quot; + id + &quot; does not exist.&quot;, null)));</span>
+    }
+
+    /**
+     * Creates a new product (ADMIN only).
+     *
+     * &lt;p&gt;Validates that name is non-blank, quantity is non-negative, and purchasePrice is positive.
+     * Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param request product fields (name, quantity, purchasePrice)
+     * @return HTTP 200 with the persisted {@link Product} including its generated ID,
+     *         or HTTP 400 if validation fails
+     */
+    @PostMapping
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;?&gt; createProduct(@Valid @RequestBody CreateProductRequest request) {
+<span class="fc" id="L125">        log.debug(&quot;Received request to create product: {}&quot;, request);</span>
+<span class="fc" id="L126">        Product savedProduct = productService.create(request.getName(), request.getQuantity(), request.getPurchasePrice());</span>
+<span class="fc" id="L127">        return ResponseEntity.ok(savedProduct);</span>
+    }
+
+    /**
+     * Deletes a product by ID (ADMIN only).
+     *
+     * &lt;p&gt;Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param id product identifier to delete
+     * @param principal authenticated user, recorded against the deletion in the change log
+     * @return HTTP 200 on success, HTTP 404 if the product does not exist
+     */
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; deleteProduct(@PathVariable long id, Principal principal) {
+<span class="fc" id="L142">        log.info(&quot;Entering deleteProduct method with ID: {}&quot;, id);</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        if (!productService.deleteById(id, currentUser(principal))) {</span>
+<span class="fc" id="L144">            return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L145">                    .body(new ApiResponse&lt;&gt;(false, &quot;Cannot delete. Product with ID &quot; + id + &quot; does not exist.&quot;, null));</span>
+        }
+<span class="fc" id="L147">        return ResponseEntity.ok(</span>
+                new ApiResponse&lt;&gt;(true, &quot;Product with ID &quot; + id + &quot; has been successfully deleted.&quot;, null)
+        );
+    }
+
+    /**
+     * Returns products with critically low stock.
+     *
+     * &lt;p&gt;Threshold is hardcoded at 5 units; consider externalising to
+     * {@code application.properties} if it needs to vary per environment.
+     * Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @return list of low-stock {@link Product} entities, or a status message if all levels are sufficient
+     */
+    @GetMapping(&quot;/low-stock&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;?&gt; getLowStockProducts() {
+<span class="fc" id="L164">        List&lt;Product&gt; lowStockProducts = productService.findLowStock(5);</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">        if (lowStockProducts.isEmpty()) {</span>
+<span class="fc" id="L166">            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;All products are sufficiently stocked.&quot;));</span>
+        }
+<span class="fc" id="L168">        return ResponseEntity.ok(lowStockProducts);</span>
+    }
+
+    /**
+     * Searches products by name using a case-insensitive substring match.
+     *
+     * &lt;p&gt;For example, searching {@code &quot;apple&quot;} matches {@code &quot;Apple Juice&quot;}, {@code &quot;APPLE&quot;},
+     * and {@code &quot;Green Apple&quot;}. Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param name search term (substring, case-insensitive)
+     * @return HTTP 200 with matching products, or HTTP 204 if none found
+     */
+    @GetMapping(&quot;/search&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;?&gt; searchProductsByName(@RequestParam String name) {
+<span class="fc" id="L183">        List&lt;Product&gt; products = productService.searchByName(name);</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">        if (products.isEmpty()) {</span>
+<span class="fc" id="L185">            return ResponseEntity.status(HttpStatus.NO_CONTENT)</span>
+<span class="fc" id="L186">                    .body(Map.of(&quot;message&quot;, &quot;No products found matching the name: &quot; + name));</span>
+        }
+<span class="fc" id="L188">        return ResponseEntity.ok(products);</span>
+    }
+
+    /**
+     * Updates the stock quantity of a specific product.
+     *
+     * &lt;p&gt;{@code totalValue} in the response is computed from the updated quantity.
+     * Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param id      product identifier
+     * @param request request body containing an integer {@code quantity} field
+     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
+     */
+    @PutMapping(&quot;/{id}/quantity&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Product&gt;&gt; updateQuantity(@PathVariable long id, @Valid @RequestBody UpdateQuantityRequest request) {
+<span class="fc" id="L204">        Product updatedProduct = productService.updateQuantity(id, request.getQuantity());</span>
+<span class="fc" id="L205">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Quantity updated successfully&quot;, updatedProduct));</span>
+    }
+
+    /**
+     * Updates the purchase price of a specific product.
+     *
+     * &lt;p&gt;{@code totalValue} in the response is computed from the updated price.
+     * Behavior defined in {@code docs/api/paths/products.yaml}.
+     *
+     * @param id      product identifier
+     * @param request request body containing a numeric {@code purchasePrice} field
+     * @param principal authenticated user, recorded against the change in the change log
+     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
+     */
+    @PutMapping(&quot;/{id}/price&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Product&gt;&gt; updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request, Principal principal) {
+<span class="fc" id="L222">        Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()), currentUser(principal));</span>
+<span class="fc" id="L223">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Price updated successfully&quot;, updatedProduct));</span>
+    }
+
+    /**
+     * Updates the name of a specific product.
+     *
+     * &lt;p&gt;Uniqueness is enforced at the database level. Behavior defined in
+     * {@code docs/api/paths/products.yaml}.
+     *
+     * @param id      product identifier
+     * @param request request body containing a non-blank {@code name} field
+     * @param principal authenticated user, recorded against the change in the change log
+     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
+     */
+    @PutMapping(&quot;/{id}/name&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Product&gt;&gt; updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request, Principal principal) {
+<span class="fc" id="L240">        Product updatedProduct = productService.updateName(id, request.getName(), currentUser(principal));</span>
+<span class="fc" id="L241">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Name updated successfully&quot;, updatedProduct));</span>
+    }
+
+    /**
+     * Calculates the aggregate inventory value across all products.
+     *
+     * &lt;p&gt;Executes a database-level aggregate ({@code SUM(quantity * purchasePrice)}) via
+     * {@link ProductService#getTotalStockValue()}. Behavior defined in
+     * {@code docs/api/paths/products.yaml}.
+     *
+     * @return HTTP 200 with the total stock value as a {@link Double}
+     */
+    @GetMapping(&quot;/total-stock-value&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;Double&gt;&gt; getTotalStockValue() {
+<span class="fc" id="L256">        double totalStockValue = productService.getTotalStockValue();</span>
+<span class="fc" id="L257">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Total stock value fetched successfully&quot;, totalStockValue));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

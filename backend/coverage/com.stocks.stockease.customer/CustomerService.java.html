@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomerService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.customer</a> &gt; <span class="el_source">CustomerService.java</span></div><h1>CustomerService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.customer;
+
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.stocks.stockease.customer.internal.CustomerRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Customer module's public API for looking up and registering customers.
+ * Other modules depend on this service rather than reaching into the module's repository.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class CustomerService {
+
+    private final CustomerRepository customerRepository;
+
+    /**
+     * Finds a customer by its ID.
+     *
+     * @param id customer identifier
+     * @return the customer, or empty if none exists with that ID
+     */
+    public Optional&lt;Customer&gt; findById(long id) {
+<span class="fc" id="L30">        return customerRepository.findById(id);</span>
+    }
+
+    /**
+     * Creates and persists a new customer.
+     *
+     * @param name customer name
+     * @param email customer email, may be {@code null}
+     * @param phone customer phone number, may be {@code null}
+     * @param address customer postal address, may be {@code null}
+     * @param city customer city, may be {@code null}
+     * @return the persisted customer including its generated ID
+     */
+    @Transactional
+    public Customer create(String name, String email, String phone, String address, String city) {
+<span class="fc" id="L45">        Customer customer = new Customer();</span>
+<span class="fc" id="L46">        customer.setName(name);</span>
+<span class="fc" id="L47">        customer.setEmail(email);</span>
+<span class="fc" id="L48">        customer.setPhone(phone);</span>
+<span class="fc" id="L49">        customer.setAddress(address);</span>
+<span class="fc" id="L50">        customer.setCity(city);</span>
+<span class="fc" id="L51">        return customerRepository.save(customer);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

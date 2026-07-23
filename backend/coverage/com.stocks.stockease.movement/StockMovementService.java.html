@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StockMovementService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.movement</a> &gt; <span class="el_source">StockMovementService.java</span></div><h1>StockMovementService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.movement;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.stocks.stockease.invoice.InvoiceItem;
+import com.stocks.stockease.invoice.InvoiceService;
+import com.stocks.stockease.invoice.InvoiceStatus;
+import com.stocks.stockease.invoice.InvoiceType;
+import com.stocks.stockease.movement.internal.StockMovementRepository;
+import com.stocks.stockease.product.Product;
+import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.User;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Movement module's public API and the single write path for product stock quantities.
+ * Movements are append-only: a recorded movement is never updated or deleted.
+ */
+@Service
+@RequiredArgsConstructor
+public class StockMovementService {
+
+    private final StockMovementRepository stockMovementRepository;
+    private final ProductService productService;
+    private final InvoiceService invoiceService;
+
+    /**
+     * Returns every stock movement a user triggered, newest first.
+     *
+     * @param userId user identifier
+     * @return that user's movements ordered by creation time descending
+     */
+    @Transactional(readOnly = true)
+    public List&lt;StockMovement&gt; findByUser(long userId) {
+<span class="fc" id="L40">        return stockMovementRepository.findByUserIdOrderByCreatedAtDesc(userId);</span>
+    }
+
+    /**
+     * Records a stock movement and applies its quantity change to the product atomically.
+     *
+     * @param command the movement to record
+     * @param user the user triggering the movement
+     * @return the persisted movement
+     * @throws IllegalArgumentException if a required field is missing or a field is supplied that the reason forbids
+     * @throws EntityNotFoundException if the referenced invoice item or product does not exist
+     * @throws IllegalStateException if the movement contradicts its invoice item, duplicates an existing
+     *         movement, or would drive the product's stock negative
+     */
+    @Transactional
+    public StockMovement recordMovement(RecordMovementCommand command, User user) {
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (user == null) {</span>
+<span class="fc" id="L57">            throw new IllegalArgumentException(&quot;User is required.&quot;);</span>
+        }
+<span class="pc bpc" id="L59" title="1 of 4 branches missed.">        if (command.productId() == null || command.reason() == null) {</span>
+<span class="fc" id="L60">            throw new IllegalArgumentException(&quot;Product and reason are required.&quot;);</span>
+        }
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        if (command.quantity() &lt;= 0) {</span>
+<span class="fc" id="L63">            throw new IllegalArgumentException(&quot;Quantity must be positive.&quot;);</span>
+        }
+
+<span class="fc" id="L66">        MovementReason reason = command.reason();</span>
+<span class="fc" id="L67">        validateFields(command, reason);</span>
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        InvoiceItem item = requiresInvoiceItem(reason) ? loadAndValidateItem(command, reason) : null;</span>
+<span class="fc bfc" id="L70" title="All 4 branches covered.">        if (reason == MovementReason.PURCHASE || reason == MovementReason.SOLD) {</span>
+<span class="fc" id="L71">            validateNotAlreadyRecorded(command, reason, item);</span>
+        }
+<span class="fc bfc" id="L73" title="All 4 branches covered.">        if (reason == MovementReason.RETURN_FROM_CUSTOMER || reason == MovementReason.RETURNED_TO_SUPPLIER) {</span>
+            // cap enforcement and the returnedQty increment join this transaction
+<span class="fc" id="L75">            invoiceService.registerReturn(command.invoiceItemId(), command.quantity());</span>
+        }
+
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        int delta = reason.getType() == MovementType.INCREASE ? command.quantity() : -command.quantity();</span>
+<span class="fc" id="L79">        Product product = productService.adjustQuantity(command.productId(), delta);</span>
+
+<span class="fc" id="L81">        return stockMovementRepository.save(buildMovement(command, reason, user, product, item));</span>
+    }
+
+    /** Rejects fields the reason forbids and demands the ones it requires. */
+    private void validateFields(RecordMovementCommand command, MovementReason reason) {
+<span class="fc bfc" id="L86" title="All 3 branches covered.">        switch (reason) {</span>
+            case NEW_PRODUCT -&gt; {
+<span class="fc bfc" id="L88" title="All 2 branches covered.">                if (command.invoiceItemId() != null) {</span>
+<span class="fc" id="L89">                    throw new IllegalArgumentException(&quot;NEW_PRODUCT movements must not reference an invoice item.&quot;);</span>
+                }
+<span class="pc bpc" id="L91" title="1 of 4 branches missed.">                if (command.unitCost() == null || command.unitCost().signum() &lt;= 0) {</span>
+<span class="fc" id="L92">                    throw new IllegalArgumentException(&quot;NEW_PRODUCT movements require a positive unit cost.&quot;);</span>
+                }
+            }
+            case LOST, DESTROYED -&gt; {
+<span class="pc bpc" id="L96" title="1 of 4 branches missed.">                if (command.invoiceItemId() != null || command.unitCost() != null) {</span>
+<span class="fc" id="L97">                    throw new IllegalArgumentException(</span>
+                            &quot;LOST and DESTROYED movements carry no invoice item or prices.&quot;);
+                }
+            }
+            default -&gt; {
+<span class="fc bfc" id="L102" title="All 2 branches covered.">                if (command.invoiceItemId() == null) {</span>
+<span class="fc" id="L103">                    throw new IllegalArgumentException(reason + &quot; movements require an invoice item.&quot;);</span>
+                }
+<span class="fc bfc" id="L105" title="All 2 branches covered.">                if (command.unitCost() != null) {</span>
+<span class="fc" id="L106">                    throw new IllegalArgumentException(</span>
+                            &quot;Unit cost is derived from the invoice item and must not be supplied.&quot;);
+                }
+            }
+        }
+<span class="fc" id="L111">    }</span>
+
+    /** Loads the linked invoice item and checks it matches the movement's invoice type and product. */
+    private InvoiceItem loadAndValidateItem(RecordMovementCommand command, MovementReason reason) {
+<span class="fc" id="L115">        InvoiceItem item = invoiceService.findItemById(command.invoiceItemId())</span>
+<span class="fc" id="L116">                .orElseThrow(() -&gt; new EntityNotFoundException(</span>
+<span class="fc" id="L117">                        &quot;Invoice item with ID &quot; + command.invoiceItemId() + &quot; not found.&quot;));</span>
+<span class="fc bfc" id="L118" title="All 4 branches covered.">        InvoiceType requiredType = reason == MovementReason.PURCHASE || reason == MovementReason.RETURNED_TO_SUPPLIER</span>
+<span class="fc" id="L119">                ? InvoiceType.PURCHASE</span>
+<span class="fc" id="L120">                : InvoiceType.SALE;</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        if (item.getInvoice().getType() != requiredType) {</span>
+<span class="fc" id="L122">            throw new IllegalStateException(</span>
+                    reason + &quot; movements must reference a &quot; + requiredType + &quot; invoice item.&quot;);
+        }
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {</span>
+<span class="fc" id="L126">            throw new IllegalStateException(&quot;Movements cannot be recorded against an open invoice.&quot;);</span>
+        }
+<span class="fc bfc" id="L128" title="All 2 branches covered.">        if (!item.getProduct().getId().equals(command.productId())) {</span>
+<span class="fc" id="L129">            throw new IllegalStateException(</span>
+<span class="fc" id="L130">                    &quot;Invoice item &quot; + command.invoiceItemId() + &quot; belongs to a different product.&quot;);</span>
+        }
+<span class="fc" id="L132">        return item;</span>
+    }
+
+    /** Holds a purchase or sale to its invoice line's exact quantity, once per line. */
+    private void validateNotAlreadyRecorded(RecordMovementCommand command, MovementReason reason, InvoiceItem item) {
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if (command.quantity() != item.getQuantity()) {</span>
+<span class="fc" id="L138">            throw new IllegalStateException(</span>
+<span class="fc" id="L139">                    &quot;Movement quantity must equal the invoice item quantity (&quot; + item.getQuantity() + &quot;).&quot;);</span>
+        }
+<span class="fc bfc" id="L141" title="All 2 branches covered.">        if (stockMovementRepository.existsByInvoiceItemIdAndReason(command.invoiceItemId(), reason)) {</span>
+<span class="fc" id="L142">            throw new IllegalStateException(</span>
+<span class="fc" id="L143">                    &quot;A &quot; + reason + &quot; movement already exists for invoice item &quot; + command.invoiceItemId() + &quot;.&quot;);</span>
+        }
+<span class="fc" id="L145">    }</span>
+
+    /** Assembles the movement row, snapshotting prices from the invoice item rather than the caller. */
+    private StockMovement buildMovement(RecordMovementCommand command, MovementReason reason, User user,
+            Product product, InvoiceItem item) {
+<span class="fc" id="L150">        StockMovement movement = new StockMovement();</span>
+<span class="fc" id="L151">        movement.setProduct(product);</span>
+<span class="fc" id="L152">        movement.setUser(user);</span>
+<span class="fc" id="L153">        movement.setType(reason.getType());</span>
+<span class="fc" id="L154">        movement.setReason(reason);</span>
+<span class="fc" id="L155">        movement.setQuantity(command.quantity());</span>
+<span class="fc" id="L156">        movement.setInvoiceItem(item);</span>
+<span class="fc bfc" id="L157" title="All 4 branches covered.">        switch (reason) {</span>
+<span class="fc" id="L158">            case PURCHASE -&gt; movement.setUnitCost(item.getUnitPrice());</span>
+<span class="fc" id="L159">            case SOLD, RETURN_FROM_CUSTOMER -&gt; movement.setSoldPrice(item.getUnitPrice());</span>
+<span class="fc" id="L160">            case NEW_PRODUCT -&gt; movement.setUnitCost(command.unitCost());</span>
+            default -&gt; {
+                // LOST, DESTROYED and RETURNED_TO_SUPPLIER carry no price snapshot
+            }
+        }
+<span class="fc" id="L165">        return movement;</span>
+    }
+
+    /** Reports whether the reason must be backed by an invoice line. */
+    private static boolean requiresInvoiceItem(MovementReason reason) {
+<span class="fc bfc" id="L170" title="All 8 branches covered.">        return reason == MovementReason.PURCHASE || reason == MovementReason.SOLD</span>
+                || reason == MovementReason.RETURN_FROM_CUSTOMER || reason == MovementReason.RETURNED_TO_SUPPLIER;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

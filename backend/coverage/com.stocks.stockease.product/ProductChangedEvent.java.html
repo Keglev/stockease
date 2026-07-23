@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductChangedEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.product</a> &gt; <span class="el_source">ProductChangedEvent.java</span></div><h1>ProductChangedEvent.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.product;
+
+import com.stocks.stockease.security.User;
+
+/**
+ * Published when a product attribute changes or its soft-delete state flips; the nested {@link Field}
+ * enum deliberately mirrors the audit module's {@code ChangedField} by name so the product module never
+ * depends on an audit type, which would create a module cycle.
+ *
+ * @param product the product that changed
+ * @param user user who made the change
+ * @param field which attribute or lifecycle event this records
+ * @param oldValue value before the change; {@code null} for lifecycle events
+ * @param newValue value after the change; {@code null} for lifecycle events
+ */
+<span class="fc" id="L16">public record ProductChangedEvent(Product product, User user, Field field, String oldValue, String newValue) {</span>
+
+    /** Attributes and lifecycle events worth recording; names match the audit module's enum constants. */
+<span class="fc" id="L19">    public enum Field {</span>
+<span class="fc" id="L20">        NAME,</span>
+<span class="fc" id="L21">        PURCHASE_PRICE,</span>
+
+        /** Soft delete lifecycle event, values are null. */
+<span class="fc" id="L24">        DELETED,</span>
+
+        /** Soft delete lifecycle event, values are null. */
+<span class="fc" id="L27">        RESTORED</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

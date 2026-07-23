@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InvoiceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.invoice</a> &gt; <span class="el_source">InvoiceService.java</span></div><h1>InvoiceService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.invoice;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.stocks.stockease.customer.Customer;
+import com.stocks.stockease.customer.CustomerService;
+import com.stocks.stockease.invoice.internal.InvoiceItemRepository;
+import com.stocks.stockease.invoice.internal.InvoiceRepository;
+import com.stocks.stockease.product.Product;
+import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.User;
+import com.stocks.stockease.supplier.Supplier;
+import com.stocks.stockease.supplier.SupplierService;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Invoice module's public API for the invoice lifecycle: creation, closing, returns and deletion.
+ * Other modules depend on this service rather than reaching into the module's repositories.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class InvoiceService {
+
+    private final InvoiceItemRepository invoiceItemRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final ProductService productService;
+    private final SupplierService supplierService;
+    private final CustomerService customerService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    /**
+     * Finds an invoice item by its ID.
+     *
+     * @param id invoice item identifier
+     * @return the invoice item, or empty if none exists with that ID
+     */
+    public Optional&lt;InvoiceItem&gt; findItemById(long id) {
+<span class="fc" id="L48">        return invoiceItemRepository.findById(id);</span>
+    }
+
+    /**
+     * Returns every invoice a user closed, most recently closed first.
+     *
+     * @param userId user identifier
+     * @return the invoices that user closed, ordered by closing time descending
+     */
+    public List&lt;Invoice&gt; findClosedBy(long userId) {
+        // closed invoices are never soft-deleted (deletion is vetoed for non-open invoices), so no
+        // restriction bypass is needed here
+<span class="fc" id="L60">        return invoiceRepository.findByClosedByIdOrderByClosedAtDesc(userId);</span>
+    }
+
+    /**
+     * Creates an invoice together with all of its lines in one transaction.
+     *
+     * @param command the invoice and lines to create
+     * @return the persisted invoice including its generated ID and items
+     * @throws IllegalArgumentException if a required field is missing, the counterparty does not match the
+     *         invoice type, or a line has a non-positive quantity or unit price
+     * @throws EntityNotFoundException if the supplier, customer or any product does not exist
+     */
+    @Transactional
+    public Invoice createInvoice(CreateInvoiceCommand command) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (command.type() == null) {</span>
+<span class="fc" id="L75">            throw new IllegalArgumentException(&quot;Invoice type is required.&quot;);</span>
+        }
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (command.dueDate() == null) {</span>
+<span class="fc" id="L78">            throw new IllegalArgumentException(&quot;Due date is required.&quot;);</span>
+        }
+<span class="pc bpc" id="L80" title="1 of 4 branches missed.">        if (command.items() == null || command.items().isEmpty()) {</span>
+<span class="fc" id="L81">            throw new IllegalArgumentException(&quot;An invoice requires at least one item.&quot;);</span>
+        }
+
+<span class="fc" id="L84">        Invoice invoice = new Invoice();</span>
+<span class="fc" id="L85">        invoice.setType(command.type());</span>
+<span class="fc" id="L86">        applyCounterparty(command, invoice);</span>
+<span class="fc" id="L87">        invoice.setStatus(InvoiceStatus.OPEN);</span>
+<span class="fc" id="L88">        invoice.setDueDate(command.dueDate());</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        invoice.setInterestRate(command.interestRate() == null ? BigDecimal.ZERO : command.interestRate());</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        invoice.setFineValue(command.fineValue() == null ? BigDecimal.ZERO : command.fineValue());</span>
+
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        for (CreateInvoiceCommand.ItemLine line : command.items()) {</span>
+<span class="fc" id="L93">            invoice.getItems().add(buildItem(invoice, line));</span>
+<span class="fc" id="L94">        }</span>
+<span class="fc" id="L95">        return invoiceRepository.save(invoice);</span>
+    }
+
+    /** Resolves and attaches the counterparty the invoice type calls for. */
+    private void applyCounterparty(CreateInvoiceCommand command, Invoice invoice) {
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (command.type() == InvoiceType.PURCHASE) {</span>
+<span class="fc bfc" id="L101" title="All 4 branches covered.">            if (command.supplierId() == null || command.customerId() != null) {</span>
+<span class="fc" id="L102">                throw new IllegalArgumentException(&quot;Purchase invoices require a supplier and no customer.&quot;);</span>
+            }
+<span class="fc" id="L104">            Supplier supplier = supplierService.findById(command.supplierId())</span>
+<span class="fc" id="L105">                    .orElseThrow(() -&gt; new EntityNotFoundException(</span>
+<span class="fc" id="L106">                            &quot;Supplier with ID &quot; + command.supplierId() + &quot; not found.&quot;));</span>
+<span class="fc" id="L107">            invoice.setSupplier(supplier);</span>
+<span class="fc" id="L108">            return;</span>
+        }
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        if (command.supplierId() != null) {</span>
+<span class="fc" id="L111">            throw new IllegalArgumentException(&quot;Sale invoices must not reference a supplier.&quot;);</span>
+        }
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        if (command.customerId() != null) {</span>
+<span class="fc" id="L114">            Customer customer = customerService.findById(command.customerId())</span>
+<span class="fc" id="L115">                    .orElseThrow(() -&gt; new EntityNotFoundException(</span>
+<span class="fc" id="L116">                            &quot;Customer with ID &quot; + command.customerId() + &quot; not found.&quot;));</span>
+<span class="fc" id="L117">            invoice.setCustomer(customer);</span>
+        }
+<span class="fc" id="L119">    }</span>
+
+    /** Validates a line and builds its persistent item. */
+    private InvoiceItem buildItem(Invoice invoice, CreateInvoiceCommand.ItemLine line) {
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (line.quantity() &lt;= 0) {</span>
+<span class="fc" id="L124">            throw new IllegalArgumentException(&quot;Item quantity must be positive.&quot;);</span>
+        }
+<span class="pc bpc" id="L126" title="1 of 4 branches missed.">        if (line.unitPrice() == null || line.unitPrice().signum() &lt;= 0) {</span>
+<span class="fc" id="L127">            throw new IllegalArgumentException(&quot;Item unit price must be positive.&quot;);</span>
+        }
+<span class="fc" id="L129">        Product product = productService.findById(line.productId())</span>
+<span class="fc" id="L130">                .orElseThrow(() -&gt; new EntityNotFoundException(</span>
+<span class="fc" id="L131">                        &quot;Product with ID &quot; + line.productId() + &quot; not found.&quot;));</span>
+
+<span class="fc" id="L133">        InvoiceItem item = new InvoiceItem();</span>
+<span class="fc" id="L134">        item.setInvoice(invoice);</span>
+<span class="fc" id="L135">        item.setProduct(product);</span>
+<span class="fc" id="L136">        item.setQuantity(line.quantity());</span>
+<span class="fc" id="L137">        item.setUnitPrice(line.unitPrice());</span>
+<span class="fc" id="L138">        item.setReturnedQty(0);</span>
+<span class="fc" id="L139">        return item;</span>
+    }
+
+    /**
+     * Closes an open invoice and books its lines into stock.
+     *
+     * @param invoiceId invoice identifier
+     * @param user user closing the invoice
+     * @return the closed invoice
+     * @throws EntityNotFoundException if no invoice exists with the given ID
+     * @throws IllegalStateException if the invoice is not open, or if booking its stock movements fails
+     */
+    @Transactional
+    public Invoice close(long invoiceId, User user) {
+<span class="fc" id="L153">        Invoice invoice = invoiceRepository.findById(invoiceId)</span>
+<span class="fc" id="L154">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Invoice with ID &quot; + invoiceId + &quot; not found.&quot;));</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if (invoice.getStatus() != InvoiceStatus.OPEN) {</span>
+<span class="fc" id="L156">            throw new IllegalStateException(&quot;Only open invoices can be closed.&quot;);</span>
+        }
+<span class="fc" id="L158">        invoice.setStatus(InvoiceStatus.CLOSED);</span>
+<span class="fc" id="L159">        invoice.setClosedBy(user);</span>
+<span class="fc" id="L160">        invoice.setClosedAt(LocalDateTime.now());</span>
+<span class="fc" id="L161">        invoiceRepository.save(invoice);</span>
+
+<span class="fc" id="L163">        List&lt;InvoiceClosedEvent.Line&gt; lines = invoice.getItems().stream()</span>
+<span class="fc" id="L164">                .map(item -&gt; new InvoiceClosedEvent.Line(item.getId(), item.getProduct().getId(), item.getQuantity()))</span>
+<span class="fc" id="L165">                .toList();</span>
+        // synchronous listeners run inside this transaction - a failed stock booking rolls back the close
+<span class="fc" id="L167">        eventPublisher.publishEvent(new InvoiceClosedEvent(invoice.getId(), invoice.getType(), user, lines));</span>
+<span class="fc" id="L168">        return invoice;</span>
+    }
+
+    /**
+     * Registers a return of {@code quantity} units against an invoice item.
+     *
+     * @param itemId invoice item identifier
+     * @param quantity number of units being returned; must be positive
+     * @return the updated invoice item
+     * @throws EntityNotFoundException if no invoice item exists with the given ID
+     * @throws IllegalArgumentException if {@code quantity} is not positive
+     * @throws IllegalStateException if the invoice is still open, or if the return would exceed the item's
+     *         remaining returnable quantity
+     */
+    @Transactional
+    public InvoiceItem registerReturn(long itemId, int quantity) {
+<span class="fc" id="L184">        InvoiceItem item = invoiceItemRepository.findById(itemId)</span>
+<span class="fc" id="L185">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Invoice item with ID &quot; + itemId + &quot; not found.&quot;));</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">        if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {</span>
+<span class="fc" id="L187">            throw new IllegalStateException(&quot;Returns require a closed invoice.&quot;);</span>
+        }
+<span class="fc bfc" id="L189" title="All 2 branches covered.">        if (quantity &lt;= 0) {</span>
+<span class="fc" id="L190">            throw new IllegalArgumentException(&quot;Return quantity must be positive.&quot;);</span>
+        }
+        // database CHECK on returned_qty is the backstop for this invariant
+<span class="fc bfc" id="L193" title="All 2 branches covered.">        if (item.getReturnedQty() + quantity &gt; item.getQuantity()) {</span>
+<span class="fc" id="L194">            throw new IllegalStateException(&quot;Return of &quot; + quantity + &quot; exceeds remaining returnable quantity &quot;</span>
+<span class="fc" id="L195">                    + (item.getQuantity() - item.getReturnedQty()) + &quot; for invoice item &quot; + itemId + &quot;.&quot;);</span>
+        }
+<span class="fc" id="L197">        item.setReturnedQty(item.getReturnedQty() + quantity);</span>
+<span class="fc" id="L198">        InvoiceItem saved = invoiceItemRepository.save(item);</span>
+
+<span class="fc" id="L200">        Invoice invoice = item.getInvoice();</span>
+        // allMatch over an empty collection is vacuously true - guard against any future creation
+        // path that could yield an itemless invoice
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        if (!invoice.getItems().isEmpty()</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">                &amp;&amp; invoice.getItems().stream().allMatch(line -&gt; line.getReturnedQty().equals(line.getQuantity()))) {</span>
+<span class="fc" id="L205">            invoice.setStatus(InvoiceStatus.FULLY_RETURNED);</span>
+<span class="fc" id="L206">            invoiceRepository.save(invoice);</span>
+        }
+<span class="fc" id="L208">        return saved;</span>
+    }
+
+    /**
+     * Records that an invoice has been paid, stamping the moment of payment.
+     * Payment is independent of the invoice lifecycle status: an invoice may be paid before or after
+     * it is closed, so no status precondition applies.
+     *
+     * @param invoiceId invoice identifier
+     * @return the paid invoice
+     * @throws EntityNotFoundException if no invoice exists with the given ID
+     * @throws IllegalStateException if the invoice is already marked as paid
+     */
+    @Transactional
+    public Invoice markAsPaid(long invoiceId) {
+<span class="fc" id="L223">        Invoice invoice = invoiceRepository.findById(invoiceId)</span>
+<span class="fc" id="L224">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Invoice with ID &quot; + invoiceId + &quot; not found.&quot;));</span>
+<span class="fc bfc" id="L225" title="All 2 branches covered.">        if (invoice.getPaidAt() != null) {</span>
+<span class="fc" id="L226">            throw new IllegalStateException(&quot;Invoice is already marked as paid.&quot;);</span>
+        }
+<span class="fc" id="L228">        invoice.setPaidAt(LocalDateTime.now());</span>
+<span class="fc" id="L229">        return invoiceRepository.save(invoice);</span>
+    }
+
+    /**
+     * Deletes an open invoice; the entity's soft-delete mapping applies.
+     *
+     * @param invoiceId invoice identifier
+     * @throws EntityNotFoundException if no invoice exists with the given ID
+     * @throws IllegalStateException if the invoice is not open
+     */
+    @Transactional
+    public void deleteById(long invoiceId) {
+<span class="fc" id="L241">        Invoice invoice = invoiceRepository.findById(invoiceId)</span>
+<span class="fc" id="L242">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Invoice with ID &quot; + invoiceId + &quot; not found.&quot;));</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">        if (invoice.getStatus() != InvoiceStatus.OPEN) {</span>
+<span class="fc" id="L244">            throw new IllegalStateException(&quot;Only open invoices can be deleted.&quot;);</span>
+        }
+<span class="fc" id="L246">        invoiceRepository.delete(invoice);</span>
+<span class="fc" id="L247">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

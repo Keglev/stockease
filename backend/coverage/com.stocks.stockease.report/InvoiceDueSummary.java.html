@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InvoiceDueSummary.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.report</a> &gt; <span class="el_source">InvoiceDueSummary.java</span></div><h1>InvoiceDueSummary.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.report;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+/**
+ * One unpaid invoice with what is still owed on it.
+ *
+ * @param invoiceId invoice identifier
+ * @param invoiceType {@code PURCHASE} or {@code SALE} as a plain string
+ * @param counterparty supplier or customer name, or {@code Cash sale} when the invoice names neither
+ * @param dueDate the date the invoice falls due
+ * @param outstandingValue line values net of returned quantities
+ * @param daysOverdue days past the due date, or {@code null} when the report does not compute it
+ */
+<span class="fc" id="L16">public record InvoiceDueSummary(Long invoiceId, String invoiceType, String counterparty, LocalDate dueDate,</span>
+        BigDecimal outstandingValue, Long daysOverdue) {
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

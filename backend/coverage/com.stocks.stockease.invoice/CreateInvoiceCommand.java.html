@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreateInvoiceCommand.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.invoice</a> &gt; <span class="el_source">CreateInvoiceCommand.java</span></div><h1>CreateInvoiceCommand.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.invoice;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+/**
+ * Request to create an invoice together with all of its lines; the counterparty field that applies
+ * depends on {@code type}, and an invoice is never created without at least one line.
+ *
+ * @param type whether this invoice records a purchase from a supplier or a sale to a customer
+ * @param supplierId counterparty for purchase invoices; must be {@code null} for sales
+ * @param customerId counterparty for sale invoices; optional for anonymous cash sales, {@code null} for purchases
+ * @param dueDate date payment falls due
+ * @param interestRate late-payment interest rate; defaults to zero when {@code null}
+ * @param fineValue accrued late-payment fine; defaults to zero when {@code null}
+ * @param items the lines to create, at least one
+ */
+<span class="fc" id="L19">public record CreateInvoiceCommand(InvoiceType type, Long supplierId, Long customerId, LocalDate dueDate,</span>
+        BigDecimal interestRate, BigDecimal fineValue, List&lt;ItemLine&gt; items) {
+
+    /**
+     * A single line to create on the invoice.
+     *
+     * @param productId product being purchased or sold
+     * @param quantity number of units; must be positive
+     * @param unitPrice price snapshot per unit; must be positive
+     */
+<span class="fc" id="L29">    public record ItemLine(Long productId, int quantity, BigDecimal unitPrice) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

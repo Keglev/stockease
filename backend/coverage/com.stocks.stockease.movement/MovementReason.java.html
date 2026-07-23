@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MovementReason.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.movement</a> &gt; <span class="el_source">MovementReason.java</span></div><h1>MovementReason.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.movement;
+
+/**
+ * Reasons a stock movement can occur. Each reason is bound to its movement
+ * direction so an inconsistent type/reason pair cannot be constructed.
+ */
+<span class="fc" id="L7">public enum MovementReason {</span>
+
+    /** Initial stock at product creation, carries its own cost snapshot. */
+<span class="fc" id="L10">    NEW_PRODUCT(MovementType.INCREASE),</span>
+<span class="fc" id="L11">    PURCHASE(MovementType.INCREASE),</span>
+
+    /** Customer return, refund reduces revenue. */
+<span class="fc" id="L14">    RETURN_FROM_CUSTOMER(MovementType.INCREASE),</span>
+
+<span class="fc" id="L16">    SOLD(MovementType.DECREASE),</span>
+<span class="fc" id="L17">    LOST(MovementType.DECREASE),</span>
+<span class="fc" id="L18">    DESTROYED(MovementType.DECREASE),</span>
+<span class="fc" id="L19">    RETURNED_TO_SUPPLIER(MovementType.DECREASE);</span>
+
+    private final MovementType type;
+
+<span class="fc" id="L23">    MovementReason(MovementType type) {</span>
+<span class="fc" id="L24">        this.type = type;</span>
+<span class="fc" id="L25">    }</span>
+
+    /** Returns the movement direction this reason is bound to. */
+    public MovementType getType() {
+<span class="fc" id="L29">        return type;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

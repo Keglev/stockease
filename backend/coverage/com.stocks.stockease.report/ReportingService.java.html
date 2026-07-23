@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.report</a> &gt; <span class="el_source">ReportingService.java</span></div><h1>ReportingService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.report;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Read model over the schema, answering aggregation questions with native SQL rather than through the
+ * domain model. Reports are derived at read time and never stored.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class ReportingService {
+
+    /** Shown instead of a counterparty name for sale invoices that name no customer. */
+    private static final String CASH_SALE = &quot;Cash sale&quot;;
+
+    // Historical report: soft-deleted products are INCLUDED (movements reference them regardless); the
+    // deleted flag lets callers mark them.
+    // Supplier-return recovery joins the invoice line because RETURNED_TO_SUPPLIER movements carry no
+    // price snapshot of their own.
+    private static final String PRODUCT_PROFIT_SELECT = &quot;&quot;&quot;
+            SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,
+              COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.sold_price
+                                WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.sold_price
+                                ELSE 0 END), 0) AS revenue,
+              COALESCE(SUM(CASE WHEN m.reason IN ('PURCHASE','NEW_PRODUCT') THEN m.quantity * m.unit_cost
+                                WHEN m.reason = 'RETURNED_TO_SUPPLIER' THEN -m.quantity * ii.unit_price
+                                ELSE 0 END), 0) AS cost
+            FROM product p
+            LEFT JOIN stock_movement m ON m.product_id = p.id
+            LEFT JOIN invoice_item ii ON ii.id = m.invoice_item_id
+            &quot;&quot;&quot;;
+
+    private static final String PRODUCT_PROFIT_GROUP = &quot;&quot;&quot;
+            GROUP BY p.id, p.name, p.sku, p.deleted_at
+            ORDER BY p.id
+            &quot;&quot;&quot;;
+
+    /** Outstanding value per invoice, netting out quantities already returned. */
+    private static final String OUTSTANDING_SUBQUERY = &quot;&quot;&quot;
+            JOIN (SELECT ii.invoice_id, SUM((ii.quantity - ii.returned_qty) * ii.unit_price) AS outstanding
+                  FROM invoice_item ii GROUP BY ii.invoice_id) t ON t.invoice_id = i.id
+            &quot;&quot;&quot;;
+
+    private final JdbcClient jdbcClient;
+
+<span class="fc" id="L57">    private static final RowMapper&lt;ProductProfitReport&gt; PRODUCT_PROFIT_MAPPER = (rs, rowNum) -&gt; {</span>
+<span class="fc" id="L58">        BigDecimal revenue = rs.getBigDecimal(&quot;revenue&quot;);</span>
+<span class="fc" id="L59">        BigDecimal cost = rs.getBigDecimal(&quot;cost&quot;);</span>
+<span class="fc" id="L60">        return new ProductProfitReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;), rs.getString(&quot;sku&quot;),</span>
+<span class="fc" id="L61">                rs.getBoolean(&quot;deleted&quot;), revenue, cost, revenue.subtract(cost));</span>
+    };
+
+<span class="fc" id="L64">    private static final RowMapper&lt;InvoiceDueSummary&gt; DUE_SOON_MAPPER = (rs, rowNum) -&gt; new InvoiceDueSummary(</span>
+<span class="fc" id="L65">            rs.getLong(&quot;id&quot;), rs.getString(&quot;invoice_type&quot;), counterparty(rs.getString(&quot;counterparty&quot;)),</span>
+<span class="fc" id="L66">            rs.getObject(&quot;due_date&quot;, LocalDate.class), rs.getBigDecimal(&quot;outstanding&quot;), null);</span>
+
+<span class="fc" id="L68">    private static final RowMapper&lt;InvoiceDueSummary&gt; OVERDUE_MAPPER = (rs, rowNum) -&gt; new InvoiceDueSummary(</span>
+<span class="fc" id="L69">            rs.getLong(&quot;id&quot;), rs.getString(&quot;invoice_type&quot;), counterparty(rs.getString(&quot;counterparty&quot;)),</span>
+<span class="fc" id="L70">            rs.getObject(&quot;due_date&quot;, LocalDate.class), rs.getBigDecimal(&quot;outstanding&quot;),</span>
+<span class="fc" id="L71">            rs.getLong(&quot;days_overdue&quot;));</span>
+
+    /** An invoice naming neither supplier nor customer is an anonymous cash sale. */
+    private static String counterparty(String name) {
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        return name == null ? CASH_SALE : name;</span>
+    }
+
+    /**
+     * Returns gross profit for every product, including soft-deleted ones.
+     *
+     * @return one row per product, ordered by product ID
+     */
+    public List&lt;ProductProfitReport&gt; profitPerProduct() {
+<span class="fc" id="L84">        return jdbcClient.sql(PRODUCT_PROFIT_SELECT + PRODUCT_PROFIT_GROUP).query(PRODUCT_PROFIT_MAPPER).list();</span>
+    }
+
+    /**
+     * Returns gross profit for one product.
+     *
+     * @param productId product identifier
+     * @return the product's profit row, or empty if no such product exists
+     */
+    public Optional&lt;ProductProfitReport&gt; profitForProduct(long productId) {
+<span class="fc" id="L94">        return jdbcClient.sql(PRODUCT_PROFIT_SELECT + &quot;WHERE p.id = :id\n&quot; + PRODUCT_PROFIT_GROUP)</span>
+<span class="fc" id="L95">                .param(&quot;id&quot;, productId)</span>
+<span class="fc" id="L96">                .query(PRODUCT_PROFIT_MAPPER)</span>
+<span class="fc" id="L97">                .optional();</span>
+    }
+
+    /**
+     * Returns gross profit attributed to each supplier across the products it has supplied.
+     *
+     * @return one row per supplier that has supplied at least one product, ordered by supplier ID
+     */
+    public List&lt;SupplierProfitReport&gt; profitPerSupplier() {
+        // A product purchased from several suppliers counts fully for each of them - documented
+        // simplification (gross profit model, no per-supplier cost allocation).
+<span class="fc" id="L108">        String sql = &quot;&quot;&quot;</span>
+                WITH product_profit AS (
+                  SELECT p.id,
+                    COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.sold_price
+                                      WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.sold_price
+                                      ELSE 0 END), 0) AS revenue,
+                    COALESCE(SUM(CASE WHEN m.reason IN ('PURCHASE','NEW_PRODUCT') THEN m.quantity * m.unit_cost
+                                      WHEN m.reason = 'RETURNED_TO_SUPPLIER' THEN -m.quantity * ii.unit_price
+                                      ELSE 0 END), 0) AS cost
+                  FROM product p
+                  LEFT JOIN stock_movement m ON m.product_id = p.id
+                  LEFT JOIN invoice_item ii ON ii.id = m.invoice_item_id
+                  GROUP BY p.id
+                ), supplier_products AS (
+                  SELECT DISTINCT i.supplier_id, ii.product_id
+                  FROM invoice i JOIN invoice_item ii ON ii.invoice_id = i.id
+                  WHERE i.invoice_type = 'PURCHASE'
+                )
+                SELECT s.id, s.name, COALESCE(SUM(pp.revenue),0) AS revenue, COALESCE(SUM(pp.cost),0) AS cost
+                FROM supplier s
+                JOIN supplier_products sp ON sp.supplier_id = s.id
+                JOIN product_profit pp ON pp.id = sp.product_id
+                GROUP BY s.id, s.name
+                ORDER BY s.id
+                &quot;&quot;&quot;;
+<span class="fc" id="L133">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; {</span>
+<span class="fc" id="L134">            BigDecimal revenue = rs.getBigDecimal(&quot;revenue&quot;);</span>
+<span class="fc" id="L135">            BigDecimal cost = rs.getBigDecimal(&quot;cost&quot;);</span>
+<span class="fc" id="L136">            return new SupplierProfitReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;), revenue, cost,</span>
+<span class="fc" id="L137">                    revenue.subtract(cost));</span>
+<span class="fc" id="L138">        }).list();</span>
+    }
+
+    /**
+     * Returns what each live product has sold and what it still holds.
+     *
+     * @return one row per live product, ordered by product ID
+     */
+    public List&lt;StockStatusReport&gt; stockStatus() {
+        // Current-state report: soft-deleted products are EXCLUDED (their stock is not operational).
+<span class="fc" id="L148">        String sql = &quot;&quot;&quot;</span>
+                SELECT p.id, p.name, p.sku,
+                  COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity
+                                    WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity
+                                    ELSE 0 END), 0) AS sold_units,
+                  COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.sold_price
+                                    WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.sold_price
+                                    ELSE 0 END), 0) AS sold_revenue,
+                  p.quantity AS in_stock_units,
+                  p.quantity * p.purchase_price AS in_stock_value
+                FROM product p
+                LEFT JOIN stock_movement m ON m.product_id = p.id
+                WHERE p.deleted_at IS NULL
+                GROUP BY p.id, p.name, p.sku, p.quantity, p.purchase_price
+                ORDER BY p.id
+                &quot;&quot;&quot;;
+<span class="fc" id="L164">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new StockStatusReport(rs.getLong(&quot;id&quot;),</span>
+<span class="fc" id="L165">                rs.getString(&quot;name&quot;), rs.getString(&quot;sku&quot;), rs.getInt(&quot;sold_units&quot;),</span>
+<span class="fc" id="L166">                rs.getBigDecimal(&quot;sold_revenue&quot;), rs.getInt(&quot;in_stock_units&quot;),</span>
+<span class="fc" id="L167">                rs.getBigDecimal(&quot;in_stock_value&quot;))).list();</span>
+    }
+
+    /**
+     * Returns units written off as lost or destroyed, valued at each product's current purchase price.
+     *
+     * @return one row per product with at least one loss movement, ordered by product ID
+     */
+    public List&lt;LossReport&gt; lossReport() {
+        // Loss lines are valued at the product's CURRENT purchase price: pooled stock has no per-unit
+        // cost, so this is a documented approximation consistent with the gross profit model.
+<span class="fc" id="L178">        String sql = &quot;&quot;&quot;</span>
+                SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,
+                  COALESCE(SUM(CASE WHEN m.reason = 'LOST' THEN m.quantity ELSE 0 END), 0) AS lost_units,
+                  COALESCE(SUM(CASE WHEN m.reason = 'DESTROYED' THEN m.quantity ELSE 0 END), 0) AS destroyed_units,
+                  SUM(m.quantity) * p.purchase_price AS loss_value
+                FROM product p
+                JOIN stock_movement m ON m.product_id = p.id AND m.reason IN ('LOST','DESTROYED')
+                GROUP BY p.id, p.name, p.sku, p.deleted_at, p.purchase_price
+                ORDER BY p.id
+                &quot;&quot;&quot;;
+<span class="fc" id="L188">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new LossReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;),</span>
+<span class="fc" id="L189">                rs.getString(&quot;sku&quot;), rs.getBoolean(&quot;deleted&quot;), rs.getInt(&quot;lost_units&quot;),</span>
+<span class="fc" id="L190">                rs.getInt(&quot;destroyed_units&quot;), rs.getBigDecimal(&quot;loss_value&quot;))).list();</span>
+    }
+
+    /**
+     * Returns unpaid invoices grouped by due date and invoice type.
+     *
+     * @return one bucket per due date and type, ordered by due date
+     */
+    public List&lt;DueDateBucket&gt; dueDateBuckets() {
+        // Unpaid, live invoices only; FULLY_RETURNED is excluded because nothing is owed on it.
+        // Outstanding value nets out returned quantities.
+<span class="fc" id="L201">        String sql = &quot;&quot;&quot;</span>
+                SELECT i.due_date, i.invoice_type, COUNT(*) AS invoice_count,
+                  COALESCE(SUM(t.outstanding), 0) AS total_value
+                FROM invoice i
+                &quot;&quot;&quot;
+                + OUTSTANDING_SUBQUERY
+                + &quot;&quot;&quot;
+                WHERE i.paid_at IS NULL AND i.deleted_at IS NULL AND i.status &lt;&gt; 'FULLY_RETURNED'
+                GROUP BY i.due_date, i.invoice_type
+                ORDER BY i.due_date
+                &quot;&quot;&quot;;
+<span class="fc" id="L212">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new DueDateBucket(</span>
+<span class="fc" id="L213">                rs.getObject(&quot;due_date&quot;, LocalDate.class), rs.getString(&quot;invoice_type&quot;),</span>
+<span class="fc" id="L214">                rs.getLong(&quot;invoice_count&quot;), rs.getBigDecimal(&quot;total_value&quot;))).list();</span>
+    }
+
+    /**
+     * Returns unpaid invoices falling due within the given window.
+     *
+     * @param days size of the window in days from today
+     * @return the matching invoices, ordered by due date
+     */
+    public List&lt;InvoiceDueSummary&gt; dueSoon(int days) {
+<span class="fc" id="L224">        String sql = &quot;&quot;&quot;</span>
+                SELECT i.id, i.invoice_type, COALESCE(s.name, c.name) AS counterparty, i.due_date, t.outstanding
+                FROM invoice i
+                LEFT JOIN supplier s ON s.id = i.supplier_id
+                LEFT JOIN customer c ON c.id = i.customer_id
+                &quot;&quot;&quot;
+                + OUTSTANDING_SUBQUERY
+                + &quot;&quot;&quot;
+                WHERE i.paid_at IS NULL AND i.deleted_at IS NULL AND i.status &lt;&gt; 'FULLY_RETURNED'
+                  AND i.due_date &lt;= CURRENT_DATE + :days
+                ORDER BY i.due_date
+                &quot;&quot;&quot;;
+<span class="fc" id="L236">        return jdbcClient.sql(sql).param(&quot;days&quot;, days).query(DUE_SOON_MAPPER).list();</span>
+    }
+
+    /**
+     * Returns invoices that are booked, unpaid and past their due date.
+     *
+     * @return the overdue invoices with how many days each is late, ordered by due date
+     */
+    public List&lt;InvoiceDueSummary&gt; overdue() {
+        // The derived overdue predicate: booked (CLOSED), unpaid, past due. Never stored.
+<span class="fc" id="L246">        String sql = &quot;&quot;&quot;</span>
+                SELECT i.id, i.invoice_type, COALESCE(s.name, c.name) AS counterparty, i.due_date, t.outstanding,
+                  (CURRENT_DATE - i.due_date) AS days_overdue
+                FROM invoice i
+                LEFT JOIN supplier s ON s.id = i.supplier_id
+                LEFT JOIN customer c ON c.id = i.customer_id
+                &quot;&quot;&quot;
+                + OUTSTANDING_SUBQUERY
+                + &quot;&quot;&quot;
+                WHERE i.status = 'CLOSED' AND i.paid_at IS NULL AND i.deleted_at IS NULL
+                  AND i.due_date &lt; CURRENT_DATE
+                ORDER BY i.due_date
+                &quot;&quot;&quot;;
+<span class="fc" id="L259">        return jdbcClient.sql(sql).query(OVERDUE_MAPPER).list();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

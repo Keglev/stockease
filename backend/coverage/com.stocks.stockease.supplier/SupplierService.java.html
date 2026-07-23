@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SupplierService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.supplier</a> &gt; <span class="el_source">SupplierService.java</span></div><h1>SupplierService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.supplier;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.stocks.stockease.supplier.internal.SupplierRepository;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Supplier module's public API for querying and mutating suppliers.
+ * Other modules depend on this service rather than reaching into the module's repository.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class SupplierService {
+
+    private final SupplierRepository supplierRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    /**
+     * Finds a supplier by its ID.
+     *
+     * @param id supplier identifier
+     * @return the supplier, or empty if none exists with that ID
+     */
+    public Optional&lt;Supplier&gt; findById(long id) {
+<span class="fc" id="L34">        return supplierRepository.findById(id);</span>
+    }
+
+    /**
+     * Returns every live supplier.
+     *
+     * @return list of all suppliers that have not been soft-deleted
+     */
+    public List&lt;Supplier&gt; findAll() {
+<span class="fc" id="L43">        return supplierRepository.findAll();</span>
+    }
+
+    /**
+     * Creates and persists a new supplier.
+     *
+     * @param name supplier display name; must not be blank
+     * @param address supplier postal address; must not be blank
+     * @return the persisted supplier including its generated ID
+     * @throws IllegalArgumentException if name or address is missing or blank
+     */
+    @Transactional
+    public Supplier create(String name, String address) {
+<span class="fc" id="L56">        requireNameAndAddress(name, address);</span>
+<span class="fc" id="L57">        Supplier supplier = new Supplier();</span>
+<span class="fc" id="L58">        supplier.setName(name);</span>
+<span class="fc" id="L59">        supplier.setAddress(address);</span>
+<span class="fc" id="L60">        return supplierRepository.save(supplier);</span>
+    }
+
+    /**
+     * Updates a supplier's name and address.
+     *
+     * @param id supplier identifier
+     * @param name new display name; must not be blank
+     * @param address new postal address; must not be blank
+     * @return the updated supplier
+     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws IllegalArgumentException if name or address is missing or blank
+     */
+    @Transactional
+    public Supplier update(long id, String name, String address) {
+<span class="fc" id="L75">        Supplier supplier = supplierRepository.findById(id)</span>
+<span class="fc" id="L76">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L77">        requireNameAndAddress(name, address);</span>
+<span class="fc" id="L78">        supplier.setName(name);</span>
+<span class="fc" id="L79">        supplier.setAddress(address);</span>
+<span class="fc" id="L80">        return supplierRepository.save(supplier);</span>
+    }
+
+    /**
+     * Soft-deletes a supplier, unless a listener vetoes the deletion.
+     *
+     * @param id supplier identifier
+     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws IllegalStateException if a listener vetoes the deletion, for instance because open
+     *         invoices still reference the supplier
+     */
+    @Transactional
+    public void deleteById(long id) {
+<span class="fc" id="L93">        Supplier supplier = supplierRepository.findById(id)</span>
+<span class="fc" id="L94">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+        // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
+        // rolls back the transaction
+<span class="fc" id="L97">        eventPublisher.publishEvent(new SupplierDeletedEvent(supplier.getId(), supplier.getName()));</span>
+<span class="fc" id="L98">        supplierRepository.delete(supplier);</span>
+<span class="fc" id="L99">    }</span>
+
+    /** Rejects a missing or blank name or address with the shared message. */
+    private static void requireNameAndAddress(String name, String address) {
+<span class="pc bpc" id="L103" title="2 of 8 branches missed.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
+<span class="fc" id="L104">            throw new IllegalArgumentException(&quot;Supplier name and address are required.&quot;);</span>
+        }
+<span class="fc" id="L106">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
