@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockEase · Documentation</title>
+
+  <!-- Set the theme before paint to avoid a flash; matches the doc templates. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="home" id="main">
+    <section class="hero">
+      <h1>Modular inventory management with Spring Boot</h1>
+      <p>A modular inventory management system - products, suppliers, customers, invoices and stock movements in one Spring Boot application.</p>
+      <div class="stack">
+        <span>Java · Spring Boot</span>
+        <span>PostgreSQL</span>
+        <span>Docker</span>
+        <span>GitHub Actions</span>
+      </div>
+    </section>
+
+    <div class="card-grid">
+      <a class="card" href="/stockease/backend/architecture/overview.html">
+        <span class="card-tag">Backend</span>
+        <h2>Architecture</h2>
+        <p>System design, layering, security, and deployment of the Spring Boot service.</p>
+      </a>
+
+      <a class="card" href="/stockease/backend/api/index.html">
+        <span class="card-tag">Backend</span>
+        <h2>API reference</h2>
+        <p>REST API with OAuth2 authentication, endpoints, and schema definitions.</p>
+      </a>
+
+      <a class="card" href="/stockease/backend/coverage/index.html">
+        <span class="card-tag">Backend</span>
+        <h2>Coverage</h2>
+        <p>JaCoCo coverage report and test metrics for the backend services.</p>
+      </a>
+
+      <!-- Frontend section returns with the Angular scaffold -->
+      <!--
+      <a class="card" href="/stockease/frontend/architecture/overview.html">
+        <span class="card-tag">Frontend</span>
+        <h2>Architecture</h2>
+        <p>SPA shell, routing, state management, and design-system overview.</p>
+      </a>
+
+      <a class="card" href="/stockease/frontend/api/index.html">
+        <span class="card-tag">Frontend</span>
+        <h2>API reference</h2>
+        <p>API-layer and React context reference generated from the TypeScript sources.</p>
+      </a>
+
+      <a class="card" href="/stockease/frontend/coverage/index.html">
+        <span class="card-tag">Frontend</span>
+        <h2>Coverage</h2>
+        <p>Vitest coverage report for React components and utilities.</p>
+      </a>
+      -->
+    </div>
+  </main>
+
+  <footer class="footer">
+    StockEase · <a href="https://github.com/Keglev/stockease">GitHub repository</a>
+  </footer>
+
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>

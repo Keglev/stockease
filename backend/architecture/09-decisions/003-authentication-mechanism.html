@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backend ·
+09-decisions/003-authentication-mechanism · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-003-authentication-mechanism">ADR 003:
+        Authentication Mechanism</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>:
+        October 31, 2025</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>StockEase exposes REST APIs consumed by a separate React
+        frontend deployed on a different domain. Users must authenticate
+        and the system must enforce role-based access control (ADMIN vs
+        USER). A decision was needed on the authentication mechanism:
+        stateless JWT tokens or server-side sessions.</p>
+        <p>Requirements: support cross-origin requests (frontend on
+        Vercel, backend on Koyeb), no shared session store between
+        container replicas, work with auto-scaling, support role-based
+        authorization per request, and be implementable with Spring
+        Security.</p>
+        <hr />
+        <h2 id="decision">Decision</h2>
+        <p><strong>JWT (JSON Web Token) bearer tokens</strong> with
+        HS256 signing, 10-hour expiry, role claim embedded in the
+        payload, and validation via <code>JwtFilter</code> in the Spring
+        Security filter chain.</p>
+        <hr />
+        <h2 id="rationale">Rationale</h2>
+        <h3 id="stateless-design-fits-the-deployment-model">Stateless
+        design fits the deployment model</h3>
+        <p>Koyeb scales the backend horizontally to 1–2 replicas.
+        Session-based authentication requires a shared session store
+        (Redis or sticky sessions) so that any replica can validate a
+        session. JWT is self-contained — each token carries the user
+        identity and role, so any replica can validate it independently
+        using the shared secret. No external session store is
+        needed.</p>
+        <h3 id="cross-origin-compatibility">Cross-origin
+        compatibility</h3>
+        <p>The frontend (Vercel) and backend (Koyeb) are on different
+        domains. Browser session cookies do not work reliably across
+        origins without complex configuration. JWT tokens sent as
+        <code>Authorization: Bearer</code> headers work cleanly across
+        origins with standard CORS configuration.</p>
+        <h3 id="role-authorization-per-request">Role authorization per
+        request</h3>
+        <p>The JWT payload includes a <code>role</code> claim.
+        <code>JwtFilter</code> validates the token and calls
+        <code>CustomUserDetailsService.loadUserByUsername()</code> on
+        every authenticated request to populate the Spring
+        <code>SecurityContext</code>, enabling
+        <code>@PreAuthorize("hasRole('ADMIN')")</code> enforcement
+        without an extra authorization lookup.</p>
+        <h3 id="bcrypt-for-password-storage">BCrypt for password
+        storage</h3>
+        <p>Passwords are hashed with BCrypt (cost factor 10) before
+        storage. The JWT secret and database credentials are injected
+        via environment variables — never hardcoded.</p>
+        <hr />
+        <h2 id="alternatives-considered">Alternatives Considered</h2>
+        <p><strong>Session-based authentication with Spring
+        Session</strong> — rejected. Requires a shared session store
+        (Redis) to support multiple replicas, adds infrastructure
+        complexity, and does not work well across origins without sticky
+        sessions or cookie configuration.</p>
+        <p><strong>OAuth2 / OpenID Connect (e.g. Auth0,
+        Keycloak)</strong> — rejected for current scope. Adds
+        significant infrastructure and configuration overhead that is
+        not justified for a single-tenant inventory application with two
+        roles. Can be adopted later if multi-tenancy or social login is
+        needed.</p>
+        <p><strong>HTTP Basic Authentication</strong> — rejected.
+        Requires sending credentials on every request, no expiry
+        mechanism, no role embedding, not suitable for SPA clients.</p>
+        <hr />
+        <h2 id="consequences">Consequences</h2>
+        <p><strong>Positive</strong>: stateless design supports
+        horizontal scaling with no shared state, cross-origin requests
+        work cleanly, no session store infrastructure needed. Role
+        authorization is enforced per request via the
+        <code>SecurityContext</code> populated by
+        <code>JwtFilter</code>.</p>
+        <p><strong>Negative</strong>: tokens cannot be invalidated
+        before expiry without a token blacklist (not currently
+        implemented). If the JWT secret is compromised, all tokens are
+        compromised until the secret is rotated and all users
+        re-authenticate. Token expiry (24 hours) is a fixed trade-off
+        between security and user convenience.</p>
+        <hr />
+        <h2 id="security-constraints">Security Constraints</h2>
+        <ul>
+        <li>JWT secret must be 32+ characters, randomly generated,
+        stored only as an environment variable</li>
+        <li>Tokens expire after 10 hours (hardcoded
+        <code>EXPIRATION_TIME = 36000000</code> ms)</li>
+        <li>HTTPS enforced in production — tokens must never travel over
+        plain HTTP</li>
+        <li>Failed authentication returns 401 with a generic message —
+        no information about whether the username or password was
+        wrong</li>
+        </ul>
+        <hr />
+        <h2 id="implementation-status">Implementation Status</h2>
+        <ul>
+        <li><code>JwtUtil</code> — token generation and validation —
+        implemented</li>
+        <li><code>JwtFilter</code> — filter chain integration —
+        implemented</li>
+        <li><code>SecurityConfig</code> — stateless session policy,
+        public/protected endpoint rules — implemented</li>
+        <li>BCrypt password encoding (cost factor 10) — implemented</li>
+        <li>Environment variable injection for JWT secret —
+        implemented</li>
+        </ul>
+        <hr />
+        <p><a href="./index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-003-authentication-mechanism"
+      id="toc-adr-003-authentication-mechanism">ADR 003: Authentication
+      Mechanism</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#rationale" id="toc-rationale">Rationale</a>
+      <ul>
+      <li><a href="#stateless-design-fits-the-deployment-model"
+      id="toc-stateless-design-fits-the-deployment-model">Stateless
+      design fits the deployment model</a></li>
+      <li><a href="#cross-origin-compatibility"
+      id="toc-cross-origin-compatibility">Cross-origin
+      compatibility</a></li>
+      <li><a href="#role-authorization-per-request"
+      id="toc-role-authorization-per-request">Role authorization per
+      request</a></li>
+      <li><a href="#bcrypt-for-password-storage"
+      id="toc-bcrypt-for-password-storage">BCrypt for password
+      storage</a></li>
+      </ul></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives Considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      <li><a href="#security-constraints"
+      id="toc-security-constraints">Security Constraints</a></li>
+      <li><a href="#implementation-status"
+      id="toc-implementation-status">Implementation Status</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>

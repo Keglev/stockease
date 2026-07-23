@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backend ·
+09-decisions/001-database-choice · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-001-database-choice">ADR 001: Database Choice</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>:
+        October 31, 2025</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>StockEase requires a persistent data store for product
+        inventory and user management. Three decisions were needed:
+        production database technology, testing database technology, and
+        schema migration tooling.</p>
+        <p>Requirements: ACID compliance, support for complex queries,
+        fast test execution, no external dependencies during local
+        development, and reproducible deployments.</p>
+        <hr />
+        <h2 id="decision">Decision</h2>
+        <ul>
+        <li><strong>Production</strong>: PostgreSQL 17.5 managed on Neon
+        (serverless)</li>
+        <li><strong>Testing</strong>: H2 in-memory</li>
+        <li><strong>Migrations</strong>: Flyway 11.7.2</li>
+        </ul>
+        <hr />
+        <h2 id="rationale">Rationale</h2>
+        <h3 id="postgresql-for-production">PostgreSQL for
+        Production</h3>
+        <p>ACID compliance guarantees data integrity for inventory
+        operations where partial writes would corrupt stock levels.
+        PostgreSQL provides full-text search, JSONB, window functions,
+        and CTEs for future analytics needs. Neon delivers serverless
+        PostgreSQL with automatic backups, connection pooling, and
+        pay-as-you-go pricing suitable for the current scale.</p>
+        <h3 id="h2-for-testing">H2 for Testing</h3>
+        <p>In-memory execution means no network latency or external
+        service dependency — the full test suite completes in under one
+        minute. Each test gets a fresh database, ensuring isolation and
+        deterministic results. Developers need no local PostgreSQL
+        installation.</p>
+        <h3 id="flyway-for-migrations">Flyway for Migrations</h3>
+        <p>Migration files (SQL and Java) are version-controlled in Git
+        alongside application code. Flyway validates and executes
+        migrations in order on startup, making deployments reproducible
+        across H2 (tests) and PostgreSQL (production). It prevents
+        duplicate execution and fails fast if a migration is
+        inconsistent. Java migrations (<code>BaseJavaMigration</code>)
+        are used when SQL alone is insufficient — for example,
+        <code>V3__seed_data.java</code> uses
+        <code>BCryptPasswordEncoder</code> to hash passwords at
+        migration time.</p>
+        <hr />
+        <h2 id="alternatives-considered">Alternatives Considered</h2>
+        <p><strong>MySQL</strong> — rejected. PostgreSQL has superior
+        JSON support, more advanced query features (window functions,
+        CTEs), and better horizontal scaling options.</p>
+        <p><strong>MongoDB</strong> — rejected. Product inventory data
+        is highly structured and relational. ACID compliance is
+        non-negotiable for stock level accuracy.</p>
+        <p><strong>PostgreSQL for both production and tests</strong> —
+        rejected. Requires running a database service during development
+        and in CI, slows test execution, and adds cost for test
+        runs.</p>
+        <p><strong>Liquibase instead of Flyway</strong> — rejected.
+        Flyway is simpler: SQL and Java migrations, smaller learning
+        curve, no YAML/JSON overhead.</p>
+        <hr />
+        <h2 id="consequences">Consequences</h2>
+        <p><strong>Positive</strong>: fast test suite (&lt; 1 minute for
+        65+ tests), production-grade consistency, developers can work
+        without external dependencies, schema changes are
+        version-controlled and reproducible.</p>
+        <p><strong>Negative</strong>: H2 does not support all PostgreSQL
+        features, so SQL migrations must use database-agnostic syntax.
+        Any PostgreSQL-specific syntax in application queries must be
+        tested carefully against H2 compatibility. Java migrations
+        bypass this constraint by using JDBC directly, but they require
+        Spring dependencies (e.g. <code>BCryptPasswordEncoder</code>) to
+        be on the classpath at migration time.</p>
+        <hr />
+        <h2 id="implementation-status">Implementation Status</h2>
+        <ul>
+        <li>PostgreSQL 17.5 on Neon — production</li>
+        <li>H2 2.3.232 — test suite</li>
+        <li>Flyway 11.7.2 — all environments</li>
+        <li>HikariCP connection pooling — configured</li>
+        </ul>
+        <hr />
+        <h2 id="infrastructure-change">2025 Infrastructure Change</h2>
+        <p>The project migrated from Render (both hosting and managed
+        PostgreSQL) to <strong>Koyeb</strong> (container hosting) and
+        <strong>Neon PostgreSQL</strong> (managed serverless database).
+        The primary driver was cost reduction: Render’s free tier was
+        deprecated, whereas Koyeb and Neon both offer free tiers with
+        pay-as-you-go pricing that scales with actual usage.</p>
+        <p>Additional technical benefits:</p>
+        <ul>
+        <li><strong>Neon</strong> provides serverless PostgreSQL with
+        autoscaling compute, automatic daily backups, point-in-time
+        restore, and built-in connection pooling — without a dedicated
+        always-on server. The datasource configuration changed from a
+        <code>DB_HOST</code>/<code>DB_PORT</code>/<code>DB_NAME</code>
+        triplet to a single <code>SPRING_DATASOURCE_URL</code>
+        environment variable containing the full JDBC connection string
+        (SSL enforced).</li>
+        <li><strong>Koyeb</strong> supports Docker-based deployment with
+        native HTTP/2, health-probe integration, auto-scaling replicas,
+        and a built-in HTTPS edge — equivalent production infrastructure
+        at lower cost.</li>
+        </ul>
+        <h3
+        id="why-flyway-with-a-java-migration-instead-of-pure-sql">Why
+        Flyway with a Java Migration Instead of Pure SQL</h3>
+        <p><code>V3__seed_data.java</code> extends
+        <code>BaseJavaMigration</code> rather than using a plain SQL
+        file for one unavoidable reason: <strong>passwords must be
+        BCrypt-hashed at migration time</strong>. A SQL migration can
+        only insert static string literals — invoking
+        <code>BCryptPasswordEncoder</code> requires running application
+        code from the Spring Security classpath, which only a Java
+        migration can do.</p>
+        <p>The Java migration also achieves cross-database idempotence
+        without relying on PostgreSQL-specific syntax: rather than
+        <code>INSERT ... ON CONFLICT DO NOTHING</code> (which H2 does
+        not support), the migration queries for row existence first and
+        skips the insert if the row is already present. This keeps the
+        test environment (H2 in-memory, <code>create-drop</code>) fully
+        compatible with the same migration code.</p>
+        <p>Alternatives considered and rejected:</p>
+        <table>
+        <colgroup>
+        <col style="width: 50%" />
+        <col style="width: 50%" />
+        </colgroup>
+        <thead>
+        <tr class="header">
+        <th>Alternative</th>
+        <th>Why Rejected</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="odd">
+        <td>Pure SQL <code>INSERT</code> with plaintext passwords</td>
+        <td>Passwords would be stored unhashed — security violation</td>
+        </tr>
+        <tr class="even">
+        <td>PostgreSQL <code>ON CONFLICT DO NOTHING</code></td>
+        <td>Not supported by H2; breaks test environment
+        compatibility</td>
+        </tr>
+        <tr class="odd">
+        <td>Application-level <code>DataSeeder.java</code> only</td>
+        <td>Only runs in non-production profiles; cannot seed production
+        on first deploy</td>
+        </tr>
+        <tr class="even">
+        <td>Liquibase custom task</td>
+        <td>Adds Liquibase as a second migration tool alongside Flyway —
+        rejected when Flyway was chosen over Liquibase</td>
+        </tr>
+        </tbody>
+        </table>
+        <hr />
+        <p><a href="./index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-001-database-choice"
+      id="toc-adr-001-database-choice">ADR 001: Database Choice</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#rationale" id="toc-rationale">Rationale</a>
+      <ul>
+      <li><a href="#postgresql-for-production"
+      id="toc-postgresql-for-production">PostgreSQL for
+      Production</a></li>
+      <li><a href="#h2-for-testing" id="toc-h2-for-testing">H2 for
+      Testing</a></li>
+      <li><a href="#flyway-for-migrations"
+      id="toc-flyway-for-migrations">Flyway for Migrations</a></li>
+      </ul></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives Considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      <li><a href="#implementation-status"
+      id="toc-implementation-status">Implementation Status</a></li>
+      <li><a href="#infrastructure-change"
+      id="toc-infrastructure-change">2025 Infrastructure Change</a>
+      <ul>
+      <li><a
+      href="#why-flyway-with-a-java-migration-instead-of-pure-sql"
+      id="toc-why-flyway-with-a-java-migration-instead-of-pure-sql">Why
+      Flyway with a Java Migration Instead of Pure SQL</a></li>
+      </ul></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>

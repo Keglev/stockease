@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backend ·
+09-decisions/006-audit-and-profit-model · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-006-audit-and-profit-model">ADR 006: Audit and
+        Profit Model</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        23, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>Two reporting needs share a design space: tracking who
+        changed product data, and computing merchandise profit. Both
+        must stay cheap to reason about and must not leak accounting
+        concerns into the merchandise domain.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Custom change log over a framework.</strong> Product
+        changes (name, price, deletion, restore) publish an event; a
+        synchronous listener writes the change log entry in the same
+        transaction as the change - the log row commits or rolls back
+        with the change it describes. Quantity is deliberately never
+        change-logged: the movement stream is the quantity history.</p>
+        <p><strong>Gross profit from stored snapshots.</strong> Profit
+        is sold price minus unit cost, both taken from the immutable
+        snapshots on movements. Prices vary per invoice by design; a
+        customer return reduces revenue at the original selling price.
+        No FIFO or AVCO cost flow is computed - stock is pooled and the
+        snapshot model already answers the profit question this system
+        asks.</p>
+        <p><strong>Documented approximation for losses.</strong> LOST
+        and DESTROYED movements carry no snapshot; loss reports value
+        them at the product’s current purchase price, an explicitly
+        documented approximation.</p>
+        <p><strong>Reporting is a CQRS-lite read model.</strong> The
+        report module answers aggregations with native SQL, returns its
+        own records, and depends on no other module’s Java types -
+        invoice types travel as strings. It is read-only and owns no
+        state; this is the one documented exemption from going through
+        the domain model. Native SQL naturally bypasses the soft-delete
+        restriction: a feature for historical reports, which must
+        include deleted products, and an explicit filter where a report
+        is current-state.</p>
+        <p><strong>Supplier profit double-counts shared products by
+        design.</strong> A product supplied by two suppliers contributes
+        its whole profit to each supplier’s row - the report answers
+        “how profitable is the merchandise associated with this
+        supplier”, not a partition of total profit. This behavior is
+        pinned by a test whose interlocking figures fail under any
+        per-supplier allocation.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Hibernate Envers.</strong> Rejected: full-entity
+        revision snapshots and framework coupling, where the requirement
+        is a selective, human-readable log of a few fields with
+        same-transaction semantics.</p>
+        <p><strong>FIFO/AVCO costing.</strong> Rejected: cost-flow
+        accounting belongs to bookkeeping (ADR 011); the snapshot model
+        is sufficient for merchandise gross profit.</p>
+        <p><strong>Reporting through domain services.</strong> Rejected:
+        aggregations would drag cross-module Java dependencies and
+        entity graphs into what are single SQL statements; the read
+        model keeps module boundaries clean.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li>Audit rows can never exist without their change, nor vice
+        versa.</li>
+        <li>Reports are single native queries, cheap to verify against
+        the schema.</li>
+        <li>The double-counting design decision is test-pinned: an
+        accidental “fix” fails the suite rather than silently changing
+        report semantics.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-006-audit-and-profit-model"
+      id="toc-adr-006-audit-and-profit-model">ADR 006: Audit and Profit
+      Model</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>

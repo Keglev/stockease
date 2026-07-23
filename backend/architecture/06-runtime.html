@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backend · 06-runtime · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="runtime-view">Runtime View</h1>
+        <p>Three flows carry the interesting behavior: closing an
+        invoice (the stock-booking act), creating one, and returning
+        against one. Everything else is conventional CRUD.</p>
+        <h2 id="close-books-stock-the-flagship-flow">Close-books-stock:
+        the flagship flow</h2>
+        <p>Closing is where the event inversion (ADR 007) and the
+        booking model (ADR 004) meet. The whole flow is one
+        transaction.</p>
+        <div class="mermaid">
+        sequenceDiagram
+          actor Admin
+          participant IS as InvoiceService
+          participant EV as ApplicationEventPublisher
+          participant L as InvoiceClosedListener<br/>(movement.internal)
+          participant MS as StockMovementService
+          participant PS as ProductService
+
+          Admin->>IS: close(invoiceId)
+          IS->>IS: guard: status must be OPEN
+          IS->>IS: stamp closedBy, closedAt
+          IS->>EV: publish InvoiceClosedEvent
+          EV->>L: deliver (synchronous, same thread,<br/>same transaction)
+          loop one movement per invoice item
+            L->>MS: recordMovement(item, derived reason)
+            MS->>MS: validate against the reason matrix
+            MS->>PS: adjustQuantity (pessimistic lock)
+            alt sale exceeds stock
+              PS-->>MS: reject negative stock
+              MS-->>Admin: exception - ENTIRE close rolls back,<br/>invoice stays OPEN, no movement persists
+            end
+          end
+          IS-->>Admin: invoice CLOSED, stock booked
+        </div>
+        <p>Properties worth naming:</p>
+        <ul>
+        <li><strong>All or nothing.</strong> The listener runs inside
+        the closing transaction. A sale item exceeding stock does not
+        produce a partially booked invoice - the close itself fails and
+        the invoice remains OPEN and correctable.</li>
+        <li><strong>Derived snapshots.</strong> Each booked movement
+        copies its price from its invoice item at this moment; nothing
+        is caller-supplied.</li>
+        <li><strong>Acyclic modules.</strong> The invoice module knows
+        nothing of movement types; it publishes one event and is done.
+        The listener lives in the movement module’s internals.</li>
+        </ul>
+        <p>This rollback behavior is not aspirational: it is exercised
+        by an integration test through the real event pipeline - a
+        standing requirement for every event-listener change in this
+        codebase.</p>
+        <h2 id="creating-an-invoice">Creating an invoice</h2>
+        <p><code>InvoiceService.createInvoice</code> persists the
+        invoice and all items atomically: counterparty rules per type
+        (purchase: supplier required, no customer; sale: no supplier,
+        customer optional), line validation, and no stock effect - an
+        OPEN invoice is a recorded draft. Wrong drafts are deleted and
+        recreated; there are no edit methods (ADR 004).</p>
+        <h2 id="returns">Returns</h2>
+        <p><code>InvoiceService.registerReturn</code> accepts returns
+        only against CLOSED invoices. In one transaction it validates
+        the cap (returned plus requested never exceeds the item
+        quantity), records the return movement with the price derived
+        from the original item, and - when the last outstanding unit
+        comes back - flips the invoice to its terminal FULLY_RETURNED
+        state. A full return is the de facto cancellation of a closed
+        invoice.</p>
+        <h2 id="demo-reset-planned">Demo reset (planned)</h2>
+        <p>The demo-mode phase rebuilds demo data through these same
+        flows - creating and closing invoices so that stock arrives the
+        way it does in production, rather than by inserting rows. Demo
+        accounts are exempt from reset.</p>
+        <p><a href="index.html">Back to Architecture Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#runtime-view" id="toc-runtime-view">Runtime View</a>
+      <ul>
+      <li><a href="#close-books-stock-the-flagship-flow"
+      id="toc-close-books-stock-the-flagship-flow">Close-books-stock:
+      the flagship flow</a></li>
+      <li><a href="#creating-an-invoice"
+      id="toc-creating-an-invoice">Creating an invoice</a></li>
+      <li><a href="#returns" id="toc-returns">Returns</a></li>
+      <li><a href="#demo-reset-planned" id="toc-demo-reset-planned">Demo
+      reset (planned)</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>

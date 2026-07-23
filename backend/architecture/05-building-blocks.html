@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backend · 05-building-blocks · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="building-blocks">Building Blocks</h1>
+        <p>StockEase is one deployable divided into nine domain modules
+        plus a global infrastructure package, organized
+        package-per-module under Spring Modulith. The boundaries below
+        are not conventions - they are verified by a test on every build
+        and violating them fails CI.</p>
+        <h2 id="module-map">Module map</h2>
+        <p>Solid arrows are service calls in the natural dependency
+        direction; dashed arrows are application events, used exactly
+        where a call would create a cycle or where a module must react
+        to another without being known to it.</p>
+        <div class="mermaid">
+        graph TD
+          subgraph Domain modules
+            product[product]
+            supplier[supplier]
+            customer[customer]
+            invoice[invoice]
+            movement[movement]
+            audit[audit]
+            report[report]
+          end
+          security[security]
+          shared[shared]
+
+          movement -->|item lookups| invoice
+          movement -->|adjustQuantity| product
+          invoice -.->|InvoiceClosedEvent| movement
+          product -.->|ProductChangedEvent| audit
+          product -.->|ProductChangedEvent DELETED| invoice
+          supplier -.->|SupplierDeletedEvent| invoice
+        </div>
+        <p>Reading the two directions between invoice and movement: the
+        movement module calls invoice’s exposed services to validate and
+        resolve invoice items - the natural direction. When an invoice
+        closes, the dependency must run the other way; a call would
+        close the cycle, so the invoice module publishes
+        <code>InvoiceClosedEvent</code> and a synchronous listener in
+        the movement module books the stock inside the same transaction.
+        The module graph stays acyclic and the atomicity story stays
+        intact (ADR 007).</p>
+        <p>The two dashed arrows into invoice are deletion vetoes: the
+        invoice module listens for supplier and product deletion events
+        and throws inside the deleting transaction while open invoices
+        pin the party - the deletion rolls back whole. Veto listeners
+        are pinned to run before all other listeners.</p>
+        <p>Not on the diagram: the <code>report</code> module has no
+        arrows because it has no Java dependencies at all - it answers
+        aggregations with native SQL and returns its own records (ADR
+        006). Web layers across modules use <code>shared</code>
+        (response envelopes, global exception handling) and resolve
+        their principal through the <code>security</code> module’s user
+        service.</p>
+        <h2 id="module-anatomy">Module anatomy</h2>
+        <p>Every module follows the same three-level layout:</p>
+        <table>
+        <colgroup>
+        <col style="width: 26%" />
+        <col style="width: 58%" />
+        <col style="width: 15%" />
+        </colgroup>
+        <thead>
+        <tr class="header">
+        <th>Location</th>
+        <th>Contents</th>
+        <th>Visibility</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="odd">
+        <td>module root</td>
+        <td>entities, enums, services, commands, events</td>
+        <td>exposed API</td>
+        </tr>
+        <tr class="even">
+        <td><code>&lt;module&gt;.internal</code></td>
+        <td>repositories</td>
+        <td>module-private</td>
+        </tr>
+        <tr class="odd">
+        <td><code>&lt;module&gt;.web</code></td>
+        <td>controllers, single-consumer DTOs</td>
+        <td>module-private</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>Only what sits in the module root is callable from other
+        modules. Repositories are never reachable across a boundary:
+        cross-module data access happens through exposed services or
+        events, never through another module’s persistence layer.</p>
+        <h2 id="enforcement">Enforcement</h2>
+        <p><code>ModularityTest</code> verifies the module structure on
+        every build without booting a Spring context. One lesson is part
+        of the record: Spring Modulith treats the base package as an
+        implicit root module and verifies it too - there is no
+        exemption-by-location anywhere in the tree. Dead infrastructure
+        discovered by this rule was deleted rather than relocated.</p>
+        <h2 id="the-config-package">The config package</h2>
+        <p><code>config</code> holds global infrastructure (Flyway
+        ordering, JPA auditing) and is deliberately not a domain module:
+        it has no domain API, publishes no events, and exists so that
+        framework wiring never hides inside a domain package.</p>
+        <h2 id="module-reference">Module reference</h2>
+        <p>Per-module detail - exposed API, internals, events published
+        and consumed, invariants - lives in the <a
+        href="05-domains/index.html">Domain modules</a> pages.</p>
+        <p><a href="index.html">Back to Architecture Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#building-blocks" id="toc-building-blocks">Building
+      Blocks</a>
+      <ul>
+      <li><a href="#module-map" id="toc-module-map">Module map</a></li>
+      <li><a href="#module-anatomy" id="toc-module-anatomy">Module
+      anatomy</a></li>
+      <li><a href="#enforcement"
+      id="toc-enforcement">Enforcement</a></li>
+      <li><a href="#the-config-package" id="toc-the-config-package">The
+      config package</a></li>
+      <li><a href="#module-reference" id="toc-module-reference">Module
+      reference</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
