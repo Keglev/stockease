@@ -1,0 +1,116 @@
+# =============================================================================
+# StockEase - Deploy Docs to GitHub Pages
+#
+# Triggered after docs-pipeline.yml succeeds.
+# Consumes: docs-site artifact (built by docs-pipeline.yml).
+# Publishes static documentation to the gh-pages branch.
+# =============================================================================
+name: Deploy Docs to GitHub Pages
+
+on:
+  workflow_run:
+    workflows: ["Docs Pipeline"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+# Prevent concurrent gh-pages pushes — parallel runs cause branch merge conflicts
+concurrency:
+  group: ghpages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-ghpages:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Download docs-site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-site
+          path: docs-site
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync docs-site into gh-pages root
+        run: |
+          set -euo pipefail
+
+          # Preserve existing coverage reports when the current build did not regenerate
+          # them. Backend coverage is absent on docs-only pushes; frontend coverage is
+          # absent on every build not triggered by frontend CI — without this backup the
+          # wipe below would delete it on each backend or docs deploy.
+          for SIDE in backend frontend; do
+            if [ ! -d "docs-site/$SIDE/coverage" ] && [ -d "$SIDE/coverage" ]; then
+              echo "$SIDE coverage not in current build — preserving existing report"
+              mkdir -p "/tmp/coverage-backup/$SIDE"
+              cp -R "$SIDE/coverage" "/tmp/coverage-backup/$SIDE/"
+            fi
+          done
+
+          # Clear gh-pages content, keeping only .git and .github metadata
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name '.git' ! -name '.github' ! -name 'docs-site' \
+            -exec rm -rf {} +
+
+          if [ -d "docs-site" ] && [ "$(ls -A docs-site)" ]; then
+            cp -R docs-site/* .
+            rm -rf docs-site
+          else
+            echo "::error::docs-site artifact is empty or missing"
+            exit 1
+          fi
+
+          for SIDE in backend frontend; do
+            if [ -d "/tmp/coverage-backup/$SIDE/coverage" ]; then
+              mkdir -p "$SIDE/coverage"
+              cp -R "/tmp/coverage-backup/$SIDE/coverage/." "$SIDE/coverage/"
+              echo "Restored existing $SIDE coverage"
+            fi
+          done
+          rm -rf /tmp/coverage-backup
+
+      - name: Inject back-to-docs link into coverage report
+        run: |
+          set -euo pipefail
+          for COV in backend/coverage/index.html frontend/coverage/index.html; do
+            if [ -f "$COV" ]; then
+              if grep -q 'id="back-to-docs"' "$COV"; then
+                echo "$COV: back-to-docs link already present — skipping"
+              else
+                sed -i 's|<body[^>]*>|&<a id="back-to-docs" href="/stockease/" style="position:fixed;top:8px;right:12px;z-index:9999;font:14px sans-serif;padding:6px 12px;background:#2563eb;color:#fff;text-decoration:none;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.2);">\&larr; Back to docs</a>|' "$COV"
+                echo "$COV: back-to-docs link injected"
+              fi
+            fi
+          done
+
+      - name: Commit and push to gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git status --porcelain | grep .; then
+            git add .
+            git commit -m "docs: publish from workflow_run ${{ github.event.workflow_run.id }}"
+            git push origin gh-pages
+            echo "Documentation published"
+          else
+            echo "No changes to publish"
+          fi
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## GitHub Pages Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** \`gh-pages\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Site:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY

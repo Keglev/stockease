@@ -50,6 +50,14 @@ jobs:
         working-directory: ${{ env.PROJECT_DIR }}
         run: ./mvnw -B -ntp test
 
+      - name: Upload coverage report
+        # Consumed by the docs pipeline via workflow_run; PR runs publish nothing.
+        if: env.RUN_TESTS == 'true' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-html-${{ github.sha }}
+          path: ${{ env.PROJECT_DIR }}/target/site/jacoco
+
       - name: Build and verify
         working-directory: ${{ env.PROJECT_DIR }}
         # -DskipTests: tests already ran in previous step
