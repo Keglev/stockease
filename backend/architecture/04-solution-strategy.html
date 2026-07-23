@@ -97,15 +97,45 @@
     <main class="content" id="main">
       <article class="doc-body">
         <h1 id="solution-strategy">Solution Strategy</h1>
-        <blockquote>
-        <p><strong>Status: skeleton.</strong> This section is planned
-        and will be filled in a dedicated documentation PR. The outline
-        below fixes its intended scope.</p>
-        </blockquote>
-        <p>Planned content: - Modular monolith over microservices;
-        in-process events over a message broker - Invoice lifecycle as
-        the stock-booking mechanism - CQRS-lite read model for reporting
-        - Flyway as the single schema owner; Hibernate as validator</p>
+        <p>Four strategic choices shape everything else. Each has a
+        decision record; this page is the map.</p>
+        <h2 id="one-deployable-real-boundaries">One deployable, real
+        boundaries</h2>
+        <p>The domain decomposes cleanly, but the flows that matter
+        share transactions and one database. So: a modular monolith
+        under Spring Modulith, with boundaries enforced by a build-time
+        test rather than by network calls (ADR 007). Microservices were
+        rejected for cost without driver; the module seams keep that
+        door open.</p>
+        <h2 id="the-invoice-lifecycle-books-the-stock">The invoice
+        lifecycle books the stock</h2>
+        <p>Stock never changes by direct edit. Invoices are drafted
+        OPEN, and closing them is the booking act: an event, a
+        synchronous listener, one movement per item, all in the closing
+        transaction (ADR 004). Everything downstream - derived price
+        snapshots, append-only corrections via returns, the single
+        locked quantity path - follows from making the document
+        lifecycle the only source of stock truth.</p>
+        <h2 id="reads-that-need-no-model-go-around-it">Reads that need
+        no model go around it</h2>
+        <p>Aggregation questions (profit, stock status, due dates) are
+        answered by a CQRS-lite read model: native SQL, own result
+        records, zero Java dependencies on other modules (ADR 006). The
+        write model stays clean of reporting concerns; the one exemption
+        from the domain model is bounded and documented.</p>
+        <h2 id="the-schema-has-one-owner">The schema has one owner</h2>
+        <p>Flyway owns the schema down to exact DDL - numeric precision,
+        partial unique indexes - and Hibernate only validates. Applied
+        migrations are immutable. This is what makes database-level
+        guarantees (CHECK constraints, partial indexes) first-class
+        design tools rather than generator artifacts.</p>
+        <h2 id="what-was-deliberately-left-out">What was deliberately
+        left out</h2>
+        <p>Restraint decisions are part of the strategy: no message
+        broker (ADR 007), no lot tracking (ADR 010), no financial
+        calculations beyond the payment fact (ADR 011). Each names its
+        adoption triggers - the boundary between “not built” and “not
+        considered”.</p>
         <p><a href="index.html">Back to Architecture Index</a></p>
       </article>
     </main>
@@ -114,7 +144,24 @@
       <p class="toc-title">On this page</p>
       <ul>
       <li><a href="#solution-strategy"
-      id="toc-solution-strategy">Solution Strategy</a></li>
+      id="toc-solution-strategy">Solution Strategy</a>
+      <ul>
+      <li><a href="#one-deployable-real-boundaries"
+      id="toc-one-deployable-real-boundaries">One deployable, real
+      boundaries</a></li>
+      <li><a href="#the-invoice-lifecycle-books-the-stock"
+      id="toc-the-invoice-lifecycle-books-the-stock">The invoice
+      lifecycle books the stock</a></li>
+      <li><a href="#reads-that-need-no-model-go-around-it"
+      id="toc-reads-that-need-no-model-go-around-it">Reads that need no
+      model go around it</a></li>
+      <li><a href="#the-schema-has-one-owner"
+      id="toc-the-schema-has-one-owner">The schema has one
+      owner</a></li>
+      <li><a href="#what-was-deliberately-left-out"
+      id="toc-what-was-deliberately-left-out">What was deliberately left
+      out</a></li>
+      </ul></li>
       </ul>
     </nav>
       </div>
