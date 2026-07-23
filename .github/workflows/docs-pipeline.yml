@@ -1,86 +1,70 @@
 name: Docs Pipeline
 
 on:
+  workflow_run:
+    workflows: ["Deploy Backend"]
+    types: [completed]
   push:
     branches: [main]
     paths:
       - 'docs/**'
-      - 'pom.xml'
-      - 'src/test/**'
-      - '.github/workflows/docs-pipeline.yml'
-      - '.github/scripts/templates/**'
       - '.github/scripts/docs/**'
+      - '.github/workflows/docs-pipeline.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  actions: read
+
+concurrency:
+  group: docs-pipeline-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-publish-docs:
+  build-docs:
+    # workflow_run fires for every "Deploy Backend" run, including PR runs -
+    # only successful non-PR runs may rebuild the published site.
+    if: >
+      (github.event_name == 'workflow_run'
+        && github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.event != 'pull_request')
+      || github.event_name != 'workflow_run'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history; shallow clone omits git metadata used by docs scripts
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Detect project root
-        run: bash .github/scripts/shared/detect-maven-project.sh
+      # Fresh coverage only exists when backend CI just ran; on docs-only
+      # pushes the deploy workflow preserves the previously published report.
+      - name: Download JaCoCo artifact
+        if: github.event_name == 'workflow_run'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-html-${{ github.event.workflow_run.head_sha }}
+          path: target/site/jacoco
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24'
 
-      - name: Generate API docs
-        run: bash .github/scripts/docs/generate-api-docs.sh
+      - name: Install ReDoc CLI
+        run: npm install -g @redocly/cli
 
       - name: Install Pandoc
-        run: sudo apt-get update -q && sudo apt-get install -y -q pandoc
+        run: sudo apt-get update -qq && sudo apt-get install -y pandoc
 
-      - name: Generate architecture docs
-        run: |
-          bash .github/scripts/docs/generate-docs.sh \
-            --source architecture \
-            --output architecture \
-            --toc-depth 3 \
-            --lua-filter  # converts mermaid fences and .md links for mermaid.js
-
-      - name: Generate additional docs
-        run: |
-          bash .github/scripts/docs/generate-docs.sh \
-            --source . \
-            --output generated \
-            --exclude "*/architecture/*" \
-            --exclude "*/templates/*" \
-            --lua-filter
-
-      - name: Fix directory links
-        run: bash .github/scripts/docs/fix-directory-links.sh
-
-      - name: Copy site templates
-        run: |
-          cp "$PROJECT_DIR/.github/scripts/templates/index.html" "$PROJECT_DIR/target/docs/index.html"
-          mkdir -p "$PROJECT_DIR/target/docs/templates"
-          cp "$PROJECT_DIR/.github/scripts/templates/base.css"      "$PROJECT_DIR/target/docs/templates/"
-          cp "$PROJECT_DIR/.github/scripts/templates/component.css" "$PROJECT_DIR/target/docs/templates/"
-          cp "$PROJECT_DIR/.github/scripts/templates/hub.css"       "$PROJECT_DIR/target/docs/templates/"
-
-      - name: Verify output
-        run: |
-          OUTPUT_DIR="$PROJECT_DIR/target/docs"
-          echo "Files: $(find "$OUTPUT_DIR" -type f | wc -l)"
-          du -sh "$OUTPUT_DIR"
+      - name: Build docs site
+        run: bash .github/scripts/docs/build-docs.sh .
 
       - name: Upload docs-site artifact
         uses: actions/upload-artifact@v4
         with:
           name: docs-site
-          path: ${{ env.PROJECT_DIR }}/target/docs
-
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ env.PROJECT_DIR }}/target/docs
+          path: target/docs
