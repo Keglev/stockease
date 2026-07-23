@@ -1,8 +1,21 @@
 # Module: security
 
-JWT authentication, users and roles, and the user lookup service consumed by controllers for principal resolution.
+Authentication and the user model: JWT-based stateless auth, plus the web
+security infrastructure (filter chain, CORS, entry point).
 
-> **Status: skeleton.** Full module documentation lands with the
-> section-fill PRs.
+## Exposed API
+
+`User`, `UserService` (findByUsername - controllers resolve their principal
+here), and the security configuration classes wiring the JWT filter chain.
+
+## Internals
+
+`UserRepository`.
+
+## Invariants
+
+- Stateless JWT (ADR 003); passwords BCrypt-hashed.
+- Controllers never touch the user repository - principal resolution goes
+  through the exposed service.
 
 [Back to Domain Modules](index.md)
