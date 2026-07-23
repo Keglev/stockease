@@ -97,17 +97,71 @@
     <main class="content" id="main">
       <article class="doc-body">
         <h1 id="cross-cutting-concepts">Cross-cutting Concepts</h1>
-        <blockquote>
-        <p><strong>Status: skeleton.</strong> This section is planned
-        and will be filled in a dedicated documentation PR. The outline
-        below fixes its intended scope.</p>
-        </blockquote>
-        <p>Planned content: - In-process application events: synchronous
-        listeners, deletion vetoes with listener ordering - Pessimistic
-        locking on the quantity write path - Derived-versus-stored
-        doctrine: snapshots stored, totals and overdue derived - Soft
-        delete with partial unique indexes; restore semantics - Schema
-        validation only (ddl-auto=validate)</p>
+        <p>Recurring mechanisms that hold across modules. Each concept
+        links to the decision record carrying its full rationale.</p>
+        <h2 id="in-process-application-events">In-process application
+        events</h2>
+        <p>Cross-module reactions use Spring application events, not a
+        broker (ADR 007). Two flavors, chosen per flow:</p>
+        <ul>
+        <li><strong>Synchronous listeners</strong> where atomicity
+        matters: the invoice-close listener books stock inside the
+        closing transaction; the audit listener writes the change log in
+        the same transaction as the change. Commit or roll back together
+        - never half.</li>
+        <li><strong>Deletion vetoes</strong>: listeners pinned to run
+        before all other listeners that throw inside the deleting
+        transaction while open invoices pin a supplier or product.
+        Spring defines no default order between listeners on one event,
+        so veto precedence is explicit, making fail-fast
+        deterministic.</li>
+        </ul>
+        <p>Event payloads never import the consuming module’s types;
+        shared vocabulary is mirrored by name and mapped on arrival -
+        the price of an acyclic module graph.</p>
+        <p>A standing rule follows from a found bug: every
+        event-listener change ships an integration test through the real
+        event pipeline. Mocked publishers are structurally blind to
+        persistence-context effects (a deleted-then-referenced entity
+        broke only in the real pipeline).</p>
+        <h2 id="the-single-quantity-write-path">The single quantity
+        write path</h2>
+        <p>All stock changes flow through one service method holding a
+        PESSIMISTIC_WRITE lock; negative stock is rejected with no
+        override (ADR 004). Concurrent closes serialize on the product
+        row instead of racing.</p>
+        <h2 id="derived-versus-stored">Derived versus stored</h2>
+        <p>Snapshots are stored; conclusions are derived. Movements
+        store the price copied from their invoice item at booking time -
+        a historical fact that must survive later price changes. Totals,
+        overdue status and profit are computed at read time - deriving
+        them keeps them incapable of going stale (ADR 011).</p>
+        <h2 id="soft-delete-partial-indexes-restore">Soft delete,
+        partial indexes, restore</h2>
+        <p>Deletable master data (product, supplier, customer) stamps
+        <code>deletedAt</code> rather than removing rows, keeping
+        history joinable. Uniqueness (product name, SKU, customer email)
+        is enforced by partial indexes over live rows only, so deleted
+        names are reusable. Restore revives a soft-deleted product
+        unless a live row took its name or SKU meanwhile. Implementation
+        detail with a lesson behind it: soft delete stamps-and-saves
+        instead of calling a repository delete, so same-transaction
+        listeners keep a valid entity reference.</p>
+        <p>Native-SQL reporting bypasses the soft-delete restriction by
+        nature - a feature for historical reports, an explicit filter
+        for current-state ones (ADR 006).</p>
+        <h2 id="schema-ownership">Schema ownership</h2>
+        <p>Flyway owns the schema; Hibernate only validates
+        (<code>ddl-auto=validate</code>). Applied migrations are
+        immutable - new concerns get new migration files. Exact DDL
+        (numeric precision, partial unique indexes) exists only because
+        no generator ever rewrites it.</p>
+        <h2 id="comment-and-test-discipline">Comment and test
+        discipline</h2>
+        <p>Class documentation states purpose in two sentences; inline
+        comments explain why, never what. Tests are named
+        method_state_expected and capped in length; committed fixtures
+        use globally unique names so suites compose.</p>
         <p><a href="index.html">Back to Architecture Index</a></p>
       </article>
     </main>
@@ -116,7 +170,25 @@
       <p class="toc-title">On this page</p>
       <ul>
       <li><a href="#cross-cutting-concepts"
-      id="toc-cross-cutting-concepts">Cross-cutting Concepts</a></li>
+      id="toc-cross-cutting-concepts">Cross-cutting Concepts</a>
+      <ul>
+      <li><a href="#in-process-application-events"
+      id="toc-in-process-application-events">In-process application
+      events</a></li>
+      <li><a href="#the-single-quantity-write-path"
+      id="toc-the-single-quantity-write-path">The single quantity write
+      path</a></li>
+      <li><a href="#derived-versus-stored"
+      id="toc-derived-versus-stored">Derived versus stored</a></li>
+      <li><a href="#soft-delete-partial-indexes-restore"
+      id="toc-soft-delete-partial-indexes-restore">Soft delete, partial
+      indexes, restore</a></li>
+      <li><a href="#schema-ownership" id="toc-schema-ownership">Schema
+      ownership</a></li>
+      <li><a href="#comment-and-test-discipline"
+      id="toc-comment-and-test-discipline">Comment and test
+      discipline</a></li>
+      </ul></li>
       </ul>
     </nav>
       </div>
