@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["Backend Tests"]
     types: [completed]
+    branches: [main]
   push:
     branches: [main]
     paths:
@@ -22,7 +23,8 @@ concurrency:
 
 jobs:
   build-docs:
-    # workflow_run fires for every "Deploy Backend" run, including PR runs -
+    # The branches filter keeps PR-branch runs of "Backend Tests" from
+    # creating stub runs here; this condition remains as defense in depth -
     # only successful non-PR runs may rebuild the published site.
     if: >
       (github.event_name == 'workflow_run'

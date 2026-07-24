@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["Backend Tests"]
     types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -15,7 +16,8 @@ permissions:
 
 jobs:
   deploy:
-    # workflow_run fires for every "Backend Tests" run, including PR runs -
+    # The branches filter keeps PR-branch runs of "Backend Tests" from
+    # creating stub runs here; this condition remains as defense in depth -
     # only successful non-PR runs may deploy. workflow_dispatch is the
     # manual emergency-deploy path and always runs.
     if: >
