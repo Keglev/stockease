@@ -97,15 +97,33 @@
     <main class="content" id="main">
       <article class="doc-body">
         <h1 id="quality-requirements">Quality Requirements</h1>
-        <blockquote>
-        <p><strong>Status: skeleton.</strong> This section is planned
-        and will be filled in a dedicated documentation PR. The outline
-        below fixes its intended scope.</p>
-        </blockquote>
-        <p>Planned content: - Boundary verification on every build -
-        Test suite: unit, integration through the real event pipeline,
-        Testcontainers against PostgreSQL - Coverage reporting via
-        JaCoCo</p>
+        <p>Quality goals from the <a href="index.html">introduction</a>,
+        made concrete and checkable.</p>
+        <h2 id="correctness-of-stock-arithmetic">Correctness of stock
+        arithmetic</h2>
+        <p>Every quantity change flows through one pessimistically
+        locked method that rejects negative stock. The rollback story -
+        a sale exceeding stock fails its entire close - is exercised by
+        an integration test through the real event pipeline, not
+        asserted on mocks.</p>
+        <h2 id="verifiable-boundaries">Verifiable boundaries</h2>
+        <p>Module dependencies fail the build when violated: the
+        Modulith boundary test runs in every CI execution, without
+        booting a context.</p>
+        <h2 id="test-discipline">Test discipline</h2>
+        <p>The suite (265+ tests) combines unit tests, Spring slices,
+        and integration tests against real PostgreSQL via
+        Testcontainers. Beyond coverage, the suite uses deliberate
+        test-quality techniques: controlled pairs and sensitivity
+        experiments (prove the test CAN fail), detachment proofs for
+        persistence effects, randomized execution order for committed
+        fixtures, and interlocking scenario numbers that make wrong
+        implementations fail multiple assertions at once. Design
+        decisions at risk of well-meaning “fixes” - like the reporting
+        double-count (ADR 006) - are pinned by tests whose failure
+        message says so.</p>
+        <p>Coverage is published with every backend build - see the
+        coverage report linked in the sidebar.</p>
         <p><a href="index.html">Back to Architecture Index</a></p>
       </article>
     </main>
@@ -114,7 +132,16 @@
       <p class="toc-title">On this page</p>
       <ul>
       <li><a href="#quality-requirements"
-      id="toc-quality-requirements">Quality Requirements</a></li>
+      id="toc-quality-requirements">Quality Requirements</a>
+      <ul>
+      <li><a href="#correctness-of-stock-arithmetic"
+      id="toc-correctness-of-stock-arithmetic">Correctness of stock
+      arithmetic</a></li>
+      <li><a href="#verifiable-boundaries"
+      id="toc-verifiable-boundaries">Verifiable boundaries</a></li>
+      <li><a href="#test-discipline" id="toc-test-discipline">Test
+      discipline</a></li>
+      </ul></li>
       </ul>
     </nav>
       </div>

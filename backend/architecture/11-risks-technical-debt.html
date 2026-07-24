@@ -97,15 +97,31 @@
     <main class="content" id="main">
       <article class="doc-body">
         <h1 id="risks-and-technical-debt">Risks and Technical Debt</h1>
-        <blockquote>
-        <p><strong>Status: skeleton.</strong> This section is planned
-        and will be filled in a dedicated documentation PR. The outline
-        below fixes its intended scope.</p>
-        </blockquote>
-        <p>Planned content: - Old credentials in git history: rewrite
-        outcome unconfirmed - Legacy React frontend frozen until the
-        Angular rewrite lands - Named triggers that would justify
-        heavier infrastructure (broker, lot tracking)</p>
+        <p>Tracked debt, with its planned resolution. Small enough to be
+        honest about.</p>
+        <ul>
+        <li><strong>Pre-service-layer web code.</strong> The oldest
+        controllers and exception handling predate the service-layer
+        rework and are scheduled for rewrite with the API-layer phase -
+        including replacing generic exceptions with domain exceptions
+        and moving the last derived getter off an entity into a
+        DTO.</li>
+        <li><strong>Legacy frontend.</strong> The separate React app is
+        frozen (known cosmetic defects included) until the Angular
+        frontend in this repository replaces it; it is retired, not
+        migrated.</li>
+        <li><strong>Single environment.</strong> No staging tier
+        (section 02): pull requests get the full test gate, but
+        production is the first runtime environment every merge meets.
+        Accepted for a system whose data is disposable.</li>
+        <li><strong>Credential lifecycle.</strong> A password-expiry
+        feature for user accounts is designed but unscheduled; demo
+        accounts must be exempt so the public demo cannot lock itself
+        out.</li>
+        <li><strong>Scaling triggers, not scaling debt.</strong> The
+        monolith is a decision with named exit conditions (ADR 007, ADR
+        010) - reaching them is growth, not debt.</li>
+        </ul>
         <p><a href="index.html">Back to Architecture Index</a></p>
       </article>
     </main>

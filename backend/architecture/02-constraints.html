@@ -97,16 +97,32 @@
     <main class="content" id="main">
       <article class="doc-body">
         <h1 id="constraints">Constraints</h1>
-        <blockquote>
-        <p><strong>Status: skeleton.</strong> This section is planned
-        and will be filled in a dedicated documentation PR. The outline
-        below fixes its intended scope.</p>
-        </blockquote>
-        <p>Planned content: - Free-tier hosting (Koyeb, Supabase) and
-        what it rules out - Solo development; review via pull requests
-        against a protected main branch - Portfolio purpose: German
-        market conventions shape the domain - LTS-only runtime policy
-        (Java 21, Spring Boot 4.x)</p>
+        <h2 id="technical">Technical</h2>
+        <ul>
+        <li><strong>Free-tier hosting.</strong> Koyeb and Supabase free
+        tiers rule out a staging environment, a message broker, and
+        anything requiring always-on background infrastructure. These
+        are accepted trade-offs, not oversights - restraint decisions
+        reference this constraint (ADR 007, ADR 010).</li>
+        <li><strong>LTS-only runtime.</strong> Java 21 and Spring Boot
+        4.x; major upgrades run as their own isolated change, never
+        combined with other work.</li>
+        <li><strong>Schema immutability.</strong> Applied Flyway
+        migrations are never edited; every schema concern is a new
+        migration.</li>
+        </ul>
+        <h2 id="organizational">Organizational</h2>
+        <ul>
+        <li><strong>Solo development with review discipline.</strong> No
+        direct pushes to main: every change is a pull request against a
+        protected branch with a required test gate, reviewed before
+        squash-merging - main’s history reads as a sequence of complete,
+        explained changes.</li>
+        <li><strong>Portfolio purpose.</strong> The system targets
+        technical reviewers in the German market; domain conventions
+        (every sale invoiced, German document vocabulary) are
+        requirements, not flavor.</li>
+        </ul>
         <p><a href="index.html">Back to Architecture Index</a></p>
       </article>
     </main>
@@ -114,8 +130,12 @@
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#constraints"
-      id="toc-constraints">Constraints</a></li>
+      <li><a href="#constraints" id="toc-constraints">Constraints</a>
+      <ul>
+      <li><a href="#technical" id="toc-technical">Technical</a></li>
+      <li><a href="#organizational"
+      id="toc-organizational">Organizational</a></li>
+      </ul></li>
       </ul>
     </nav>
       </div>

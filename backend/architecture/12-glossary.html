@@ -97,17 +97,69 @@
     <main class="content" id="main">
       <article class="doc-body">
         <h1 id="glossary">Glossary</h1>
-        <blockquote>
-        <p><strong>Status: skeleton.</strong> This section is planned
-        and will be filled in a dedicated documentation PR. The outline
-        below fixes its intended scope.</p>
-        </blockquote>
-        <p>Planned content: - Eingangsrechnung / Ausgangsrechnung
-        (purchase / sales invoice) - Barverkauf (anonymous cash sale) -
-        Chargenverwaltung (lot tracking - evaluated and rejected) -
-        Buchhaltung boundary (accounting concerns kept out of
-        merchandise scope) - Warenwirtschaft (merchandise
-        management)</p>
+        <p>German commercial terms are first-class in this domain - the
+        system models German business practice, and the vocabulary
+        appears in code, documents and decisions.</p>
+        <table>
+        <colgroup>
+        <col style="width: 20%" />
+        <col style="width: 80%" />
+        </colgroup>
+        <thead>
+        <tr class="header">
+        <th>Term</th>
+        <th>Meaning in this system</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="odd">
+        <td>Warenwirtschaft</td>
+        <td>Merchandise management - the system’s domain: goods,
+        documents and stock, distinct from accounting.</td>
+        </tr>
+        <tr class="even">
+        <td>Eingangsrechnung</td>
+        <td>Purchase invoice (type PURCHASE): supplier required, books
+        stock IN on close.</td>
+        </tr>
+        <tr class="odd">
+        <td>Ausgangsrechnung</td>
+        <td>Sales invoice (type SALE): every sale is invoiced, following
+        German practice; books stock OUT on close.</td>
+        </tr>
+        <tr class="even">
+        <td>Barverkauf</td>
+        <td>Anonymous cash sale - a sales invoice with no customer
+        attached.</td>
+        </tr>
+        <tr class="odd">
+        <td>Buchhaltung</td>
+        <td>Bookkeeping/accounting - the neighboring discipline
+        deliberately outside scope: payment is recorded as a fact,
+        financial arithmetic is never performed (ADR 011).</td>
+        </tr>
+        <tr class="even">
+        <td>Chargenverwaltung</td>
+        <td>Lot/batch tracking - evaluated and rejected (ADR 010); stock
+        is pooled.</td>
+        </tr>
+        <tr class="odd">
+        <td>Opening balance</td>
+        <td>The redefined NEW_PRODUCT movement: stock that predates any
+        invoice in the system, with a caller-supplied cost basis.</td>
+        </tr>
+        <tr class="even">
+        <td>Booking</td>
+        <td>The act of turning an invoice into stock movements - happens
+        exactly once, at close.</td>
+        </tr>
+        <tr class="odd">
+        <td>Read model</td>
+        <td>The reporting module’s bounded exemption from the domain
+        model: native SQL, own records, read-only (ADR 006).</td>
+        </tr>
+        </tbody>
+        </table>
         <p><a href="index.html">Back to Architecture Index</a></p>
       </article>
     </main>
