@@ -9,6 +9,7 @@ on:
       - 'docs/**'
       - '.gitignore'
       - 'README.md'
+      - 'frontend/**'
       - '.github/workflows/docs-pipeline.yml'
   pull_request:
     branches: [main]
