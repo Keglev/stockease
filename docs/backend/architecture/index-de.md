@@ -28,7 +28,3 @@ lesende Berichte.
 Ein Solo-Entwickler, der fuer technische Gutachter baut: Recruiter und
 Ingenieure, die Codequalitaet, Architekturbegruendung und
 Dokumentationspraxis fuer den deutschen Markt bewerten.
-
-> **Status: Skelett.** Die uebrigen arc42-Abschnitte sind Platzhalter und
-> werden abschnittsweise gefuellt; Entscheidungsinhalte stehen bereits im
-> [ADR-Index](09-decisions/index.md) (EN).
