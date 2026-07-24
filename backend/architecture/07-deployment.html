@@ -97,15 +97,57 @@
     <main class="content" id="main">
       <article class="doc-body">
         <h1 id="deployment-view">Deployment View</h1>
-        <blockquote>
-        <p><strong>Status: skeleton.</strong> This section is planned
-        and will be filled in a dedicated documentation PR. The outline
-        below fixes its intended scope.</p>
-        </blockquote>
-        <p>Planned content: - Koyeb (backend container), Supabase
-        (PostgreSQL), GitHub Pages (documentation) - CI workflows:
-        build-and-test gate, guarded deploy, docs pipeline - Docker
-        image strategy</p>
+        <p>Everything deploys from <code>main</code>; nothing deploys
+        from anywhere else. Merging is the release act.</p>
+        <div class="mermaid">
+        graph LR
+          GH[GitHub main] -->|push| BT[build-and-test<br/>full suite, JaCoCo]
+          BT -->|gate| DEP[deploy job]
+          DEP -->|API redeploy + health poll| KOYEB[Koyeb<br/>builds Dockerfile, runs container]
+          KOYEB --> DB[(Supabase<br/>PostgreSQL)]
+          BT -.->|coverage artifact| DOCS[Docs Pipeline]
+          GH -->|"push (docs/**)"| DOCS
+          DOCS -->|site artifact| PAGES[Deploy Docs<br/>GitHub Pages]
+        </div>
+        <h2 id="backend-delivery">Backend delivery</h2>
+        <p>One workflow, two jobs. <code>build-and-test</code> runs the
+        full suite (Testcontainers against real PostgreSQL) and uploads
+        the coverage report as an artifact; it is the required status
+        check on every pull request. The <code>deploy</code> job runs
+        only outside pull requests, gated on the tests: it triggers a
+        redeploy through the Koyeb API and polls until the service
+        reports healthy - CI does not build or push the image. Koyeb
+        builds the repository’s Dockerfile itself, so the deployed
+        artifact is always exactly what <code>main</code> describes.</p>
+        <p>A biweekly scheduled run rebuilds even without commits,
+        picking up patched base images.</p>
+        <h2 id="the-image">The image</h2>
+        <p>Multi-stage: a Maven/JDK stage builds the jar (dependency
+        layers cached separately from sources), a slim JRE stage runs it
+        as a non-root user with a fixed entrypoint. The image contains
+        the jar and nothing else - no sources, no docs, no build
+        tooling.</p>
+        <h2 id="documentation-delivery">Documentation delivery</h2>
+        <p>A separate pipeline, deliberately decoupled from production:
+        docs changes build and publish to GitHub Pages without touching
+        the backend, and backend runs feed fresh coverage into the next
+        docs build via artifact. The gh-pages branch is disposable build
+        output - the site is a pure function of <code>main</code> and
+        can be regenerated wholesale at any time.</p>
+        <h2 id="configuration-and-secrets">Configuration and
+        secrets</h2>
+        <p>Runtime configuration reaches the container as environment
+        variables. Koyeb’s model has two layers worth naming because
+        confusing them costs debugging time: the account-level secrets
+        store holds values; a service only sees a secret once it is
+        explicitly mapped into that service’s environment. Deploy
+        credentials (API key, service id) live in GitHub Actions secrets
+        and appear nowhere in the repository.</p>
+        <h2 id="environments">Environments</h2>
+        <p>There is one: production. Pull requests get the full test
+        gate but no deployment; there is no staging tier - a deliberate
+        free-tier constraint (section 02) accepted for a portfolio
+        system whose data is disposable.</p>
         <p><a href="index.html">Back to Architecture Index</a></p>
       </article>
     </main>
@@ -114,7 +156,19 @@
       <p class="toc-title">On this page</p>
       <ul>
       <li><a href="#deployment-view" id="toc-deployment-view">Deployment
-      View</a></li>
+      View</a>
+      <ul>
+      <li><a href="#backend-delivery" id="toc-backend-delivery">Backend
+      delivery</a></li>
+      <li><a href="#the-image" id="toc-the-image">The image</a></li>
+      <li><a href="#documentation-delivery"
+      id="toc-documentation-delivery">Documentation delivery</a></li>
+      <li><a href="#configuration-and-secrets"
+      id="toc-configuration-and-secrets">Configuration and
+      secrets</a></li>
+      <li><a href="#environments"
+      id="toc-environments">Environments</a></li>
+      </ul></li>
       </ul>
     </nav>
       </div>
