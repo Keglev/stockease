@@ -1,11 +1,22 @@
 # System Context
 
-> **Status: skeleton.** This section is planned and will be filled in a
-> dedicated documentation PR. The outline below fixes its intended scope.
+```mermaid
+graph LR
+  U[Admin / demo users] --> FE[Web frontend]
+  FE -->|REST + JWT| BE[StockEase backend]
+  BE --> DB[(PostgreSQL)]
+  BE -. explicitly out of scope .-> BH[Bookkeeping / Buchhaltung]
+```
 
-Planned content:
-- Users and roles: admin and demo users
-- Frontend as the only API consumer; no third-party system integrations
-- The accounting (Buchhaltung) boundary: what this system deliberately does not do
+The backend is the system boundary: a REST API consumed by exactly one
+client, the web frontend (currently the legacy React app; an Angular
+frontend inside this repository replaces it). Users authenticate with JWT;
+public demo accounts exercise the same paths as the admin.
+
+There are no third-party integrations - no payment providers, no external
+inventory feeds. The one neighboring system worth drawing is the one
+deliberately NOT integrated: bookkeeping. Payment is recorded as a fact,
+interest and penalties are displayed but never computed - where accounting
+begins, this system stops (ADR 011).
 
 [Back to Architecture Index](index.md)
