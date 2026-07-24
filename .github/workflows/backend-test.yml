@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.gitignore'
+      - 'README.md'
       - '.github/workflows/docs-pipeline.yml'
   pull_request:
     branches: [main]
