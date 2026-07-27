@@ -3,6 +3,7 @@ package com.stocks.stockease.shared.web;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -167,16 +168,24 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles {@link MethodArgumentNotValidException} from {@code @Valid} bean validation failures and returns a 400 Bad Request response with field-level errors.
+     * A field violating several constraints at once has its messages sorted and joined into one entry.
      *
      * @param ex the caught exception
      * @return 400 response with field errors map
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException ex) {
+        // grouped rather than collected into a map directly: one field can carry several violations, and
+        // a plain toMap has no merge function, so it would throw and cost the client the whole envelope.
+        // Sorting makes the joined value independent of the order constraints happen to be evaluated in.
         Map<String, String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
+                .collect(Collectors.groupingBy(FieldError::getField, TreeMap::new,
+                        Collectors.mapping(FieldError::getDefaultMessage,
+                                Collectors.collectingAndThen(Collectors.toList(), messages -> messages.stream()
+                                        .sorted()
+                                        .collect(Collectors.joining("; "))))));
         return ResponseEntity.badRequest()
                 .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors));
     }

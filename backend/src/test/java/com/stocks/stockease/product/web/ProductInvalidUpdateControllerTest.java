@@ -87,6 +87,25 @@ class ProductInvalidUpdateControllerTest {
 
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
+    void updateName_withMissingField_returns400(String username, String role) throws Exception {
+        when(productService.updateName(eq(1L), anyString(), any(User.class)))
+                .thenReturn(Objects.requireNonNull(product1));
+
+        // regression: a null name once violated two constraints at once, which broke the handler's
+        // error collection and cost the response its envelope entirely
+        mockMvc.perform(put("/api/products/1/name")
+                        .contentType(applicationJson())
+                        .with(userWithRole(username, role))
+                        .with(csrfToken())
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Validation failed for request parameters."))
+                .andExpect(jsonPath("$.data.name").exists());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updatePrice_withNegativeValue_returns400(String username, String role) throws Exception {
         when(productService.updatePrice(eq(1L), any(BigDecimal.class), any(User.class))).thenReturn(Objects.requireNonNull(product1));
 

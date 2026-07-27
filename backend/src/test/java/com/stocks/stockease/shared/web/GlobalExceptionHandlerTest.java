@@ -190,6 +190,23 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleValidationException_withTwoViolationsOnOneField_joinsMessagesInSortedOrder() {
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "product");
+        // added in reverse of the expected order, so passing proves sorting rather than insertion order
+        bindingResult.addError(new FieldError("product", "name", "must not be null"));
+        bindingResult.addError(new FieldError("product", "name", "must not be blank"));
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(anyParam(), bindingResult);
+
+        ResponseEntity<ApiResponse<Map<String, String>>> response = handler.handleValidationException(ex);
+        ApiResponse<Map<String, String>> body = Objects.requireNonNull(response.getBody());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo("Validation failed for request parameters.");
+        assertThat(body.getData()).containsEntry("name", "must not be blank; must not be null");
+    }
+
+    @Test
     void handleHttpMessageNotReadableException_withNullMessage_returnsDefaultMessage() {
         HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
         when(ex.getMessage()).thenReturn(null);
