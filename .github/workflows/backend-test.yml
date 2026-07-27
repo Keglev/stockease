@@ -14,6 +14,12 @@ on:
       - '.github/workflows/docs-pipeline.yml'
   pull_request:
     branches: [main]
+    # frontend/** is the ONLY legal entry here: frontend PRs get the
+    # required build-and-test check from frontend-test.yml. Ignoring
+    # anything else (docs/**, README) would leave those PRs with NO
+    # check named build-and-test and permanently blocked from merging.
+    paths-ignore:
+      - 'frontend/**'
   workflow_dispatch:
 
 concurrency:
