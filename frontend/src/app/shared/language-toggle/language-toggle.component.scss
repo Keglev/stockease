@@ -1,0 +1,15 @@
+.lang-toggle {
+  display: flex;
+  gap: 0.125rem;
+}
+
+.lang-button {
+  min-width: 3rem;
+
+  &.active {
+    // The active language must stay readable against the surface behind it.
+    background-color: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+    font-weight: 600;
+  }
+}

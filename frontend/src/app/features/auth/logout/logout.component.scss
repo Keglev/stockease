@@ -1,0 +1,28 @@
+.logout-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.logout-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.logout-content {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-card {
+  width: 100%;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.logout-message {
+  margin: 0 0 1rem;
+}

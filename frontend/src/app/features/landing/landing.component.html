@@ -1,0 +1,25 @@
+<div class="landing-page">
+  <header class="landing-header">
+    <app-language-toggle />
+  </header>
+
+  <main class="landing-hero">
+    <h1 class="landing-title">{{ 'landing.title' | translate }}</h1>
+    <p class="landing-description">{{ 'landing.description' | translate }}</p>
+
+    <!-- demo-credentials box: added when the public demo goes live -->
+
+    <div class="landing-actions">
+      <a matButton="filled" routerLink="/login">{{ 'landing.loginCta' | translate }}</a>
+    </div>
+
+    <nav class="landing-links">
+      <a matButton [href]="repositoryUrl" target="_blank" rel="noopener">
+        {{ 'landing.repository' | translate }}
+      </a>
+      <a matButton [href]="documentationUrl" target="_blank" rel="noopener">
+        {{ 'landing.documentation' | translate }}
+      </a>
+    </nav>
+  </main>
+</div>

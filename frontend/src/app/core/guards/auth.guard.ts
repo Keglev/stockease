@@ -10,10 +10,13 @@ export const authGuard: CanActivateFn = () => {
   return auth.isAuthenticated() ? true : router.createUrlTree(['/login']);
 };
 
-/** Admin-only routes; an authenticated non-admin goes home rather than to the login page. */
+/**
+ * Admin-only routes; an authenticated non-admin goes to the authenticated home rather than
+ * to the login page.
+ */
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  return auth.isAuthenticated() && auth.role() === 'ADMIN' ? true : router.createUrlTree(['/']);
+  return auth.isAuthenticated() && auth.role() === 'ADMIN' ? true : router.createUrlTree(['/app']);
 };
