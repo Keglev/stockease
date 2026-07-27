@@ -1,0 +1,34 @@
+<div class="login-page">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>Sign in to StockEase</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" autocomplete="username" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+        </mat-form-field>
+
+        @if (errorMessage(); as message) {
+          <p class="login-error" role="alert">{{ message }}</p>
+        }
+
+        <button matButton="filled" type="submit" [disabled]="pending()">
+          {{ pending() ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
