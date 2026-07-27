@@ -1,10 +1,20 @@
 {
   "common": {
-    "appName": "StockEase",
+    "appName": "Bestandskontrolle",
     "language": "Sprache"
   },
+  "landing": {
+    "description": "{{app}} ist eine Bestandsverwaltung für kleine Unternehmen: Produkte und Lagerbestände verfolgen, Lieferanten und Kunden verwalten sowie Ein- und Verkäufe über den Rechnungslauf abwickeln. Diese Demo arbeitet mit der aktiven Spring-Boot-API.",
+    "loginCta": "Anmelden",
+    "repository": "GitHub-Repository",
+    "documentation": "Dokumentation"
+  },
+  "logoutPage": {
+    "message": "Sie wurden abgemeldet.",
+    "backToLanding": "Zur Startseite"
+  },
   "login": {
-    "title": "Bei StockEase anmelden",
+    "title": "Bei {{app}} anmelden",
     "username": "Benutzername",
     "password": "Passwort",
     "submit": "Anmelden",

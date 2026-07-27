@@ -7,11 +7,12 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { LanguageService, SUPPORTED_LANGUAGES } from '../../core/i18n/language.service';
+import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
 
 @Component({
   selector: 'app-shell',
   imports: [
+    LanguageToggleComponent,
     MatButtonModule,
     MatListModule,
     MatSidenavModule,
@@ -26,21 +27,14 @@ import { LanguageService, SUPPORTED_LANGUAGES } from '../../core/i18n/language.s
 })
 export class ShellComponent {
   private readonly auth = inject(AuthService);
-  private readonly language = inject(LanguageService);
   private readonly router = inject(Router);
 
   // Only the role is available in state; the backend does not return the username on login.
   protected readonly role = this.auth.role;
 
-  protected readonly languages = SUPPORTED_LANGUAGES;
-  protected readonly currentLang = this.language.currentLang;
-
-  protected switchLanguage(lang: string): void {
-    this.language.setLanguage(lang);
-  }
-
   protected logout(): void {
+    // Clear state before navigating so no guarded route can observe a stale session.
     this.auth.logout();
-    void this.router.navigate(['/login']);
+    void this.router.navigate(['/logout']);
   }
 }

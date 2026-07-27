@@ -1,0 +1,44 @@
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.landing-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.landing-hero {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.landing-title {
+  margin: 0;
+  font: var(--mat-sys-display-small);
+}
+
+.landing-description {
+  // Keeps the paragraph at a comfortable reading measure on wide screens.
+  max-width: 34rem;
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.landing-actions {
+  margin-top: 0.5rem;
+}
+
+.landing-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}

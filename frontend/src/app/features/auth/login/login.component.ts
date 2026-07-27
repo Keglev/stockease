@@ -8,10 +8,12 @@ import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageToggleComponent } from '../../../shared/language-toggle/language-toggle.component';
 
 @Component({
   selector: 'app-login',
   imports: [
+    LanguageToggleComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -45,7 +47,7 @@ export class LoginComponent {
     this.auth.login(username, password).subscribe({
       next: () => {
         this.pending.set(false);
-        void this.router.navigate(['/']);
+        void this.router.navigate(['/app']);
       },
       error: (error: Error) => {
         this.pending.set(false);

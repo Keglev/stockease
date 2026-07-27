@@ -1,7 +1,7 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { environment } from '../../../../environments/environment';
 import { errorInterceptor } from '../../../core/interceptors/error.interceptor';
@@ -9,6 +9,14 @@ import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { LoginComponent } from './login.component';
 
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
+
+/** Unsigned JWT-shaped token; the frontend only reads the payload. */
+function validToken(): string {
+  const encode = (value: object) =>
+    btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const payload = { sub: 'alice', role: 'USER', exp: Math.floor(Date.now() / 1000) + 3600 };
+  return `${encode({ alg: 'HS256' })}.${encode(payload)}.signature`;
+}
 
 describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
@@ -21,8 +29,14 @@ describe('LoginComponent', () => {
       providers: [
         provideHttpClient(withInterceptors([errorInterceptor])),
         provideHttpClientTesting(),
-        provideRouter([]),
-        provideTestTranslations({ en: { login: { title: 'Sign in to StockEase' } } })
+        // Registered so the post-login navigation resolves instead of rejecting mid-test.
+        provideRouter([{ path: 'app', children: [] }]),
+        provideTestTranslations({
+          en: {
+            common: { appName: 'Bestandskontrolle' },
+            login: { title: 'Sign in to {{app}}' }
+          }
+        })
       ]
     }).compileComponents();
 
@@ -46,6 +60,19 @@ describe('LoginComponent', () => {
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Invalid username or password.');
+    controller.verify();
+  });
+
+  it('submit_validCredentials_navigatesToAuthenticatedArea', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+    fillCredentials('alice', 'secret');
+
+    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+
+    controller.expectOne(LOGIN_URL).flush({ success: true, message: 'ok', data: validToken() });
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(['/app']);
     controller.verify();
   });
 

@@ -46,13 +46,13 @@ describe('auth guards', () => {
     expect((result as UrlTree).toString()).toBe('/login');
   });
 
-  it('adminGuard_userRole_redirectsToRoot', () => {
+  it('adminGuard_userRole_redirectsToAuthenticatedHome', () => {
     localStorage.setItem(TOKEN_STORAGE_KEY, tokenFor('USER'));
 
     const result = runGuard(adminGuard);
 
     expect(result).toBeInstanceOf(UrlTree);
-    expect((result as UrlTree).toString()).toBe('/');
+    expect((result as UrlTree).toString()).toBe('/app');
   });
 
   it('adminGuard_adminRole_allowsActivation', () => {

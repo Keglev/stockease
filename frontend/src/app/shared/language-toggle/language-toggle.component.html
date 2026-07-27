@@ -1,0 +1,14 @@
+<div class="lang-toggle" role="group" [attr.aria-label]="'common.language' | translate">
+  @for (lang of languages; track lang) {
+    <button
+      matButton
+      type="button"
+      class="lang-button"
+      [class.active]="currentLang() === lang"
+      [attr.aria-pressed]="currentLang() === lang"
+      (click)="switchLanguage(lang)"
+    >
+      {{ lang.toUpperCase() }}
+    </button>
+  }
+</div>
