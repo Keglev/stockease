@@ -3,6 +3,9 @@ StockEase,com.stocks.stockease,StockEaseApplication,5,3,0,0,2,1,1,1,1,1
 StockEase,com.stocks.stockease.audit.internal,ProductChangedListener,0,32,0,0,0,8,0,1,0,1
 StockEase,com.stocks.stockease.config,FlywayConfiguration,0,38,0,2,0,14,0,3,0,2
 StockEase,com.stocks.stockease.config,JpaAuditingConfig,0,3,0,0,0,1,0,1,0,1
+StockEase,com.stocks.stockease.report.web,ReportController,0,60,0,2,0,12,0,10,0,9
+StockEase,com.stocks.stockease.audit.web,AuditController,0,18,0,0,0,2,0,2,0,2
+StockEase,com.stocks.stockease.audit.web,ChangeLogResponse,0,44,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.product.web,ProductController,5,220,0,6,0,37,1,17,1,14
 StockEase,com.stocks.stockease.shared,DuplicateResourceException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,InvalidMovementException,0,4,0,0,0,2,0,1,0,1

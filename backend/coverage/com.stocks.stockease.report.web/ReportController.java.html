@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.report.web</a> &gt; <span class="el_source">ReportController.java</span></div><h1>ReportController.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.report.web;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.stocks.stockease.report.DueDateBucket;
+import com.stocks.stockease.report.InvoiceDueSummary;
+import com.stocks.stockease.report.LossReport;
+import com.stocks.stockease.report.ProductProfitReport;
+import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.StockStatusReport;
+import com.stocks.stockease.report.SupplierProfitReport;
+import com.stocks.stockease.shared.ApiResponse;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * REST controller exposing the reporting read model.
+ *
+ * &lt;p&gt;The report module's own records are serialized directly rather than remapped: the module depends
+ * on no other module's types, so its records already are the API contract and a parallel set of
+ * response records would duplicate them without adding isolation. Every report is read-only and
+ * available to both roles.
+ */
+@RestController
+@RequestMapping(&quot;/api/reports&quot;)
+@RequiredArgsConstructor
+public class ReportController {
+
+    /** Window applied to the due-soon listing when the caller names none. */
+    private static final int DEFAULT_DUE_SOON_DAYS = 7;
+
+    private final ReportingService reportingService;
+
+    /**
+     * Returns gross profit for every product, including soft-deleted ones.
+     *
+     * @return one row per product, ordered by product ID
+     */
+    @GetMapping(&quot;/profit/products&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;ProductProfitReport&gt; profitPerProduct() {
+<span class="fc" id="L51">        return reportingService.profitPerProduct();</span>
+    }
+
+    /**
+     * Returns gross profit for one product.
+     *
+     * @param id product identifier
+     * @return HTTP 200 with the product's profit row
+     * @throws EntityNotFoundException if no such product exists
+     */
+    @GetMapping(&quot;/profit/products/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;ProductProfitReport&gt;&gt; profitForProduct(@PathVariable long id) {
+<span class="fc" id="L64">        ProductProfitReport report = reportingService.profitForProduct(id)</span>
+<span class="fc" id="L65">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;No profit report for product with ID &quot; + id + &quot;.&quot;));</span>
+<span class="fc" id="L66">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Product profit fetched successfully&quot;, report));</span>
+    }
+
+    /**
+     * Returns gross profit attributed to each supplier across the products it has supplied.
+     *
+     * @return one row per supplier that has supplied at least one product
+     */
+    @GetMapping(&quot;/profit/suppliers&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;SupplierProfitReport&gt; profitPerSupplier() {
+<span class="fc" id="L77">        return reportingService.profitPerSupplier();</span>
+    }
+
+    /**
+     * Returns what each live product has sold and what it still holds.
+     *
+     * @return one row per live product, ordered by product ID
+     */
+    @GetMapping(&quot;/stock-status&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;StockStatusReport&gt; stockStatus() {
+<span class="fc" id="L88">        return reportingService.stockStatus();</span>
+    }
+
+    /**
+     * Returns units written off as lost or destroyed.
+     *
+     * @return one row per product with at least one loss movement
+     */
+    @GetMapping(&quot;/losses&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;LossReport&gt; lossReport() {
+<span class="fc" id="L99">        return reportingService.lossReport();</span>
+    }
+
+    /**
+     * Returns unpaid invoices grouped by due date and invoice type.
+     *
+     * @return one bucket per due date and type, ordered by due date
+     */
+    @GetMapping(&quot;/due-dates&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;DueDateBucket&gt; dueDateBuckets() {
+<span class="fc" id="L110">        return reportingService.dueDateBuckets();</span>
+    }
+
+    /**
+     * Returns unpaid invoices falling due within the given window.
+     *
+     * @param days size of the window in days from today; defaults to a week
+     * @return the matching invoices, ordered by due date
+     * @throws IllegalArgumentException if {@code days} is not positive
+     */
+    @GetMapping(&quot;/due-soon&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;InvoiceDueSummary&gt; dueSoon(
+            @RequestParam(defaultValue = &quot;&quot; + DEFAULT_DUE_SOON_DAYS) int days) {
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (days &lt; 1) {</span>
+<span class="fc" id="L125">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
+        }
+<span class="fc" id="L127">        return reportingService.dueSoon(days);</span>
+    }
+
+    /**
+     * Returns invoices that are booked, unpaid and past their due date.
+     *
+     * @return the overdue invoices with how many days each is late
+     */
+    @GetMapping(&quot;/overdue&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;InvoiceDueSummary&gt; overdue() {
+<span class="fc" id="L138">        return reportingService.overdue();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
