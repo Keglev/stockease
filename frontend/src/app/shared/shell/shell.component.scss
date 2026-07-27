@@ -2,6 +2,23 @@
   flex: 1 1 auto;
 }
 
+.lang-toggle {
+  display: flex;
+  gap: 0.125rem;
+  margin-right: 0.75rem;
+}
+
+.lang-button {
+  min-width: 3rem;
+
+  &.active {
+    // The active language must stay readable against the toolbar surface.
+    background-color: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+    font-weight: 600;
+  }
+}
+
 .role {
   margin-right: 0.75rem;
   font: var(--mat-sys-label-large);

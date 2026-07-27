@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 
 import { environment } from '../../../../environments/environment';
 import { errorInterceptor } from '../../../core/interceptors/error.interceptor';
+import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { LoginComponent } from './login.component';
 
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
@@ -20,7 +21,8 @@ describe('LoginComponent', () => {
       providers: [
         provideHttpClient(withInterceptors([errorInterceptor])),
         provideHttpClientTesting(),
-        provideRouter([])
+        provideRouter([]),
+        provideTestTranslations({ en: { login: { title: 'Sign in to StockEase' } } })
       ]
     }).compileComponents();
 

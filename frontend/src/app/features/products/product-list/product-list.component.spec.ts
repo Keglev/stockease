@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 
 import { PaginatedProducts } from '../../../core/api/api-models';
+import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProductService } from '../product.service';
 import { ProductListComponent } from './product-list.component';
 
@@ -43,7 +44,10 @@ describe('ProductListComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
-      providers: [{ provide: ProductService, useValue: stub }]
+      providers: [
+        { provide: ProductService, useValue: stub },
+        provideTestTranslations({ en: { products: { title: 'Products' } } })
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductListComponent);

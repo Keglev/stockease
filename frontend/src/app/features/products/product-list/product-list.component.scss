@@ -6,6 +6,11 @@
   width: 100%;
 }
 
+.product-empty {
+  margin: 1rem 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .product-error {
   margin: 0.5rem 0;
   color: var(--mat-sys-error);

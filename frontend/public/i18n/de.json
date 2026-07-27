@@ -1,0 +1,41 @@
+{
+  "common": {
+    "appName": "StockEase",
+    "language": "Sprache"
+  },
+  "login": {
+    "title": "Bei StockEase anmelden",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "submitting": "Anmeldung läuft…"
+  },
+  "nav": {
+    "dashboard": "Übersicht",
+    "products": "Produkte"
+  },
+  "shell": {
+    "logout": "Abmelden",
+    "role": {
+      "ADMIN": "Administrator",
+      "USER": "Benutzer"
+    }
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "placeholder": "Lagerkennzahlen und Berichte erscheinen hier, sobald die Fachmodule verfügbar sind."
+  },
+  "products": {
+    "title": "Produkte",
+    "columns": {
+      "name": "Name",
+      "sku": "Artikelnummer",
+      "quantity": "Menge",
+      "purchasePrice": "Einkaufspreis",
+      "totalValue": "Gesamtwert",
+      "createdAt": "Erstellt am"
+    },
+    "loading": "Produkte werden geladen…",
+    "empty": "Keine Produkte gefunden."
+  }
+}

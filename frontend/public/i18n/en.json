@@ -1,0 +1,41 @@
+{
+  "common": {
+    "appName": "StockEase",
+    "language": "Language"
+  },
+  "login": {
+    "title": "Sign in to StockEase",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…"
+  },
+  "nav": {
+    "dashboard": "Overview",
+    "products": "Products"
+  },
+  "shell": {
+    "logout": "Log out",
+    "role": {
+      "ADMIN": "Administrator",
+      "USER": "User"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "placeholder": "Inventory figures and reports will appear here once the feature modules land."
+  },
+  "products": {
+    "title": "Products",
+    "columns": {
+      "name": "Name",
+      "sku": "SKU",
+      "quantity": "Quantity",
+      "purchasePrice": "Purchase Price",
+      "totalValue": "Total Value",
+      "createdAt": "Created"
+    },
+    "loading": "Loading products…",
+    "empty": "No products found."
+  }
+}
