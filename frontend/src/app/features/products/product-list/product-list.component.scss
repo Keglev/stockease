@@ -2,6 +2,14 @@
   display: block;
 }
 
+.product-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .product-table {
   width: 100%;
 }

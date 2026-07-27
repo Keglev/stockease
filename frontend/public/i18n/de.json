@@ -109,9 +109,34 @@
       "quantity": "Menge",
       "purchasePrice": "Einkaufspreis",
       "totalValue": "Gesamtwert",
-      "createdAt": "Erstellt am"
+      "createdAt": "Erstellt am",
+      "actions": "Aktionen"
     },
     "loading": "Produkte werden geladen…",
-    "empty": "Keine Produkte gefunden."
+    "empty": "Keine Produkte gefunden.",
+    "create": "Neues Produkt",
+    "actions": "Produktaktionen",
+    "rename": "Umbenennen",
+    "changePrice": "Preis ändern",
+    "created": "Produkt wurde angelegt.",
+    "renamed": "Produkt wurde umbenannt.",
+    "priceChanged": "Preis wurde aktualisiert.",
+    "delete": {
+      "action": "Löschen",
+      "title": "Produkt löschen",
+      "message": "Möchten Sie „{{name}}“ wirklich löschen?"
+    },
+    "form": {
+      "createTitle": "Neues Produkt",
+      "nameTitle": "Produkt umbenennen",
+      "priceTitle": "Preis ändern",
+      "name": "Name",
+      "quantity": "Menge",
+      "purchasePrice": "Einkaufspreis",
+      "nameRequired": "Name ist erforderlich.",
+      "quantityInvalid": "Bitte geben Sie eine ganze Zahl ab 0 ein.",
+      "priceInvalid": "Bitte geben Sie einen Preis größer als 0 ein.",
+      "skuHint": "Die Artikelnummer wird automatisch vergeben."
+    }
   }
 }
