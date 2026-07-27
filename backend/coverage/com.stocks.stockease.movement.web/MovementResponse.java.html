@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MovementResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.movement.web</a> &gt; <span class="el_source">MovementResponse.java</span></div><h1>MovementResponse.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.movement.web;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementType;
+import com.stocks.stockease.movement.StockMovement;
+
+/**
+ * API representation of a recorded stock movement.
+ *
+ * &lt;p&gt;Every association appears as an identifier only: reading an identifier off a lazy association
+ * touches the proxy's key rather than loading the row, so this record is safe to build from a movement
+ * whose product, user and invoice line were never initialized.
+ *
+ * @param id unique movement identifier
+ * @param productId product whose stock changed
+ * @param userId user who triggered the movement
+ * @param type direction of the change
+ * @param reason business reason for the change
+ * @param quantity number of units affected
+ * @param invoiceItemId invoice line this movement fulfils, or {@code null} where no link applies
+ * @param soldPrice revenue snapshot per unit, set only for sales and customer returns
+ * @param unitCost cost snapshot per unit, set only for initial stock and purchases
+ * @param createdAt moment the movement was recorded
+ */
+<span class="fc" id="L28">public record MovementResponse(Long id, Long productId, Long userId, MovementType type, MovementReason reason,</span>
+        Integer quantity, Long invoiceItemId, BigDecimal soldPrice, BigDecimal unitCost, LocalDateTime createdAt) {
+
+    /**
+     * Maps a recorded movement to its API representation without initializing any association.
+     *
+     * @param movement the entity to map
+     * @return the movement record
+     */
+    public static MovementResponse from(StockMovement movement) {
+<span class="fc" id="L38">        return new MovementResponse(movement.getId(), movement.getProduct().getId(), movement.getUser().getId(),</span>
+<span class="fc" id="L39">                movement.getType(), movement.getReason(), movement.getQuantity(),</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">                movement.getInvoiceItem() == null ? null : movement.getInvoiceItem().getId(),</span>
+<span class="fc" id="L41">                movement.getSoldPrice(), movement.getUnitCost(), movement.getCreatedAt());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
