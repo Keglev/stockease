@@ -40,7 +40,7 @@ import com.stocks.stockease.security.JwtUtil;
 /** Slice tests for GET /api/products/paged (paginated product queries). */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-@Import(TestConfig.class)
+@Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
 // JwtUtil stubs configured in setUp() are scoped to the Spring context; DirtiesContext forces a reload between tests to prevent stub bleed-over.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ProductPaginationControllerTest {

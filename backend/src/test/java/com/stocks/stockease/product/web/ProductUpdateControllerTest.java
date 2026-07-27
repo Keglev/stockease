@@ -37,7 +37,7 @@ import com.stocks.stockease.security.JwtUtil;
 /** Slice tests for PUT /api/products/{id}/quantity|price|name (happy-path updates). */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-@Import(TestConfig.class)
+@Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
 class ProductUpdateControllerTest {
 
     @MockitoBean

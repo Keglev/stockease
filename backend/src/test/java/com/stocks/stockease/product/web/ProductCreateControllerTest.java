@@ -34,7 +34,7 @@ import com.stocks.stockease.security.JwtUtil;
 /** Slice tests for POST /api/products (product creation). */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-@Import(TestConfig.class)
+@Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
 class ProductCreateControllerTest {
 
     @Autowired
@@ -81,11 +81,16 @@ class ProductCreateControllerTest {
 
     @Test
     void createProduct_asUserRole_returns403() throws Exception {
+        // CSRF token is supplied deliberately: the 403 must come from @PreAuthorize("hasRole('ADMIN')")
+        // and nothing else, so the admin-only rule is what this test actually proves
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
                         .content("{\"name\": \"Valid Product\", \"quantity\": 10, \"purchasePrice\": 100.0}")
-                        .with(userWithRole("regularUser", "USER")))
+                        .with(userWithRole("regularUser", "USER"))
+                        .with(csrfToken()))
                 .andExpect(status().isForbidden());
+
+        Mockito.verify(productService, Mockito.never()).create(anyString(), anyInt(), anyDouble());
     }
 
     @Test

@@ -32,7 +32,7 @@ import com.stocks.stockease.security.JwtUtil;
 /** Slice tests for ProductController read endpoints: low-stock, search, total-stock-value. */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-@Import(TestConfig.class)
+@Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
 class ProductControllerTest {
 
     @Autowired
