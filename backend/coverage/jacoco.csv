@@ -54,14 +54,13 @@ StockEase,com.stocks.stockease.report,StockStatusReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,CustomerSummary,0,27,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,LossReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice.internal,OpenInvoiceDeletionVeto,0,52,0,8,0,14,0,7,0,3
-StockEase,com.stocks.stockease.security,CorsConfig,0,51,0,0,0,7,0,2,0,2
 StockEase,com.stocks.stockease.security,UserService,5,0,0,0,1,0,1,0,1,0
 StockEase,com.stocks.stockease.security,User,0,12,0,0,0,5,0,1,0,1
 StockEase,com.stocks.stockease.security,JwtUtil,0,80,0,0,0,19,0,8,0,8
 StockEase,com.stocks.stockease.security,CustomUserDetailsService,0,35,0,0,0,9,0,3,0,3
 StockEase,com.stocks.stockease.security,CustomAuthenticationEntryPoint,0,14,0,0,0,5,0,2,0,2
 StockEase,com.stocks.stockease.security,JwtFilter,0,62,0,6,0,18,0,6,0,3
-StockEase,com.stocks.stockease.security,SecurityConfig,12,185,0,0,4,30,1,11,1,11
+StockEase,com.stocks.stockease.security,SecurityConfig,12,152,0,0,4,31,1,11,1,11
 StockEase,com.stocks.stockease.movement.internal,InvoiceClosedListener,0,38,0,4,0,7,0,3,0,1
 StockEase,com.stocks.stockease.security.web,AuthController,0,93,0,4,0,19,0,4,0,2
 StockEase,com.stocks.stockease.supplier.web,SupplierResponse,0,27,0,0,0,3,0,2,0,2
