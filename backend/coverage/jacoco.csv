@@ -20,11 +20,16 @@ StockEase,com.stocks.stockease.security,CustomAuthenticationEntryPoint,0,14,0,0,
 StockEase,com.stocks.stockease.security,JwtFilter,0,62,0,6,0,18,0,6,0,3
 StockEase,com.stocks.stockease.security,SecurityConfig,12,267,0,0,4,35,1,11,1,11
 StockEase,com.stocks.stockease.product.web,ProductController,5,220,0,6,0,37,1,17,1,14
+StockEase,com.stocks.stockease.shared,DuplicateResourceException,0,4,0,0,0,2,0,1,0,1
+StockEase,com.stocks.stockease.shared,InvalidMovementException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,PaginatedResponse,0,23,0,0,0,7,0,1,0,1
+StockEase,com.stocks.stockease.shared,InsufficientStockException,0,4,0,0,0,2,0,1,0,1
+StockEase,com.stocks.stockease.shared,EntityInUseException,0,4,0,0,0,2,0,1,0,1
+StockEase,com.stocks.stockease.shared,InvoiceStateException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.movement.internal,InvoiceClosedListener,0,38,0,4,0,7,0,3,0,1
 StockEase,com.stocks.stockease.security.web,AuthController,0,93,0,4,0,19,0,4,0,2
 StockEase,com.stocks.stockease.shared.web,HealthController,0,37,0,0,0,9,0,3,0,3
-StockEase,com.stocks.stockease.shared.web,GlobalExceptionHandler,0,182,0,8,0,37,0,17,0,13
+StockEase,com.stocks.stockease.shared.web,GlobalExceptionHandler,0,237,0,8,0,47,0,22,0,18
 StockEase,com.stocks.stockease.supplier,SupplierService,0,107,2,6,0,21,2,10,0,8
 StockEase,com.stocks.stockease.supplier,SupplierDeletedEvent,0,9,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice,InvoiceStatus,0,21,0,0,0,4,0,1,0,1

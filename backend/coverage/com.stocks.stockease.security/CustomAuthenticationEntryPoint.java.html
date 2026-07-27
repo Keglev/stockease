@@ -10,11 +10,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Handles authentication failures by returning a 401 JSON error response.
- * Uses a generic error message to avoid revealing whether a username exists.
+ * Handles unauthenticated requests by returning a 401 JSON error response in the {@code ApiResponse} envelope.
+ * The message states only that authentication is required, so it neither reveals whether a username exists
+ * nor claims wrong credentials for a request that simply carried no token.
  */
 @Component
-<span class="fc" id="L17">public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {</span>
+<span class="fc" id="L18">public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {</span>
 
     /**
      * Writes a 401 Unauthorized JSON error response for unauthenticated requests.
@@ -27,10 +28,10 @@ import jakarta.servlet.http.HttpServletResponse;
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-<span class="fc" id="L30">        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
-<span class="fc" id="L31">        response.setContentType(&quot;application/json&quot;);</span>
+<span class="fc" id="L31">        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
+<span class="fc" id="L32">        response.setContentType(&quot;application/json&quot;);</span>
         // Generic message prevents username enumeration attacks
-<span class="fc" id="L33">        response.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;Invalid username or password\&quot;}&quot;);</span>
-<span class="fc" id="L34">    }</span>
+<span class="fc" id="L34">        response.getWriter().write(&quot;{\&quot;success\&quot;:false,\&quot;message\&quot;:\&quot;Authentication required.\&quot;,\&quot;data\&quot;:null}&quot;);</span>
+<span class="fc" id="L35">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
