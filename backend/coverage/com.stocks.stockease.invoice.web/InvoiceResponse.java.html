@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InvoiceResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.invoice.web</a> &gt; <span class="el_source">InvoiceResponse.java</span></div><h1>InvoiceResponse.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.invoice.web;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.stocks.stockease.invoice.Invoice;
+import com.stocks.stockease.invoice.InvoiceStatus;
+import com.stocks.stockease.invoice.InvoiceType;
+
+/**
+ * API representation of a single invoice in full, including its lines and counterparty names.
+ *
+ * &lt;p&gt;Reads associations that are lazy on the entity, so it may only be built from an invoice loaded
+ * through the fetch-joined detail query; building it from a list query would fail outside a session.
+ *
+ * @param id unique invoice identifier
+ * @param type whether the invoice records a purchase or a sale
+ * @param status current lifecycle state
+ * @param dueDate date payment falls due
+ * @param supplierId counterparty identifier for purchase invoices
+ * @param supplierName counterparty name for purchase invoices
+ * @param customerId counterparty identifier for sale invoices
+ * @param customerName counterparty name for sale invoices
+ * @param closedAt moment the invoice was closed
+ * @param paidAt moment the invoice was paid
+ * @param createdAt moment the invoice was first persisted
+ * @param items the invoice's lines
+ */
+<span class="fc" id="L30">public record InvoiceResponse(Long id, InvoiceType type, InvoiceStatus status, LocalDate dueDate, Long supplierId,</span>
+        String supplierName, Long customerId, String customerName, LocalDateTime closedAt, LocalDateTime paidAt,
+        LocalDateTime createdAt, List&lt;InvoiceItemResponse&gt; items) {
+
+    /**
+     * Maps a fetch-joined invoice to its detail representation.
+     *
+     * @param invoice the entity to map, loaded with items, products and counterparties initialized
+     * @return the detail record
+     */
+    public static InvoiceResponse from(Invoice invoice) {
+<span class="fc" id="L41">        return new InvoiceResponse(invoice.getId(), invoice.getType(), invoice.getStatus(), invoice.getDueDate(),</span>
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
+<span class="pc bpc" id="L43" title="1 of 2 branches missed.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getName(),</span>
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getName(),</span>
+<span class="fc" id="L46">                invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt(),</span>
+<span class="fc" id="L47">                invoice.getItems().stream().map(InvoiceItemResponse::from).toList());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

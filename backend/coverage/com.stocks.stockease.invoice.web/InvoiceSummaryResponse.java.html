@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InvoiceSummaryResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.invoice.web</a> &gt; <span class="el_source">InvoiceSummaryResponse.java</span></div><h1>InvoiceSummaryResponse.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.invoice.web;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import com.stocks.stockease.invoice.Invoice;
+import com.stocks.stockease.invoice.InvoiceStatus;
+import com.stocks.stockease.invoice.InvoiceType;
+
+/**
+ * API representation of an invoice for list views, safe to build from an uninitialized entity.
+ *
+ * &lt;p&gt;Counterparties appear as identifiers only, never as names: reading an identifier off a lazy
+ * association touches the proxy's key rather than loading the row, which is what keeps listing many
+ * invoices free of both lazy-initialization failures and N+1 queries. Use {@link InvoiceResponse}
+ * when names are needed.
+ *
+ * @param id unique invoice identifier
+ * @param type whether the invoice records a purchase or a sale
+ * @param status current lifecycle state
+ * @param dueDate date payment falls due
+ * @param supplierId counterparty identifier for purchase invoices
+ * @param customerId counterparty identifier for sale invoices
+ * @param closedAt moment the invoice was closed
+ * @param paidAt moment the invoice was paid
+ * @param createdAt moment the invoice was first persisted
+ */
+<span class="fc" id="L28">public record InvoiceSummaryResponse(Long id, InvoiceType type, InvoiceStatus status, LocalDate dueDate,</span>
+        Long supplierId, Long customerId, LocalDateTime closedAt, LocalDateTime paidAt, LocalDateTime createdAt) {
+
+    /**
+     * Maps an invoice to its list representation without initializing any association.
+     *
+     * @param invoice the entity to map
+     * @return the summary record
+     */
+    public static InvoiceSummaryResponse from(Invoice invoice) {
+<span class="fc" id="L38">        return new InvoiceSummaryResponse(invoice.getId(), invoice.getType(), invoice.getStatus(),</span>
+<span class="fc" id="L39">                invoice.getDueDate(),</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
+<span class="fc bfc" id="L41" title="All 2 branches covered.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
+<span class="fc" id="L42">                invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

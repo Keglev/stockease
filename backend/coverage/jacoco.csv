@@ -30,6 +30,12 @@ StockEase,com.stocks.stockease.movement.internal,InvoiceClosedListener,0,38,0,4,
 StockEase,com.stocks.stockease.customer.web,CustomerController,0,63,0,0,0,10,0,5,0,5
 StockEase,com.stocks.stockease.customer.web,CreateCustomerRequest,0,18,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.customer.web,CustomerResponse,0,42,0,0,0,3,0,2,0,2
+StockEase,com.stocks.stockease.invoice.web,InvoiceResponse,10,85,4,4,0,8,4,2,0,2
+StockEase,com.stocks.stockease.invoice.web,InvoiceSummaryResponse,0,64,0,4,0,6,0,4,0,2
+StockEase,com.stocks.stockease.invoice.web,CreateInvoiceRequest,0,58,0,0,0,5,0,3,0,3
+StockEase,com.stocks.stockease.invoice.web,CreateInvoiceRequest.ItemRequest,0,12,0,0,0,1,0,1,0,1
+StockEase,com.stocks.stockease.invoice.web,InvoiceController,5,95,0,0,0,17,1,8,1,8
+StockEase,com.stocks.stockease.invoice.web,InvoiceItemResponse,0,39,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.security.web,AuthController,0,93,0,4,0,19,0,4,0,2
 StockEase,com.stocks.stockease.supplier.web,SupplierResponse,0,27,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.supplier.web,SupplierController,0,75,0,0,0,12,0,6,0,6
@@ -45,7 +51,7 @@ StockEase,com.stocks.stockease.invoice,CreateInvoiceCommand.ItemLine,0,12,0,0,0,
 StockEase,com.stocks.stockease.invoice,InvoiceClosedEvent.Line,0,12,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice,CreateInvoiceCommand,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice,InvoiceClosedEvent,0,15,0,0,0,1,0,1,0,1
-StockEase,com.stocks.stockease.invoice,InvoiceService,0,470,2,44,0,91,2,39,0,18
+StockEase,com.stocks.stockease.invoice,InvoiceService,4,476,2,44,1,92,3,40,1,19
 StockEase,com.stocks.stockease.product,ProductChangedEvent,0,18,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.product,ProductService,0,322,0,16,0,61,0,26,0,18
 StockEase,com.stocks.stockease.product,ProductChangedEvent.Field,0,27,0,0,0,5,0,1,0,1
