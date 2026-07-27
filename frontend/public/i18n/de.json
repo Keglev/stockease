@@ -28,7 +28,39 @@
   "nav": {
     "dashboard": "Übersicht",
     "products": "Produkte",
-    "suppliers": "Lieferanten"
+    "suppliers": "Lieferanten",
+    "customers": "Kunden"
+  },
+  "customers": {
+    "title": "Kunden",
+    "create": "Neuer Kunde",
+    "loading": "Kunden werden geladen…",
+    "empty": "Keine Kunden gefunden.",
+    "created": "Kunde wurde angelegt.",
+    "deleteHint": "Kunden mit offenen Rechnungen können nicht gelöscht werden.",
+    "columns": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "city": "Stadt",
+      "createdAt": "Erstellt am",
+      "actions": "Aktionen"
+    },
+    "delete": {
+      "action": "Kunde löschen",
+      "title": "Kunde löschen",
+      "message": "Möchten Sie „{{name}}“ wirklich löschen?"
+    },
+    "form": {
+      "createTitle": "Neuer Kunde",
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "address": "Adresse",
+      "city": "Stadt",
+      "nameRequired": "Name ist erforderlich.",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+    }
   },
   "suppliers": {
     "title": "Lieferanten",

@@ -11,12 +11,22 @@ import { ShellComponent } from './shell.component';
 const TRANSLATIONS = {
   en: {
     common: { appName: 'Bestandskontrolle', language: 'Language' },
-    nav: { dashboard: 'Overview', products: 'Products', suppliers: 'Suppliers' },
+    nav: {
+      dashboard: 'Overview',
+      products: 'Products',
+      suppliers: 'Suppliers',
+      customers: 'Customers'
+    },
     shell: { logout: 'Log out', role: { ADMIN: 'Administrator', USER: 'User' } }
   },
   de: {
     common: { appName: 'Bestandskontrolle', language: 'Sprache' },
-    nav: { dashboard: 'Übersicht', products: 'Produkte', suppliers: 'Lieferanten' },
+    nav: {
+      dashboard: 'Übersicht',
+      products: 'Produkte',
+      suppliers: 'Lieferanten',
+      customers: 'Kunden'
+    },
     shell: { logout: 'Abmelden', role: { ADMIN: 'Administrator', USER: 'Benutzer' } }
   }
 };
@@ -103,7 +113,7 @@ describe('ShellComponent', () => {
       (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('mat-nav-list a')
     ).map((anchor) => anchor.getAttribute('href'));
 
-    expect(hrefs).toEqual(['/app', '/app/products', '/app/suppliers']);
+    expect(hrefs).toEqual(['/app', '/app/products', '/app/suppliers', '/app/customers']);
   });
 
   it('logout_clicked_clearsAuthenticationState', async () => {

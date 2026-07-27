@@ -9,3 +9,5 @@ export type ProductResponse = components['schemas']['ProductResponse'];
 export type PaginatedProducts = components['schemas']['PaginatedProducts'];
 
 export type SupplierResponse = components['schemas']['SupplierResponse'];
+
+export type CustomerResponse = components['schemas']['CustomerResponse'];

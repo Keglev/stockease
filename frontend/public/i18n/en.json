@@ -28,7 +28,39 @@
   "nav": {
     "dashboard": "Overview",
     "products": "Products",
-    "suppliers": "Suppliers"
+    "suppliers": "Suppliers",
+    "customers": "Customers"
+  },
+  "customers": {
+    "title": "Customers",
+    "create": "New customer",
+    "loading": "Loading customers…",
+    "empty": "No customers found.",
+    "created": "Customer created.",
+    "deleteHint": "Customers with open invoices cannot be deleted.",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "city": "City",
+      "createdAt": "Created",
+      "actions": "Actions"
+    },
+    "delete": {
+      "action": "Delete customer",
+      "title": "Delete customer",
+      "message": "Do you really want to delete \"{{name}}\"?"
+    },
+    "form": {
+      "createTitle": "New customer",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "city": "City",
+      "nameRequired": "Name is required.",
+      "emailInvalid": "Enter a valid email address."
+    }
   },
   "suppliers": {
     "title": "Suppliers",
