@@ -1,0 +1,12 @@
+:host {
+  display: block;
+}
+
+.product-table {
+  width: 100%;
+}
+
+.product-error {
+  margin: 0.5rem 0;
+  color: var(--mat-sys-error);
+}
