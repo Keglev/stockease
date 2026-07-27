@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.invoice.internal.InvoiceRepository;
+import com.stocks.stockease.invoice.web.InvoiceResponse;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
@@ -156,5 +157,24 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(invoiceRepository.findById(invoice.getId()).orElseThrow().getStatus())
                 .isEqualTo(InvoiceStatus.FULLY_RETURNED);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void findDetailById_afterClose_mapsToResponseOutsideSession() {
+        Product product = newProduct("Lifecycle Detail Fetch", 10);
+        Invoice invoice = invoiceService.createInvoice(purchaseCommand(newSupplier(), line(product, 4)));
+        invoiceService.close(invoice.getId(), user);
+
+        Invoice detail = invoiceService.findDetailById(invoice.getId()).orElseThrow();
+
+        // the method runs without a transaction, so the service's own one has closed by now: mapping here
+        // touches associations with no session available and only survives because of the fetch join
+        InvoiceResponse response = InvoiceResponse.from(detail);
+        assertThat(response.supplierName()).isEqualTo("Acme");
+        assertThat(response.items()).singleElement().satisfies(item -> {
+            assertThat(item.productName()).isEqualTo("Lifecycle Detail Fetch");
+            assertThat(item.quantity()).isEqualTo(4);
+        });
     }
 }

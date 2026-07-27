@@ -1,8 +1,11 @@
 package com.stocks.stockease.invoice.internal;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.stocks.stockease.invoice.Invoice;
 import com.stocks.stockease.invoice.InvoiceStatus;
@@ -35,4 +38,22 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
      * @return the invoices that user closed, ordered by closing time descending
      */
     List<Invoice> findByClosedByIdOrderByClosedAtDesc(Long userId);
+
+    /**
+     * Returns every live invoice, newest first.
+     *
+     * @return all invoices ordered by creation time descending
+     */
+    List<Invoice> findAllByOrderByCreatedAtDesc();
+
+    /**
+     * Loads one invoice with its items, their products and both counterparties initialized.
+     *
+     * @param id invoice identifier
+     * @return the fully initialized invoice, or empty if none exists with that ID
+     */
+    // only the items collection is fetch-joined; a second collection join would produce a cartesian product
+    @Query("select distinct i from Invoice i left join fetch i.items it left join fetch it.product "
+            + "left join fetch i.supplier left join fetch i.customer where i.id = :id")
+    Optional<Invoice> findDetailById(@Param("id") Long id);
 }
