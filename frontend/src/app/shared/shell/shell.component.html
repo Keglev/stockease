@@ -1,19 +1,37 @@
 <mat-toolbar color="primary">
-  <span>StockEase</span>
+  <span>{{ 'common.appName' | translate }}</span>
   <span class="spacer"></span>
+
+  <div class="lang-toggle" role="group" [attr.aria-label]="'common.language' | translate">
+    @for (lang of languages; track lang) {
+      <button
+        matButton
+        type="button"
+        class="lang-button"
+        [class.active]="currentLang() === lang"
+        [attr.aria-pressed]="currentLang() === lang"
+        (click)="switchLanguage(lang)"
+      >
+        {{ lang.toUpperCase() }}
+      </button>
+    }
+  </div>
+
   @if (role(); as currentRole) {
-    <span class="role">{{ currentRole }}</span>
+    <span class="role">{{ 'shell.role.' + currentRole | translate }}</span>
   }
-  <button matButton type="button" (click)="logout()">Log out</button>
+  <button matButton type="button" (click)="logout()">{{ 'shell.logout' | translate }}</button>
 </mat-toolbar>
 
 <mat-sidenav-container class="shell-container">
   <mat-sidenav mode="side" opened>
     <mat-nav-list>
       <a mat-list-item routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        Dashboard
+        {{ 'nav.dashboard' | translate }}
       </a>
-      <a mat-list-item routerLink="/products" routerLinkActive="active">Products</a>
+      <a mat-list-item routerLink="/products" routerLinkActive="active">
+        {{ 'nav.products' | translate }}
+      </a>
     </mat-nav-list>
   </mat-sidenav>
 

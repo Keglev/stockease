@@ -1,18 +1,18 @@
 <div class="login-page">
   <mat-card class="login-card">
     <mat-card-header>
-      <mat-card-title>Sign in to StockEase</mat-card-title>
+      <mat-card-title>{{ 'login.title' | translate }}</mat-card-title>
     </mat-card-header>
 
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="submit()">
         <mat-form-field appearance="outline">
-          <mat-label>Username</mat-label>
+          <mat-label>{{ 'login.username' | translate }}</mat-label>
           <input matInput formControlName="username" autocomplete="username" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
+          <mat-label>{{ 'login.password' | translate }}</mat-label>
           <input
             matInput
             type="password"
@@ -21,12 +21,13 @@
           />
         </mat-form-field>
 
+        <!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
         @if (errorMessage(); as message) {
           <p class="login-error" role="alert">{{ message }}</p>
         }
 
         <button matButton="filled" type="submit" [disabled]="pending()">
-          {{ pending() ? 'Signing in…' : 'Sign in' }}
+          {{ (pending() ? 'login.submitting' : 'login.submit') | translate }}
         </button>
       </form>
     </mat-card-content>

@@ -3,6 +3,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProductResponse } from '../../../core/api/api-models';
 import { ProductService } from '../product.service';
@@ -16,7 +17,8 @@ const DEFAULT_PAGE_SIZE = 10;
     DatePipe,
     MatPaginatorModule,
     MatProgressBarModule,
-    MatTableModule
+    MatTableModule,
+    TranslatePipe
   ],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.scss'
