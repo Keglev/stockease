@@ -1,12 +1,15 @@
 package com.stocks.stockease.customer;
 
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.customer.internal.CustomerRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -19,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Finds a customer by its ID.
@@ -28,6 +32,15 @@ public class CustomerService {
      */
     public Optional<Customer> findById(long id) {
         return customerRepository.findById(id);
+    }
+
+    /**
+     * Returns every live customer.
+     *
+     * @return list of all customers that have not been soft-deleted
+     */
+    public List<Customer> findAll() {
+        return customerRepository.findAll();
     }
 
     /**
@@ -49,5 +62,23 @@ public class CustomerService {
         customer.setAddress(address);
         customer.setCity(city);
         return customerRepository.save(customer);
+    }
+
+    /**
+     * Soft-deletes a customer, unless a listener vetoes the deletion.
+     *
+     * @param id customer identifier
+     * @throws EntityNotFoundException if no customer exists with the given ID
+     * @throws com.stocks.stockease.shared.EntityInUseException if a listener vetoes the deletion, for
+     *         instance because open invoices still reference the customer
+     */
+    @Transactional
+    public void deleteById(long id) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + id + " not found."));
+        // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
+        // rolls back the transaction
+        eventPublisher.publishEvent(new CustomerDeletedEvent(customer.getId(), customer.getName()));
+        customerRepository.delete(customer);
     }
 }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.customer.Customer;
+import com.stocks.stockease.customer.CustomerService;
+import com.stocks.stockease.customer.internal.CustomerRepository;
 import com.stocks.stockease.invoice.Invoice;
 import com.stocks.stockease.invoice.InvoiceItem;
 import com.stocks.stockease.invoice.InvoiceStatus;
@@ -43,6 +47,12 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @Autowired
     private ProductService productService;
@@ -96,6 +106,29 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
         return invoice;
     }
 
+    private Customer newCustomer() {
+        return customerRepository.saveAndFlush(
+                new Customer(null, "Guard Customer", null, null, "1 Main St", "Springfield", null, null));
+    }
+
+    /** Persists a sale invoice in the given status, billed to {@code customer}; sale invoices carry no supplier. */
+    private Invoice newSaleInvoice(Customer customer, InvoiceStatus status) {
+        Invoice invoice = new Invoice();
+        invoice.setType(InvoiceType.SALE);
+        invoice.setCustomer(customer);
+        invoice.setStatus(status);
+        invoice.setDueDate(LocalDate.now());
+        invoice.setInterestRate(BigDecimal.ZERO);
+        invoice.setFineValue(BigDecimal.ZERO);
+        return invoiceRepository.saveAndFlush(invoice);
+    }
+
+    /** Reads the raw soft-delete stamp, bypassing the entity's live-rows-only restriction. */
+    private LocalDateTime deletedAtOf(Long customerId) {
+        return jdbcTemplate.queryForObject(
+                "SELECT deleted_at FROM customer WHERE id = ?", LocalDateTime.class, customerId);
+    }
+
     private int deletedLogRows(Long productId) {
         return jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM product_change_log WHERE product_id = ? AND field = 'DELETED'",
@@ -125,6 +158,32 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
         supplierService.deleteById(supplier.getId());
 
         assertThat(supplierRepository.findById(supplier.getId())).isEmpty();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void deleteCustomer_withOpenInvoice_vetoedAndRolledBack() {
+        Customer customer = newCustomer();
+        newSaleInvoice(customer, InvoiceStatus.OPEN);
+
+        assertThatThrownBy(() -> customerService.deleteById(customer.getId()))
+                .isInstanceOf(EntityInUseException.class)
+                .hasMessageContaining("open invoices exist");
+
+        Customer reloaded = customerRepository.findById(customer.getId()).orElseThrow();
+        assertThat(reloaded.getDeletedAt()).isNull();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void deleteCustomer_withOnlyClosedInvoices_succeeds() {
+        Customer customer = newCustomer();
+        newSaleInvoice(customer, InvoiceStatus.CLOSED);
+
+        customerService.deleteById(customer.getId());
+
+        assertThat(customerRepository.findById(customer.getId())).isEmpty();
+        assertThat(deletedAtOf(customer.getId())).isNotNull();
     }
 
     @Test
