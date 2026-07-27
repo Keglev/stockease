@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.report.CustomerSummary;
 import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
 import com.stocks.stockease.report.LossReport;
@@ -29,6 +30,11 @@ import lombok.RequiredArgsConstructor;
  * on no other module's types, so its records already are the API contract and a parallel set of
  * response records would duplicate them without adding isolation. Every report is read-only and
  * available to both roles.
+ *
+ * <p>Covers profit per product and per supplier, stock status, losses, due-date buckets, due-soon and
+ * overdue listings, and the per-customer purchase summary. That last one sits under this path rather
+ * than under the customer API because the aggregation belongs to this module, even though what it
+ * describes is a customer.
  */
 @RestController
 @RequestMapping("/api/reports")
@@ -75,6 +81,21 @@ public class ReportController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<SupplierProfitReport> profitPerSupplier() {
         return reportingService.profitPerSupplier();
+    }
+
+    /**
+     * Returns what one customer has bought and returned across its booked sale invoices.
+     *
+     * @param id customer identifier
+     * @return HTTP 200 with the customer's summary, zero-filled if it has no booked sales
+     * @throws EntityNotFoundException if no such customer exists
+     */
+    @GetMapping("/customers/{id}/summary")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<ApiResponse<CustomerSummary>> customerSummary(@PathVariable long id) {
+        CustomerSummary summary = reportingService.customerSummary(id)
+                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + id + " not found."));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Customer summary fetched successfully", summary));
     }
 
     /**

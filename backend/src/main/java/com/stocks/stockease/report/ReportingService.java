@@ -70,6 +70,11 @@ public class ReportingService {
             rs.getObject("due_date", LocalDate.class), rs.getBigDecimal("outstanding"),
             rs.getLong("days_overdue"));
 
+    private static final RowMapper<CustomerSummary> CUSTOMER_SUMMARY_MAPPER = (rs, rowNum) -> new CustomerSummary(
+            rs.getLong("id"), rs.getString("name"), rs.getBoolean("deleted"), rs.getLong("sale_invoice_count"),
+            rs.getLong("bought_units"), rs.getBigDecimal("bought_value"), rs.getLong("returned_units"),
+            rs.getBigDecimal("returned_value"));
+
     /** An invoice naming neither supplier nor customer is an anonymous cash sale. */
     private static String counterparty(String name) {
         return name == null ? CASH_SALE : name;
@@ -188,6 +193,38 @@ public class ReportingService {
         return jdbcClient.sql(sql).query((rs, rowNum) -> new LossReport(rs.getLong("id"), rs.getString("name"),
                 rs.getString("sku"), rs.getBoolean("deleted"), rs.getInt("lost_units"),
                 rs.getInt("destroyed_units"), rs.getBigDecimal("loss_value"))).list();
+    }
+
+    /**
+     * Returns what one customer has bought and returned across its booked sale invoices.
+     *
+     * <p>Anonymous cash sales name no customer by construction, so they belong to no summary and are
+     * invisible here.
+     *
+     * @param customerId customer identifier
+     * @return the customer's summary, zero-filled if it has no booked sales, or empty if no such
+     *         customer exists; a soft-deleted customer still reports, flagged as deleted
+     */
+    public Optional<CustomerSummary> customerSummary(long customerId) {
+        // The invoice restriction lives in the JOIN condition, not in WHERE: moving it out would drop the
+        // customer's own row whenever it has no booked sale, turning a zero-filled summary into "no such
+        // customer". Soft-deleted invoices need no exclusion here - only OPEN invoices can be deleted, and
+        // OPEN is already excluded.
+        String sql = """
+                SELECT c.id, c.name, (c.deleted_at IS NOT NULL) AS deleted,
+                  COUNT(DISTINCT i.id) AS sale_invoice_count,
+                  COALESCE(SUM(ii.quantity), 0) AS bought_units,
+                  COALESCE(SUM(ii.quantity * ii.unit_price), 0) AS bought_value,
+                  COALESCE(SUM(ii.returned_qty), 0) AS returned_units,
+                  COALESCE(SUM(ii.returned_qty * ii.unit_price), 0) AS returned_value
+                FROM customer c
+                LEFT JOIN invoice i
+                  ON i.customer_id = c.id AND i.invoice_type = 'SALE' AND i.status <> 'OPEN'
+                LEFT JOIN invoice_item ii ON ii.invoice_id = i.id
+                WHERE c.id = :id
+                GROUP BY c.id, c.name, c.deleted_at
+                """;
+        return jdbcClient.sql(sql).param("id", customerId).query(CUSTOMER_SUMMARY_MAPPER).optional();
     }
 
     /**
