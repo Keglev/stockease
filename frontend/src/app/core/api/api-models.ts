@@ -7,3 +7,5 @@ import { components } from './api-types';
 export type ProductResponse = components['schemas']['ProductResponse'];
 
 export type PaginatedProducts = components['schemas']['PaginatedProducts'];
+
+export type SupplierResponse = components['schemas']['SupplierResponse'];

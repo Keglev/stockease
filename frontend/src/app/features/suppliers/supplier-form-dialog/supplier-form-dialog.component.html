@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>
+  {{ (isEdit ? 'suppliers.form.editTitle' : 'suppliers.form.createTitle') | translate }}
+</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-dialog-content>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'suppliers.form.name' | translate }}</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+        <mat-error>{{ 'suppliers.form.nameRequired' | translate }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'suppliers.form.address' | translate }}</mat-label>
+      <input matInput formControlName="address" />
+      @if (form.controls.address.touched && form.controls.address.hasError('required')) {
+        <mat-error>{{ 'suppliers.form.addressRequired' | translate }}</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Rendered verbatim: this text comes from the backend, which has no i18n. -->
+    @if (errorMessage(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button matButton type="button" class="form-cancel" (click)="cancel()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button
+      matButton="filled"
+      type="submit"
+      class="form-submit"
+      [disabled]="form.invalid || pending()"
+    >
+      {{ 'common.save' | translate }}
+    </button>
+  </mat-dialog-actions>
+</form>

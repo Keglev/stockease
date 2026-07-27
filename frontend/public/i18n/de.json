@@ -3,7 +3,10 @@
     "appName": "Bestandskontrolle",
     "language": "Sprache",
     "themeLight": "Helles Design",
-    "themeDark": "Dunkles Design"
+    "themeDark": "Dunkles Design",
+    "confirm": "Bestätigen",
+    "cancel": "Abbrechen",
+    "save": "Speichern"
   },
   "landing": {
     "description": "{{app}} ist eine Bestandsverwaltung für kleine Unternehmen: Produkte und Lagerbestände verfolgen, Lieferanten und Kunden verwalten sowie Ein- und Verkäufe über den Rechnungslauf abwickeln. Diese Demo arbeitet mit der aktiven Spring-Boot-API.",
@@ -24,7 +27,36 @@
   },
   "nav": {
     "dashboard": "Übersicht",
-    "products": "Produkte"
+    "products": "Produkte",
+    "suppliers": "Lieferanten"
+  },
+  "suppliers": {
+    "title": "Lieferanten",
+    "create": "Neuer Lieferant",
+    "edit": "Bearbeiten",
+    "loading": "Lieferanten werden geladen…",
+    "empty": "Keine Lieferanten gefunden.",
+    "created": "Lieferant wurde angelegt.",
+    "updated": "Lieferant wurde aktualisiert.",
+    "columns": {
+      "name": "Name",
+      "address": "Adresse",
+      "createdAt": "Erstellt am",
+      "actions": "Aktionen"
+    },
+    "delete": {
+      "action": "Lieferant löschen",
+      "title": "Lieferant löschen",
+      "message": "Möchten Sie „{{name}}“ wirklich löschen?"
+    },
+    "form": {
+      "createTitle": "Neuer Lieferant",
+      "editTitle": "Lieferant bearbeiten",
+      "name": "Name",
+      "address": "Adresse",
+      "nameRequired": "Name ist erforderlich.",
+      "addressRequired": "Adresse ist erforderlich."
+    }
   },
   "shell": {
     "logout": "Abmelden",

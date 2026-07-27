@@ -3,7 +3,10 @@
     "appName": "Bestandskontrolle",
     "language": "Language",
     "themeLight": "Light mode",
-    "themeDark": "Dark mode"
+    "themeDark": "Dark mode",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save"
   },
   "landing": {
     "description": "{{app}} is an inventory management application for small businesses: track products and stock levels, manage suppliers and customers, and settle purchases and sales through the invoice lifecycle. This demo runs against the live Spring Boot API.",
@@ -24,7 +27,36 @@
   },
   "nav": {
     "dashboard": "Overview",
-    "products": "Products"
+    "products": "Products",
+    "suppliers": "Suppliers"
+  },
+  "suppliers": {
+    "title": "Suppliers",
+    "create": "New supplier",
+    "edit": "Edit",
+    "loading": "Loading suppliers…",
+    "empty": "No suppliers found.",
+    "created": "Supplier created.",
+    "updated": "Supplier updated.",
+    "columns": {
+      "name": "Name",
+      "address": "Address",
+      "createdAt": "Created",
+      "actions": "Actions"
+    },
+    "delete": {
+      "action": "Delete supplier",
+      "title": "Delete supplier",
+      "message": "Do you really want to delete \"{{name}}\"?"
+    },
+    "form": {
+      "createTitle": "New supplier",
+      "editTitle": "Edit supplier",
+      "name": "Name",
+      "address": "Address",
+      "nameRequired": "Name is required.",
+      "addressRequired": "Address is required."
+    }
   },
   "shell": {
     "logout": "Log out",
