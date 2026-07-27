@@ -1,0 +1,76 @@
+put:
+  summary: Update product name
+  description: |
+    Renames the product and records the change in the change log. The name must not be blank, and
+    must not collide with another live product's name (compared case-insensitively).
+  operationId: updateName
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Product identifier
+      schema:
+        type: integer
+        format: int64
+        example: 1
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/UpdateNameRequest'
+  responses:
+    '200':
+      description: Name updated (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseProduct'
+          example:
+            success: true
+            message: Name updated successfully
+            data:
+              id: 1
+              name: High-Performance Laptop
+              sku: SKU-A1B2C3D4
+              quantity: 50
+              purchasePrice: 999.99
+              totalValue: 49999.50
+              createdAt: '2026-01-02T03:04:00'
+    '400':
+      description: Validation error - the name is blank or missing
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
+          example:
+            success: false
+            message: Validation failed for request parameters.
+            data:
+              name: must not be blank
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No product with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Product with ID 999 not found.'
+            data: null
+    '409':
+      description: Another live product already carries that name
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: "A product named 'Gadget' already exists."
+            data: null

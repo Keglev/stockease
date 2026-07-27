@@ -1,0 +1,64 @@
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: Invoice identifier
+
+patch:
+  summary: Mark an invoice as paid (ADMIN only)
+  description: |
+    Stamps the moment of payment. Payment is independent of the lifecycle status: an invoice may be
+    paid before or after it is closed, so no status precondition applies. Marking an already-paid
+    invoice is refused.
+  operationId: markInvoiceAsPaid
+  tags:
+    - Invoices
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Invoice marked as paid
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseInvoiceSummary'
+          example:
+            success: true
+            message: Invoice marked as paid
+            data:
+              id: 1
+              type: PURCHASE
+              status: CLOSED
+              dueDate: '2026-03-01'
+              supplierId: 7
+              customerId: null
+              closedAt: '2026-01-03T09:00:00'
+              paidAt: '2026-01-04T10:00:00'
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '403':
+      $ref: '../openapi.yaml#/components/responses/Forbidden'
+    '404':
+      description: No invoice with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Invoice with ID 9 not found.'
+            data: null
+    '409':
+      description: The invoice already carries a payment stamp
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: Invoice is already marked as paid.
+            data: null

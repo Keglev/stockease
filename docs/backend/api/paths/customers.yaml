@@ -1,0 +1,72 @@
+get:
+  summary: List all customers
+  description: Returns every live customer. Soft-deleted customers are excluded.
+  operationId: getAllCustomers
+  tags:
+    - Customers
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Customers retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/CustomerResponse'
+          example:
+            - id: 9
+              name: Jane Doe
+              email: jane@example.com
+              phone: 555-1234
+              address: 1 Main St
+              city: Springfield
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+
+post:
+  summary: Create a customer
+  description: |
+    Only the name is mandatory. The contact fields are optional; when an email is supplied it must be
+    well formed.
+  operationId: createCustomer
+  tags:
+    - Customers
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/CreateCustomerRequest'
+  responses:
+    '200':
+      description: Customer created (ROLE_USER or ROLE_ADMIN); returns the bare record
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CustomerResponse'
+          example:
+            id: 9
+            name: Jane Doe
+            email: jane@example.com
+            phone: 555-1234
+            address: 1 Main St
+            city: Springfield
+            createdAt: '2026-01-02T03:04:00'
+    '400':
+      description: Validation failed - blank name, or a malformed email
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
+          example:
+            success: false
+            message: Validation failed for request parameters.
+            data:
+              email: Customer email must be a valid email address.
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

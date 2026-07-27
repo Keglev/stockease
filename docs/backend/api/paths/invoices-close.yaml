@@ -1,0 +1,78 @@
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: Invoice identifier
+
+patch:
+  summary: Close an invoice, booking its stock (ADMIN only)
+  description: |
+    Closing is the act that turns a recorded invoice into booked business: it stamps the closing user
+    and time, and books one stock movement per line - PURCHASE movements for a purchase invoice, SOLD
+    movements for a sale. This is the only way those two reasons ever come into existence.
+
+    Booking runs inside the closing transaction, so a sale that exceeds available stock fails the
+    whole close: the invoice stays OPEN and no movement is written.
+  operationId: closeInvoice
+  tags:
+    - Invoices
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Invoice closed and its movements booked
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseInvoiceSummary'
+          example:
+            success: true
+            message: Invoice closed successfully
+            data:
+              id: 1
+              type: PURCHASE
+              status: CLOSED
+              dueDate: '2026-03-01'
+              supplierId: 7
+              customerId: null
+              closedAt: '2026-01-03T09:00:00'
+              paidAt: null
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '403':
+      $ref: '../openapi.yaml#/components/responses/Forbidden'
+    '404':
+      description: No invoice with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Invoice with ID 9 not found.'
+            data: null
+    '409':
+      description: |
+        The invoice is not open, or a sale line would drive stock negative. Both roll the close back
+        entirely.
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          examples:
+            notOpen:
+              summary: Lifecycle violation
+              value:
+                success: false
+                message: Only open invoices can be closed.
+                data: null
+            insufficientStock:
+              summary: A sale line exceeds available stock
+              value:
+                success: false
+                message: 'Adjustment of -5 would result in negative stock for product 3 (current: 3).'
+                data: null

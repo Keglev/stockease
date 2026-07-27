@@ -1,0 +1,30 @@
+get:
+  summary: Units written off as lost or destroyed
+  description: |
+    One row per product with at least one loss movement, ordered by product ID.
+    Documented approximation: loss lines are valued at the product's current purchase price, because
+    pooled stock carries no per-unit cost.
+  operationId: lossReport
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/LossReport'
+          example:
+            - productId: 3
+              name: Widget
+              sku: SKU-3
+              deleted: false
+              lostUnits: 2
+              destroyedUnits: 1
+              lossValue: 15.00
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

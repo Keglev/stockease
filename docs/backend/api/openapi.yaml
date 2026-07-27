@@ -1,0 +1,1136 @@
+openapi: 3.0.3
+info:
+  title: StockEase API
+  version: 2.0.0
+  description: |
+    StockEase is an inventory management system built around stock movements as the single source of
+    truth for quantity. The API covers the product catalogue, the two counterparty registers
+    (suppliers and customers), the invoice lifecycle, stock movements and returns, a reporting read
+    model, and the product change log.
+
+    ## Response envelope
+    Most single-resource and mutation responses use the `ApiResponse` envelope (`success`, `message`,
+    `data`). List endpoints return the bare array, and creation endpoints return the bare created
+    record. Every error produced by the shared exception handler uses the envelope with
+    `success: false`.
+
+    ## Authentication and roles
+    All endpoints except `POST /api/auth/login` and `GET /health` require a JWT bearer token.
+    Authorization is declared per endpoint: reads and most writes accept `ROLE_USER` or `ROLE_ADMIN`,
+    while destructive or lifecycle-critical operations (product create and delete, supplier, customer
+    and invoice deletion, invoice close and payment) require `ROLE_ADMIN`. A request without a usable
+    token receives 401 with the envelope; an authenticated request lacking the role receives 403.
+
+    ## Domain doctrine expressed by the API
+    Several rules are enforced at the API surface rather than left to convention:
+
+    - **Purchase and sale movements exist only through invoice closing.** They cannot be recorded
+      directly; closing an invoice books them as a side effect.
+    - **`POST /api/stock-movements` accepts three reasons only** - `NEW_PRODUCT`, `LOST` and
+      `DESTROYED` - the standalone corrections that no invoice accounts for. Any other reason is
+      rejected with 400 before the service is reached.
+    - **Returns are a first-class operation** with their own endpoint, `POST /api/returns`. It records
+      the movement and raises the invoice line's returned quantity in one transaction.
+    - **Customer master data has no update endpoint by design.** Customers can be listed, fetched,
+      created and soft-deleted; correcting customer details is out of scope for this API.
+    - **Product quantity cannot be assigned directly.** It changes only as a consequence of movements.
+  contact:
+    name: Carlos Felipe Keglevich
+    url: https://github.com/Keglev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8081
+    description: Local development environment
+  - url: https://stockeasebackend.koyeb.app
+    description: Production environment (Koyeb)
+
+tags:
+  - name: Authentication
+    description: Login and JWT token issuance
+  - name: Health
+    description: Database-backed liveness probe
+  - name: Products
+    description: Product catalogue, pricing, search and stock analytics
+  - name: Suppliers
+    description: Supplier register - the purchase-side counterparty
+  - name: Customers
+    description: Customer register - the sale-side counterparty; no update endpoint by design
+  - name: Invoices
+    description: Invoice lifecycle - creation, closing (which books stock), payment and deletion
+  - name: Stock Movements
+    description: Standalone stock corrections; purchases and sales are booked by closing invoices
+  - name: Returns
+    description: Returns against an invoice line, in either direction
+  - name: Reports
+    description: Reporting read model - profit, stock status, losses, due dates and customer summaries
+  - name: Audit
+    description: Product change log, readable per user and per product
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token for authentication. Obtained from /api/auth/login endpoint.
+        Include in Authorization header: "Authorization: Bearer <token>"
+        Tokens contain user role (ADMIN or USER) as claim.
+
+  responses:
+    Unauthorized:
+      description: |
+        Unauthenticated - no token, or a token that is missing, expired or invalid. Produced by the
+        authentication entry point, which states only that authentication is required and never
+        whether the account exists.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: Authentication required.
+            data: null
+    Forbidden:
+      description: Authenticated, but the account lacks the role this endpoint requires.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: You do not have permission to access this resource.
+            data: null
+    ValidationError:
+      description: |
+        Bean Validation rejected the request body before the service was reached. `data` maps each
+        offending field to its message; a field violating several constraints at once has its
+        messages sorted and joined with `"; "`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+          example:
+            success: false
+            message: Validation failed for request parameters.
+            data:
+              name: must not be blank
+
+  schemas:
+    # ---------------------------------------------------------------- envelope
+    ApiResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Operation success indicator
+          example: true
+        message:
+          type: string
+          description: Human-readable outcome message
+          example: Product fetched successfully
+        data:
+          description: |
+            Operation result payload; null for errors and for operations with no output. Left
+            untyped here because each endpoint narrows it - see the ApiResponse* variants.
+      description: Standard wrapper used by single-resource reads and mutations
+
+    ApiResponseError:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            data:
+              example: null
+      description: The envelope as produced by the shared exception handler
+
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            data:
+              type: object
+              additionalProperties:
+                type: string
+              description: Field name to message; multiple messages are sorted and joined with "; "
+      description: 400 response carrying field-level validation messages
+
+    ApiResponseString:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: string
+              nullable: true
+
+    ApiResponseDouble:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: number
+              format: double
+
+    # ---------------------------------------------------------- authentication
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: User account name (must not be blank)
+          example: admin
+        password:
+          type: string
+          minLength: 1
+          description: User account password (must not be blank)
+          example: password123
+      description: Credentials for user authentication
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: UP
+        db:
+          type: string
+          example: UP
+      description: Combined application and database liveness
+
+    # --------------------------------------------------------------- products
+    ProductResponse:
+      type: object
+      required:
+        - id
+        - name
+        - sku
+        - quantity
+        - purchasePrice
+        - totalValue
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Laptop
+        sku:
+          type: string
+          description: Stock keeping unit; generated on creation when not supplied
+          example: SKU-A1B2C3D4
+        quantity:
+          type: integer
+          description: Units in stock; changes only through stock movements
+          example: 50
+        purchasePrice:
+          type: number
+          format: double
+          example: 999.99
+        totalValue:
+          type: number
+          format: double
+          readOnly: true
+          description: purchasePrice times quantity, derived when the response is built
+          example: 49999.50
+        createdAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          example: '2026-01-02T03:04:00'
+      description: API representation of a product
+
+    ApiResponseProduct:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ProductResponse'
+
+    ProductList:
+      type: array
+      items:
+        $ref: '#/components/schemas/ProductResponse'
+
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - quantity
+        - purchasePrice
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Must not be blank
+          example: New Laptop
+        quantity:
+          type: integer
+          minimum: 0
+          description: Must be zero or greater
+          example: 25
+        purchasePrice:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Must be positive
+          example: 1299.99
+
+    UpdatePriceRequest:
+      type: object
+      required:
+        - purchasePrice
+      properties:
+        purchasePrice:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Must be positive
+          example: 150.0
+
+    UpdateNameRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Must not be blank
+          example: Renamed Laptop
+
+    PaginatedProducts:
+      type: object
+      required:
+        - content
+        - pageNumber
+        - pageSize
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          $ref: '#/components/schemas/ProductList'
+        pageNumber:
+          type: integer
+          example: 0
+        pageSize:
+          type: integer
+          example: 10
+        totalElements:
+          type: integer
+          format: int64
+          example: 100
+        totalPages:
+          type: integer
+          example: 10
+
+    ApiResponsePaginated:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/PaginatedProducts'
+
+    MessageOnly:
+      type: object
+      properties:
+        message:
+          type: string
+      description: Bare status message returned by the low-stock and search endpoints when empty
+
+    # -------------------------------------------------------------- suppliers
+    SupplierResponse:
+      type: object
+      required:
+        - id
+        - name
+        - address
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 7
+        name:
+          type: string
+          example: Acme
+        address:
+          type: string
+          example: 1 Main St
+        createdAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          example: '2026-01-02T03:04:00'
+
+    ApiResponseSupplier:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/SupplierResponse'
+
+    SupplierRequest:
+      type: object
+      required:
+        - name
+        - address
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: 'Must not be blank; message: "Supplier name is required."'
+          example: Acme
+        address:
+          type: string
+          minLength: 1
+          description: 'Must not be blank; message: "Supplier address is required."'
+          example: 1 Main St
+      description: Body for both supplier creation and update; every field is replaced on update
+
+    # -------------------------------------------------------------- customers
+    CustomerResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 9
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          nullable: true
+          example: jane@example.com
+        phone:
+          type: string
+          nullable: true
+          example: 555-1234
+        address:
+          type: string
+          nullable: true
+          example: 1 Main St
+        city:
+          type: string
+          nullable: true
+          example: Springfield
+        createdAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          example: '2026-01-02T03:04:00'
+
+    ApiResponseCustomer:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/CustomerResponse'
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: 'Must not be blank; message: "Customer name is required."'
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: 'Optional, but must be well formed when present; message: "Customer email must be a valid email address."'
+          example: jane@example.com
+        phone:
+          type: string
+          nullable: true
+          example: 555-1234
+        address:
+          type: string
+          nullable: true
+          example: 1 Main St
+        city:
+          type: string
+          nullable: true
+          example: Springfield
+
+    # --------------------------------------------------------------- invoices
+    InvoiceType:
+      type: string
+      enum: [PURCHASE, SALE]
+      description: Purchase invoices name a supplier; sale invoices name a customer or nobody (cash sale)
+
+    InvoiceStatus:
+      type: string
+      enum: [OPEN, CLOSED, FULLY_RETURNED]
+      description: OPEN is recorded but not yet booked; CLOSED has booked its stock movements
+
+    InvoiceSummaryResponse:
+      type: object
+      required:
+        - id
+        - type
+        - status
+        - dueDate
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        type:
+          $ref: '#/components/schemas/InvoiceType'
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        dueDate:
+          type: string
+          format: date
+          example: '2026-03-01'
+        supplierId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 7
+        customerId:
+          type: integer
+          format: int64
+          nullable: true
+        closedAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          nullable: true
+        paidAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          nullable: true
+        createdAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          example: '2026-01-02T03:04:00'
+      description: |
+        List representation. Counterparties appear as identifiers only, never as names: the list is
+        built without initializing associations, which is what keeps it free of extra queries.
+
+    InvoiceItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 4
+        productId:
+          type: integer
+          format: int64
+          example: 3
+        productName:
+          type: string
+          example: Widget
+        quantity:
+          type: integer
+          example: 2
+        unitPrice:
+          type: number
+          format: double
+          example: 15.00
+        returnedQty:
+          type: integer
+          description: Units returned against this line so far
+          example: 0
+
+    InvoiceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        type:
+          $ref: '#/components/schemas/InvoiceType'
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        dueDate:
+          type: string
+          format: date
+          example: '2026-03-01'
+        supplierId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 7
+        supplierName:
+          type: string
+          nullable: true
+          example: Acme
+        customerId:
+          type: integer
+          format: int64
+          nullable: true
+        customerName:
+          type: string
+          nullable: true
+        closedAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          nullable: true
+        paidAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          nullable: true
+        createdAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceItemResponse'
+      description: |
+        Detail representation, loaded through a fetch-joined query so items, their products and both
+        counterparties are present. Only this shape carries counterparty names and lines.
+
+    ApiResponseInvoiceSummary:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/InvoiceSummaryResponse'
+
+    ApiResponseInvoice:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/InvoiceResponse'
+
+    CreateInvoiceItem:
+      type: object
+      required:
+        - productId
+        - quantity
+        - unitPrice
+      properties:
+        productId:
+          type: integer
+          format: int64
+          description: 'Required; message: "Item product is required."'
+          example: 3
+        quantity:
+          type: integer
+          minimum: 0
+          exclusiveMinimum: true
+          description: 'Must be positive; message: "Item quantity must be positive."'
+          example: 2
+        unitPrice:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: 'Must be positive; message: "Item unit price must be positive."'
+          example: 15.00
+
+    CreateInvoiceRequest:
+      type: object
+      required:
+        - type
+        - dueDate
+        - items
+      properties:
+        type:
+          $ref: '#/components/schemas/InvoiceType'
+        supplierId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Required for PURCHASE invoices; must be absent on SALE invoices
+          example: 7
+        customerId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Optional on SALE invoices (absent means an anonymous cash sale); must be absent on PURCHASE
+        dueDate:
+          type: string
+          format: date
+          description: 'Required; message: "Due date is required."'
+          example: '2026-03-01'
+        interestRate:
+          type: number
+          nullable: true
+          minimum: 0
+          description: Optional, must not be negative; defaults to zero
+        fineValue:
+          type: number
+          nullable: true
+          minimum: 0
+          description: Optional, must not be negative; defaults to zero
+        items:
+          type: array
+          minItems: 1
+          description: 'At least one line; message: "An invoice requires at least one item."'
+          items:
+            $ref: '#/components/schemas/CreateInvoiceItem'
+      description: |
+        Field-level rules are enforced here; which counterparty a type requires is a service-level
+        rule, so both identifiers are nullable at this layer and a mismatch surfaces as 400.
+
+    # -------------------------------------------------------------- movements
+    MovementType:
+      type: string
+      enum: [INCREASE, DECREASE]
+      description: Direction of the change, fixed by the reason
+
+    MovementReason:
+      type: string
+      enum: [NEW_PRODUCT, PURCHASE, RETURN_FROM_CUSTOMER, SOLD, LOST, DESTROYED, RETURNED_TO_SUPPLIER]
+      description: |
+        Business reason for the change. PURCHASE and SOLD are booked only by closing an invoice;
+        RETURN_FROM_CUSTOMER and RETURNED_TO_SUPPLIER are recorded through the returns endpoint;
+        NEW_PRODUCT, LOST and DESTROYED are the standalone corrections.
+
+    MovementResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 5
+        productId:
+          type: integer
+          format: int64
+          example: 3
+        userId:
+          type: integer
+          format: int64
+          description: User who triggered the movement, resolved from the token
+          example: 11
+        type:
+          $ref: '#/components/schemas/MovementType'
+        reason:
+          $ref: '#/components/schemas/MovementReason'
+        quantity:
+          type: integer
+          example: 2
+        invoiceItemId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Present only for movements bound to an invoice line
+        soldPrice:
+          type: number
+          format: double
+          nullable: true
+          description: Revenue snapshot, set for sales and customer returns
+        unitCost:
+          type: number
+          format: double
+          nullable: true
+          description: Cost snapshot, set for initial stock and purchases
+          example: 7.50
+        createdAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+
+    RecordMovementRequest:
+      type: object
+      required:
+        - productId
+        - reason
+        - quantity
+      properties:
+        productId:
+          type: integer
+          format: int64
+          description: 'Required; message: "Product is required."'
+          example: 3
+        reason:
+          allOf:
+            - $ref: '#/components/schemas/MovementReason'
+          description: Required, and must be NEW_PRODUCT, LOST or DESTROYED at this endpoint
+        quantity:
+          type: integer
+          minimum: 0
+          exclusiveMinimum: true
+          description: 'Must be positive; message: "Quantity must be positive."'
+          example: 2
+        unitCost:
+          type: number
+          format: double
+          nullable: true
+          description: Required by NEW_PRODUCT and rejected for the other reasons; must be positive when present
+          example: 7.50
+
+    RegisterReturnRequest:
+      type: object
+      required:
+        - invoiceItemId
+        - productId
+        - reason
+        - quantity
+      properties:
+        invoiceItemId:
+          type: integer
+          format: int64
+          description: 'Required; message: "Invoice item is required."'
+          example: 4
+        productId:
+          type: integer
+          format: int64
+          description: |
+            Required even though the invoice line determines it. Stating it lets the service's
+            item-product coherence check reject a client that sent the wrong line, instead of the
+            server silently deriving over the mistake.
+          example: 3
+        reason:
+          allOf:
+            - $ref: '#/components/schemas/MovementReason'
+          description: Must be RETURN_FROM_CUSTOMER or RETURNED_TO_SUPPLIER
+        quantity:
+          type: integer
+          minimum: 0
+          exclusiveMinimum: true
+          description: 'Must be positive; message: "Quantity must be positive."'
+          example: 2
+
+    # ---------------------------------------------------------------- reports
+    ProductProfitReport:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+          example: 3
+        name:
+          type: string
+          example: Widget
+        sku:
+          type: string
+          example: SKU-3
+        deleted:
+          type: boolean
+          description: Soft-deleted products still appear; history stays reportable
+          example: false
+        revenue:
+          type: number
+          example: 100.00
+        cost:
+          type: number
+          example: 40.00
+        grossProfit:
+          type: number
+          example: 60.00
+
+    ApiResponseProductProfit:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ProductProfitReport'
+
+    SupplierProfitReport:
+      type: object
+      properties:
+        supplierId:
+          type: integer
+          format: int64
+          example: 7
+        name:
+          type: string
+          example: Acme
+        revenue:
+          type: number
+          example: 100.00
+        cost:
+          type: number
+          example: 40.00
+        grossProfit:
+          type: number
+          example: 60.00
+
+    StockStatusReport:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+          example: 3
+        name:
+          type: string
+          example: Widget
+        sku:
+          type: string
+          example: SKU-3
+        soldUnits:
+          type: integer
+          example: 4
+        soldRevenue:
+          type: number
+          example: 60.00
+        inStockUnits:
+          type: integer
+          example: 6
+        inStockValue:
+          type: number
+          example: 30.00
+
+    LossReport:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+          example: 3
+        name:
+          type: string
+          example: Widget
+        sku:
+          type: string
+          example: SKU-3
+        deleted:
+          type: boolean
+          example: false
+        lostUnits:
+          type: integer
+          example: 2
+        destroyedUnits:
+          type: integer
+          example: 1
+        lossValue:
+          type: number
+          example: 15.00
+
+    DueDateBucket:
+      type: object
+      properties:
+        dueDate:
+          type: string
+          format: date
+          example: '2026-03-01'
+        invoiceType:
+          type: string
+          example: SALE
+        invoiceCount:
+          type: integer
+          format: int64
+          example: 2
+        totalValue:
+          type: number
+          example: 60.00
+
+    InvoiceDueSummary:
+      type: object
+      properties:
+        invoiceId:
+          type: integer
+          format: int64
+          example: 1
+        invoiceType:
+          type: string
+          example: SALE
+        counterparty:
+          type: string
+          description: Supplier or customer name; "Cash sale" when the sale names no customer
+          example: Jane Doe
+        dueDate:
+          type: string
+          format: date
+          example: '2026-03-01'
+        outstandingValue:
+          type: number
+          description: Invoice value net of quantities already returned
+          example: 30.00
+        daysOverdue:
+          type: integer
+          format: int64
+          nullable: true
+          description: Populated by the overdue listing only; null in the due-soon listing
+          example: 5
+
+    CustomerSummary:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          format: int64
+          example: 9
+        name:
+          type: string
+          example: Jane Doe
+        deleted:
+          type: boolean
+          description: Soft-deleted customers keep reporting, flagged here
+          example: false
+        saleInvoiceCount:
+          type: integer
+          format: int64
+          example: 1
+        boughtUnits:
+          type: integer
+          format: int64
+          example: 5
+        boughtValue:
+          type: number
+          example: 80.00
+        returnedUnits:
+          type: integer
+          format: int64
+          example: 1
+        returnedValue:
+          type: number
+          example: 10.00
+      description: |
+        Counts booked sale invoices only - an OPEN invoice is recorded but has not happened yet.
+        A customer with no booked sales reports zeros rather than being absent.
+
+    ApiResponseCustomerSummary:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/CustomerSummary'
+
+    # ------------------------------------------------------------------ audit
+    ChangedField:
+      type: string
+      enum: [NAME, PURCHASE_PRICE, DELETED, RESTORED]
+      description: Attribute or lifecycle event the log entry records
+
+    ChangeLogResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        productId:
+          type: integer
+          format: int64
+          example: 3
+        userId:
+          type: integer
+          format: int64
+          example: 11
+        field:
+          $ref: '#/components/schemas/ChangedField'
+        oldValue:
+          type: string
+          nullable: true
+          description: Null for lifecycle events that carry no value
+          example: Old name
+        newValue:
+          type: string
+          nullable: true
+          example: New name
+        createdAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+
+paths:
+  # authentication and health
+  /api/auth/login:
+    $ref: './paths/auth-login.yaml'
+  /health:
+    $ref: './paths/health.yaml'
+
+  # products
+  /api/products:
+    $ref: './paths/products.yaml'
+  /api/products/{id}:
+    $ref: './paths/products-detail.yaml'
+  /api/products/paged:
+    $ref: './paths/products-paged.yaml'
+  /api/products/low-stock:
+    $ref: './paths/products-low-stock.yaml'
+  /api/products/search:
+    $ref: './paths/products-search.yaml'
+  /api/products/{id}/price:
+    $ref: './paths/products-price.yaml'
+  /api/products/{id}/name:
+    $ref: './paths/products-name.yaml'
+  /api/products/total-stock-value:
+    $ref: './paths/products-total-stock-value.yaml'
+
+  # suppliers
+  /api/suppliers:
+    $ref: './paths/suppliers.yaml'
+  /api/suppliers/{id}:
+    $ref: './paths/suppliers-detail.yaml'
+
+  # customers
+  /api/customers:
+    $ref: './paths/customers.yaml'
+  /api/customers/{id}:
+    $ref: './paths/customers-detail.yaml'
+
+  # invoices
+  /api/invoices:
+    $ref: './paths/invoices.yaml'
+  /api/invoices/{id}:
+    $ref: './paths/invoices-detail.yaml'
+  /api/invoices/{id}/close:
+    $ref: './paths/invoices-close.yaml'
+  /api/invoices/{id}/paid:
+    $ref: './paths/invoices-paid.yaml'
+
+  # movements and returns
+  /api/stock-movements:
+    $ref: './paths/stock-movements.yaml'
+  /api/returns:
+    $ref: './paths/returns.yaml'
+
+  # reports
+  /api/reports/profit/products:
+    $ref: './paths/reports-profit-products.yaml'
+  /api/reports/profit/products/{id}:
+    $ref: './paths/reports-profit-product-detail.yaml'
+  /api/reports/profit/suppliers:
+    $ref: './paths/reports-profit-suppliers.yaml'
+  /api/reports/customers/{id}/summary:
+    $ref: './paths/reports-customer-summary.yaml'
+  /api/reports/stock-status:
+    $ref: './paths/reports-stock-status.yaml'
+  /api/reports/losses:
+    $ref: './paths/reports-losses.yaml'
+  /api/reports/due-dates:
+    $ref: './paths/reports-due-dates.yaml'
+  /api/reports/due-soon:
+    $ref: './paths/reports-due-soon.yaml'
+  /api/reports/overdue:
+    $ref: './paths/reports-overdue.yaml'
+
+  # audit
+  /api/audit/users/{userId}/changes:
+    $ref: './paths/audit-user-changes.yaml'
+  /api/audit/products/{productId}/changes:
+    $ref: './paths/audit-product-changes.yaml'
+
+security:
+  - BearerAuth: []

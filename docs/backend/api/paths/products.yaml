@@ -1,0 +1,95 @@
+get:
+  summary: Retrieve all products
+  description: |
+    Loads the entire inventory without pagination, ordered by ID.
+    Use /api/products/paged for large datasets to prevent memory issues.
+  operationId: getAllProducts
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Products retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ProductList'
+          example:
+            - id: 1
+              name: Laptop
+              sku: SKU-A1B2C3D4
+              quantity: 50
+              purchasePrice: 999.99
+              totalValue: 49999.50
+              createdAt: '2026-01-02T03:04:00'
+            - id: 2
+              name: Mouse
+              sku: SKU-B2C3D4E5
+              quantity: 200
+              purchasePrice: 25.99
+              totalValue: 5198.00
+              createdAt: '2026-01-02T03:05:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+
+post:
+  summary: Create a new product (ADMIN only)
+  description: |
+    Creates a product from a name, an initial quantity and a purchase price. The SKU is generated
+    when not supplied, and `totalValue` is derived for the response rather than stored.
+
+    Note that the initial quantity given here is the only quantity this API accepts directly; from
+    then on the value changes exclusively through stock movements.
+  operationId: createProduct
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/CreateProductRequest'
+  responses:
+    '200':
+      description: Product created; returns the bare record
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ProductResponse'
+          example:
+            id: 3
+            name: New Laptop
+            sku: SKU-C3D4E5F6
+            quantity: 25
+            purchasePrice: 1299.99
+            totalValue: 32499.75
+            createdAt: '2026-01-02T03:06:00'
+    '400':
+      description: Validation error - missing or invalid fields
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
+          example:
+            success: false
+            message: Validation failed for request parameters.
+            data:
+              name: must not be blank
+              quantity: must be greater than or equal to 0
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '403':
+      $ref: '../openapi.yaml#/components/responses/Forbidden'
+    '409':
+      description: A live product already carries that name
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: "A product named 'Laptop' already exists."
+            data: null

@@ -1,0 +1,67 @@
+put:
+  summary: Update product purchase price
+  description: |
+    Updates the purchase price and records the change in the change log. `totalValue` in the response
+    is derived from the updated price and the unchanged quantity. Zero and negative prices are
+    rejected.
+  operationId: updatePrice
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Product identifier
+      schema:
+        type: integer
+        format: int64
+        example: 1
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/UpdatePriceRequest'
+  responses:
+    '200':
+      description: Price updated (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseProduct'
+          example:
+            success: true
+            message: Price updated successfully
+            data:
+              id: 1
+              name: Laptop
+              sku: SKU-A1B2C3D4
+              quantity: 50
+              purchasePrice: 1199.99
+              totalValue: 59999.50
+              createdAt: '2026-01-02T03:04:00'
+    '400':
+      description: Validation error - the price is missing, zero or negative
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
+          example:
+            success: false
+            message: Validation failed for request parameters.
+            data:
+              purchasePrice: must be greater than 0
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No product with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Product with ID 999 not found.'
+            data: null

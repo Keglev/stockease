@@ -1,0 +1,133 @@
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: Supplier identifier
+
+get:
+  summary: Get a supplier by ID
+  operationId: getSupplierById
+  tags:
+    - Suppliers
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Supplier found (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseSupplier'
+          example:
+            success: true
+            message: Supplier fetched successfully
+            data:
+              id: 7
+              name: Acme
+              address: 1 Main St
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No supplier with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Supplier with ID 9 not found.'
+            data: null
+
+put:
+  summary: Replace a supplier's name and address
+  description: Both fields are replaced wholesale, so both are mandatory.
+  operationId: updateSupplier
+  tags:
+    - Suppliers
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/SupplierRequest'
+  responses:
+    '200':
+      description: Supplier updated (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseSupplier'
+          example:
+            success: true
+            message: Supplier updated successfully
+            data:
+              id: 7
+              name: Acme Two
+              address: 2 Side St
+              createdAt: '2026-01-02T03:04:00'
+    '400':
+      $ref: '../openapi.yaml#/components/responses/ValidationError'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No supplier with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Supplier with ID 9 not found.'
+            data: null
+
+delete:
+  summary: Soft-delete a supplier (ADMIN only)
+  description: |
+    Soft-deletes the supplier. The invoice module vetoes the deletion while any open invoice still
+    names this supplier, which surfaces as 409 and rolls the whole transaction back.
+  operationId: deleteSupplier
+  tags:
+    - Suppliers
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Supplier deleted
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseString'
+          example:
+            success: true
+            message: Supplier with ID 1 has been successfully deleted.
+            data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '403':
+      $ref: '../openapi.yaml#/components/responses/Forbidden'
+    '404':
+      description: No supplier with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Supplier with ID 9 not found.'
+            data: null
+    '409':
+      description: Deletion vetoed - open invoices still reference the supplier
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: "Cannot delete supplier 'Acme': open invoices exist."
+            data: null

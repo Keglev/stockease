@@ -1,0 +1,29 @@
+get:
+  summary: Sold and in-stock figures per product
+  description: |
+    One row per live product, ordered by product ID. Current-state report: soft-deleted products are
+    excluded, because their stock is no longer operational.
+  operationId: stockStatus
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/StockStatusReport'
+          example:
+            - productId: 3
+              name: Widget
+              sku: SKU-3
+              soldUnits: 4
+              soldRevenue: 60.00
+              inStockUnits: 6
+              inStockValue: 30.00
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

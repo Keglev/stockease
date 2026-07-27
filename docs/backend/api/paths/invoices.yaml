@@ -1,0 +1,113 @@
+get:
+  summary: List all invoices
+  description: |
+    Returns every invoice, newest first, as summaries. Counterparties appear as identifiers only -
+    names and lines belong to the detail endpoint.
+  operationId: getAllInvoices
+  tags:
+    - Invoices
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Invoices retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/InvoiceSummaryResponse'
+          example:
+            - id: 2
+              type: SALE
+              status: OPEN
+              dueDate: '2026-03-01'
+              supplierId: null
+              customerId: 9
+              closedAt: null
+              paidAt: null
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+
+post:
+  summary: Create an invoice with its lines
+  description: |
+    Creates an invoice together with all of its lines, in status OPEN. Creation records the invoice
+    but books no stock - that happens when the invoice is closed.
+
+    Which counterparty the type requires is validated in the service, so a mismatch (a purchase
+    without a supplier, a sale naming one) returns 400 with the plain envelope rather than the
+    field-error map.
+  operationId: createInvoice
+  tags:
+    - Invoices
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/CreateInvoiceRequest'
+        example:
+          type: PURCHASE
+          supplierId: 7
+          dueDate: '2026-03-01'
+          items:
+            - productId: 3
+              quantity: 2
+              unitPrice: 15.00
+  responses:
+    '200':
+      description: Invoice created (ROLE_USER or ROLE_ADMIN); returns the bare summary
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/InvoiceSummaryResponse'
+          example:
+            id: 1
+            type: PURCHASE
+            status: OPEN
+            dueDate: '2026-03-01'
+            supplierId: 7
+            customerId: null
+            closedAt: null
+            paidAt: null
+            createdAt: '2026-01-02T03:04:00'
+    '400':
+      description: |
+        Field validation failed (missing type or due date, empty items, non-positive quantity or unit
+        price), or the counterparty does not match the invoice type.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
+              - $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          examples:
+            fieldValidation:
+              summary: Field-level validation
+              value:
+                success: false
+                message: Validation failed for request parameters.
+                data:
+                  items[0].quantity: Item quantity must be positive.
+            counterpartyMismatch:
+              summary: Counterparty rule, checked in the service
+              value:
+                success: false
+                message: Purchase invoices require a supplier and no customer.
+                data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: The supplier, customer or one of the products does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Product with ID 3 not found.'
+            data: null

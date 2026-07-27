@@ -1,0 +1,95 @@
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: Customer identifier
+
+get:
+  summary: Get a customer by ID
+  description: |
+    There is deliberately no PUT counterpart: customer master-data management is out of scope for
+    this API by design.
+  operationId: getCustomerById
+  tags:
+    - Customers
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Customer found (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseCustomer'
+          example:
+            success: true
+            message: Customer fetched successfully
+            data:
+              id: 9
+              name: Jane Doe
+              email: jane@example.com
+              phone: 555-1234
+              address: 1 Main St
+              city: Springfield
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No customer with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Customer with ID 9 not found.'
+            data: null
+
+delete:
+  summary: Soft-delete a customer (ADMIN only)
+  description: |
+    Soft-deletes the customer. The invoice module vetoes the deletion while any open sale invoice
+    still names this customer, which surfaces as 409 and rolls the whole transaction back.
+  operationId: deleteCustomer
+  tags:
+    - Customers
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Customer deleted
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseString'
+          example:
+            success: true
+            message: Customer with ID 1 has been successfully deleted.
+            data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '403':
+      $ref: '../openapi.yaml#/components/responses/Forbidden'
+    '404':
+      description: No customer with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Customer with ID 9 not found.'
+            data: null
+    '409':
+      description: Deletion vetoed - open invoices still reference the customer
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: "Cannot delete customer 'Jane Doe': open invoices exist."
+            data: null

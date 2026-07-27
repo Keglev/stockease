@@ -1,0 +1,113 @@
+post:
+  summary: Return units against an invoice line
+  description: |
+    Records a return in one transaction: it writes the stock movement and raises the invoice line's
+    returned quantity together, so the two can never drift apart. When every line of an invoice is
+    fully returned, the invoice flips to `FULLY_RETURNED`.
+
+    Accepts the two return directions only - `RETURN_FROM_CUSTOMER` (units come back into stock from
+    a customer) and `RETURNED_TO_SUPPLIER` (units leave stock back to a supplier). Any other reason
+    is rejected before the service is reached.
+
+    The endpoint lives under the movement module because the movement service is what orchestrates
+    the return, calling into the invoice module rather than the other way around.
+
+    `productId` is required even though the invoice line already determines it: stating it lets the
+    service's item-product coherence check catch a client that referenced the wrong line.
+  operationId: registerReturn
+  tags:
+    - Returns
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/RegisterReturnRequest'
+        example:
+          invoiceItemId: 4
+          productId: 3
+          reason: RETURN_FROM_CUSTOMER
+          quantity: 2
+  responses:
+    '200':
+      description: Return recorded (ROLE_USER or ROLE_ADMIN); returns the bare movement
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/MovementResponse'
+          example:
+            id: 5
+            productId: 3
+            userId: 11
+            type: INCREASE
+            reason: RETURN_FROM_CUSTOMER
+            quantity: 2
+            invoiceItemId: 4
+            soldPrice: 15.00
+            unitCost: null
+            createdAt: '2026-01-02T03:04:00'
+    '400':
+      description: |
+        A reason that is not a return, a field-level validation failure, or a movement the service's
+        validation matrix rejects (for example a line belonging to a different product).
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
+              - $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          examples:
+            reasonNotAReturn:
+              summary: Reason owned by another flow
+              value:
+                success: false
+                message: This endpoint records returns only.
+                data: null
+            fieldValidation:
+              summary: Field-level validation
+              value:
+                success: false
+                message: Validation failed for request parameters.
+                data:
+                  invoiceItemId: Invoice item is required.
+            wrongProduct:
+              summary: The line belongs to another product
+              value:
+                success: false
+                message: Invoice item 4 belongs to a different product.
+                data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: The referenced invoice item or product does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Invoice item with ID 4 not found.'
+            data: null
+    '409':
+      description: |
+        The return exceeds what the line still has outstanding, the invoice is not closed yet, or the
+        resulting stock change would go negative.
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          examples:
+            exceedsRemaining:
+              summary: Return cap exceeded
+              value:
+                success: false
+                message: Return of 2 exceeds remaining returnable quantity 1 for invoice item 4.
+                data: null
+            invoiceStillOpen:
+              summary: Nothing to return against yet
+              value:
+                success: false
+                message: Returns require a closed invoice.
+                data: null

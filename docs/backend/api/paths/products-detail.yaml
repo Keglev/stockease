@@ -1,6 +1,6 @@
 get:
   summary: Retrieve a single product by ID
-  description: Returns product details if found, otherwise 404 error.
+  description: Returns the product if it exists, otherwise 404.
   operationId: getProductById
   tags:
     - Products
@@ -17,29 +17,32 @@ get:
         example: 1
   responses:
     '200':
-      description: Product found and returned
+      description: Product found (ROLE_USER or ROLE_ADMIN)
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseProduct'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseProduct'
           example:
             success: true
             message: Product fetched successfully
             data:
               id: 1
               name: Laptop
+              sku: SKU-A1B2C3D4
               quantity: 50
               purchasePrice: 999.99
-              sku: SKU-A1B2C3D4
               totalValue: 49999.50
+              createdAt: '2026-01-02T03:04:00'
     '401':
-      description: Unauthorized - missing or invalid JWT token
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
     '404':
-      description: Product not found
+      description: |
+        No product with that ID. This endpoint builds its own 404 body rather than raising through
+        the shared handler, so the message carries no `Entity not found: ` prefix.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseError'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           example:
             success: false
             message: The product with ID 999 does not exist.
@@ -48,8 +51,8 @@ get:
 delete:
   summary: Delete a product (ADMIN only)
   description: |
-    Deletes a product by ID. Returns 404 if product not found.
-    Deletion checks product existence first to avoid orphaned references.
+    Soft-deletes the product and records the deletion in the change log. The invoice module vetoes
+    the deletion while the product appears on any open invoice, which surfaces as 409.
   operationId: deleteProduct
   tags:
     - Products
@@ -66,32 +69,36 @@ delete:
         example: 1
   responses:
     '200':
-      description: Product deleted successfully
+      description: Product deleted
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponse'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseString'
           example:
             success: true
             message: Product with ID 1 has been successfully deleted.
             data: null
-    '400':
-      description: Invalid request - ID missing
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiResponseError'
     '401':
-      description: Unauthorized - missing or invalid JWT token
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
     '403':
-      description: Forbidden - insufficient permissions (requires ADMIN role)
+      $ref: '../openapi.yaml#/components/responses/Forbidden'
     '404':
-      description: Product not found
+      description: No product with that ID. Built by the endpoint itself, so no prefix on the message.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseError'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           example:
             success: false
             message: Cannot delete. Product with ID 999 does not exist.
+            data: null
+    '409':
+      description: Deletion vetoed - the product appears on an open invoice
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: "Cannot delete product 'Laptop': it appears on an open invoice."
             data: null
