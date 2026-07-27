@@ -1,7 +1,9 @@
 {
   "common": {
     "appName": "Bestandskontrolle",
-    "language": "Language"
+    "language": "Language",
+    "themeLight": "Light mode",
+    "themeDark": "Dark mode"
   },
   "landing": {
     "description": "{{app}} is an inventory management application for small businesses: track products and stock levels, manage suppliers and customers, and settle purchases and sales through the invoice lifecycle. This demo runs against the live Spring Boot API.",

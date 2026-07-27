@@ -4,10 +4,17 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { LanguageToggleComponent } from '../../shared/language-toggle/language-toggle.component';
+import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-landing',
-  imports: [LanguageToggleComponent, MatButtonModule, RouterLink, TranslatePipe],
+  imports: [
+    LanguageToggleComponent,
+    ThemeToggleComponent,
+    MatButtonModule,
+    RouterLink,
+    TranslatePipe
+  ],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss'
 })

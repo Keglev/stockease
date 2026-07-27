@@ -1,0 +1,10 @@
+<button
+  matIconButton
+  type="button"
+  class="theme-button"
+  [attr.aria-label]="label() | translate"
+  [title]="label() | translate"
+  (click)="toggle()"
+>
+  <mat-icon>{{ icon() }}</mat-icon>
+</button>

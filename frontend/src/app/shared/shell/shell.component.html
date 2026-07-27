@@ -3,11 +3,14 @@
   <span class="spacer"></span>
 
   <app-language-toggle />
+  <app-theme-toggle />
 
   @if (role(); as currentRole) {
     <span class="role">{{ 'shell.role.' + currentRole | translate }}</span>
   }
-  <button matButton type="button" (click)="logout()">{{ 'shell.logout' | translate }}</button>
+  <button matButton type="button" class="logout-button" (click)="logout()">
+    {{ 'shell.logout' | translate }}
+  </button>
 </mat-toolbar>
 
 <mat-sidenav-container class="shell-container">

@@ -9,11 +9,13 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { LanguageToggleComponent } from '../../../shared/language-toggle/language-toggle.component';
+import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-login',
   imports: [
     LanguageToggleComponent,
+    ThemeToggleComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,

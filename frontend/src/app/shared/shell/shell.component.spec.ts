@@ -42,12 +42,11 @@ describe('ShellComponent', () => {
     ).find((button) => button.textContent?.trim() === label);
   }
 
-  function logoutButton(): HTMLButtonElement | undefined {
-    return Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
-        'mat-toolbar button'
-      )
-    ).find((button) => !button.classList.contains('lang-button'));
+  function logoutButton(): HTMLButtonElement | null {
+    // Selected by its own class: the toolbar also holds the language and theme toggles.
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'button.logout-button'
+    );
   }
 
   async function setUp(): Promise<void> {
