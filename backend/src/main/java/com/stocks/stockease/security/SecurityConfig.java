@@ -1,7 +1,8 @@
 package com.stocks.stockease.security;
 
-import java.util.Arrays;
+import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,15 +34,20 @@ public class SecurityConfig {
 
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
+    private final List<String> allowedOrigins;
+
     /**
-     * Constructs security config with the JWT filter and custom authentication entry point.
+     * Constructs security config with the JWT filter, custom authentication entry point, and CORS origins.
      *
      * @param jwtFilter validates JWT tokens in request headers
      * @param customAuthenticationEntryPoint sends custom 401 error responses
+     * @param allowedOrigins frontend origins permitted to call the API
      */
-    public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint) {
+    public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint,
+            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
         this.jwtFilter = jwtFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+        this.allowedOrigins = allowedOrigins;
     }
 
     /**
@@ -109,12 +115,9 @@ public class SecurityConfig {
      */
     private @NonNull CorsConfiguration corsConfiguration() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList(
-            "http://localhost:5173",
-            "https://stockeasefrontend.vercel.app/"
-        ));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
         config.setAllowCredentials(true);
         return config;
     }
