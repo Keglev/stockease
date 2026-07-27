@@ -41,6 +41,9 @@ import lombok.RequiredArgsConstructor;
  * <p>Covers CRUD, partial field updates, pagination, search, and stock analytics.
  * Full contract for every operation is defined in {@code docs/api/paths/products.yaml}.
  * All endpoints require at minimum ROLE_USER; create and delete require ROLE_ADMIN.
+ *
+ * <p>Stock quantities change exclusively through stock movements (the movements and returns
+ * endpoints); direct quantity assignment no longer exists.
  */
 @RestController
 @RequestMapping("/api/products")
@@ -64,12 +67,12 @@ public class ProductController {
      * <p>Loads the entire catalogue into memory. Prefer {@link #getPagedProducts} for
      * large datasets. Behavior defined in {@code docs/api/paths/products.yaml}.
      *
-     * @return list of all {@link Product} entities ordered by ID
+     * @return list of all products ordered by ID
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+    public List<ProductResponse> getAllProducts() {
+        return productService.getAllProducts().stream().map(ProductResponse::from).toList();
     }
 
     /**
@@ -83,12 +86,12 @@ public class ProductController {
      */
     @GetMapping("/paged")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<PaginatedResponse<Product>>> getPagedProducts(
+    public ResponseEntity<ApiResponse<PaginatedResponse<ProductResponse>>> getPagedProducts(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Positive int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Product> products = productService.getPagedProducts(pageable);
-        PaginatedResponse<Product> response = new PaginatedResponse<>(products);
+        Page<ProductResponse> products = productService.getPagedProducts(pageable).map(ProductResponse::from);
+        PaginatedResponse<ProductResponse> response = new PaginatedResponse<>(products);
         return ResponseEntity.ok(new ApiResponse<>(true, "Paged products fetched successfully", response));
     }
 
@@ -98,13 +101,14 @@ public class ProductController {
      * <p>Behavior defined in {@code docs/api/paths/products.yaml}.
      *
      * @param id product identifier
-     * @return HTTP 200 with the {@link Product}, or HTTP 404 if not found
+     * @return HTTP 200 with the product, or HTTP 404 if not found
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> getProductById(@PathVariable long id) {
+    public ResponseEntity<ApiResponse<ProductResponse>> getProductById(@PathVariable long id) {
         return productService.findById(id)
-                .map(product -> ResponseEntity.ok(new ApiResponse<>(true, "Product fetched successfully", product)))
+                .map(product -> ResponseEntity.ok(
+                        new ApiResponse<>(true, "Product fetched successfully", ProductResponse.from(product))))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(false, "The product with ID " + id + " does not exist.", null)));
     }
@@ -116,15 +120,15 @@ public class ProductController {
      * Behavior defined in {@code docs/api/paths/products.yaml}.
      *
      * @param request product fields (name, quantity, purchasePrice)
-     * @return HTTP 200 with the persisted {@link Product} including its generated ID,
+     * @return HTTP 200 with the persisted product including its generated ID,
      *         or HTTP 400 if validation fails
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createProduct(@Valid @RequestBody CreateProductRequest request) {
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
         log.debug("Received request to create product: {}", request);
         Product savedProduct = productService.create(request.getName(), request.getQuantity(), request.getPurchasePrice());
-        return ResponseEntity.ok(savedProduct);
+        return ResponseEntity.ok(ProductResponse.from(savedProduct));
     }
 
     /**
@@ -156,7 +160,7 @@ public class ProductController {
      * {@code application.properties} if it needs to vary per environment.
      * Behavior defined in {@code docs/api/paths/products.yaml}.
      *
-     * @return list of low-stock {@link Product} entities, or a status message if all levels are sufficient
+     * @return list of low-stock products, or a status message if all levels are sufficient
      */
     @GetMapping("/low-stock")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -165,7 +169,7 @@ public class ProductController {
         if (lowStockProducts.isEmpty()) {
             return ResponseEntity.ok(Map.of("message", "All products are sufficiently stocked."));
         }
-        return ResponseEntity.ok(lowStockProducts);
+        return ResponseEntity.ok(lowStockProducts.stream().map(ProductResponse::from).toList());
     }
 
     /**
@@ -185,42 +189,26 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.NO_CONTENT)
                     .body(Map.of("message", "No products found matching the name: " + name));
         }
-        return ResponseEntity.ok(products);
-    }
-
-    /**
-     * Updates the stock quantity of a specific product.
-     *
-     * <p>{@code totalValue} in the response is computed from the updated quantity.
-     * Behavior defined in {@code docs/api/paths/products.yaml}.
-     *
-     * @param id      product identifier
-     * @param request request body containing an integer {@code quantity} field
-     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
-     */
-    @PutMapping("/{id}/quantity")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updateQuantity(@PathVariable long id, @Valid @RequestBody UpdateQuantityRequest request) {
-        Product updatedProduct = productService.updateQuantity(id, request.getQuantity());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Quantity updated successfully", updatedProduct));
+        return ResponseEntity.ok(products.stream().map(ProductResponse::from).toList());
     }
 
     /**
      * Updates the purchase price of a specific product.
      *
-     * <p>{@code totalValue} in the response is computed from the updated price.
+     * <p>{@code totalValue} in the response is derived from the updated price.
      * Behavior defined in {@code docs/api/paths/products.yaml}.
      *
      * @param id      product identifier
      * @param request request body containing a numeric {@code purchasePrice} field
      * @param principal authenticated user, recorded against the change in the change log
-     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
+     * @return HTTP 200 with the updated product, or HTTP 400/404 on error
      */
     @PutMapping("/{id}/price")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request, Principal principal) {
+    public ResponseEntity<ApiResponse<ProductResponse>> updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request, Principal principal) {
         Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()), currentUser(principal));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Price updated successfully", updatedProduct));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Price updated successfully", ProductResponse.from(updatedProduct)));
     }
 
     /**
@@ -232,13 +220,14 @@ public class ProductController {
      * @param id      product identifier
      * @param request request body containing a non-blank {@code name} field
      * @param principal authenticated user, recorded against the change in the change log
-     * @return HTTP 200 with the updated {@link Product}, or HTTP 400/404 on error
+     * @return HTTP 200 with the updated product, or HTTP 400/404 on error
      */
     @PutMapping("/{id}/name")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Product>> updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request, Principal principal) {
+    public ResponseEntity<ApiResponse<ProductResponse>> updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request, Principal principal) {
         Product updatedProduct = productService.updateName(id, request.getName(), currentUser(principal));
-        return ResponseEntity.ok(new ApiResponse<>(true, "Name updated successfully", updatedProduct));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Name updated successfully", ProductResponse.from(updatedProduct)));
     }
 
     /**

@@ -34,7 +34,7 @@ import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.security.JwtUtil;
 
-/** Slice tests for PUT /api/products/{id}/quantity|price|name (happy-path updates). */
+/** Slice tests for PUT /api/products/{id}/price|name (happy-path updates). */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 @Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
@@ -65,26 +65,8 @@ class ProductUpdateControllerTest {
 
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
-    void updateQuantity_withValidData_returns200(String username, String role) throws Exception {
-        Product product = new Product("Product 1", 10, 100.0);
-        product.setId(1L);
-        product.setQuantity(50);
-        when(productService.updateQuantity(eq(1L), eq(50))).thenReturn(product);
-
-        mockMvc.perform(put("/api/products/1/quantity")
-                        .contentType(applicationJson())
-                        .with(userWithRole(username, role))
-                        .with(csrfToken())
-                        .content("{\"quantity\": 50}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Quantity updated successfully"))
-                .andExpect(jsonPath("$.data.quantity").value(50));
-    }
-
-    @ParameterizedTest
-    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updatePrice_withValidData_returns200(String username, String role) throws Exception {
-        Product product = new Product("Product 1", 10, 100.0);
+        Product product = new Product("Product 1", 10, 150.0);
         product.setId(1L);
         when(productService.updatePrice(eq(1L), any(BigDecimal.class), any(User.class))).thenReturn(product);
 
@@ -94,7 +76,10 @@ class ProductUpdateControllerTest {
                         .with(csrfToken())
                         .content("{\"purchasePrice\": 150.0}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Price updated successfully"));
+                .andExpect(jsonPath("$.message").value("Price updated successfully"))
+                .andExpect(jsonPath("$.data.purchasePrice").value(150.0))
+                // derived at mapping time from the updated price and the unchanged quantity
+                .andExpect(jsonPath("$.data.totalValue").value(1500.0));
     }
 
     @ParameterizedTest
