@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.stocks.stockease.shared.ApiResponse;
+import com.stocks.stockease.shared.DuplicateResourceException;
+import com.stocks.stockease.shared.EntityInUseException;
+import com.stocks.stockease.shared.InsufficientStockException;
+import com.stocks.stockease.shared.InvalidMovementException;
+import com.stocks.stockease.shared.InvoiceStateException;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -60,6 +65,66 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<String>> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(false, ex.getMessage(), null));
+    }
+
+    /**
+     * Handles {@link InvalidMovementException} from the stock movement validation matrix and returns a 400 Bad Request response.
+     *
+     * @param ex the caught exception
+     * @return 400 response with the rejected movement's error message
+     */
+    @ExceptionHandler(InvalidMovementException.class)
+    public ResponseEntity<ApiResponse<String>> handleInvalidMovementException(InvalidMovementException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(false, ex.getMessage(), null));
+    }
+
+    /**
+     * Handles {@link InvoiceStateException} from invoice lifecycle rule violations and returns a 409 Conflict response.
+     *
+     * @param ex the caught exception
+     * @return 409 response with the lifecycle error message
+     */
+    @ExceptionHandler(InvoiceStateException.class)
+    public ResponseEntity<ApiResponse<String>> handleInvoiceStateException(InvoiceStateException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponse<>(false, ex.getMessage(), null));
+    }
+
+    /**
+     * Handles {@link EntityInUseException} from deletions vetoed by referencing records and returns a 409 Conflict response.
+     *
+     * @param ex the caught exception
+     * @return 409 response with the veto message
+     */
+    @ExceptionHandler(EntityInUseException.class)
+    public ResponseEntity<ApiResponse<String>> handleEntityInUseException(EntityInUseException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponse<>(false, ex.getMessage(), null));
+    }
+
+    /**
+     * Handles {@link DuplicateResourceException} from unique attribute conflicts and returns a 409 Conflict response.
+     *
+     * @param ex the caught exception
+     * @return 409 response with the conflict message
+     */
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiResponse<String>> handleDuplicateResourceException(DuplicateResourceException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponse<>(false, ex.getMessage(), null));
+    }
+
+    /**
+     * Handles {@link InsufficientStockException} from quantity changes that would drive stock negative and returns a 409 Conflict response.
+     *
+     * @param ex the caught exception
+     * @return 409 response with the shortfall message
+     */
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ApiResponse<String>> handleInsufficientStockException(InsufficientStockException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ApiResponse<>(false, ex.getMessage(), null));
     }
 

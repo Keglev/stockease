@@ -21,6 +21,7 @@ import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
+import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
 import com.stocks.stockease.support.AbstractIntegrationTest;
@@ -134,7 +135,7 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
         Long itemId = invoice.getItems().get(0).getId();
 
         assertThatThrownBy(() -> invoiceService.close(invoice.getId(), user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InsufficientStockException.class)
                 .hasMessageContaining("would result in negative stock");
 
         Invoice reloaded = invoiceRepository.findById(invoice.getId()).orElseThrow();

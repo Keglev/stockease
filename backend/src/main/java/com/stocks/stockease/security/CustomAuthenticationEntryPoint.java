@@ -10,8 +10,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Handles authentication failures by returning a 401 JSON error response.
- * Uses a generic error message to avoid revealing whether a username exists.
+ * Handles unauthenticated requests by returning a 401 JSON error response in the {@code ApiResponse} envelope.
+ * The message states only that authentication is required, so it neither reveals whether a username exists
+ * nor claims wrong credentials for a request that simply carried no token.
  */
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
@@ -30,6 +31,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         // Generic message prevents username enumeration attacks
-        response.getWriter().write("{\"error\": \"Invalid username or password\"}");
+        response.getWriter().write("{\"success\":false,\"message\":\"Authentication required.\",\"data\":null}");
     }
 }

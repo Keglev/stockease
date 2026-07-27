@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.DuplicateResourceException;
+import com.stocks.stockease.shared.InsufficientStockException;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -65,14 +67,14 @@ public class ProductService {
      * @param quantity stock quantity
      * @param purchasePrice unit purchase price
      * @return the persisted product including its generated ID
-     * @throws IllegalStateException if a live product already carries that name
+     * @throws DuplicateResourceException if a live product already carries that name
      */
     @Transactional
     public Product create(String name, int quantity, double purchasePrice) {
         // service check gives the friendly message, the partial unique index in the database is the
         // concurrency backstop
         if (productRepository.existsByNameIgnoreCase(name)) {
-            throw new IllegalStateException("A product named '" + name + "' already exists.");
+            throw new DuplicateResourceException("A product named '" + name + "' already exists.");
         }
         return productRepository.save(new Product(name, quantity, purchasePrice));
     }
@@ -108,7 +110,7 @@ public class ProductService {
      * @param user user performing the restore
      * @return the restored product
      * @throws EntityNotFoundException if no soft-deleted product exists with the given ID
-     * @throws IllegalStateException if a live product already carries the same name or SKU
+     * @throws DuplicateResourceException if a live product already carries the same name or SKU
      */
     @Transactional
     public Product restore(long id, User user) {
@@ -117,11 +119,11 @@ public class ProductService {
         // live rows only - @SQLRestriction scopes both exists queries; the partial unique indexes are the
         // concurrency backstop
         if (productRepository.existsByNameIgnoreCase(product.getName())) {
-            throw new IllegalStateException(
+            throw new DuplicateResourceException(
                     "Cannot restore: a live product named '" + product.getName() + "' already exists.");
         }
         if (productRepository.existsBySku(product.getSku())) {
-            throw new IllegalStateException(
+            throw new DuplicateResourceException(
                     "Cannot restore: a live product with SKU '" + product.getSku() + "' already exists.");
         }
         product.setDeletedAt(null);
@@ -175,7 +177,7 @@ public class ProductService {
      * @param delta signed number of units to add to the current quantity
      * @return the updated product
      * @throws EntityNotFoundException if no product exists with the given ID
-     * @throws IllegalStateException if the adjustment would drive the quantity below zero
+     * @throws InsufficientStockException if the adjustment would drive the quantity below zero
      */
     @Transactional
     public Product adjustQuantity(long id, int delta) {
@@ -184,7 +186,7 @@ public class ProductService {
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
         int newQuantity = product.getQuantity() + delta;
         if (newQuantity < 0) {
-            throw new IllegalStateException("Adjustment of " + delta + " would result in negative stock for product "
+            throw new InsufficientStockException("Adjustment of " + delta + " would result in negative stock for product "
                     + id + " (current: " + product.getQuantity() + ").");
         }
         product.setQuantity(newQuantity);
@@ -224,7 +226,7 @@ public class ProductService {
      * @param user user making the change
      * @return the updated product
      * @throws EntityNotFoundException if no product exists with the given ID
-     * @throws IllegalStateException if a different live product already carries that name
+     * @throws DuplicateResourceException if a different live product already carries that name
      */
     @Transactional
     public Product updateName(long id, String name, User user) {
@@ -232,7 +234,7 @@ public class ProductService {
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
         // excluding this product's own row is what lets a rename fix only the capitalization of its own name
         if (productRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
-            throw new IllegalStateException("A product named '" + name + "' already exists.");
+            throw new DuplicateResourceException("A product named '" + name + "' already exists.");
         }
         String oldName = product.getName();
         product.setName(name);

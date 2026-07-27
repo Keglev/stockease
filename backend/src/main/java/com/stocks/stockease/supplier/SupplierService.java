@@ -85,8 +85,8 @@ public class SupplierService {
      *
      * @param id supplier identifier
      * @throws EntityNotFoundException if no supplier exists with the given ID
-     * @throws IllegalStateException if a listener vetoes the deletion, for instance because open
-     *         invoices still reference the supplier
+     * @throws com.stocks.stockease.shared.EntityInUseException if a listener vetoes the deletion, for
+     *         instance because open invoices still reference the supplier
      */
     @Transactional
     public void deleteById(long id) {

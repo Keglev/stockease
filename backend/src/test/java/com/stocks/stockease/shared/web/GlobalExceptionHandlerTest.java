@@ -23,6 +23,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.stocks.stockease.shared.ApiResponse;
+import com.stocks.stockease.shared.DuplicateResourceException;
+import com.stocks.stockease.shared.EntityInUseException;
+import com.stocks.stockease.shared.InsufficientStockException;
+import com.stocks.stockease.shared.InvalidMovementException;
+import com.stocks.stockease.shared.InvoiceStateException;
 
 import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
@@ -106,6 +111,65 @@ class GlobalExceptionHandlerTest {
         assertThat(body.isSuccess()).isFalse();
         assertThat(body.getMessage()).isEqualTo("price must be positive");
     }
+
+    @Test
+    void handleInvalidMovementException_returns400WithOriginalMessage() {
+        var response = handler.handleInvalidMovementException(
+                new InvalidMovementException("Quantity must be positive."));
+        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo("Quantity must be positive.");
+    }
+
+    // --- 409 conflict ---
+
+    @Test
+    void handleInvoiceStateException_returns409WithOriginalMessage() {
+        var response = handler.handleInvoiceStateException(
+                new InvoiceStateException("Only open invoices can be closed."));
+        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
+        assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo("Only open invoices can be closed.");
+    }
+
+    @Test
+    void handleEntityInUseException_returns409WithOriginalMessage() {
+        var response = handler.handleEntityInUseException(
+                new EntityInUseException("Cannot delete supplier 'Acme': open invoices exist."));
+        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
+        assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo("Cannot delete supplier 'Acme': open invoices exist.");
+    }
+
+    @Test
+    void handleDuplicateResourceException_returns409WithOriginalMessage() {
+        var response = handler.handleDuplicateResourceException(
+                new DuplicateResourceException("A product named 'Widget' already exists."));
+        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
+        assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo("A product named 'Widget' already exists.");
+    }
+
+    @Test
+    void handleInsufficientStockException_returns409WithOriginalMessage() {
+        var response = handler.handleInsufficientStockException(
+                new InsufficientStockException("Adjustment of -5 would result in negative stock."));
+        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
+        assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo("Adjustment of -5 would result in negative stock.");
+    }
+
+    // --- 400 bad request (continued) ---
 
     @Test
     void handleValidationException_returns400WithFieldErrors() {
