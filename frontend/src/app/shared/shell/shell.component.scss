@@ -1,0 +1,17 @@
+.spacer {
+  flex: 1 1 auto;
+}
+
+.role {
+  margin-right: 0.75rem;
+  font: var(--mat-sys-label-large);
+}
+
+.shell-container {
+  // Fills what the toolbar leaves so the sidenav spans the viewport.
+  height: calc(100vh - 64px);
+}
+
+.shell-content {
+  padding: 1.5rem;
+}
