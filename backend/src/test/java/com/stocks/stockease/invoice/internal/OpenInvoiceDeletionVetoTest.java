@@ -18,6 +18,7 @@ import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductChangedEvent;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.supplier.SupplierDeletedEvent;
 
 /** Tests for {@link OpenInvoiceDeletionVeto} covering every veto branch and the ignored-field path. */
@@ -46,11 +47,11 @@ class OpenInvoiceDeletionVetoTest {
     }
 
     @Test
-    void onSupplierDeleted_withOpenInvoices_throwsIllegalStateException() {
+    void onSupplierDeleted_withOpenInvoices_throwsEntityInUseException() {
         when(invoiceRepository.existsBySupplierIdAndStatus(1L, InvoiceStatus.OPEN)).thenReturn(true);
 
         assertThatThrownBy(() -> veto.onSupplierDeleted(new SupplierDeletedEvent(1L, "Acme")))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(EntityInUseException.class)
                 .hasMessage("Cannot delete supplier 'Acme': open invoices exist.");
     }
 
@@ -63,11 +64,11 @@ class OpenInvoiceDeletionVetoTest {
     }
 
     @Test
-    void onProductChanged_deletedOnOpenInvoice_throwsIllegalStateException() {
+    void onProductChanged_deletedOnOpenInvoice_throwsEntityInUseException() {
         when(invoiceItemRepository.existsByProductIdAndInvoiceStatus(7L, InvoiceStatus.OPEN)).thenReturn(true);
 
         assertThatThrownBy(() -> veto.onProductChanged(productEvent(ProductChangedEvent.Field.DELETED)))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(EntityInUseException.class)
                 .hasMessage("Cannot delete product 'Widget': it appears on an open invoice.");
     }
 

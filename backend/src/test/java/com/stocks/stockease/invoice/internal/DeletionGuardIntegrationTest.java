@@ -24,6 +24,7 @@ import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
+import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
@@ -108,7 +109,7 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
         newInvoice(supplier, InvoiceStatus.OPEN, null);
 
         assertThatThrownBy(() -> supplierService.deleteById(supplier.getId()))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(EntityInUseException.class)
                 .hasMessageContaining("open invoices exist");
 
         Supplier reloaded = supplierRepository.findById(supplier.getId()).orElseThrow();
@@ -133,7 +134,7 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
         newInvoice(newSupplier(), InvoiceStatus.OPEN, product);
 
         assertThatThrownBy(() -> productService.deleteById(product.getId(), user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(EntityInUseException.class)
                 .hasMessageContaining("it appears on an open invoice");
 
         // the veto runs first, so the audit listener never runs: zero log rows deterministically proves

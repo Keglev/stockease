@@ -13,6 +13,8 @@ import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.InsufficientStockException;
+import com.stocks.stockease.shared.InvalidMovementException;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -46,21 +48,21 @@ public class StockMovementService {
      * @param command the movement to record
      * @param user the user triggering the movement
      * @return the persisted movement
-     * @throws IllegalArgumentException if a required field is missing or a field is supplied that the reason forbids
+     * @throws InvalidMovementException if a required field is missing, a field is supplied that the reason
+     *         forbids, or the movement contradicts or duplicates its invoice item
      * @throws EntityNotFoundException if the referenced invoice item or product does not exist
-     * @throws IllegalStateException if the movement contradicts its invoice item, duplicates an existing
-     *         movement, or would drive the product's stock negative
+     * @throws InsufficientStockException if the movement would drive the product's stock negative
      */
     @Transactional
     public StockMovement recordMovement(RecordMovementCommand command, User user) {
         if (user == null) {
-            throw new IllegalArgumentException("User is required.");
+            throw new InvalidMovementException("User is required.");
         }
         if (command.productId() == null || command.reason() == null) {
-            throw new IllegalArgumentException("Product and reason are required.");
+            throw new InvalidMovementException("Product and reason are required.");
         }
         if (command.quantity() <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive.");
+            throw new InvalidMovementException("Quantity must be positive.");
         }
 
         MovementReason reason = command.reason();
@@ -86,24 +88,24 @@ public class StockMovementService {
         switch (reason) {
             case NEW_PRODUCT -> {
                 if (command.invoiceItemId() != null) {
-                    throw new IllegalArgumentException("NEW_PRODUCT movements must not reference an invoice item.");
+                    throw new InvalidMovementException("NEW_PRODUCT movements must not reference an invoice item.");
                 }
                 if (command.unitCost() == null || command.unitCost().signum() <= 0) {
-                    throw new IllegalArgumentException("NEW_PRODUCT movements require a positive unit cost.");
+                    throw new InvalidMovementException("NEW_PRODUCT movements require a positive unit cost.");
                 }
             }
             case LOST, DESTROYED -> {
                 if (command.invoiceItemId() != null || command.unitCost() != null) {
-                    throw new IllegalArgumentException(
+                    throw new InvalidMovementException(
                             "LOST and DESTROYED movements carry no invoice item or prices.");
                 }
             }
             default -> {
                 if (command.invoiceItemId() == null) {
-                    throw new IllegalArgumentException(reason + " movements require an invoice item.");
+                    throw new InvalidMovementException(reason + " movements require an invoice item.");
                 }
                 if (command.unitCost() != null) {
-                    throw new IllegalArgumentException(
+                    throw new InvalidMovementException(
                             "Unit cost is derived from the invoice item and must not be supplied.");
                 }
             }
@@ -119,14 +121,14 @@ public class StockMovementService {
                 ? InvoiceType.PURCHASE
                 : InvoiceType.SALE;
         if (item.getInvoice().getType() != requiredType) {
-            throw new IllegalStateException(
+            throw new InvalidMovementException(
                     reason + " movements must reference a " + requiredType + " invoice item.");
         }
         if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {
-            throw new IllegalStateException("Movements cannot be recorded against an open invoice.");
+            throw new InvalidMovementException("Movements cannot be recorded against an open invoice.");
         }
         if (!item.getProduct().getId().equals(command.productId())) {
-            throw new IllegalStateException(
+            throw new InvalidMovementException(
                     "Invoice item " + command.invoiceItemId() + " belongs to a different product.");
         }
         return item;
@@ -135,11 +137,11 @@ public class StockMovementService {
     /** Holds a purchase or sale to its invoice line's exact quantity, once per line. */
     private void validateNotAlreadyRecorded(RecordMovementCommand command, MovementReason reason, InvoiceItem item) {
         if (command.quantity() != item.getQuantity()) {
-            throw new IllegalStateException(
+            throw new InvalidMovementException(
                     "Movement quantity must equal the invoice item quantity (" + item.getQuantity() + ").");
         }
         if (stockMovementRepository.existsByInvoiceItemIdAndReason(command.invoiceItemId(), reason)) {
-            throw new IllegalStateException(
+            throw new InvalidMovementException(
                     "A " + reason + " movement already exists for invoice item " + command.invoiceItemId() + ".");
         }
     }

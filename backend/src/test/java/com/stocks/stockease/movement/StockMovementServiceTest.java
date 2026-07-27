@@ -29,6 +29,7 @@ import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.InvalidMovementException;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -205,65 +206,65 @@ class StockMovementServiceTest {
     }
 
     @Test
-    void recordMovement_withNullUser_throwsIllegalArgumentException() {
+    void recordMovement_withNullUser_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.LOST, 1, null, null), null))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("User is required.");
     }
 
     @Test
-    void recordMovement_withNullReason_throwsIllegalArgumentException() {
+    void recordMovement_withNullReason_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService.recordMovement(command(null, 1, null, null), user))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("Product and reason are required.");
     }
 
     @Test
-    void recordMovement_withZeroQuantity_throwsIllegalArgumentException() {
+    void recordMovement_withZeroQuantity_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.LOST, 0, null, null), user))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("Quantity must be positive.");
     }
 
     @Test
-    void recordMovement_newProductWithInvoiceItem_throwsIllegalArgumentException() {
+    void recordMovement_newProductWithInvoiceItem_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.NEW_PRODUCT, 1, ITEM_ID, BigDecimal.TEN), user))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessageContaining("must not reference an invoice item");
     }
 
     @Test
-    void recordMovement_newProductWithoutUnitCost_throwsIllegalArgumentException() {
+    void recordMovement_newProductWithoutUnitCost_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.NEW_PRODUCT, 1, null, null), user))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessageContaining("require a positive unit cost");
     }
 
     @Test
-    void recordMovement_lostWithInvoiceItem_throwsIllegalArgumentException() {
+    void recordMovement_lostWithInvoiceItem_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.LOST, 1, ITEM_ID, null), user))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessageContaining("carry no invoice item or prices");
     }
 
     @Test
-    void recordMovement_purchaseWithoutInvoiceItem_throwsIllegalArgumentException() {
+    void recordMovement_purchaseWithoutInvoiceItem_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.PURCHASE, 1, null, null), user))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("PURCHASE movements require an invoice item.");
     }
 
     @Test
-    void recordMovement_soldWithSuppliedUnitCost_throwsIllegalArgumentException() {
+    void recordMovement_soldWithSuppliedUnitCost_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 1, ITEM_ID, BigDecimal.TEN), user))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessageContaining("derived from the invoice item");
     }
 
@@ -278,57 +279,57 @@ class StockMovementServiceTest {
     }
 
     @Test
-    void recordMovement_soldAgainstPurchaseInvoice_throwsIllegalStateException() {
+    void recordMovement_soldAgainstPurchaseInvoice_throwsInvalidMovementException() {
         when(invoiceService.findItemById(ITEM_ID)).thenReturn(Optional.of(item(InvoiceType.PURCHASE, 5)));
 
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("SOLD movements must reference a SALE invoice item.");
     }
 
     @Test
-    void recordMovement_soldAgainstOpenInvoice_throwsIllegalStateException() {
+    void recordMovement_soldAgainstOpenInvoice_throwsInvalidMovementException() {
         InvoiceItem item = item(InvoiceType.SALE, 5);
         item.getInvoice().setStatus(InvoiceStatus.OPEN);
         when(invoiceService.findItemById(ITEM_ID)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("Movements cannot be recorded against an open invoice.");
     }
 
     @Test
-    void recordMovement_withInvoiceItemOfAnotherProduct_throwsIllegalStateException() {
+    void recordMovement_withInvoiceItemOfAnotherProduct_throwsInvalidMovementException() {
         InvoiceItem item = item(InvoiceType.SALE, 5);
         item.getProduct().setId(99L);
         when(invoiceService.findItemById(ITEM_ID)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("Invoice item 7 belongs to a different product.");
     }
 
     @Test
-    void recordMovement_purchaseQuantityBelowItemQuantity_throwsIllegalStateException() {
+    void recordMovement_purchaseQuantityBelowItemQuantity_throwsInvalidMovementException() {
         when(invoiceService.findItemById(ITEM_ID)).thenReturn(Optional.of(item(InvoiceType.PURCHASE, 5)));
 
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.PURCHASE, 3, ITEM_ID, null), user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("Movement quantity must equal the invoice item quantity (5).");
     }
 
     @Test
-    void recordMovement_soldAlreadyRecordedForItem_throwsIllegalStateException() {
+    void recordMovement_soldAlreadyRecordedForItem_throwsInvalidMovementException() {
         when(invoiceService.findItemById(ITEM_ID)).thenReturn(Optional.of(item(InvoiceType.SALE, 5)));
         when(stockMovementRepository.existsByInvoiceItemIdAndReason(ITEM_ID, MovementReason.SOLD)).thenReturn(true);
 
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvalidMovementException.class)
                 .hasMessage("A SOLD movement already exists for invoice item 7.");
     }
 

@@ -16,6 +16,7 @@ import com.stocks.stockease.invoice.internal.InvoiceRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.InvoiceStateException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
@@ -146,14 +147,14 @@ public class InvoiceService {
      * @param user user closing the invoice
      * @return the closed invoice
      * @throws EntityNotFoundException if no invoice exists with the given ID
-     * @throws IllegalStateException if the invoice is not open, or if booking its stock movements fails
+     * @throws InvoiceStateException if the invoice is not open, or if booking its stock movements fails
      */
     @Transactional
     public Invoice close(long invoiceId, User user) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
         if (invoice.getStatus() != InvoiceStatus.OPEN) {
-            throw new IllegalStateException("Only open invoices can be closed.");
+            throw new InvoiceStateException("Only open invoices can be closed.");
         }
         invoice.setStatus(InvoiceStatus.CLOSED);
         invoice.setClosedBy(user);
@@ -176,7 +177,7 @@ public class InvoiceService {
      * @return the updated invoice item
      * @throws EntityNotFoundException if no invoice item exists with the given ID
      * @throws IllegalArgumentException if {@code quantity} is not positive
-     * @throws IllegalStateException if the invoice is still open, or if the return would exceed the item's
+     * @throws InvoiceStateException if the invoice is still open, or if the return would exceed the item's
      *         remaining returnable quantity
      */
     @Transactional
@@ -184,14 +185,14 @@ public class InvoiceService {
         InvoiceItem item = invoiceItemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice item with ID " + itemId + " not found."));
         if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {
-            throw new IllegalStateException("Returns require a closed invoice.");
+            throw new InvoiceStateException("Returns require a closed invoice.");
         }
         if (quantity <= 0) {
             throw new IllegalArgumentException("Return quantity must be positive.");
         }
         // database CHECK on returned_qty is the backstop for this invariant
         if (item.getReturnedQty() + quantity > item.getQuantity()) {
-            throw new IllegalStateException("Return of " + quantity + " exceeds remaining returnable quantity "
+            throw new InvoiceStateException("Return of " + quantity + " exceeds remaining returnable quantity "
                     + (item.getQuantity() - item.getReturnedQty()) + " for invoice item " + itemId + ".");
         }
         item.setReturnedQty(item.getReturnedQty() + quantity);
@@ -216,14 +217,14 @@ public class InvoiceService {
      * @param invoiceId invoice identifier
      * @return the paid invoice
      * @throws EntityNotFoundException if no invoice exists with the given ID
-     * @throws IllegalStateException if the invoice is already marked as paid
+     * @throws InvoiceStateException if the invoice is already marked as paid
      */
     @Transactional
     public Invoice markAsPaid(long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
         if (invoice.getPaidAt() != null) {
-            throw new IllegalStateException("Invoice is already marked as paid.");
+            throw new InvoiceStateException("Invoice is already marked as paid.");
         }
         invoice.setPaidAt(LocalDateTime.now());
         return invoiceRepository.save(invoice);
@@ -234,14 +235,14 @@ public class InvoiceService {
      *
      * @param invoiceId invoice identifier
      * @throws EntityNotFoundException if no invoice exists with the given ID
-     * @throws IllegalStateException if the invoice is not open
+     * @throws InvoiceStateException if the invoice is not open
      */
     @Transactional
     public void deleteById(long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
         if (invoice.getStatus() != InvoiceStatus.OPEN) {
-            throw new IllegalStateException("Only open invoices can be deleted.");
+            throw new InvoiceStateException("Only open invoices can be deleted.");
         }
         invoiceRepository.delete(invoice);
     }

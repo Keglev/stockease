@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.product.ProductChangedEvent;
+import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.supplier.SupplierDeletedEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -30,12 +31,12 @@ public class OpenInvoiceDeletionVeto {
      * Vetoes deleting a supplier that still has open invoices.
      *
      * @param event the pending supplier deletion
-     * @throws IllegalStateException if any open invoice references the supplier
+     * @throws EntityInUseException if any open invoice references the supplier
      */
     @EventListener
     public void onSupplierDeleted(SupplierDeletedEvent event) {
         if (invoiceRepository.existsBySupplierIdAndStatus(event.supplierId(), InvoiceStatus.OPEN)) {
-            throw new IllegalStateException(
+            throw new EntityInUseException(
                     "Cannot delete supplier '" + event.supplierName() + "': open invoices exist.");
         }
     }
@@ -44,7 +45,7 @@ public class OpenInvoiceDeletionVeto {
      * Vetoes deleting a product that appears on an open invoice; other product changes are ignored.
      *
      * @param event the product change being recorded
-     * @throws IllegalStateException if the product is a line on any open invoice
+     * @throws EntityInUseException if the product is a line on any open invoice
      */
     @EventListener
     public void onProductChanged(ProductChangedEvent event) {
@@ -53,7 +54,7 @@ public class OpenInvoiceDeletionVeto {
         }
         if (invoiceItemRepository.existsByProductIdAndInvoiceStatus(
                 event.product().getId(), InvoiceStatus.OPEN)) {
-            throw new IllegalStateException("Cannot delete product '" + event.product().getName()
+            throw new EntityInUseException("Cannot delete product '" + event.product().getName()
                     + "': it appears on an open invoice.");
         }
     }

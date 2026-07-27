@@ -20,6 +20,7 @@ import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
+import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /**
@@ -96,7 +97,7 @@ class ProductAuditIntegrationTest extends AbstractIntegrationTest {
         productRepository.saveAndFlush(new Product("Audit Conflict Name", 3, 5.0));
 
         assertThatThrownBy(() -> productService.restore(product.getId(), user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("Cannot restore: a live product named");
 
         assertThat(logFor(product.getId()))

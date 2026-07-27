@@ -27,6 +27,8 @@ import org.springframework.data.domain.Pageable;
 
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.DuplicateResourceException;
+import com.stocks.stockease.shared.InsufficientStockException;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -108,35 +110,35 @@ class ProductServiceTest {
     }
 
     @Test
-    void create_withDuplicateName_throwsIllegalStateExceptionWithoutSaving() {
+    void create_withDuplicateName_throwsDuplicateResourceExceptionWithoutSaving() {
         when(productRepository.existsByNameIgnoreCase("widget")).thenReturn(true);
 
         assertThatThrownBy(() -> productService.create("widget", 10, 5.0))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(DuplicateResourceException.class)
                 .hasMessage("A product named 'widget' already exists.");
         verify(productRepository, never()).save(any(Product.class));
     }
 
     @Test
-    void updateName_toAnotherProductsName_throwsIllegalStateException() {
+    void updateName_toAnotherProductsName_throwsDuplicateResourceException() {
         Product product = new Product("Widget", 10, 5.0);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.existsByNameIgnoreCaseAndIdNot("Gadget", 1L)).thenReturn(true);
 
         assertThatThrownBy(() -> productService.updateName(1L, "Gadget", user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(DuplicateResourceException.class)
                 .hasMessage("A product named 'Gadget' already exists.");
         verify(productRepository, never()).save(product);
     }
 
     @Test
-    void updateName_toCaseVariantOfAnotherProductsName_throwsIllegalStateException() {
+    void updateName_toCaseVariantOfAnotherProductsName_throwsDuplicateResourceException() {
         Product product = new Product("Widget", 10, 5.0);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.existsByNameIgnoreCaseAndIdNot("GADGET", 1L)).thenReturn(true);
 
         assertThatThrownBy(() -> productService.updateName(1L, "GADGET", user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(DuplicateResourceException.class)
                 .hasMessage("A product named 'GADGET' already exists.");
     }
 
@@ -234,12 +236,12 @@ class ProductServiceTest {
     }
 
     @Test
-    void adjustQuantity_withDeltaBelowZero_throwsIllegalStateException() {
+    void adjustQuantity_withDeltaBelowZero_throwsInsufficientStockException() {
         Product product = new Product("Widget", 3, 5.0);
         when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
 
         assertThatThrownBy(() -> productService.adjustQuantity(1L, -5))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InsufficientStockException.class)
                 .hasMessage("Adjustment of -5 would result in negative stock for product 1 (current: 3).");
     }
 
@@ -372,23 +374,23 @@ class ProductServiceTest {
     }
 
     @Test
-    void restore_withLiveNameConflict_throwsIllegalStateException() {
+    void restore_withLiveNameConflict_throwsDuplicateResourceException() {
         when(productRepository.findDeletedById(1L)).thenReturn(Optional.of(deletedProduct()));
         when(productRepository.existsByNameIgnoreCase("Widget")).thenReturn(true);
 
         assertThatThrownBy(() -> productService.restore(1L, user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(DuplicateResourceException.class)
                 .hasMessage("Cannot restore: a live product named 'Widget' already exists.");
     }
 
     @Test
-    void restore_withLiveSkuConflict_throwsIllegalStateException() {
+    void restore_withLiveSkuConflict_throwsDuplicateResourceException() {
         when(productRepository.findDeletedById(1L)).thenReturn(Optional.of(deletedProduct()));
         when(productRepository.existsByNameIgnoreCase("Widget")).thenReturn(false);
         when(productRepository.existsBySku("SKU-1")).thenReturn(true);
 
         assertThatThrownBy(() -> productService.restore(1L, user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(DuplicateResourceException.class)
                 .hasMessage("Cannot restore: a live product with SKU 'SKU-1' already exists.");
     }
 

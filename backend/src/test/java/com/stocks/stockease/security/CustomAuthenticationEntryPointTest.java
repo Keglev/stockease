@@ -26,6 +26,6 @@ class CustomAuthenticationEntryPointTest {
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
         assertThat(response.getContentType()).isEqualTo("application/json");
         assertThat(response.getContentAsString())
-                .isEqualTo("{\"error\": \"Invalid username or password\"}");
+                .isEqualTo("{\"success\":false,\"message\":\"Authentication required.\",\"data\":null}");
     }
 }

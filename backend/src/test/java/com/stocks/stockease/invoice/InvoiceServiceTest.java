@@ -28,6 +28,7 @@ import com.stocks.stockease.invoice.internal.InvoiceRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.InvoiceStateException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
@@ -297,12 +298,12 @@ class InvoiceServiceTest {
     }
 
     @Test
-    void close_alreadyClosedInvoice_throwsIllegalStateException() {
+    void close_alreadyClosedInvoice_throwsInvoiceStateException() {
         Invoice invoice = invoiceWith(InvoiceStatus.CLOSED, InvoiceType.SALE);
         when(invoiceRepository.findById(1L)).thenReturn(Optional.of(invoice));
 
         assertThatThrownBy(() -> invoiceService.close(1L, user))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvoiceStateException.class)
                 .hasMessage("Only open invoices can be closed.");
         verify(eventPublisher, never()).publishEvent(any(InvoiceClosedEvent.class));
     }
@@ -328,12 +329,12 @@ class InvoiceServiceTest {
     }
 
     @Test
-    void registerReturn_againstOpenInvoice_throwsIllegalStateException() {
+    void registerReturn_againstOpenInvoice_throwsInvoiceStateException() {
         InvoiceItem item = itemOn(invoiceWith(InvoiceStatus.OPEN, InvoiceType.PURCHASE), 1L, 1L, 5, 0);
         when(invoiceItemRepository.findById(1L)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> invoiceService.registerReturn(1L, 2))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvoiceStateException.class)
                 .hasMessage("Returns require a closed invoice.");
     }
 
@@ -380,12 +381,12 @@ class InvoiceServiceTest {
     }
 
     @Test
-    void registerReturn_exceedingRemainingQuantity_throwsIllegalStateException() {
+    void registerReturn_exceedingRemainingQuantity_throwsInvoiceStateException() {
         InvoiceItem item = itemWith(5, 4);
         when(invoiceItemRepository.findById(1L)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> invoiceService.registerReturn(1L, 2))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvoiceStateException.class)
                 .hasMessageContaining("exceeds remaining returnable quantity");
     }
 
@@ -433,13 +434,13 @@ class InvoiceServiceTest {
     }
 
     @Test
-    void markAsPaid_alreadyPaidInvoice_throwsIllegalStateException() {
+    void markAsPaid_alreadyPaidInvoice_throwsInvoiceStateException() {
         Invoice invoice = invoiceWith(InvoiceStatus.CLOSED, InvoiceType.SALE);
         invoice.setPaidAt(LocalDateTime.now());
         when(invoiceRepository.findById(1L)).thenReturn(Optional.of(invoice));
 
         assertThatThrownBy(() -> invoiceService.markAsPaid(1L))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvoiceStateException.class)
                 .hasMessage("Invoice is already marked as paid.");
         verify(invoiceRepository, never()).save(invoice);
     }
@@ -464,12 +465,12 @@ class InvoiceServiceTest {
     }
 
     @Test
-    void deleteById_closedInvoice_throwsIllegalStateException() {
+    void deleteById_closedInvoice_throwsInvoiceStateException() {
         Invoice invoice = invoiceWith(InvoiceStatus.CLOSED, InvoiceType.SALE);
         when(invoiceRepository.findById(1L)).thenReturn(Optional.of(invoice));
 
         assertThatThrownBy(() -> invoiceService.deleteById(1L))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(InvoiceStateException.class)
                 .hasMessage("Only open invoices can be deleted.");
         verify(invoiceRepository, never()).delete(invoice);
     }
