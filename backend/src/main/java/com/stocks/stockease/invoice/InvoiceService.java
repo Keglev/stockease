@@ -50,6 +50,29 @@ public class InvoiceService {
     }
 
     /**
+     * Returns every live invoice, newest first.
+     * The invoices come back with their associations uninitialized, so callers must read nothing from
+     * the supplier, customer or items beyond their identifiers.
+     *
+     * @return all invoices ordered by creation time descending
+     */
+    public List<Invoice> findAll() {
+        return invoiceRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    /**
+     * Finds one invoice with everything the detail view needs already loaded.
+     * The items, each item's product, and both counterparties are initialized by the query, so the
+     * result stays fully readable after the transaction ends.
+     *
+     * @param id invoice identifier
+     * @return the initialized invoice, or empty if none exists with that ID
+     */
+    public Optional<Invoice> findDetailById(long id) {
+        return invoiceRepository.findDetailById(id);
+    }
+
+    /**
      * Returns every invoice a user closed, most recently closed first.
      *
      * @param userId user identifier
