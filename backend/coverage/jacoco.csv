@@ -27,7 +27,14 @@ StockEase,com.stocks.stockease.shared,InsufficientStockException,0,4,0,0,0,2,0,1
 StockEase,com.stocks.stockease.shared,EntityInUseException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,InvoiceStateException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.movement.internal,InvoiceClosedListener,0,38,0,4,0,7,0,3,0,1
+StockEase,com.stocks.stockease.customer.web,CustomerController,0,63,0,0,0,10,0,5,0,5
+StockEase,com.stocks.stockease.customer.web,CreateCustomerRequest,0,18,0,0,0,1,0,1,0,1
+StockEase,com.stocks.stockease.customer.web,CustomerResponse,0,42,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.security.web,AuthController,0,93,0,4,0,19,0,4,0,2
+StockEase,com.stocks.stockease.supplier.web,SupplierResponse,0,27,0,0,0,3,0,2,0,2
+StockEase,com.stocks.stockease.supplier.web,SupplierController,0,75,0,0,0,12,0,6,0,6
+StockEase,com.stocks.stockease.supplier.web,UpdateSupplierRequest,0,9,0,0,0,1,0,1,0,1
+StockEase,com.stocks.stockease.supplier.web,CreateSupplierRequest,0,9,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.shared.web,HealthController,0,37,0,0,0,9,0,3,0,3
 StockEase,com.stocks.stockease.shared.web,GlobalExceptionHandler,0,237,0,8,0,47,0,22,0,18
 StockEase,com.stocks.stockease.supplier,SupplierService,0,107,2,6,0,21,2,10,0,8
