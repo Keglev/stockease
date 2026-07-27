@@ -6,6 +6,10 @@ const angular = require('angular-eslint');
 
 module.exports = defineConfig([
   {
+    // Machine output from `npm run gen:api`; never hand-edited, so linting it is noise.
+    ignores: ['src/app/core/api/api-types.ts'],
+  },
+  {
     files: ['**/*.ts'],
     extends: [
       eslint.configs.recommended,
