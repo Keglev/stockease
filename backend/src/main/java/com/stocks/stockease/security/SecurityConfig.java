@@ -84,11 +84,8 @@ public class SecurityConfig {
                 .requestMatchers("/health", "/health/").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/products/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole("ADMIN", "USER")
+                // endpoint authorization lives on the controller methods (@PreAuthorize); the catch-all
+                // keeps everything authenticated
                 .anyRequest().authenticated()
             )
             .exceptionHandling(exceptions -> exceptions

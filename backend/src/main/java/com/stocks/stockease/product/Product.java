@@ -17,14 +17,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
  * Domain entity representing a product in the inventory system, persisted to the {@code product} table.
- * {@code totalValue} is computed on read from {@code quantity} and {@code purchasePrice}, never stored.
+ * Persistence-only: derived values such as total stock value are computed where responses are built.
  */
 @Data
 @Entity
@@ -88,15 +87,5 @@ public class Product {
             sku = "SKU-" + UUID.randomUUID().toString()
                     .substring(0, 8).toUpperCase();
         }
-    }
-
-    /**
-     * Computes the total stock value as {@code quantity * purchasePrice}; never persisted.
-     *
-     * @return the product of {@code quantity} and {@code purchasePrice}
-     */
-    @Transient
-    public BigDecimal getTotalValue() {
-        return purchasePrice.multiply(BigDecimal.valueOf(quantity));
     }
 }

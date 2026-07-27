@@ -9,7 +9,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mockito;
@@ -38,7 +37,7 @@ import com.stocks.stockease.security.JwtUtil;
 
 import jakarta.persistence.EntityNotFoundException;
 
-/** Slice tests for validation and error scenarios in PUT /api/products/{id}/quantity|price|name. */
+/** Slice tests for validation and error scenarios in PUT /api/products/{id}/price|name. */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 @Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
@@ -73,30 +72,17 @@ class ProductInvalidUpdateControllerTest {
 
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
-    void updateQuantity_withMissingField_returns400(String username, String role) throws Exception {
-        when(productService.updateQuantity(eq(1L), anyInt())).thenReturn(Objects.requireNonNull(product1));
+    void updatePrice_withMissingField_returns400(String username, String role) throws Exception {
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class), any(User.class)))
+                .thenReturn(Objects.requireNonNull(product1));
 
-        mockMvc.perform(put("/api/products/1/quantity")
+        mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
                         .with(userWithRole(username, role))
                         .with(csrfToken())
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed for request parameters."));
-    }
-
-    @ParameterizedTest
-    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
-    void updateQuantity_withInvalidType_returns400(String username, String role) throws Exception {
-        when(productService.updateQuantity(eq(1L), anyInt())).thenReturn(Objects.requireNonNull(product1));
-
-        mockMvc.perform(put("/api/products/1/quantity")
-                        .contentType(applicationJson())
-                        .with(userWithRole(username, role))
-                        .with(csrfToken())
-                        .content("{\"quantity\": \"notAnInteger\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Invalid request format or data type."));
     }
 
     @ParameterizedTest
@@ -158,14 +144,14 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updateProduct_whenNotFound_returns404(String username, String role) throws Exception {
-        when(productService.updateQuantity(eq(999L), anyInt()))
+        when(productService.updatePrice(eq(999L), any(BigDecimal.class), any(User.class)))
                 .thenThrow(new EntityNotFoundException("Product with ID 999 not found."));
 
-        mockMvc.perform(put("/api/products/999/quantity")
+        mockMvc.perform(put("/api/products/999/price")
                         .contentType(applicationJson())
                         .with(userWithRole(username, role))
                         .with(csrfToken())
-                        .content("{\"quantity\": 10}"))
+                        .content("{\"purchasePrice\": 10.0}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Entity not found: Product with ID 999 not found."));
     }
@@ -173,13 +159,14 @@ class ProductInvalidUpdateControllerTest {
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
     void updateProduct_withoutCsrfToken_returns403(String username, String role) throws Exception {
-        when(productService.updateQuantity(eq(1L), anyInt())).thenReturn(Objects.requireNonNull(product1));
+        when(productService.updatePrice(eq(1L), any(BigDecimal.class), any(User.class)))
+                .thenReturn(Objects.requireNonNull(product1));
 
         // 403 is issued by the CSRF filter, not the authorization layer; both roles are rejected equally
-        mockMvc.perform(put("/api/products/1/quantity")
+        mockMvc.perform(put("/api/products/1/price")
                         .contentType(applicationJson())
                         .with(userWithRole(username, role))
-                        .content("{\"quantity\": 10}"))
+                        .content("{\"purchasePrice\": 10.0}"))
                 .andExpect(status().isForbidden());
     }
 

@@ -194,26 +194,6 @@ class ProductServiceTest {
     }
 
     @Test
-    void updateQuantity_withExistingId_updatesAndReturnsProduct() {
-        Product product = new Product("Widget", 10, 5.0);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.save(product)).thenReturn(product);
-
-        Product result = productService.updateQuantity(1L, 50);
-
-        assertThat(result.getQuantity()).isEqualTo(50);
-    }
-
-    @Test
-    void updateQuantity_withMissingId_throwsEntityNotFoundException() {
-        when(productRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> productService.updateQuantity(1L, 50))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("Product with ID 1 not found.");
-    }
-
-    @Test
     void adjustQuantity_withPositiveDelta_increasesAndReturnsProduct() {
         Product product = new Product("Widget", 10, 5.0);
         when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));

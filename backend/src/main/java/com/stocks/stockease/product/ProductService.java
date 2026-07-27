@@ -154,23 +154,6 @@ public class ProductService {
     }
 
     /**
-     * Updates a product's stock quantity.
-     *
-     * @param id product identifier
-     * @param quantity new quantity
-     * @return the updated product
-     * @throws EntityNotFoundException if no product exists with the given ID
-     */
-    @Transactional
-    public Product updateQuantity(long id, int quantity) {
-        // quantity history lives exclusively in stock movements; never logged to the change log
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
-        product.setQuantity(quantity);
-        return productRepository.save(product);
-    }
-
-    /**
      * Applies a relative change to a product's stock quantity.
      *
      * @param id product identifier
