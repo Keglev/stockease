@@ -7,16 +7,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.jspecify.annotations.NonNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -35,7 +32,7 @@ import com.stocks.stockease.security.UserService;
 /** Slice tests for DELETE /api/products/{id} endpoint. */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-@Import(TestConfig.class)
+@Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
 class ProductDeleteControllerTest {
 
     @MockitoBean
@@ -80,16 +77,15 @@ class ProductDeleteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "regularUser", roles = {"USER"})
     void deleteProduct_asUserRole_returns403() throws Exception {
-        // @WithMockUser would inherit TestConfig's ROLE_ADMIN + ROLE_USER; manual setup isolates ROLE_USER only
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(
-                "regularUser", "password", AuthorityUtils.createAuthorityList("ROLE_USER")));
-        SecurityContextHolder.setContext(securityContext);
-
-        mockMvc.perform(delete("/api/products/1"))
+        // CSRF token is supplied deliberately: the 403 must come from @PreAuthorize("hasRole('ADMIN')")
+        // and nothing else, so the admin-only rule is what this test actually proves
+        mockMvc.perform(delete("/api/products/1").with(csrfToken()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error").doesNotExist());
+
+        Mockito.verify(productService, Mockito.never()).deleteById(anyLong(), any(User.class));
     }
 
     private static @NonNull RequestPostProcessor csrfToken() {

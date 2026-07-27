@@ -41,7 +41,7 @@ import jakarta.persistence.EntityNotFoundException;
 /** Slice tests for validation and error scenarios in PUT /api/products/{id}/quantity|price|name. */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
-@Import(TestConfig.class)
+@Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
 class ProductInvalidUpdateControllerTest {
 
     @Autowired
