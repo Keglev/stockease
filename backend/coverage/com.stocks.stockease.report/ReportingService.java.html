@@ -70,9 +70,14 @@ public class ReportingService {
 <span class="fc" id="L70">            rs.getObject(&quot;due_date&quot;, LocalDate.class), rs.getBigDecimal(&quot;outstanding&quot;),</span>
 <span class="fc" id="L71">            rs.getLong(&quot;days_overdue&quot;));</span>
 
+<span class="fc" id="L73">    private static final RowMapper&lt;CustomerSummary&gt; CUSTOMER_SUMMARY_MAPPER = (rs, rowNum) -&gt; new CustomerSummary(</span>
+<span class="fc" id="L74">            rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;), rs.getBoolean(&quot;deleted&quot;), rs.getLong(&quot;sale_invoice_count&quot;),</span>
+<span class="fc" id="L75">            rs.getLong(&quot;bought_units&quot;), rs.getBigDecimal(&quot;bought_value&quot;), rs.getLong(&quot;returned_units&quot;),</span>
+<span class="fc" id="L76">            rs.getBigDecimal(&quot;returned_value&quot;));</span>
+
     /** An invoice naming neither supplier nor customer is an anonymous cash sale. */
     private static String counterparty(String name) {
-<span class="fc bfc" id="L75" title="All 2 branches covered.">        return name == null ? CASH_SALE : name;</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        return name == null ? CASH_SALE : name;</span>
     }
 
     /**
@@ -81,7 +86,7 @@ public class ReportingService {
      * @return one row per product, ordered by product ID
      */
     public List&lt;ProductProfitReport&gt; profitPerProduct() {
-<span class="fc" id="L84">        return jdbcClient.sql(PRODUCT_PROFIT_SELECT + PRODUCT_PROFIT_GROUP).query(PRODUCT_PROFIT_MAPPER).list();</span>
+<span class="fc" id="L89">        return jdbcClient.sql(PRODUCT_PROFIT_SELECT + PRODUCT_PROFIT_GROUP).query(PRODUCT_PROFIT_MAPPER).list();</span>
     }
 
     /**
@@ -91,10 +96,10 @@ public class ReportingService {
      * @return the product's profit row, or empty if no such product exists
      */
     public Optional&lt;ProductProfitReport&gt; profitForProduct(long productId) {
-<span class="fc" id="L94">        return jdbcClient.sql(PRODUCT_PROFIT_SELECT + &quot;WHERE p.id = :id\n&quot; + PRODUCT_PROFIT_GROUP)</span>
-<span class="fc" id="L95">                .param(&quot;id&quot;, productId)</span>
-<span class="fc" id="L96">                .query(PRODUCT_PROFIT_MAPPER)</span>
-<span class="fc" id="L97">                .optional();</span>
+<span class="fc" id="L99">        return jdbcClient.sql(PRODUCT_PROFIT_SELECT + &quot;WHERE p.id = :id\n&quot; + PRODUCT_PROFIT_GROUP)</span>
+<span class="fc" id="L100">                .param(&quot;id&quot;, productId)</span>
+<span class="fc" id="L101">                .query(PRODUCT_PROFIT_MAPPER)</span>
+<span class="fc" id="L102">                .optional();</span>
     }
 
     /**
@@ -105,7 +110,7 @@ public class ReportingService {
     public List&lt;SupplierProfitReport&gt; profitPerSupplier() {
         // A product purchased from several suppliers counts fully for each of them - documented
         // simplification (gross profit model, no per-supplier cost allocation).
-<span class="fc" id="L108">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L113">        String sql = &quot;&quot;&quot;</span>
                 WITH product_profit AS (
                   SELECT p.id,
                     COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.sold_price
@@ -130,12 +135,12 @@ public class ReportingService {
                 GROUP BY s.id, s.name
                 ORDER BY s.id
                 &quot;&quot;&quot;;
-<span class="fc" id="L133">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; {</span>
-<span class="fc" id="L134">            BigDecimal revenue = rs.getBigDecimal(&quot;revenue&quot;);</span>
-<span class="fc" id="L135">            BigDecimal cost = rs.getBigDecimal(&quot;cost&quot;);</span>
-<span class="fc" id="L136">            return new SupplierProfitReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;), revenue, cost,</span>
-<span class="fc" id="L137">                    revenue.subtract(cost));</span>
-<span class="fc" id="L138">        }).list();</span>
+<span class="fc" id="L138">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; {</span>
+<span class="fc" id="L139">            BigDecimal revenue = rs.getBigDecimal(&quot;revenue&quot;);</span>
+<span class="fc" id="L140">            BigDecimal cost = rs.getBigDecimal(&quot;cost&quot;);</span>
+<span class="fc" id="L141">            return new SupplierProfitReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;), revenue, cost,</span>
+<span class="fc" id="L142">                    revenue.subtract(cost));</span>
+<span class="fc" id="L143">        }).list();</span>
     }
 
     /**
@@ -145,7 +150,7 @@ public class ReportingService {
      */
     public List&lt;StockStatusReport&gt; stockStatus() {
         // Current-state report: soft-deleted products are EXCLUDED (their stock is not operational).
-<span class="fc" id="L148">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L153">        String sql = &quot;&quot;&quot;</span>
                 SELECT p.id, p.name, p.sku,
                   COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity
                                     WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity
@@ -161,10 +166,10 @@ public class ReportingService {
                 GROUP BY p.id, p.name, p.sku, p.quantity, p.purchase_price
                 ORDER BY p.id
                 &quot;&quot;&quot;;
-<span class="fc" id="L164">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new StockStatusReport(rs.getLong(&quot;id&quot;),</span>
-<span class="fc" id="L165">                rs.getString(&quot;name&quot;), rs.getString(&quot;sku&quot;), rs.getInt(&quot;sold_units&quot;),</span>
-<span class="fc" id="L166">                rs.getBigDecimal(&quot;sold_revenue&quot;), rs.getInt(&quot;in_stock_units&quot;),</span>
-<span class="fc" id="L167">                rs.getBigDecimal(&quot;in_stock_value&quot;))).list();</span>
+<span class="fc" id="L169">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new StockStatusReport(rs.getLong(&quot;id&quot;),</span>
+<span class="fc" id="L170">                rs.getString(&quot;name&quot;), rs.getString(&quot;sku&quot;), rs.getInt(&quot;sold_units&quot;),</span>
+<span class="fc" id="L171">                rs.getBigDecimal(&quot;sold_revenue&quot;), rs.getInt(&quot;in_stock_units&quot;),</span>
+<span class="fc" id="L172">                rs.getBigDecimal(&quot;in_stock_value&quot;))).list();</span>
     }
 
     /**
@@ -175,7 +180,7 @@ public class ReportingService {
     public List&lt;LossReport&gt; lossReport() {
         // Loss lines are valued at the product's CURRENT purchase price: pooled stock has no per-unit
         // cost, so this is a documented approximation consistent with the gross profit model.
-<span class="fc" id="L178">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L183">        String sql = &quot;&quot;&quot;</span>
                 SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,
                   COALESCE(SUM(CASE WHEN m.reason = 'LOST' THEN m.quantity ELSE 0 END), 0) AS lost_units,
                   COALESCE(SUM(CASE WHEN m.reason = 'DESTROYED' THEN m.quantity ELSE 0 END), 0) AS destroyed_units,
@@ -185,9 +190,41 @@ public class ReportingService {
                 GROUP BY p.id, p.name, p.sku, p.deleted_at, p.purchase_price
                 ORDER BY p.id
                 &quot;&quot;&quot;;
-<span class="fc" id="L188">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new LossReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;),</span>
-<span class="fc" id="L189">                rs.getString(&quot;sku&quot;), rs.getBoolean(&quot;deleted&quot;), rs.getInt(&quot;lost_units&quot;),</span>
-<span class="fc" id="L190">                rs.getInt(&quot;destroyed_units&quot;), rs.getBigDecimal(&quot;loss_value&quot;))).list();</span>
+<span class="fc" id="L193">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new LossReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;),</span>
+<span class="fc" id="L194">                rs.getString(&quot;sku&quot;), rs.getBoolean(&quot;deleted&quot;), rs.getInt(&quot;lost_units&quot;),</span>
+<span class="fc" id="L195">                rs.getInt(&quot;destroyed_units&quot;), rs.getBigDecimal(&quot;loss_value&quot;))).list();</span>
+    }
+
+    /**
+     * Returns what one customer has bought and returned across its booked sale invoices.
+     *
+     * &lt;p&gt;Anonymous cash sales name no customer by construction, so they belong to no summary and are
+     * invisible here.
+     *
+     * @param customerId customer identifier
+     * @return the customer's summary, zero-filled if it has no booked sales, or empty if no such
+     *         customer exists; a soft-deleted customer still reports, flagged as deleted
+     */
+    public Optional&lt;CustomerSummary&gt; customerSummary(long customerId) {
+        // The invoice restriction lives in the JOIN condition, not in WHERE: moving it out would drop the
+        // customer's own row whenever it has no booked sale, turning a zero-filled summary into &quot;no such
+        // customer&quot;. Soft-deleted invoices need no exclusion here - only OPEN invoices can be deleted, and
+        // OPEN is already excluded.
+<span class="fc" id="L213">        String sql = &quot;&quot;&quot;</span>
+                SELECT c.id, c.name, (c.deleted_at IS NOT NULL) AS deleted,
+                  COUNT(DISTINCT i.id) AS sale_invoice_count,
+                  COALESCE(SUM(ii.quantity), 0) AS bought_units,
+                  COALESCE(SUM(ii.quantity * ii.unit_price), 0) AS bought_value,
+                  COALESCE(SUM(ii.returned_qty), 0) AS returned_units,
+                  COALESCE(SUM(ii.returned_qty * ii.unit_price), 0) AS returned_value
+                FROM customer c
+                LEFT JOIN invoice i
+                  ON i.customer_id = c.id AND i.invoice_type = 'SALE' AND i.status &lt;&gt; 'OPEN'
+                LEFT JOIN invoice_item ii ON ii.invoice_id = i.id
+                WHERE c.id = :id
+                GROUP BY c.id, c.name, c.deleted_at
+                &quot;&quot;&quot;;
+<span class="fc" id="L227">        return jdbcClient.sql(sql).param(&quot;id&quot;, customerId).query(CUSTOMER_SUMMARY_MAPPER).optional();</span>
     }
 
     /**
@@ -198,7 +235,7 @@ public class ReportingService {
     public List&lt;DueDateBucket&gt; dueDateBuckets() {
         // Unpaid, live invoices only; FULLY_RETURNED is excluded because nothing is owed on it.
         // Outstanding value nets out returned quantities.
-<span class="fc" id="L201">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L238">        String sql = &quot;&quot;&quot;</span>
                 SELECT i.due_date, i.invoice_type, COUNT(*) AS invoice_count,
                   COALESCE(SUM(t.outstanding), 0) AS total_value
                 FROM invoice i
@@ -209,9 +246,9 @@ public class ReportingService {
                 GROUP BY i.due_date, i.invoice_type
                 ORDER BY i.due_date
                 &quot;&quot;&quot;;
-<span class="fc" id="L212">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new DueDateBucket(</span>
-<span class="fc" id="L213">                rs.getObject(&quot;due_date&quot;, LocalDate.class), rs.getString(&quot;invoice_type&quot;),</span>
-<span class="fc" id="L214">                rs.getLong(&quot;invoice_count&quot;), rs.getBigDecimal(&quot;total_value&quot;))).list();</span>
+<span class="fc" id="L249">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new DueDateBucket(</span>
+<span class="fc" id="L250">                rs.getObject(&quot;due_date&quot;, LocalDate.class), rs.getString(&quot;invoice_type&quot;),</span>
+<span class="fc" id="L251">                rs.getLong(&quot;invoice_count&quot;), rs.getBigDecimal(&quot;total_value&quot;))).list();</span>
     }
 
     /**
@@ -221,7 +258,7 @@ public class ReportingService {
      * @return the matching invoices, ordered by due date
      */
     public List&lt;InvoiceDueSummary&gt; dueSoon(int days) {
-<span class="fc" id="L224">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L261">        String sql = &quot;&quot;&quot;</span>
                 SELECT i.id, i.invoice_type, COALESCE(s.name, c.name) AS counterparty, i.due_date, t.outstanding
                 FROM invoice i
                 LEFT JOIN supplier s ON s.id = i.supplier_id
@@ -233,7 +270,7 @@ public class ReportingService {
                   AND i.due_date &lt;= CURRENT_DATE + :days
                 ORDER BY i.due_date
                 &quot;&quot;&quot;;
-<span class="fc" id="L236">        return jdbcClient.sql(sql).param(&quot;days&quot;, days).query(DUE_SOON_MAPPER).list();</span>
+<span class="fc" id="L273">        return jdbcClient.sql(sql).param(&quot;days&quot;, days).query(DUE_SOON_MAPPER).list();</span>
     }
 
     /**
@@ -243,7 +280,7 @@ public class ReportingService {
      */
     public List&lt;InvoiceDueSummary&gt; overdue() {
         // The derived overdue predicate: booked (CLOSED), unpaid, past due. Never stored.
-<span class="fc" id="L246">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L283">        String sql = &quot;&quot;&quot;</span>
                 SELECT i.id, i.invoice_type, COALESCE(s.name, c.name) AS counterparty, i.due_date, t.outstanding,
                   (CURRENT_DATE - i.due_date) AS days_overdue
                 FROM invoice i
@@ -256,7 +293,7 @@ public class ReportingService {
                   AND i.due_date &lt; CURRENT_DATE
                 ORDER BY i.due_date
                 &quot;&quot;&quot;;
-<span class="fc" id="L259">        return jdbcClient.sql(sql).query(OVERDUE_MAPPER).list();</span>
+<span class="fc" id="L296">        return jdbcClient.sql(sql).query(OVERDUE_MAPPER).list();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

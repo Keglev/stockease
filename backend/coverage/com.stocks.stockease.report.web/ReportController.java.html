@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.report.CustomerSummary;
 import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
 import com.stocks.stockease.report.LossReport;
@@ -29,6 +30,11 @@ import lombok.RequiredArgsConstructor;
  * on no other module's types, so its records already are the API contract and a parallel set of
  * response records would duplicate them without adding isolation. Every report is read-only and
  * available to both roles.
+ *
+ * &lt;p&gt;Covers profit per product and per supplier, stock status, losses, due-date buckets, due-soon and
+ * overdue listings, and the per-customer purchase summary. That last one sits under this path rather
+ * than under the customer API because the aggregation belongs to this module, even though what it
+ * describes is a customer.
  */
 @RestController
 @RequestMapping(&quot;/api/reports&quot;)
@@ -48,7 +54,7 @@ public class ReportController {
     @GetMapping(&quot;/profit/products&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;ProductProfitReport&gt; profitPerProduct() {
-<span class="fc" id="L51">        return reportingService.profitPerProduct();</span>
+<span class="fc" id="L57">        return reportingService.profitPerProduct();</span>
     }
 
     /**
@@ -61,9 +67,9 @@ public class ReportController {
     @GetMapping(&quot;/profit/products/{id}&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;ProductProfitReport&gt;&gt; profitForProduct(@PathVariable long id) {
-<span class="fc" id="L64">        ProductProfitReport report = reportingService.profitForProduct(id)</span>
-<span class="fc" id="L65">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;No profit report for product with ID &quot; + id + &quot;.&quot;));</span>
-<span class="fc" id="L66">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Product profit fetched successfully&quot;, report));</span>
+<span class="fc" id="L70">        ProductProfitReport report = reportingService.profitForProduct(id)</span>
+<span class="fc" id="L71">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;No profit report for product with ID &quot; + id + &quot;.&quot;));</span>
+<span class="fc" id="L72">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Product profit fetched successfully&quot;, report));</span>
     }
 
     /**
@@ -74,7 +80,22 @@ public class ReportController {
     @GetMapping(&quot;/profit/suppliers&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;SupplierProfitReport&gt; profitPerSupplier() {
-<span class="fc" id="L77">        return reportingService.profitPerSupplier();</span>
+<span class="fc" id="L83">        return reportingService.profitPerSupplier();</span>
+    }
+
+    /**
+     * Returns what one customer has bought and returned across its booked sale invoices.
+     *
+     * @param id customer identifier
+     * @return HTTP 200 with the customer's summary, zero-filled if it has no booked sales
+     * @throws EntityNotFoundException if no such customer exists
+     */
+    @GetMapping(&quot;/customers/{id}/summary&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;CustomerSummary&gt;&gt; customerSummary(@PathVariable long id) {
+<span class="fc" id="L96">        CustomerSummary summary = reportingService.customerSummary(id)</span>
+<span class="fc" id="L97">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L98">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Customer summary fetched successfully&quot;, summary));</span>
     }
 
     /**
@@ -85,7 +106,7 @@ public class ReportController {
     @GetMapping(&quot;/stock-status&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;StockStatusReport&gt; stockStatus() {
-<span class="fc" id="L88">        return reportingService.stockStatus();</span>
+<span class="fc" id="L109">        return reportingService.stockStatus();</span>
     }
 
     /**
@@ -96,7 +117,7 @@ public class ReportController {
     @GetMapping(&quot;/losses&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;LossReport&gt; lossReport() {
-<span class="fc" id="L99">        return reportingService.lossReport();</span>
+<span class="fc" id="L120">        return reportingService.lossReport();</span>
     }
 
     /**
@@ -107,7 +128,7 @@ public class ReportController {
     @GetMapping(&quot;/due-dates&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;DueDateBucket&gt; dueDateBuckets() {
-<span class="fc" id="L110">        return reportingService.dueDateBuckets();</span>
+<span class="fc" id="L131">        return reportingService.dueDateBuckets();</span>
     }
 
     /**
@@ -121,10 +142,10 @@ public class ReportController {
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceDueSummary&gt; dueSoon(
             @RequestParam(defaultValue = &quot;&quot; + DEFAULT_DUE_SOON_DAYS) int days) {
-<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (days &lt; 1) {</span>
-<span class="fc" id="L125">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (days &lt; 1) {</span>
+<span class="fc" id="L146">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
         }
-<span class="fc" id="L127">        return reportingService.dueSoon(days);</span>
+<span class="fc" id="L148">        return reportingService.dueSoon(days);</span>
     }
 
     /**
@@ -135,7 +156,7 @@ public class ReportController {
     @GetMapping(&quot;/overdue&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceDueSummary&gt; overdue() {
-<span class="fc" id="L138">        return reportingService.overdue();</span>
+<span class="fc" id="L159">        return reportingService.overdue();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
