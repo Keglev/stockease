@@ -8,7 +8,7 @@ StockEase,com.stocks.stockease.report,StockStatusReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,LossReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease,StockEaseApplication,5,3,0,0,2,1,1,1,1,1
 StockEase,com.stocks.stockease.audit.internal,ProductChangedListener,0,32,0,0,0,8,0,1,0,1
-StockEase,com.stocks.stockease.invoice.internal,OpenInvoiceDeletionVeto,0,37,0,6,0,10,0,5,0,2
+StockEase,com.stocks.stockease.invoice.internal,OpenInvoiceDeletionVeto,0,52,0,8,0,14,0,7,0,3
 StockEase,com.stocks.stockease.config,FlywayConfiguration,0,38,0,2,0,14,0,3,0,2
 StockEase,com.stocks.stockease.config,JpaAuditingConfig,0,3,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.security,CorsConfig,0,51,0,0,0,7,0,2,0,2
@@ -49,4 +49,5 @@ StockEase,com.stocks.stockease.movement,RecordMovementCommand,0,18,0,0,0,1,0,1,0
 StockEase,com.stocks.stockease.movement,MovementType,0,15,0,0,0,3,0,1,0,1
 StockEase,com.stocks.stockease.audit,ChangedField,0,27,0,0,0,5,0,1,0,1
 StockEase,com.stocks.stockease.audit,AuditService,0,12,0,0,0,2,0,2,0,2
-StockEase,com.stocks.stockease.customer,CustomerService,0,31,0,0,0,8,0,2,0,2
+StockEase,com.stocks.stockease.customer,CustomerService,0,66,0,0,0,14,0,5,0,5
+StockEase,com.stocks.stockease.customer,CustomerDeletedEvent,0,9,0,0,0,1,0,1,0,1

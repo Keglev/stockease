@@ -5,6 +5,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import com.stocks.stockease.customer.CustomerDeletedEvent;
 import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.product.ProductChangedEvent;
 import com.stocks.stockease.shared.EntityInUseException;
@@ -13,9 +14,9 @@ import com.stocks.stockease.supplier.SupplierDeletedEvent;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Open invoices pin the parties they reference: neither the supplier billed nor a product on a line
- * may disappear while the invoice is unsettled. These synchronous listeners veto supplier and product
- * deletions inside the deleting transaction.
+ * Open invoices pin the parties they reference: neither the supplier billed, the customer invoiced nor
+ * a product on a line may disappear while the invoice is unsettled. These synchronous listeners veto
+ * supplier, customer and product deletions inside the deleting transaction.
  */
 // vetoes are validations and run before any other listener does work - fail fast; ordering is pinned
 // so behavior cannot shift with classpath or JVM changes
@@ -35,11 +36,25 @@ public class OpenInvoiceDeletionVeto {
      */
     @EventListener
     public void onSupplierDeleted(SupplierDeletedEvent event) {
-<span class="fc bfc" id="L38" title="All 2 branches covered.">        if (invoiceRepository.existsBySupplierIdAndStatus(event.supplierId(), InvoiceStatus.OPEN)) {</span>
-<span class="fc" id="L39">            throw new EntityInUseException(</span>
-<span class="fc" id="L40">                    &quot;Cannot delete supplier '&quot; + event.supplierName() + &quot;': open invoices exist.&quot;);</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (invoiceRepository.existsBySupplierIdAndStatus(event.supplierId(), InvoiceStatus.OPEN)) {</span>
+<span class="fc" id="L40">            throw new EntityInUseException(</span>
+<span class="fc" id="L41">                    &quot;Cannot delete supplier '&quot; + event.supplierName() + &quot;': open invoices exist.&quot;);</span>
         }
-<span class="fc" id="L42">    }</span>
+<span class="fc" id="L43">    }</span>
+
+    /**
+     * Vetoes deleting a customer that still has open invoices.
+     *
+     * @param event the pending customer deletion
+     * @throws EntityInUseException if any open invoice references the customer
+     */
+    @EventListener
+    public void onCustomerDeleted(CustomerDeletedEvent event) {
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (invoiceRepository.existsByCustomerIdAndStatus(event.customerId(), InvoiceStatus.OPEN)) {</span>
+<span class="fc" id="L54">            throw new EntityInUseException(</span>
+<span class="fc" id="L55">                    &quot;Cannot delete customer '&quot; + event.customerName() + &quot;': open invoices exist.&quot;);</span>
+        }
+<span class="fc" id="L57">    }</span>
 
     /**
      * Vetoes deleting a product that appears on an open invoice; other product changes are ignored.
@@ -49,14 +64,14 @@ public class OpenInvoiceDeletionVeto {
      */
     @EventListener
     public void onProductChanged(ProductChangedEvent event) {
-<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (event.field() != ProductChangedEvent.Field.DELETED) {</span>
-<span class="fc" id="L53">            return;</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (event.field() != ProductChangedEvent.Field.DELETED) {</span>
+<span class="fc" id="L68">            return;</span>
         }
-<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (invoiceItemRepository.existsByProductIdAndInvoiceStatus(</span>
-<span class="fc" id="L56">                event.product().getId(), InvoiceStatus.OPEN)) {</span>
-<span class="fc" id="L57">            throw new EntityInUseException(&quot;Cannot delete product '&quot; + event.product().getName()</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (invoiceItemRepository.existsByProductIdAndInvoiceStatus(</span>
+<span class="fc" id="L71">                event.product().getId(), InvoiceStatus.OPEN)) {</span>
+<span class="fc" id="L72">            throw new EntityInUseException(&quot;Cannot delete product '&quot; + event.product().getName()</span>
                     + &quot;': it appears on an open invoice.&quot;);
         }
-<span class="fc" id="L60">    }</span>
+<span class="fc" id="L75">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
