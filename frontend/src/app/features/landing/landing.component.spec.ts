@@ -5,21 +5,21 @@ import { LanguageService } from '../../core/i18n/language.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { LandingComponent } from './landing.component';
 
-const DESCRIPTION = 'StockEase is an inventory management application for small businesses.';
+/** The rendered result once {{app}} is interpolated from common.appName. */
+const DESCRIPTION = 'Bestandskontrolle is an inventory management application for small businesses.';
 
 const TRANSLATIONS = {
   en: {
-    common: { language: 'Language' },
+    common: { appName: 'Bestandskontrolle', language: 'Language' },
     landing: {
-      title: 'StockEase',
-      description: DESCRIPTION,
+      description: '{{app}} is an inventory management application for small businesses.',
       loginCta: 'Login',
       repository: 'GitHub repository',
       documentation: 'Documentation'
     }
   },
   de: {
-    common: { language: 'Sprache' },
+    common: { appName: 'Bestandskontrolle', language: 'Sprache' },
     landing: { loginCta: 'Anmelden' }
   }
 };

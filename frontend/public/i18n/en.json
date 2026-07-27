@@ -1,11 +1,10 @@
 {
   "common": {
-    "appName": "StockEase",
+    "appName": "Bestandskontrolle",
     "language": "Language"
   },
   "landing": {
-    "title": "StockEase",
-    "description": "StockEase is an inventory management application for small businesses: track products and stock levels, manage suppliers and customers, and settle purchases and sales through the invoice lifecycle. This demo runs against the live Spring Boot API.",
+    "description": "{{app}} is an inventory management application for small businesses: track products and stock levels, manage suppliers and customers, and settle purchases and sales through the invoice lifecycle. This demo runs against the live Spring Boot API.",
     "loginCta": "Login",
     "repository": "GitHub repository",
     "documentation": "Documentation"
@@ -15,7 +14,7 @@
     "backToLanding": "Back to start page"
   },
   "login": {
-    "title": "Sign in to StockEase",
+    "title": "Sign in to {{app}}",
     "username": "Username",
     "password": "Password",
     "submit": "Sign in",

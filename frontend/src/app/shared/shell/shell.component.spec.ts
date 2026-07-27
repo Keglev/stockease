@@ -10,12 +10,12 @@ import { ShellComponent } from './shell.component';
 
 const TRANSLATIONS = {
   en: {
-    common: { appName: 'StockEase', language: 'Language' },
+    common: { appName: 'Bestandskontrolle', language: 'Language' },
     nav: { dashboard: 'Overview', products: 'Products' },
     shell: { logout: 'Log out', role: { ADMIN: 'Administrator', USER: 'User' } }
   },
   de: {
-    common: { appName: 'StockEase', language: 'Sprache' },
+    common: { appName: 'Bestandskontrolle', language: 'Sprache' },
     nav: { dashboard: 'Übersicht', products: 'Produkte' },
     shell: { logout: 'Abmelden', role: { ADMIN: 'Administrator', USER: 'Benutzer' } }
   }

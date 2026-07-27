@@ -4,8 +4,10 @@
   </header>
 
   <main class="landing-hero">
-    <h1 class="landing-title">{{ 'landing.title' | translate }}</h1>
-    <p class="landing-description">{{ 'landing.description' | translate }}</p>
+    <h1 class="landing-title">{{ 'common.appName' | translate }}</h1>
+    <p class="landing-description">
+      {{ 'landing.description' | translate: { app: 'common.appName' | translate } }}
+    </p>
 
     <!-- demo-credentials box: added when the public demo goes live -->
 

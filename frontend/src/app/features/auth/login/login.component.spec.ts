@@ -31,7 +31,12 @@ describe('LoginComponent', () => {
         provideHttpClientTesting(),
         // Registered so the post-login navigation resolves instead of rejecting mid-test.
         provideRouter([{ path: 'app', children: [] }]),
-        provideTestTranslations({ en: { login: { title: 'Sign in to StockEase' } } })
+        provideTestTranslations({
+          en: {
+            common: { appName: 'Bestandskontrolle' },
+            login: { title: 'Sign in to {{app}}' }
+          }
+        })
       ]
     }).compileComponents();
 
