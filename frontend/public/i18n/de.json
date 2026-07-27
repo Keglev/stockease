@@ -1,7 +1,9 @@
 {
   "common": {
     "appName": "Bestandskontrolle",
-    "language": "Sprache"
+    "language": "Sprache",
+    "themeLight": "Helles Design",
+    "themeDark": "Dunkles Design"
   },
   "landing": {
     "description": "{{app}} ist eine Bestandsverwaltung für kleine Unternehmen: Produkte und Lagerbestände verfolgen, Lieferanten und Kunden verwalten sowie Ein- und Verkäufe über den Rechnungslauf abwickeln. Diese Demo arbeitet mit der aktiven Spring-Boot-API.",

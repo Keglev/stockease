@@ -8,11 +8,13 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
+import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-shell',
   imports: [
     LanguageToggleComponent,
+    ThemeToggleComponent,
     MatButtonModule,
     MatListModule,
     MatSidenavModule,

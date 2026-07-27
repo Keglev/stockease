@@ -78,4 +78,10 @@ describe('LandingComponent', () => {
       (fixture.nativeElement as HTMLElement).querySelector('app-language-toggle')
     ).not.toBeNull();
   });
+
+  it('render_themeToggle_isPresentBeforeLogin', () => {
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('app-theme-toggle')
+    ).not.toBeNull();
+  });
 });

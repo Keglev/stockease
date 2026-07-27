@@ -13,6 +13,7 @@ import { routes } from './app.routes';
 import { LanguageService } from './core/i18n/language.service';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { ThemeService } from './core/theme/theme.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,6 +26,7 @@ export const appConfig: ApplicationConfig = {
     }),
     // Returning the loader observable holds bootstrap until translations are in place,
     // so the login page never flashes raw translation keys.
-    provideAppInitializer(() => inject(LanguageService).initialize())
+    provideAppInitializer(() => inject(LanguageService).initialize()),
+    provideAppInitializer(() => inject(ThemeService).initialize())
   ]
 };
