@@ -1,0 +1,38 @@
+parameters:
+  - name: userId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: User identifier
+
+get:
+  summary: Product changes made by one user
+  description: |
+    Every product change the user made, newest first. The log is written by an event listener as
+    changes happen; there is no API to write to it.
+  operationId: getChangesByUser
+  tags:
+    - Audit
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Change log retrieved (ROLE_USER or ROLE_ADMIN); empty array when the user changed nothing
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/ChangeLogResponse'
+          example:
+            - id: 2
+              productId: 3
+              userId: 11
+              field: NAME
+              oldValue: Old name
+              newValue: New name
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

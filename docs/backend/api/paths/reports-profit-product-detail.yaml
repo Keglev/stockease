@@ -1,0 +1,46 @@
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: Product identifier
+
+get:
+  summary: Gross profit for one product
+  operationId: profitForProduct
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseProductProfit'
+          example:
+            success: true
+            message: Product profit fetched successfully
+            data:
+              productId: 3
+              name: Widget
+              sku: SKU-3
+              deleted: false
+              revenue: 100.00
+              cost: 40.00
+              grossProfit: 60.00
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No such product
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: No profit report for product with ID 9.'
+            data: null

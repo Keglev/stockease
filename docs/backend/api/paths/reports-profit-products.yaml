@@ -1,0 +1,29 @@
+get:
+  summary: Gross profit per product
+  description: |
+    One row per product, ordered by product ID. Historical report: soft-deleted products are
+    included and flagged, because movements reference them regardless.
+  operationId: profitPerProduct
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/ProductProfitReport'
+          example:
+            - productId: 3
+              name: Widget
+              sku: SKU-3
+              deleted: false
+              revenue: 100.00
+              cost: 40.00
+              grossProfit: 60.00
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

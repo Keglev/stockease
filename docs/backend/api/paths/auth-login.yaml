@@ -13,7 +13,7 @@ post:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/LoginRequest'
+          $ref: '../openapi.yaml#/components/schemas/LoginRequest'
         example:
           username: admin
           password: password123
@@ -23,7 +23,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseString'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseString'
           example:
             success: true
             message: Login successful
@@ -33,7 +33,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseError'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           example:
             success: false
             message: "Validation failed for request parameters."
@@ -45,7 +45,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseError'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           example:
             success: false
             message: Invalid username or password
@@ -55,7 +55,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseError'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           example:
             success: false
             message: An unexpected error occurred

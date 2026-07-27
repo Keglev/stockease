@@ -1,0 +1,99 @@
+post:
+  summary: Record a standalone stock correction
+  description: |
+    Records a movement that stands on its own and applies its quantity change to the product
+    atomically. Movements are append-only: a recorded movement is never updated or deleted.
+
+    **Only three reasons are accepted here** - `NEW_PRODUCT`, `LOST` and `DESTROYED`. The other four
+    are rejected at the API surface before the service is reached, because they belong to other
+    flows: `PURCHASE` and `SOLD` come into existence only by closing an invoice, and the two return
+    reasons go through `POST /api/returns`.
+
+    `NEW_PRODUCT` requires a positive `unitCost` and the other two reject it, since only initial
+    stock carries a cost snapshot of its own.
+  operationId: recordMovement
+  tags:
+    - Stock Movements
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/RecordMovementRequest'
+        example:
+          productId: 3
+          reason: NEW_PRODUCT
+          quantity: 2
+          unitCost: 7.50
+  responses:
+    '200':
+      description: Movement recorded (ROLE_USER or ROLE_ADMIN); returns the bare record
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/MovementResponse'
+          example:
+            id: 5
+            productId: 3
+            userId: 11
+            type: INCREASE
+            reason: NEW_PRODUCT
+            quantity: 2
+            invoiceItemId: null
+            soldPrice: null
+            unitCost: 7.50
+            createdAt: '2026-01-02T03:04:00'
+    '400':
+      description: |
+        A reason this endpoint does not accept, a field-level validation failure, or a movement the
+        service's validation matrix rejects.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
+              - $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          examples:
+            reasonNotAllowed:
+              summary: Reason owned by another flow
+              value:
+                success: false
+                message: PURCHASE and SOLD movements exist only through invoice closing; returns use the return endpoint.
+                data: null
+            fieldValidation:
+              summary: Field-level validation
+              value:
+                success: false
+                message: Validation failed for request parameters.
+                data:
+                  quantity: Quantity must be positive.
+            matrixViolation:
+              summary: Rejected by the movement validation matrix
+              value:
+                success: false
+                message: NEW_PRODUCT movements require a positive unit cost.
+                data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: The referenced product does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Product with ID 3 not found.'
+            data: null
+    '409':
+      description: The movement would drive the product's stock below zero
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Adjustment of -2 would result in negative stock for product 3 (current: 1).'
+            data: null

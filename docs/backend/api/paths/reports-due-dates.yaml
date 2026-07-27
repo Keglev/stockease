@@ -1,0 +1,27 @@
+get:
+  summary: Unpaid invoices bucketed by due date and type
+  description: |
+    One bucket per due date and invoice type, ordered by due date. Covers unpaid, live invoices only;
+    fully returned invoices are excluded because nothing is owed on them. Values are net of
+    quantities already returned.
+  operationId: dueDateBuckets
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/DueDateBucket'
+          example:
+            - dueDate: '2026-03-01'
+              invoiceType: SALE
+              invoiceCount: 2
+              totalValue: 60.00
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

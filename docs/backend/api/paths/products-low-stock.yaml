@@ -1,0 +1,37 @@
+get:
+  summary: Get products with critically low stock
+  description: |
+    Returns products whose quantity is below the reorder threshold of 5 units.
+    When every product is adequately stocked the endpoint returns a bare status message object
+    instead of an empty array.
+  operationId: getLowStockProducts
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Low-stock products, or a status message when there are none
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../openapi.yaml#/components/schemas/ProductList'
+              - $ref: '../openapi.yaml#/components/schemas/MessageOnly'
+          examples:
+            lowStock:
+              summary: Products below the threshold
+              value:
+                - id: 1
+                  name: Laptop
+                  sku: SKU-A1B2C3D4
+                  quantity: 3
+                  purchasePrice: 999.99
+                  totalValue: 2999.97
+                  createdAt: '2026-01-02T03:04:00'
+            allStocked:
+              summary: Nothing below the threshold
+              value:
+                message: All products are sufficiently stocked.
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

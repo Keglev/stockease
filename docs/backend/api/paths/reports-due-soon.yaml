@@ -1,0 +1,47 @@
+get:
+  summary: Unpaid invoices falling due within a window
+  description: |
+    Unpaid invoices due within the given number of days from today, ordered by due date.
+    `daysOverdue` is null here - it is populated by the overdue listing only.
+  operationId: dueSoon
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: days
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 7
+      description: Size of the window in days from today; must be positive
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/InvoiceDueSummary'
+          example:
+            - invoiceId: 1
+              invoiceType: SALE
+              counterparty: Jane Doe
+              dueDate: '2026-03-01'
+              outstandingValue: 30.00
+              daysOverdue: null
+    '400':
+      description: The window is not positive
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: Days must be positive.
+            data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

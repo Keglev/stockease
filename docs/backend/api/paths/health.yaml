@@ -1,0 +1,36 @@
+get:
+  summary: Health check endpoint
+  security: []
+  description: |
+    Database-backed liveness probe used by uptime monitors and orchestration. Probes the database
+    with a trivial query and reports combined application and database liveness as JSON.
+    A failing probe returns 503 rather than 500: it signals a transient dependency outage, not an
+    application bug.
+    No authentication required.
+    Used by:
+    - Kubernetes (liveness/readiness probes)
+    - Docker (healthcheck instruction)
+    - Load balancers (backend health verification)
+    - Monitoring systems (Prometheus, DataDog, etc.)
+  operationId: healthCheck
+  tags:
+    - Health
+  responses:
+    '200':
+      description: Application and database healthy
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/HealthStatus'
+          example:
+            status: UP
+            db: UP
+    '503':
+      description: The database probe failed
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/HealthStatus'
+          example:
+            status: DOWN
+            db: DOWN

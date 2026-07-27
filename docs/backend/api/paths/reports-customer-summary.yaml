@@ -1,0 +1,60 @@
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: Customer identifier
+
+get:
+  summary: What one customer has bought and returned
+  description: |
+    Aggregates the customer's booked sale invoices - an invoice still OPEN is recorded but has not
+    happened yet, so it contributes nothing. Bought figures come from each line's quantity times its
+    selling-price snapshot; returned figures use the same snapshot, so a return is always valued at
+    what the customer actually paid.
+
+    A customer with no booked sales reports zeros rather than being absent, and a soft-deleted
+    customer keeps reporting with `deleted: true`. Only an unknown identifier yields 404.
+
+    Anonymous cash sales name no customer by construction, so they belong to no summary.
+
+    The path sits under `/api/reports` rather than under the customer API because the aggregation is
+    the reporting module's, even though what it describes is a customer.
+  operationId: customerSummary
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Summary retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseCustomerSummary'
+          example:
+            success: true
+            message: Customer summary fetched successfully
+            data:
+              customerId: 9
+              name: Jane Doe
+              deleted: false
+              saleInvoiceCount: 1
+              boughtUnits: 5
+              boughtValue: 80.00
+              returnedUnits: 1
+              returnedValue: 10.00
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No customer row with that ID at all
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Customer with ID 999 not found.'
+            data: null

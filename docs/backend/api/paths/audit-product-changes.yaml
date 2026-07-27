@@ -1,0 +1,38 @@
+parameters:
+  - name: productId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: Product identifier
+
+get:
+  summary: Full change history of one product
+  description: |
+    Every logged change to the product, newest first, including the DELETED and RESTORED lifecycle
+    events, which carry no old or new value.
+  operationId: getChangesByProduct
+  tags:
+    - Audit
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Change log retrieved (ROLE_USER or ROLE_ADMIN); empty array when nothing was logged
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/ChangeLogResponse'
+          example:
+            - id: 2
+              productId: 3
+              userId: 11
+              field: PURCHASE_PRICE
+              oldValue: '5.00'
+              newValue: '7.50'
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

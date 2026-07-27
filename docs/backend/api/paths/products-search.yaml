@@ -3,7 +3,7 @@ get:
   description: |
     Case-insensitive substring search. For example, searching "apple" returns products like
     "Apple Juice", "APPLE", "Green Apple", etc.
-    Returns 204 NO_CONTENT if no matches found.
+    Returns 204 NO_CONTENT when nothing matches.
   operationId: searchProductsByName
   tags:
     - Products
@@ -23,14 +23,15 @@ get:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ProductList'
+            $ref: '../openapi.yaml#/components/schemas/ProductList'
           example:
             - id: 1
               name: Laptop
+              sku: SKU-A1B2C3D4
               quantity: 50
               purchasePrice: 999.99
-              sku: SKU-A1B2C3D4
               totalValue: 49999.50
+              createdAt: '2026-01-02T03:04:00'
     '204':
       description: |
         No matching products found.
@@ -38,11 +39,8 @@ get:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              message:
-                type: string
+            $ref: '../openapi.yaml#/components/schemas/MessageOnly'
           example:
-            message: "No products found matching the name: laptop"
+            message: 'No products found matching the name: laptop'
     '401':
-      description: Unauthorized - missing or invalid JWT token
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

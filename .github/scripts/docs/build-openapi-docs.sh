@@ -12,7 +12,7 @@ set -euo pipefail
 
 PROJECT_DIR="${1:?Usage: build-openapi-docs.sh <project-dir>}"
 
-OPENAPI_YAML="$PROJECT_DIR/docs/api/openapi.yaml"  # spec moves to docs/backend/api with the API-docs review
+OPENAPI_YAML="$PROJECT_DIR/docs/backend/api/openapi.yaml"  # spec lives with the backend architecture docs
 API_OUT="$PROJECT_DIR/target/docs/backend/api"
 
 echo "==> [build-openapi-docs] PROJECT_DIR=$PROJECT_DIR"

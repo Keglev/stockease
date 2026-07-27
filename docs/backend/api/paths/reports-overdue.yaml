@@ -1,0 +1,28 @@
+get:
+  summary: Booked, unpaid invoices past their due date
+  description: |
+    The derived overdue predicate - closed, unpaid and past due - evaluated at read time and never
+    stored. Ordered by due date, with the number of days each invoice is late.
+  operationId: overdue
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/InvoiceDueSummary'
+          example:
+            - invoiceId: 1
+              invoiceType: SALE
+              counterparty: Jane Doe
+              dueDate: '2026-03-01'
+              outstandingValue: 30.00
+              daysOverdue: 5
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

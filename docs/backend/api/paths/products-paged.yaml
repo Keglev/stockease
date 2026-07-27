@@ -1,8 +1,8 @@
 get:
   summary: Retrieve products with pagination
   description: |
-    Returns paginated product list with metadata. Prevents loading entire table into memory.
-    Default page size is 10 items. Includes total count and page information for client-side pagination controls.
+    Returns a paginated product list with metadata, so the whole table never has to be loaded.
+    Default page size is 10.
   operationId: getPagedProducts
   tags:
     - Products
@@ -29,11 +29,11 @@ get:
         example: 10
   responses:
     '200':
-      description: Paginated products returned successfully
+      description: Paginated products returned (ROLE_USER or ROLE_ADMIN)
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponsePaginated'
+            $ref: '../openapi.yaml#/components/schemas/ApiResponsePaginated'
           example:
             success: true
             message: Paged products fetched successfully
@@ -41,25 +41,27 @@ get:
               content:
                 - id: 1
                   name: Laptop
+                  sku: SKU-A1B2C3D4
                   quantity: 50
                   purchasePrice: 999.99
-                  sku: SKU-A1B2C3D4
                   totalValue: 49999.50
-                - id: 2
-                  name: Mouse
-                  quantity: 200
-                  purchasePrice: 25.99
-                  sku: SKU-B2C3D4E5
-                  totalValue: 5198.00
-              totalElements: 100
-              totalPages: 10
+                  createdAt: '2026-01-02T03:04:00'
               pageNumber: 0
               pageSize: 10
+              totalElements: 100
+              totalPages: 10
     '400':
-      description: Invalid parameters
+      description: |
+        Invalid pagination parameters - a negative page or a non-positive size. Reported by the
+        handler-method validation path, whose error key is not deterministic.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponseError'
+            $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
+          example:
+            success: false
+            message: Validation failed for request parameters.
+            data:
+              Unknown: Unable to extract detailed validation error.
     '401':
-      description: Unauthorized - missing or invalid JWT token
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
