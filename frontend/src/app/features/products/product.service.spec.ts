@@ -4,10 +4,22 @@ import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../core/api/api-envelope';
-import { PaginatedProducts } from '../../core/api/api-models';
+import { PaginatedProducts, ProductResponse } from '../../core/api/api-models';
 import { ProductService } from './product.service';
 
 const PAGED_URL = `${environment.apiBaseUrl}/api/products/paged`;
+
+const BASE_URL = `${environment.apiBaseUrl}/api/products`;
+
+const LAPTOP: ProductResponse = {
+  id: 1,
+  name: 'Laptop',
+  sku: 'SKU-A1B2C3D4',
+  quantity: 50,
+  purchasePrice: 999.99,
+  totalValue: 49999.5,
+  createdAt: '2026-01-02T03:04:00'
+};
 
 const PAGE: PaginatedProducts = {
   content: [
@@ -65,6 +77,61 @@ describe('ProductService', () => {
     expect(emitted).not.toHaveProperty('success');
     expect(emitted).not.toHaveProperty('data');
     expect(emitted?.content.length).toBe(1);
+    controller.verify();
+  });
+
+  it('create_bareObjectResponse_emitsPayloadUnchanged', () => {
+    let emitted: ProductResponse | undefined;
+    service.create('Laptop', 50, 999.99).subscribe((product) => (emitted = product));
+
+    const request = controller.expectOne(BASE_URL);
+    expect(request.request.method).toBe('POST');
+    // No sku key: the server generates it.
+    expect(request.request.body).toEqual({ name: 'Laptop', quantity: 50, purchasePrice: 999.99 });
+    request.flush(LAPTOP);
+
+    expect(emitted).toEqual(LAPTOP);
+    expect(emitted).not.toHaveProperty('data');
+    controller.verify();
+  });
+
+  it('rename_envelopedResponse_emitsUnwrappedData', () => {
+    let emitted: ProductResponse | undefined;
+    service.rename(1, 'Laptop Pro').subscribe((product) => (emitted = product));
+
+    const request = controller.expectOne(`${BASE_URL}/1/name`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ name: 'Laptop Pro' });
+    request.flush({ success: true, message: 'ok', data: { ...LAPTOP, name: 'Laptop Pro' } });
+
+    expect(emitted).toEqual({ ...LAPTOP, name: 'Laptop Pro' });
+    expect(emitted).not.toHaveProperty('success');
+    controller.verify();
+  });
+
+  it('changePrice_envelopedResponse_emitsUnwrappedData', () => {
+    let emitted: ProductResponse | undefined;
+    service.changePrice(1, 1099.5).subscribe((product) => (emitted = product));
+
+    const request = controller.expectOne(`${BASE_URL}/1/price`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ purchasePrice: 1099.5 });
+    request.flush({ success: true, message: 'ok', data: { ...LAPTOP, purchasePrice: 1099.5 } });
+
+    expect(emitted).toEqual({ ...LAPTOP, purchasePrice: 1099.5 });
+    expect(emitted).not.toHaveProperty('success');
+    controller.verify();
+  });
+
+  it('remove_envelopedResponse_emitsBackendMessage', () => {
+    let emitted: string | undefined;
+    service.remove(1).subscribe((message) => (emitted = message));
+
+    const request = controller.expectOne(`${BASE_URL}/1`);
+    expect(request.request.method).toBe('DELETE');
+    request.flush({ success: true, message: 'Product deleted.', data: null });
+
+    expect(emitted).toBe('Product deleted.');
     controller.verify();
   });
 });

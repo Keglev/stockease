@@ -1,10 +1,37 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, throwError } from 'rxjs';
 
 import { PaginatedProducts } from '../../../core/api/api-models';
+import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../core/i18n/language.service';
+import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProductService } from '../product.service';
 import { ProductListComponent } from './product-list.component';
+
+const TRANSLATIONS = {
+  en: {
+    common: { confirm: 'Confirm', cancel: 'Cancel' },
+    products: {
+      title: 'Products',
+      create: 'New product',
+      actions: 'Product actions',
+      rename: 'Rename',
+      changePrice: 'Change price',
+      columns: {
+        name: 'Name',
+        sku: 'SKU',
+        quantity: 'Quantity',
+        purchasePrice: 'Purchase Price',
+        totalValue: 'Total Value',
+        createdAt: 'Created',
+        actions: 'Actions'
+      },
+      delete: { action: 'Delete', title: 'Delete product', message: 'Delete "{{name}}"?' }
+    }
+  }
+};
 
 function pageWith(names: string[], totalElements = names.length): PaginatedProducts {
   return {
@@ -27,28 +54,83 @@ function pageWith(names: string[], totalElements = names.length): PaginatedProdu
 class ProductServiceStub {
   calls: { page: number; size: number }[] = [];
   response: Observable<PaginatedProducts> = of(pageWith([]));
+  removeCalls: number[] = [];
+  removeResult: Observable<string> = of('Product deleted.');
 
   getPagedProducts(page: number, size: number): Observable<PaginatedProducts> {
     this.calls.push({ page, size });
     return this.response;
+  }
+
+  remove(id: number): Observable<string> {
+    this.removeCalls.push(id);
+    return this.removeResult;
+  }
+}
+
+class NotificationServiceStub {
+  successes: string[] = [];
+  errors: string[] = [];
+
+  success(message: string): void {
+    this.successes.push(message);
+  }
+
+  error(message: string): void {
+    this.errors.push(message);
+  }
+}
+
+class MatDialogStub {
+  confirmed: boolean | undefined = true;
+
+  open() {
+    return { afterClosed: () => of(this.confirmed) };
   }
 }
 
 describe('ProductListComponent', () => {
   let fixture: ComponentFixture<ProductListComponent>;
   let stub: ProductServiceStub;
+  let notifications: NotificationServiceStub;
+  let dialog: MatDialogStub;
 
-  async function setUp(response: Observable<PaginatedProducts>): Promise<void> {
+  function host(): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  /** The menu renders into an overlay only once its trigger is clicked. */
+  async function openRowMenu(rowIndex = 0): Promise<void> {
+    host().querySelectorAll<HTMLButtonElement>('.product-actions')[rowIndex].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  function menuItem(selector: string): HTMLButtonElement | null {
+    return document.querySelector<HTMLButtonElement>(selector);
+  }
+
+  async function setUp(
+    response: Observable<PaginatedProducts>,
+    role: 'ADMIN' | 'USER' = 'ADMIN'
+  ): Promise<void> {
     stub = new ProductServiceStub();
     stub.response = response;
+    notifications = new NotificationServiceStub();
+    dialog = new MatDialogStub();
 
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
       providers: [
+        provideTestTranslations(TRANSLATIONS),
         { provide: ProductService, useValue: stub },
-        provideTestTranslations({ en: { products: { title: 'Products' } } })
+        { provide: NotificationService, useValue: notifications },
+        { provide: MatDialog, useValue: dialog },
+        { provide: AuthService, useValue: { role: () => role } }
       ]
     }).compileComponents();
+
+    TestBed.inject(LanguageService).initialize().subscribe();
 
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
@@ -56,37 +138,107 @@ describe('ProductListComponent', () => {
   }
 
   beforeEach(() => {
+    localStorage.clear();
     TestBed.resetTestingModule();
   });
 
   it('load_serviceReturnsProducts_rendersOneRowPerProduct', async () => {
     await setUp(of(pageWith(['Laptop', 'Monitor', 'Keyboard'])));
 
-    const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr');
-    expect(rows.length).toBe(3);
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Laptop');
+    expect(host().querySelectorAll('tbody tr').length).toBe(3);
+    expect(host().textContent).toContain('Laptop');
   });
 
   it('load_serviceErrors_rendersErrorMessage', async () => {
     await setUp(throwError(() => new Error('Authentication required.')));
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'Authentication required.'
-    );
+    expect(host().textContent).toContain('Authentication required.');
   });
 
   it('onPage_pageChanged_requestsNewPageFromService', async () => {
     await setUp(of(pageWith(['Laptop'], 100)));
     expect(stub.calls).toEqual([{ page: 0, size: 10 }]);
 
-    const next = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      '.mat-mdc-paginator-navigation-next'
-    );
-    next?.click();
+    host().querySelector<HTMLButtonElement>('.mat-mdc-paginator-navigation-next')?.click();
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(stub.calls.length).toBe(2);
     expect(stub.calls[1]).toEqual({ page: 1, size: 10 });
+  });
+
+  it('render_adminRole_showsCreateButton', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+
+    expect(host().querySelector('.product-create')).not.toBeNull();
+  });
+
+  it('render_userRole_hidesCreateButton', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+
+    expect(host().querySelector('.product-create')).toBeNull();
+  });
+
+  it('menu_adminRole_showsDeleteItem', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    await openRowMenu();
+
+    expect(menuItem('.product-delete')).not.toBeNull();
+  });
+
+  it('menu_userRole_hidesDeleteItem', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+    await openRowMenu();
+
+    expect(menuItem('.product-delete')).toBeNull();
+  });
+
+  it('menu_userRole_stillOffersRenameAndPrice', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+    await openRowMenu();
+
+    expect(menuItem('.product-rename')).not.toBeNull();
+    expect(menuItem('.product-reprice')).not.toBeNull();
+  });
+
+  it('render_anyRole_offersNoQuantityEditing', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    await openRowMenu();
+
+    // Quantity changes exist only as stock movements; the table must expose no editor.
+    const quantityCell = host().querySelectorAll('tbody tr')[0].querySelectorAll('td')[2];
+    expect(quantityCell.querySelectorAll('input, select, textarea, button').length).toBe(0);
+    expect(quantityCell.getAttribute('contenteditable')).toBeNull();
+
+    const menuText = (document.querySelector('.mat-mdc-menu-panel')?.textContent ?? '')
+      .toLowerCase();
+    expect(menuText).not.toContain('quantity');
+    expect(menuText).not.toContain('menge');
+  });
+
+  it('delete_confirmed_callsServiceAndReloadsCurrentPage', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    dialog.confirmed = true;
+    const loadsBefore = stub.calls.length;
+
+    await openRowMenu();
+    menuItem('.product-delete')?.click();
+    await fixture.whenStable();
+
+    expect(stub.removeCalls).toEqual([1]);
+    expect(notifications.successes).toEqual(['Product deleted.']);
+    expect(stub.calls.length).toBe(loadsBefore + 1);
+  });
+
+  it('delete_rejected_surfacesErrorNotification', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    dialog.confirmed = true;
+    stub.removeResult = throwError(() => new Error('Product cannot be deleted.'));
+
+    await openRowMenu();
+    menuItem('.product-delete')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.errors).toEqual(['Product cannot be deleted.']);
   });
 });

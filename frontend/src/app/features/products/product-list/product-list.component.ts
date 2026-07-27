@@ -1,11 +1,27 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProductResponse } from '../../../core/api/api-models';
+import { AuthService } from '../../../core/auth/auth.service';
+import { NotificationService } from '../../../core/notifications/notification.service';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData
+} from '../../../shared/confirm-dialog/confirm-dialog.component';
+import { ProductCreateDialogComponent } from '../product-create-dialog/product-create-dialog.component';
+import {
+  ProductEditDialogComponent,
+  ProductEditDialogData,
+  ProductEditMode
+} from '../product-edit-dialog/product-edit-dialog.component';
 import { ProductService } from '../product.service';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -15,6 +31,9 @@ const DEFAULT_PAGE_SIZE = 10;
   imports: [
     CurrencyPipe,
     DatePipe,
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
     MatPaginatorModule,
     MatProgressBarModule,
     MatTableModule,
@@ -25,14 +44,23 @@ const DEFAULT_PAGE_SIZE = 10;
 })
 export class ProductListComponent implements OnInit {
   private readonly products = inject(ProductService);
+  private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly notifications = inject(NotificationService);
 
+  // UI convenience only: the server is the authority and answers 403 regardless of these flags.
+  // Creation and deletion are admin acts; renaming and repricing are open to every role.
+  protected readonly isAdmin = computed(() => this.auth.role() === 'ADMIN');
+
+  // Quantity stays a plain read-only cell: no endpoint accepts a quantity change.
   protected readonly displayedColumns = [
     'name',
     'sku',
     'quantity',
     'purchasePrice',
     'totalValue',
-    'createdAt'
+    'createdAt',
+    'actions'
   ];
 
   protected readonly rows = signal<ProductResponse[]>([]);
@@ -51,6 +79,61 @@ export class ProductListComponent implements OnInit {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
     this.load();
+  }
+
+  protected openCreate(): void {
+    this.dialog
+      .open(ProductCreateDialogComponent)
+      .afterClosed()
+      .subscribe((created: ProductResponse | undefined) => {
+        if (created) {
+          this.notifications.success('products.created');
+          this.load();
+        }
+      });
+  }
+
+  protected openEdit(product: ProductResponse, mode: ProductEditMode): void {
+    const data: ProductEditDialogData = { mode, product };
+
+    this.dialog
+      .open(ProductEditDialogComponent, { data })
+      .afterClosed()
+      .subscribe((saved: ProductResponse | undefined) => {
+        if (saved) {
+          this.notifications.success(
+            mode === 'price' ? 'products.priceChanged' : 'products.renamed'
+          );
+          this.load();
+        }
+      });
+  }
+
+  protected confirmDelete(product: ProductResponse): void {
+    const data: ConfirmDialogData = {
+      titleKey: 'products.delete.title',
+      messageKey: 'products.delete.message',
+      messageParams: { name: product.name }
+    };
+
+    this.dialog
+      .open(ConfirmDialogComponent, { data })
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (confirmed === true) {
+          this.remove(product);
+        }
+      });
+  }
+
+  private remove(product: ProductResponse): void {
+    this.products.remove(product.id).subscribe({
+      next: (message) => {
+        this.notifications.success(message);
+        this.load();
+      },
+      error: (err: Error) => this.notifications.error(err.message)
+    });
   }
 
   private load(): void {

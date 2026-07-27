@@ -109,9 +109,34 @@
       "quantity": "Quantity",
       "purchasePrice": "Purchase Price",
       "totalValue": "Total Value",
-      "createdAt": "Created"
+      "createdAt": "Created",
+      "actions": "Actions"
     },
     "loading": "Loading products…",
-    "empty": "No products found."
+    "empty": "No products found.",
+    "create": "New product",
+    "actions": "Product actions",
+    "rename": "Rename",
+    "changePrice": "Change price",
+    "created": "Product created.",
+    "renamed": "Product renamed.",
+    "priceChanged": "Price updated.",
+    "delete": {
+      "action": "Delete",
+      "title": "Delete product",
+      "message": "Do you really want to delete \"{{name}}\"?"
+    },
+    "form": {
+      "createTitle": "New product",
+      "nameTitle": "Rename product",
+      "priceTitle": "Change price",
+      "name": "Name",
+      "quantity": "Quantity",
+      "purchasePrice": "Purchase price",
+      "nameRequired": "Name is required.",
+      "quantityInvalid": "Enter a whole number of 0 or more.",
+      "priceInvalid": "Enter a price greater than 0.",
+      "skuHint": "The SKU is generated automatically."
+    }
   }
 }
