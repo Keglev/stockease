@@ -20,6 +20,15 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     boolean existsBySupplierIdAndStatus(Long supplierId, InvoiceStatus status);
 
     /**
+     * Reports whether a customer has any invoice in the given status, used to veto its deletion.
+     *
+     * @param customerId customer identifier
+     * @param status lifecycle state to look for
+     * @return {@code true} if such an invoice exists
+     */
+    boolean existsByCustomerIdAndStatus(Long customerId, InvoiceStatus status);
+
+    /**
      * Returns every invoice a user closed, most recently closed first.
      *
      * @param userId user identifier

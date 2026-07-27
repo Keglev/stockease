@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.stocks.stockease.customer.CustomerDeletedEvent;
 import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductChangedEvent;
@@ -60,6 +61,23 @@ class OpenInvoiceDeletionVetoTest {
         when(invoiceRepository.existsBySupplierIdAndStatus(1L, InvoiceStatus.OPEN)).thenReturn(false);
 
         assertThatCode(() -> veto.onSupplierDeleted(new SupplierDeletedEvent(1L, "Acme")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void onCustomerDeleted_withOpenInvoices_throwsEntityInUseException() {
+        when(invoiceRepository.existsByCustomerIdAndStatus(2L, InvoiceStatus.OPEN)).thenReturn(true);
+
+        assertThatThrownBy(() -> veto.onCustomerDeleted(new CustomerDeletedEvent(2L, "Jane Doe")))
+                .isInstanceOf(EntityInUseException.class)
+                .hasMessage("Cannot delete customer 'Jane Doe': open invoices exist.");
+    }
+
+    @Test
+    void onCustomerDeleted_withoutOpenInvoices_doesNotThrow() {
+        when(invoiceRepository.existsByCustomerIdAndStatus(2L, InvoiceStatus.OPEN)).thenReturn(false);
+
+        assertThatCode(() -> veto.onCustomerDeleted(new CustomerDeletedEvent(2L, "Jane Doe")))
                 .doesNotThrowAnyException();
     }
 

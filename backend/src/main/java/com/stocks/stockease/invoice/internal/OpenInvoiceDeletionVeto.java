@@ -5,6 +5,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import com.stocks.stockease.customer.CustomerDeletedEvent;
 import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.product.ProductChangedEvent;
 import com.stocks.stockease.shared.EntityInUseException;
@@ -13,9 +14,9 @@ import com.stocks.stockease.supplier.SupplierDeletedEvent;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Open invoices pin the parties they reference: neither the supplier billed nor a product on a line
- * may disappear while the invoice is unsettled. These synchronous listeners veto supplier and product
- * deletions inside the deleting transaction.
+ * Open invoices pin the parties they reference: neither the supplier billed, the customer invoiced nor
+ * a product on a line may disappear while the invoice is unsettled. These synchronous listeners veto
+ * supplier, customer and product deletions inside the deleting transaction.
  */
 // vetoes are validations and run before any other listener does work - fail fast; ordering is pinned
 // so behavior cannot shift with classpath or JVM changes
@@ -38,6 +39,20 @@ public class OpenInvoiceDeletionVeto {
         if (invoiceRepository.existsBySupplierIdAndStatus(event.supplierId(), InvoiceStatus.OPEN)) {
             throw new EntityInUseException(
                     "Cannot delete supplier '" + event.supplierName() + "': open invoices exist.");
+        }
+    }
+
+    /**
+     * Vetoes deleting a customer that still has open invoices.
+     *
+     * @param event the pending customer deletion
+     * @throws EntityInUseException if any open invoice references the customer
+     */
+    @EventListener
+    public void onCustomerDeleted(CustomerDeletedEvent event) {
+        if (invoiceRepository.existsByCustomerIdAndStatus(event.customerId(), InvoiceStatus.OPEN)) {
+            throw new EntityInUseException(
+                    "Cannot delete customer '" + event.customerName() + "': open invoices exist.");
         }
     }
 
