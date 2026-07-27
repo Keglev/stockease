@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+.customer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.customer-table {
+  width: 100%;
+}
+
+.customer-empty {
+  margin: 1rem 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.customer-error {
+  margin: 0.5rem 0;
+  color: var(--mat-sys-error);
+}

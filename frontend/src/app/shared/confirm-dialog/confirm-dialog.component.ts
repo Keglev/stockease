@@ -7,6 +7,8 @@ export interface ConfirmDialogData {
   titleKey: string;
   messageKey: string;
   messageParams?: Record<string, unknown>;
+  /** Optional secondary line, e.g. a caveat about when the action is refused. */
+  detailKey?: string;
 }
 
 /** Generic confirmation dialog; callers supply translation keys, nothing domain-specific lives here. */

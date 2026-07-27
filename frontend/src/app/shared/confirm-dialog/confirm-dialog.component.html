@@ -2,6 +2,9 @@
 
 <mat-dialog-content>
   <p class="confirm-message">{{ data.messageKey | translate: data.messageParams }}</p>
+  @if (data.detailKey; as detailKey) {
+    <p class="confirm-detail">{{ detailKey | translate }}</p>
+  }
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
