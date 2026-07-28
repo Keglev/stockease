@@ -7,8 +7,11 @@
     /* Set explicitly because outDir is set: TypeScript 6 no longer infers the output layout
        from the common source directory, and without this it reports TS5011. */
     "rootDir": "./src",
+    /* "node" is here for the translation-parity spec, which reads the real locale files from
+       disk; specs run in Node under Vitest, so the built app is unaffected. */
     "types": [
-      "vitest/globals"
+      "vitest/globals",
+      "node"
     ]
   },
   "include": [
