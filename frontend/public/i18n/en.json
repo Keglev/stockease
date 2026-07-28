@@ -29,8 +29,29 @@
     "dashboard": "Overview",
     "products": "Products",
     "invoices": "Invoices",
+    "movements": "Stock movements",
     "suppliers": "Suppliers",
     "customers": "Customers"
+  },
+  "movements": {
+    "title": "Record stock movement",
+    "product": "Product",
+    "reasonLabel": "Reason",
+    "reason": {
+      "NEW_PRODUCT": "New stock",
+      "LOST": "Lost",
+      "DESTROYED": "Destroyed"
+    },
+    "directionHint": {
+      "NEW_PRODUCT": "New stock increases the recorded quantity.",
+      "LOST": "A loss decreases the recorded quantity.",
+      "DESTROYED": "Destruction decreases the recorded quantity."
+    },
+    "quantity": "Quantity",
+    "unitCost": "Unit cost",
+    "unitCostHint": "Cost snapshot per unit",
+    "submit": "Record movement",
+    "recorded": "Stock movement recorded."
   },
   "invoices": {
     "title": "Invoices",

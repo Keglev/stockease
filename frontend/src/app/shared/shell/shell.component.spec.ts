@@ -15,6 +15,7 @@ const TRANSLATIONS = {
       dashboard: 'Overview',
       products: 'Products',
       invoices: 'Invoices',
+      movements: 'Stock movements',
       suppliers: 'Suppliers',
       customers: 'Customers'
     },
@@ -26,6 +27,7 @@ const TRANSLATIONS = {
       dashboard: 'Übersicht',
       products: 'Produkte',
       invoices: 'Rechnungen',
+      movements: 'Lagerbewegungen',
       suppliers: 'Lieferanten',
       customers: 'Kunden'
     },
@@ -119,6 +121,7 @@ describe('ShellComponent', () => {
       '/app',
       '/app/products',
       '/app/invoices',
+      '/app/movements',
       '/app/suppliers',
       '/app/customers'
     ]);

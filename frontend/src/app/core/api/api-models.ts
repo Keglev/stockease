@@ -19,3 +19,7 @@ export type InvoiceResponse = components['schemas']['InvoiceResponse'];
 export type InvoiceItemResponse = components['schemas']['InvoiceItemResponse'];
 
 export type CreateInvoiceRequest = components['schemas']['CreateInvoiceRequest'];
+
+export type RecordMovementRequest = components['schemas']['RecordMovementRequest'];
+
+export type MovementResponse = components['schemas']['MovementResponse'];
