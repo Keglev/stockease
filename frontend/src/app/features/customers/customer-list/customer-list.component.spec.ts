@@ -41,8 +41,16 @@ const CUSTOMERS: CustomerResponse[] = [
     city: 'Springfield',
     createdAt: '2026-01-02T03:04:00'
   },
-  // Every optional field absent: the table must render dashes rather than blanks.
-  { id: 10, name: 'John Roe', createdAt: '2026-01-03T03:04:00' }
+  // Every optional field null: the table must render dashes rather than blanks.
+  {
+    id: 10,
+    name: 'John Roe',
+    email: null,
+    phone: null,
+    address: null,
+    city: null,
+    createdAt: '2026-01-03T03:04:00'
+  }
 ];
 
 class CustomerServiceStub {

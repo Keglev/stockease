@@ -29,6 +29,10 @@ const TRANSLATIONS = {
 const JANE: CustomerResponse = {
   id: 9,
   name: 'Jane Doe',
+  email: null,
+  phone: null,
+  address: null,
+  city: null,
   createdAt: '2026-01-02T03:04:00'
 };
 

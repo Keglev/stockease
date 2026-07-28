@@ -63,7 +63,7 @@ export class InvoiceDetailComponent implements OnInit {
 
   /** Line total for one item; display only, never sent back to the API. */
   protected lineTotal(item: InvoiceItemResponse): number {
-    return (item.quantity ?? 0) * (item.unitPrice ?? 0);
+    return item.quantity * item.unitPrice;
   }
 
   /**
@@ -76,7 +76,7 @@ export class InvoiceDetailComponent implements OnInit {
   }
 
   /** Returns the chip class matching the invoice status. */
-  protected statusClass(status: string | undefined): string {
+  protected statusClass(status: string): string {
     if (status === 'CLOSED') {
       return 'status-closed';
     }

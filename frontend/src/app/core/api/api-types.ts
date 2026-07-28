@@ -791,30 +791,30 @@ export interface components {
              * @description Operation result payload; null for errors and for operations with no output. Left
              *     untyped here because each endpoint narrows it - see the ApiResponse* variants.
              */
-            data?: unknown;
+            data: unknown;
         };
         /** @description The envelope as produced by the shared exception handler */
         ApiResponseError: components["schemas"]["ApiResponse"] & {
             /** @example false */
-            success?: boolean;
+            success: boolean;
             /** @example null */
-            data?: unknown;
+            data: unknown;
         };
         /** @description 400 response carrying field-level validation messages */
         ValidationErrorResponse: components["schemas"]["ApiResponse"] & {
             /** @example false */
-            success?: boolean;
+            success: boolean;
             /** @description Field name to message; multiple messages are sorted and joined with "; " */
-            data?: {
+            data: {
                 [key: string]: string;
             };
         };
         ApiResponseString: components["schemas"]["ApiResponse"] & {
-            data?: string | null;
+            data: string | null;
         };
         ApiResponseDouble: components["schemas"]["ApiResponse"] & {
             /** Format: double */
-            data?: number;
+            data: number;
         };
         /** @description Credentials for user authentication */
         LoginRequest: {
@@ -832,9 +832,9 @@ export interface components {
         /** @description Combined application and database liveness */
         HealthStatus: {
             /** @example UP */
-            status?: string;
+            status: string;
             /** @example UP */
-            db?: string;
+            db: string;
         };
         /** @description API representation of a product */
         ProductResponse: {
@@ -870,10 +870,10 @@ export interface components {
              * @description ISO-8601 local date-time, serialized without a zone offset
              * @example 2026-01-02T03:04:00
              */
-            createdAt?: string;
+            createdAt: string;
         };
         ApiResponseProduct: components["schemas"]["ApiResponse"] & {
-            data?: components["schemas"]["ProductResponse"];
+            data: components["schemas"]["ProductResponse"];
         };
         ProductList: components["schemas"]["ProductResponse"][];
         CreateProductRequest: {
@@ -924,11 +924,11 @@ export interface components {
             totalPages: number;
         };
         ApiResponsePaginated: components["schemas"]["ApiResponse"] & {
-            data?: components["schemas"]["PaginatedProducts"];
+            data: components["schemas"]["PaginatedProducts"];
         };
         /** @description Bare status message returned by the low-stock and search endpoints when empty */
         MessageOnly: {
-            message?: string;
+            message: string;
         };
         SupplierResponse: {
             /**
@@ -944,10 +944,10 @@ export interface components {
              * @description ISO-8601 local date-time, serialized without a zone offset
              * @example 2026-01-02T03:04:00
              */
-            createdAt?: string;
+            createdAt: string;
         };
         ApiResponseSupplier: components["schemas"]["ApiResponse"] & {
-            data?: components["schemas"]["SupplierResponse"];
+            data: components["schemas"]["SupplierResponse"];
         };
         /** @description Body for both supplier creation and update; every field is replaced on update */
         SupplierRequest: {
@@ -971,21 +971,21 @@ export interface components {
             /** @example Jane Doe */
             name: string;
             /** @example jane@example.com */
-            email?: string | null;
+            email: string | null;
             /** @example 555-1234 */
-            phone?: string | null;
+            phone: string | null;
             /** @example 1 Main St */
-            address?: string | null;
+            address: string | null;
             /** @example Springfield */
-            city?: string | null;
+            city: string | null;
             /**
              * @description ISO-8601 local date-time, serialized without a zone offset
              * @example 2026-01-02T03:04:00
              */
-            createdAt?: string;
+            createdAt: string;
         };
         ApiResponseCustomer: components["schemas"]["ApiResponse"] & {
-            data?: components["schemas"]["CustomerResponse"];
+            data: components["schemas"]["CustomerResponse"];
         };
         CreateCustomerRequest: {
             /**
@@ -1037,44 +1037,44 @@ export interface components {
              * Format: int64
              * @example 7
              */
-            supplierId?: number | null;
+            supplierId: number | null;
             /** Format: int64 */
-            customerId?: number | null;
+            customerId: number | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
-            closedAt?: string | null;
+            closedAt: string | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
-            paidAt?: string | null;
+            paidAt: string | null;
             /**
              * @description ISO-8601 local date-time, serialized without a zone offset
              * @example 2026-01-02T03:04:00
              */
-            createdAt?: string;
+            createdAt: string;
         };
         InvoiceItemResponse: {
             /**
              * Format: int64
              * @example 4
              */
-            id?: number;
+            id: number;
             /**
              * Format: int64
              * @example 3
              */
-            productId?: number;
+            productId: number;
             /** @example Widget */
-            productName?: string;
+            productName: string;
             /** @example 2 */
-            quantity?: number;
+            quantity: number;
             /**
              * Format: double
              * @example 15
              */
-            unitPrice?: number;
+            unitPrice: number;
             /**
              * @description Units returned against this line so far
              * @example 0
              */
-            returnedQty?: number;
+            returnedQty: number;
         };
         /**
          * @description Detail representation, loaded through a fetch-joined query so items, their products and both
@@ -1085,37 +1085,37 @@ export interface components {
              * Format: int64
              * @example 1
              */
-            id?: number;
-            type?: components["schemas"]["InvoiceType"];
-            status?: components["schemas"]["InvoiceStatus"];
+            id: number;
+            type: components["schemas"]["InvoiceType"];
+            status: components["schemas"]["InvoiceStatus"];
             /**
              * Format: date
              * @example 2026-03-01
              */
-            dueDate?: string;
+            dueDate: string;
             /**
              * Format: int64
              * @example 7
              */
-            supplierId?: number | null;
+            supplierId: number | null;
             /** @example Acme */
-            supplierName?: string | null;
+            supplierName: string | null;
             /** Format: int64 */
-            customerId?: number | null;
-            customerName?: string | null;
+            customerId: number | null;
+            customerName: string | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
-            closedAt?: string | null;
+            closedAt: string | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
-            paidAt?: string | null;
+            paidAt: string | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
-            createdAt?: string;
-            items?: components["schemas"]["InvoiceItemResponse"][];
+            createdAt: string;
+            items: components["schemas"]["InvoiceItemResponse"][];
         };
         ApiResponseInvoiceSummary: components["schemas"]["ApiResponse"] & {
-            data?: components["schemas"]["InvoiceSummaryResponse"];
+            data: components["schemas"]["InvoiceSummaryResponse"];
         };
         ApiResponseInvoice: components["schemas"]["ApiResponse"] & {
-            data?: components["schemas"]["InvoiceResponse"];
+            data: components["schemas"]["InvoiceResponse"];
         };
         CreateInvoiceItem: {
             /**
@@ -1183,40 +1183,40 @@ export interface components {
              * Format: int64
              * @example 5
              */
-            id?: number;
+            id: number;
             /**
              * Format: int64
              * @example 3
              */
-            productId?: number;
+            productId: number;
             /**
              * Format: int64
              * @description User who triggered the movement, resolved from the token
              * @example 11
              */
-            userId?: number;
-            type?: components["schemas"]["MovementType"];
-            reason?: components["schemas"]["MovementReason"];
+            userId: number;
+            type: components["schemas"]["MovementType"];
+            reason: components["schemas"]["MovementReason"];
             /** @example 2 */
-            quantity?: number;
+            quantity: number;
             /**
              * Format: int64
              * @description Present only for movements bound to an invoice line
              */
-            invoiceItemId?: number | null;
+            invoiceItemId: number | null;
             /**
              * Format: double
              * @description Revenue snapshot, set for sales and customer returns
              */
-            soldPrice?: number | null;
+            soldPrice: number | null;
             /**
              * Format: double
              * @description Cost snapshot, set for initial stock and purchases
              * @example 7.5
              */
-            unitCost?: number | null;
+            unitCost: number | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
-            createdAt?: string;
+            createdAt: string;
         };
         RecordMovementRequest: {
             /**
@@ -1267,124 +1267,124 @@ export interface components {
              * Format: int64
              * @example 3
              */
-            productId?: number;
+            productId: number;
             /** @example Widget */
-            name?: string;
+            name: string;
             /** @example SKU-3 */
-            sku?: string;
+            sku: string;
             /**
              * @description Soft-deleted products still appear; history stays reportable
              * @example false
              */
-            deleted?: boolean;
+            deleted: boolean;
             /** @example 100 */
-            revenue?: number;
+            revenue: number;
             /** @example 40 */
-            cost?: number;
+            cost: number;
             /** @example 60 */
-            grossProfit?: number;
+            grossProfit: number;
         };
         ApiResponseProductProfit: components["schemas"]["ApiResponse"] & {
-            data?: components["schemas"]["ProductProfitReport"];
+            data: components["schemas"]["ProductProfitReport"];
         };
         SupplierProfitReport: {
             /**
              * Format: int64
              * @example 7
              */
-            supplierId?: number;
+            supplierId: number;
             /** @example Acme */
-            name?: string;
+            name: string;
             /** @example 100 */
-            revenue?: number;
+            revenue: number;
             /** @example 40 */
-            cost?: number;
+            cost: number;
             /** @example 60 */
-            grossProfit?: number;
+            grossProfit: number;
         };
         StockStatusReport: {
             /**
              * Format: int64
              * @example 3
              */
-            productId?: number;
+            productId: number;
             /** @example Widget */
-            name?: string;
+            name: string;
             /** @example SKU-3 */
-            sku?: string;
+            sku: string;
             /** @example 4 */
-            soldUnits?: number;
+            soldUnits: number;
             /** @example 60 */
-            soldRevenue?: number;
+            soldRevenue: number;
             /** @example 6 */
-            inStockUnits?: number;
+            inStockUnits: number;
             /** @example 30 */
-            inStockValue?: number;
+            inStockValue: number;
         };
         LossReport: {
             /**
              * Format: int64
              * @example 3
              */
-            productId?: number;
+            productId: number;
             /** @example Widget */
-            name?: string;
+            name: string;
             /** @example SKU-3 */
-            sku?: string;
+            sku: string;
             /** @example false */
-            deleted?: boolean;
+            deleted: boolean;
             /** @example 2 */
-            lostUnits?: number;
+            lostUnits: number;
             /** @example 1 */
-            destroyedUnits?: number;
+            destroyedUnits: number;
             /** @example 15 */
-            lossValue?: number;
+            lossValue: number;
         };
         DueDateBucket: {
             /**
              * Format: date
              * @example 2026-03-01
              */
-            dueDate?: string;
+            dueDate: string;
             /** @example SALE */
-            invoiceType?: string;
+            invoiceType: string;
             /**
              * Format: int64
              * @example 2
              */
-            invoiceCount?: number;
+            invoiceCount: number;
             /** @example 60 */
-            totalValue?: number;
+            totalValue: number;
         };
         InvoiceDueSummary: {
             /**
              * Format: int64
              * @example 1
              */
-            invoiceId?: number;
+            invoiceId: number;
             /** @example SALE */
-            invoiceType?: string;
+            invoiceType: string;
             /**
              * @description Supplier or customer name; "Cash sale" when the sale names no customer
              * @example Jane Doe
              */
-            counterparty?: string;
+            counterparty: string;
             /**
              * Format: date
              * @example 2026-03-01
              */
-            dueDate?: string;
+            dueDate: string;
             /**
              * @description Invoice value net of quantities already returned
              * @example 30
              */
-            outstandingValue?: number;
+            outstandingValue: number;
             /**
              * Format: int64
              * @description Populated by the overdue listing only; null in the due-soon listing
              * @example 5
              */
-            daysOverdue?: number | null;
+            daysOverdue: number | null;
         };
         /**
          * @description Counts booked sale invoices only - an OPEN invoice is recorded but has not happened yet.
@@ -1395,36 +1395,36 @@ export interface components {
              * Format: int64
              * @example 9
              */
-            customerId?: number;
+            customerId: number;
             /** @example Jane Doe */
-            name?: string;
+            name: string;
             /**
              * @description Soft-deleted customers keep reporting, flagged here
              * @example false
              */
-            deleted?: boolean;
+            deleted: boolean;
             /**
              * Format: int64
              * @example 1
              */
-            saleInvoiceCount?: number;
+            saleInvoiceCount: number;
             /**
              * Format: int64
              * @example 5
              */
-            boughtUnits?: number;
+            boughtUnits: number;
             /** @example 80 */
-            boughtValue?: number;
+            boughtValue: number;
             /**
              * Format: int64
              * @example 1
              */
-            returnedUnits?: number;
+            returnedUnits: number;
             /** @example 10 */
-            returnedValue?: number;
+            returnedValue: number;
         };
         ApiResponseCustomerSummary: components["schemas"]["ApiResponse"] & {
-            data?: components["schemas"]["CustomerSummary"];
+            data: components["schemas"]["CustomerSummary"];
         };
         /**
          * @description Attribute or lifecycle event the log entry records
@@ -1436,27 +1436,27 @@ export interface components {
              * Format: int64
              * @example 2
              */
-            id?: number;
+            id: number;
             /**
              * Format: int64
              * @example 3
              */
-            productId?: number;
+            productId: number;
             /**
              * Format: int64
              * @example 11
              */
-            userId?: number;
-            field?: components["schemas"]["ChangedField"];
+            userId: number;
+            field: components["schemas"]["ChangedField"];
             /**
              * @description Null for lifecycle events that carry no value
              * @example Old name
              */
-            oldValue?: string | null;
+            oldValue: string | null;
             /** @example New name */
-            newValue?: string | null;
+            newValue: string | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
-            createdAt?: string;
+            createdAt: string;
         };
     };
     responses: {
