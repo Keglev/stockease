@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../core/api/api-envelope';
 import {
+  CustomerSummary,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
@@ -31,7 +32,7 @@ export class ReportService {
   }
 
   /**
-   * Reads the profit row for one product. This is the single reporting endpoint that IS
+   * Reads the profit row for one product. This is one of the two reporting endpoints that ARE
    * enveloped - the controller returns ApiResponse<ProductProfitReport> where the list
    * endpoints return their records bare - so the payload is unwrapped here.
    */
@@ -44,6 +45,17 @@ export class ReportService {
   /** Bare array - deliberately not unwrapped. */
   profitSuppliers(): Observable<SupplierProfitReport[]> {
     return this.http.get<SupplierProfitReport[]>(`${this.baseUrl}/profit/suppliers`);
+  }
+
+  /**
+   * Reads what one customer has bought and returned. The second enveloped reporting endpoint
+   * alongside the profit detail, so the payload is unwrapped here; a customer with no booked
+   * sales answers a zero-filled summary rather than an error.
+   */
+  customerSummary(id: number): Observable<CustomerSummary> {
+    return this.http
+      .get<ApiEnvelope<CustomerSummary>>(`${this.baseUrl}/customers/${id}/summary`)
+      .pipe(map((envelope) => envelope.data as CustomerSummary));
   }
 
   /** Bare array - deliberately not unwrapped; the window defaults to a week server-side. */

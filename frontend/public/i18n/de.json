@@ -209,6 +209,16 @@
       "title": "Kunde löschen",
       "message": "Möchten Sie „{{name}}“ wirklich löschen?"
     },
+    "summary": {
+      "action": "Übersicht",
+      "title": "Kundenübersicht",
+      "saleInvoiceCount": "Verkaufsrechnungen",
+      "boughtUnits": "Gekaufte Einheiten",
+      "boughtValue": "Kaufwert",
+      "returnedUnits": "Retournierte Einheiten",
+      "returnedValue": "Retourenwert",
+      "loading": "Übersicht wird geladen…"
+    },
     "form": {
       "createTitle": "Neuer Kunde",
       "name": "Name",

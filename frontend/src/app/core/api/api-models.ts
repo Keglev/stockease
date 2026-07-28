@@ -38,4 +38,6 @@ export type DueDateBucket = components['schemas']['DueDateBucket'];
 
 export type InvoiceDueSummary = components['schemas']['InvoiceDueSummary'];
 
+export type CustomerSummary = components['schemas']['CustomerSummary'];
+
 export type HealthStatus = components['schemas']['HealthStatus'];

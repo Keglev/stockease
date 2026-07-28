@@ -1,0 +1,37 @@
+.summary-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+// Matches the reports tables: a soft-deleted customer still reports, so the header says so.
+.deleted-hint {
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-small);
+}
+
+.summary-loading {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.summary-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.5rem;
+  margin: 0;
+}
+
+dt {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+dd {
+  margin: 0;
+  text-align: right;
+  font: var(--mat-sys-body-medium);
+}
