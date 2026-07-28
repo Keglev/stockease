@@ -28,8 +28,48 @@
   "nav": {
     "dashboard": "Overview",
     "products": "Products",
+    "invoices": "Invoices",
     "suppliers": "Suppliers",
     "customers": "Customers"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "loading": "Loading invoices…",
+    "empty": "No invoices found.",
+    "paid": "Paid",
+    "walkIn": "Walk-in sale",
+    "columns": {
+      "id": "No.",
+      "type": "Type",
+      "status": "Status",
+      "counterparty": "Counterparty",
+      "dueDate": "Due date",
+      "createdAt": "Created"
+    },
+    "type": {
+      "PURCHASE": "Purchase",
+      "SALE": "Sale"
+    },
+    "status": {
+      "OPEN": "Open",
+      "CLOSED": "Closed",
+      "FULLY_RETURNED": "Fully returned"
+    },
+    "detail": {
+      "title": "Invoice",
+      "dueDate": "Due date",
+      "createdAt": "Created",
+      "closedAt": "Closed",
+      "paidAt": "Paid",
+      "items": "Items",
+      "product": "Product",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "returnedQty": "Returned",
+      "lineTotal": "Line total",
+      "total": "Invoice total",
+      "back": "Back to invoices"
+    }
   },
   "customers": {
     "title": "Customers",

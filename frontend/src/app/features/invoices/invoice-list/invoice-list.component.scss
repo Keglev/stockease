@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.invoice-table {
+  width: 100%;
+}
+
+.invoice-row {
+  cursor: pointer;
+}
+
+.status-chip.status-open {
+  background-color: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+}
+
+.status-chip.status-closed {
+  background-color: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.status-chip.status-fully-returned {
+  background-color: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.paid-chip {
+  margin-left: 0.25rem;
+}
+
+.invoice-empty {
+  margin: 1rem 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.invoice-error {
+  margin: 0.5rem 0;
+  color: var(--mat-sys-error);
+}

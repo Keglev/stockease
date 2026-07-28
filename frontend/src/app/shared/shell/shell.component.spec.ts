@@ -14,6 +14,7 @@ const TRANSLATIONS = {
     nav: {
       dashboard: 'Overview',
       products: 'Products',
+      invoices: 'Invoices',
       suppliers: 'Suppliers',
       customers: 'Customers'
     },
@@ -24,6 +25,7 @@ const TRANSLATIONS = {
     nav: {
       dashboard: 'Übersicht',
       products: 'Produkte',
+      invoices: 'Rechnungen',
       suppliers: 'Lieferanten',
       customers: 'Kunden'
     },
@@ -113,7 +115,13 @@ describe('ShellComponent', () => {
       (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('mat-nav-list a')
     ).map((anchor) => anchor.getAttribute('href'));
 
-    expect(hrefs).toEqual(['/app', '/app/products', '/app/suppliers', '/app/customers']);
+    expect(hrefs).toEqual([
+      '/app',
+      '/app/products',
+      '/app/invoices',
+      '/app/suppliers',
+      '/app/customers'
+    ]);
   });
 
   it('logout_clicked_clearsAuthenticationState', async () => {
