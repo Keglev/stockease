@@ -29,8 +29,29 @@
     "dashboard": "Übersicht",
     "products": "Produkte",
     "invoices": "Rechnungen",
+    "movements": "Lagerbewegungen",
     "suppliers": "Lieferanten",
     "customers": "Kunden"
+  },
+  "movements": {
+    "title": "Lagerbewegung erfassen",
+    "product": "Produkt",
+    "reasonLabel": "Grund",
+    "reason": {
+      "NEW_PRODUCT": "Neuzugang",
+      "LOST": "Verlust",
+      "DESTROYED": "Zerstört"
+    },
+    "directionHint": {
+      "NEW_PRODUCT": "Ein Neuzugang erhöht den erfassten Bestand.",
+      "LOST": "Ein Verlust verringert den erfassten Bestand.",
+      "DESTROYED": "Eine Zerstörung verringert den erfassten Bestand."
+    },
+    "quantity": "Menge",
+    "unitCost": "Stückkosten",
+    "unitCostHint": "Kostenwert je Einheit",
+    "submit": "Bewegung erfassen",
+    "recorded": "Lagerbewegung wurde erfasst."
   },
   "invoices": {
     "title": "Rechnungen",

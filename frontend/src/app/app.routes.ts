@@ -59,6 +59,13 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'movements',
+        loadComponent: () =>
+          import('./features/movements/movement-record/movement-record.component').then(
+            (m) => m.MovementRecordComponent
+          )
+      },
+      {
         path: 'suppliers',
         loadComponent: () =>
           import('./features/suppliers/supplier-list/supplier-list.component').then(
