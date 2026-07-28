@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
 import {
+  CustomerSummary,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
@@ -37,6 +38,17 @@ const OVERDUE: InvoiceDueSummary[] = [
     daysOverdue: 5
   }
 ];
+
+const SUMMARY: CustomerSummary = {
+  customerId: 9,
+  name: 'Jane Doe',
+  deleted: false,
+  saleInvoiceCount: 3,
+  boughtUnits: 12,
+  boughtValue: 240,
+  returnedUnits: 2,
+  returnedValue: 40
+};
 
 const SUPPLIERS: SupplierProfitReport[] = [
   { supplierId: 7, name: 'Acme', revenue: 100, cost: 40, grossProfit: 60 }
@@ -151,6 +163,22 @@ describe('ReportService', () => {
 
     expect(emitted).toEqual(PROFIT[0]);
     expect(emitted).not.toHaveProperty('success');
+    controller.verify();
+  });
+
+  it('customerSummary_envelopedResponse_emitsUnwrappedData', () => {
+    let emitted: CustomerSummary | undefined;
+    service.customerSummary(9).subscribe((summary) => (emitted = summary));
+
+    const request = controller.expectOne(`${BASE_URL}/customers/9/summary`);
+    expect(request.request.method).toBe('GET');
+    // Enveloped, unlike its bare siblings above: the customer summary and the profit detail
+    // are the two reporting endpoints that wrap their record in ApiResponse.
+    request.flush({ success: true, message: 'ok', data: SUMMARY });
+
+    expect(emitted).toEqual(SUMMARY);
+    expect(emitted).not.toHaveProperty('success');
+    expect(emitted).not.toHaveProperty('data');
     controller.verify();
   });
 

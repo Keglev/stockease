@@ -209,6 +209,16 @@
       "title": "Delete customer",
       "message": "Do you really want to delete \"{{name}}\"?"
     },
+    "summary": {
+      "action": "Summary",
+      "title": "Customer summary",
+      "saleInvoiceCount": "Sales invoices",
+      "boughtUnits": "Units bought",
+      "boughtValue": "Purchase value",
+      "returnedUnits": "Units returned",
+      "returnedValue": "Return value",
+      "loading": "Loading summary…"
+    },
     "form": {
       "createTitle": "New customer",
       "name": "Name",

@@ -1,0 +1,43 @@
+@if (summary(); as figures) {
+  <h2 mat-dialog-title class="summary-title">
+    {{ figures.name }}
+    @if (figures.deleted) {
+      <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+    }
+  </h2>
+} @else {
+  <h2 mat-dialog-title>{{ 'customers.summary.title' | translate }}</h2>
+}
+
+<mat-dialog-content>
+  @if (loading()) {
+    <p class="summary-loading">{{ 'customers.summary.loading' | translate }}</p>
+  }
+
+  <!-- Zero is data here, not emptiness: a customer with no booked sales has a real, all-zero
+       summary and it renders like any other. -->
+  @if (summary(); as figures) {
+    <dl class="summary-list">
+      <dt>{{ 'customers.summary.saleInvoiceCount' | translate }}</dt>
+      <dd class="summary-invoice-count">{{ figures.saleInvoiceCount }}</dd>
+
+      <dt>{{ 'customers.summary.boughtUnits' | translate }}</dt>
+      <dd class="summary-bought-units">{{ figures.boughtUnits }}</dd>
+
+      <dt>{{ 'customers.summary.boughtValue' | translate }}</dt>
+      <dd class="summary-bought-value">{{ figures.boughtValue | currency: 'EUR' }}</dd>
+
+      <dt>{{ 'customers.summary.returnedUnits' | translate }}</dt>
+      <dd class="summary-returned-units">{{ figures.returnedUnits }}</dd>
+
+      <dt>{{ 'customers.summary.returnedValue' | translate }}</dt>
+      <dd class="summary-returned-value">{{ figures.returnedValue | currency: 'EUR' }}</dd>
+    </dl>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" class="summary-close" mat-dialog-close>
+    {{ 'common.close' | translate }}
+  </button>
+</mat-dialog-actions>

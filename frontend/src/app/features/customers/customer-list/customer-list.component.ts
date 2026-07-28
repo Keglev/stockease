@@ -15,6 +15,10 @@ import {
   ConfirmDialogData
 } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { CustomerCreateDialogComponent } from '../customer-create-dialog/customer-create-dialog.component';
+import {
+  CustomerSummaryDialogComponent,
+  CustomerSummaryDialogData
+} from '../customer-summary-dialog/customer-summary-dialog.component';
 import { CustomerService } from '../customer.service';
 
 @Component({
@@ -60,6 +64,12 @@ export class CustomerListComponent implements OnInit {
           this.load();
         }
       });
+  }
+
+  /** Opens the read-only sales summary; open to both roles because it changes nothing. */
+  protected openSummary(customer: CustomerResponse): void {
+    const data: CustomerSummaryDialogData = { customerId: customer.id };
+    this.dialog.open(CustomerSummaryDialogComponent, { data });
   }
 
   protected confirmDelete(customer: CustomerResponse): void {

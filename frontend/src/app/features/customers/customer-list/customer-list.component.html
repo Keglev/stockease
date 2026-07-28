@@ -40,10 +40,20 @@
     <td mat-cell *matCellDef="let customer">{{ customer.createdAt | date: 'medium' }}</td>
   </ng-container>
 
-  <!-- Delete only: the API has no customer update endpoint, so no edit action exists. -->
+  <!-- Summary and delete only: the API has no customer update endpoint, so no edit action
+       exists. The summary is read-only and open to both roles. -->
   <ng-container matColumnDef="actions">
     <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.actions' | translate }}</th>
     <td mat-cell *matCellDef="let customer">
+      <button
+        matIconButton
+        type="button"
+        class="customer-summary"
+        [attr.aria-label]="'customers.summary.action' | translate"
+        (click)="openSummary(customer)"
+      >
+        <mat-icon>insights</mat-icon>
+      </button>
       @if (canDelete()) {
         <button
           matIconButton

@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
+import { CustomerSummaryDialogComponent } from '../customer-summary-dialog/customer-summary-dialog.component';
 import { CustomerService } from '../customer.service';
 import { CustomerListComponent } from './customer-list.component';
 
@@ -26,7 +27,8 @@ const TRANSLATIONS = {
         createdAt: 'Created',
         actions: 'Actions'
       },
-      delete: { action: 'Delete customer', title: 'Delete customer', message: 'Delete "{{name}}"?' }
+      delete: { action: 'Delete customer', title: 'Delete customer', message: 'Delete "{{name}}"?' },
+      summary: { action: 'Summary' }
     }
   }
 };
@@ -82,8 +84,10 @@ class NotificationServiceStub {
 
 class MatDialogStub {
   confirmed: boolean | undefined = true;
+  openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
 
-  open() {
+  open(component: unknown, config?: { data?: unknown }) {
+    this.openCalls.push({ component, config });
     return { afterClosed: () => of(this.confirmed) };
   }
 }
@@ -96,6 +100,10 @@ describe('CustomerListComponent', () => {
 
   function deleteButtons(): NodeListOf<HTMLButtonElement> {
     return (fixture.nativeElement as HTMLElement).querySelectorAll('.customer-delete');
+  }
+
+  function summaryButtons(): NodeListOf<HTMLButtonElement> {
+    return (fixture.nativeElement as HTMLElement).querySelectorAll('.customer-summary');
   }
 
   function text(): string {
@@ -161,6 +169,24 @@ describe('CustomerListComponent', () => {
     await setUp('USER');
 
     expect(deleteButtons().length).toBe(0);
+  });
+
+  it('render_userRole_showsSummaryButtonPerRow', async () => {
+    await setUp('USER');
+
+    // Read-only, so it is offered to both roles rather than gated like deletion.
+    expect(summaryButtons().length).toBe(2);
+  });
+
+  it('summary_clicked_opensDialogWithThatCustomerId', async () => {
+    await setUp('USER');
+
+    summaryButtons()[0].click();
+    await fixture.whenStable();
+
+    expect(dialog.openCalls.length).toBe(1);
+    expect(dialog.openCalls[0].component).toBe(CustomerSummaryDialogComponent);
+    expect(dialog.openCalls[0].config?.data).toEqual({ customerId: 9 });
   });
 
   it('render_anyRole_offersNoEditAffordance', async () => {
