@@ -35,6 +35,21 @@
     "suppliers": "Suppliers",
     "customers": "Customers"
   },
+  "audit": {
+    "productTitle": "Change history - product #{{id}}",
+    "userTitle": "Changes by user #{{id}}",
+    "userChip": "User #{{id}}",
+    "productLink": "Product #{{id}}",
+    "field": {
+      "PURCHASE_PRICE": "Purchase price",
+      "NAME": "Name",
+      "DELETED": "Deleted",
+      "RESTORED": "Restored"
+    },
+    "empty": "No changes have been recorded.",
+    "loading": "Loading change history…",
+    "back": "Back"
+  },
   "reports": {
     "title": "Reports",
     "refresh": "Refresh",
@@ -305,6 +320,7 @@
     "actions": "Product actions",
     "rename": "Rename",
     "changePrice": "Change price",
+    "history": "History",
     "created": "Product created.",
     "renamed": "Product renamed.",
     "priceChanged": "Price updated.",

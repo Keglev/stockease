@@ -72,6 +72,16 @@
         >
           {{ 'products.changePrice' | translate }}
         </button>
+        <!-- Open to both roles: the backend guards the audit endpoints with hasAnyRole, because
+             the change trail is transparency rather than administration. -->
+        <button
+          mat-menu-item
+          type="button"
+          class="product-history"
+          (click)="openHistory(product)"
+        >
+          {{ 'products.history' | translate }}
+        </button>
         @if (isAdmin()) {
           <button
             mat-menu-item

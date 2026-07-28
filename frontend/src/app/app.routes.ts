@@ -65,6 +65,22 @@ export const routes: Routes = [
             (m) => m.MovementRecordComponent
           )
       },
+      // Both audit routes load the same component and are reached contextually - from a product
+      // row, and from the actor chip on the page itself - so neither appears in the shell nav.
+      {
+        path: 'audit/products/:productId',
+        loadComponent: () =>
+          import('./features/audit/change-history/change-history.component').then(
+            (m) => m.ChangeHistoryComponent
+          )
+      },
+      {
+        path: 'audit/users/:userId',
+        loadComponent: () =>
+          import('./features/audit/change-history/change-history.component').then(
+            (m) => m.ChangeHistoryComponent
+          )
+      },
       {
         path: 'reports',
         loadComponent: () =>

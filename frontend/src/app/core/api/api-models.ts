@@ -40,4 +40,6 @@ export type InvoiceDueSummary = components['schemas']['InvoiceDueSummary'];
 
 export type CustomerSummary = components['schemas']['CustomerSummary'];
 
+export type ChangeLogResponse = components['schemas']['ChangeLogResponse'];
+
 export type HealthStatus = components['schemas']['HealthStatus'];

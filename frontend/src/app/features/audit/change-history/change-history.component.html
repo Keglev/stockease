@@ -1,0 +1,69 @@
+<div class="audit-toolbar">
+  <h1 class="audit-title">
+    @if (mode() === 'product') {
+      {{ 'audit.productTitle' | translate: { id: targetId() } }}
+    } @else {
+      {{ 'audit.userTitle' | translate: { id: targetId() } }}
+    }
+  </h1>
+  <button matButton="outlined" type="button" class="audit-back" (click)="goBack()">
+    {{ 'audit.back' | translate }}
+  </button>
+</div>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" [attr.aria-label]="'audit.loading' | translate" />
+}
+
+<!-- Rendered verbatim: this text comes from the backend, which has no i18n. -->
+@if (error(); as message) {
+  <p class="audit-error" role="alert">{{ message }}</p>
+}
+
+@if (!loading() && !error() && entries().length === 0) {
+  <p class="audit-empty">{{ 'audit.empty' | translate }}</p>
+}
+
+<ol class="audit-timeline">
+  @for (entry of entries(); track entry.id) {
+    <li class="audit-entry" [class.audit-entry-lifecycle]="isLifecycle(entry)">
+      <div class="audit-entry-main">
+        @if (isLifecycle(entry)) {
+          <!-- No old/new rendering: both values are null by design on lifecycle events. -->
+          <span
+            class="audit-badge"
+            [class.audit-badge-warn]="entry.field === 'DELETED'"
+            [class.audit-badge-confirm]="entry.field === 'RESTORED'"
+          >
+            {{ 'audit.field.' + entry.field | translate }}
+          </span>
+        } @else {
+          <span class="audit-field">{{ 'audit.field.' + entry.field | translate }}</span>
+          <span class="audit-change">
+            <span class="audit-old">{{ entry.oldValue }}</span>
+            <span class="audit-arrow" aria-hidden="true">&rarr;</span>
+            <span class="audit-new">{{ entry.newValue }}</span>
+          </span>
+        }
+      </div>
+
+      <div class="audit-entry-meta">
+        @if (mode() === 'user') {
+          <a class="audit-product-link" [routerLink]="['/app/audit/products', entry.productId]">
+            {{ 'audit.productLink' | translate: { id: entry.productId } }}
+          </a>
+        }
+
+        @if (isSelfActor(entry)) {
+          <span class="audit-actor">{{ 'audit.userChip' | translate: { id: entry.userId } }}</span>
+        } @else {
+          <a class="audit-actor audit-actor-link" [routerLink]="['/app/audit/users', entry.userId]">
+            {{ 'audit.userChip' | translate: { id: entry.userId } }}
+          </a>
+        }
+
+        <span class="audit-time">{{ entry.createdAt | date: 'medium' }}</span>
+      </div>
+    </li>
+  }
+</ol>
