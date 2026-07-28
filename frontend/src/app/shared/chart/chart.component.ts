@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  InjectionToken,
   OnDestroy,
   effect,
   inject,
@@ -10,12 +11,23 @@ import {
   untracked,
   viewChild
 } from '@angular/core';
-import { BarChart, type BarSeriesOption } from 'echarts/charts';
+import {
+  BarChart,
+  type BarSeriesOption,
+  GaugeChart,
+  type GaugeSeriesOption,
+  LineChart,
+  type LineSeriesOption,
+  PieChart,
+  type PieSeriesOption
+} from 'echarts/charts';
 import {
   GridComponent,
   type GridComponentOption,
   LegendComponent,
   type LegendComponentOption,
+  TitleComponent,
+  type TitleComponentOption,
   TooltipComponent,
   type TooltipComponentOption
 } from 'echarts/components';
@@ -33,7 +45,17 @@ import { ThemeService } from '../../core/theme/theme.service';
 // nothing by default, so only the pieces listed below reach the bundle. Importing the 'echarts'
 // barrel instead would pull every chart type and component in. Anything a future chart needs must
 // be added to this list.
-use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent]);
+use([
+  CanvasRenderer,
+  BarChart,
+  PieChart,
+  LineChart,
+  GaugeChart,
+  GridComponent,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent
+]);
 
 /**
  * The option type accepted by this wrapper. It is echarts' EChartsOption narrowed to the modules
@@ -41,8 +63,28 @@ use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent]
  * rendering blank.
  */
 export type ChartOption = ComposeOption<
-  BarSeriesOption | GridComponentOption | TooltipComponentOption | LegendComponentOption
+  | BarSeriesOption
+  | PieSeriesOption
+  | LineSeriesOption
+  | GaugeSeriesOption
+  | GridComponentOption
+  | TitleComponentOption
+  | TooltipComponentOption
+  | LegendComponentOption
 >;
+
+/** Creates an ECharts instance on a host element; the signature of echarts' own init. */
+export type ChartEngine = typeof init;
+
+// Injected rather than called through the module import so tests can supply a stub. Mocking the
+// echarts entry point at module level is racy: spec files sharing a Vitest worker share its module
+// registry, so a spec that transitively imports this file first leaves the real module resolved
+// and the mock silently inert, at which point real echarts reaches jsdom's canvas and dies inside
+// zrender. The seam also keeps this file the only one in the app aware of echarts.
+export const CHART_ENGINE = new InjectionToken<ChartEngine>('CHART_ENGINE', {
+  providedIn: 'root',
+  factory: () => init
+});
 
 const DARK_THEME = 'dark';
 
@@ -60,6 +102,7 @@ const DEFAULT_THEME = 'default';
 })
 export class ChartComponent implements AfterViewInit, OnDestroy {
   private readonly theme = inject(ThemeService);
+  private readonly engine = inject(CHART_ENGINE);
 
   readonly option = input.required<ChartOption>();
 
@@ -107,9 +150,11 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
     this.destroyChart();
     // backgroundColor stays transparent so the Material card surface shows through and the chart
     // does not paint its own panel over the app's theme.
-    this.chart = init(this.host().nativeElement, mode === DARK_THEME ? DARK_THEME : DEFAULT_THEME, {
-      renderer: 'canvas'
-    });
+    this.chart = this.engine(
+      this.host().nativeElement,
+      mode === DARK_THEME ? DARK_THEME : DEFAULT_THEME,
+      { renderer: 'canvas' }
+    );
     this.applyOption();
   }
 

@@ -1,18 +1,20 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { ApiEnvelope } from '../../core/api/api-envelope';
 import {
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
   ProductProfitReport,
-  StockStatusReport
+  StockStatusReport,
+  SupplierProfitReport
 } from '../../core/api/api-models';
 
 /**
- * Reads the backend's reporting endpoints, every one of which returns its records bare.
+ * Reads the backend's reporting endpoints, whose list responses all return their records bare.
  * It lives under features/reports because the reports pages are its primary home; the
  * dashboard consuming it is deliberate cross-feature reuse, the same precedent as the
  * shared positive-price validator.
@@ -26,6 +28,27 @@ export class ReportService {
   /** Bare array - deliberately not unwrapped. */
   profitProducts(): Observable<ProductProfitReport[]> {
     return this.http.get<ProductProfitReport[]>(`${this.baseUrl}/profit/products`);
+  }
+
+  /**
+   * Reads the profit row for one product. This is the single reporting endpoint that IS
+   * enveloped - the controller returns ApiResponse<ProductProfitReport> where the list
+   * endpoints return their records bare - so the payload is unwrapped here.
+   */
+  profitProductDetail(id: number): Observable<ProductProfitReport> {
+    return this.http
+      .get<ApiEnvelope<ProductProfitReport>>(`${this.baseUrl}/profit/products/${id}`)
+      .pipe(map((envelope) => envelope.data as ProductProfitReport));
+  }
+
+  /** Bare array - deliberately not unwrapped. */
+  profitSuppliers(): Observable<SupplierProfitReport[]> {
+    return this.http.get<SupplierProfitReport[]>(`${this.baseUrl}/profit/suppliers`);
+  }
+
+  /** Bare array - deliberately not unwrapped; the window defaults to a week server-side. */
+  dueSoon(): Observable<InvoiceDueSummary[]> {
+    return this.http.get<InvoiceDueSummary[]>(`${this.baseUrl}/due-soon`);
   }
 
   /** Bare array - deliberately not unwrapped. */

@@ -1,0 +1,23 @@
+.detail-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.5rem;
+  margin: 0;
+}
+
+dt {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+dd {
+  margin: 0;
+  text-align: right;
+  font: var(--mat-sys-body-medium);
+}
+
+.detail-deleted {
+  margin: 1rem 0 0;
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-small);
+}

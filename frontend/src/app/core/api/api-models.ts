@@ -28,6 +28,8 @@ export type RegisterReturnRequest = components['schemas']['RegisterReturnRequest
 
 export type ProductProfitReport = components['schemas']['ProductProfitReport'];
 
+export type SupplierProfitReport = components['schemas']['SupplierProfitReport'];
+
 export type StockStatusReport = components['schemas']['StockStatusReport'];
 
 export type LossReport = components['schemas']['LossReport'];

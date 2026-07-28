@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>{{ detail.name }}</h2>
+
+<mat-dialog-content>
+  <dl class="detail-list">
+    <dt>{{ 'reports.columns.sku' | translate }}</dt>
+    <dd class="detail-sku">{{ detail.sku }}</dd>
+
+    <dt>{{ 'reports.columns.revenue' | translate }}</dt>
+    <dd class="detail-revenue">{{ detail.revenue | currency: 'EUR' }}</dd>
+
+    <dt>{{ 'reports.columns.cost' | translate }}</dt>
+    <dd class="detail-cost">{{ detail.cost | currency: 'EUR' }}</dd>
+
+    <dt>{{ 'reports.columns.grossProfit' | translate }}</dt>
+    <dd class="detail-gross-profit">{{ detail.grossProfit | currency: 'EUR' }}</dd>
+  </dl>
+
+  @if (detail.deleted) {
+    <p class="detail-deleted">{{ 'reports.deletedHint' | translate }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" class="detail-close" mat-dialog-close>
+    {{ 'common.close' | translate }}
+  </button>
+</mat-dialog-actions>

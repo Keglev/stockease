@@ -2,25 +2,21 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ThemeService } from '../../core/theme/theme.service';
-import { ChartComponent, ChartOption } from './chart.component';
+import { CHART_ENGINE, ChartComponent, ChartOption } from './chart.component';
 
 /**
- * jsdom has no canvas, so echarts' entry point is mocked and the assertions cover the wiring
- * this component owns - init, setOption and dispose - rather than rendered pixels.
+ * jsdom has no canvas, so the engine is stubbed through CHART_ENGINE and the assertions cover
+ * the wiring this component owns - init, setOption and dispose - rather than rendered pixels.
  */
-const echarts = vi.hoisted(() => {
-  const instance = {
-    setOption: vi.fn<(option: unknown, notMerge?: boolean) => void>(),
-    dispose: vi.fn(),
-    resize: vi.fn()
-  };
-  const init = vi.fn<(host: unknown, theme: unknown, opts?: unknown) => typeof instance>(
-    () => instance
-  );
-  return { instance, init, use: vi.fn() };
-});
+const instance = {
+  setOption: vi.fn<(option: unknown, notMerge?: boolean) => void>(),
+  dispose: vi.fn(),
+  resize: vi.fn()
+};
 
-vi.mock('echarts/core', () => ({ init: echarts.init, use: echarts.use }));
+const engine = vi.fn<(host: unknown, theme: unknown, opts?: unknown) => typeof instance>(
+  () => instance
+);
 
 const OPTION: ChartOption = {
   xAxis: { type: 'category', data: ['a'] },
@@ -53,12 +49,15 @@ describe('ChartComponent', () => {
     // Reset first: tearing down the previous fixture disposes its chart and would otherwise
     // land on the freshly cleared counters.
     TestBed.resetTestingModule();
-    echarts.init.mockClear();
-    echarts.instance.setOption.mockClear();
-    echarts.instance.dispose.mockClear();
+    engine.mockClear();
+    instance.setOption.mockClear();
+    instance.dispose.mockClear();
 
     TestBed.configureTestingModule({
-      providers: [{ provide: ThemeService, useClass: ThemeServiceStub }]
+      providers: [
+        { provide: ThemeService, useClass: ThemeServiceStub },
+        { provide: CHART_ENGINE, useValue: engine }
+      ]
     });
     fixture = TestBed.createComponent(HostComponent);
     theme = TestBed.inject(ThemeService) as unknown as ThemeServiceStub;
@@ -66,13 +65,13 @@ describe('ChartComponent', () => {
   });
 
   it('ngAfterViewInit_lightTheme_initsWithDefaultThemeAndSetsOption', () => {
-    expect(echarts.init).toHaveBeenCalledTimes(1);
-    expect(echarts.init.mock.calls[0][1]).toBe('default');
-    expect(echarts.instance.setOption).toHaveBeenCalled();
+    expect(engine).toHaveBeenCalledTimes(1);
+    expect(engine.mock.calls[0][1]).toBe('default');
+    expect(instance.setOption).toHaveBeenCalled();
   });
 
   it('setOption_anyOption_keepsBackgroundTransparentAndReplacesOption', () => {
-    const [applied, notMerge] = echarts.instance.setOption.mock.calls[0];
+    const [applied, notMerge] = instance.setOption.mock.calls[0];
 
     // The Material card surface must show through instead of echarts painting its own panel.
     expect((applied as { backgroundColor: string }).backgroundColor).toBe('transparent');
@@ -80,12 +79,12 @@ describe('ChartComponent', () => {
   });
 
   it('optionChange_newOption_setsOptionWithoutReinitialising', () => {
-    const before = echarts.instance.setOption.mock.calls.length;
+    const before = instance.setOption.mock.calls.length;
     fixture.componentInstance.option.set({ ...OPTION, series: [{ type: 'bar', data: [2] }] });
     fixture.detectChanges();
 
-    expect(echarts.init).toHaveBeenCalledTimes(1);
-    expect(echarts.instance.setOption.mock.calls.length).toBeGreaterThan(before);
+    expect(engine).toHaveBeenCalledTimes(1);
+    expect(instance.setOption.mock.calls.length).toBeGreaterThan(before);
   });
 
   it('themeChange_toDark_disposesAndReinitsWithDarkTheme', () => {
@@ -93,14 +92,14 @@ describe('ChartComponent', () => {
     fixture.detectChanges();
 
     // The theme is bound at init, so the only way to switch it is a fresh instance.
-    expect(echarts.instance.dispose).toHaveBeenCalledTimes(1);
-    expect(echarts.init).toHaveBeenCalledTimes(2);
-    expect(echarts.init.mock.calls[1][1]).toBe('dark');
+    expect(instance.dispose).toHaveBeenCalledTimes(1);
+    expect(engine).toHaveBeenCalledTimes(2);
+    expect(engine.mock.calls[1][1]).toBe('dark');
   });
 
   it('destroy_afterInit_disposesInstance', () => {
     fixture.destroy();
 
-    expect(echarts.instance.dispose).toHaveBeenCalledTimes(1);
+    expect(instance.dispose).toHaveBeenCalledTimes(1);
   });
 });
