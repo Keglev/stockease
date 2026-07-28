@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.0.0
+  version: 2.0.1
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -126,6 +126,7 @@ components:
       required:
         - success
         - message
+        - data
       properties:
         success:
           type: boolean
@@ -136,6 +137,7 @@ components:
           description: Human-readable outcome message
           example: Product fetched successfully
         data:
+          nullable: true
           description: |
             Operation result payload; null for errors and for operations with no output. Left
             untyped here because each endpoint narrows it - see the ApiResponse* variants.
@@ -145,11 +147,15 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - success
+            - data
           properties:
             success:
               type: boolean
               example: false
             data:
+              nullable: true
               example: null
       description: The envelope as produced by the shared exception handler
 
@@ -157,6 +163,9 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - success
+            - data
           properties:
             success:
               type: boolean
@@ -172,6 +181,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               type: string
@@ -181,6 +192,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               type: number
@@ -207,6 +220,9 @@ components:
 
     HealthStatus:
       type: object
+      required:
+        - status
+        - db
       properties:
         status:
           type: string
@@ -226,6 +242,7 @@ components:
         - quantity
         - purchasePrice
         - totalValue
+        - createdAt
       properties:
         id:
           type: integer
@@ -262,6 +279,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               $ref: '#/components/schemas/ProductResponse'
@@ -349,12 +368,16 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               $ref: '#/components/schemas/PaginatedProducts'
 
     MessageOnly:
       type: object
+      required:
+        - message
       properties:
         message:
           type: string
@@ -367,6 +390,7 @@ components:
         - id
         - name
         - address
+        - createdAt
       properties:
         id:
           type: integer
@@ -387,6 +411,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               $ref: '#/components/schemas/SupplierResponse'
@@ -415,6 +441,11 @@ components:
       required:
         - id
         - name
+        - email
+        - phone
+        - address
+        - city
+        - createdAt
       properties:
         id:
           type: integer
@@ -448,6 +479,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               $ref: '#/components/schemas/CustomerResponse'
@@ -499,6 +532,11 @@ components:
         - type
         - status
         - dueDate
+        - supplierId
+        - customerId
+        - closedAt
+        - paidAt
+        - createdAt
       properties:
         id:
           type: integer
@@ -539,6 +577,13 @@ components:
 
     InvoiceItemResponse:
       type: object
+      required:
+        - id
+        - productId
+        - productName
+        - quantity
+        - unitPrice
+        - returnedQty
       properties:
         id:
           type: integer
@@ -565,6 +610,19 @@ components:
 
     InvoiceResponse:
       type: object
+      required:
+        - id
+        - type
+        - status
+        - dueDate
+        - supplierId
+        - supplierName
+        - customerId
+        - customerName
+        - closedAt
+        - paidAt
+        - createdAt
+        - items
       properties:
         id:
           type: integer
@@ -617,6 +675,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               $ref: '#/components/schemas/InvoiceSummaryResponse'
@@ -625,6 +685,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               $ref: '#/components/schemas/InvoiceResponse'
@@ -716,6 +778,17 @@ components:
 
     MovementResponse:
       type: object
+      required:
+        - id
+        - productId
+        - userId
+        - type
+        - reason
+        - quantity
+        - invoiceItemId
+        - soldPrice
+        - unitCost
+        - createdAt
       properties:
         id:
           type: integer
@@ -821,6 +894,14 @@ components:
     # ---------------------------------------------------------------- reports
     ProductProfitReport:
       type: object
+      required:
+        - productId
+        - name
+        - sku
+        - deleted
+        - revenue
+        - cost
+        - grossProfit
       properties:
         productId:
           type: integer
@@ -850,12 +931,20 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               $ref: '#/components/schemas/ProductProfitReport'
 
     SupplierProfitReport:
       type: object
+      required:
+        - supplierId
+        - name
+        - revenue
+        - cost
+        - grossProfit
       properties:
         supplierId:
           type: integer
@@ -876,6 +965,14 @@ components:
 
     StockStatusReport:
       type: object
+      required:
+        - productId
+        - name
+        - sku
+        - soldUnits
+        - soldRevenue
+        - inStockUnits
+        - inStockValue
       properties:
         productId:
           type: integer
@@ -902,6 +999,14 @@ components:
 
     LossReport:
       type: object
+      required:
+        - productId
+        - name
+        - sku
+        - deleted
+        - lostUnits
+        - destroyedUnits
+        - lossValue
       properties:
         productId:
           type: integer
@@ -928,6 +1033,11 @@ components:
 
     DueDateBucket:
       type: object
+      required:
+        - dueDate
+        - invoiceType
+        - invoiceCount
+        - totalValue
       properties:
         dueDate:
           type: string
@@ -946,6 +1056,13 @@ components:
 
     InvoiceDueSummary:
       type: object
+      required:
+        - invoiceId
+        - invoiceType
+        - counterparty
+        - dueDate
+        - outstandingValue
+        - daysOverdue
       properties:
         invoiceId:
           type: integer
@@ -975,6 +1092,15 @@ components:
 
     CustomerSummary:
       type: object
+      required:
+        - customerId
+        - name
+        - deleted
+        - saleInvoiceCount
+        - boughtUnits
+        - boughtValue
+        - returnedUnits
+        - returnedValue
       properties:
         customerId:
           type: integer
@@ -1013,6 +1139,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - type: object
+          required:
+            - data
           properties:
             data:
               $ref: '#/components/schemas/CustomerSummary'
@@ -1025,6 +1153,14 @@ components:
 
     ChangeLogResponse:
       type: object
+      required:
+        - id
+        - productId
+        - userId
+        - field
+        - oldValue
+        - newValue
+        - createdAt
       properties:
         id:
           type: integer

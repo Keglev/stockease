@@ -62,7 +62,7 @@ export class InvoiceListComponent implements OnInit {
   }
 
   /** Returns the chip class matching the invoice status. */
-  protected statusClass(status: string | undefined): string {
+  protected statusClass(status: string): string {
     if (status === 'CLOSED') {
       return 'status-closed';
     }

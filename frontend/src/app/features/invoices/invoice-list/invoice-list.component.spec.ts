@@ -50,9 +50,21 @@ function invoice(overrides: Partial<InvoiceSummaryResponse>): InvoiceSummaryResp
   };
 }
 
-const SUPPLIERS: SupplierResponse[] = [{ id: 7, name: 'Acme', address: '1 Main St' }];
+const SUPPLIERS: SupplierResponse[] = [
+  { id: 7, name: 'Acme', address: '1 Main St', createdAt: '2026-01-02T03:04:00' }
+];
 
-const CUSTOMERS: CustomerResponse[] = [{ id: 9, name: 'Jane Doe' }];
+const CUSTOMERS: CustomerResponse[] = [
+  {
+    id: 9,
+    name: 'Jane Doe',
+    email: null,
+    phone: null,
+    address: null,
+    city: null,
+    createdAt: '2026-01-02T03:04:00'
+  }
+];
 
 describe('InvoiceListComponent', () => {
   let fixture: ComponentFixture<InvoiceListComponent>;
