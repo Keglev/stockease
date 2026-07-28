@@ -61,6 +61,18 @@
     "created": "Rechnung wurde angelegt.",
     "paid": "Bezahlt",
     "walkIn": "Barverkauf",
+    "returnAction": "Retoure",
+    "returnDialog": {
+      "title": "Retoure erfassen",
+      "product": "Produkt",
+      "remaining": "Retournierbar",
+      "quantity": "Menge",
+      "directionCustomer": "Ware kommt vom Kunden zurück",
+      "directionSupplier": "Ware geht an den Lieferanten zurück",
+      "confirm": "Retoure erfassen",
+      "cancel": "Abbrechen",
+      "registered": "Retoure wurde erfasst."
+    },
     "columns": {
       "id": "Nr.",
       "type": "Art",

@@ -23,3 +23,5 @@ export type CreateInvoiceRequest = components['schemas']['CreateInvoiceRequest']
 export type RecordMovementRequest = components['schemas']['RecordMovementRequest'];
 
 export type MovementResponse = components['schemas']['MovementResponse'];
+
+export type RegisterReturnRequest = components['schemas']['RegisterReturnRequest'];

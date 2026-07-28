@@ -61,6 +61,18 @@
     "created": "Invoice created.",
     "paid": "Paid",
     "walkIn": "Walk-in sale",
+    "returnAction": "Return",
+    "returnDialog": {
+      "title": "Register return",
+      "product": "Product",
+      "remaining": "Returnable",
+      "quantity": "Quantity",
+      "directionCustomer": "Stock returns from the customer",
+      "directionSupplier": "Stock goes back to the supplier",
+      "confirm": "Register return",
+      "cancel": "Cancel",
+      "registered": "Return registered."
+    },
     "columns": {
       "id": "No.",
       "type": "Type",

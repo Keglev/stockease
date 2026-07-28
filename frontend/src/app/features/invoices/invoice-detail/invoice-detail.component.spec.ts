@@ -3,8 +3,14 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
-import { InvoiceResponse, InvoiceSummaryResponse } from '../../../core/api/api-models';
+import {
+  InvoiceResponse,
+  InvoiceSummaryResponse,
+  RegisterReturnRequest
+} from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { MovementService } from '../../movements/movement.service';
+import { InvoiceReturnDialogComponent } from '../invoice-return-dialog/invoice-return-dialog.component';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
@@ -120,9 +126,22 @@ class InvoiceServiceStub {
 
 class MatDialogStub {
   confirmed: boolean | undefined = true;
+  returnResult: { quantity: number } | undefined = { quantity: 1 };
 
-  open() {
-    return { afterClosed: () => of(this.confirmed) };
+  /** The return dialog resolves to a quantity; the lifecycle confirmations resolve to a boolean. */
+  open(component: unknown) {
+    const isReturn = component === InvoiceReturnDialogComponent;
+    return { afterClosed: () => of(isReturn ? this.returnResult : this.confirmed) };
+  }
+}
+
+class MovementServiceStub {
+  returns: RegisterReturnRequest[] = [];
+  result: Observable<unknown> = of({});
+
+  registerReturn(request: RegisterReturnRequest): Observable<unknown> {
+    this.returns.push(request);
+    return this.result;
   }
 }
 
@@ -130,6 +149,7 @@ describe('InvoiceDetailComponent', () => {
   let fixture: ComponentFixture<InvoiceDetailComponent>;
   let notifications: NotificationServiceStub;
   let invoices: InvoiceServiceStub;
+  let movements: MovementServiceStub;
   let dialog: MatDialogStub;
 
   function host(): HTMLElement {
@@ -147,6 +167,7 @@ describe('InvoiceDetailComponent', () => {
   ): Promise<void> {
     notifications = new NotificationServiceStub();
     invoices = new InvoiceServiceStub(response);
+    movements = new MovementServiceStub();
     dialog = new MatDialogStub();
 
     await TestBed.configureTestingModule({
@@ -156,6 +177,7 @@ describe('InvoiceDetailComponent', () => {
         provideRouter([{ path: 'app/invoices', children: [] }]),
         provideTestTranslations(TRANSLATIONS),
         { provide: InvoiceService, useValue: invoices },
+        { provide: MovementService, useValue: movements },
         { provide: NotificationService, useValue: notifications },
         { provide: MatDialog, useValue: dialog },
         { provide: AuthService, useValue: { role: () => role } },
@@ -334,6 +356,92 @@ describe('InvoiceDetailComponent', () => {
     expect(invoices.removeCalls).toEqual([1]);
     expect(notifications.successes).toEqual(['Invoice deleted.']);
     expect(navigate).toHaveBeenCalledWith(['/app/invoices']);
+  });
+
+  it('returnAction_openInvoice_hidesReturnButton', async () => {
+    await setUp(of(detail({ status: 'OPEN' })));
+
+    // Returns require a closed invoice; the backend rejects them on an open one.
+    expect(host().querySelectorAll('.item-return').length).toBe(0);
+  });
+
+  it('returnAction_fullyReturnedLine_hidesReturnButtonForThatLine', async () => {
+    await setUp(
+      of(
+        detail({
+          status: 'CLOSED',
+          items: [
+            { id: 4, productId: 3, productName: 'Widget', quantity: 2, unitPrice: 15, returnedQty: 2 },
+            { id: 5, productId: 6, productName: 'Gadget', quantity: 3, unitPrice: 10, returnedQty: 1 }
+          ]
+        })
+      )
+    );
+
+    expect(host().querySelectorAll('.item-return').length).toBe(1);
+  });
+
+  it('returnAction_closedInvoiceAsNonAdmin_showsReturnButton', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })), 'USER');
+
+    // Returns are operational, not admin: the endpoint authorizes hasAnyRole(ADMIN, USER).
+    expect(host().querySelectorAll('.item-return').length).toBe(2);
+  });
+
+  it('return_saleInvoice_postsReturnFromCustomerWithLineProductId', async () => {
+    await setUp(of(detail({ status: 'CLOSED', type: 'SALE' })));
+    dialog.returnResult = { quantity: 2 };
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(movements.returns).toEqual([
+      { invoiceItemId: 4, productId: 3, reason: 'RETURN_FROM_CUSTOMER', quantity: 2 }
+    ]);
+  });
+
+  it('return_purchaseInvoice_postsReturnedToSupplierWithLineProductId', async () => {
+    await setUp(of(detail({ status: 'CLOSED', type: 'PURCHASE' })));
+    dialog.returnResult = { quantity: 1 };
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(movements.returns).toEqual([
+      { invoiceItemId: 4, productId: 3, reason: 'RETURNED_TO_SUPPLIER', quantity: 1 }
+    ]);
+  });
+
+  it('return_success_refetchesDetail', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })));
+    const loadsBefore = invoices.getByIdCalls;
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(notifications.successes).toEqual(['invoices.returnDialog.registered']);
+    // A full return flips the status server-side, which only a re-read can reveal.
+    expect(invoices.getByIdCalls).toBe(loadsBefore + 1);
+  });
+
+  it('return_cancelled_postsNothing', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })));
+    dialog.returnResult = undefined;
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(movements.returns).toEqual([]);
+  });
+
+  it('return_rejected_surfacesMessageVerbatim', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })));
+    movements.result = throwError(() => new Error('Only 1 unit remains returnable.'));
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(notifications.errors).toEqual(['Only 1 unit remains returnable.']);
   });
 
   it('delete_rejected_surfacesMessageAndStaysOnPage', async () => {
