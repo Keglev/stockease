@@ -57,6 +57,20 @@
       "CLOSED": "Closed",
       "FULLY_RETURNED": "Fully returned"
     },
+    "actions": {
+      "close": "Close invoice",
+      "closeConfirmTitle": "Close invoice",
+      "closeConfirmMessage": "Do you really want to close this invoice?",
+      "closeConfirmDetail": "Closing books the stock movements for every line and cannot be undone.",
+      "closed": "Invoice closed.",
+      "markPaid": "Mark as paid",
+      "paidConfirmTitle": "Mark invoice as paid",
+      "paidConfirmMessage": "Do you really want to mark this invoice as paid?",
+      "markedPaid": "Invoice marked as paid.",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete invoice",
+      "deleteConfirmMessage": "Do you really want to delete this invoice?"
+    },
     "createPage": {
       "title": "New invoice",
       "typeLabel": "Invoice type",

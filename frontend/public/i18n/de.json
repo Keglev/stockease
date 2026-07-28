@@ -57,6 +57,20 @@
       "CLOSED": "Geschlossen",
       "FULLY_RETURNED": "Vollständig retourniert"
     },
+    "actions": {
+      "close": "Abschließen",
+      "closeConfirmTitle": "Rechnung abschließen",
+      "closeConfirmMessage": "Möchten Sie diese Rechnung wirklich abschließen?",
+      "closeConfirmDetail": "Beim Abschließen werden die Lagerbewegungen aller Positionen gebucht; dies kann nicht rückgängig gemacht werden.",
+      "closed": "Rechnung wurde abgeschlossen.",
+      "markPaid": "Als bezahlt markieren",
+      "paidConfirmTitle": "Rechnung als bezahlt markieren",
+      "paidConfirmMessage": "Möchten Sie diese Rechnung wirklich als bezahlt markieren?",
+      "markedPaid": "Rechnung wurde als bezahlt markiert.",
+      "delete": "Löschen",
+      "deleteConfirmTitle": "Rechnung löschen",
+      "deleteConfirmMessage": "Möchten Sie diese Rechnung wirklich löschen?"
+    },
     "createPage": {
       "title": "Neue Rechnung",
       "typeLabel": "Rechnungsart",
