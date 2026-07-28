@@ -1,0 +1,367 @@
+<div class="reports-toolbar">
+  <h1>{{ 'reports.title' | translate }}</h1>
+  <button matButton="outlined" type="button" class="reports-refresh" (click)="refresh()">
+    {{ 'reports.refresh' | translate }}
+  </button>
+</div>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" [attr.aria-label]="'reports.loading' | translate" />
+}
+
+<!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
+@if (error(); as message) {
+  <p class="reports-error" role="alert">{{ message }}</p>
+}
+
+<mat-tab-group [selectedIndex]="selectedTab()" (selectedIndexChange)="activate($event)">
+  <mat-tab [label]="'reports.tabs.profit' | translate">
+    <div class="tab-body">
+      <div class="chart-row">
+        <mat-card class="chart-card margin-card">
+          <mat-card-content>
+            <h2 class="section-title">{{ 'reports.profit.margin' | translate }}</h2>
+            @if (marginOption(); as option) {
+              <app-chart [option]="option" height="16rem" />
+            } @else {
+              <p class="empty-state margin-empty">{{ 'reports.profit.empty' | translate }}</p>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card profit-chart-card">
+          <mat-card-content>
+            <h2 class="section-title">{{ 'reports.profit.byProduct' | translate }}</h2>
+            @if (profitOption(); as option) {
+              <app-chart [option]="option" height="24rem" />
+            } @else {
+              <p class="empty-state">{{ 'reports.profit.empty' | translate }}</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <mat-card class="table-card">
+        <mat-card-content>
+          <h2 class="section-title">{{ 'reports.profit.products' | translate }}</h2>
+          @if (profitRows().length === 0) {
+            <p class="empty-state">{{ 'reports.profit.empty' | translate }}</p>
+          } @else {
+            <table
+              mat-table
+              [dataSource]="profitRows()"
+              matSort
+              (matSortChange)="sortProfit($event)"
+              class="profit-table"
+            >
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.name' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.name }}
+                  @if (row.deleted) {
+                    <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+                  }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="sku">
+                <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="revenue">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.revenue' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.revenue | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="cost">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.cost' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.cost | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="grossProfit">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.grossProfit' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.grossProfit | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="profitColumns"></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: profitColumns"
+                class="profit-row"
+                tabindex="0"
+                (click)="openDetail(row)"
+                (keydown.enter)="openDetail(row)"
+              ></tr>
+            </table>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="table-card">
+        <mat-card-content>
+          <h2 class="section-title">{{ 'reports.profit.suppliers' | translate }}</h2>
+          @if (supplierRows().length === 0) {
+            <p class="empty-state">{{ 'reports.profit.suppliersEmpty' | translate }}</p>
+          } @else {
+            <table
+              mat-table
+              [dataSource]="supplierRows()"
+              matSort
+              (matSortChange)="sortSuppliers($event)"
+              class="supplier-table"
+            >
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.name' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="revenue">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.revenue' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.revenue | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="cost">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.cost' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.cost | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="grossProfit">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.grossProfit' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.grossProfit | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="supplierColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: supplierColumns"></tr>
+            </table>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-tab>
+
+  <mat-tab [label]="'reports.tabs.stock' | translate">
+    <div class="tab-body">
+      <mat-card class="chart-card">
+        <mat-card-content>
+          <h2 class="section-title">{{ 'reports.stock.byValue' | translate }}</h2>
+          @if (stockOption(); as option) {
+            <app-chart [option]="option" height="24rem" />
+          } @else {
+            <p class="empty-state">{{ 'reports.stock.empty' | translate }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="table-card">
+        <mat-card-content>
+          @if (stockRows().length === 0) {
+            <p class="empty-state">{{ 'reports.stock.empty' | translate }}</p>
+          } @else {
+            <table
+              mat-table
+              [dataSource]="stockRows()"
+              matSort
+              (matSortChange)="sortStock($event)"
+              class="stock-table"
+            >
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.name' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="sku">
+                <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="soldUnits">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.soldUnits' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.soldUnits }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="soldRevenue">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.soldRevenue' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.soldRevenue | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="inStockUnits">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.inStockUnits' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.inStockUnits }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="inStockValue">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.inStockValue' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.inStockValue | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="stockColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: stockColumns"></tr>
+            </table>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-tab>
+
+  <mat-tab [label]="'reports.tabs.losses' | translate">
+    <div class="tab-body">
+      <mat-card class="chart-card">
+        <mat-card-content>
+          <h2 class="section-title">{{ 'reports.losses.byProduct' | translate }}</h2>
+          @if (lossOption(); as option) {
+            <app-chart [option]="option" height="24rem" />
+          } @else {
+            <p class="empty-state losses-empty">{{ 'reports.losses.empty' | translate }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="table-card">
+        <mat-card-content>
+          @if (lossRows().length === 0) {
+            <p class="empty-state">{{ 'reports.losses.empty' | translate }}</p>
+          } @else {
+            <table
+              mat-table
+              [dataSource]="lossRows()"
+              matSort
+              (matSortChange)="sortLosses($event)"
+              class="loss-table"
+            >
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.name' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">
+                  {{ row.name }}
+                  @if (row.deleted) {
+                    <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+                  }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="sku">
+                <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="lostUnits">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.lostUnits' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.lostUnits }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="destroyedUnits">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.destroyedUnits' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.destroyedUnits }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="lossValue">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                  {{ 'reports.columns.lossValue' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.lossValue | currency: 'EUR' }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="lossColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: lossColumns"></tr>
+            </table>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-tab>
+
+  <mat-tab [label]="'reports.tabs.dueDates' | translate">
+    <div class="tab-body">
+      <mat-card class="chart-card">
+        <mat-card-content>
+          <h2 class="section-title">{{ 'reports.due.chart' | translate }}</h2>
+          @if (dueOption(); as option) {
+            <app-chart [option]="option" height="24rem" />
+          } @else {
+            <p class="empty-state">{{ 'reports.due.empty' | translate }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <div class="due-lists">
+        <mat-card class="table-card due-soon-card">
+          <mat-card-content>
+            <h2 class="section-title">{{ 'reports.due.dueSoon' | translate }}</h2>
+            @if (dueSoonRows().length === 0) {
+              <p class="empty-state">{{ 'reports.due.dueSoonEmpty' | translate }}</p>
+            } @else {
+              <ul class="due-list">
+                @for (row of dueSoonRows(); track row.invoiceId) {
+                  <li class="due-soon-row">
+                    <a [routerLink]="['/app/invoices', row.invoiceId]">#{{ row.invoiceId }}</a>
+                    <span class="due-type">{{ 'invoices.type.' + row.invoiceType | translate }}</span>
+                    <span class="due-counterparty">{{ row.counterparty }}</span>
+                    <span class="due-date">{{ row.dueDate | date: 'mediumDate' }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="table-card overdue-card">
+          <mat-card-content>
+            <h2 class="section-title">{{ 'reports.due.overdue' | translate }}</h2>
+            @if (overdueRows().length === 0) {
+              <p class="empty-state">{{ 'reports.due.overdueEmpty' | translate }}</p>
+            } @else {
+              <ul class="due-list">
+                @for (row of overdueRows(); track row.invoiceId) {
+                  <li class="overdue-row">
+                    <a [routerLink]="['/app/invoices', row.invoiceId]">#{{ row.invoiceId }}</a>
+                    <span class="due-type">{{ 'invoices.type.' + row.invoiceType | translate }}</span>
+                    <span class="due-counterparty">{{ row.counterparty }}</span>
+                    <span class="due-date">{{ row.dueDate | date: 'mediumDate' }}</span>
+                    <!-- Only the overdue query computes this; due-soon rows carry null by design. -->
+                    @if (row.daysOverdue !== null) {
+                      <span class="days-overdue">
+                        {{ 'reports.due.daysOverdue' | translate: { days: row.daysOverdue } }}
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </mat-tab>
+</mat-tab-group>

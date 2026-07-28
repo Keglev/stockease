@@ -8,7 +8,8 @@ import {
   InvoiceDueSummary,
   LossReport,
   ProductProfitReport,
-  StockStatusReport
+  StockStatusReport,
+  SupplierProfitReport
 } from '../../core/api/api-models';
 import { ReportService } from './report.service';
 
@@ -34,6 +35,22 @@ const OVERDUE: InvoiceDueSummary[] = [
     dueDate: '2026-03-01',
     outstandingValue: 30,
     daysOverdue: 5
+  }
+];
+
+const SUPPLIERS: SupplierProfitReport[] = [
+  { supplierId: 7, name: 'Acme', revenue: 100, cost: 40, grossProfit: 60 }
+];
+
+const DUE_SOON: InvoiceDueSummary[] = [
+  {
+    invoiceId: 9,
+    invoiceType: 'PURCHASE',
+    counterparty: 'Acme',
+    dueDate: '2026-03-05',
+    outstandingValue: 40,
+    // Null by design on this endpoint: only the overdue query computes the day count.
+    daysOverdue: null
   }
 ];
 
@@ -95,6 +112,45 @@ describe('ReportService', () => {
     controller.expectOne(`${BASE_URL}/overdue`).flush(OVERDUE);
 
     expect(emitted).toEqual(OVERDUE);
+    controller.verify();
+  });
+
+  it('profitSuppliers_bareArray_emitsPayloadUnchanged', () => {
+    let emitted: SupplierProfitReport[] | undefined;
+    service.profitSuppliers().subscribe((rows) => (emitted = rows));
+
+    controller.expectOne(`${BASE_URL}/profit/suppliers`).flush(SUPPLIERS);
+
+    // Like every other list endpoint, this one is unenveloped.
+    expect(emitted).toEqual(SUPPLIERS);
+    expect(emitted).not.toHaveProperty('data');
+    controller.verify();
+  });
+
+  it('dueSoon_bareArray_requestsDueSoonUrlWithoutDaysParam', () => {
+    let emitted: InvoiceDueSummary[] | undefined;
+    service.dueSoon().subscribe((rows) => (emitted = rows));
+
+    const request = controller.expectOne(`${BASE_URL}/due-soon`);
+    // No days param: the backend's own one-week default is the intended window.
+    expect(request.request.params.keys()).toEqual([]);
+    request.flush(DUE_SOON);
+
+    expect(emitted).toEqual(DUE_SOON);
+    controller.verify();
+  });
+
+  it('profitProductDetail_envelopedResponse_emitsUnwrappedData', () => {
+    let emitted: ProductProfitReport | undefined;
+    service.profitProductDetail(3).subscribe((row) => (emitted = row));
+
+    const request = controller.expectOne(`${BASE_URL}/profit/products/3`);
+    expect(request.request.method).toBe('GET');
+    // The one enveloped reporting endpoint: the controller wraps the single row in ApiResponse.
+    request.flush({ success: true, message: 'ok', data: PROFIT[0] });
+
+    expect(emitted).toEqual(PROFIT[0]);
+    expect(emitted).not.toHaveProperty('success');
     controller.verify();
   });
 

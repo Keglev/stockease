@@ -6,6 +6,7 @@
     "themeDark": "Dark mode",
     "confirm": "Confirm",
     "cancel": "Cancel",
+    "close": "Close",
     "save": "Save"
   },
   "landing": {
@@ -30,8 +31,60 @@
     "products": "Products",
     "invoices": "Invoices",
     "movements": "Stock movements",
+    "reports": "Reports",
     "suppliers": "Suppliers",
     "customers": "Customers"
+  },
+  "reports": {
+    "title": "Reports",
+    "refresh": "Refresh",
+    "loading": "Loading report…",
+    "deletedHint": "deleted",
+    "tabs": {
+      "profit": "Profit",
+      "stock": "Stock",
+      "losses": "Losses",
+      "dueDates": "Due dates"
+    },
+    "columns": {
+      "name": "Name",
+      "sku": "SKU",
+      "revenue": "Revenue",
+      "cost": "Cost",
+      "grossProfit": "Gross profit",
+      "soldUnits": "Sold units",
+      "soldRevenue": "Sales revenue",
+      "inStockUnits": "Units in stock",
+      "inStockValue": "Stock value",
+      "lostUnits": "Lost",
+      "destroyedUnits": "Destroyed",
+      "lossValue": "Loss value"
+    },
+    "profit": {
+      "margin": "Overall profit margin",
+      "byProduct": "Profit by product",
+      "products": "Profit per product",
+      "suppliers": "Profit per supplier",
+      "empty": "No profit has been recorded yet.",
+      "suppliersEmpty": "No supplier has supplied a product yet."
+    },
+    "stock": {
+      "byValue": "Products by stock value",
+      "empty": "No products are currently in stock."
+    },
+    "losses": {
+      "byProduct": "Loss share by product",
+      "empty": "No losses have been recorded."
+    },
+    "due": {
+      "chart": "Outstanding value by due date",
+      "dueSoon": "Due soon",
+      "overdue": "Overdue",
+      "daysOverdue": "{{days}} days late",
+      "empty": "No invoices are currently outstanding.",
+      "dueSoonEmpty": "No invoices fall due in the coming week.",
+      "overdueEmpty": "No invoice is overdue."
+    }
   },
   "movements": {
     "title": "Record stock movement",

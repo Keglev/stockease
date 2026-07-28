@@ -6,6 +6,7 @@
     "themeDark": "Dunkles Design",
     "confirm": "Bestätigen",
     "cancel": "Abbrechen",
+    "close": "Schließen",
     "save": "Speichern"
   },
   "landing": {
@@ -30,8 +31,60 @@
     "products": "Produkte",
     "invoices": "Rechnungen",
     "movements": "Lagerbewegungen",
+    "reports": "Berichte",
     "suppliers": "Lieferanten",
     "customers": "Kunden"
+  },
+  "reports": {
+    "title": "Berichte",
+    "refresh": "Aktualisieren",
+    "loading": "Bericht wird geladen…",
+    "deletedHint": "gelöscht",
+    "tabs": {
+      "profit": "Gewinn",
+      "stock": "Bestand",
+      "losses": "Verluste",
+      "dueDates": "Fälligkeiten"
+    },
+    "columns": {
+      "name": "Name",
+      "sku": "Artikelnummer",
+      "revenue": "Umsatz",
+      "cost": "Kosten",
+      "grossProfit": "Rohgewinn",
+      "soldUnits": "Verkaufte Einheiten",
+      "soldRevenue": "Verkaufserlös",
+      "inStockUnits": "Einheiten am Lager",
+      "inStockValue": "Bestandswert",
+      "lostUnits": "Verloren",
+      "destroyedUnits": "Zerstört",
+      "lossValue": "Verlustwert"
+    },
+    "profit": {
+      "margin": "Gesamtgewinnmarge",
+      "byProduct": "Gewinn je Produkt",
+      "products": "Gewinn je Produkt",
+      "suppliers": "Gewinn je Lieferant",
+      "empty": "Es wurde noch kein Gewinn erfasst.",
+      "suppliersEmpty": "Bisher hat kein Lieferant ein Produkt geliefert."
+    },
+    "stock": {
+      "byValue": "Produkte nach Bestandswert",
+      "empty": "Derzeit ist kein Produkt am Lager."
+    },
+    "losses": {
+      "byProduct": "Verlustanteil je Produkt",
+      "empty": "Es wurden keine Verluste erfasst."
+    },
+    "due": {
+      "chart": "Offener Betrag nach Fälligkeitsdatum",
+      "dueSoon": "Bald fällig",
+      "overdue": "Überfällig",
+      "daysOverdue": "{{days}} Tage überfällig",
+      "empty": "Derzeit sind keine Rechnungen offen.",
+      "dueSoonEmpty": "In der kommenden Woche wird keine Rechnung fällig.",
+      "overdueEmpty": "Keine Rechnung ist überfällig."
+    }
   },
   "movements": {
     "title": "Lagerbewegung erfassen",

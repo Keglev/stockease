@@ -10,12 +10,23 @@ import {
   untracked,
   viewChild
 } from '@angular/core';
-import { BarChart, type BarSeriesOption } from 'echarts/charts';
+import {
+  BarChart,
+  type BarSeriesOption,
+  GaugeChart,
+  type GaugeSeriesOption,
+  LineChart,
+  type LineSeriesOption,
+  PieChart,
+  type PieSeriesOption
+} from 'echarts/charts';
 import {
   GridComponent,
   type GridComponentOption,
   LegendComponent,
   type LegendComponentOption,
+  TitleComponent,
+  type TitleComponentOption,
   TooltipComponent,
   type TooltipComponentOption
 } from 'echarts/components';
@@ -33,7 +44,17 @@ import { ThemeService } from '../../core/theme/theme.service';
 // nothing by default, so only the pieces listed below reach the bundle. Importing the 'echarts'
 // barrel instead would pull every chart type and component in. Anything a future chart needs must
 // be added to this list.
-use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent]);
+use([
+  CanvasRenderer,
+  BarChart,
+  PieChart,
+  LineChart,
+  GaugeChart,
+  GridComponent,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent
+]);
 
 /**
  * The option type accepted by this wrapper. It is echarts' EChartsOption narrowed to the modules
@@ -41,7 +62,14 @@ use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent]
  * rendering blank.
  */
 export type ChartOption = ComposeOption<
-  BarSeriesOption | GridComponentOption | TooltipComponentOption | LegendComponentOption
+  | BarSeriesOption
+  | PieSeriesOption
+  | LineSeriesOption
+  | GaugeSeriesOption
+  | GridComponentOption
+  | TitleComponentOption
+  | TooltipComponentOption
+  | LegendComponentOption
 >;
 
 const DARK_THEME = 'dark';

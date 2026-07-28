@@ -16,6 +16,7 @@ const TRANSLATIONS = {
       products: 'Products',
       invoices: 'Invoices',
       movements: 'Stock movements',
+      reports: 'Reports',
       suppliers: 'Suppliers',
       customers: 'Customers'
     },
@@ -28,6 +29,7 @@ const TRANSLATIONS = {
       products: 'Produkte',
       invoices: 'Rechnungen',
       movements: 'Lagerbewegungen',
+      reports: 'Berichte',
       suppliers: 'Lieferanten',
       customers: 'Kunden'
     },
@@ -122,6 +124,7 @@ describe('ShellComponent', () => {
       '/app/products',
       '/app/invoices',
       '/app/movements',
+      '/app/reports',
       '/app/suppliers',
       '/app/customers'
     ]);
