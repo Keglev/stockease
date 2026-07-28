@@ -16,6 +16,11 @@ decisions are marked, never rewritten.
 - [ADR 009 - Sales Invoices and Customers](009-sales-invoices-and-customers.md)
 - [ADR 010 - Pooled Inventory - No Lot Tracking](010-no-lot-tracking.md)
 - [ADR 011 - Merchandise Scope and the Payment Fact](011-merchandise-scope-and-payment.md)
+- [ADR 012 - Frontend Hosting on a CDN, Not a Container](012-frontend-hosting.md)
+- [ADR 013 - JWT in localStorage, No Refresh Token](013-token-storage.md)
+- [ADR 014 - Types-Only Generation from the OpenAPI Spec](014-openapi-types-only.md)
+- [ADR 015 - Runtime Translation over Compile-Time Localization](015-runtime-i18n.md)
+- [ADR 016 - Direct ECharts, Not an Angular Wrapper](016-charting-library.md)
 
 ADR 005 is reserved for the demo-access design and will be written with the
 demo-mode phase.

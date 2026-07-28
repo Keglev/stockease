@@ -5,6 +5,8 @@
 ![Backend Tests](https://github.com/Keglev/stockease/actions/workflows/backend-test.yml/badge.svg)
 ![Docs Pipeline](https://github.com/Keglev/stockease/actions/workflows/docs-pipeline.yml/badge.svg)
 
+**StockEase** is the technical name of this repository and its codebase. The product ships to users as **Bestandskontrolle**, live at **[bestandskontrolle.vercel.app](https://bestandskontrolle.vercel.app)**.
+
 Managing inventory manually in manufacturing environments leads to stock discrepancies, delayed decisions, and lost revenue. StockEase replaces that with a production-grade backend for products, suppliers, customers, purchase and sales invoicing, stock movements, and audit trails - built as a modular monolith with strict module boundaries, event-driven stock booking, and a fully documented architecture. Developed to enterprise standards as a portfolio project, with bilingual (EN/DE) arc42 documentation, Architecture Decision Records, and automated test coverage.
 
 ## Repository Structure
