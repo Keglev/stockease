@@ -11,3 +11,9 @@ export type PaginatedProducts = components['schemas']['PaginatedProducts'];
 export type SupplierResponse = components['schemas']['SupplierResponse'];
 
 export type CustomerResponse = components['schemas']['CustomerResponse'];
+
+export type InvoiceSummaryResponse = components['schemas']['InvoiceSummaryResponse'];
+
+export type InvoiceResponse = components['schemas']['InvoiceResponse'];
+
+export type InvoiceItemResponse = components['schemas']['InvoiceItemResponse'];

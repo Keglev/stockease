@@ -28,8 +28,48 @@
   "nav": {
     "dashboard": "Übersicht",
     "products": "Produkte",
+    "invoices": "Rechnungen",
     "suppliers": "Lieferanten",
     "customers": "Kunden"
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "loading": "Rechnungen werden geladen…",
+    "empty": "Keine Rechnungen gefunden.",
+    "paid": "Bezahlt",
+    "walkIn": "Barverkauf",
+    "columns": {
+      "id": "Nr.",
+      "type": "Art",
+      "status": "Status",
+      "counterparty": "Geschäftspartner",
+      "dueDate": "Fällig am",
+      "createdAt": "Erstellt am"
+    },
+    "type": {
+      "PURCHASE": "Einkauf",
+      "SALE": "Verkauf"
+    },
+    "status": {
+      "OPEN": "Offen",
+      "CLOSED": "Geschlossen",
+      "FULLY_RETURNED": "Vollständig retourniert"
+    },
+    "detail": {
+      "title": "Rechnung",
+      "dueDate": "Fällig am",
+      "createdAt": "Erstellt am",
+      "closedAt": "Geschlossen am",
+      "paidAt": "Bezahlt am",
+      "items": "Positionen",
+      "product": "Produkt",
+      "quantity": "Menge",
+      "unitPrice": "Einzelpreis",
+      "returnedQty": "Retourniert",
+      "lineTotal": "Positionssumme",
+      "total": "Rechnungssumme",
+      "back": "Zurück zu den Rechnungen"
+    }
   },
   "customers": {
     "title": "Kunden",
