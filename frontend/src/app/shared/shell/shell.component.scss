@@ -2,6 +2,13 @@
   flex: 1 1 auto;
 }
 
+// The authenticated area gets its own header tone so it reads as a distinct surface from the
+// public pages. Both values are system tokens, so the active scheme decides the actual colours.
+mat-toolbar {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
 app-language-toggle {
   margin-right: 0.75rem;
 }
@@ -12,10 +19,22 @@ app-language-toggle {
 }
 
 .shell-container {
-  // Fills what the toolbar leaves so the sidenav spans the viewport.
-  height: calc(100vh - 64px);
+  // Was a fixed height: calc(100vh - 64px). The footer now lives inside the content pane, so
+  // the container needs a floor rather than a ceiling - min-height lets a long page grow past
+  // the viewport while a short one still pushes the footer down to the bottom edge.
+  min-height: calc(100vh - 64px);
 }
 
 .shell-content {
+  // Column layout so the routed view takes the slack and the footer settles beneath it.
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+  // Padding moves to the outlet wrapper so the footer can span the full content width.
+  padding: 0;
+}
+
+.shell-outlet {
+  flex: 1 1 auto;
   padding: 1.5rem;
 }

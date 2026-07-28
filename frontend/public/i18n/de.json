@@ -15,6 +15,13 @@
     "repository": "GitHub-Repository",
     "documentation": "Dokumentation"
   },
+  "footer": {
+    "tagline": "Bestandsverwaltung - Demo",
+    "repository": "Repository",
+    "documentation": "Dokumentation",
+    "apiDown": "API nicht erreichbar",
+    "apiLatency": "API {{ms}} ms"
+  },
   "logoutPage": {
     "message": "Sie wurden abgemeldet.",
     "backToLanding": "Zur Startseite"

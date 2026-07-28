@@ -15,6 +15,13 @@
     "repository": "GitHub repository",
     "documentation": "Documentation"
   },
+  "footer": {
+    "tagline": "Inventory management demo",
+    "repository": "Repository",
+    "documentation": "Documentation",
+    "apiDown": "API unavailable",
+    "apiLatency": "API {{ms}} ms"
+  },
   "logoutPage": {
     "message": "You have been logged out.",
     "backToLanding": "Back to start page"

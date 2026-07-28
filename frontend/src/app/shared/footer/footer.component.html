@@ -1,0 +1,28 @@
+<footer class="app-footer">
+  <div class="footer-identity">
+    <span class="footer-name">{{ 'common.appName' | translate }}</span>
+    <span class="footer-tagline">{{ 'footer.tagline' | translate }}</span>
+  </div>
+
+  <nav class="footer-links">
+    <a class="footer-repository" [href]="repositoryUrl" target="_blank" rel="noopener">
+      {{ 'footer.repository' | translate }}
+    </a>
+    <a class="footer-documentation" [href]="documentationUrl" target="_blank" rel="noopener">
+      {{ 'footer.documentation' | translate }}
+    </a>
+  </nav>
+
+  @if (probe(); as status) {
+    <p class="footer-health">
+      <span class="footer-dot" [class.footer-dot-up]="status.up" aria-hidden="true"></span>
+      @if (status.up) {
+        <span class="footer-latency">
+          {{ 'footer.apiLatency' | translate: { ms: status.latencyMs } }}
+        </span>
+      } @else {
+        <span class="footer-down">{{ 'footer.apiDown' | translate }}</span>
+      }
+    </p>
+  }
+</footer>

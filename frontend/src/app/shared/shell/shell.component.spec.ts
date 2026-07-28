@@ -130,6 +130,15 @@ describe('ShellComponent', () => {
     ]);
   });
 
+  it('render_authenticatedShell_showsFooterBelowTheOutlet', async () => {
+    await setUp();
+    const host = fixture.nativeElement as HTMLElement;
+
+    // The footer belongs to the content pane, not the sidenav, so it must sit inside it.
+    expect(host.querySelector('mat-sidenav-content app-footer')).not.toBeNull();
+    expect(host.querySelector('mat-sidenav app-footer')).toBeNull();
+  });
+
   it('logout_clicked_clearsAuthenticationState', async () => {
     localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
     await setUp();
