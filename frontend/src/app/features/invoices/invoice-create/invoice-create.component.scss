@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.create-card {
+  margin-bottom: 1.5rem;
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.field-label {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+}
+
+mat-form-field {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.item-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+
+  mat-form-field {
+    max-width: 14rem;
+  }
+}
+
+.running-total {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin: 1rem 0 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.create-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}

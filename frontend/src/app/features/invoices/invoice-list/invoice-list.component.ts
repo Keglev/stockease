@@ -1,9 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 
@@ -18,7 +19,15 @@ import { InvoiceService } from '../invoice.service';
  */
 @Component({
   selector: 'app-invoice-list',
-  imports: [DatePipe, MatChipsModule, MatProgressBarModule, MatTableModule, TranslatePipe],
+  imports: [
+    DatePipe,
+    MatButtonModule,
+    MatChipsModule,
+    MatProgressBarModule,
+    MatTableModule,
+    RouterLink,
+    TranslatePipe
+  ],
   templateUrl: './invoice-list.component.html',
   styleUrl: './invoice-list.component.scss'
 })

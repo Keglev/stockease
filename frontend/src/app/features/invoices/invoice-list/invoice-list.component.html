@@ -1,4 +1,10 @@
-<h1>{{ 'invoices.title' | translate }}</h1>
+<div class="invoice-toolbar">
+  <h1>{{ 'invoices.title' | translate }}</h1>
+  <!-- Not role-gated: the backend permits creation for hasAnyRole(ADMIN, USER). -->
+  <a matButton="filled" routerLink="/app/invoices/new" class="invoice-create">
+    {{ 'invoices.create' | translate }}
+  </a>
+</div>
 
 @if (loading()) {
   <mat-progress-bar mode="indeterminate" [attr.aria-label]="'invoices.loading' | translate" />

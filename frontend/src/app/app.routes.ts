@@ -42,6 +42,15 @@ export const routes: Routes = [
             (m) => m.InvoiceListComponent
           )
       },
+      // 'invoices/new' MUST stay declared before 'invoices/:id', otherwise the parameterised
+      // route matches first and 'new' is captured as an id.
+      {
+        path: 'invoices/new',
+        loadComponent: () =>
+          import('./features/invoices/invoice-create/invoice-create.component').then(
+            (m) => m.InvoiceCreateComponent
+          )
+      },
       {
         path: 'invoices/:id',
         loadComponent: () =>

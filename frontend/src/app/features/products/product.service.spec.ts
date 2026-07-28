@@ -80,6 +80,20 @@ describe('ProductService', () => {
     controller.verify();
   });
 
+  it('getAll_bareArrayResponse_emitsPayloadUnchanged', () => {
+    let emitted: ProductResponse[] | undefined;
+    service.getAll().subscribe((products) => (emitted = products));
+
+    const request = controller.expectOne(BASE_URL);
+    expect(request.request.method).toBe('GET');
+    request.flush([LAPTOP]);
+
+    // The unpaged collection endpoint is not enveloped: the array must arrive untouched.
+    expect(emitted).toEqual([LAPTOP]);
+    expect(emitted?.[0]).not.toHaveProperty('data');
+    controller.verify();
+  });
+
   it('create_bareObjectResponse_emitsPayloadUnchanged', () => {
     let emitted: ProductResponse | undefined;
     service.create('Laptop', 50, 999.99).subscribe((product) => (emitted = product));
