@@ -7,6 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
+import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProductResponse } from '../../../core/api/api-models';
@@ -47,6 +48,7 @@ export class ProductListComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
+  private readonly router = inject(Router);
 
   // UI convenience only: the server is the authority and answers 403 regardless of these flags.
   // Creation and deletion are admin acts; renaming and repricing are open to every role.
@@ -107,6 +109,11 @@ export class ProductListComponent implements OnInit {
           this.load();
         }
       });
+  }
+
+  /** Opens the product's audit trail, which either role may read. */
+  protected openHistory(product: ProductResponse): void {
+    void this.router.navigate(['/app/audit/products', product.id]);
   }
 
   protected confirmDelete(product: ProductResponse): void {

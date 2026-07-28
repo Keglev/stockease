@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { Router, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
 import { PaginatedProducts } from '../../../core/api/api-models';
@@ -19,6 +20,7 @@ const TRANSLATIONS = {
       actions: 'Product actions',
       rename: 'Rename',
       changePrice: 'Change price',
+      history: 'History',
       columns: {
         name: 'Name',
         sku: 'SKU',
@@ -122,6 +124,7 @@ describe('ProductListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
       providers: [
+        provideRouter([]),
         provideTestTranslations(TRANSLATIONS),
         { provide: ProductService, useValue: stub },
         { provide: NotificationService, useValue: notifications },
@@ -199,6 +202,25 @@ describe('ProductListComponent', () => {
 
     expect(menuItem('.product-rename')).not.toBeNull();
     expect(menuItem('.product-reprice')).not.toBeNull();
+  });
+
+  it('menu_userRole_showsHistoryItem', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+    await openRowMenu();
+
+    // Ungated: the backend guards the audit endpoints with hasAnyRole, not an admin check.
+    expect(menuItem('.product-history')).not.toBeNull();
+  });
+
+  it('history_clicked_navigatesToThatProductsAuditRoute', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+    await openRowMenu();
+    menuItem('.product-history')?.click();
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(['/app/audit/products', 1]);
   });
 
   it('render_anyRole_offersNoQuantityEditing', async () => {
