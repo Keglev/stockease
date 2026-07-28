@@ -3,6 +3,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    /* Without outDir a direct `tsc -b` writes .js next to every source file; /out-tsc is
+       already gitignored. rootDir must accompany it, or TypeScript 6 reports TS5011. */
+    "outDir": "./out-tsc/app",
+    "rootDir": "./src",
     "types": []
   },
   "include": [
