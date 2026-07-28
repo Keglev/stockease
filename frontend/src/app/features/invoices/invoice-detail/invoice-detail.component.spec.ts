@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
-import { InvoiceResponse } from '../../../core/api/api-models';
+import { InvoiceResponse, InvoiceSummaryResponse } from '../../../core/api/api-models';
+import { AuthService } from '../../../core/auth/auth.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
@@ -57,11 +59,24 @@ function detail(overrides: Partial<InvoiceResponse> = {}): InvoiceResponse {
   };
 }
 
+const SUMMARY: InvoiceSummaryResponse = {
+  id: 1,
+  type: 'PURCHASE',
+  status: 'CLOSED',
+  dueDate: '2026-03-01',
+  supplierId: 7,
+  customerId: null,
+  closedAt: '2026-02-01T10:00:00',
+  paidAt: null,
+  createdAt: '2026-01-02T03:04:00'
+};
+
 class NotificationServiceStub {
+  successes: string[] = [];
   errors: string[] = [];
 
-  success(): void {
-    // Not exercised by these tests.
+  success(message: string): void {
+    this.successes.push(message);
   }
 
   error(message: string): void {
@@ -69,16 +84,70 @@ class NotificationServiceStub {
   }
 }
 
+/** Counts detail reads so the re-fetch behaviour after a lifecycle call can be asserted. */
+class InvoiceServiceStub {
+  getByIdCalls = 0;
+  closeCalls: number[] = [];
+  paidCalls: number[] = [];
+  removeCalls: number[] = [];
+
+  closeResult: Observable<InvoiceSummaryResponse> = of(SUMMARY);
+  paidResult: Observable<InvoiceSummaryResponse> = of(SUMMARY);
+  removeResult: Observable<string> = of('Invoice deleted.');
+
+  constructor(private readonly detailResponse: Observable<InvoiceResponse>) {}
+
+  getById(): Observable<InvoiceResponse> {
+    this.getByIdCalls += 1;
+    return this.detailResponse;
+  }
+
+  close(id: number): Observable<InvoiceSummaryResponse> {
+    this.closeCalls.push(id);
+    return this.closeResult;
+  }
+
+  markPaid(id: number): Observable<InvoiceSummaryResponse> {
+    this.paidCalls.push(id);
+    return this.paidResult;
+  }
+
+  remove(id: number): Observable<string> {
+    this.removeCalls.push(id);
+    return this.removeResult;
+  }
+}
+
+class MatDialogStub {
+  confirmed: boolean | undefined = true;
+
+  open() {
+    return { afterClosed: () => of(this.confirmed) };
+  }
+}
+
 describe('InvoiceDetailComponent', () => {
   let fixture: ComponentFixture<InvoiceDetailComponent>;
   let notifications: NotificationServiceStub;
+  let invoices: InvoiceServiceStub;
+  let dialog: MatDialogStub;
 
   function host(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
   }
 
-  async function setUp(response: Observable<InvoiceResponse>): Promise<void> {
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  async function setUp(
+    response: Observable<InvoiceResponse>,
+    role: 'ADMIN' | 'USER' = 'ADMIN'
+  ): Promise<void> {
     notifications = new NotificationServiceStub();
+    invoices = new InvoiceServiceStub(response);
+    dialog = new MatDialogStub();
 
     await TestBed.configureTestingModule({
       imports: [InvoiceDetailComponent],
@@ -86,8 +155,10 @@ describe('InvoiceDetailComponent', () => {
         // Registered so the load-failure navigation resolves instead of rejecting mid-test.
         provideRouter([{ path: 'app/invoices', children: [] }]),
         provideTestTranslations(TRANSLATIONS),
-        { provide: InvoiceService, useValue: { getById: () => response } },
+        { provide: InvoiceService, useValue: invoices },
         { provide: NotificationService, useValue: notifications },
+        { provide: MatDialog, useValue: dialog },
+        { provide: AuthService, useValue: { role: () => role } },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: { get: () => '1' } } }
@@ -163,5 +234,117 @@ describe('InvoiceDetailComponent', () => {
     await setUp(throwError(() => new Error('Invoice not found.')));
 
     expect(notifications.errors).toEqual(['Invoice not found.']);
+  });
+
+  it('actions_adminWithOpenInvoice_showsCloseMarkPaidAndDelete', async () => {
+    await setUp(of(detail({ status: 'OPEN', paidAt: null })));
+
+    expect(host().querySelector('.action-close')).not.toBeNull();
+    expect(host().querySelector('.action-paid')).not.toBeNull();
+    expect(host().querySelector('.action-delete')).not.toBeNull();
+  });
+
+  it('actions_adminWithClosedUnpaidInvoice_showsMarkPaidOnly', async () => {
+    await setUp(of(detail({ status: 'CLOSED', paidAt: null })));
+
+    expect(host().querySelector('.action-close')).toBeNull();
+    expect(host().querySelector('.action-paid')).not.toBeNull();
+    expect(host().querySelector('.action-delete')).toBeNull();
+  });
+
+  it('actions_adminWithClosedPaidInvoice_showsNoActions', async () => {
+    await setUp(of(detail({ status: 'CLOSED', paidAt: '2026-02-02T10:00:00' })));
+
+    expect(host().querySelector('.action-close')).toBeNull();
+    expect(host().querySelector('.action-paid')).toBeNull();
+    expect(host().querySelector('.action-delete')).toBeNull();
+  });
+
+  it('actions_adminWithFullyReturnedUnpaidInvoice_showsMarkPaidOnly', async () => {
+    await setUp(of(detail({ status: 'FULLY_RETURNED', paidAt: null })));
+
+    expect(host().querySelector('.action-close')).toBeNull();
+    expect(host().querySelector('.action-paid')).not.toBeNull();
+    expect(host().querySelector('.action-delete')).toBeNull();
+  });
+
+  it('actions_nonAdminWithOpenInvoice_showsNoActions', async () => {
+    await setUp(of(detail({ status: 'OPEN', paidAt: null })), 'USER');
+
+    // Non-admins get no lifecycle affordance at all; the server enforces 403 regardless.
+    expect(host().querySelector('.action-close')).toBeNull();
+    expect(host().querySelector('.action-paid')).toBeNull();
+    expect(host().querySelector('.action-delete')).toBeNull();
+  });
+
+  it('close_confirmed_callsServiceAndRefetchesDetail', async () => {
+    await setUp(of(detail({ status: 'OPEN' })));
+    const loadsBefore = invoices.getByIdCalls;
+
+    host().querySelector<HTMLButtonElement>('.action-close')?.click();
+    await settle();
+
+    expect(invoices.closeCalls).toEqual([1]);
+    expect(notifications.successes).toEqual(['invoices.actions.closed']);
+    expect(invoices.getByIdCalls).toBe(loadsBefore + 1);
+  });
+
+  it('close_insufficientStock_surfacesMessageAndStillRefetches', async () => {
+    await setUp(of(detail({ status: 'OPEN' })));
+    invoices.closeResult = throwError(() => new Error('Insufficient stock for product Widget.'));
+    const loadsBefore = invoices.getByIdCalls;
+
+    host().querySelector<HTMLButtonElement>('.action-close')?.click();
+    await settle();
+
+    expect(notifications.errors).toEqual(['Insufficient stock for product Widget.']);
+    // The close rolled back entirely, so the page is re-read to prove nothing changed.
+    expect(invoices.getByIdCalls).toBe(loadsBefore + 1);
+  });
+
+  it('close_cancelled_callsNothing', async () => {
+    await setUp(of(detail({ status: 'OPEN' })));
+    dialog.confirmed = false;
+
+    host().querySelector<HTMLButtonElement>('.action-close')?.click();
+    await settle();
+
+    expect(invoices.closeCalls).toEqual([]);
+  });
+
+  it('markPaid_confirmed_callsServiceAndRefetchesDetail', async () => {
+    await setUp(of(detail({ status: 'CLOSED', paidAt: null })));
+    const loadsBefore = invoices.getByIdCalls;
+
+    host().querySelector<HTMLButtonElement>('.action-paid')?.click();
+    await settle();
+
+    expect(invoices.paidCalls).toEqual([1]);
+    expect(notifications.successes).toEqual(['invoices.actions.markedPaid']);
+    expect(invoices.getByIdCalls).toBe(loadsBefore + 1);
+  });
+
+  it('delete_confirmed_notifiesBackendMessageAndNavigatesToList', async () => {
+    await setUp(of(detail({ status: 'OPEN' })));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+    host().querySelector<HTMLButtonElement>('.action-delete')?.click();
+    await settle();
+
+    expect(invoices.removeCalls).toEqual([1]);
+    expect(notifications.successes).toEqual(['Invoice deleted.']);
+    expect(navigate).toHaveBeenCalledWith(['/app/invoices']);
+  });
+
+  it('delete_rejected_surfacesMessageAndStaysOnPage', async () => {
+    await setUp(of(detail({ status: 'OPEN' })));
+    invoices.removeResult = throwError(() => new Error('Only open invoices can be deleted.'));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+    host().querySelector<HTMLButtonElement>('.action-delete')?.click();
+    await settle();
+
+    expect(notifications.errors).toEqual(['Only open invoices can be deleted.']);
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

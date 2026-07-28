@@ -40,4 +40,25 @@ export class InvoiceService {
   create(request: CreateInvoiceRequest): Observable<InvoiceSummaryResponse> {
     return this.http.post<InvoiceSummaryResponse>(this.baseUrl, request);
   }
+
+  /** Enveloped - books the stock movements server-side and returns the updated summary. */
+  close(id: number): Observable<InvoiceSummaryResponse> {
+    return this.http
+      .patch<ApiEnvelope<InvoiceSummaryResponse>>(`${this.baseUrl}/${id}/close`, {})
+      .pipe(map((envelope) => envelope.data as InvoiceSummaryResponse));
+  }
+
+  /** Enveloped - records the payment timestamp and returns the updated summary. */
+  markPaid(id: number): Observable<InvoiceSummaryResponse> {
+    return this.http
+      .patch<ApiEnvelope<InvoiceSummaryResponse>>(`${this.baseUrl}/${id}/paid`, {})
+      .pipe(map((envelope) => envelope.data as InvoiceSummaryResponse));
+  }
+
+  /** Emits the backend's own message so the caller can surface it verbatim. */
+  remove(id: number): Observable<string> {
+    return this.http
+      .delete<ApiEnvelope<string>>(`${this.baseUrl}/${id}`)
+      .pipe(map((envelope) => envelope.message));
+  }
 }

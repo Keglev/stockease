@@ -36,6 +36,14 @@ const DETAIL: InvoiceResponse = {
   items: [{ id: 4, productId: 3, productName: 'Widget', quantity: 2, unitPrice: 15, returnedQty: 0 }]
 };
 
+const CLOSED: InvoiceSummaryResponse = {
+  ...SUMMARY,
+  status: 'CLOSED',
+  closedAt: '2026-02-01T10:00:00'
+};
+
+const PAID: InvoiceSummaryResponse = { ...SUMMARY, paidAt: '2026-02-02T10:00:00' };
+
 /** Built through the same helper the create page uses, so the payload pins test real construction. */
 function purchaseDraft() {
   return buildCreateInvoiceRequest({
@@ -154,6 +162,49 @@ describe('InvoiceService', () => {
 
     expect(body).not.toHaveProperty('supplierId');
     expect(body).not.toHaveProperty('customerId');
+    controller.verify();
+  });
+
+  // The three lifecycle endpoints are ENVELOPED, in contrast to the bare getAll and create
+  // above: the mixed shape is per-endpoint backend contract, so each is pinned separately.
+
+  it('close_envelopedResponse_emitsUnwrappedSummary', () => {
+    let emitted: InvoiceSummaryResponse | undefined;
+    service.close(1).subscribe((summary) => (emitted = summary));
+
+    const request = controller.expectOne(`${BASE_URL}/1/close`);
+    expect(request.request.method).toBe('PATCH');
+    request.flush({ success: true, message: 'Invoice closed', data: CLOSED });
+
+    expect(emitted).toEqual(CLOSED);
+    expect(emitted).not.toHaveProperty('success');
+    expect(emitted).not.toHaveProperty('data');
+    controller.verify();
+  });
+
+  it('markPaid_envelopedResponse_emitsUnwrappedSummary', () => {
+    let emitted: InvoiceSummaryResponse | undefined;
+    service.markPaid(1).subscribe((summary) => (emitted = summary));
+
+    const request = controller.expectOne(`${BASE_URL}/1/paid`);
+    expect(request.request.method).toBe('PATCH');
+    request.flush({ success: true, message: 'Invoice paid', data: PAID });
+
+    expect(emitted).toEqual(PAID);
+    expect(emitted).not.toHaveProperty('success');
+    controller.verify();
+  });
+
+  it('remove_envelopedResponse_emitsBackendMessage', () => {
+    let emitted: string | undefined;
+    service.remove(1).subscribe((message) => (emitted = message));
+
+    const request = controller.expectOne(`${BASE_URL}/1`);
+    expect(request.request.method).toBe('DELETE');
+    request.flush({ success: true, message: 'Invoice deleted.', data: null });
+
+    // The message is the confirmation the UI shows, so it is what the service emits.
+    expect(emitted).toBe('Invoice deleted.');
     controller.verify();
   });
 });

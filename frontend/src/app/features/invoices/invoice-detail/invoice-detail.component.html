@@ -22,6 +22,44 @@
         }
       </div>
 
+      @if (canClose() || canMarkPaid() || canDelete()) {
+        <div class="detail-actions">
+          @if (canClose()) {
+            <button
+              matButton="filled"
+              type="button"
+              class="action-close"
+              [disabled]="working()"
+              (click)="confirmClose()"
+            >
+              {{ 'invoices.actions.close' | translate }}
+            </button>
+          }
+          @if (canMarkPaid()) {
+            <button
+              matButton
+              type="button"
+              class="action-paid"
+              [disabled]="working()"
+              (click)="confirmMarkPaid()"
+            >
+              {{ 'invoices.actions.markPaid' | translate }}
+            </button>
+          }
+          @if (canDelete()) {
+            <button
+              matButton
+              type="button"
+              class="action-delete"
+              [disabled]="working()"
+              (click)="confirmDelete()"
+            >
+              {{ 'invoices.actions.delete' | translate }}
+            </button>
+          }
+        </div>
+      }
+
       <dl class="detail-facts">
         <div class="detail-fact detail-counterparty">
           <dt>{{ 'invoices.columns.counterparty' | translate }}</dt>
