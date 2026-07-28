@@ -25,3 +25,15 @@ export type RecordMovementRequest = components['schemas']['RecordMovementRequest
 export type MovementResponse = components['schemas']['MovementResponse'];
 
 export type RegisterReturnRequest = components['schemas']['RegisterReturnRequest'];
+
+export type ProductProfitReport = components['schemas']['ProductProfitReport'];
+
+export type StockStatusReport = components['schemas']['StockStatusReport'];
+
+export type LossReport = components['schemas']['LossReport'];
+
+export type DueDateBucket = components['schemas']['DueDateBucket'];
+
+export type InvoiceDueSummary = components['schemas']['InvoiceDueSummary'];
+
+export type HealthStatus = components['schemas']['HealthStatus'];

@@ -148,4 +148,29 @@ describe('ProductService', () => {
     expect(emitted).toBe('Product deleted.');
     controller.verify();
   });
+
+  it('lowStock_arrayResponse_emitsProductsUntouched', () => {
+    let emitted: ProductResponse[] | undefined;
+    service.lowStock().subscribe((products) => (emitted = products));
+
+    const request = controller.expectOne(`${BASE_URL}/low-stock`);
+    expect(request.request.method).toBe('GET');
+    request.flush([LAPTOP]);
+
+    expect(emitted).toEqual([LAPTOP]);
+    controller.verify();
+  });
+
+  it('lowStock_messageObjectResponse_emitsEmptyArray', () => {
+    let emitted: ProductResponse[] | undefined;
+    service.lowStock().subscribe((products) => (emitted = products));
+
+    // The as-built endpoint answers 200 with this object instead of an empty array.
+    controller
+      .expectOne(`${BASE_URL}/low-stock`)
+      .flush({ message: 'All products are sufficiently stocked.' });
+
+    expect(emitted).toEqual([]);
+    controller.verify();
+  });
 });

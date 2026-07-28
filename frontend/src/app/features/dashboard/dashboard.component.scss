@@ -1,3 +1,111 @@
 :host {
   display: block;
 }
+
+.dashboard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-error {
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-medium);
+}
+
+.kpi-row,
+.chart-row {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.kpi-row {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.chart-row {
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+
+.kpi-label {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+.kpi-value {
+  margin: 0.25rem 0 0;
+  font: var(--mat-sys-headline-medium);
+}
+
+.section-title {
+  margin: 0 0 0.75rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.low-stock-card {
+  margin-bottom: 1rem;
+}
+
+// The alert state borrows the error colour rather than a bespoke one, so it reads the same
+// as every other warning in the app and follows the theme.
+.low-stock-alert {
+  border: 1px solid var(--mat-sys-error);
+}
+
+.low-stock-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.low-stock-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.low-stock-row:last-child {
+  border-bottom: none;
+}
+
+.low-stock-quantity {
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-title-small);
+}
+
+.low-stock-none {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.health-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.health-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--mat-sys-error);
+}
+
+.health-dot-up {
+  background: var(--mat-sys-primary);
+}
+
+.health-latency,
+.health-checked {
+  margin: 0.35rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}

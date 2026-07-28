@@ -35,6 +35,18 @@ export class ProductService {
     return this.http.get<ProductResponse[]>(this.baseUrl);
   }
 
+  /**
+   * Lists products at or below the backend's hardcoded low-stock threshold, normalised to an
+   * array. As built, the endpoint answers 200 with a bare array when products are low but 200
+   * with a bare {"message": "..."} object when none are, so the quirk is absorbed here and
+   * components never see two shapes.
+   */
+  lowStock(): Observable<ProductResponse[]> {
+    return this.http
+      .get<ProductResponse[] | { message: string }>(`${this.baseUrl}/low-stock`)
+      .pipe(map((body) => (Array.isArray(body) ? body : [])));
+  }
+
   /** Bare object - deliberately not unwrapped. SKU is generated server-side and never sent. */
   create(name: string, quantity: number, purchasePrice: number): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(this.baseUrl, { name, quantity, purchasePrice });
