@@ -3,7 +3,11 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { MovementResponse, RecordMovementRequest } from '../../core/api/api-models';
+import {
+  MovementResponse,
+  RecordMovementRequest,
+  RegisterReturnRequest
+} from '../../core/api/api-models';
 
 /**
  * Records the standalone stock corrections the API accepts directly. Purchases and sales are
@@ -18,5 +22,13 @@ export class MovementService {
   /** Bare object - deliberately not unwrapped. */
   record(request: RecordMovementRequest): Observable<MovementResponse> {
     return this.http.post<MovementResponse>(this.baseUrl, request);
+  }
+
+  /**
+   * Registers a return against one invoice line; bare response, deliberately not unwrapped.
+   * It lives here because the backend's return controller belongs to the movement module.
+   */
+  registerReturn(request: RegisterReturnRequest): Observable<MovementResponse> {
+    return this.http.post<MovementResponse>(`${environment.apiBaseUrl}/api/returns`, request);
   }
 }

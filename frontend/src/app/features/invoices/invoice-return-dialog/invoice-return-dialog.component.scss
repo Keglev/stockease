@@ -1,0 +1,29 @@
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 0.5rem;
+}
+
+mat-form-field {
+  width: 100%;
+  min-width: 18rem;
+  margin-top: 0.5rem;
+}
+
+.return-product,
+.return-remaining {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.return-label {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.return-direction {
+  margin: 0.5rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
