@@ -1,2 +1,103 @@
-<h1>{{ 'dashboard.title' | translate }}</h1>
-<p>{{ 'dashboard.placeholder' | translate }}</p>
+<div class="dashboard-toolbar">
+  <h1>{{ 'dashboard.title' | translate }}</h1>
+  <button matButton="outlined" type="button" class="dashboard-refresh" (click)="refresh()">
+    {{ 'dashboard.refresh' | translate }}
+  </button>
+</div>
+
+<!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
+@if (error(); as message) {
+  <p class="dashboard-error" role="alert">{{ message }}</p>
+}
+
+<div class="kpi-row">
+  <mat-card class="kpi-card kpi-products">
+    <mat-card-content>
+      <p class="kpi-label">{{ 'dashboard.kpi.products' | translate }}</p>
+      <p class="kpi-value">{{ totalProducts() }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi-card kpi-low-stock">
+    <mat-card-content>
+      <p class="kpi-label">{{ 'dashboard.kpi.lowStock' | translate }}</p>
+      <p class="kpi-value">{{ lowStock().length }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi-card kpi-overdue">
+    <mat-card-content>
+      <p class="kpi-label">{{ 'dashboard.kpi.overdue' | translate }}</p>
+      <p class="kpi-value">{{ overdueCount() }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi-card kpi-loss-value">
+    <mat-card-content>
+      <p class="kpi-label">{{ 'dashboard.kpi.lossValue' | translate }}</p>
+      <p class="kpi-value">{{ lossValue() | currency: 'EUR' }}</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<mat-card class="low-stock-card" [class.low-stock-alert]="lowStock().length > 0">
+  <mat-card-content>
+    <h2 class="section-title">{{ 'dashboard.lowStockTitle' | translate }}</h2>
+
+    @if (lowStock().length > 0) {
+      <ul class="low-stock-list">
+        @for (product of lowStock(); track product.id) {
+          <li class="low-stock-row">
+            <a routerLink="/app/products">{{ product.name }}</a>
+            <span class="low-stock-quantity">{{ product.quantity }}</span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="low-stock-none">{{ 'dashboard.lowStockNone' | translate }}</p>
+    }
+  </mat-card-content>
+</mat-card>
+
+<div class="chart-row">
+  <mat-card class="chart-card chart-profit">
+    <mat-card-content>
+      <h2 class="section-title">{{ 'dashboard.charts.profitByProduct' | translate }}</h2>
+      @if (profitOption(); as option) {
+        <app-chart [option]="option" height="22rem" />
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="chart-card chart-due-dates">
+    <mat-card-content>
+      <h2 class="section-title">{{ 'dashboard.charts.dueDates' | translate }}</h2>
+      @if (dueDateOption(); as option) {
+        <app-chart [option]="option" height="22rem" />
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<mat-card class="health-card">
+  <mat-card-content>
+    <h2 class="section-title">{{ 'dashboard.health.title' | translate }}</h2>
+
+    @if (probe(); as status) {
+      <p class="health-status">
+        <span class="health-dot" [class.health-dot-up]="status.up" aria-hidden="true"></span>
+        {{ (status.up ? 'dashboard.health.up' : 'dashboard.health.down') | translate }}
+      </p>
+      <!-- Round-trip time as measured in the browser, labelled as such: it is not database lag. -->
+      <p class="health-latency">
+        {{ 'dashboard.health.latency' | translate: { ms: status.latencyMs } }}
+      </p>
+    }
+
+    @if (lastChecked(); as checked) {
+      <p class="health-checked">
+        {{ 'dashboard.health.lastChecked' | translate: { time: checked | date: 'mediumTime' } }}
+      </p>
+    }
+  </mat-card-content>
+</mat-card>

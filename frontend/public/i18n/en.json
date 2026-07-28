@@ -204,7 +204,26 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "placeholder": "Inventory figures and reports will appear here once the feature modules land."
+    "refresh": "Refresh",
+    "kpi": {
+      "products": "Products",
+      "lowStock": "Low stock",
+      "overdue": "Overdue invoices",
+      "lossValue": "Loss value"
+    },
+    "lowStockTitle": "Low stock",
+    "lowStockNone": "All products are sufficiently stocked.",
+    "charts": {
+      "profitByProduct": "Profit by product",
+      "dueDates": "Upcoming due dates"
+    },
+    "health": {
+      "title": "API status",
+      "up": "Available",
+      "down": "Unavailable",
+      "latency": "API response time: {{ms}} ms",
+      "lastChecked": "Last checked at {{time}}"
+    }
   },
   "products": {
     "title": "Products",

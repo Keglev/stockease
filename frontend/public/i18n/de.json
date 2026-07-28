@@ -204,7 +204,26 @@
   },
   "dashboard": {
     "title": "Übersicht",
-    "placeholder": "Lagerkennzahlen und Berichte erscheinen hier, sobald die Fachmodule verfügbar sind."
+    "refresh": "Aktualisieren",
+    "kpi": {
+      "products": "Produkte",
+      "lowStock": "Bestand niedrig",
+      "overdue": "Überfällige Rechnungen",
+      "lossValue": "Verlustwert"
+    },
+    "lowStockTitle": "Bestand niedrig",
+    "lowStockNone": "Alle Produkte sind ausreichend bevorratet.",
+    "charts": {
+      "profitByProduct": "Gewinn je Produkt",
+      "dueDates": "Anstehende Fälligkeiten"
+    },
+    "health": {
+      "title": "API-Status",
+      "up": "Erreichbar",
+      "down": "Nicht erreichbar",
+      "latency": "API-Antwortzeit: {{ms}} ms",
+      "lastChecked": "Zuletzt geprüft um {{time}}"
+    }
   },
   "products": {
     "title": "Produkte",
