@@ -17,3 +17,5 @@ export type InvoiceSummaryResponse = components['schemas']['InvoiceSummaryRespon
 export type InvoiceResponse = components['schemas']['InvoiceResponse'];
 
 export type InvoiceItemResponse = components['schemas']['InvoiceItemResponse'];
+
+export type CreateInvoiceRequest = components['schemas']['CreateInvoiceRequest'];

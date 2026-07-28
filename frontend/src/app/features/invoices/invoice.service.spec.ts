@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
 import { InvoiceResponse, InvoiceSummaryResponse } from '../../core/api/api-models';
+import { buildCreateInvoiceRequest } from './invoice-payload';
 import { InvoiceService } from './invoice.service';
 
 const BASE_URL = `${environment.apiBaseUrl}/api/invoices`;
@@ -34,6 +35,17 @@ const DETAIL: InvoiceResponse = {
   createdAt: '2026-01-02T03:04:00',
   items: [{ id: 4, productId: 3, productName: 'Widget', quantity: 2, unitPrice: 15, returnedQty: 0 }]
 };
+
+/** Built through the same helper the create page uses, so the payload pins test real construction. */
+function purchaseDraft() {
+  return buildCreateInvoiceRequest({
+    type: 'PURCHASE',
+    supplierId: 7,
+    customerId: null,
+    dueDate: '2026-03-01',
+    items: [{ productId: 3, quantity: 2, unitPrice: 15 }]
+  });
+}
 
 describe('InvoiceService', () => {
   let service: InvoiceService;
@@ -86,6 +98,62 @@ describe('InvoiceService', () => {
     // The envelope keys must not survive the service boundary.
     expect(emitted).not.toHaveProperty('success');
     expect(emitted).not.toHaveProperty('data');
+    controller.verify();
+  });
+
+  it('create_bareResponse_emitsPayloadUnchanged', () => {
+    let emitted: InvoiceSummaryResponse | undefined;
+    service.create(purchaseDraft()).subscribe((created) => (emitted = created));
+
+    const request = controller.expectOne(BASE_URL);
+    expect(request.request.method).toBe('POST');
+    request.flush(SUMMARY);
+
+    expect(emitted).toEqual(SUMMARY);
+    expect(emitted).not.toHaveProperty('data');
+    controller.verify();
+  });
+
+  it('create_anyPayload_omitsFinancialFields', () => {
+    service.create(purchaseDraft()).subscribe();
+
+    const body = controller.expectOne(BASE_URL).request.body as object;
+
+    // Financial fields are deliberately absent: the system records inventory facts, not
+    // financial calculations (ADR 011).
+    expect(body).not.toHaveProperty('interestRate');
+    expect(body).not.toHaveProperty('fineValue');
+    controller.verify();
+  });
+
+  it('create_purchasePayload_omitsCustomerIdKey', () => {
+    service.create(purchaseDraft()).subscribe();
+
+    const body = controller.expectOne(BASE_URL).request.body as object;
+
+    // Omitted entirely rather than sent as null: a purchase must carry no customer key at all.
+    expect(body).not.toHaveProperty('customerId');
+    expect(body).toHaveProperty('supplierId', 7);
+    controller.verify();
+  });
+
+  it('create_walkInSalePayload_omitsBothCounterpartyKeys', () => {
+    service
+      .create(
+        buildCreateInvoiceRequest({
+          type: 'SALE',
+          supplierId: null,
+          customerId: null,
+          dueDate: '2026-03-01',
+          items: [{ productId: 3, quantity: 2, unitPrice: 15 }]
+        })
+      )
+      .subscribe();
+
+    const body = controller.expectOne(BASE_URL).request.body as object;
+
+    expect(body).not.toHaveProperty('supplierId');
+    expect(body).not.toHaveProperty('customerId');
     controller.verify();
   });
 });

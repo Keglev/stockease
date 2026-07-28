@@ -30,6 +30,11 @@ export class ProductService {
       .pipe(map((envelope) => envelope.data as PaginatedProducts));
   }
 
+  /** Bare array - deliberately not unwrapped. */
+  getAll(): Observable<ProductResponse[]> {
+    return this.http.get<ProductResponse[]>(this.baseUrl);
+  }
+
   /** Bare object - deliberately not unwrapped. SKU is generated server-side and never sent. */
   create(name: string, quantity: number, purchasePrice: number): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(this.baseUrl, { name, quantity, purchasePrice });

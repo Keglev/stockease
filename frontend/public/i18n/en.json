@@ -36,6 +36,8 @@
     "title": "Invoices",
     "loading": "Loading invoices…",
     "empty": "No invoices found.",
+    "create": "New invoice",
+    "created": "Invoice created.",
     "paid": "Paid",
     "walkIn": "Walk-in sale",
     "columns": {
@@ -54,6 +56,22 @@
       "OPEN": "Open",
       "CLOSED": "Closed",
       "FULLY_RETURNED": "Fully returned"
+    },
+    "createPage": {
+      "title": "New invoice",
+      "typeLabel": "Invoice type",
+      "counterpartySupplier": "Supplier",
+      "counterpartyCustomer": "Customer",
+      "dueDate": "Due date",
+      "items": "Items",
+      "addItem": "Add item",
+      "removeItem": "Remove item",
+      "product": "Product",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "runningTotal": "Running total",
+      "submit": "Create invoice",
+      "cancel": "Cancel"
     },
     "detail": {
       "title": "Invoice",

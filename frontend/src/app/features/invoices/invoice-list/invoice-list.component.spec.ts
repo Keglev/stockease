@@ -19,6 +19,7 @@ const TRANSLATIONS = {
     invoices: {
       title: 'Invoices',
       empty: 'No invoices found.',
+      create: 'New invoice',
       paid: 'Paid',
       walkIn: 'Walk-in sale',
       columns: {
@@ -153,6 +154,15 @@ describe('InvoiceListComponent', () => {
     expect(host().querySelectorAll('.status-open').length).toBe(1);
     expect(host().querySelectorAll('.status-closed').length).toBe(1);
     expect(host().querySelectorAll('.status-fully-returned').length).toBe(1);
+  });
+
+  it('render_anyRole_showsCreateButtonRoutedToNewPage', async () => {
+    await setUp([invoice({ id: 1 })]);
+
+    // Creation is not admin-gated: the backend permits hasAnyRole(ADMIN, USER).
+    const create = host().querySelector<HTMLAnchorElement>('.invoice-create');
+    expect(create).not.toBeNull();
+    expect(create?.getAttribute('href')).toBe('/app/invoices/new');
   });
 
   it('load_backendOrder_isRenderedUnchanged', async () => {

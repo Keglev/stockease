@@ -4,7 +4,11 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../core/api/api-envelope';
-import { InvoiceResponse, InvoiceSummaryResponse } from '../../core/api/api-models';
+import {
+  CreateInvoiceRequest,
+  InvoiceResponse,
+  InvoiceSummaryResponse
+} from '../../core/api/api-models';
 
 /**
  * Reads invoices from the API. The list and detail endpoints differ in shape, so each method
@@ -30,5 +34,10 @@ export class InvoiceService {
     return this.http
       .get<ApiEnvelope<InvoiceResponse>>(`${this.baseUrl}/${id}`)
       .pipe(map((envelope) => envelope.data as InvoiceResponse));
+  }
+
+  /** Bare created summary - deliberately not unwrapped. */
+  create(request: CreateInvoiceRequest): Observable<InvoiceSummaryResponse> {
+    return this.http.post<InvoiceSummaryResponse>(this.baseUrl, request);
   }
 }

@@ -1,0 +1,108 @@
+<h1>{{ 'invoices.createPage.title' | translate }}</h1>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-card class="create-card">
+    <mat-card-content>
+      <div class="field-row">
+        <span class="field-label">{{ 'invoices.createPage.typeLabel' | translate }}</span>
+        <mat-button-toggle-group formControlName="type" class="type-toggle">
+          <mat-button-toggle value="PURCHASE">
+            {{ 'invoices.type.PURCHASE' | translate }}
+          </mat-button-toggle>
+          <mat-button-toggle value="SALE">{{ 'invoices.type.SALE' | translate }}</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>
+          {{
+            (isPurchase()
+              ? 'invoices.createPage.counterpartySupplier'
+              : 'invoices.createPage.counterpartyCustomer'
+            ) | translate
+          }}
+        </mat-label>
+        <mat-select formControlName="counterpartyId" class="counterparty-select">
+          @if (!isPurchase()) {
+            <mat-option [value]="null">{{ 'invoices.walkIn' | translate }}</mat-option>
+          }
+          @for (option of counterpartyOptions(); track option.id) {
+            <mat-option [value]="option.id">{{ option.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'invoices.createPage.dueDate' | translate }}</mat-label>
+        <input matInput [matDatepicker]="duePicker" formControlName="dueDate" />
+        <mat-datepicker-toggle matIconSuffix [for]="duePicker" />
+        <mat-datepicker #duePicker />
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="create-card">
+    <mat-card-content>
+      <h2>{{ 'invoices.createPage.items' | translate }}</h2>
+
+      <div formArrayName="items">
+        @for (row of items.controls; track $index) {
+          <div class="item-row" [formGroupName]="$index">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'invoices.createPage.product' | translate }}</mat-label>
+              <mat-select formControlName="productId" class="product-select">
+                @for (product of productOptions(); track product.id) {
+                  <mat-option [value]="product.id">{{ product.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'invoices.createPage.quantity' | translate }}</mat-label>
+              <input matInput type="number" formControlName="quantity" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'invoices.createPage.unitPrice' | translate }}</mat-label>
+              <input matInput type="number" formControlName="unitPrice" />
+            </mat-form-field>
+
+            <button
+              matIconButton
+              type="button"
+              class="remove-item"
+              [disabled]="items.length === 1"
+              [attr.aria-label]="'invoices.createPage.removeItem' | translate"
+              (click)="removeItem($index)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <button matButton type="button" class="add-item" (click)="addItem()">
+        {{ 'invoices.createPage.addItem' | translate }}
+      </button>
+
+      <p class="running-total">
+        <span>{{ 'invoices.createPage.runningTotal' | translate }}</span>
+        <span class="running-total-value">{{ runningTotal() }}</span>
+      </p>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="create-actions">
+    <button matButton type="button" class="create-cancel" (click)="cancel()">
+      {{ 'invoices.createPage.cancel' | translate }}
+    </button>
+    <button
+      matButton="filled"
+      type="submit"
+      class="create-submit"
+      [disabled]="form.invalid || pending()"
+    >
+      {{ 'invoices.createPage.submit' | translate }}
+    </button>
+  </div>
+</form>

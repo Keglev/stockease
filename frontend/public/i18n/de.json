@@ -36,6 +36,8 @@
     "title": "Rechnungen",
     "loading": "Rechnungen werden geladen…",
     "empty": "Keine Rechnungen gefunden.",
+    "create": "Neue Rechnung",
+    "created": "Rechnung wurde angelegt.",
     "paid": "Bezahlt",
     "walkIn": "Barverkauf",
     "columns": {
@@ -54,6 +56,22 @@
       "OPEN": "Offen",
       "CLOSED": "Geschlossen",
       "FULLY_RETURNED": "Vollständig retourniert"
+    },
+    "createPage": {
+      "title": "Neue Rechnung",
+      "typeLabel": "Rechnungsart",
+      "counterpartySupplier": "Lieferant",
+      "counterpartyCustomer": "Kunde",
+      "dueDate": "Fällig am",
+      "items": "Positionen",
+      "addItem": "Position hinzufügen",
+      "removeItem": "Position entfernen",
+      "product": "Produkt",
+      "quantity": "Menge",
+      "unitPrice": "Einzelpreis",
+      "runningTotal": "Zwischensumme",
+      "submit": "Rechnung anlegen",
+      "cancel": "Abbrechen"
     },
     "detail": {
       "title": "Rechnung",
