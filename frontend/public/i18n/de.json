@@ -11,6 +11,12 @@
   },
   "landing": {
     "description": "{{app}} ist eine Bestandsverwaltung für kleine Unternehmen: Produkte und Lagerbestände verfolgen, Lieferanten und Kunden verwalten sowie Ein- und Verkäufe über den Rechnungslauf abwickeln. Diese Demo arbeitet mit der aktiven Spring-Boot-API.",
+    "demo": {
+      "title": "Demo ausprobieren",
+      "tryAdmin": "Als Admin testen",
+      "tryUser": "Als Benutzer testen",
+      "resetNotice": "Demodaten - werden nächtlich um 03:00 UTC zurückgesetzt"
+    },
     "loginCta": "Anmelden",
     "repository": "GitHub-Repository",
     "documentation": "Dokumentation"
@@ -282,6 +288,8 @@
   },
   "shell": {
     "logout": "Abmelden",
+    "demoBadge": "DEMO",
+    "demoTooltip": "Demosystem - Daten werden nächtlich zurückgesetzt",
     "role": {
       "ADMIN": "Administrator",
       "USER": "Benutzer"

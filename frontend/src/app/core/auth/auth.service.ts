@@ -46,20 +46,33 @@ export class AuthService {
   }
 
   login(username: string, password: string): Observable<ApiEnvelope<string>> {
-    return this.http
-      .post<ApiEnvelope<string>>(`${environment.apiBaseUrl}/api/auth/login`, { username, password })
-      .pipe(
-        tap((response) => {
-          if (response.success && response.data) {
-            this.storeToken(response.data);
-          }
-        })
-      );
+    return this.authenticate(`${environment.apiBaseUrl}/api/auth/login`, { username, password });
+  }
+
+  /** Passwordless demo entry: the backend issues an ordinary JWT for the demo account of that role. */
+  demoLogin(role: UserRole): Observable<ApiEnvelope<string>> {
+    return this.authenticate(`${environment.apiBaseUrl}/api/demo/login`, { role });
   }
 
   logout(): void {
     this.clearStoredToken();
     this.tokenSignal.set(null);
+  }
+
+  /**
+   * Posts a credential-bearing body and captures the token the envelope carries. Both logins go
+   * through here on purpose: once the token lands, a demo session is indistinguishable from a
+   * normal one - same storage key, same signals, same restore on reload - so no downstream code
+   * has a demo branch to get wrong.
+   */
+  private authenticate(url: string, body: object): Observable<ApiEnvelope<string>> {
+    return this.http.post<ApiEnvelope<string>>(url, body).pipe(
+      tap((response) => {
+        if (response.success && response.data) {
+          this.storeToken(response.data);
+        }
+      })
+    );
   }
 
   private storeToken(token: string): void {

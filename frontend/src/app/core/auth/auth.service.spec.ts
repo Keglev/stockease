@@ -8,6 +8,8 @@ import { AuthService, TOKEN_STORAGE_KEY } from './auth.service';
 
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
 
+const DEMO_LOGIN_URL = `${environment.apiBaseUrl}/api/demo/login`;
+
 /** Builds an unsigned JWT-shaped token; the frontend only reads the payload. */
 function tokenWith(payload: Record<string, unknown>): string {
   const encode = (value: object) =>
@@ -64,6 +66,38 @@ describe('AuthService', () => {
     expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
     expect(service.role()).toBeNull();
+    http.verify();
+  });
+
+  it('demoLogin_adminRole_postsRoleAndStoresTokenLikeNormalLogin', () => {
+    const { service, http } = setUp();
+    const token = futureToken('ADMIN');
+
+    service.demoLogin('ADMIN').subscribe();
+
+    const request = http.expectOne(DEMO_LOGIN_URL);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ role: 'ADMIN' });
+    request.flush({ success: true, message: 'Login successful', data: token } as ApiEnvelope<string>);
+
+    // Same storage key and same signals as login above: after the token lands the two are one session.
+    expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBe(token);
+    expect(service.isAuthenticated()).toBe(true);
+    expect(service.role()).toBe('ADMIN');
+    http.verify();
+  });
+
+  it('demoLogin_rejectedByBackend_leavesStateClean', () => {
+    const { service, http } = setUp();
+
+    service.demoLogin('USER').subscribe({ error: () => undefined });
+
+    http
+      .expectOne(DEMO_LOGIN_URL)
+      .flush({ success: false, message: 'Demo role must be ADMIN or USER.', data: null }, { status: 400, statusText: 'Bad Request' });
+
+    expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
+    expect(service.isAuthenticated()).toBe(false);
     http.verify();
   });
 

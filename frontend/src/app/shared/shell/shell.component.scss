@@ -9,6 +9,19 @@ mat-toolbar {
   color: var(--mat-sys-on-primary-container);
 }
 
+// Outlined rather than filled: the badge states a fact about the deployment and should read as an
+// annotation on the product name, not as a second header colour competing with the toolbar tone.
+// Both values are system tokens, so the active scheme decides the actual colours.
+.demo-badge {
+  margin-left: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 1rem;
+  color: var(--mat-sys-on-primary-container);
+  font: var(--mat-sys-label-small);
+  letter-spacing: 0.08em;
+}
+
 app-language-toggle {
   margin-right: 0.75rem;
 }
