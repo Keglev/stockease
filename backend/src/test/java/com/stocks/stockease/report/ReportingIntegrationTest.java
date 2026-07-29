@@ -65,7 +65,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
 
     /** Products start at quantity 0 so all stock exists only via movements the reports read. */
     private Product newProduct(String name, String purchasePrice) {
-        return productService.create(name, 0, new BigDecimal(purchasePrice).doubleValue());
+        return productService.create(name, "RPT-" + name.hashCode(), new BigDecimal(purchasePrice).doubleValue());
     }
 
     private Invoice closedPurchase(long supplierId, long productId, int qty, String unitPrice) {

@@ -31,10 +31,11 @@ export class ProductCreateDialogComponent {
   protected readonly pending = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
-  // No SKU control: the server generates it, so there is nothing for the user to supply.
+  // No quantity control: creation is master-data only and books no stock (ADR 018). The SKU is
+  // operator-assigned - it is the article number the business already uses, not ours to invent.
   protected readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', Validators.required],
-    quantity: [0, [Validators.required, Validators.min(0), integerOnly]],
+    sku: ['', [Validators.required, Validators.maxLength(64)]],
     purchasePrice: [0, [Validators.required, positivePrice]]
   });
 
@@ -45,8 +46,8 @@ export class ProductCreateDialogComponent {
     this.pending.set(true);
     this.errorMessage.set(null);
 
-    const { name, quantity, purchasePrice } = this.form.getRawValue();
-    this.products.create(name, Number(quantity), Number(purchasePrice)).subscribe({
+    const { name, sku, purchasePrice } = this.form.getRawValue();
+    this.products.create(name, sku, Number(purchasePrice)).subscribe({
       next: (created) => {
         this.pending.set(false);
         this.dialogRef.close(created);
@@ -62,12 +63,4 @@ export class ProductCreateDialogComponent {
   protected cancel(): void {
     this.dialogRef.close();
   }
-}
-
-function integerOnly(control: { value: unknown }) {
-  const value = control.value;
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-  return Number.isInteger(Number(value)) ? null : { integerOnly: true };
 }

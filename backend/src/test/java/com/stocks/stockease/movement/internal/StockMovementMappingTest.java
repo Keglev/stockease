@@ -36,7 +36,10 @@ class StockMovementMappingTest extends AbstractIntegrationTest {
 
     @Test
     void persistMovement_minimalSoldMovement_persistsWithGeneratedId() {
-        Product product = productRepository.saveAndFlush(new Product("Widget", 10, 5.0));
+        // explicit SKU: it is no longer generated on persist
+        Product product = new Product("Widget", 10, 5.0);
+        product.setSku("TST-MMAP-1");
+        productRepository.saveAndFlush(product);
         User user = userRepository.saveAndFlush(new User("mover", "hash", "ROLE_ADMIN"));
 
         StockMovement movement = new StockMovement(null, product, user, MovementType.DECREASE,

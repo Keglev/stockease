@@ -96,12 +96,17 @@ describe('ProductService', () => {
 
   it('create_bareObjectResponse_emitsPayloadUnchanged', () => {
     let emitted: ProductResponse | undefined;
-    service.create('Laptop', 50, 999.99).subscribe((product) => (emitted = product));
+    service.create('Laptop', 'BUE-0004', 999.99).subscribe((product) => (emitted = product));
 
     const request = controller.expectOne(BASE_URL);
     expect(request.request.method).toBe('POST');
-    // No sku key: the server generates it.
-    expect(request.request.body).toEqual({ name: 'Laptop', quantity: 50, purchasePrice: 999.99 });
+    // whole-body pin: exactly these three keys go on the wire. No quantity - creation books no
+    // stock (ADR 018) - and the SKU is the operator's, not the server's.
+    expect(request.request.body).toEqual({
+      name: 'Laptop',
+      sku: 'BUE-0004',
+      purchasePrice: 999.99
+    });
     request.flush(LAPTOP);
 
     expect(emitted).toEqual(LAPTOP);

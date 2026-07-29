@@ -18,6 +18,9 @@ import com.stocks.stockease.invoice.CreateInvoiceCommand;
 import com.stocks.stockease.invoice.Invoice;
 import com.stocks.stockease.invoice.InvoiceService;
 import com.stocks.stockease.invoice.InvoiceType;
+import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.RecordMovementCommand;
+import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
@@ -45,6 +48,9 @@ class CustomerSummaryIntegrationTest extends AbstractIntegrationTest {
     private InvoiceService invoiceService;
 
     @Autowired
+    private StockMovementService stockMovementService;
+
+    @Autowired
     private UserRepository userRepository;
 
     private User user;
@@ -59,9 +65,16 @@ class CustomerSummaryIntegrationTest extends AbstractIntegrationTest {
         return customerService.create(name, null, null, null, null);
     }
 
-    /** Stocked up front so closing a sale has units to book out. */
+    /**
+     * Stocked up front so closing a sale has units to book out. Creation itself books no stock
+     * (ADR 018), so the opening balance arrives as a NEW_PRODUCT movement - the same path the demo
+     * baseline uses for stock that predates any invoice.
+     */
     private Product newProduct(String name, int quantity) {
-        return productService.create(name, quantity, 5.0);
+        Product product = productService.create(name, "SUM-" + name.hashCode(), 5.0);
+        stockMovementService.recordMovement(new RecordMovementCommand(
+                product.getId(), MovementReason.NEW_PRODUCT, quantity, null, new BigDecimal("5.00")), user);
+        return product;
     }
 
     private Invoice sale(Long customerId, CreateInvoiceCommand.ItemLine... lines) {

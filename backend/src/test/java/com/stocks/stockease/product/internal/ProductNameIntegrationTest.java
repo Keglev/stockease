@@ -27,9 +27,10 @@ class ProductNameIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void persistProduct_nameDifferingOnlyByCase_rejected() {
-        productRepository.saveAndFlush(new Product("Name Case Widget", 10, 5.0));
+        productRepository.saveAndFlush(withSku(new Product("Name Case Widget", 10, 5.0), "TST-NAME-1"));
 
-        Product second = new Product("NAME CASE WIDGET", 10, 5.0);
+        // distinct SKU so the violation can only come from the name index, not the SKU index
+        Product second = withSku(new Product("NAME CASE WIDGET", 10, 5.0), "TST-NAME-2");
 
         assertThatThrownBy(() -> productRepository.saveAndFlush(second))
                 .isInstanceOf(DataIntegrityViolationException.class);
@@ -37,22 +38,32 @@ class ProductNameIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void softDeleteProduct_thenRecreateSameName_succeeds() {
-        Product first = productRepository.saveAndFlush(new Product("Name Reuse Widget", 10, 5.0));
+        Product first = productRepository.saveAndFlush(
+                withSku(new Product("Name Reuse Widget", 10, 5.0), "TST-NAME-3"));
         productRepository.delete(first);
         productRepository.flush();
 
-        Product saved = productRepository.saveAndFlush(new Product("Name Reuse Widget", 10, 5.0));
+        Product saved = productRepository.saveAndFlush(
+                withSku(new Product("Name Reuse Widget", 10, 5.0), "TST-NAME-4"));
 
         assertThat(saved.getId()).isNotNull();
     }
 
     @Test
     void persistProducts_withDistinctNames_bothPersist() {
-        Product first = productRepository.saveAndFlush(new Product("Name Distinct One", 10, 5.0));
+        Product first = productRepository.saveAndFlush(
+                withSku(new Product("Name Distinct One", 10, 5.0), "TST-NAME-5"));
 
-        Product second = productRepository.saveAndFlush(new Product("Name Distinct Two", 10, 5.0));
+        Product second = productRepository.saveAndFlush(
+                withSku(new Product("Name Distinct Two", 10, 5.0), "TST-NAME-6"));
 
         assertThat(first.getId()).isNotNull();
         assertThat(second.getId()).isNotNull();
+    }
+
+    /** The SKU is no longer generated on persist, so every fixture has to carry its own. */
+    private static Product withSku(Product product, String sku) {
+        product.setSku(sku);
+        return product;
     }
 }

@@ -2,7 +2,6 @@ package com.stocks.stockease.product;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -15,7 +14,6 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -54,7 +52,7 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal purchasePrice;
 
-    /** Stock keeping unit identifier; generated on creation if not supplied. */
+    /** Stock keeping unit identifier, assigned by the operator at creation and never generated. */
     @Column(nullable = false)
     private String sku;
 
@@ -78,14 +76,5 @@ public class Product {
         this.name = name;
         this.quantity = quantity;
         this.purchasePrice = BigDecimal.valueOf(purchasePrice);
-    }
-
-    @PrePersist
-    private void ensureSku() {
-        if (sku == null || sku.isBlank()) {
-            // interim generator; real SKU convention arrives with demo data
-            sku = "SKU-" + UUID.randomUUID().toString()
-                    .substring(0, 8).toUpperCase();
-        }
     }
 }

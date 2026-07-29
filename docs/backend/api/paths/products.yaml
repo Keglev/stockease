@@ -36,11 +36,12 @@ get:
 post:
   summary: Create a new product (ADMIN only)
   description: |
-    Creates a product from a name, an initial quantity and a purchase price. The SKU is generated
-    when not supplied, and `totalValue` is derived for the response rather than stored.
+    Creates a product from a name, an operator-assigned SKU and a purchase price. `totalValue` is
+    derived for the response rather than stored.
 
-    Note that the initial quantity given here is the only quantity this API accepts directly; from
-    then on the value changes exclusively through stock movements.
+    Creation is master-data maintenance and accepts no quantity: the product starts at zero stock,
+    and every unit it later holds arrives through a movement that documents it - closing a purchase
+    invoice, or a `NEW_PRODUCT` opening balance.
   operationId: createProduct
   tags:
     - Products
@@ -62,10 +63,10 @@ post:
           example:
             id: 3
             name: New Laptop
-            sku: SKU-C3D4E5F6
-            quantity: 25
+            sku: BUE-0004
+            quantity: 0
             purchasePrice: 1299.99
-            totalValue: 32499.75
+            totalValue: 0.00
             createdAt: '2026-01-02T03:06:00'
     '400':
       description: Validation error - missing or invalid fields
@@ -78,13 +79,13 @@ post:
             message: Validation failed for request parameters.
             data:
               name: must not be blank
-              quantity: must be greater than or equal to 0
+              sku: must not be blank
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'
     '403':
       $ref: '../openapi.yaml#/components/responses/Forbidden'
     '409':
-      description: A live product already carries that name
+      description: A live product already carries that name or that SKU
       content:
         application/json:
           schema:

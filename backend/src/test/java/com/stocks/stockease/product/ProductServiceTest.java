@@ -100,22 +100,48 @@ class ProductServiceTest {
 
     @Test
     void create_withValidFields_savesAndReturnsProduct() {
-        Product saved = new Product("Widget", 10, 5.0);
+        Product saved = new Product("Widget", 0, 5.0);
         when(productRepository.existsByNameIgnoreCase("Widget")).thenReturn(false);
+        when(productRepository.existsBySku("WKZ-0001")).thenReturn(false);
         when(productRepository.save(any(Product.class))).thenReturn(saved);
 
-        Product result = productService.create("Widget", 10, 5.0);
+        Product result = productService.create("Widget", "WKZ-0001", 5.0);
 
         assertThat(result).isSameAs(saved);
+    }
+
+    @Test
+    void create_withAnyPrice_persistsTheProductAtZeroStockCarryingTheGivenSku() {
+        when(productRepository.existsByNameIgnoreCase("Widget")).thenReturn(false);
+        when(productRepository.existsBySku("WKZ-0001")).thenReturn(false);
+        when(productRepository.save(any(Product.class))).thenAnswer(call -> call.getArgument(0));
+
+        productService.create("Widget", "WKZ-0001", 5.0);
+
+        ArgumentCaptor<Product> persisted = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(persisted.capture());
+        assertThat(persisted.getValue().getQuantity()).isZero();
+        assertThat(persisted.getValue().getSku()).isEqualTo("WKZ-0001");
     }
 
     @Test
     void create_withDuplicateName_throwsDuplicateResourceExceptionWithoutSaving() {
         when(productRepository.existsByNameIgnoreCase("widget")).thenReturn(true);
 
-        assertThatThrownBy(() -> productService.create("widget", 10, 5.0))
+        assertThatThrownBy(() -> productService.create("widget", "WKZ-0001", 5.0))
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessage("A product named 'widget' already exists.");
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    void create_withDuplicateLiveSku_throwsDuplicateResourceExceptionWithoutSaving() {
+        when(productRepository.existsByNameIgnoreCase("Widget")).thenReturn(false);
+        when(productRepository.existsBySku("WKZ-0001")).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.create("Widget", "WKZ-0001", 5.0))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessage("A product with SKU 'WKZ-0001' already exists.");
         verify(productRepository, never()).save(any(Product.class));
     }
 

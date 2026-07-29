@@ -114,7 +114,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void recordMovement_soldAgainstSaleInvoice_decreasesStockAndSnapshotsPrice() {
-        Product product = productRepository.saveAndFlush(new Product("Movement Sold", 10, 5.0));
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Sold", 10, 5.0), "TST-MOVE-1"));
         InvoiceItem item = saleItemFor(product, 5);
 
         StockMovement saved = stockMovementService
@@ -128,7 +129,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void recordMovement_returnFromCustomer_incrementsReturnedQty() {
-        Product product = productRepository.saveAndFlush(new Product("Movement Return From Customer", 10, 5.0));
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Return From Customer", 10, 5.0), "TST-MOVE-2"));
         InvoiceItem item = saleItemFor(product, 5);
         stockMovementService.recordMovement(command(MovementReason.SOLD, product, 5, item.getId()), user);
 
@@ -143,7 +145,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void recordMovement_decreaseBelowZero_rejectsAndRollsBack() {
-        Product product = productRepository.saveAndFlush(new Product("Movement Below Zero", 3, 5.0));
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Below Zero", 3, 5.0), "TST-MOVE-3"));
         InvoiceItem item = saleItemFor(product, 5);
         long movementsBefore = stockMovementRepository.count();
 
@@ -165,7 +168,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void recordMovement_returnToSupplierExceedingStock_rollsBackReturnedQtyIncrement() {
-        Product product = productRepository.saveAndFlush(new Product("Movement Return To Supplier", 3, 5.0));
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Return To Supplier", 3, 5.0), "TST-MOVE-4"));
         InvoiceItem item = purchaseItemFor(product, 10);
 
         assertThatThrownBy(() -> stockMovementService
@@ -177,5 +181,11 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(productRepository.findById(product.getId()).orElseThrow().getQuantity()).isEqualTo(3);
         assertThat(stockMovementRepository
                 .existsByInvoiceItemIdAndReason(item.getId(), MovementReason.RETURNED_TO_SUPPLIER)).isFalse();
+    }
+
+    /** The SKU is no longer generated on persist, so every fixture has to carry its own. */
+    private static Product withSku(Product product, String sku) {
+        product.setSku(sku);
+        return product;
     }
 }

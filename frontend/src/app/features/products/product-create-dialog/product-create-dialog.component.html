@@ -11,10 +11,10 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>{{ 'products.form.quantity' | translate }}</mat-label>
-      <input matInput type="number" formControlName="quantity" />
-      @if (form.controls.quantity.invalid) {
-        <mat-error>{{ 'products.form.quantityInvalid' | translate }}</mat-error>
+      <mat-label>{{ 'products.form.sku' | translate }}</mat-label>
+      <input matInput formControlName="sku" maxlength="64" />
+      @if (form.controls.sku.touched && form.controls.sku.invalid) {
+        <mat-error>{{ 'products.form.skuRequired' | translate }}</mat-error>
       }
     </mat-form-field>
 
@@ -25,8 +25,6 @@
         <mat-error>{{ 'products.form.priceInvalid' | translate }}</mat-error>
       }
     </mat-form-field>
-
-    <p class="sku-hint">{{ 'products.form.skuHint' | translate }}</p>
 
     <!-- Rendered verbatim: this text comes from the backend, which has no i18n. -->
     @if (errorMessage(); as message) {

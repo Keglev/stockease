@@ -28,8 +28,10 @@ class SoftDeleteIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void deleteProduct_viaRepository_setsDeletedAtInsteadOfRemoving() {
-        Product product = productRepository.saveAndFlush(new Product("Widget", 10, 5.0));
-        Long id = product.getId();
+        Product product = new Product("Widget", 10, 5.0);
+        // explicit since ADR 018 removed the generator; the column is NOT NULL
+        product.setSku("SKU-DEL-1");
+        Long id = productRepository.saveAndFlush(product).getId();
 
         productRepository.delete(product);
         productRepository.flush();

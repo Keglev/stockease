@@ -29,5 +29,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 015 - Runtime Translation over Compile-Time Localization](015-runtime-i18n.md) - **[Frontend]**
 - [ADR 016 - Direct ECharts, Not an Angular Wrapper](016-charting-library.md) - **[Frontend]**
 - [ADR 017 - Central Decision Log at the System Level](017-central-decision-log.md) - **[Cross-cutting]**
+- [ADR 018 - Product Creation is Master-Data Maintenance](018-product-master-data.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

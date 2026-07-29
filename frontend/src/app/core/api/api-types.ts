@@ -71,11 +71,12 @@ export interface paths {
         put?: never;
         /**
          * Create a new product (ADMIN only)
-         * @description Creates a product from a name, an initial quantity and a purchase price. The SKU is generated
-         *     when not supplied, and `totalValue` is derived for the response rather than stored.
+         * @description Creates a product from a name, an operator-assigned SKU and a purchase price. `totalValue` is
+         *     derived for the response rather than stored.
          *
-         *     Note that the initial quantity given here is the only quantity this API accepts directly; from
-         *     then on the value changes exclusively through stock movements.
+         *     Creation is master-data maintenance and accepts no quantity: the product starts at zero stock,
+         *     and every unit it later holds arrives through a movement that documents it - closing a purchase
+         *     invoice, or a `NEW_PRODUCT` opening balance.
          */
         post: operations["createProduct"];
         delete?: never;
@@ -883,10 +884,10 @@ export interface components {
              */
             name: string;
             /**
-             * @description Must be zero or greater
-             * @example 25
+             * @description Operator-assigned stock keeping unit; must not be blank
+             * @example BUE-0004
              */
-            quantity: number;
+            sku: string;
             /**
              * Format: double
              * @description Must be positive
@@ -1721,10 +1722,10 @@ export interface operations {
                      * @example {
                      *       "id": 3,
                      *       "name": "New Laptop",
-                     *       "sku": "SKU-C3D4E5F6",
-                     *       "quantity": 25,
+                     *       "sku": "BUE-0004",
+                     *       "quantity": 0,
                      *       "purchasePrice": 1299.99,
-                     *       "totalValue": 32499.75,
+                     *       "totalValue": 0,
                      *       "createdAt": "2026-01-02T03:06:00"
                      *     }
                      */
@@ -1743,7 +1744,7 @@ export interface operations {
                      *       "message": "Validation failed for request parameters.",
                      *       "data": {
                      *         "name": "must not be blank",
-                     *         "quantity": "must be greater than or equal to 0"
+                     *         "sku": "must not be blank"
                      *       }
                      *     }
                      */
@@ -1752,7 +1753,7 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
-            /** @description A live product already carries that name */
+            /** @description A live product already carries that name or that SKU */
             409: {
                 headers: {
                     [name: string]: unknown;
