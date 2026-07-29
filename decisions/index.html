@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend ·
-09-decisions/014-openapi-types-only · StockEase Docs</title>
+  <title>Decisions · index · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -66,6 +65,7 @@
   <p class="nav-title">Docs</p>
   <ul>
     <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
   </ul>
 
   <p class="nav-title">Backend</p>
@@ -82,7 +82,7 @@
     <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
     <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
     <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
-    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
     <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
     <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
     <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
@@ -97,81 +97,79 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="adr-014-types-only-generation-from-the-openapi-spec">ADR
-        014: Types-Only Generation from the OpenAPI Spec</h1>
-        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
-        28, 2026</p>
-        <hr />
-        <h2 id="context">Context</h2>
-        <p>The OpenAPI document under <code>docs/backend/api</code> is
-        the source of truth for the HTTP contract (ADR 008). The
-        frontend needs the same request and response shapes, and
-        hand-copying them guarantees drift.</p>
-        <p>Generation is the obvious answer, but the API’s response
-        shape is not uniform and not accidentally so: some endpoints
-        return a bare payload, others wrap it in the shared envelope,
-        and which is which is part of the contract each endpoint agreed
-        to. That knowledge has to live somewhere the tests can
-        reach.</p>
-        <h2 id="decision">Decision</h2>
-        <p><strong>Generate types, not a client</strong> (PR #70).
-        <code>openapi-typescript</code> reads the spec and emits
-        <code>src/app/core/api/api-types.ts</code>; the generated file
-        is committed, so a clone builds without running the generator
-        and a regeneration shows up as a reviewable diff. Every service
-        is hand-written on Angular’s <code>HttpClient</code>, typed from
-        the generated definitions, and each one states in code which of
-        its calls are enveloped and which are bare.</p>
-        <p>The generator is invoked through an <strong>isolated, exactly
-        pinned <code>npx</code></strong>
-        (<code>npx --yes --package openapi-typescript@7.13.0</code>)
-        rather than installed as a devDependency. It declares a
-        TypeScript 5 peer range while this workspace pins TypeScript 6;
-        adding it to the dependency tree would either force a resolution
-        conflict or pin the workspace’s compiler to the generator’s
-        convenience. Run out-of-tree, it is a tool that produces a file,
-        not a dependency with an opinion about the toolchain.</p>
-        <h2 id="alternatives-considered">Alternatives considered</h2>
-        <p><strong>Full client generation.</strong> Rejected: the
-        generated client returns whatever the spec’s schema says and
-        flattens the per-endpoint envelope decision into uniform call
-        sites. That knowledge is deliberately kept in the services,
-        where it is visible and unit-tested; regenerating it away would
-        trade a tested contract for boilerplate nobody reads.</p>
-        <p><strong>A generator devDependency.</strong> Rejected on the
-        peer-range conflict above. This is the same class of coupling
-        recorded in ADR 016 - a tool that pins the framework or compiler
-        version it will tolerate is a tool that decides when the project
-        may upgrade.</p>
-        <p><strong>Hand-written types.</strong> Rejected: it is exactly
-        the drift the spec exists to prevent.</p>
-        <h2 id="consequences">Consequences</h2>
+        <h1 id="architecture-decision-records">Architecture Decision
+        Records</h1>
+        <p>Decisions with justification: why a design was chosen, what
+        alternatives were rejected, and which trade-offs are accepted.
+        ADRs are append-only; superseded decisions are marked, never
+        rewritten.</p>
+        <p>This is the system-wide decision log. The backend and
+        frontend architecture documentations reference it from their
+        section 9 rather than keeping separate logs, so one numbered
+        sequence covers the whole system. Each entry is tagged with the
+        tier it decides for: <strong>[Backend]</strong>,
+        <strong>[Frontend]</strong> or
+        <strong>[Cross-cutting]</strong>.</p>
+        <h2 id="index">Index</h2>
         <ul>
-        <li><code>npm run gen:api</code> regenerates the file; the diff
-        is the contract change.</li>
-        <li>A backend response shape change surfaces as a TypeScript
-        error in the services rather than as a runtime
-        <code>undefined</code>.</li>
-        <li>The envelope contract stays where it is asserted, one
-        service at a time.</li>
+        <li><a href="001-database-choice.html">ADR 001 - Database
+        Choice</a> - <strong>[Backend]</strong></li>
+        <li><a href="002-validation-strategy.html">ADR 002 - Validation
+        Strategy</a> - <strong>[Backend]</strong></li>
+        <li><a href="003-authentication-mechanism.html">ADR 003 -
+        Authentication Mechanism</a> - <strong>[Backend]</strong></li>
+        <li><a href="004-inventory-domain-model.html">ADR 004 -
+        Inventory Domain Model</a> - <strong>[Backend]</strong></li>
+        <li><a href="006-audit-and-profit-model.html">ADR 006 - Audit
+        and Profit Model</a> - <strong>[Backend]</strong></li>
+        <li><a href="007-modular-monolith.html">ADR 007 - Modular
+        Monolith with Spring Modulith</a> -
+        <strong>[Backend]</strong></li>
+        <li><a href="008-documentation-structure.html">ADR 008 -
+        Documentation Structure</a> -
+        <strong>[Cross-cutting]</strong></li>
+        <li><a href="009-sales-invoices-and-customers.html">ADR 009 -
+        Sales Invoices and Customers</a> -
+        <strong>[Backend]</strong></li>
+        <li><a href="010-no-lot-tracking.html">ADR 010 - Pooled
+        Inventory - No Lot Tracking</a> -
+        <strong>[Backend]</strong></li>
+        <li><a href="011-merchandise-scope-and-payment.html">ADR 011 -
+        Merchandise Scope and the Payment Fact</a> -
+        <strong>[Backend]</strong></li>
+        <li><a href="012-frontend-hosting.html">ADR 012 - Frontend
+        Hosting on a CDN, Not a Container</a> -
+        <strong>[Frontend]</strong></li>
+        <li><a href="013-token-storage.html">ADR 013 - JWT in
+        localStorage, No Refresh Token</a> -
+        <strong>[Frontend]</strong></li>
+        <li><a href="014-openapi-types-only.html">ADR 014 - Types-Only
+        Generation from the OpenAPI Spec</a> -
+        <strong>[Cross-cutting]</strong></li>
+        <li><a href="015-runtime-i18n.html">ADR 015 - Runtime
+        Translation over Compile-Time Localization</a> -
+        <strong>[Frontend]</strong></li>
+        <li><a href="016-charting-library.html">ADR 016 - Direct
+        ECharts, Not an Angular Wrapper</a> -
+        <strong>[Frontend]</strong></li>
+        <li><a href="017-central-decision-log.html">ADR 017 - Central
+        Decision Log at the System Level</a> -
+        <strong>[Cross-cutting]</strong></li>
         </ul>
-        <p><a href="index.html">Back to Decisions Index</a></p>
+        <p>ADR 005 is reserved for the demo-access design and will be
+        written with the demo-mode phase.</p>
+        <p><a href="/stockease/">Back to Documentation Home</a></p>
       </article>
     </main>
 
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#adr-014-types-only-generation-from-the-openapi-spec"
-      id="toc-adr-014-types-only-generation-from-the-openapi-spec">ADR
-      014: Types-Only Generation from the OpenAPI Spec</a>
+      <li><a href="#architecture-decision-records"
+      id="toc-architecture-decision-records">Architecture Decision
+      Records</a>
       <ul>
-      <li><a href="#context" id="toc-context">Context</a></li>
-      <li><a href="#decision" id="toc-decision">Decision</a></li>
-      <li><a href="#alternatives-considered"
-      id="toc-alternatives-considered">Alternatives considered</a></li>
-      <li><a href="#consequences"
-      id="toc-consequences">Consequences</a></li>
+      <li><a href="#index" id="toc-index">Index</a></li>
       </ul></li>
       </ul>
     </nav>

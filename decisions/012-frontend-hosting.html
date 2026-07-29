@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend ·
-09-decisions/004-inventory-domain-model · StockEase Docs</title>
+  <title>Decisions · 012-frontend-hosting · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -66,6 +65,7 @@
   <p class="nav-title">Docs</p>
   <ul>
     <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
   </ul>
 
   <p class="nav-title">Backend</p>
@@ -82,7 +82,7 @@
     <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
     <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
     <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
-    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
     <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
     <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
     <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
@@ -97,69 +97,56 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="adr-004-inventory-domain-model">ADR 004: Inventory
-        Domain Model</h1>
+        <h1 id="adr-012-frontend-hosting-on-a-cdn-not-a-container">ADR
+        012: Frontend Hosting on a CDN, Not a Container</h1>
         <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
-        23, 2026</p>
+        28, 2026</p>
         <hr />
         <h2 id="context">Context</h2>
-        <p>Stock quantity must always be explainable: every unit on hand
-        traces to recorded business events. The design question is how
-        stock changes relate to invoices - when stock is booked, who
-        supplies prices, and whether bookings can be partial or
-        corrected.</p>
+        <p>The backend is a Spring Boot deployable that Koyeb builds
+        from the repository Dockerfile and runs as a container (ADR 007,
+        section 07). The Angular frontend is a different kind of
+        artifact: a static single-page application - HTML, CSS,
+        JavaScript and locale files - that talks to that backend over
+        HTTPS. The question is whether the same containerized deployment
+        path should carry it.</p>
         <h2 id="decision">Decision</h2>
-        <p><strong>Movements are append-only facts.</strong> A stock
-        movement is never edited or deleted. Each movement carries a
-        reason, and the movement type (IN or OUT) is always derived from
-        that reason - inconsistent pairs are unrepresentable.</p>
-        <p><strong>Invoice-linked reasons derive everything from the
-        invoice item.</strong> PURCHASE and SOLD movements require an
-        invoice item of the matching invoice type; the movement quantity
-        must equal the item quantity, at most one such movement exists
-        per item, and the price snapshot (unit cost or sold price) is
-        copied from the item’s unit price - never caller-supplied. Both
-        return reasons likewise require their originating item and
-        derive their snapshot from it, so a return can never be priced
-        differently from its sale or purchase.</p>
-        <p><strong>Closing the invoice is the booking act.</strong> An
-        OPEN invoice is recorded but not booked and may be deleted.
-        Closing stamps the actor and time and books one movement per
-        item; creating a product creates only the record - first stock
-        arrives through a purchase invoice like any restock. NEW_PRODUCT
-        survives solely as an opening balance for stock that predates
-        the system, with a caller-supplied cost basis.</p>
-        <p><strong>No partial bookings.</strong> The invoice item is the
-        purchase or sale. Smaller sales are new invoices; partial flows
-        are returns, capped so that returned quantity never exceeds the
-        item quantity.</p>
-        <p><strong>One quantity write path.</strong> All movements
-        adjust stock through a single service method holding a
-        pessimistic lock; negative stock is rejected with no
-        override.</p>
+        <p><strong>The frontend is served from Vercel’s CDN</strong> at
+        <a
+        href="https://bestandskontrolle.vercel.app">bestandskontrolle.vercel.app</a>,
+        deployed by its own workflow (PR #51) and not from a
+        container.</p>
+        <p>A static bundle needs no server process. Putting one in front
+        of it - nginx in an image, a health check, a container to size
+        and keep warm - buys nothing the CDN does not already provide:
+        edge caching, HTTPS with managed certificates, and a preview
+        deployment per pull request come with the platform rather than
+        with configuration this repository would own.</p>
+        <p>The deployment paths are separate on purpose. The frontend
+        workflow gates on the frontend test suite; a backend release
+        does not redeploy the SPA and a frontend release does not
+        restart the API. Each side ships when its own checks are
+        green.</p>
         <h2 id="alternatives-considered">Alternatives considered</h2>
-        <p><strong>Caller-supplied prices on movements.</strong>
-        Rejected: two sources of truth for the same price invite drift;
-        deriving from the item makes consistency structural instead of
-        validated.</p>
-        <p><strong>Editable invoices and movements.</strong> Rejected in
-        favor of a correction doctrine: a wrong OPEN invoice is deleted
-        and recreated; a wrong CLOSED invoice is corrected through the
-        return flow, where a full return is the de facto
-        cancellation.</p>
-        <p><strong>Booking stock at invoice creation.</strong> Rejected:
-        it would make every draft irreversible or force compensating
-        logic; the OPEN/CLOSED split gives a free staging area with one
-        well-defined booking moment.</p>
+        <p><strong>Serving the SPA from the backend container.</strong>
+        Rejected: it couples every frontend fix to a backend redeploy
+        and puts static-asset caching, compression and SPA fallback
+        routing into Spring’s responsibility, where they are
+        configuration to maintain rather than platform behaviour.</p>
+        <p><strong>A separate frontend container on Koyeb.</strong>
+        Rejected: an nginx image and its config file to maintain, paying
+        for a running process to hand out files a CDN serves closer to
+        the user for free.</p>
         <h2 id="consequences">Consequences</h2>
         <ul>
-        <li>Stock history is complete and immutable; quantity is never
-        change-logged because the movement stream is the quantity
-        history.</li>
-        <li>Insufficient stock on closing a sale rolls back the entire
-        close.</li>
-        <li>Per-invoice price variability is inherent; return prices
-        cannot vary by construction.</li>
+        <li>No web-server configuration lives in this repository.</li>
+        <li>The frontend’s production URL is a platform concern; the
+        backend’s CORS policy names it as an allowed origin (PR
+        #66).</li>
+        <li>A frontend Dockerfile remains a queued item for local-run
+        parity only - bringing the SPA up alongside the API in one
+        compose command. It is not a production deployment path, and
+        this decision is why.</li>
         </ul>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
@@ -168,9 +155,9 @@
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#adr-004-inventory-domain-model"
-      id="toc-adr-004-inventory-domain-model">ADR 004: Inventory Domain
-      Model</a>
+      <li><a href="#adr-012-frontend-hosting-on-a-cdn-not-a-container"
+      id="toc-adr-012-frontend-hosting-on-a-cdn-not-a-container">ADR
+      012: Frontend Hosting on a CDN, Not a Container</a>
       <ul>
       <li><a href="#context" id="toc-context">Context</a></li>
       <li><a href="#decision" id="toc-decision">Decision</a></li>

@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend ·
-09-decisions/012-frontend-hosting · StockEase Docs</title>
+  <title>Decisions · 017-central-decision-log · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -66,6 +65,7 @@
   <p class="nav-title">Docs</p>
   <ul>
     <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
   </ul>
 
   <p class="nav-title">Backend</p>
@@ -82,7 +82,7 @@
     <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
     <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
     <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
-    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
     <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
     <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
     <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
@@ -97,56 +97,60 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="adr-012-frontend-hosting-on-a-cdn-not-a-container">ADR
-        012: Frontend Hosting on a CDN, Not a Container</h1>
+        <h1 id="adr-017-central-decision-log-at-the-system-level">ADR
+        017: Central Decision Log at the System Level</h1>
         <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
-        28, 2026</p>
+        29, 2026</p>
         <hr />
         <h2 id="context">Context</h2>
-        <p>The backend is a Spring Boot deployable that Koyeb builds
-        from the repository Dockerfile and runs as a container (ADR 007,
-        section 07). The Angular frontend is a different kind of
-        artifact: a static single-page application - HTML, CSS,
-        JavaScript and locale files - that talks to that backend over
-        HTTPS. The question is whether the same containerized deployment
-        path should carry it.</p>
+        <p>The decision log began inside the backend arc42 tree, at
+        section 9, because ADR 008 put it there when the backend was the
+        only documented tier. That address was correct for what the log
+        then held.</p>
+        <p>The frontend build-out changed what it holds. ADRs 012 to 016
+        decide frontend hosting, token storage, i18n and charting, and
+        014 decides the contract seam between the two tiers. A sequence
+        that records decisions for the whole system was living at an
+        address that claims it belongs to one tier.</p>
         <h2 id="decision">Decision</h2>
-        <p><strong>The frontend is served from Vercel’s CDN</strong> at
-        <a
-        href="https://bestandskontrolle.vercel.app">bestandskontrolle.vercel.app</a>,
-        deployed by its own workflow (PR #51) and not from a
-        container.</p>
-        <p>A static bundle needs no server process. Putting one in front
-        of it - nginx in an image, a health check, a container to size
-        and keep warm - buys nothing the CDN does not already provide:
-        edge caching, HTTPS with managed certificates, and a preview
-        deployment per pull request come with the platform rather than
-        with configuration this repository would own.</p>
-        <p>The deployment paths are separate on purpose. The frontend
-        workflow gates on the frontend test suite; a backend release
-        does not redeploy the SPA and a frontend release does not
-        restart the API. Each side ships when its own checks are
-        green.</p>
+        <p><strong>One central log at <code>docs/decisions</code>, with
+        a single numbering.</strong> Every architecture decision in this
+        repository - backend, frontend or cross-cutting - enters the
+        same sequence at the same address. Entries carry a scope tag so
+        a reader can filter by tier without the tiers owning separate
+        logs.</p>
+        <p><strong>Each architecture tree’s section 9 becomes a pointer
+        page.</strong> The arc42 section stays present, so the structure
+        the standard defines is intact and navigable; its content is a
+        sentence and a link to the central log. This is arc42’s own
+        guidance for content that belongs elsewhere: refer to it, do not
+        duplicate it.</p>
         <h2 id="alternatives-considered">Alternatives considered</h2>
-        <p><strong>Serving the SPA from the backend container.</strong>
-        Rejected: it couples every frontend fix to a backend redeploy
-        and puts static-asset caching, compression and SPA fallback
-        routing into Spring’s responsibility, where they are
-        configuration to maintain rather than platform behaviour.</p>
-        <p><strong>A separate frontend container on Koyeb.</strong>
-        Rejected: an nginx image and its config file to maintain, paying
-        for a running process to hand out files a CDN serves closer to
-        the user for free.</p>
+        <p><strong>A decision log per tier.</strong> Rejected: it splits
+        one interdependent sequence. ADR 013’s token storage is the
+        frontend half of ADR 003’s authentication mechanism, and ADR 014
+        is a contract between the tiers - filed under one tier, each
+        becomes invisible from the other. Cross-cutting decisions like
+        ADR 008 would have no home at all, and two logs numbering
+        independently would produce two different ADR 012s.</p>
+        <p><strong>Leave the log where it is.</strong> Rejected on
+        timing rather than on principle. The frontend documentation tree
+        is not built yet; every link it would grow into the log would
+        point at an address inside the backend tree, and each one would
+        have to be rewritten later. The move is cheapest now, before
+        those links exist.</p>
         <h2 id="consequences">Consequences</h2>
         <ul>
-        <li>No web-server configuration lives in this repository.</li>
-        <li>The frontend’s production URL is a platform concern; the
-        backend’s CORS policy names it as an allowed origin (PR
-        #66).</li>
-        <li>A frontend Dockerfile remains a queued item for local-run
-        parity only - bringing the SPA up alongside the API in one
-        compose command. It is not a production deployment path, and
-        this decision is why.</li>
+        <li>ADR 008’s location clause is superseded; its status records
+        that, and its text is left as written - the log is
+        append-only.</li>
+        <li>The frontend documentation tree will be born with a pointer
+        section 9 rather than a log of its own.</li>
+        <li>External deep links to an ADR at its old address break.
+        Accepted: the site is young, the log is reachable from both
+        landing pages and from every architecture tree, and permanent
+        redirects are not worth a build step for the audience this
+        documentation has today.</li>
         </ul>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
@@ -155,9 +159,9 @@
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#adr-012-frontend-hosting-on-a-cdn-not-a-container"
-      id="toc-adr-012-frontend-hosting-on-a-cdn-not-a-container">ADR
-      012: Frontend Hosting on a CDN, Not a Container</a>
+      <li><a href="#adr-017-central-decision-log-at-the-system-level"
+      id="toc-adr-017-central-decision-log-at-the-system-level">ADR 017:
+      Central Decision Log at the System Level</a>
       <ul>
       <li><a href="#context" id="toc-context">Context</a></li>
       <li><a href="#decision" id="toc-decision">Decision</a></li>

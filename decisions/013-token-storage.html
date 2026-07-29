@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend ·
-09-decisions/016-charting-library · StockEase Docs</title>
+  <title>Decisions · 013-token-storage · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -66,6 +65,7 @@
   <p class="nav-title">Docs</p>
   <ul>
     <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
   </ul>
 
   <p class="nav-title">Backend</p>
@@ -82,7 +82,7 @@
     <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
     <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
     <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
-    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
     <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
     <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
     <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
@@ -97,58 +97,58 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="adr-016-direct-echarts-not-an-angular-wrapper">ADR 016:
-        Direct ECharts, Not an Angular Wrapper</h1>
+        <h1 id="adr-013-jwt-in-localstorage-no-refresh-token">ADR 013:
+        JWT in localStorage, No Refresh Token</h1>
         <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
         28, 2026</p>
         <hr />
         <h2 id="context">Context</h2>
-        <p>The dashboard and the reports page need bar, line, area, pie
-        and gauge charts (PR #85, PR #86). Angular has established
-        wrapper libraries for the common charting engines, and reaching
-        for one is the default move.</p>
+        <p>Authentication is a single stateless HMAC-signed JWT with a
+        ten-hour lifetime (ADR 003). There is no refresh token and no
+        server-side session to resume from. The SPA must therefore keep
+        that one token somewhere that survives a page reload, or every
+        refresh becomes a logout.</p>
         <h2 id="decision">Decision</h2>
-        <p><strong>Apache ECharts, imported directly through
-        <code>echarts/core</code></strong>, with every chart type and
-        component registered explicitly, and the whole integration
-        wrapped once in a component this repository owns.</p>
-        <p>The modular entry point ships nothing by default, so the
-        registration list is also the bundle contents - only the pieces
-        the application draws are included, and a chart using an
-        unregistered type fails to compile rather than rendering blank.
-        ECharts itself is framework-agnostic and declares no Angular or
-        TypeScript peer dependency, so it cannot become the package that
-        blocks an Angular upgrade.</p>
-        <p><strong>The <code>init</code> function is provided through an
-        injection token</strong> rather than called through the module
-        import.</p>
+        <p><strong>The token is stored in
+        <code>localStorage</code></strong> and attached by an HTTP
+        interceptor (PR #68). The auth service is the only code that
+        touches the storage key; the rest of the application asks the
+        service, never the browser.</p>
+        <p>The trade-off is stated rather than glossed:
+        <strong><code>localStorage</code> is readable by any JavaScript
+        that runs on the origin, so a successful XSS reads the
+        token.</strong> That is accepted here, and the reasons are
+        specific to what this application is - a demo with disposable
+        seeded data, no third-party scripts, no analytics or tag
+        manager, and Angular’s default output escaping across every
+        template. The blast radius of the accepted risk is a demo
+        dataset, not a real one.</p>
         <h2 id="alternatives-considered">Alternatives considered</h2>
-        <p><strong><code>ngx-echarts</code> or
-        <code>ng2-charts</code>.</strong> Rejected: both declare Angular
-        and TypeScript peer ranges, which is precisely the coupling that
-        already produced the TypeScript 6 conflict recorded in ADR 014 -
-        a wrapper decides which framework version the project is allowed
-        to run. What they provide over the engine is a component
-        template and an options input, which is the wrapper below and is
-        roughly one file.</p>
-        <p><strong>Chart.js.</strong> Rejected on the requirement: no
-        native gauge, and the dashboard needs one.</p>
+        <p><strong>httpOnly cookie.</strong> The correct answer for a
+        system holding real data: the token becomes unreadable from
+        JavaScript. Rejected here because it is not a storage swap - it
+        moves the token into the backend’s issuing response, and cookies
+        are sent automatically, which requires CSRF protection on every
+        state-changing endpoint plus cross-site cookie handling between
+        the CDN origin and the API origin. That is backend work
+        disproportionate to a demo.</p>
+        <p><strong>In memory only.</strong> Rejected: with no refresh
+        token there is nothing to restore from, so every reload and
+        every new tab would land on the login page.</p>
+        <p><strong>Short-lived token plus a refresh token.</strong>
+        Rejected: it does not remove the storage question, it duplicates
+        it - the refresh token then needs the same decision, and it is
+        the more valuable credential.</p>
         <h2 id="consequences">Consequences</h2>
         <ul>
-        <li>The wrapper component is the entire integration surface. No
-        feature component imports echarts; the wrapper owns instance
-        lifecycle - init, option updates, resize and dispose - and the
-        theme rebuild.</li>
-        <li>Any new chart type must be added to the registration list,
-        which is the point: bundle growth is an explicit edit.</li>
-        <li>The injection seam exists for a concrete reason. Mocking the
-        echarts entry point at module level proved racy: spec files
-        sharing a Vitest worker share its module registry, so a spec
-        that transitively imported the wrapper first left the real
-        module resolved and the mock silently inert, at which point real
-        echarts reached jsdom and died inside zrender. Injecting the
-        engine makes the stub a provider, which is per-TestBed and
-        cannot race. The fix landed with PR #86.</li>
+        <li>Reloads and new tabs stay signed in; logout clears the
+        key.</li>
+        <li>The token’s ten-hour expiry is the only revocation
+        mechanism, consistent with the stateless design in ADR 003.</li>
+        <li><strong>This decision is scoped to the demo.</strong> Any
+        deployment holding real customer or pricing data reopens it, and
+        the alternative to adopt is the httpOnly cookie with CSRF
+        protection described above.</li>
         </ul>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
@@ -157,9 +157,9 @@
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#adr-016-direct-echarts-not-an-angular-wrapper"
-      id="toc-adr-016-direct-echarts-not-an-angular-wrapper">ADR 016:
-      Direct ECharts, Not an Angular Wrapper</a>
+      <li><a href="#adr-013-jwt-in-localstorage-no-refresh-token"
+      id="toc-adr-013-jwt-in-localstorage-no-refresh-token">ADR 013: JWT
+      in localStorage, No Refresh Token</a>
       <ul>
       <li><a href="#context" id="toc-context">Context</a></li>
       <li><a href="#decision" id="toc-decision">Decision</a></li>

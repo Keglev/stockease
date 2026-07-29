@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend ·
-09-decisions/006-audit-and-profit-model · StockEase Docs</title>
+  <title>Decisions · 007-modular-monolith · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -66,6 +65,7 @@
   <p class="nav-title">Docs</p>
   <ul>
     <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
   </ul>
 
   <p class="nav-title">Backend</p>
@@ -82,7 +82,7 @@
     <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
     <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
     <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
-    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
     <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
     <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
     <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
@@ -97,71 +97,73 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="adr-006-audit-and-profit-model">ADR 006: Audit and
-        Profit Model</h1>
+        <h1 id="adr-007-modular-monolith-with-spring-modulith">ADR 007:
+        Modular Monolith with Spring Modulith</h1>
         <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
         23, 2026</p>
         <hr />
         <h2 id="context">Context</h2>
-        <p>Two reporting needs share a design space: tracking who
-        changed product data, and computing merchandise profit. Both
-        must stay cheap to reason about and must not leak accounting
-        concerns into the merchandise domain.</p>
+        <p>The system has clearly separable domains (product, invoice,
+        movement, audit, reporting) but one database, shared
+        transactions, and free-tier hosting. The question is how to get
+        real boundaries without distributed-system costs.</p>
         <h2 id="decision">Decision</h2>
-        <p><strong>Custom change log over a framework.</strong> Product
-        changes (name, price, deletion, restore) publish an event; a
-        synchronous listener writes the change log entry in the same
-        transaction as the change - the log row commits or rolls back
-        with the change it describes. Quantity is deliberately never
-        change-logged: the movement stream is the quantity history.</p>
-        <p><strong>Gross profit from stored snapshots.</strong> Profit
-        is sold price minus unit cost, both taken from the immutable
-        snapshots on movements. Prices vary per invoice by design; a
-        customer return reduces revenue at the original selling price.
-        No FIFO or AVCO cost flow is computed - stock is pooled and the
-        snapshot model already answers the profit question this system
-        asks.</p>
-        <p><strong>Documented approximation for losses.</strong> LOST
-        and DESTROYED movements carry no snapshot; loss reports value
-        them at the product’s current purchase price, an explicitly
-        documented approximation.</p>
-        <p><strong>Reporting is a CQRS-lite read model.</strong> The
-        report module answers aggregations with native SQL, returns its
-        own records, and depends on no other module’s Java types -
-        invoice types travel as strings. It is read-only and owns no
-        state; this is the one documented exemption from going through
-        the domain model. Native SQL naturally bypasses the soft-delete
-        restriction: a feature for historical reports, which must
-        include deleted products, and an explicit filter where a report
-        is current-state.</p>
-        <p><strong>Supplier profit double-counts shared products by
-        design.</strong> A product supplied by two suppliers contributes
-        its whole profit to each supplier’s row - the report answers
-        “how profitable is the merchandise associated with this
-        supplier”, not a partition of total profit. This behavior is
-        pinned by a test whose interlocking figures fail under any
-        per-supplier allocation.</p>
+        <p><strong>One deployable, enforced modules.</strong> The
+        codebase is organized package-per-module (product, supplier,
+        invoice, movement, audit, customer, security, shared, report,
+        plus config for global infrastructure) under Spring Modulith.
+        Module anatomy: the root package is the exposed API (entities,
+        enums, services, commands, events), repositories live in an
+        internal subpackage, controllers and single-consumer DTOs in a
+        web subpackage. A boundary test verifies the module structure on
+        every build without booting a context - boundaries are law, not
+        convention. A verification lesson is part of this decision’s
+        record: the base package itself is an implicit module and is
+        verified too; there is no exemption-by-location anywhere in the
+        tree.</p>
+        <p><strong>Cross-module communication is calls forward, events
+        backward.</strong> Modules call each other’s exposed services in
+        the natural dependency direction. Where a call would create a
+        cycle - invoice needing movement while movement already calls
+        invoice - the dependency is inverted with an application event:
+        invoice publishes, movement listens. Event payloads never import
+        the consuming module’s types; shared vocabulary is mirrored by
+        name.</p>
+        <p><strong>Listeners are synchronous where atomicity
+        matters.</strong> The invoice-close listener books stock inside
+        the closing transaction: close and bookings commit or roll back
+        together. Deletion vetoes are synchronous listeners pinned to
+        run before all other listeners, throwing inside the deleting
+        transaction to roll it back whole.</p>
+        <p><strong>No message broker.</strong> Kafka was evaluated and
+        deferred: it solves asynchronous messaging between systems,
+        while this is a single deployable with one database where the
+        interesting flows must share a transaction. A broker would add
+        infrastructure the hosting cannot carry and would read as
+        resume-driven design. Adoption triggers are named: multiple
+        deployables, consumers outside the transaction boundary, or
+        event streaming to external systems.</p>
         <h2 id="alternatives-considered">Alternatives considered</h2>
-        <p><strong>Hibernate Envers.</strong> Rejected: full-entity
-        revision snapshots and framework coupling, where the requirement
-        is a selective, human-readable log of a few fields with
-        same-transaction semantics.</p>
-        <p><strong>FIFO/AVCO costing.</strong> Rejected: cost-flow
-        accounting belongs to bookkeeping (ADR 011); the snapshot model
-        is sufficient for merchandise gross profit.</p>
-        <p><strong>Reporting through domain services.</strong> Rejected:
-        aggregations would drag cross-module Java dependencies and
-        entity graphs into what are single SQL statements; the read
-        model keeps module boundaries clean.</p>
+        <p><strong>Microservices.</strong> Rejected: distributed
+        transactions or sagas for flows that are naturally atomic,
+        per-service infrastructure the free tier cannot host, and no
+        organizational driver - one developer, one deployment unit.</p>
+        <p><strong>Plain packages without enforcement.</strong>
+        Rejected: unverified boundaries decay silently; the entire value
+        of the module structure is that violations fail the build.</p>
+        <p><strong>Asynchronous module listeners for stock
+        booking.</strong> Rejected for the close flow: booking must be
+        atomic with the close. Asynchronous listening remains available
+        where eventual consistency is acceptable.</p>
         <h2 id="consequences">Consequences</h2>
         <ul>
-        <li>Audit rows can never exist without their change, nor vice
-        versa.</li>
-        <li>Reports are single native queries, cheap to verify against
-        the schema.</li>
-        <li>The double-counting design decision is test-pinned: an
-        accidental “fix” fails the suite rather than silently changing
-        report semantics.</li>
+        <li>Refactoring toward services later is possible along module
+        seams; today’s cost stays monolith-cheap.</li>
+        <li>The event inversion keeps the module graph acyclic and
+        machine-verified.</li>
+        <li>Synchronous listeners make rollback stories testable through
+        the real event pipeline - a standing test requirement in this
+        codebase.</li>
         </ul>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
@@ -170,9 +172,9 @@
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#adr-006-audit-and-profit-model"
-      id="toc-adr-006-audit-and-profit-model">ADR 006: Audit and Profit
-      Model</a>
+      <li><a href="#adr-007-modular-monolith-with-spring-modulith"
+      id="toc-adr-007-modular-monolith-with-spring-modulith">ADR 007:
+      Modular Monolith with Spring Modulith</a>
       <ul>
       <li><a href="#context" id="toc-context">Context</a></li>
       <li><a href="#decision" id="toc-decision">Decision</a></li>

@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend ·
-09-decisions/013-token-storage · StockEase Docs</title>
+  <title>Decisions · 006-audit-and-profit-model · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -66,6 +65,7 @@
   <p class="nav-title">Docs</p>
   <ul>
     <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
   </ul>
 
   <p class="nav-title">Backend</p>
@@ -82,7 +82,7 @@
     <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
     <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
     <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
-    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (ADRs)</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
     <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
     <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
     <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
@@ -97,58 +97,71 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="adr-013-jwt-in-localstorage-no-refresh-token">ADR 013:
-        JWT in localStorage, No Refresh Token</h1>
+        <h1 id="adr-006-audit-and-profit-model">ADR 006: Audit and
+        Profit Model</h1>
         <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
-        28, 2026</p>
+        23, 2026</p>
         <hr />
         <h2 id="context">Context</h2>
-        <p>Authentication is a single stateless HMAC-signed JWT with a
-        ten-hour lifetime (ADR 003). There is no refresh token and no
-        server-side session to resume from. The SPA must therefore keep
-        that one token somewhere that survives a page reload, or every
-        refresh becomes a logout.</p>
+        <p>Two reporting needs share a design space: tracking who
+        changed product data, and computing merchandise profit. Both
+        must stay cheap to reason about and must not leak accounting
+        concerns into the merchandise domain.</p>
         <h2 id="decision">Decision</h2>
-        <p><strong>The token is stored in
-        <code>localStorage</code></strong> and attached by an HTTP
-        interceptor (PR #68). The auth service is the only code that
-        touches the storage key; the rest of the application asks the
-        service, never the browser.</p>
-        <p>The trade-off is stated rather than glossed:
-        <strong><code>localStorage</code> is readable by any JavaScript
-        that runs on the origin, so a successful XSS reads the
-        token.</strong> That is accepted here, and the reasons are
-        specific to what this application is - a demo with disposable
-        seeded data, no third-party scripts, no analytics or tag
-        manager, and Angular’s default output escaping across every
-        template. The blast radius of the accepted risk is a demo
-        dataset, not a real one.</p>
+        <p><strong>Custom change log over a framework.</strong> Product
+        changes (name, price, deletion, restore) publish an event; a
+        synchronous listener writes the change log entry in the same
+        transaction as the change - the log row commits or rolls back
+        with the change it describes. Quantity is deliberately never
+        change-logged: the movement stream is the quantity history.</p>
+        <p><strong>Gross profit from stored snapshots.</strong> Profit
+        is sold price minus unit cost, both taken from the immutable
+        snapshots on movements. Prices vary per invoice by design; a
+        customer return reduces revenue at the original selling price.
+        No FIFO or AVCO cost flow is computed - stock is pooled and the
+        snapshot model already answers the profit question this system
+        asks.</p>
+        <p><strong>Documented approximation for losses.</strong> LOST
+        and DESTROYED movements carry no snapshot; loss reports value
+        them at the product’s current purchase price, an explicitly
+        documented approximation.</p>
+        <p><strong>Reporting is a CQRS-lite read model.</strong> The
+        report module answers aggregations with native SQL, returns its
+        own records, and depends on no other module’s Java types -
+        invoice types travel as strings. It is read-only and owns no
+        state; this is the one documented exemption from going through
+        the domain model. Native SQL naturally bypasses the soft-delete
+        restriction: a feature for historical reports, which must
+        include deleted products, and an explicit filter where a report
+        is current-state.</p>
+        <p><strong>Supplier profit double-counts shared products by
+        design.</strong> A product supplied by two suppliers contributes
+        its whole profit to each supplier’s row - the report answers
+        “how profitable is the merchandise associated with this
+        supplier”, not a partition of total profit. This behavior is
+        pinned by a test whose interlocking figures fail under any
+        per-supplier allocation.</p>
         <h2 id="alternatives-considered">Alternatives considered</h2>
-        <p><strong>httpOnly cookie.</strong> The correct answer for a
-        system holding real data: the token becomes unreadable from
-        JavaScript. Rejected here because it is not a storage swap - it
-        moves the token into the backend’s issuing response, and cookies
-        are sent automatically, which requires CSRF protection on every
-        state-changing endpoint plus cross-site cookie handling between
-        the CDN origin and the API origin. That is backend work
-        disproportionate to a demo.</p>
-        <p><strong>In memory only.</strong> Rejected: with no refresh
-        token there is nothing to restore from, so every reload and
-        every new tab would land on the login page.</p>
-        <p><strong>Short-lived token plus a refresh token.</strong>
-        Rejected: it does not remove the storage question, it duplicates
-        it - the refresh token then needs the same decision, and it is
-        the more valuable credential.</p>
+        <p><strong>Hibernate Envers.</strong> Rejected: full-entity
+        revision snapshots and framework coupling, where the requirement
+        is a selective, human-readable log of a few fields with
+        same-transaction semantics.</p>
+        <p><strong>FIFO/AVCO costing.</strong> Rejected: cost-flow
+        accounting belongs to bookkeeping (ADR 011); the snapshot model
+        is sufficient for merchandise gross profit.</p>
+        <p><strong>Reporting through domain services.</strong> Rejected:
+        aggregations would drag cross-module Java dependencies and
+        entity graphs into what are single SQL statements; the read
+        model keeps module boundaries clean.</p>
         <h2 id="consequences">Consequences</h2>
         <ul>
-        <li>Reloads and new tabs stay signed in; logout clears the
-        key.</li>
-        <li>The token’s ten-hour expiry is the only revocation
-        mechanism, consistent with the stateless design in ADR 003.</li>
-        <li><strong>This decision is scoped to the demo.</strong> Any
-        deployment holding real customer or pricing data reopens it, and
-        the alternative to adopt is the httpOnly cookie with CSRF
-        protection described above.</li>
+        <li>Audit rows can never exist without their change, nor vice
+        versa.</li>
+        <li>Reports are single native queries, cheap to verify against
+        the schema.</li>
+        <li>The double-counting design decision is test-pinned: an
+        accidental “fix” fails the suite rather than silently changing
+        report semantics.</li>
         </ul>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
@@ -157,9 +170,9 @@
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#adr-013-jwt-in-localstorage-no-refresh-token"
-      id="toc-adr-013-jwt-in-localstorage-no-refresh-token">ADR 013: JWT
-      in localStorage, No Refresh Token</a>
+      <li><a href="#adr-006-audit-and-profit-model"
+      id="toc-adr-006-audit-and-profit-model">ADR 006: Audit and Profit
+      Model</a>
       <ul>
       <li><a href="#context" id="toc-context">Context</a></li>
       <li><a href="#decision" id="toc-decision">Decision</a></li>
