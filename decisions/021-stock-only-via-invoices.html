@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+021-stock-only-via-invoices · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-021-stock-enters-only-through-closed-purchase-invoices">ADR
+        021: Stock Enters Only Through Closed Purchase Invoices</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        29, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>ADR 004 set the rule the inventory model rests on: every unit
+        on hand traces to a recorded business event. It then carved out
+        one exception. NEW_PRODUCT survived “solely as an opening
+        balance for stock that predates the system, with a
+        caller-supplied cost basis” - a movement that increased stock
+        with no supplier, no invoice and no document, on a price the
+        caller typed.</p>
+        <p>The exception was reasonable when it was written: a system
+        being adopted has to account for what is already on the shelves.
+        But it never stayed in that role. It was the mechanism the demo
+        seeder used to stock a product, the one integration-test
+        fixtures reached for when a sale needed units to sell, and the
+        one reason on the standalone endpoint that could raise a
+        quantity. In practice it had become a general-purpose “add
+        stock” button, and its cost basis was the one price in the
+        system that nobody had agreed to pay.</p>
+        <p>That matters more now than it did. ADR 018 made creation
+        master data - it books nothing. ADR 019 made the purchase price
+        follow the last closed purchase line. Both decisions push in the
+        same direction: the invoice is the document, and the document is
+        what the numbers come from. NEW_PRODUCT was the remaining path
+        that answered “where did this stock come from, and what did it
+        cost?” with “someone said so”.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Stock increases only by closing a purchase
+        invoice.</strong> NEW_PRODUCT is removed from the domain: from
+        the reason enum, from the validation matrix, from the API, from
+        the form, and its rows are deleted by V18. There is no
+        opening-balance movement, and a product’s first units are bought
+        exactly like its hundredth.</p>
+        <p>This is the <em>Belegprinzip</em> applied to inventory - no
+        entry without a document. Every unit that arrives now has a
+        supplier, a price that a supplier charged, an invoice line to
+        point at, and a closing act with a user and a timestamp behind
+        it. “Where did this come from” has one answer, and it is a
+        document.</p>
+        <p><strong>The standalone movements endpoint becomes a loss
+        ledger.</strong> The only reasons it accepts are LOST and
+        DESTROYED, both of which decrease stock and both of which
+        require a remark (ADR 020). It accepts no price at all: a cost
+        snapshot belongs to a purchase line, and purchases are not
+        recorded there.</p>
+        <p><strong>Adopting the system means entering the opening stock
+        as a purchase.</strong> That is the migration story, and it is a
+        better one than a bare quantity: it produces the supplier, the
+        cost and the document that every later unit will have.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Keep NEW_PRODUCT for adoption only, gated by a flag
+        or a role.</strong> Rejected. A path that exists is a path that
+        gets used - this one already drifted from “opening balance” to
+        “add stock” without anybody deciding that it should. Gating it
+        narrows who can bypass the document rule without changing that
+        the bypass exists, and the gate itself becomes a thing to
+        maintain and to test.</p>
+        <p><strong>Keep it but derive the cost from somewhere.</strong>
+        Rejected: there is nowhere honest to derive it from. The
+        product’s own price is a starting value under ADR 018, and using
+        it would make the cost basis of real stock depend on a figure
+        typed on a master-data form.</p>
+        <p><strong>Migrate the existing rows to synthetic purchase
+        invoices.</strong> Rejected as dishonest bookkeeping. A
+        fabricated invoice against a fabricated supplier is a worse
+        record than no invoice: it looks like a document and answers to
+        nobody. The rows are deleted instead, which is defensible only
+        because the deployed data is the demo baseline the nightly reset
+        (ADR 005) replaces wholesale - see the consequence below.</p>
+        <p><strong>Leave the enum value in place and merely stop
+        offering it.</strong> Rejected: a value the API still accepts is
+        part of the contract regardless of what the UI shows, and the
+        report SQL would keep a <code>NEW_PRODUCT</code> branch that
+        could never be true - dead code that reads as a live rule.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li>The movement stream is now fully documented. Every INCREASE
+        is a PURCHASE against an invoice line, or a customer return
+        against a sale line.</li>
+        <li>The profit report’s cost side simplifies: both cost branches
+        drop from <code>reason IN ('PURCHASE','NEW_PRODUCT')</code> to
+        <code>reason = 'PURCHASE'</code>. No figure moves, because the
+        baseline’s opening balance is now a purchase.</li>
+        <li>The movements form loses its unit-cost field entirely; there
+        is no reason left on that endpoint that carries a price.</li>
+        <li>Stocking a genuinely new product is two acts instead of one:
+        create it, then buy it. This is the intended cost, and it is the
+        same shape as ADR 018’s.</li>
+        <li>V18 deletes existing NEW_PRODUCT rows. Deleting movement
+        history contradicts ADR 004’s append-only rule, and is
+        acceptable here only because the deployed database is the demo
+        baseline: the reason value no longer maps to a Java constant, so
+        keeping the rows would turn history into a read-time failure. In
+        a system with real history this decision would need a different
+        migration - most likely retaining the rows behind a
+        retired-value mapping.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-021-stock-enters-only-through-closed-purchase-invoices"
+      id="toc-adr-021-stock-enters-only-through-closed-purchase-invoices">ADR
+      021: Stock Enters Only Through Closed Purchase Invoices</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
