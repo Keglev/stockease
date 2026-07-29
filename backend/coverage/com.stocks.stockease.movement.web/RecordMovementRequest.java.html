@@ -3,6 +3,7 @@
 import java.math.BigDecimal;
 
 import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementRemark;
 import com.stocks.stockease.movement.RecordMovementCommand;
 
 import jakarta.validation.constraints.NotNull;
@@ -18,12 +19,15 @@ import jakarta.validation.constraints.Positive;
  * @param reason business reason for the change, which also fixes its direction
  * @param quantity number of units affected; must be positive
  * @param unitCost cost snapshot per unit, required by {@code NEW_PRODUCT} and rejected for other reasons
+ * @param remark why the stock was lost, required by {@code LOST} and {@code DESTROYED} and rejected
+ *        for other reasons
  */
-<span class="fc" id="L22">public record RecordMovementRequest(</span>
+<span class="fc" id="L25">public record RecordMovementRequest(</span>
         @NotNull(message = &quot;Product is required.&quot;) Long productId,
         @NotNull(message = &quot;Movement reason is required.&quot;) MovementReason reason,
         @Positive(message = &quot;Quantity must be positive.&quot;) int quantity,
-        @Positive(message = &quot;Unit cost must be positive.&quot;) BigDecimal unitCost) {
+        @Positive(message = &quot;Unit cost must be positive.&quot;) BigDecimal unitCost,
+        MovementRemark remark) {
 
     /**
      * Maps this request to the command the movement service accepts.
@@ -31,7 +35,7 @@ import jakarta.validation.constraints.Positive;
      * @return the equivalent movement command, never referencing an invoice item
      */
     public RecordMovementCommand toCommand() {
-<span class="fc" id="L34">        return new RecordMovementCommand(productId, reason, quantity, null, unitCost);</span>
+<span class="fc" id="L38">        return new RecordMovementCommand(productId, reason, quantity, null, unitCost, remark);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementRemark;
 import com.stocks.stockease.movement.MovementType;
 import com.stocks.stockease.movement.StockMovement;
 
@@ -23,10 +24,12 @@ import com.stocks.stockease.movement.StockMovement;
  * @param invoiceItemId invoice line this movement fulfils, or {@code null} where no link applies
  * @param soldPrice revenue snapshot per unit, set only for sales and customer returns
  * @param unitCost cost snapshot per unit, set only for initial stock and purchases
+ * @param remark why the stock was lost, set only for LOST and DESTROYED and {@code null} otherwise
  * @param createdAt moment the movement was recorded
  */
-<span class="fc" id="L28">public record MovementResponse(Long id, Long productId, Long userId, MovementType type, MovementReason reason,</span>
-        Integer quantity, Long invoiceItemId, BigDecimal soldPrice, BigDecimal unitCost, LocalDateTime createdAt) {
+<span class="fc" id="L30">public record MovementResponse(Long id, Long productId, Long userId, MovementType type, MovementReason reason,</span>
+        Integer quantity, Long invoiceItemId, BigDecimal soldPrice, BigDecimal unitCost, MovementRemark remark,
+        LocalDateTime createdAt) {
 
     /**
      * Maps a recorded movement to its API representation without initializing any association.
@@ -35,10 +38,10 @@ import com.stocks.stockease.movement.StockMovement;
      * @return the movement record
      */
     public static MovementResponse from(StockMovement movement) {
-<span class="fc" id="L38">        return new MovementResponse(movement.getId(), movement.getProduct().getId(), movement.getUser().getId(),</span>
-<span class="fc" id="L39">                movement.getType(), movement.getReason(), movement.getQuantity(),</span>
-<span class="fc bfc" id="L40" title="All 2 branches covered.">                movement.getInvoiceItem() == null ? null : movement.getInvoiceItem().getId(),</span>
-<span class="fc" id="L41">                movement.getSoldPrice(), movement.getUnitCost(), movement.getCreatedAt());</span>
+<span class="fc" id="L41">        return new MovementResponse(movement.getId(), movement.getProduct().getId(), movement.getUser().getId(),</span>
+<span class="fc" id="L42">                movement.getType(), movement.getReason(), movement.getQuantity(),</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">                movement.getInvoiceItem() == null ? null : movement.getInvoiceItem().getId(),</span>
+<span class="fc" id="L44">                movement.getSoldPrice(), movement.getUnitCost(), movement.getRemark(), movement.getCreatedAt());</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
