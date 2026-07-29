@@ -19,14 +19,33 @@
           <mat-label>{{ 'login.password' | translate }}</mat-label>
           <input
             matInput
-            type="password"
+            [type]="passwordVisible() ? 'text' : 'password'"
             formControlName="password"
             autocomplete="current-password"
           />
+          <!-- type="button" is load-bearing: the default inside a form is submit, so without it
+               revealing the password would post the form. Icon and label name the ACTION, as on
+               the theme toggle: while the password is masked the button offers to show it. -->
+          <button
+            matIconButton
+            matSuffix
+            type="button"
+            class="password-toggle"
+            [attr.aria-pressed]="passwordVisible()"
+            [attr.aria-label]="
+              (passwordVisible() ? 'login.hidePassword' : 'login.showPassword') | translate
+            "
+            [title]="(passwordVisible() ? 'login.hidePassword' : 'login.showPassword') | translate"
+            (click)="togglePasswordVisibility()"
+          >
+            <mat-icon>{{ passwordVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
         </mat-form-field>
 
-        <!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
-        @if (errorMessage(); as message) {
+        @if (errorKey(); as key) {
+          <p class="login-error" role="alert">{{ key | translate }}</p>
+        } @else if (errorMessage(); as message) {
+          <!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
           <p class="login-error" role="alert">{{ message }}</p>
         }
 

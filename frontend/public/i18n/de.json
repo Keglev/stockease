@@ -36,8 +36,17 @@
     "title": "Bei {{app}} anmelden",
     "username": "Benutzername",
     "password": "Passwort",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
     "submit": "Anmelden",
-    "submitting": "Anmeldung läuft…"
+    "submitting": "Anmeldung läuft…",
+    "invalidCredentials": "Benutzername oder Passwort ungültig"
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "message": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "goHome": "Zur Startseite",
+    "goDashboard": "Zum Dashboard"
   },
   "nav": {
     "dashboard": "Übersicht",

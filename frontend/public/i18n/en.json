@@ -36,8 +36,17 @@
     "title": "Sign in to {{app}}",
     "username": "Username",
     "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "submit": "Sign in",
-    "submitting": "Signing in…"
+    "submitting": "Signing in…",
+    "invalidCredentials": "Invalid username or password"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "message": "The page you were looking for does not exist or has moved.",
+    "goHome": "To the start page",
+    "goDashboard": "To the dashboard"
   },
   "nav": {
     "dashboard": "Overview",

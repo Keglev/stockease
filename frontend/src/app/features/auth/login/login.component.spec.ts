@@ -34,7 +34,12 @@ describe('LoginComponent', () => {
         provideTestTranslations({
           en: {
             common: { appName: 'Bestandskontrolle' },
-            login: { title: 'Sign in to {{app}}' }
+            login: {
+              title: 'Sign in to {{app}}',
+              showPassword: 'Show password',
+              hidePassword: 'Hide password',
+              invalidCredentials: 'Invalid username or password'
+            }
           }
         })
       ]
@@ -45,21 +50,50 @@ describe('LoginComponent', () => {
     await fixture.whenStable();
   });
 
-  it('submit_rejectedCredentials_rendersBackendMessage', async () => {
+  it('submit_rejectedCredentials_rendersTranslatedMessageNotTheBackendText', async () => {
     fillCredentials('alice', 'wrong');
+    submitForm();
 
-    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+    // A distinctive backend message, so the assertion proves the translation replaced it rather
+    // than merely happening to read the same.
+    await failWith(401, 'Bad credentials from the server.');
 
-    controller
-      .expectOne(LOGIN_URL)
-      .flush(
-        { success: false, message: 'Invalid username or password.', data: null },
-        { status: 401, statusText: 'Unauthorized' }
-      );
-    await fixture.whenStable();
+    expect(text()).toContain('Invalid username or password');
+    expect(text()).not.toContain('Bad credentials from the server.');
+    controller.verify();
+  });
 
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Invalid username or password.');
+  it('submit_serverError_rendersTheBackendMessageVerbatim', async () => {
+    fillCredentials('alice', 'secret');
+    submitForm();
+
+    await failWith(500, 'An unexpected error occurred.');
+
+    expect(text()).toContain('An unexpected error occurred.');
+    controller.verify();
+  });
+
+  it('togglePassword_clicked_flipsTheInputTypeAndAriaPressed', () => {
+    const input = passwordInput();
+    expect(input.getAttribute('type')).toBe('password');
+    expect(toggle().getAttribute('aria-pressed')).toBe('false');
+
+    toggle().click();
+    fixture.detectChanges();
+
+    expect(passwordInput().getAttribute('type')).toBe('text');
+    expect(toggle().getAttribute('aria-pressed')).toBe('true');
+    expect(toggle().getAttribute('title')).toBe('Hide password');
+  });
+
+  it('togglePassword_clicked_doesNotSubmitTheForm', () => {
+    fillCredentials('alice', 'secret');
+
+    toggle().click();
+    fixture.detectChanges();
+
+    // type="button" is what keeps this true; the default inside a form would post it.
+    controller.expectNone(LOGIN_URL);
     controller.verify();
   });
 
@@ -75,6 +109,33 @@ describe('LoginComponent', () => {
     expect(navigate).toHaveBeenCalledWith(['/app']);
     controller.verify();
   });
+
+  function text(): string {
+    return (fixture.nativeElement as HTMLElement).textContent ?? '';
+  }
+
+  function passwordInput(): HTMLInputElement {
+    return (fixture.nativeElement as HTMLElement).querySelectorAll('input')[1];
+  }
+
+  function toggle(): HTMLButtonElement {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'button.password-toggle'
+    )!;
+  }
+
+  function submitForm(): void {
+    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+  }
+
+  /** Fails the pending login with the given status and backend message, then settles the view. */
+  async function failWith(status: number, message: string): Promise<void> {
+    controller
+      .expectOne(LOGIN_URL)
+      .flush({ success: false, message, data: null }, { status, statusText: 'Error' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   function fillCredentials(username: string, password: string): void {
     const inputs = (fixture.nativeElement as HTMLElement).querySelectorAll('input');

@@ -11,9 +11,25 @@ const LOGIN_ENDPOINT = `${environment.apiBaseUrl}/api/auth/login`;
 const GENERIC_MESSAGE = 'Request failed. Please try again.';
 
 /**
- * Maps HTTP failures to plain Errors carrying the backend message, so components can render
- * err.message without knowing about HTTP. Successful bodies pass through untouched because
- * the report endpoints are not enveloped.
+ * An error raised by a failed HTTP call, carrying the status alongside the backend message.
+ * It is an Error, so every consumer that only reads {@link Error.message} needs to know nothing
+ * about it.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+/**
+ * Maps HTTP failures to Errors carrying the backend message, so components can render
+ * err.message without knowing about HTTP. A consumer that needs to branch on a known case may
+ * check {@code instanceof ApiError} for the status; the message contract is unchanged either way.
+ * Successful bodies pass through untouched because the report endpoints are not enveloped.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -27,7 +43,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         auth.logout();
         void router.navigate(['/login']);
       }
-      return throwError(() => new Error(extractMessage(error)));
+      // Status 0 stands for "never reached the server": a network or CORS failure carries no
+      // HTTP status, so no consumer can mistake it for one the backend chose.
+      const status = error instanceof HttpErrorResponse ? error.status : 0;
+      return throwError(() => new ApiError(extractMessage(error), status));
     })
   );
 };
