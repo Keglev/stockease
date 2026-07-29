@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 import {
   DueDateBucket,
@@ -151,9 +151,11 @@ class ReportServiceStub {
 
 class ProductServiceStub {
   lowStockRows: ProductResponse[] = [WIDGET];
+  /** Set to make the paged call fail, which is what puts the component into its error state. */
+  pagedFailure: Error | null = null;
 
   getPagedProducts(): Observable<PaginatedProducts> {
-    return of(PAGE);
+    return this.pagedFailure ? throwError(() => this.pagedFailure) : of(PAGE);
   }
 
   lowStock(): Observable<ProductResponse[]> {
@@ -285,4 +287,31 @@ describe('DashboardComponent', () => {
     expect(textOf('.health-status')).toContain('Unavailable');
     expect((fixture.nativeElement as HTMLElement).querySelector('.health-dot-up')).toBeNull();
   });
+
+  it('kpiCards_loadFailed_renderEmDashInsteadOfNumbers', () => {
+    products.pagedFailure = new Error('Authentication required.');
+    render();
+
+    // scoped to the KPI values: a substring search over the whole page also hits icon ligatures
+    // and the low-stock list, so it would pass or fail for reasons that are not this behaviour
+    expect(kpiValues()).toEqual(['—', '—', '—', '—']);
+    expect(kpiValues().join('')).not.toContain('42');
+    expect(kpiValues().join('')).not.toContain('20.00');
+  });
+
+  it('kpiCards_loadedWithoutError_renderTheirNumbers', () => {
+    render();
+
+    // the other direction: the em dash appears only as a stand-in, never over real data
+    expect(kpiValues().join('')).not.toContain('—');
+    expect(kpiValues()[0]).toBe('42');
+    expect(kpiValues()[2]).toBe('3');
+  });
+
+  /** The four KPI values in template order: products, low stock, overdue, loss value. */
+  function kpiValues(): string[] {
+    return Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.kpi-card .kpi-value')
+    ).map((element) => (element.textContent ?? '').trim());
+  }
 });

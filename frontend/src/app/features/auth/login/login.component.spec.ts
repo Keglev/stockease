@@ -1,7 +1,7 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 
 import { environment } from '../../../../environments/environment';
 import { errorInterceptor } from '../../../core/interceptors/error.interceptor';
@@ -38,7 +38,8 @@ describe('LoginComponent', () => {
               title: 'Sign in to {{app}}',
               showPassword: 'Show password',
               hidePassword: 'Hide password',
-              invalidCredentials: 'Invalid username or password'
+              invalidCredentials: 'Invalid username or password',
+              sessionExpired: 'Your session has expired. Please log in again.'
             }
           }
         })
@@ -109,6 +110,54 @@ describe('LoginComponent', () => {
     expect(navigate).toHaveBeenCalledWith(['/app']);
     controller.verify();
   });
+
+  it('render_withoutExpiredReason_showsNoSessionNotice', () => {
+    // the other direction of the pin: an ordinary visit to /login explains nothing it should not
+    expect((fixture.nativeElement as HTMLElement).querySelector('.login-notice')).toBeNull();
+    expect(text()).not.toContain('Your session has expired.');
+  });
+
+  it('render_expiredReason_showsSessionExpiredNotice', async () => {
+    await withQueryParams({ reason: 'expired' });
+
+    expect(text()).toContain('Your session has expired. Please log in again.');
+    // it is an explanation, not the visitor's failed attempt, so it is not the error line
+    expect((fixture.nativeElement as HTMLElement).querySelector('.login-error')).toBeNull();
+  });
+
+  /** Rebuilds the component with the given query params supplied through the ActivatedRoute seam. */
+  async function withQueryParams(params: Record<string, string>): Promise<void> {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [LoginComponent],
+      providers: [
+        provideHttpClient(withInterceptors([errorInterceptor])),
+        provideHttpClientTesting(),
+        provideRouter([{ path: 'app', children: [] }]),
+        provideTestTranslations({
+          en: {
+            common: { appName: 'Bestandskontrolle' },
+            login: {
+              title: 'Sign in to {{app}}',
+              showPassword: 'Show password',
+              hidePassword: 'Hide password',
+              invalidCredentials: 'Invalid username or password',
+              sessionExpired: 'Your session has expired. Please log in again.'
+            }
+          }
+        }),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap(params) } }
+        }
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(LoginComponent);
+    controller = TestBed.inject(HttpTestingController);
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   function text(): string {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';

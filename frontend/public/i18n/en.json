@@ -40,7 +40,8 @@
     "hidePassword": "Hide password",
     "submit": "Sign in",
     "submitting": "Signing in…",
-    "invalidCredentials": "Invalid username or password"
+    "invalidCredentials": "Invalid username or password",
+    "sessionExpired": "Your session has expired. Please log in again."
   },
   "notFound": {
     "title": "Page not found",

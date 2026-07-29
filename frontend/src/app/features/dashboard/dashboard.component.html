@@ -10,32 +10,35 @@
   <p class="dashboard-error" role="alert">{{ message }}</p>
 }
 
+<!-- While the load failed, every KPI shows an em dash. A zero here is indistinguishable from a real
+     zero, and the signals still hold their defaults, so rendering them would present "no data" as
+     data - the exact reading a user takes from a dashboard full of zeros. -->
 <div class="kpi-row">
   <mat-card class="kpi-card kpi-products">
     <mat-card-content>
       <p class="kpi-label">{{ 'dashboard.kpi.products' | translate }}</p>
-      <p class="kpi-value">{{ totalProducts() }}</p>
+      <p class="kpi-value">{{ error() ? '—' : totalProducts() }}</p>
     </mat-card-content>
   </mat-card>
 
   <mat-card class="kpi-card kpi-low-stock">
     <mat-card-content>
       <p class="kpi-label">{{ 'dashboard.kpi.lowStock' | translate }}</p>
-      <p class="kpi-value">{{ lowStock().length }}</p>
+      <p class="kpi-value">{{ error() ? '—' : lowStock().length }}</p>
     </mat-card-content>
   </mat-card>
 
   <mat-card class="kpi-card kpi-overdue">
     <mat-card-content>
       <p class="kpi-label">{{ 'dashboard.kpi.overdue' | translate }}</p>
-      <p class="kpi-value">{{ overdueCount() }}</p>
+      <p class="kpi-value">{{ error() ? '—' : overdueCount() }}</p>
     </mat-card-content>
   </mat-card>
 
   <mat-card class="kpi-card kpi-loss-value">
     <mat-card-content>
       <p class="kpi-label">{{ 'dashboard.kpi.lossValue' | translate }}</p>
-      <p class="kpi-value">{{ lossValue() | currency: 'EUR' }}</p>
+      <p class="kpi-value">{{ error() ? '—' : (lossValue() | currency: 'EUR') }}</p>
     </mat-card-content>
   </mat-card>
 </div>
