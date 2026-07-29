@@ -14,6 +14,14 @@
       </div>
 
       <mat-form-field appearance="outline">
+        <mat-label>{{ 'invoices.form.invoiceNumber' | translate }}</mat-label>
+        <input matInput formControlName="invoiceNumber" maxlength="64" class="invoice-number-input" />
+        @if (form.controls.invoiceNumber.touched && form.controls.invoiceNumber.invalid) {
+          <mat-error>{{ 'invoices.form.invoiceNumberRequired' | translate }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
         <mat-label>
           {{
             (isPurchase()

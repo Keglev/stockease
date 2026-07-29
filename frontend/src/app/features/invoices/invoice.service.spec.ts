@@ -11,6 +11,7 @@ const BASE_URL = `${environment.apiBaseUrl}/api/invoices`;
 
 const SUMMARY: InvoiceSummaryResponse = {
   id: 1,
+  invoiceNumber: 'RE-2026-0117',
   type: 'PURCHASE',
   status: 'OPEN',
   dueDate: '2026-03-01',
@@ -23,6 +24,7 @@ const SUMMARY: InvoiceSummaryResponse = {
 
 const DETAIL: InvoiceResponse = {
   id: 1,
+  invoiceNumber: 'RE-2026-0117',
   type: 'PURCHASE',
   status: 'OPEN',
   dueDate: '2026-03-01',
@@ -48,6 +50,7 @@ const PAID: InvoiceSummaryResponse = { ...SUMMARY, paidAt: '2026-02-02T10:00:00'
 function purchaseDraft() {
   return buildCreateInvoiceRequest({
     type: 'PURCHASE',
+    invoiceNumber: 'RE-2026-0117',
     supplierId: 7,
     customerId: null,
     dueDate: '2026-03-01',
@@ -150,6 +153,7 @@ describe('InvoiceService', () => {
       .create(
         buildCreateInvoiceRequest({
           type: 'SALE',
+          invoiceNumber: 'AR-2026-0001',
           supplierId: null,
           customerId: null,
           dueDate: '2026-03-01',

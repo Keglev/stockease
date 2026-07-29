@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,8 +52,12 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /** invoice_number is NOT NULL and unique among live rows, so every fixture takes a fresh one. */
+    private static final AtomicInteger NUMBERS = new AtomicInteger();
+
     private static Invoice newInvoice(InvoiceType type) {
         Invoice invoice = new Invoice();
+        invoice.setInvoiceNumber("TST-IMAP-" + NUMBERS.incrementAndGet());
         invoice.setType(type);
         invoice.setStatus(InvoiceStatus.OPEN);
         invoice.setDueDate(LocalDate.now());
@@ -70,6 +75,7 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
         productRepository.saveAndFlush(product);
 
         Invoice invoice = new Invoice();
+        invoice.setInvoiceNumber("TST-IMAP-CASCADE");
         invoice.setType(InvoiceType.PURCHASE);
         invoice.setSupplier(supplier);
         invoice.setStatus(InvoiceStatus.OPEN);

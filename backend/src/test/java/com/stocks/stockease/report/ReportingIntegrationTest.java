@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,25 +70,32 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
         return productService.create(name, "RPT-" + name.hashCode(), new BigDecimal(purchasePrice).doubleValue());
     }
 
+    /** Numbers are unique among live invoices, and these tests commit, so each takes a fresh one. */
+    private static final AtomicInteger NUMBERS = new AtomicInteger();
+
+    private static String nextNumber() {
+        return "TST-RPT-" + NUMBERS.incrementAndGet();
+    }
+
     private Invoice closedPurchase(long supplierId, long productId, int qty, String unitPrice) {
-        Invoice invoice = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, supplierId,
-                null, LocalDate.now(), null, null,
+        Invoice invoice = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE,
+                nextNumber(), supplierId, null, LocalDate.now(), null, null,
                 List.of(new CreateInvoiceCommand.ItemLine(productId, qty, new BigDecimal(unitPrice)))));
         invoiceService.close(invoice.getId(), user);
         return invoice;
     }
 
     private Invoice closedSale(long productId, int qty, String unitPrice) {
-        Invoice invoice = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, null, null,
-                LocalDate.now(), null, null,
+        Invoice invoice = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, nextNumber(),
+                null, null, LocalDate.now(), null, null,
                 List.of(new CreateInvoiceCommand.ItemLine(productId, qty, new BigDecimal(unitPrice)))));
         invoiceService.close(invoice.getId(), user);
         return invoice;
     }
 
     private Invoice unpaidSale(long productId, int qty, String unitPrice, LocalDate dueDate) {
-        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, null, null, dueDate,
-                null, null,
+        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, nextNumber(), null, null,
+                dueDate, null, null,
                 List.of(new CreateInvoiceCommand.ItemLine(productId, qty, new BigDecimal(unitPrice)))));
     }
 
@@ -281,8 +289,8 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
 
     /** A closed purchase invoice that fell due yesterday. */
     private Invoice overduePurchase(long supplierId, long productId) {
-        Invoice invoice = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, supplierId,
-                null, LocalDate.now().minusDays(1), null, null,
+        Invoice invoice = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE,
+                nextNumber(), supplierId, null, LocalDate.now().minusDays(1), null, null,
                 List.of(new CreateInvoiceCommand.ItemLine(productId, 1, new BigDecimal("10.00")))));
         invoiceService.close(invoice.getId(), user);
         return invoice;

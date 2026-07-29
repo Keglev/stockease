@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,15 +74,22 @@ class CustomerSummaryIntegrationTest extends AbstractIntegrationTest {
         Product product = productService.create(name, "SUM-" + name.hashCode(), 5.0);
         Supplier supplier = supplierService.create(name + " Supplier", "1 Main St");
         Invoice purchase = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE,
-                supplier.getId(), null, LocalDate.now(), null, null,
+                nextNumber(), supplier.getId(), null, LocalDate.now(), null, null,
                 List.of(line(product, quantity, "5.00"))));
         invoiceService.close(purchase.getId(), user);
         return product;
     }
 
+    /** Numbers are unique among live invoices, and these tests commit, so each takes a fresh one. */
+    private static final AtomicInteger NUMBERS = new AtomicInteger();
+
+    private static String nextNumber() {
+        return "TST-SUM-" + NUMBERS.incrementAndGet();
+    }
+
     private Invoice sale(Long customerId, CreateInvoiceCommand.ItemLine... lines) {
-        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, null, customerId,
-                LocalDate.now(), null, null, List.of(lines)));
+        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, nextNumber(), null,
+                customerId, LocalDate.now(), null, null, List.of(lines)));
     }
 
     private static CreateInvoiceCommand.ItemLine line(Product product, int quantity, String unitPrice) {

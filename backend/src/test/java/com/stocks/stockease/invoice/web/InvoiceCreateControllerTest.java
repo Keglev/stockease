@@ -61,6 +61,7 @@ class InvoiceCreateControllerTest {
                         .contentType(applicationJson()).content(validCreateBody()).with(csrfToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.invoiceNumber").value("RE-2026-0117"))
                 .andExpect(jsonPath("$.status").value("OPEN"))
                 .andExpect(jsonPath("$.supplierId").value(7));
 
@@ -74,6 +75,7 @@ class InvoiceCreateControllerTest {
         CreateInvoiceCommand command = captor.getValue();
 
         assertThat(command.type()).isEqualTo(InvoiceType.PURCHASE);
+        assertThat(command.invoiceNumber()).isEqualTo("RE-2026-0117");
         assertThat(command.supplierId()).isEqualTo(7L);
         assertThat(command.customerId()).isNull();
         assertThat(command.dueDate()).isEqualTo(InvoiceTestFixtures.DUE_DATE);
@@ -102,6 +104,30 @@ class InvoiceCreateControllerTest {
         performInvalid("{\"dueDate\": \"2026-03-01\","
                 + " \"items\": [{\"productId\": 3, \"quantity\": 2, \"unitPrice\": 15.00}]}", "type",
                 "Invoice type is required.");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void createInvoice_withMissingInvoiceNumber_returns400() throws Exception {
+        // both @NotNull and @NotBlank fire on a missing value and the handler joins their messages,
+        // so this asserts the field is rejected and why, without pinning the join
+        mockMvc.perform(post("/api/invoices").contentType(applicationJson()).with(csrfToken())
+                        .content("{\"type\": \"PURCHASE\", \"supplierId\": 7, \"dueDate\": \"2026-03-01\","
+                                + " \"items\": [{\"productId\": 3, \"quantity\": 2, \"unitPrice\": 15.00}]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.data['invoiceNumber']").value(
+                        org.hamcrest.Matchers.containsString("Invoice number is required.")));
+
+        Mockito.verify(invoiceService, Mockito.never()).createInvoice(any(CreateInvoiceCommand.class));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void createInvoice_withBlankInvoiceNumber_returns400() throws Exception {
+        performInvalid("{\"type\": \"PURCHASE\", \"invoiceNumber\": \"  \", \"supplierId\": 7,"
+                + " \"dueDate\": \"2026-03-01\","
+                + " \"items\": [{\"productId\": 3, \"quantity\": 2, \"unitPrice\": 15.00}]}", "invoiceNumber",
+                "Invoice number is required.");
     }
 
     @Test

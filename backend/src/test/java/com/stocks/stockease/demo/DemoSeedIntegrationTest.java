@@ -1,6 +1,7 @@
 package com.stocks.stockease.demo;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -113,6 +114,15 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM stock_movement WHERE type = 'INCREASE' AND reason <> 'PURCHASE' "
                         + "AND reason <> 'RETURN_FROM_CUSTOMER'", Long.class)).isZero();
+    }
+
+    @Test
+    void seededInvoices_afterSeeding_allCarryADistinctNonBlankNumber() {
+        List<String> numbers = jdbcTemplate.queryForList(
+                "SELECT invoice_number FROM invoice", String.class);
+
+        assertThat(numbers).hasSize(14).doesNotContainNull().doesNotHaveDuplicates();
+        assertThat(numbers).allSatisfy(number -> assertThat(number).isNotBlank());
     }
 
     @Test

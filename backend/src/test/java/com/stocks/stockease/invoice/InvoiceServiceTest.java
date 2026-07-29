@@ -97,8 +97,8 @@ class InvoiceServiceTest {
 
     private static CreateInvoiceCommand command(InvoiceType type, Long supplierId, Long customerId,
             CreateInvoiceCommand.ItemLine... lines) {
-        return new CreateInvoiceCommand(type, supplierId, customerId, LocalDate.now(), BigDecimal.ONE,
-                BigDecimal.ONE, List.of(lines));
+        return new CreateInvoiceCommand(type, "TST-SVC-1", supplierId, customerId, LocalDate.now(),
+                BigDecimal.ONE, BigDecimal.ONE, List.of(lines));
     }
 
     /** Makes {@code save} return its argument so creation tests can assert on the built graph. */
@@ -176,8 +176,8 @@ class InvoiceServiceTest {
     void createInvoice_nullInterestAndFine_defaultToZero() {
         when(productService.findById(3L)).thenReturn(Optional.of(product(3L)));
         stubSaveReturnsArgument();
-        CreateInvoiceCommand command = new CreateInvoiceCommand(InvoiceType.SALE, null, null, LocalDate.now(),
-                null, null, List.of(line(3L, 2, BigDecimal.TEN)));
+        CreateInvoiceCommand command = new CreateInvoiceCommand(InvoiceType.SALE, "TST-SVC-2", null, null,
+                LocalDate.now(), null, null, List.of(line(3L, 2, BigDecimal.TEN)));
 
         Invoice result = invoiceService.createInvoice(command);
 
@@ -195,7 +195,7 @@ class InvoiceServiceTest {
 
     @Test
     void createInvoice_withNullDueDate_throwsIllegalArgumentException() {
-        CreateInvoiceCommand command = new CreateInvoiceCommand(InvoiceType.SALE, null, null, null,
+        CreateInvoiceCommand command = new CreateInvoiceCommand(InvoiceType.SALE, "TST-SVC-3", null, null, null,
                 null, null, List.of(line(3L, 1, BigDecimal.TEN)));
 
         assertThatThrownBy(() -> invoiceService.createInvoice(command))

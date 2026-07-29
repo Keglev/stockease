@@ -4,6 +4,7 @@ export type InvoiceType = CreateInvoiceRequest['type'];
 
 export interface InvoiceDraft {
   type: InvoiceType;
+  invoiceNumber: string;
   supplierId: number | null;
   customerId: number | null;
   dueDate: string;
@@ -17,6 +18,7 @@ export interface InvoiceDraft {
 export function buildCreateInvoiceRequest(draft: InvoiceDraft): CreateInvoiceRequest {
   const request: CreateInvoiceRequest = {
     type: draft.type,
+    invoiceNumber: draft.invoiceNumber,
     dueDate: draft.dueDate,
     items: draft.items
   };

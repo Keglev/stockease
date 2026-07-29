@@ -173,11 +173,16 @@
     },
     "columns": {
       "id": "Nr.",
+      "invoiceNumber": "Rechnungsnummer",
       "type": "Art",
       "status": "Status",
       "counterparty": "Geschäftspartner",
       "dueDate": "Fällig am",
       "createdAt": "Erstellt am"
+    },
+    "form": {
+      "invoiceNumber": "Rechnungsnummer",
+      "invoiceNumberRequired": "Rechnungsnummer ist erforderlich."
     },
     "type": {
       "PURCHASE": "Einkauf",

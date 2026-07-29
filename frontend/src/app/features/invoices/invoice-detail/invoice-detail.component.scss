@@ -10,6 +10,17 @@
   justify-content: space-between;
 }
 
+.detail-number {
+  margin-left: 0.5rem;
+}
+
+// The technical id stays readable but visibly secondary to the business number.
+.detail-id {
+  margin-left: 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
 .detail-card {
   margin-bottom: 1.5rem;
 }

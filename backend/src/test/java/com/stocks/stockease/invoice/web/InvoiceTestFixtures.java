@@ -32,6 +32,7 @@ final class InvoiceTestFixtures {
     static Invoice purchaseInvoice(InvoiceStatus status) {
         Invoice invoice = new Invoice();
         invoice.setId(1L);
+        invoice.setInvoiceNumber("RE-2026-0117");
         invoice.setType(InvoiceType.PURCHASE);
         invoice.setStatus(status);
         invoice.setDueDate(DUE_DATE);
@@ -70,7 +71,8 @@ final class InvoiceTestFixtures {
 
     /** A well-formed purchase creation body with a single line. */
     static String validCreateBody() {
-        return "{\"type\": \"PURCHASE\", \"supplierId\": 7, \"dueDate\": \"2026-03-01\","
+        return "{\"type\": \"PURCHASE\", \"invoiceNumber\": \"RE-2026-0117\", \"supplierId\": 7,"
+                + " \"dueDate\": \"2026-03-01\","
                 + " \"items\": [{\"productId\": 3, \"quantity\": 2, \"unitPrice\": 15.00}]}";
     }
 

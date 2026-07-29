@@ -62,6 +62,10 @@ export class InvoiceCreateComponent implements OnInit {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     type: this.formBuilder.nonNullable.control<InvoiceType>('PURCHASE', Validators.required),
+    invoiceNumber: this.formBuilder.nonNullable.control('', [
+      Validators.required,
+      Validators.maxLength(64)
+    ]),
     counterpartyId: this.formBuilder.control<number | null>(null, Validators.required),
     dueDate: this.formBuilder.control<Date | null>(null, Validators.required),
     items: this.formBuilder.array([this.itemGroup()])
@@ -122,6 +126,7 @@ export class InvoiceCreateComponent implements OnInit {
     const counterpartyId = raw.counterpartyId;
     const request = buildCreateInvoiceRequest({
       type: raw.type,
+      invoiceNumber: raw.invoiceNumber,
       supplierId: raw.type === 'PURCHASE' ? counterpartyId : null,
       customerId: raw.type === 'SALE' ? counterpartyId : null,
       dueDate: toIsoDate(raw.dueDate),

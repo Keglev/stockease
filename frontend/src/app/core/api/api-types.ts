@@ -1027,6 +1027,11 @@ export interface components {
              * @example 1
              */
             id: number;
+            /**
+             * @description Operator-assigned business identifier; the technical key stays `id`
+             * @example RE-2026-0117
+             */
+            invoiceNumber: string;
             type: components["schemas"]["InvoiceType"];
             status: components["schemas"]["InvoiceStatus"];
             /**
@@ -1087,6 +1092,11 @@ export interface components {
              * @example 1
              */
             id: number;
+            /**
+             * @description Operator-assigned business identifier; the technical key stays `id`
+             * @example RE-2026-0117
+             */
+            invoiceNumber: string;
             type: components["schemas"]["InvoiceType"];
             status: components["schemas"]["InvoiceStatus"];
             /**
@@ -1143,6 +1153,11 @@ export interface components {
          */
         CreateInvoiceRequest: {
             type: components["schemas"]["InvoiceType"];
+            /**
+             * @description Operator-assigned business identifier: the supplier's document number on a purchase, the operator's own number on a sale. Must be unique among invoices that are not soft-deleted - a deleted invoice's number may be reused. Rejected with 409 when it collides.
+             * @example RE-2026-0117
+             */
+            invoiceNumber: string;
             /**
              * Format: int64
              * @description Required for PURCHASE invoices; must be absent on SALE invoices

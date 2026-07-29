@@ -47,6 +47,7 @@ const TRANSLATIONS = {
 function detail(overrides: Partial<InvoiceResponse> = {}): InvoiceResponse {
   return {
     id: 1,
+    invoiceNumber: 'RE-2026-0117',
     type: 'PURCHASE',
     status: 'OPEN',
     dueDate: '2026-03-01',
@@ -67,6 +68,7 @@ function detail(overrides: Partial<InvoiceResponse> = {}): InvoiceResponse {
 
 const SUMMARY: InvoiceSummaryResponse = {
   id: 1,
+  invoiceNumber: 'RE-2026-0117',
   type: 'PURCHASE',
   status: 'CLOSED',
   dueDate: '2026-03-01',

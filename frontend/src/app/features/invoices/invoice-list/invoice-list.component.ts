@@ -40,6 +40,7 @@ export class InvoiceListComponent implements OnInit {
 
   protected readonly displayedColumns = [
     'id',
+    'invoiceNumber',
     'type',
     'status',
     'counterparty',

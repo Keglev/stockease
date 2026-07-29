@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,9 +72,17 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
                 .orElseGet(() -> userRepository.saveAndFlush(new User("movement-tester", "hash", "ROLE_ADMIN")));
     }
 
+    /** invoice_number is NOT NULL and unique among live rows, so every fixture takes a fresh one. */
+    private static final AtomicInteger NUMBERS = new AtomicInteger();
+
+    private static String nextNumber() {
+        return "TST-MOVE-INV-" + NUMBERS.incrementAndGet();
+    }
+
     /** Persists a product plus a sale invoice line of {@code itemQty} units at 15.00 each. */
     private InvoiceItem saleItemFor(Product product, int itemQty) {
         Invoice invoice = new Invoice();
+        invoice.setInvoiceNumber(nextNumber());
         invoice.setType(InvoiceType.SALE);
         // these fixtures stand in for already-booked invoices; movements are rejected against open ones
         invoice.setStatus(InvoiceStatus.CLOSED);
@@ -95,6 +104,7 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
     private InvoiceItem purchaseItemFor(Product product, int itemQty) {
         Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", "1 Main St", null, null));
         Invoice invoice = new Invoice();
+        invoice.setInvoiceNumber(nextNumber());
         invoice.setType(InvoiceType.PURCHASE);
         invoice.setSupplier(supplier);
         // these fixtures stand in for already-booked invoices; movements are rejected against open ones

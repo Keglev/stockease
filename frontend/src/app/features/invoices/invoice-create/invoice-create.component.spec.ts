@@ -74,6 +74,7 @@ const PRODUCTS: ProductResponse[] = [
 
 const CREATED: InvoiceSummaryResponse = {
   id: 42,
+  invoiceNumber: 'AR-2026-0001',
   type: 'SALE',
   status: 'OPEN',
   dueDate: '2026-03-01',
@@ -150,6 +151,7 @@ describe('InvoiceCreateComponent', () => {
 
   function fillValidSale(): void {
     control('type').setValue('SALE');
+    control('invoiceNumber').setValue('AR-2026-0001');
     control('dueDate').setValue(new Date(2026, 2, 1));
     fillItem(0, 3, 2, 15);
   }
@@ -283,6 +285,36 @@ describe('InvoiceCreateComponent', () => {
     // ADR 011: the UI records inventory facts, never financial calculations.
     expect(invoices.requests[0]).not.toHaveProperty('interestRate');
     expect(invoices.requests[0]).not.toHaveProperty('fineValue');
+  });
+
+  it('submit_validSale_sendsExactlyTheExpectedKeySet', async () => {
+    fillValidSale();
+    await settle();
+
+    submitButton()?.click();
+    await settle();
+
+    // whole-object pin: invoiceNumber is present, the financial keys are absent, and a walk-in
+    // carries neither counterparty key
+    expect(invoices.requests[0]).toEqual({
+      type: 'SALE',
+      invoiceNumber: 'AR-2026-0001',
+      dueDate: '2026-03-01',
+      items: [{ productId: 3, quantity: 2, unitPrice: 15 }]
+    });
+  });
+
+  it('submit_withoutInvoiceNumber_isBlocked', async () => {
+    control('type').setValue('SALE');
+    control('dueDate').setValue(new Date(2026, 2, 1));
+    fillItem(0, 3, 2, 15);
+    await settle();
+
+    expect(submitButton()?.disabled).toBe(true);
+    submitButton()?.click();
+    await settle();
+
+    expect(invoices.requests).toEqual([]);
   });
 
   it('submit_backendRejects_notifiesAndStaysOnPage', async () => {

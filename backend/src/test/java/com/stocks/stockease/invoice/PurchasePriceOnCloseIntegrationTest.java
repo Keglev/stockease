@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -73,13 +74,20 @@ class PurchasePriceOnCloseIntegrationTest extends AbstractIntegrationTest {
         return new CreateInvoiceCommand.ItemLine(product.getId(), 2, new BigDecimal(unitPrice));
     }
 
+    /** Numbers are unique among live invoices, and these tests commit, so each takes a fresh one. */
+    private static final AtomicInteger NUMBERS = new AtomicInteger();
+
+    private static String nextNumber() {
+        return "TST-PRICE-" + NUMBERS.incrementAndGet();
+    }
+
     private Invoice purchase(CreateInvoiceCommand.ItemLine... lines) {
-        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, newSupplier().getId(),
-                null, LocalDate.now(), null, null, List.of(lines)));
+        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, nextNumber(),
+                newSupplier().getId(), null, LocalDate.now(), null, null, List.of(lines)));
     }
 
     private Invoice sale(CreateInvoiceCommand.ItemLine... lines) {
-        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, null, null,
+        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, nextNumber(), null, null,
                 LocalDate.now(), null, null, List.of(lines)));
     }
 
