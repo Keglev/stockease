@@ -1,0 +1,76 @@
+name: Demo Reset
+
+# Restores the seeded demo baseline (ADR 005) by calling the backend's
+# token-protected reset endpoint. Whatever a visitor did to the demo during the
+# day is ephemeral by design; this job is what makes that true.
+
+on:
+  schedule:
+    # 03:00 UTC is the agreed reset time: past midnight in every European
+    # timezone the demo is shown in, so a reset never lands mid-visit, and well
+    # clear of the deploy workflows.
+    - cron: "0 3 * * *"
+  # Manual dispatch is the recovery path when a nightly run fails - the repo
+  # dispatches rather than re-running, so the run reflects current main. It is
+  # also how the FIRST baseline seed gets triggered, before any schedule fires.
+  workflow_dispatch:
+
+concurrency:
+  group: demo-reset
+  # Never cancel a reset in flight: two wipes interleaving would leave the demo
+  # half-seeded, which is worse than a late reset.
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+
+    env:
+      # Production apiBaseUrl, from frontend/src/environments/environment.ts.
+      RESET_URL: https://stockeasebackend.koyeb.app/api/demo/reset
+
+    steps:
+      - name: Reset demo data
+        env:
+          # The same value lives in two places and must be kept in step: here as
+          # an Actions secret, and on Koyeb as the backend's app.demo.reset-token.
+          # A mismatch shows up as 403, not as a silent no-op.
+          DEMO_RESET_TOKEN: ${{ secrets.DEMO_RESET_TOKEN }}
+        run: |
+          set -uo pipefail
+
+          # No --verbose anywhere: it would echo the request headers, and the
+          # token is one of them. --silent --show-error keeps errors visible
+          # without the header dump.
+          #
+          # Retries cover the free-tier instance's cold start: the first request
+          # after an idle period can time out while the container wakes.
+          status=$(curl \
+            --silent --show-error \
+            --request POST \
+            --header "X-Demo-Reset-Token: ${DEMO_RESET_TOKEN}" \
+            --fail-with-body \
+            --max-time 120 \
+            --retry 3 \
+            --retry-delay 30 \
+            --retry-all-errors \
+            --output response.txt \
+            --write-out '%{http_code}' \
+            "${RESET_URL}") && curl_exit=0 || curl_exit=$?
+
+          echo "HTTP status: ${status:-<no response>}"
+          echo "Response body:"
+          # The body is the standard API envelope; its message is the whole
+          # diagnostic, so it is printed on success and on failure alike.
+          cat response.txt 2>/dev/null || echo "<no body received>"
+          echo
+
+          exit "${curl_exit}"
+
+      - name: Triage hint
+        if: failure()
+        run: |
+          echo "Reset failed. 401 or 404 means demo mode is not enabled on the backend (app.demo.enabled); 403 means the DEMO_RESET_TOKEN secret does not match the token configured on Koyeb; a timeout means the instance never woke."
