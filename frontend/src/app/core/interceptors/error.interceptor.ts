@@ -41,7 +41,15 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       // Excluding the login endpoint prevents a redirect loop on a rejected login attempt.
       if (isUnauthorized && !req.url.startsWith(LOGIN_ENDPOINT)) {
         auth.logout();
-        void router.navigate(['/login']);
+        // Already-on-/login check, not a flag: a page firing several requests answers with several
+        // 401s, and each one would otherwise queue its own navigation to the page we are on.
+        // replaceUrl keeps the dead deep link out of history, so Back does not return to it.
+        if (!router.url.startsWith('/login')) {
+          void router.navigate(['/login'], {
+            queryParams: { reason: 'expired' },
+            replaceUrl: true
+          });
+        }
       }
       // Status 0 stands for "never reached the server": a network or CORS failure carries no
       // HTTP status, so no consumer can mistake it for one the backend chose.

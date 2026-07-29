@@ -9,6 +9,10 @@
     </mat-card-header>
 
     <mat-card-content>
+      @if (sessionExpired) {
+        <p class="login-notice" role="status">{{ 'login.sessionExpired' | translate }}</p>
+      }
+
       <form [formGroup]="form" (ngSubmit)="submit()">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'login.username' | translate }}</mat-label>

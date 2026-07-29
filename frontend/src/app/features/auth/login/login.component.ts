@@ -5,7 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -41,6 +41,12 @@ export class LoginComponent {
   protected readonly errorKey = signal<string | null>(null);
 
   protected readonly passwordVisible = signal(false);
+
+  // Read once at construction: the interceptor redirects here with reason=expired, and the notice
+  // explains a logout the user never asked for. It is not an error of theirs, so it renders as its
+  // own line rather than through the error signals a failed attempt owns.
+  protected readonly sessionExpired =
+    inject(ActivatedRoute).snapshot.queryParamMap.get('reason') === 'expired';
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     username: ['', Validators.required],
