@@ -75,8 +75,8 @@ export interface paths {
          *     derived for the response rather than stored.
          *
          *     Creation is master-data maintenance and accepts no quantity: the product starts at zero stock,
-         *     and every unit it later holds arrives through a movement that documents it - closing a purchase
-         *     invoice, or a `NEW_PRODUCT` opening balance.
+         *     and every unit it later holds arrives the only way stock ever does - by closing a purchase
+         *     invoice.
          */
         post: operations["createProduct"];
         delete?: never;
@@ -473,13 +473,13 @@ export interface paths {
          * @description Records a movement that stands on its own and applies its quantity change to the product
          *     atomically. Movements are append-only: a recorded movement is never updated or deleted.
          *
-         *     **Only three reasons are accepted here** - `NEW_PRODUCT`, `LOST` and `DESTROYED`. The other four
-         *     are rejected at the API surface before the service is reached, because they belong to other
-         *     flows: `PURCHASE` and `SOLD` come into existence only by closing an invoice, and the two return
-         *     reasons go through `POST /api/returns`.
+         *     **Only two reasons are accepted here** - `LOST` and `DESTROYED`. This endpoint is a loss ledger:
+         *     stock never enters through it. The other reasons are rejected at the API surface before the
+         *     service is reached, because they belong to other flows: `PURCHASE` and `SOLD` come into
+         *     existence only by closing an invoice, and the two return reasons go through `POST /api/returns`.
          *
-         *     `NEW_PRODUCT` requires a positive `unitCost` and the other two reject it, since only initial
-         *     stock carries a cost snapshot of its own.
+         *     Both reasons require a `remark` naming what happened to the stock, and neither accepts a price:
+         *     a cost snapshot belongs to a purchase line, and purchases are not recorded here.
          */
         post: operations["recordMovement"];
         delete?: never;
@@ -1173,12 +1173,13 @@ export interface components {
          */
         MovementType: "INCREASE" | "DECREASE";
         /**
-         * @description Business reason for the change. PURCHASE and SOLD are booked only by closing an invoice;
-         *     RETURN_FROM_CUSTOMER and RETURNED_TO_SUPPLIER are recorded through the returns endpoint;
-         *     NEW_PRODUCT, LOST and DESTROYED are the standalone corrections.
+         * @description Business reason for the change. PURCHASE and SOLD are booked only by closing an invoice -
+         *     PURCHASE is the sole way stock ever increases from outside; RETURN_FROM_CUSTOMER and
+         *     RETURNED_TO_SUPPLIER are recorded through the returns endpoint; LOST and DESTROYED are the
+         *     standalone corrections the movements endpoint accepts.
          * @enum {string}
          */
-        MovementReason: "NEW_PRODUCT" | "PURCHASE" | "RETURN_FROM_CUSTOMER" | "SOLD" | "LOST" | "DESTROYED" | "RETURNED_TO_SUPPLIER";
+        MovementReason: "PURCHASE" | "RETURN_FROM_CUSTOMER" | "SOLD" | "LOST" | "DESTROYED" | "RETURNED_TO_SUPPLIER";
         /**
          * @description Why stock was lost or destroyed. One taxonomy serves both reasons: the question has the same
          *     answers either way, and a shared list keeps the loss report groupable across the pair. The
@@ -1235,24 +1236,21 @@ export interface components {
              * @example 3
              */
             productId: number;
-            /** @description Required, and must be NEW_PRODUCT, LOST or DESTROYED at this endpoint */
-            reason: components["schemas"]["MovementReason"];
+            /**
+             * @description Required, and must be LOST or DESTROYED. This endpoint is a loss ledger: stock never enters through it, so no incoming reason is accepted here.
+             * @enum {string}
+             */
+            reason: "LOST" | "DESTROYED";
             /**
              * @description Must be positive; message: "Quantity must be positive."
              * @example 2
              */
             quantity: number;
             /**
-             * Format: double
-             * @description Required by NEW_PRODUCT and rejected for the other reasons; must be positive when present
-             * @example 7.5
-             */
-            unitCost?: number | null;
-            /**
-             * @description Conditionally required: LOST and DESTROYED movements must carry a remark explaining the loss, and every other reason must omit it. Rejected with 400 when the pair is inconsistent; a database CHECK enforces the same rule as a backstop.
+             * @description Required: every reason this endpoint accepts is a loss, and a loss must say what happened to the stock. A database CHECK enforces the same rule as a backstop.
              * @example EXPIRED
              */
-            remark?: components["schemas"]["MovementRemark"] | null;
+            remark: components["schemas"]["MovementRemark"];
         };
         RegisterReturnRequest: {
             /**
@@ -3117,9 +3115,9 @@ export interface operations {
                 /**
                  * @example {
                  *       "productId": 3,
-                 *       "reason": "NEW_PRODUCT",
+                 *       "reason": "LOST",
                  *       "quantity": 2,
-                 *       "unitCost": 7.5
+                 *       "remark": "EXPIRED"
                  *     }
                  */
                 "application/json": components["schemas"]["RecordMovementRequest"];
@@ -3137,12 +3135,13 @@ export interface operations {
                      *       "id": 5,
                      *       "productId": 3,
                      *       "userId": 11,
-                     *       "type": "INCREASE",
-                     *       "reason": "NEW_PRODUCT",
+                     *       "type": "DECREASE",
+                     *       "reason": "LOST",
                      *       "quantity": 2,
                      *       "invoiceItemId": null,
                      *       "soldPrice": null,
-                     *       "unitCost": 7.5,
+                     *       "unitCost": null,
+                     *       "remark": "EXPIRED",
                      *       "createdAt": "2026-01-02T03:04:00"
                      *     }
                      */

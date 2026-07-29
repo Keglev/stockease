@@ -113,10 +113,8 @@ public class DemoDataService {
         List<Customer> customers = seedCustomers();
         List<Product> products = seedProducts();
 
-        // Opening stock for the one product whose only purchase invoice is still open, booked the way
-        // the domain models initial stock: a NEW_PRODUCT movement carrying its own cost snapshot.
-        record(staff, MovementReason.NEW_PRODUCT, products.get(9), 90, null, new BigDecimal("21.50"));
-
+        // No opening-balance step: every unit the baseline holds arrives by closing a purchase
+        // invoice (ADR 021), which is also what sets each product's price - see seedProducts.
         List<Invoice> purchases = seedPurchaseInvoices(suppliers, products, admin);
         List<Invoice> sales = seedSaleInvoices(customers, products, admin);
         seedAdjustments(purchases, sales, products, staff);
@@ -153,8 +151,14 @@ public class DemoDataService {
     }
 
     /**
-     * Creates the catalogue at zero stock; every unit the demo holds arrives through a booked movement,
-     * so the cost basis the profit report reads is never an unexplained opening balance.
+     * Creates the catalogue at zero stock; every unit the demo holds arrives by closing a purchase
+     * invoice, so the cost basis the profit report reads always has a document behind it.
+     *
+     * <p>The prices passed here are starting values only. Each product's live price is
+     * <em>derived</em>: closing a purchase invoice reprices its lines to what that invoice paid
+     * (ADR 019), so after seeding a product carries the unit price of its last closed purchase line,
+     * not the figure below. Product 0 is bought twice on purpose - 58.00 first, then 61.50 - and the
+     * invoices close in that order, so it ends at the later 61.50 rather than the earlier price.
      */
     private List<Product> seedProducts() {
         List<Product> products = new ArrayList<>();
@@ -177,8 +181,11 @@ public class DemoDataService {
 
     /**
      * Purchases from all five suppliers, closed except the last so an OPEN purchase exists. Due dates
-     * straddle today: one long overdue, two inside the default due-soon window, the rest across the
+     * straddle today: two long overdue, two inside the default due-soon window, the rest across the
      * coming three weeks so the bucket chart has columns.
+     *
+     * <p>Closing these is what puts stock on the shelves and what fixes each product's price, so
+     * every product the sales below draw on is bought here first, in enough quantity to cover them.
      */
     private List<Invoice> seedPurchaseInvoices(List<Supplier> suppliers, List<Product> products, User admin) {
         List<Invoice> invoices = new ArrayList<>();
@@ -195,6 +202,11 @@ public class DemoDataService {
         invoices.add(closedPurchase(suppliers.get(0), days(3), admin,
                 line(products.get(0), 10, "61.50"), line(products.get(7), 20, "142.00"),
                 line(products.get(8), 8, "170.00"), line(products.get(10), 9, "352.00")));
+        // The paper supplier's delivered order. It is what stocks the copier paper the walk-in sale
+        // sells, which the open order below cannot do: an OPEN invoice books nothing.
+        invoices.add(closedPurchase(suppliers.get(4), days(-30), admin,
+                line(products.get(9), 90, "21.50")));
+        // still open, so the demo has a purchase in each state; a repeat order from the same supplier
         invoices.add(openPurchase(suppliers.get(4), days(9), line(products.get(9), 80, "21.50")));
         return invoices;
     }

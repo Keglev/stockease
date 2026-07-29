@@ -1,5 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -10,23 +9,19 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProductResponse } from '../../../core/api/api-models';
 import { NotificationService } from '../../../core/notifications/notification.service';
-// Deliberate cross-feature import, as on the invoice create page: "a price must be greater
-// than zero" should have one definition rather than a copy per feature.
-import { positivePrice } from '../../products/positive-price.validator';
 import { ProductService } from '../../products/product.service';
 import {
   MOVEMENT_REMARKS,
   MovementRemarkValue,
   STANDALONE_REASONS,
   StandaloneReason,
-  buildRecordMovementRequest,
-  requiresRemark
+  buildRecordMovementRequest
 } from '../movement-payload';
 import { MovementService } from '../movement.service';
 
 /**
- * Routed form for recording a standalone stock correction. The unit-cost control exists only
- * for new stock, which is the sole reason the API accepts it on.
+ * Routed form for recording a loss. It offers only LOST and DESTROYED, each of which needs a remark
+ * and none of which carries a price; stock is added by closing a purchase invoice, not here.
  */
 @Component({
   selector: 'app-movement-record',
@@ -47,18 +42,20 @@ export class MovementRecordComponent implements OnInit {
   private readonly products = inject(ProductService);
   private readonly notifications = inject(NotificationService);
 
-  // Only the three standalone reasons: the backend books PURCHASE and SOLD through invoice
-  // closing and the return reasons through the return endpoint, refusing them here with a 400.
+  // Only the two loss reasons: the backend books PURCHASE and SOLD through invoice closing and the
+  // return reasons through the return endpoint, refusing them here with a 400. Stock never enters
+  // through this form at all - a new product is stocked by closing a purchase invoice (ADR 021).
   protected readonly reasons = STANDALONE_REASONS;
   protected readonly remarks = MOVEMENT_REMARKS;
 
   protected readonly productOptions = signal<ProductResponse[]>([]);
   protected readonly pending = signal(false);
 
-  // unitCost is optional in the group's type so it can be added and removed with the reason.
+  // Every control is unconditional now: both reasons this form offers are losses, so both take a
+  // remark and neither takes a price. Nothing is added or removed as the reason changes.
   protected readonly form = new FormGroup<MovementForm>({
     productId: new FormControl<number | null>(null, Validators.required),
-    reason: new FormControl<StandaloneReason>('NEW_PRODUCT', {
+    reason: new FormControl<StandaloneReason>('LOST', {
       nonNullable: true,
       validators: Validators.required
     }),
@@ -66,21 +63,11 @@ export class MovementRecordComponent implements OnInit {
       nonNullable: true,
       validators: [Validators.required, Validators.min(1), integerOnly]
     }),
-    unitCost: unitCostControl()
+    remark: remarkControl()
   });
-
-  private readonly reasonValue = toSignal(this.form.controls.reason.valueChanges, {
-    initialValue: this.form.controls.reason.value
-  });
-
-  protected readonly isNewProduct = computed(() => this.reasonValue() === 'NEW_PRODUCT');
-
-  protected readonly isLoss = computed(() => requiresRemark(this.reasonValue()));
 
   ngOnInit(): void {
     this.products.getAll().subscribe((products) => this.productOptions.set(products));
-
-    this.form.controls.reason.valueChanges.subscribe((reason) => this.onReasonChange(reason));
   }
 
   protected submit(): void {
@@ -94,8 +81,8 @@ export class MovementRecordComponent implements OnInit {
       productId: Number(raw.productId),
       reason: raw.reason,
       quantity: Number(raw.quantity),
-      unitCost: this.form.contains('unitCost') ? Number(raw.unitCost) : null,
-      remark: this.form.contains('remark') ? (raw.remark ?? null) : null
+      // non-null by the time submit runs: the control is required and the form is valid
+      remark: raw.remark as MovementRemarkValue
     });
 
     this.movements.record(request).subscribe({
@@ -114,31 +101,8 @@ export class MovementRecordComponent implements OnInit {
     });
   }
 
-  /**
-   * Adds or removes the reason-specific controls. They are removed rather than hidden or disabled,
-   * because a lingering control could leak a stale value into the payload.
-   */
-  private onReasonChange(reason: StandaloneReason): void {
-    if (reason === 'NEW_PRODUCT') {
-      if (!this.form.contains('unitCost')) {
-        this.form.addControl('unitCost', unitCostControl());
-      }
-    } else {
-      this.form.removeControl('unitCost');
-    }
-
-    if (requiresRemark(reason)) {
-      if (!this.form.contains('remark')) {
-        this.form.addControl('remark', remarkControl());
-      }
-      return;
-    }
-    this.form.removeControl('remark');
-  }
-
   private resetForm(): void {
-    this.form.reset({ productId: null, reason: 'NEW_PRODUCT', quantity: 1, unitCost: 0 });
-    this.onReasonChange('NEW_PRODUCT');
+    this.form.reset({ productId: null, reason: 'LOST', quantity: 1, remark: null });
   }
 }
 
@@ -146,15 +110,7 @@ interface MovementForm {
   productId: FormControl<number | null>;
   reason: FormControl<StandaloneReason>;
   quantity: FormControl<number>;
-  unitCost?: FormControl<number>;
-  remark?: FormControl<MovementRemarkValue | null>;
-}
-
-function unitCostControl(): FormControl<number> {
-  return new FormControl(0, {
-    nonNullable: true,
-    validators: [Validators.required, positivePrice]
-  });
+  remark: FormControl<MovementRemarkValue | null>;
 }
 
 /** Starts empty and required, so a loss cannot be submitted until its cause is chosen. */

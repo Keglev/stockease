@@ -24,9 +24,10 @@ import lombok.RequiredArgsConstructor;
 /**
  * REST controller for standalone stock corrections.
  *
- * <p>Records only movements that stand on their own: initial stock, loss and destruction. Purchase
- * and sale bookings are never made here - they exist exclusively as a consequence of closing an
- * invoice - and returns have their own endpoint, so this controller rejects those reasons outright.
+ * <p>A loss ledger, and nothing else: it records only what left the shelves without a document of its
+ * own - loss and destruction. Stock never arrives here. Incoming units exist exclusively as a
+ * consequence of closing a purchase invoice (ADR 021), sales likewise come from closing, and returns
+ * have their own endpoint, so this controller rejects every other reason outright.
  */
 @RestController
 @RequestMapping("/api/stock-movements")
@@ -35,7 +36,7 @@ public class StockMovementController {
 
     /** The reasons this endpoint may record; everything else is booked elsewhere by design. */
     private static final Set<MovementReason> STANDALONE_REASONS =
-            EnumSet.of(MovementReason.NEW_PRODUCT, MovementReason.LOST, MovementReason.DESTROYED);
+            EnumSet.of(MovementReason.LOST, MovementReason.DESTROYED);
 
     private final StockMovementService stockMovementService;
     private final UserService userService;

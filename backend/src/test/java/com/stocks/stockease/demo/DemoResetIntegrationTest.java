@@ -99,7 +99,8 @@ class DemoResetIntegrationTest extends AbstractIntegrationTest {
         assertThat(markerExists()).isFalse();
         assertThat(count("product")).isEqualTo(12);
         assertThat(count("supplier")).isEqualTo(5);
-        assertThat(count("invoice")).isEqualTo(13);
+        // 14 since ADR 021: the copier paper needs a closed purchase invoice to be stocked at all
+        assertThat(count("invoice")).isEqualTo(14);
     }
 
     @Test

@@ -129,18 +129,15 @@
     "product": "Product",
     "reasonLabel": "Reason",
     "reason": {
-      "NEW_PRODUCT": "New stock",
       "LOST": "Lost",
       "DESTROYED": "Destroyed"
     },
     "directionHint": {
-      "NEW_PRODUCT": "New stock increases the recorded quantity.",
       "LOST": "A loss decreases the recorded quantity.",
       "DESTROYED": "Destruction decreases the recorded quantity."
     },
     "quantity": "Quantity",
-    "unitCost": "Unit cost",
-    "unitCostHint": "Cost snapshot per unit",
+    "stockHint": "To add stock, close a purchase invoice. Stock is never added here.",
     "form": {
       "remark": "Remark",
       "remarkRequired": "Please choose what happened to the stock.",

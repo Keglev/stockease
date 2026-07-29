@@ -18,13 +18,12 @@ import com.stocks.stockease.invoice.CreateInvoiceCommand;
 import com.stocks.stockease.invoice.Invoice;
 import com.stocks.stockease.invoice.InvoiceService;
 import com.stocks.stockease.invoice.InvoiceType;
-import com.stocks.stockease.movement.MovementReason;
-import com.stocks.stockease.movement.RecordMovementCommand;
-import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
+import com.stocks.stockease.supplier.Supplier;
+import com.stocks.stockease.supplier.SupplierService;
 import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /**
@@ -48,7 +47,7 @@ class CustomerSummaryIntegrationTest extends AbstractIntegrationTest {
     private InvoiceService invoiceService;
 
     @Autowired
-    private StockMovementService stockMovementService;
+    private SupplierService supplierService;
 
     @Autowired
     private UserRepository userRepository;
@@ -67,13 +66,16 @@ class CustomerSummaryIntegrationTest extends AbstractIntegrationTest {
 
     /**
      * Stocked up front so closing a sale has units to book out. Creation itself books no stock
-     * (ADR 018), so the opening balance arrives as a NEW_PRODUCT movement - the same path the demo
-     * baseline uses for stock that predates any invoice.
+     * (ADR 018) and stock now enters only through a closed purchase invoice (ADR 021), so the
+     * fixture buys the units the way the application does.
      */
     private Product newProduct(String name, int quantity) {
         Product product = productService.create(name, "SUM-" + name.hashCode(), 5.0);
-        stockMovementService.recordMovement(new RecordMovementCommand(
-                product.getId(), MovementReason.NEW_PRODUCT, quantity, null, new BigDecimal("5.00")), user);
+        Supplier supplier = supplierService.create(name + " Supplier", "1 Main St");
+        Invoice purchase = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE,
+                supplier.getId(), null, LocalDate.now(), null, null,
+                List.of(line(product, quantity, "5.00"))));
+        invoiceService.close(purchase.getId(), user);
         return product;
     }
 

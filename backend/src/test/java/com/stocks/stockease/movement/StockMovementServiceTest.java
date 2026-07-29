@@ -115,21 +115,6 @@ class StockMovementServiceTest {
     }
 
     @Test
-    void recordMovement_newProduct_increasesStockAndSnapshotsSuppliedCost() {
-        when(productService.adjustQuantity(anyLong(), anyInt())).thenReturn(product());
-
-        stockMovementService.recordMovement(command(MovementReason.NEW_PRODUCT, 4, null, BigDecimal.TEN), user);
-
-        verify(productService).adjustQuantity(PRODUCT_ID, 4);
-        verify(invoiceService, never()).registerReturn(anyLong(), anyInt());
-        StockMovement saved = savedMovement();
-        assertThat(saved.getType()).isEqualTo(MovementType.INCREASE);
-        assertThat(saved.getUnitCost()).isEqualByComparingTo(BigDecimal.TEN);
-        assertThat(saved.getSoldPrice()).isNull();
-        assertThat(saved.getInvoiceItem()).isNull();
-    }
-
-    @Test
     void recordMovement_purchase_increasesStockAndSnapshotsItemPriceAsCost() {
         InvoiceItem item = stubLinkedFlow(InvoiceType.PURCHASE, 5);
 
@@ -228,13 +213,13 @@ class StockMovementServiceTest {
     }
 
     @Test
-    void recordMovement_newProductWithRemark_throwsInvalidMovementException() {
+    void recordMovement_purchaseWithRemark_throwsInvalidMovementException() {
         RecordMovementCommand command = new RecordMovementCommand(
-                PRODUCT_ID, MovementReason.NEW_PRODUCT, 2, null, BigDecimal.TEN, MovementRemark.EXPIRED);
+                PRODUCT_ID, MovementReason.PURCHASE, 2, ITEM_ID, null, MovementRemark.EXPIRED);
 
         assertThatThrownBy(() -> stockMovementService.recordMovement(command, user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("NEW_PRODUCT movements carry no remark.");
+                .hasMessageContaining("A remark explains a loss");
     }
 
     @Test
@@ -276,19 +261,11 @@ class StockMovementServiceTest {
     }
 
     @Test
-    void recordMovement_newProductWithInvoiceItem_throwsInvalidMovementException() {
+    void recordMovement_lostWithUnitCost_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService
-                .recordMovement(command(MovementReason.NEW_PRODUCT, 1, ITEM_ID, BigDecimal.TEN), user))
+                .recordMovement(command(MovementReason.LOST, 1, null, BigDecimal.TEN), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessageContaining("must not reference an invoice item");
-    }
-
-    @Test
-    void recordMovement_newProductWithoutUnitCost_throwsInvalidMovementException() {
-        assertThatThrownBy(() -> stockMovementService
-                .recordMovement(command(MovementReason.NEW_PRODUCT, 1, null, null), user))
-                .isInstanceOf(InvalidMovementException.class)
-                .hasMessageContaining("require a positive unit cost");
+                .hasMessageContaining("carry no invoice item or prices");
     }
 
     @Test

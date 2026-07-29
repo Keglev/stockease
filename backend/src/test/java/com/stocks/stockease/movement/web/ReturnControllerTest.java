@@ -95,7 +95,7 @@ class ReturnControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"NEW_PRODUCT", "SOLD", "PURCHASE", "LOST", "DESTROYED"})
+    @ValueSource(strings = {"SOLD", "PURCHASE", "LOST", "DESTROYED"})
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void registerReturn_withNonReturnReason_returns400(String reason) throws Exception {
         mockMvc.perform(post("/api/returns").contentType(applicationJson())

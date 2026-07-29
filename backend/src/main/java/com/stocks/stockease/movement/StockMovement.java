@@ -77,7 +77,7 @@ public class StockMovement {
     @Column(name = "sold_price")
     private BigDecimal soldPrice;
 
-    /** Cost snapshot per unit; set only for NEW_PRODUCT. */
+    /** Cost snapshot per unit, copied from the invoice line; set only for PURCHASE. */
     @Column(name = "unit_cost")
     private BigDecimal unitCost;
 

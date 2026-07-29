@@ -86,17 +86,6 @@ public class StockMovementService {
     /** Rejects fields the reason forbids and demands the ones it requires. */
     private void validateFields(RecordMovementCommand command, MovementReason reason) {
         switch (reason) {
-            case NEW_PRODUCT -> {
-                if (command.invoiceItemId() != null) {
-                    throw new InvalidMovementException("NEW_PRODUCT movements must not reference an invoice item.");
-                }
-                if (command.unitCost() == null || command.unitCost().signum() <= 0) {
-                    throw new InvalidMovementException("NEW_PRODUCT movements require a positive unit cost.");
-                }
-                if (command.remark() != null) {
-                    throw new InvalidMovementException("NEW_PRODUCT movements carry no remark.");
-                }
-            }
             case LOST, DESTROYED -> {
                 if (command.invoiceItemId() != null || command.unitCost() != null) {
                     throw new InvalidMovementException(
@@ -171,7 +160,6 @@ public class StockMovementService {
         switch (reason) {
             case PURCHASE -> movement.setUnitCost(item.getUnitPrice());
             case SOLD, RETURN_FROM_CUSTOMER -> movement.setSoldPrice(item.getUnitPrice());
-            case NEW_PRODUCT -> movement.setUnitCost(command.unitCost());
             default -> {
                 // LOST, DESTROYED and RETURNED_TO_SUPPLIER carry no price snapshot
             }

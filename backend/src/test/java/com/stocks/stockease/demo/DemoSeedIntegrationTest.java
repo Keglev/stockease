@@ -1,5 +1,7 @@
 package com.stocks.stockease.demo;
 
+import java.math.BigDecimal;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -100,7 +102,27 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
         assertThat(count("product")).isEqualTo(12);
         assertThat(count("supplier")).isEqualTo(5);
         assertThat(count("customer")).isEqualTo(5);
-        assertThat(count("invoice")).isEqualTo(13);
+        // 14, not 13: the copier paper's stock used to come from an opening-balance movement and now
+        // needs a closed purchase invoice of its own (ADR 021)
+        assertThat(count("invoice")).isEqualTo(14);
+    }
+
+    @Test
+    void seededStock_afterSeeding_arrivesOnlyThroughPurchaseMovements() {
+        // the vacuity guard for ADR 021: no movement may increase stock except a booked purchase
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM stock_movement WHERE type = 'INCREASE' AND reason <> 'PURCHASE' "
+                        + "AND reason <> 'RETURN_FROM_CUSTOMER'", Long.class)).isZero();
+    }
+
+    @Test
+    void seededProductPrice_afterSeeding_equalsItsLastClosedPurchaseLinePrice() {
+        // product 0 is bought twice - 58.00 then 61.50 - so its price proves the derivation ran and
+        // that the later close is the one that won
+        BigDecimal price = jdbcTemplate.queryForObject(
+                "SELECT purchase_price FROM product WHERE sku = 'WKZ-0001'", BigDecimal.class);
+
+        assertThat(price).isEqualByComparingTo("61.50");
     }
 
     private long count(String table) {
