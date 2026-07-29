@@ -1,6 +1,6 @@
 # ADR 002: Validation Strategy
 
-**Status**: Accepted
+**Status**: Accepted; partially superseded by ADR 018 (product creation contract)
 **Date**: October 31, 2025
 
 ---

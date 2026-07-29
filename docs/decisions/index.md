@@ -30,5 +30,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 016 - Direct ECharts, Not an Angular Wrapper](016-charting-library.md) - **[Frontend]**
 - [ADR 017 - Central Decision Log at the System Level](017-central-decision-log.md) - **[Cross-cutting]**
 - [ADR 018 - Product Creation is Master-Data Maintenance](018-product-master-data.md) - **[Cross-cutting]**
+- [ADR 019 - The Purchase Price Follows the Last Closed Purchase](019-last-purchase-price.md) - **[Backend]**
 
 [Back to Documentation Home](/stockease/)

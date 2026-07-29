@@ -189,7 +189,35 @@ public class InvoiceService {
                 .toList();
         // synchronous listeners run inside this transaction - a failed stock booking rolls back the close
         eventPublisher.publishEvent(new InvoiceClosedEvent(invoice.getId(), invoice.getType(), user, lines));
+
+        if (invoice.getType() == InvoiceType.PURCHASE) {
+            repriceProducts(invoice, user);
+        }
         return invoice;
+    }
+
+    /**
+     * Sets each purchased product's price to the price this invoice actually paid for it (ADR 019).
+     *
+     * <p>Runs through {@link ProductService#updatePrice}, the same audited path the price endpoint uses, so
+     * the change log records the old and new value against the closing user rather than gaining a second,
+     * unaudited way for a price to move.
+     *
+     * @param invoice the purchase invoice being closed
+     * @param user the user closing it, credited with every resulting price change
+     */
+    private void repriceProducts(Invoice invoice, User user) {
+        for (InvoiceItem item : invoice.getItems()) {
+            Product product = item.getProduct();
+            // compareTo, not equals: 2.50 and 2.5 are the same price, and re-stating a price is not a change
+            if (product.getPurchasePrice().compareTo(item.getUnitPrice()) == 0) {
+                continue;
+            }
+            // the most recently CLOSED purchase invoice wins. There is no within-invoice ordering to
+            // resolve: V6 makes (invoice_id, product_id) unique, so one invoice carries at most one
+            // line per product and repeat purchases raise that line's quantity instead
+            productService.updatePrice(product.getId(), item.getUnitPrice(), user);
+        }
     }
 
     /**
