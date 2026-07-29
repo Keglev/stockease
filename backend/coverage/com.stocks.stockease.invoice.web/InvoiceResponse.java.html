@@ -15,6 +15,7 @@ import com.stocks.stockease.invoice.InvoiceType;
  * through the fetch-joined detail query; building it from a list query would fail outside a session.
  *
  * @param id unique invoice identifier
+ * @param invoiceNumber operator-assigned business identifier; never {@code null}
  * @param type whether the invoice records a purchase or a sale
  * @param status current lifecycle state
  * @param dueDate date payment falls due
@@ -27,9 +28,9 @@ import com.stocks.stockease.invoice.InvoiceType;
  * @param createdAt moment the invoice was first persisted
  * @param items the invoice's lines
  */
-<span class="fc" id="L30">public record InvoiceResponse(Long id, InvoiceType type, InvoiceStatus status, LocalDate dueDate, Long supplierId,</span>
-        String supplierName, Long customerId, String customerName, LocalDateTime closedAt, LocalDateTime paidAt,
-        LocalDateTime createdAt, List&lt;InvoiceItemResponse&gt; items) {
+<span class="fc" id="L31">public record InvoiceResponse(Long id, String invoiceNumber, InvoiceType type, InvoiceStatus status,</span>
+        LocalDate dueDate, Long supplierId, String supplierName, Long customerId, String customerName,
+        LocalDateTime closedAt, LocalDateTime paidAt, LocalDateTime createdAt, List&lt;InvoiceItemResponse&gt; items) {
 
     /**
      * Maps a fetch-joined invoice to its detail representation.
@@ -38,13 +39,14 @@ import com.stocks.stockease.invoice.InvoiceType;
      * @return the detail record
      */
     public static InvoiceResponse from(Invoice invoice) {
-<span class="fc" id="L41">        return new InvoiceResponse(invoice.getId(), invoice.getType(), invoice.getStatus(), invoice.getDueDate(),</span>
-<span class="pc bpc" id="L42" title="1 of 2 branches missed.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
-<span class="pc bpc" id="L43" title="1 of 2 branches missed.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getName(),</span>
-<span class="pc bpc" id="L44" title="1 of 2 branches missed.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
-<span class="pc bpc" id="L45" title="1 of 2 branches missed.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getName(),</span>
-<span class="fc" id="L46">                invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt(),</span>
-<span class="fc" id="L47">                invoice.getItems().stream().map(InvoiceItemResponse::from).toList());</span>
+<span class="fc" id="L42">        return new InvoiceResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),</span>
+<span class="fc" id="L43">                invoice.getStatus(), invoice.getDueDate(),</span>
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getName(),</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getName(),</span>
+<span class="fc" id="L48">                invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt(),</span>
+<span class="fc" id="L49">                invoice.getItems().stream().map(InvoiceItemResponse::from).toList());</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

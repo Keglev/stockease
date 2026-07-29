@@ -16,6 +16,7 @@ import com.stocks.stockease.invoice.InvoiceType;
  * when names are needed.
  *
  * @param id unique invoice identifier
+ * @param invoiceNumber operator-assigned business identifier; never {@code null}
  * @param type whether the invoice records a purchase or a sale
  * @param status current lifecycle state
  * @param dueDate date payment falls due
@@ -25,8 +26,9 @@ import com.stocks.stockease.invoice.InvoiceType;
  * @param paidAt moment the invoice was paid
  * @param createdAt moment the invoice was first persisted
  */
-<span class="fc" id="L28">public record InvoiceSummaryResponse(Long id, InvoiceType type, InvoiceStatus status, LocalDate dueDate,</span>
-        Long supplierId, Long customerId, LocalDateTime closedAt, LocalDateTime paidAt, LocalDateTime createdAt) {
+<span class="fc" id="L29">public record InvoiceSummaryResponse(Long id, String invoiceNumber, InvoiceType type, InvoiceStatus status,</span>
+        LocalDate dueDate, Long supplierId, Long customerId, LocalDateTime closedAt, LocalDateTime paidAt,
+        LocalDateTime createdAt) {
 
     /**
      * Maps an invoice to its list representation without initializing any association.
@@ -35,11 +37,11 @@ import com.stocks.stockease.invoice.InvoiceType;
      * @return the summary record
      */
     public static InvoiceSummaryResponse from(Invoice invoice) {
-<span class="fc" id="L38">        return new InvoiceSummaryResponse(invoice.getId(), invoice.getType(), invoice.getStatus(),</span>
-<span class="fc" id="L39">                invoice.getDueDate(),</span>
-<span class="fc bfc" id="L40" title="All 2 branches covered.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
-<span class="fc bfc" id="L41" title="All 2 branches covered.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
-<span class="fc" id="L42">                invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt());</span>
+<span class="fc" id="L40">        return new InvoiceSummaryResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),</span>
+<span class="fc" id="L41">                invoice.getStatus(), invoice.getDueDate(),</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
+<span class="fc" id="L44">                invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt());</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

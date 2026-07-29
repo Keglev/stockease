@@ -8,10 +8,12 @@ import com.stocks.stockease.invoice.CreateInvoiceCommand;
 import com.stocks.stockease.invoice.InvoiceType;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 /**
  * Request body for creating an invoice together with all of its lines.
@@ -20,6 +22,8 @@ import jakarta.validation.constraints.PositiveOrZero;
  * so both counterparty identifiers are nullable at this layer.
  *
  * @param type whether this invoice records a purchase from a supplier or a sale to a customer
+ * @param invoiceNumber operator-assigned business identifier; the supplier's document number on a
+ *        purchase, the operator's own number on a sale. Unique among live invoices.
  * @param supplierId counterparty for purchase invoices
  * @param customerId counterparty for sale invoices
  * @param dueDate date payment falls due
@@ -27,8 +31,11 @@ import jakarta.validation.constraints.PositiveOrZero;
  * @param fineValue accrued late-payment fine; defaults to zero when {@code null}
  * @param items the lines to create, at least one
  */
-<span class="fc" id="L30">public record CreateInvoiceRequest(</span>
+<span class="fc" id="L34">public record CreateInvoiceRequest(</span>
         @NotNull(message = &quot;Invoice type is required.&quot;) InvoiceType type,
+        @NotNull(message = &quot;Invoice number is required.&quot;)
+        @NotBlank(message = &quot;Invoice number is required.&quot;)
+        @Size(max = 64, message = &quot;Invoice number must not exceed 64 characters.&quot;) String invoiceNumber,
         Long supplierId,
         Long customerId,
         @NotNull(message = &quot;Due date is required.&quot;) LocalDate dueDate,
@@ -43,7 +50,7 @@ import jakarta.validation.constraints.PositiveOrZero;
      * @param quantity number of units; must be positive
      * @param unitPrice price snapshot per unit; must be positive
      */
-<span class="fc" id="L46">    public record ItemRequest(</span>
+<span class="fc" id="L53">    public record ItemRequest(</span>
             @NotNull(message = &quot;Item product is required.&quot;) Long productId,
             @Positive(message = &quot;Item quantity must be positive.&quot;) int quantity,
             @NotNull(message = &quot;Item unit price is required.&quot;)
@@ -56,10 +63,11 @@ import jakarta.validation.constraints.PositiveOrZero;
      * @return the equivalent creation command
      */
     public CreateInvoiceCommand toCommand() {
-<span class="fc" id="L59">        List&lt;CreateInvoiceCommand.ItemLine&gt; lines = items.stream()</span>
-<span class="fc" id="L60">                .map(item -&gt; new CreateInvoiceCommand.ItemLine(item.productId(), item.quantity(), item.unitPrice()))</span>
-<span class="fc" id="L61">                .toList();</span>
-<span class="fc" id="L62">        return new CreateInvoiceCommand(type, supplierId, customerId, dueDate, interestRate, fineValue, lines);</span>
+<span class="fc" id="L66">        List&lt;CreateInvoiceCommand.ItemLine&gt; lines = items.stream()</span>
+<span class="fc" id="L67">                .map(item -&gt; new CreateInvoiceCommand.ItemLine(item.productId(), item.quantity(), item.unitPrice()))</span>
+<span class="fc" id="L68">                .toList();</span>
+<span class="fc" id="L69">        return new CreateInvoiceCommand(type, invoiceNumber, supplierId, customerId, dueDate, interestRate,</span>
+                fineValue, lines);
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
