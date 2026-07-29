@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+023-chart-aggregation-and-csv · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-023-client-side-chart-aggregation-and-csv-export-conventions">ADR
+        023: Client-Side Chart Aggregation and CSV Export
+        Conventions</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        29, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The dashboard and the reports page were built against the
+        seeded demo dataset, which holds roughly ten products. Every
+        categorical chart plots one entry per product: the profit bar,
+        the stock-value bar and the loss pie. At that size the charts
+        are readable, and the reports profit bar deliberately plotted
+        <em>every</em> product as the thing that distinguished the page
+        from the dashboard’s top ten.</p>
+        <p>A real inventory has hundreds of products. A
+        three-hundred-row horizontal bar chart is a grey block with
+        unreadable axis labels, and a pie of three hundred slices is a
+        colour wheel. The distinction the reports page needs is not an
+        unabridged chart - it is the exhaustive table, which stays
+        readable at any row count because it scrolls.</p>
+        <p>The tables themselves raise a second question. Once a table
+        carries hundreds of rows, the reason to look at it is usually to
+        take the figures somewhere else - a spreadsheet, an email, an
+        accountant.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Charts plot the ten largest entries by absolute value
+        plus one aggregated remainder bucket</strong>, labelled “Other”
+        / “Sonstige”. The ranking uses the absolute value because gross
+        profit can be negative and a large loss is as chart-worthy as a
+        large gain. The bucket carries the plain sum of everything past
+        the cut, so it can itself be negative.</p>
+        <p>The aggregation is <strong>computed client-side</strong>, in
+        one shared preparation module
+        (<code>shared/chart/chart-data.ts</code>), over the full report
+        payload the endpoints already return. It applies to the
+        profit-by-product chart on both the dashboard and the reports
+        page, the stock-value chart, and the loss pie. The margin gauge
+        and the due-date chart are untouched: a gauge has no rows, and
+        the due chart aggregates by date rather than by product.</p>
+        <p><strong>CSV export is client-side too</strong>, from the same
+        rows the table displays, in the displayed sort order. The field
+        separator and the decimal separator follow the UI language:
+        German gets a semicolon and a comma decimal, English gets a
+        comma and a dot decimal. This is recorded here rather than left
+        in the code because it reads as a bug otherwise - German Excel
+        opens a comma-separated file with dot decimals as a single
+        column, so the “wrong” separator is the correct one. Files carry
+        a UTF-8 byte order mark for the same reason: without it Excel
+        renders umlauts in product and supplier names as mojibake.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>A backend top-N query parameter.</strong> Rejected
+        <em>for now</em>, and explicitly deferred rather than dismissed.
+        The report payloads are small, the frontend needs the full row
+        set anyway to render the tables and the CSV export, and a
+        server-side path would exist only for a dataset size the demo
+        never reaches - two code paths producing two definitions of “top
+        ten”. Revisit when a real dataset makes the payload itself the
+        bottleneck; at that point pagination of the tables becomes the
+        larger question and the chart parameter should be decided
+        together with it.</p>
+        <p><strong>Server-generated CSV.</strong> Rejected: it adds an
+        endpoint, a content-negotiation concern and a second place where
+        column sets and translations live, for a file the browser can
+        assemble from data it already holds in memory.</p>
+        <p><strong>A larger cut, or a per-chart cut.</strong> Rejected:
+        one shared constant is the point. A chart-specific threshold is
+        a number nobody can justify, and ten is the count at which a
+        horizontal bar chart’s labels stop overlapping.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li>The aggregation threshold is one shared constant
+        (<code>CHART_TOP_N</code>). Changing what “top ten” means is one
+        edit, and it moves every chart at once.</li>
+        <li>The remainder bucket can carry a negative value. That is by
+        design, not a defect: a bucket of loss-making products sums to a
+        loss.</li>
+        <li>The bucket label is translated at the moment the chart
+        option is built, so a language switch relabels it on the next
+        load rather than in place. Every chart option on both pages
+        already behaves that way.</li>
+        <li>Charts and tables now answer different questions. The chart
+        is the shape of the distribution; the table is the record. This
+        is what makes the reports page’s chart/table toggle sensible
+        rather than a space-saving trick.</li>
+        <li>CSV files are locale-shaped. A file exported in German and
+        one exported in English are not byte-identical, which is
+        intended and is the reason the separator rule is documented
+        here.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-023-client-side-chart-aggregation-and-csv-export-conventions"
+      id="toc-adr-023-client-side-chart-aggregation-and-csv-export-conventions">ADR
+      023: Client-Side Chart Aggregation and CSV Export Conventions</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
