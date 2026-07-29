@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.stocks.stockease.shared.ApiResponse;
 import com.stocks.stockease.shared.DuplicateResourceException;
@@ -55,6 +56,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<String>> handleEntityNotFoundException(EntityNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(false, "Entity not found: " + ex.getMessage(), null));
+    }
+
+    /**
+     * Handles {@link NoResourceFoundException}, raised when no handler is mapped to the requested path,
+     * and returns a 404 Not Found response.
+     *
+     * <p>Without this the catch-all below claims an unmapped path is a server error. The distinction is
+     * load-bearing for the demo module: with {@code app.demo.enabled} false its controllers are never
+     * registered, and "this endpoint does not exist" has to read as 404 rather than as a 500 that
+     * suggests it does exist and is broken.
+     *
+     * @param ex the caught exception
+     * @return 404 response naming the path that matched nothing
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<String>> handleNoResourceFoundException(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "No endpoint found for " + ex.getResourcePath() + ".", null));
     }
 
     /**
