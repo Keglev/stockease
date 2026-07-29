@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.0.1
+  version: 2.1.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -253,7 +253,7 @@ components:
           example: Laptop
         sku:
           type: string
-          description: Stock keeping unit; generated on creation when not supplied
+          description: Stock keeping unit; assigned by the operator at creation
           example: SKU-A1B2C3D4
         quantity:
           type: integer
@@ -294,7 +294,7 @@ components:
       type: object
       required:
         - name
-        - quantity
+        - sku
         - purchasePrice
       properties:
         name:
@@ -302,11 +302,12 @@ components:
           minLength: 1
           description: Must not be blank
           example: New Laptop
-        quantity:
-          type: integer
-          minimum: 0
-          description: Must be zero or greater
-          example: 25
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Operator-assigned stock keeping unit; must not be blank
+          example: BUE-0004
         purchasePrice:
           type: number
           format: double

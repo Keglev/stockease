@@ -116,10 +116,11 @@ public class ProductController {
     /**
      * Creates a new product (ADMIN only).
      *
-     * <p>Validates that name is non-blank, quantity is non-negative, and purchasePrice is positive.
+     * <p>Validates that name and sku are non-blank and purchasePrice is positive. The product is
+     * created at zero stock; no quantity is accepted here (ADR 018).
      * Behavior defined in {@code docs/api/paths/products.yaml}.
      *
-     * @param request product fields (name, quantity, purchasePrice)
+     * @param request product fields (name, sku, purchasePrice)
      * @return HTTP 200 with the persisted product including its generated ID,
      *         or HTTP 400 if validation fails
      */
@@ -127,7 +128,7 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
         log.debug("Received request to create product: {}", request);
-        Product savedProduct = productService.create(request.getName(), request.getQuantity(), request.getPurchasePrice());
+        Product savedProduct = productService.create(request.getName(), request.getSku(), request.getPurchasePrice());
         return ResponseEntity.ok(ProductResponse.from(savedProduct));
     }
 

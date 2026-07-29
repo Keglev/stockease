@@ -33,7 +33,7 @@ class ProductChangeLogMappingTest extends AbstractIntegrationTest {
 
     @Test
     void persistChangeLog_priceChange_persistsWithGeneratedId() {
-        Product product = productRepository.saveAndFlush(new Product("Widget", 10, 5.0));
+        Product product = productRepository.saveAndFlush(withSku(new Product("Widget", 10, 5.0), "TST-LOG-1"));
         User user = userRepository.saveAndFlush(new User("logger", "hash", "ROLE_ADMIN"));
 
         ProductChangeLog log = new ProductChangeLog(null, product, user,
@@ -46,7 +46,7 @@ class ProductChangeLogMappingTest extends AbstractIntegrationTest {
 
     @Test
     void persistChangeLog_deleteEvent_allowsNullValues() {
-        Product product = productRepository.saveAndFlush(new Product("Widget", 10, 5.0));
+        Product product = productRepository.saveAndFlush(withSku(new Product("Widget", 10, 5.0), "TST-LOG-2"));
         User user = userRepository.saveAndFlush(new User("logger", "hash", "ROLE_ADMIN"));
 
         ProductChangeLog log = new ProductChangeLog(null, product, user,
@@ -55,5 +55,11 @@ class ProductChangeLogMappingTest extends AbstractIntegrationTest {
         ProductChangeLog saved = productChangeLogRepository.saveAndFlush(log);
 
         assertThat(saved.getId()).isNotNull();
+    }
+
+    /** The SKU is no longer generated on persist, so every fixture has to carry its own. */
+    private static Product withSku(Product product, String sku) {
+        product.setSku(sku);
+        return product;
     }
 }

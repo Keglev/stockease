@@ -358,12 +358,13 @@
       "nameTitle": "Rename product",
       "priceTitle": "Change price",
       "name": "Name",
+      "sku": "SKU",
       "quantity": "Quantity",
       "purchasePrice": "Purchase price",
       "nameRequired": "Name is required.",
+      "skuRequired": "SKU is required.",
       "quantityInvalid": "Enter a whole number of 0 or more.",
-      "priceInvalid": "Enter a price greater than 0.",
-      "skuHint": "The SKU is generated automatically."
+      "priceInvalid": "Enter a price greater than 0."
     }
   }
 }

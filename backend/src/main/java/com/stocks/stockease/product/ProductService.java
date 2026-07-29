@@ -61,22 +61,34 @@ public class ProductService {
     }
 
     /**
-     * Creates and persists a new product.
+     * Creates and persists a new product at zero stock.
+     *
+     * <p>Creation is master-data maintenance and books no stock (ADR 018): the quantity is always 0,
+     * and the first units arrive through a movement that documents them - closing a purchase invoice,
+     * or a NEW_PRODUCT opening balance.
      *
      * @param name product name; must not duplicate a live product's name, ignoring case
-     * @param quantity stock quantity
+     * @param sku operator-assigned stock keeping unit; must not duplicate a live product's SKU
      * @param purchasePrice unit purchase price
-     * @return the persisted product including its generated ID
-     * @throws DuplicateResourceException if a live product already carries that name
+     * @return the persisted product including its generated ID, holding zero stock
+     * @throws DuplicateResourceException if a live product already carries that name or that SKU
      */
     @Transactional
-    public Product create(String name, int quantity, double purchasePrice) {
+    public Product create(String name, String sku, double purchasePrice) {
         // service check gives the friendly message, the partial unique index in the database is the
         // concurrency backstop
         if (productRepository.existsByNameIgnoreCase(name)) {
             throw new DuplicateResourceException("A product named '" + name + "' already exists.");
         }
-        return productRepository.save(new Product(name, quantity, purchasePrice));
+        // same split for the SKU: the friendly message here, uq_product_sku from V9 under concurrency
+        if (productRepository.existsBySku(sku)) {
+            throw new DuplicateResourceException("A product with SKU '" + sku + "' already exists.");
+        }
+        // the entity still takes a quantity so movements can build products at any stock level; this
+        // service is the gate that keeps creation at zero
+        Product product = new Product(name, 0, purchasePrice);
+        product.setSku(sku);
+        return productRepository.save(product);
     }
 
     /**

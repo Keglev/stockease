@@ -157,18 +157,20 @@ public class DemoDataService {
      */
     private List<Product> seedProducts() {
         List<Product> products = new ArrayList<>();
-        products.add(productService.create("Akkuschrauber ASB 18V", 0, 64.90));
-        products.add(productService.create("Werkzeugkoffer 128-teilig", 0, 89.50));
-        products.add(productService.create("Industriestaubsauger IS 30", 0, 149.00));
-        products.add(productService.create("LED-Baustrahler 50W", 0, 32.75));
-        products.add(productService.create("Kabeltrommel 25m H07RN-F", 0, 44.20));
-        products.add(productService.create("Sicherheitsschuhe S3 Größe 43", 0, 58.40));
-        products.add(productService.create("Arbeitshandschuhe Nitril 12er-Pack", 0, 11.95));
-        products.add(productService.create("Bürostuhl Ergo Line", 0, 179.00));
-        products.add(productService.create("Aktenschrank Stahl 4 Fächer", 0, 214.50));
-        products.add(productService.create("Kopierpapier A4 80g Karton", 0, 27.30));
-        products.add(productService.create("Kaffeevollautomat Pro 300", 0, 429.00));
-        products.add(productService.create("Reinigungswagen Kompakt", 0, 96.80));
+        // SKUs are operator-assigned master data (ADR 018), so the baseline carries the kind a German
+        // merchant would keep: a three-letter category stem and a running number, not a generated id.
+        products.add(productService.create("Akkuschrauber ASB 18V", "WKZ-0001", 64.90));
+        products.add(productService.create("Werkzeugkoffer 128-teilig", "WKZ-0002", 89.50));
+        products.add(productService.create("Industriestaubsauger IS 30", "REI-0001", 149.00));
+        products.add(productService.create("LED-Baustrahler 50W", "ELT-0001", 32.75));
+        products.add(productService.create("Kabeltrommel 25m H07RN-F", "ELT-0002", 44.20));
+        products.add(productService.create("Sicherheitsschuhe S3 Größe 43", "ARB-0001", 58.40));
+        products.add(productService.create("Arbeitshandschuhe Nitril 12er-Pack", "ARB-0002", 11.95));
+        products.add(productService.create("Bürostuhl Ergo Line", "BUE-0001", 179.00));
+        products.add(productService.create("Aktenschrank Stahl 4 Fächer", "BUE-0002", 214.50));
+        products.add(productService.create("Kopierpapier A4 80g Karton", "BUE-0003", 27.30));
+        products.add(productService.create("Kaffeevollautomat Pro 300", "KUE-0001", 429.00));
+        products.add(productService.create("Reinigungswagen Kompakt", "REI-0002", 96.80));
         return products;
     }
 

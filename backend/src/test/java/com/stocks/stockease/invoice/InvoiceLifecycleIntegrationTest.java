@@ -64,7 +64,10 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
     }
 
     private Product newProduct(String name, int quantity) {
-        return productRepository.saveAndFlush(new Product(name, quantity, 5.0));
+        Product product = new Product(name, quantity, 5.0);
+        // explicit since the SKU is no longer generated on persist; unique per product name
+        product.setSku("TST-LIFE-" + name.hashCode());
+        return productRepository.saveAndFlush(product);
     }
 
     private Supplier newSupplier() {

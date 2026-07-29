@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
@@ -57,26 +56,45 @@ class ProductCreateControllerTest {
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
         Mockito.when(jwtUtil.extractUsername(Mockito.anyString())).thenReturn("testUser");
         Mockito.when(jwtUtil.extractRole(Mockito.anyString())).thenReturn("ROLE_ADMIN");
-        product1 = new Product("Product 1", 10, 100.0);
+        // created products always hold zero stock, so the fixture the service returns does too
+        product1 = new Product("Product 1", 0, 100.0);
         product1.setId(1L);
+        product1.setSku("BUE-0004");
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
         Mockito.reset(productService);
     }
 
     @Test
     void createProduct_withValidData_returns200() throws Exception {
-        when(productService.create(anyString(), anyInt(), anyDouble())).thenReturn(Objects.requireNonNull(product1));
+        when(productService.create(anyString(), anyString(), anyDouble()))
+                .thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"purchasePrice\": 100.0}")
+                        .content("{\"name\": \"Product 1\", \"sku\": \"BUE-0004\", \"purchasePrice\": 100.0}")
                         .with(csrfToken())
                         .with(userWithRole("adminUser", "ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Product 1"))
-                .andExpect(jsonPath("$.quantity").value(10))
-                .andExpect(jsonPath("$.purchasePrice").value(100.0))
-                .andExpect(jsonPath("$.totalValue").value(1000.0));
+                .andExpect(jsonPath("$.sku").value("BUE-0004"))
+                .andExpect(jsonPath("$.purchasePrice").value(100.0));
+    }
+
+    @Test
+    void createProduct_withNoQuantityInRequest_returnsProductAtZeroStock() throws Exception {
+        when(productService.create(anyString(), anyString(), anyDouble()))
+                .thenReturn(Objects.requireNonNull(product1));
+
+        // the vacuity guard: the request carries no quantity, and the response must still say 0
+        // rather than omit the field - a created product holds no stock until a movement books it
+        mockMvc.perform(post("/api/products")
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Product 1\", \"sku\": \"BUE-0004\", \"purchasePrice\": 100.0}")
+                        .with(csrfToken())
+                        .with(userWithRole("adminUser", "ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.quantity").value(0))
+                .andExpect(jsonPath("$.totalValue").value(0.0));
     }
 
     @Test
@@ -85,12 +103,12 @@ class ProductCreateControllerTest {
         // and nothing else, so the admin-only rule is what this test actually proves
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Valid Product\", \"quantity\": 10, \"purchasePrice\": 100.0}")
+                        .content("{\"name\": \"Valid Product\", \"sku\": \"BUE-0004\", \"purchasePrice\": 100.0}")
                         .with(userWithRole("regularUser", "USER"))
                         .with(csrfToken()))
                 .andExpect(status().isForbidden());
 
-        Mockito.verify(productService, Mockito.never()).create(anyString(), anyInt(), anyDouble());
+        Mockito.verify(productService, Mockito.never()).create(anyString(), anyString(), anyDouble());
     }
 
     @Test
@@ -105,10 +123,22 @@ class ProductCreateControllerTest {
     }
 
     @Test
-    void createProduct_withNegativeQuantity_returns400() throws Exception {
+    void createProduct_withBlankSku_returns400() throws Exception {
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Product 1\", \"quantity\": -5, \"purchasePrice\": 100.0}")
+                        .content("{\"name\": \"Product 1\", \"sku\": \"  \", \"purchasePrice\": 100.0}")
+                        .with(userWithRole("adminUser", "ADMIN"))
+                        .with(csrfToken()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed for request parameters."))
+                .andExpect(jsonPath("$.data.sku").exists());
+    }
+
+    @Test
+    void createProduct_withMissingSku_returns400() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Product 1\", \"purchasePrice\": 100.0}")
                         .with(userWithRole("adminUser", "ADMIN"))
                         .with(csrfToken()))
                 .andExpect(status().isBadRequest())
@@ -119,7 +149,7 @@ class ProductCreateControllerTest {
     void createProduct_withZeroPrice_returns400() throws Exception {
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"purchasePrice\": 0}")
+                        .content("{\"name\": \"Product 1\", \"sku\": \"BUE-0004\", \"purchasePrice\": 0}")
                         .with(userWithRole("adminUser", "ADMIN"))
                         .with(csrfToken()))
                 .andExpect(status().isBadRequest())
@@ -129,11 +159,12 @@ class ProductCreateControllerTest {
     @Test
     void createProduct_withInvalidPriceType_returns400() throws Exception {
         // save is never reached — JSON deserialization fails before the controller is invoked; stub is defensive only
-        when(productService.create(anyString(), anyInt(), anyDouble())).thenReturn(Objects.requireNonNull(product1));
+        when(productService.create(anyString(), anyString(), anyDouble()))
+                .thenReturn(Objects.requireNonNull(product1));
 
         mockMvc.perform(post("/api/products")
                         .contentType(applicationJson())
-                        .content("{\"name\": \"Product 1\", \"quantity\": 10, \"purchasePrice\": \"notANumber\"}")
+                        .content("{\"name\": \"Product 1\", \"sku\": \"BUE-0004\", \"purchasePrice\": \"notANumber\"}")
                         .with(userWithRole("adminUser", "ADMIN"))
                         .with(csrfToken()))
                 .andExpect(status().isBadRequest());

@@ -358,12 +358,13 @@
       "nameTitle": "Produkt umbenennen",
       "priceTitle": "Preis ändern",
       "name": "Name",
+      "sku": "Artikelnummer",
       "quantity": "Menge",
       "purchasePrice": "Einkaufspreis",
       "nameRequired": "Name ist erforderlich.",
+      "skuRequired": "Artikelnummer ist erforderlich.",
       "quantityInvalid": "Bitte geben Sie eine ganze Zahl ab 0 ein.",
-      "priceInvalid": "Bitte geben Sie einen Preis größer als 0 ein.",
-      "skuHint": "Die Artikelnummer wird automatisch vergeben."
+      "priceInvalid": "Bitte geben Sie einen Preis größer als 0 ein."
     }
   }
 }

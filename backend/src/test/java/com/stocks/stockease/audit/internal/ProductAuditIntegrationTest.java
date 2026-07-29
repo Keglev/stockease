@@ -62,7 +62,8 @@ class ProductAuditIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void updateName_writesOneNameRowWithOldAndNewValues() {
-        Product product = productRepository.saveAndFlush(new Product("Audit Rename Before", 10, 5.0));
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Audit Rename Before", 10, 5.0), "TST-AUD-1"));
 
         productService.updateName(product.getId(), "Audit Rename After", user);
 
@@ -76,7 +77,8 @@ class ProductAuditIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void deleteThenRestore_writesDeletedThenRestoredRows() {
-        Product product = productRepository.saveAndFlush(new Product("Audit Delete Restore", 10, 5.0));
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Audit Delete Restore", 10, 5.0), "TST-AUD-2"));
 
         productService.deleteById(product.getId(), user);
         productService.restore(product.getId(), user);
@@ -89,12 +91,14 @@ class ProductAuditIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void restore_blockedByLiveNameConflict_writesNoRestoredRow() {
-        Product product = productRepository.saveAndFlush(new Product("Audit Conflict Name", 10, 5.0));
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Audit Conflict Name", 10, 5.0), "TST-AUD-3"));
         productService.deleteById(product.getId(), user);
         // flush the soft delete first: within one flush Hibernate orders inserts before updates, so the
         // new row would otherwise hit the partial name index before the old one is marked deleted
         productRepository.flush();
-        productRepository.saveAndFlush(new Product("Audit Conflict Name", 3, 5.0));
+        // distinct SKU so the blocked restore can only be blocked by the name conflict
+        productRepository.saveAndFlush(withSku(new Product("Audit Conflict Name", 3, 5.0), "TST-AUD-4"));
 
         assertThatThrownBy(() -> productService.restore(product.getId(), user))
                 .isInstanceOf(DuplicateResourceException.class)
@@ -103,5 +107,11 @@ class ProductAuditIntegrationTest extends AbstractIntegrationTest {
         assertThat(logFor(product.getId()))
                 .extracting(ProductChangeLog::getField)
                 .containsExactly(ChangedField.DELETED);
+    }
+
+    /** The SKU is no longer generated on persist, so every fixture has to carry its own. */
+    private static Product withSku(Product product, String sku) {
+        product.setSku(sku);
+        return product;
     }
 }

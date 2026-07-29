@@ -36,6 +36,9 @@ class DemoResetIntegrationTest extends AbstractIntegrationTest {
 
     private static final String MARKER_PRODUCT = "Demo Reset Marker Product";
 
+    /** Outside the baseline's SKU ranges, so it can only collide with itself. */
+    private static final String MARKER_SKU = "MRK-9001";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -51,7 +54,7 @@ class DemoResetIntegrationTest extends AbstractIntegrationTest {
     @BeforeEach
     void seedBaselineAndMarkProgress() {
         demoDataService.resetToBaseline();
-        productService.create(MARKER_PRODUCT, 7, 12.50);
+        productService.create(MARKER_PRODUCT, MARKER_SKU, 12.50);
     }
 
     /** All of {@code app_user} rendered row by row, so any change to any column shows up. */

@@ -189,7 +189,10 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void deleteProduct_onOpenInvoice_vetoedAndLeavesNoTrace() {
-        Product product = productRepository.saveAndFlush(new Product("Guard Open Invoice Widget", 10, 5.0));
+        Product product = new Product("Guard Open Invoice Widget", 10, 5.0);
+        // explicit SKU: it is no longer generated on persist
+        product.setSku("TST-GUARD-1");
+        productRepository.saveAndFlush(product);
         newInvoice(newSupplier(), InvoiceStatus.OPEN, product);
 
         assertThatThrownBy(() -> productService.deleteById(product.getId(), user))
@@ -205,7 +208,10 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void deleteProduct_onlyOnClosedInvoice_succeeds() {
-        Product product = productRepository.saveAndFlush(new Product("Guard Closed Invoice Widget", 10, 5.0));
+        Product product = new Product("Guard Closed Invoice Widget", 10, 5.0);
+        // explicit SKU: it is no longer generated on persist
+        product.setSku("TST-GUARD-2");
+        productRepository.saveAndFlush(product);
         newInvoice(newSupplier(), InvoiceStatus.CLOSED, product);
 
         productService.deleteById(product.getId(), user);

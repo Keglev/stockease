@@ -47,9 +47,12 @@ export class ProductService {
       .pipe(map((body) => (Array.isArray(body) ? body : [])));
   }
 
-  /** Bare object - deliberately not unwrapped. SKU is generated server-side and never sent. */
-  create(name: string, quantity: number, purchasePrice: number): Observable<ProductResponse> {
-    return this.http.post<ProductResponse>(this.baseUrl, { name, quantity, purchasePrice });
+  /**
+   * Bare object - deliberately not unwrapped. No quantity is sent: creation is master-data only
+   * and the product starts at zero stock (ADR 018). The SKU is supplied by the operator.
+   */
+  create(name: string, sku: string, purchasePrice: number): Observable<ProductResponse> {
+    return this.http.post<ProductResponse>(this.baseUrl, { name, sku, purchasePrice });
   }
 
   rename(id: number, name: string): Observable<ProductResponse> {
