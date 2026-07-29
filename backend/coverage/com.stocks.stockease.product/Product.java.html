@@ -2,7 +2,6 @@
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -15,7 +14,6 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -54,7 +52,7 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal purchasePrice;
 
-    /** Stock keeping unit identifier; generated on creation if not supplied. */
+    /** Stock keeping unit identifier, assigned by the operator at creation and never generated. */
     @Column(nullable = false)
     private String sku;
 
@@ -74,19 +72,10 @@ public class Product {
      * @param quantity stock quantity (required, non-negative)
      * @param purchasePrice unit price (required, positive)
      */
-<span class="fc" id="L77">    public Product(String name, int quantity, double purchasePrice) {</span>
-<span class="fc" id="L78">        this.name = name;</span>
-<span class="fc" id="L79">        this.quantity = quantity;</span>
-<span class="fc" id="L80">        this.purchasePrice = BigDecimal.valueOf(purchasePrice);</span>
-<span class="fc" id="L81">    }</span>
-
-    @PrePersist
-    private void ensureSku() {
-<span class="pc bpc" id="L85" title="1 of 4 branches missed.">        if (sku == null || sku.isBlank()) {</span>
-            // interim generator; real SKU convention arrives with demo data
-<span class="fc" id="L87">            sku = &quot;SKU-&quot; + UUID.randomUUID().toString()</span>
-<span class="fc" id="L88">                    .substring(0, 8).toUpperCase();</span>
-        }
-<span class="fc" id="L90">    }</span>
+<span class="fc" id="L75">    public Product(String name, int quantity, double purchasePrice) {</span>
+<span class="fc" id="L76">        this.name = name;</span>
+<span class="fc" id="L77">        this.quantity = quantity;</span>
+<span class="fc" id="L78">        this.purchasePrice = BigDecimal.valueOf(purchasePrice);</span>
+<span class="fc" id="L79">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

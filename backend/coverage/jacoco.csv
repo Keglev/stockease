@@ -10,7 +10,7 @@ StockEase,com.stocks.stockease.config,FlywayConfiguration,0,38,0,2,0,14,0,3,0,2
 StockEase,com.stocks.stockease.report.web,ReportController,0,83,0,2,0,15,0,12,0,11
 StockEase,com.stocks.stockease.audit.web,ChangeLogResponse,0,44,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.audit.web,AuditController,0,18,0,0,0,2,0,2,0,2
-StockEase,com.stocks.stockease.product.web,ProductController,5,222,0,6,0,38,1,16,1,13
+StockEase,com.stocks.stockease.product.web,ProductController,5,221,0,6,0,38,1,16,1,13
 StockEase,com.stocks.stockease.product.web,ProductResponse,0,59,1,3,0,6,1,4,0,3
 StockEase,com.stocks.stockease.shared,DuplicateResourceException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,InvalidMovementException,0,4,0,0,0,2,0,1,0,1
@@ -40,9 +40,9 @@ StockEase,com.stocks.stockease.invoice,CreateInvoiceCommand.ItemLine,0,12,0,0,0,
 StockEase,com.stocks.stockease.invoice,InvoiceClosedEvent.Line,0,12,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice,InvoiceService,4,476,2,44,1,92,3,40,1,19
 StockEase,com.stocks.stockease.product,ProductChangedEvent.Field,0,27,0,0,0,5,0,1,0,1
-StockEase,com.stocks.stockease.product,Product,0,31,1,3,0,9,1,3,0,2
+StockEase,com.stocks.stockease.product,Product,0,14,0,0,0,5,0,1,0,1
 StockEase,com.stocks.stockease.product,ProductChangedEvent,0,18,0,0,0,1,0,1,0,1
-StockEase,com.stocks.stockease.product,ProductService,0,296,0,16,0,57,0,24,0,16
+StockEase,com.stocks.stockease.product,ProductService,0,312,0,18,0,61,0,25,0,16
 StockEase,com.stocks.stockease.movement,RecordMovementCommand,0,18,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.movement,MovementReason,0,63,0,0,0,12,0,3,0,3
 StockEase,com.stocks.stockease.movement,StockMovementService,0,322,3,60,0,63,3,38,0,8
