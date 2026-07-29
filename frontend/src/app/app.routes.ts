@@ -101,6 +101,11 @@ export const routes: Routes = [
           import('./features/customers/customer-list/customer-list.component').then(
             (m) => m.CustomerListComponent
           )
+      },
+      {
+        path: 'help',
+        loadComponent: () =>
+          import('./features/help/help.component').then((m) => m.HelpComponent)
       }
     ]
   },

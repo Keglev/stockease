@@ -67,7 +67,7 @@
     <mat-card-content>
       <h2 class="section-title">{{ 'dashboard.charts.profitByProduct' | translate }}</h2>
       @if (profitOption(); as option) {
-        <app-chart [option]="option" height="22rem" />
+        <app-chart [option]="option" [height]="chartHeight()" />
       }
     </mat-card-content>
   </mat-card>
@@ -76,7 +76,7 @@
     <mat-card-content>
       <h2 class="section-title">{{ 'dashboard.charts.dueDates' | translate }}</h2>
       @if (dueDateOption(); as option) {
-        <app-chart [option]="option" height="22rem" />
+        <app-chart [option]="option" [height]="chartHeight()" />
       }
     </mat-card-content>
   </mat-card>

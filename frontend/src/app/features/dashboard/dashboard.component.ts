@@ -1,14 +1,16 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { switchMap, timer } from 'rxjs';
+import { map, switchMap, timer } from 'rxjs';
 
 import { DueDateBucket, ProductProfitReport, ProductResponse } from '../../core/api/api-models';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
+import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
 import { ProductService } from '../products/product.service';
 // Deliberate cross-feature import: the reporting endpoints have one client, and the reports
@@ -46,6 +48,17 @@ export class DashboardComponent implements OnInit {
   private readonly reports = inject(ReportService);
   private readonly products = inject(ProductService);
   private readonly health = inject(HealthService);
+  private readonly breakpoints = inject(BreakpointObserver);
+
+  private readonly isDesktop = toSignal(
+    this.breakpoints.observe(DESKTOP_MEDIA_QUERY).pipe(map((state) => state.matches)),
+    // Seeded from isMatched so the charts are sized correctly on the first paint.
+    { initialValue: this.breakpoints.isMatched(DESKTOP_MEDIA_QUERY) }
+  );
+
+  // Shorter on desktop so the KPI row, the low-stock card and both charts fit one 1080p viewport;
+  // below desktop the rows stack anyway and the taller chart is the more readable one.
+  protected readonly chartHeight = computed(() => (this.isDesktop() ? '15rem' : '20rem'));
 
   protected readonly totalProducts = signal(0);
   protected readonly lowStock = signal<ProductResponse[]>([]);

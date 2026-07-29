@@ -56,7 +56,8 @@
     "movements": "Stock movements",
     "reports": "Reports",
     "suppliers": "Suppliers",
-    "customers": "Customers"
+    "customers": "Customers",
+    "help": "Help"
   },
   "audit": {
     "productTitle": "Change history - product #{{id}}",
@@ -310,12 +311,16 @@
   },
   "shell": {
     "logout": "Log out",
+    "openNavigation": "Open navigation",
     "demoBadge": "DEMO",
     "demoTooltip": "Demo system - data resets nightly",
     "role": {
       "ADMIN": "Administrator",
       "USER": "User"
     }
+  },
+  "help": {
+    "title": "Help"
   },
   "dashboard": {
     "title": "Dashboard",

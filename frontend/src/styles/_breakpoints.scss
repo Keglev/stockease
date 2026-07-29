@@ -1,0 +1,33 @@
+// Single source of truth for the app's layout tiers. Every media query in the app comes from the
+// mixins below, so a tier boundary moves in one place; the TypeScript constants in
+// src/app/core/layout/layout.ts mirror these values and must be changed together with them.
+//
+// The reference viewport is 1920x1080. There is deliberately no fourth tier for ultra-wide
+// screens - those are handled by a content max-width, because the layout does not change shape
+// past 1024px, it only stops growing.
+
+// phone  : a single column, sidenav is an overlay
+$phone-max: 599.98px;
+// tablet : two columns, sidenav is still an overlay
+$tablet-min: 600px;
+$tablet-max: 1023.98px;
+// desktop: full grid, sidenav is fixed furniture
+$desktop-min: 1024px;
+
+@mixin phone {
+  @media (max-width: $phone-max) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: $tablet-min) and (max-width: $tablet-max) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $desktop-min) {
+    @content;
+  }
+}
