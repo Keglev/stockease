@@ -23,27 +23,33 @@ public class JwtUtil {
 
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
 
+    /** Authority prefix used by the persisted role values; never surfaced in the token claim. */
+    private static final String ROLE_PREFIX = &quot;ROLE_&quot;;
+
     private final SecretKey key;
 
-<span class="fc" id="L28">    public JwtUtil(@Value(&quot;${jwt.secret}&quot;) String secret) {</span>
-<span class="fc" id="L29">        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));</span>
-<span class="fc" id="L30">    }</span>
+<span class="fc" id="L31">    public JwtUtil(@Value(&quot;${jwt.secret}&quot;) String secret) {</span>
+<span class="fc" id="L32">        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));</span>
+<span class="fc" id="L33">    }</span>
 
     /**
      * Generates a signed JWT with username as the subject and role as a custom claim.
+     * The &quot;role&quot; claim always carries the bare role (&quot;ADMIN&quot;/&quot;USER&quot;): a leading &quot;ROLE_&quot; prefix is
+     * stripped here, so callers may pass either form regardless of how they store it.
      *
      * @param username authenticated user's username (becomes JWT &quot;sub&quot; claim)
-     * @param role user's authorization role (custom &quot;role&quot; claim)
+     * @param role user's authorization role, with or without the &quot;ROLE_&quot; prefix (custom &quot;role&quot; claim)
      * @return compact signed JWT string
      */
     public String generateToken(String username, String role) {
-<span class="fc" id="L40">        return Jwts.builder()</span>
-<span class="fc" id="L41">                .subject(username)</span>
-<span class="fc" id="L42">                .claim(&quot;role&quot;, role)</span>
-<span class="fc" id="L43">                .issuedAt(new Date())</span>
-<span class="fc" id="L44">                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))</span>
-<span class="fc" id="L45">                .signWith(key)</span>
-<span class="fc" id="L46">                .compact();</span>
+<span class="pc bpc" id="L45" title="1 of 4 branches missed.">        String bareRole = role != null &amp;&amp; role.startsWith(ROLE_PREFIX) ? role.substring(ROLE_PREFIX.length()) : role;</span>
+<span class="fc" id="L46">        return Jwts.builder()</span>
+<span class="fc" id="L47">                .subject(username)</span>
+<span class="fc" id="L48">                .claim(&quot;role&quot;, bareRole)</span>
+<span class="fc" id="L49">                .issuedAt(new Date())</span>
+<span class="fc" id="L50">                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))</span>
+<span class="fc" id="L51">                .signWith(key)</span>
+<span class="fc" id="L52">                .compact();</span>
     }
 
     /**
@@ -54,10 +60,10 @@ public class JwtUtil {
      */
     public boolean validateToken(String token) {
         try {
-<span class="fc" id="L57">            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);</span>
-<span class="fc" id="L58">            return true;</span>
-<span class="fc" id="L59">        } catch (JwtException e) {</span>
-<span class="fc" id="L60">            return false;</span>
+<span class="fc" id="L63">            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);</span>
+<span class="fc" id="L64">            return true;</span>
+<span class="fc" id="L65">        } catch (JwtException e) {</span>
+<span class="fc" id="L66">            return false;</span>
         }
     }
 
@@ -69,8 +75,8 @@ public class JwtUtil {
      * @return extracted claim value
      */
     public &lt;T&gt; T extractClaim(String token, Function&lt;Claims, T&gt; claimsResolver) {
-<span class="fc" id="L72">        final Claims claims = extractAllClaims(token);</span>
-<span class="fc" id="L73">        return claimsResolver.apply(claims);</span>
+<span class="fc" id="L78">        final Claims claims = extractAllClaims(token);</span>
+<span class="fc" id="L79">        return claimsResolver.apply(claims);</span>
     }
 
     /**
@@ -80,7 +86,7 @@ public class JwtUtil {
      * @return Claims object containing all embedded claims
      */
     private Claims extractAllClaims(String token) {
-<span class="fc" id="L83">        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();</span>
+<span class="fc" id="L89">        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();</span>
     }
 
     /**
@@ -90,7 +96,7 @@ public class JwtUtil {
      * @return username string
      */
     public String extractUsername(String token) {
-<span class="fc" id="L93">        return extractClaim(token, Claims::getSubject);</span>
+<span class="fc" id="L99">        return extractClaim(token, Claims::getSubject);</span>
     }
 
     /**
@@ -100,7 +106,7 @@ public class JwtUtil {
      * @return role string
      */
     public String extractRole(String token) {
-<span class="fc" id="L103">        return extractClaim(token, claims -&gt; claims.get(&quot;role&quot;, String.class));</span>
+<span class="fc" id="L109">        return extractClaim(token, claims -&gt; claims.get(&quot;role&quot;, String.class));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
