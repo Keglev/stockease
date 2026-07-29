@@ -34,5 +34,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 020 - Losses Carry a Remark from a Fixed Taxonomy](020-loss-remark.md) - **[Cross-cutting]**
 - [ADR 021 - Stock Enters Only Through Closed Purchase Invoices](021-stock-only-via-invoices.md) - **[Cross-cutting]**
 - [ADR 022 - Invoice Numbers Are Operator-Assigned](022-invoice-numbers.md) - **[Cross-cutting]**
+- [ADR 023 - Client-Side Chart Aggregation and CSV Export Conventions](023-chart-aggregation-and-csv.md) - **[Frontend]**
 
 [Back to Documentation Home](/stockease/)

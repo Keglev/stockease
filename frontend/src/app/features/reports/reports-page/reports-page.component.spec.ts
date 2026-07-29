@@ -14,6 +14,7 @@ import {
   SupplierProfitReport
 } from '../../../core/api/api-models';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
+import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { ReportService } from '../report.service';
@@ -22,11 +23,14 @@ import { ReportsPageComponent } from './reports-page.component';
 const TRANSLATIONS = {
   en: {
     invoices: { type: { PURCHASE: 'Purchase', SALE: 'Sale' } },
+    charts: { other: 'Other' },
     reports: {
       title: 'Reports',
       refresh: 'Refresh',
       loading: 'Loading report…',
       deletedHint: 'deleted',
+      exportCsv: 'Export CSV',
+      view: { chart: 'Chart', table: 'Table', list: 'List' },
       tabs: { profit: 'Profit', stock: 'Stock', losses: 'Losses', dueDates: 'Due dates' },
       columns: {
         name: 'Name',
@@ -166,10 +170,26 @@ describe('ReportsPageComponent', () => {
   let fixture: ComponentFixture<ReportsPageComponent>;
   let reports: ReportServiceStub;
   let dialog: { open: ReturnType<typeof vi.fn> };
+  let download: ReturnType<typeof vi.fn>;
 
   function render(): void {
     fixture = TestBed.createComponent(ReportsPageComponent);
     fixture.detectChanges();
+  }
+
+  /** Flips a tab to its table half, which is what the chart/table toggle exists to do. */
+  async function showTable(tab: number): Promise<void> {
+    const page = fixture.componentInstance as unknown as {
+      setView: (tab: number, view: 'chart' | 'table') => void;
+    };
+    page.setView(tab, 'table');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function host(): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
   }
 
   /**
@@ -188,6 +208,7 @@ describe('ReportsPageComponent', () => {
     TestBed.resetTestingModule();
     reports = new ReportServiceStub();
     dialog = { open: vi.fn() };
+    download = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -198,7 +219,10 @@ describe('ReportsPageComponent', () => {
         provideRouter([]),
         provideTestTranslations(TRANSLATIONS),
         { provide: ReportService, useValue: reports },
-        { provide: MatDialog, useValue: dialog }
+        { provide: MatDialog, useValue: dialog },
+        // A provider stub rather than a module mock, for the reason ADR 016 records: the module
+        // registry is shared across the specs in a Vitest worker, a TestBed is not.
+        { provide: CSV_DOWNLOADER, useValue: download }
       ]
     });
     TestBed.overrideComponent(ReportsPageComponent, {
@@ -252,18 +276,20 @@ describe('ReportsPageComponent', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.margin-empty')).not.toBeNull();
   });
 
-  it('profitTable_deletedProduct_rendersDeletedHint', () => {
+  it('profitTable_deletedProduct_rendersDeletedHint', async () => {
     render();
+    await showTable(0);
 
-    const hints = (fixture.nativeElement as HTMLElement).querySelectorAll('.deleted-hint');
+    const hints = host().querySelectorAll('.deleted-hint');
     expect(hints.length).toBe(1);
     expect(hints[0].textContent).toContain('deleted');
   });
 
-  it('rowClick_profitRow_opensDialogWithFetchedDetail', () => {
+  it('rowClick_profitRow_opensDialogWithFetchedDetail', async () => {
     render();
+    await showTable(0);
 
-    (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('.profit-row')?.click();
+    host().querySelector<HTMLElement>('.profit-row')?.click();
 
     expect(reports.calls).toContain('profitProductDetail:3');
     expect(dialog.open).toHaveBeenCalledWith(ProfitDetailDialogComponent, { data: PROFIT[0] });
@@ -272,20 +298,59 @@ describe('ReportsPageComponent', () => {
   it('dueLists_overdueRows_renderDaysOverdueAndDueSoonRowsDoNot', async () => {
     render();
     await activateTab(3);
+    await showTable(3);
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('.overdue-row')?.textContent)
-      .toContain('5 days late');
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('.due-soon-row .days-overdue')
-    ).toBeNull();
+    expect(host().querySelector('.overdue-row')?.textContent).toContain('5 days late');
+    expect(host().querySelector('.due-soon-row .days-overdue')).toBeNull();
   });
 
   it('dueLists_anyRow_linksToItsInvoice', async () => {
     render();
     await activateTab(3);
+    await showTable(3);
 
-    const link = (fixture.nativeElement as HTMLElement).querySelector('.overdue-row a');
-    expect(link?.getAttribute('href')).toBe('/app/invoices/1');
+    expect(host().querySelector('.overdue-row a')?.getAttribute('href')).toBe('/app/invoices/1');
+  });
+
+  it('toggleView_tableSelected_showsTableAndHidesChart', async () => {
+    render();
+    expect(host().querySelector('.profit-table')).toBeNull();
+
+    await showTable(0);
+
+    expect(host().querySelector('.profit-table')).not.toBeNull();
+    expect(host().querySelector('.profit-chart-card')).toBeNull();
+  });
+
+  it('toggleView_switchTabsAndReturn_preservesChosenView', async () => {
+    render();
+    await showTable(0);
+
+    await activateTab(1);
+    await activateTab(0);
+
+    // The view is a per-tab choice, so leaving the tab must not silently undo it.
+    expect(host().querySelector('.profit-table')).not.toBeNull();
+  });
+
+  it('exportCsv_profitTableWithRows_invokesDownloadWithBuiltContent', async () => {
+    render();
+    await showTable(0);
+
+    host().querySelector<HTMLButtonElement>('.export-profit')?.click();
+
+    const [filename, content] = download.mock.calls[0] as [string, string];
+    expect(filename).toBe('profit-products.csv');
+    expect(content.startsWith(String.fromCharCode(0xfeff))).toBe(true);
+    expect(content).toContain('Gross profit');
+  });
+
+  it('exportButton_emptyTable_isAbsent', async () => {
+    reports.profitPayload = [];
+    render();
+    await showTable(0);
+
+    expect(host().querySelector('.export-profit')).toBeNull();
   });
 
   it('refresh_onStockTab_refetchesOnlyThatTab', async () => {
