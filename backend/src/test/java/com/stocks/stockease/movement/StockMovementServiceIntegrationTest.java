@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +58,9 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private User user;
 
@@ -181,6 +186,36 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(productRepository.findById(product.getId()).orElseThrow().getQuantity()).isEqualTo(3);
         assertThat(stockMovementRepository
                 .existsByInvoiceItemIdAndReason(item.getId(), MovementReason.RETURNED_TO_SUPPLIER)).isFalse();
+    }
+
+    @Test
+    void insertMovement_lostWithoutRemarkViaRawSql_isRejectedByTheCheckConstraint() {
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Check Missing", 10, 5.0), "TST-MOVE-5"));
+
+        // straight past the service, because the point is that the database refuses it on its own
+        assertThatThrownBy(() -> insertMovement(product, "LOST", null))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_movement_remark");
+    }
+
+    @Test
+    void insertMovement_soldCarryingARemarkViaRawSql_isRejectedByTheCheckConstraint() {
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Check Extra", 10, 5.0), "TST-MOVE-6"));
+
+        // the other half of the boolean equality: a reason that is not a loss must carry no remark
+        assertThatThrownBy(() -> insertMovement(product, "SOLD", "EXPIRED"))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("chk_movement_remark");
+    }
+
+    /** Inserts a movement row directly, bypassing every Java-side rule. */
+    private void insertMovement(Product product, String reason, String remark) {
+        jdbcTemplate.update(
+                "INSERT INTO stock_movement (product_id, user_id, type, reason, quantity, created_at, "
+                        + "movement_remark) VALUES (?, ?, 'DECREASE', ?, 1, now(), ?)",
+                product.getId(), user.getId(), reason, remark);
     }
 
     /** The SKU is no longer generated on persist, so every fixture has to carry its own. */

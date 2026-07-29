@@ -15,9 +15,12 @@ import { NotificationService } from '../../../core/notifications/notification.se
 import { positivePrice } from '../../products/positive-price.validator';
 import { ProductService } from '../../products/product.service';
 import {
+  MOVEMENT_REMARKS,
+  MovementRemarkValue,
   STANDALONE_REASONS,
   StandaloneReason,
-  buildRecordMovementRequest
+  buildRecordMovementRequest,
+  requiresRemark
 } from '../movement-payload';
 import { MovementService } from '../movement.service';
 
@@ -47,6 +50,7 @@ export class MovementRecordComponent implements OnInit {
   // Only the three standalone reasons: the backend books PURCHASE and SOLD through invoice
   // closing and the return reasons through the return endpoint, refusing them here with a 400.
   protected readonly reasons = STANDALONE_REASONS;
+  protected readonly remarks = MOVEMENT_REMARKS;
 
   protected readonly productOptions = signal<ProductResponse[]>([]);
   protected readonly pending = signal(false);
@@ -71,6 +75,8 @@ export class MovementRecordComponent implements OnInit {
 
   protected readonly isNewProduct = computed(() => this.reasonValue() === 'NEW_PRODUCT');
 
+  protected readonly isLoss = computed(() => requiresRemark(this.reasonValue()));
+
   ngOnInit(): void {
     this.products.getAll().subscribe((products) => this.productOptions.set(products));
 
@@ -88,7 +94,8 @@ export class MovementRecordComponent implements OnInit {
       productId: Number(raw.productId),
       reason: raw.reason,
       quantity: Number(raw.quantity),
-      unitCost: this.form.contains('unitCost') ? Number(raw.unitCost) : null
+      unitCost: this.form.contains('unitCost') ? Number(raw.unitCost) : null,
+      remark: this.form.contains('remark') ? (raw.remark ?? null) : null
     });
 
     this.movements.record(request).subscribe({
@@ -108,17 +115,25 @@ export class MovementRecordComponent implements OnInit {
   }
 
   /**
-   * Adds or removes the unit-cost control with the reason. The control is removed rather than
-   * hidden or disabled, because a lingering control could leak a stale value into the payload.
+   * Adds or removes the reason-specific controls. They are removed rather than hidden or disabled,
+   * because a lingering control could leak a stale value into the payload.
    */
   private onReasonChange(reason: StandaloneReason): void {
     if (reason === 'NEW_PRODUCT') {
       if (!this.form.contains('unitCost')) {
         this.form.addControl('unitCost', unitCostControl());
       }
+    } else {
+      this.form.removeControl('unitCost');
+    }
+
+    if (requiresRemark(reason)) {
+      if (!this.form.contains('remark')) {
+        this.form.addControl('remark', remarkControl());
+      }
       return;
     }
-    this.form.removeControl('unitCost');
+    this.form.removeControl('remark');
   }
 
   private resetForm(): void {
@@ -132,6 +147,7 @@ interface MovementForm {
   reason: FormControl<StandaloneReason>;
   quantity: FormControl<number>;
   unitCost?: FormControl<number>;
+  remark?: FormControl<MovementRemarkValue | null>;
 }
 
 function unitCostControl(): FormControl<number> {
@@ -139,6 +155,11 @@ function unitCostControl(): FormControl<number> {
     nonNullable: true,
     validators: [Validators.required, positivePrice]
   });
+}
+
+/** Starts empty and required, so a loss cannot be submitted until its cause is chosen. */
+function remarkControl(): FormControl<MovementRemarkValue | null> {
+  return new FormControl<MovementRemarkValue | null>(null, Validators.required);
 }
 
 function integerOnly(control: { value: unknown }) {

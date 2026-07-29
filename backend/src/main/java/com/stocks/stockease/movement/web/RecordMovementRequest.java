@@ -3,6 +3,7 @@ package com.stocks.stockease.movement.web;
 import java.math.BigDecimal;
 
 import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementRemark;
 import com.stocks.stockease.movement.RecordMovementCommand;
 
 import jakarta.validation.constraints.NotNull;
@@ -18,12 +19,15 @@ import jakarta.validation.constraints.Positive;
  * @param reason business reason for the change, which also fixes its direction
  * @param quantity number of units affected; must be positive
  * @param unitCost cost snapshot per unit, required by {@code NEW_PRODUCT} and rejected for other reasons
+ * @param remark why the stock was lost, required by {@code LOST} and {@code DESTROYED} and rejected
+ *        for other reasons
  */
 public record RecordMovementRequest(
         @NotNull(message = "Product is required.") Long productId,
         @NotNull(message = "Movement reason is required.") MovementReason reason,
         @Positive(message = "Quantity must be positive.") int quantity,
-        @Positive(message = "Unit cost must be positive.") BigDecimal unitCost) {
+        @Positive(message = "Unit cost must be positive.") BigDecimal unitCost,
+        MovementRemark remark) {
 
     /**
      * Maps this request to the command the movement service accepts.
@@ -31,6 +35,6 @@ public record RecordMovementRequest(
      * @return the equivalent movement command, never referencing an invoice item
      */
     public RecordMovementCommand toCommand() {
-        return new RecordMovementCommand(productId, reason, quantity, null, unitCost);
+        return new RecordMovementCommand(productId, reason, quantity, null, unitCost, remark);
     }
 }

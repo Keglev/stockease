@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementRemark;
 import com.stocks.stockease.movement.RecordMovementCommand;
 import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.security.User;
@@ -106,6 +107,43 @@ class StockMovementControllerTest {
                         .content(movementBody(MovementReason.LOST)).with(csrfToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type").value("DECREASE"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void recordMovement_lostWithRemark_passesItThroughAndReturnsItInTheResponse() throws Exception {
+        Mockito.when(stockMovementService.recordMovement(any(RecordMovementCommand.class), any(User.class)))
+                .thenReturn(MovementTestFixtures.movement(MovementReason.LOST, null, MovementRemark.EXPIRED));
+
+        mockMvc.perform(post("/api/stock-movements").contentType(applicationJson())
+                        .content("{\"productId\": 3, \"reason\": \"LOST\", \"quantity\": 2, \"remark\": \"EXPIRED\"}")
+                        .with(csrfToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.remark").value("EXPIRED"))
+                // the rest of the response shape is unchanged by the new key
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.reason").value("LOST"));
+
+        ArgumentCaptor<RecordMovementCommand> command = ArgumentCaptor.forClass(RecordMovementCommand.class);
+        Mockito.verify(stockMovementService).recordMovement(command.capture(), any(User.class));
+        assertThat(command.getValue().remark()).isEqualTo(MovementRemark.EXPIRED);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void recordMovement_newProductWithoutRemark_sendsNoRemarkToTheService() throws Exception {
+        Mockito.when(stockMovementService.recordMovement(any(RecordMovementCommand.class), any(User.class)))
+                .thenReturn(MovementTestFixtures.movement(MovementReason.NEW_PRODUCT, null));
+
+        mockMvc.perform(post("/api/stock-movements").contentType(applicationJson())
+                        .content(movementBody(MovementReason.NEW_PRODUCT)).with(csrfToken()))
+                .andExpect(status().isOk())
+                // the key is always serialized, and is null for every reason that is not a loss
+                .andExpect(jsonPath("$.remark").doesNotExist());
+
+        ArgumentCaptor<RecordMovementCommand> command = ArgumentCaptor.forClass(RecordMovementCommand.class);
+        Mockito.verify(stockMovementService).recordMovement(command.capture(), any(User.class));
+        assertThat(command.getValue().remark()).isNull();
     }
 
     @ParameterizedTest

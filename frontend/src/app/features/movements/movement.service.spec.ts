@@ -21,6 +21,7 @@ const RECORDED: MovementResponse = {
   invoiceItemId: null,
   soldPrice: null,
   unitCost: null,
+  remark: 'EXPIRED',
   createdAt: '2026-01-02T03:04:00'
 };
 
@@ -41,7 +42,13 @@ describe('MovementService', () => {
     let emitted: MovementResponse | undefined;
     service
       .record(
-        buildRecordMovementRequest({ productId: 3, reason: 'LOST', quantity: 2, unitCost: null })
+        buildRecordMovementRequest({
+          productId: 3,
+          reason: 'LOST',
+          quantity: 2,
+          unitCost: null,
+          remark: 'EXPIRED'
+        })
       )
       .subscribe((movement) => (emitted = movement));
 
@@ -58,7 +65,13 @@ describe('MovementService', () => {
   it('record_lostReason_omitsUnitCostKey', () => {
     service
       .record(
-        buildRecordMovementRequest({ productId: 3, reason: 'LOST', quantity: 2, unitCost: null })
+        buildRecordMovementRequest({
+          productId: 3,
+          reason: 'LOST',
+          quantity: 2,
+          unitCost: null,
+          remark: 'EXPIRED'
+        })
       )
       .subscribe();
 
@@ -66,7 +79,7 @@ describe('MovementService', () => {
 
     // A present unitCost on a non-NEW_PRODUCT movement is a 400, so the key must be absent.
     expect(body).not.toHaveProperty('unitCost');
-    expect(body).toEqual({ productId: 3, reason: 'LOST', quantity: 2 });
+    expect(body).toEqual({ productId: 3, reason: 'LOST', quantity: 2, remark: 'EXPIRED' });
     controller.verify();
   });
 
@@ -120,7 +133,8 @@ describe('MovementService', () => {
           productId: 3,
           reason: 'NEW_PRODUCT',
           quantity: 10,
-          unitCost: 7.5
+          unitCost: 7.5,
+          remark: null
         })
       )
       .subscribe();

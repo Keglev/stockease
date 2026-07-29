@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.1.0
+  version: 2.2.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -777,6 +777,14 @@ components:
         RETURN_FROM_CUSTOMER and RETURNED_TO_SUPPLIER are recorded through the returns endpoint;
         NEW_PRODUCT, LOST and DESTROYED are the standalone corrections.
 
+    MovementRemark:
+      type: string
+      enum: [EXPIRED, IN_TRANSIT_TO_CUSTOMER, INTERNAL, FROM_SUPPLIER]
+      description: |
+        Why stock was lost or destroyed. One taxonomy serves both reasons: the question has the same
+        answers either way, and a shared list keeps the loss report groupable across the pair. The
+        value is informational - losses are valued identically whichever remark they carry.
+
     MovementResponse:
       type: object
       required:
@@ -789,6 +797,7 @@ components:
         - invoiceItemId
         - soldPrice
         - unitCost
+        - remark
         - createdAt
       properties:
         id:
@@ -827,6 +836,11 @@ components:
           nullable: true
           description: Cost snapshot, set for initial stock and purchases
           example: 7.50
+        remark:
+          allOf:
+            - $ref: '#/components/schemas/MovementRemark'
+          nullable: true
+          description: Why the stock was lost; set for LOST and DESTROYED, null for every other reason
         createdAt:
           type: string
           description: ISO-8601 local date-time, serialized without a zone offset
@@ -859,6 +873,15 @@ components:
           nullable: true
           description: Required by NEW_PRODUCT and rejected for the other reasons; must be positive when present
           example: 7.50
+        remark:
+          allOf:
+            - $ref: '#/components/schemas/MovementRemark'
+          nullable: true
+          description: >-
+            Conditionally required: LOST and DESTROYED movements must carry a remark explaining the
+            loss, and every other reason must omit it. Rejected with 400 when the pair is
+            inconsistent; a database CHECK enforces the same rule as a backstop.
+          example: EXPIRED
 
     RegisterReturnRequest:
       type: object

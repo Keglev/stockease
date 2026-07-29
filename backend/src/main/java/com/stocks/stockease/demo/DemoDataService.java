@@ -18,6 +18,7 @@ import com.stocks.stockease.invoice.Invoice;
 import com.stocks.stockease.invoice.InvoiceService;
 import com.stocks.stockease.invoice.InvoiceType;
 import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementRemark;
 import com.stocks.stockease.movement.RecordMovementCommand;
 import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.product.Product;
@@ -234,8 +235,10 @@ public class DemoDataService {
         record(staff, MovementReason.RETURN_FROM_CUSTOMER, drill, 2, itemId(sales.get(0), 0), null);
         // return to supplier against the first purchase line: 5 of the 40 units go back
         record(staff, MovementReason.RETURNED_TO_SUPPLIER, drill, 5, itemId(purchases.get(0), 0), null);
-        record(staff, MovementReason.LOST, drill, 3, null, null);
-        record(staff, MovementReason.DESTROYED, products.get(1), 2, null, null);
+        // two different remarks on purpose: the loss report is only worth grouping if the baseline
+        // shows the taxonomy has more than one member in use
+        record(staff, MovementReason.LOST, drill, 3, null, null, MovementRemark.IN_TRANSIT_TO_CUSTOMER);
+        record(staff, MovementReason.DESTROYED, products.get(1), 2, null, null, MovementRemark.EXPIRED);
     }
 
     /** Settles two invoices so the due-date and overdue reports distinguish paid from outstanding. */
@@ -269,8 +272,13 @@ public class DemoDataService {
 
     private void record(User user, MovementReason reason, Product product, int quantity, Long invoiceItemId,
             BigDecimal unitCost) {
+        record(user, reason, product, quantity, invoiceItemId, unitCost, null);
+    }
+
+    private void record(User user, MovementReason reason, Product product, int quantity, Long invoiceItemId,
+            BigDecimal unitCost, MovementRemark remark) {
         stockMovementService.recordMovement(
-                new RecordMovementCommand(product.getId(), reason, quantity, invoiceItemId, unitCost), user);
+                new RecordMovementCommand(product.getId(), reason, quantity, invoiceItemId, unitCost, remark), user);
     }
 
     private static ItemLine line(Product product, int quantity, String unitPrice) {

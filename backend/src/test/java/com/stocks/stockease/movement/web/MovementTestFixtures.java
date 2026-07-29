@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import com.stocks.stockease.invoice.InvoiceItem;
 import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementRemark;
 import com.stocks.stockease.movement.StockMovement;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.security.User;
@@ -21,6 +22,13 @@ final class MovementTestFixtures {
     static final LocalDateTime CREATED_AT = LocalDateTime.of(2026, 1, 2, 3, 4);
 
     private MovementTestFixtures() {
+    }
+
+    /** As {@link #movement(MovementReason, Long)}, plus the loss remark the response carries. */
+    static StockMovement movement(MovementReason reason, Long invoiceItemId, MovementRemark remark) {
+        StockMovement movement = movement(reason, invoiceItemId);
+        movement.setRemark(remark);
+        return movement;
     }
 
     /** Builds a recorded movement with product, user and - when linked - invoice item initialized. */

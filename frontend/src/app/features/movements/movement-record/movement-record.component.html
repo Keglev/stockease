@@ -39,6 +39,22 @@
           <mat-hint>{{ 'movements.unitCostHint' | translate }}</mat-hint>
         </mat-form-field>
       }
+
+      @if (isLoss()) {
+        <mat-form-field appearance="outline" class="remark-field">
+          <mat-label>{{ 'movements.form.remark' | translate }}</mat-label>
+          <mat-select formControlName="remark" class="remark-select">
+            @for (remark of remarks; track remark) {
+              <mat-option [value]="remark" class="remark-option">
+                {{ 'movements.form.remarkOption.' + remark | translate }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (form.controls.remark?.touched && form.controls.remark?.invalid) {
+            <mat-error>{{ 'movements.form.remarkRequired' | translate }}</mat-error>
+          }
+        </mat-form-field>
+      }
     </mat-card-content>
   </mat-card>
 
