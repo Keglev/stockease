@@ -4,13 +4,13 @@ post:
     Records a movement that stands on its own and applies its quantity change to the product
     atomically. Movements are append-only: a recorded movement is never updated or deleted.
 
-    **Only three reasons are accepted here** - `NEW_PRODUCT`, `LOST` and `DESTROYED`. The other four
-    are rejected at the API surface before the service is reached, because they belong to other
-    flows: `PURCHASE` and `SOLD` come into existence only by closing an invoice, and the two return
-    reasons go through `POST /api/returns`.
+    **Only two reasons are accepted here** - `LOST` and `DESTROYED`. This endpoint is a loss ledger:
+    stock never enters through it. The other reasons are rejected at the API surface before the
+    service is reached, because they belong to other flows: `PURCHASE` and `SOLD` come into
+    existence only by closing an invoice, and the two return reasons go through `POST /api/returns`.
 
-    `NEW_PRODUCT` requires a positive `unitCost` and the other two reject it, since only initial
-    stock carries a cost snapshot of its own.
+    Both reasons require a `remark` naming what happened to the stock, and neither accepts a price:
+    a cost snapshot belongs to a purchase line, and purchases are not recorded here.
   operationId: recordMovement
   tags:
     - Stock Movements
@@ -24,9 +24,9 @@ post:
           $ref: '../openapi.yaml#/components/schemas/RecordMovementRequest'
         example:
           productId: 3
-          reason: NEW_PRODUCT
+          reason: LOST
           quantity: 2
-          unitCost: 7.50
+          remark: EXPIRED
   responses:
     '200':
       description: Movement recorded (ROLE_USER or ROLE_ADMIN); returns the bare record
@@ -38,12 +38,13 @@ post:
             id: 5
             productId: 3
             userId: 11
-            type: INCREASE
-            reason: NEW_PRODUCT
+            type: DECREASE
+            reason: LOST
             quantity: 2
             invoiceItemId: null
             soldPrice: null
-            unitCost: 7.50
+            unitCost: null
+            remark: EXPIRED
             createdAt: '2026-01-02T03:04:00'
     '400':
       description: |
@@ -73,7 +74,7 @@ post:
               summary: Rejected by the movement validation matrix
               value:
                 success: false
-                message: NEW_PRODUCT movements require a positive unit cost.
+                message: LOST and DESTROYED movements require a remark.
                 data: null
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'

@@ -64,8 +64,7 @@ public class ProductService {
      * Creates and persists a new product at zero stock.
      *
      * <p>Creation is master-data maintenance and books no stock (ADR 018): the quantity is always 0,
-     * and the first units arrive through a movement that documents them - closing a purchase invoice,
-     * or a NEW_PRODUCT opening balance.
+     * and the first units arrive the only way any units do - by closing a purchase invoice (ADR 021).
      *
      * @param name product name; must not duplicate a live product's name, ignoring case
      * @param sku operator-assigned stock keeping unit; must not duplicate a live product's SKU

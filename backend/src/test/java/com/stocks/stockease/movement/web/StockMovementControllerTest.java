@@ -67,32 +67,33 @@ class StockMovementControllerTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void recordMovement_withNewProduct_mapsRequestToCommand() throws Exception {
+    void recordMovement_withLostReason_mapsRequestToCommand() throws Exception {
         Mockito.when(stockMovementService.recordMovement(any(RecordMovementCommand.class), any(User.class)))
-                .thenReturn(MovementTestFixtures.movement(MovementReason.NEW_PRODUCT, null));
+                .thenReturn(MovementTestFixtures.movement(MovementReason.LOST, null, MovementRemark.EXPIRED));
 
         mockMvc.perform(post("/api/stock-movements").contentType(applicationJson())
-                        .content(movementBody(MovementReason.NEW_PRODUCT)).with(csrfToken()))
+                        .content(movementBody(MovementReason.LOST)).with(csrfToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(5))
                 .andExpect(jsonPath("$.productId").value(3))
                 .andExpect(jsonPath("$.userId").value(11))
-                .andExpect(jsonPath("$.type").value("INCREASE"))
+                .andExpect(jsonPath("$.type").value("DECREASE"))
                 .andExpect(jsonPath("$.invoiceItemId").doesNotExist());
 
         assertCapturedCommand();
     }
 
-    /** Asserts the command carries the request's fields, no invoice link, and the resolved principal. */
+    /** Asserts the command carries the request's fields, no invoice link, no price, and the principal. */
     private void assertCapturedCommand() {
         ArgumentCaptor<RecordMovementCommand> command = ArgumentCaptor.forClass(RecordMovementCommand.class);
         ArgumentCaptor<User> user = ArgumentCaptor.forClass(User.class);
         Mockito.verify(stockMovementService).recordMovement(command.capture(), user.capture());
 
         assertThat(command.getValue().productId()).isEqualTo(3L);
-        assertThat(command.getValue().reason()).isEqualTo(MovementReason.NEW_PRODUCT);
+        assertThat(command.getValue().reason()).isEqualTo(MovementReason.LOST);
         assertThat(command.getValue().quantity()).isEqualTo(2);
-        assertThat(command.getValue().unitCost()).isEqualByComparingTo("7.50");
+        // the endpoint accepts no price at all now: whatever a client sends, the command carries none
+        assertThat(command.getValue().unitCost()).isNull();
         assertThat(command.getValue().invoiceItemId()).isNull();
         assertThat(user.getValue().getUsername()).isEqualTo("admin");
     }
@@ -129,21 +130,18 @@ class StockMovementControllerTest {
         assertThat(command.getValue().remark()).isEqualTo(MovementRemark.EXPIRED);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {"NEW_PRODUCT", "OPENING_BALANCE"})
     @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void recordMovement_newProductWithoutRemark_sendsNoRemarkToTheService() throws Exception {
-        Mockito.when(stockMovementService.recordMovement(any(RecordMovementCommand.class), any(User.class)))
-                .thenReturn(MovementTestFixtures.movement(MovementReason.NEW_PRODUCT, null));
-
+    void recordMovement_withRetiredOrUnknownReason_returns400(String reason) throws Exception {
+        // NEW_PRODUCT is gone from the enum (ADR 021), so it no longer deserializes and never reaches
+        // the policy check. The status is the contract here; the message is Jackson's, not ours.
         mockMvc.perform(post("/api/stock-movements").contentType(applicationJson())
-                        .content(movementBody(MovementReason.NEW_PRODUCT)).with(csrfToken()))
-                .andExpect(status().isOk())
-                // the key is always serialized, and is null for every reason that is not a loss
-                .andExpect(jsonPath("$.remark").doesNotExist());
+                        .content("{\"productId\": 3, \"reason\": \"" + reason + "\", \"quantity\": 2}")
+                        .with(csrfToken()))
+                .andExpect(status().isBadRequest());
 
-        ArgumentCaptor<RecordMovementCommand> command = ArgumentCaptor.forClass(RecordMovementCommand.class);
-        Mockito.verify(stockMovementService).recordMovement(command.capture(), any(User.class));
-        assertThat(command.getValue().remark()).isNull();
+        verifyServiceNeverCalled();
     }
 
     @ParameterizedTest
@@ -164,7 +162,7 @@ class StockMovementControllerTest {
             "{\"reason\": \"LOST\", \"quantity\": 2}",
             "{\"productId\": 3, \"quantity\": 2}",
             "{\"productId\": 3, \"reason\": \"LOST\", \"quantity\": 0}",
-            "{\"productId\": 3, \"reason\": \"NEW_PRODUCT\", \"quantity\": 2, \"unitCost\": -1}"})
+            "{\"productId\": 3, \"reason\": \"LOST\", \"quantity\": -2, \"remark\": \"EXPIRED\"}"})
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void recordMovement_withInvalidBody_returns400(String body) throws Exception {
         mockMvc.perform(post("/api/stock-movements").contentType(applicationJson())
@@ -179,9 +177,9 @@ class StockMovementControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void recordMovement_whenServiceRejectsMovement_returns400() throws Exception {
         Mockito.when(stockMovementService.recordMovement(any(RecordMovementCommand.class), any(User.class)))
-                .thenThrow(new InvalidMovementException("NEW_PRODUCT movements require a positive unit cost."));
+                .thenThrow(new InvalidMovementException("LOST and DESTROYED movements require a remark."));
 
-        performExpecting(400, "NEW_PRODUCT movements require a positive unit cost.");
+        performExpecting(400, "LOST and DESTROYED movements require a remark.");
     }
 
     @Test

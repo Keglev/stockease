@@ -129,18 +129,15 @@
     "product": "Produkt",
     "reasonLabel": "Grund",
     "reason": {
-      "NEW_PRODUCT": "Neuzugang",
       "LOST": "Verlust",
       "DESTROYED": "Zerstört"
     },
     "directionHint": {
-      "NEW_PRODUCT": "Ein Neuzugang erhöht den erfassten Bestand.",
       "LOST": "Ein Verlust verringert den erfassten Bestand.",
       "DESTROYED": "Eine Zerstörung verringert den erfassten Bestand."
     },
     "quantity": "Menge",
-    "unitCost": "Stückkosten",
-    "unitCostHint": "Kostenwert je Einheit",
+    "stockHint": "Bestand entsteht durch das Abschließen einer Einkaufsrechnung, nicht hier.",
     "form": {
       "remark": "Anmerkung",
       "remarkRequired": "Bitte wählen Sie aus, was mit der Ware geschehen ist.",

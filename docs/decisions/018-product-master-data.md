@@ -1,6 +1,6 @@
 # ADR 018: Product Creation is Master-Data Maintenance
 
-**Status**: Accepted
+**Status**: Accepted; partially superseded by ADR 021 (NEW_PRODUCT opening balance)
 **Date**: July 29, 2026
 
 ---

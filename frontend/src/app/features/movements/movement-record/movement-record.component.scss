@@ -18,7 +18,8 @@ mat-form-field {
   max-width: 22rem;
 }
 
-.direction-hint {
+.direction-hint,
+.stock-hint {
   margin: 0 0 0.5rem;
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-body-small);

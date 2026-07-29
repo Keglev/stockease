@@ -1,6 +1,6 @@
 # ADR 004: Inventory Domain Model
 
-**Status**: Accepted
+**Status**: Accepted; partially superseded by ADR 021 (NEW_PRODUCT opening balance)
 **Date**: July 23, 2026
 
 ---

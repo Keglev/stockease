@@ -32,5 +32,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 018 - Product Creation is Master-Data Maintenance](018-product-master-data.md) - **[Cross-cutting]**
 - [ADR 019 - The Purchase Price Follows the Last Closed Purchase](019-last-purchase-price.md) - **[Backend]**
 - [ADR 020 - Losses Carry a Remark from a Fixed Taxonomy](020-loss-remark.md) - **[Cross-cutting]**
+- [ADR 021 - Stock Enters Only Through Closed Purchase Invoices](021-stock-only-via-invoices.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

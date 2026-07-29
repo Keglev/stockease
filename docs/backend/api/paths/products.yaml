@@ -40,8 +40,8 @@ post:
     derived for the response rather than stored.
 
     Creation is master-data maintenance and accepts no quantity: the product starts at zero stock,
-    and every unit it later holds arrives through a movement that documents it - closing a purchase
-    invoice, or a `NEW_PRODUCT` opening balance.
+    and every unit it later holds arrives the only way stock ever does - by closing a purchase
+    invoice.
   operationId: createProduct
   tags:
     - Products

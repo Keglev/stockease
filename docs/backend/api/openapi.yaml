@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.2.0
+  version: 2.3.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -26,9 +26,9 @@ info:
 
     - **Purchase and sale movements exist only through invoice closing.** They cannot be recorded
       directly; closing an invoice books them as a side effect.
-    - **`POST /api/stock-movements` accepts three reasons only** - `NEW_PRODUCT`, `LOST` and
-      `DESTROYED` - the standalone corrections that no invoice accounts for. Any other reason is
-      rejected with 400 before the service is reached.
+    - **`POST /api/stock-movements` accepts two reasons only** - `LOST` and `DESTROYED`. It is a loss
+      ledger: stock never arrives through it. Any other reason is rejected with 400 before the
+      service is reached.
     - **Returns are a first-class operation** with their own endpoint, `POST /api/returns`. It records
       the movement and raises the invoice line's returned quantity in one transaction.
     - **Customer master data has no update endpoint by design.** Customers can be listed, fetched,
@@ -771,11 +771,12 @@ components:
 
     MovementReason:
       type: string
-      enum: [NEW_PRODUCT, PURCHASE, RETURN_FROM_CUSTOMER, SOLD, LOST, DESTROYED, RETURNED_TO_SUPPLIER]
+      enum: [PURCHASE, RETURN_FROM_CUSTOMER, SOLD, LOST, DESTROYED, RETURNED_TO_SUPPLIER]
       description: |
-        Business reason for the change. PURCHASE and SOLD are booked only by closing an invoice;
-        RETURN_FROM_CUSTOMER and RETURNED_TO_SUPPLIER are recorded through the returns endpoint;
-        NEW_PRODUCT, LOST and DESTROYED are the standalone corrections.
+        Business reason for the change. PURCHASE and SOLD are booked only by closing an invoice -
+        PURCHASE is the sole way stock ever increases from outside; RETURN_FROM_CUSTOMER and
+        RETURNED_TO_SUPPLIER are recorded through the returns endpoint; LOST and DESTROYED are the
+        standalone corrections the movements endpoint accepts.
 
     MovementRemark:
       type: string
@@ -851,6 +852,7 @@ components:
         - productId
         - reason
         - quantity
+        - remark
       properties:
         productId:
           type: integer
@@ -858,29 +860,23 @@ components:
           description: 'Required; message: "Product is required."'
           example: 3
         reason:
-          allOf:
-            - $ref: '#/components/schemas/MovementReason'
-          description: Required, and must be NEW_PRODUCT, LOST or DESTROYED at this endpoint
+          type: string
+          enum: [LOST, DESTROYED]
+          description: >-
+            Required, and must be LOST or DESTROYED. This endpoint is a loss ledger: stock never
+            enters through it, so no incoming reason is accepted here.
         quantity:
           type: integer
           minimum: 0
           exclusiveMinimum: true
           description: 'Must be positive; message: "Quantity must be positive."'
           example: 2
-        unitCost:
-          type: number
-          format: double
-          nullable: true
-          description: Required by NEW_PRODUCT and rejected for the other reasons; must be positive when present
-          example: 7.50
         remark:
           allOf:
             - $ref: '#/components/schemas/MovementRemark'
-          nullable: true
           description: >-
-            Conditionally required: LOST and DESTROYED movements must carry a remark explaining the
-            loss, and every other reason must omit it. Rejected with 400 when the pair is
-            inconsistent; a database CHECK enforces the same rule as a backstop.
+            Required: every reason this endpoint accepts is a loss, and a loss must say what
+            happened to the stock. A database CHECK enforces the same rule as a backstop.
           example: EXPIRED
 
     RegisterReturnRequest:

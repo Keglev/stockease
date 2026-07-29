@@ -55,9 +55,12 @@ final class MovementTestFixtures {
         return movement;
     }
 
-    /** A standalone movement body for the given reason, carrying a unit cost. */
+    /**
+     * A standalone movement body for the given reason, carrying the remark every acceptable reason
+     * now requires. There is no unit cost: the endpoint accepts no prices at all (ADR 021).
+     */
     static String movementBody(MovementReason reason) {
-        return "{\"productId\": 3, \"reason\": \"" + reason + "\", \"quantity\": 2, \"unitCost\": 7.50}";
+        return "{\"productId\": 3, \"reason\": \"" + reason + "\", \"quantity\": 2, \"remark\": \"EXPIRED\"}";
     }
 
     /** A return body for the given reason, linked to invoice item 4. */

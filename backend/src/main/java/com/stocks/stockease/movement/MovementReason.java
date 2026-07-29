@@ -6,8 +6,7 @@ package com.stocks.stockease.movement;
  */
 public enum MovementReason {
 
-    /** Initial stock at product creation, carries its own cost snapshot. */
-    NEW_PRODUCT(MovementType.INCREASE),
+    /** Stock arrives only by closing a purchase invoice, which is the document behind it (ADR 021). */
     PURCHASE(MovementType.INCREASE),
 
     /** Customer return, refund reduces revenue. */

@@ -33,7 +33,7 @@ public class ReportingService {
               COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.sold_price
                                 WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.sold_price
                                 ELSE 0 END), 0) AS revenue,
-              COALESCE(SUM(CASE WHEN m.reason IN ('PURCHASE','NEW_PRODUCT') THEN m.quantity * m.unit_cost
+              COALESCE(SUM(CASE WHEN m.reason = 'PURCHASE' THEN m.quantity * m.unit_cost
                                 WHEN m.reason = 'RETURNED_TO_SUPPLIER' THEN -m.quantity * ii.unit_price
                                 ELSE 0 END), 0) AS cost
             FROM product p
@@ -116,7 +116,7 @@ public class ReportingService {
                     COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.sold_price
                                       WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.sold_price
                                       ELSE 0 END), 0) AS revenue,
-                    COALESCE(SUM(CASE WHEN m.reason IN ('PURCHASE','NEW_PRODUCT') THEN m.quantity * m.unit_cost
+                    COALESCE(SUM(CASE WHEN m.reason = 'PURCHASE' THEN m.quantity * m.unit_cost
                                       WHEN m.reason = 'RETURNED_TO_SUPPLIER' THEN -m.quantity * ii.unit_price
                                       ELSE 0 END), 0) AS cost
                   FROM product p

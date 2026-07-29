@@ -46,7 +46,6 @@ describe('MovementService', () => {
           productId: 3,
           reason: 'LOST',
           quantity: 2,
-          unitCost: null,
           remark: 'EXPIRED'
         })
       )
@@ -69,7 +68,6 @@ describe('MovementService', () => {
           productId: 3,
           reason: 'LOST',
           quantity: 2,
-          unitCost: null,
           remark: 'EXPIRED'
         })
       )
@@ -77,7 +75,7 @@ describe('MovementService', () => {
 
     const body = controller.expectOne(BASE_URL).request.body as object;
 
-    // A present unitCost on a non-NEW_PRODUCT movement is a 400, so the key must be absent.
+    // The endpoint accepts no price on any reason, so the key must never appear on the wire.
     expect(body).not.toHaveProperty('unitCost');
     expect(body).toEqual({ productId: 3, reason: 'LOST', quantity: 2, remark: 'EXPIRED' });
     controller.verify();
@@ -126,22 +124,22 @@ describe('MovementService', () => {
     controller.verify();
   });
 
-  it('record_newProductReason_includesUnitCost', () => {
+  it('record_destroyedReason_sendsTheSameThreeKeysPlusRemark', () => {
     service
       .record(
         buildRecordMovementRequest({
           productId: 3,
-          reason: 'NEW_PRODUCT',
+          reason: 'DESTROYED',
           quantity: 10,
-          unitCost: 7.5,
-          remark: null
+          remark: 'FROM_SUPPLIER'
         })
       )
       .subscribe();
 
     const body = controller.expectOne(BASE_URL).request.body as object;
 
-    expect(body).toHaveProperty('unitCost', 7.5);
+    // the payload shape no longer varies by reason: both losses send exactly these four keys
+    expect(body).toEqual({ productId: 3, reason: 'DESTROYED', quantity: 10, remark: 'FROM_SUPPLIER' });
     controller.verify();
   });
 });
