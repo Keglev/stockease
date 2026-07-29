@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BootstrapAdminInitializer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.security</a> &gt; <span class="el_source">BootstrapAdminInitializer.java</span></div><h1>BootstrapAdminInitializer.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.security;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+
+import com.stocks.stockease.security.internal.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Provisions the administrator account described by {@link BootstrapAdminProperties} at startup.
+ *
+ * &lt;p&gt;This replaces the 'admin' account V3 seeded with a password committed to the repository, which
+ * V16 deletes. The credential now lives only in the deployment environment, so the account can be
+ * rotated without a migration and nothing recoverable from the source tree opens it.
+ *
+ * &lt;p&gt;Deliberately not conditional on demo mode: this is a real administrator for a real deployment
+ * and must be provisioned with {@code app.demo.enabled=false}. Equally deliberately, it never
+ * touches an account that already exists - a restart must not silently reset a password an operator
+ * has since changed. A half-configured deployment warns and carries on rather than failing to start,
+ * because refusing to boot over a missing optional credential turns a misconfiguration into an outage.
+ */
+@Component
+@RequiredArgsConstructor
+@EnableConfigurationProperties(BootstrapAdminProperties.class)
+public class BootstrapAdminInitializer implements ApplicationRunner {
+
+<span class="fc" id="L34">    private static final Logger log = LoggerFactory.getLogger(BootstrapAdminInitializer.class);</span>
+
+    /** Authority as the column stores it; the JWT layer strips the prefix when it writes the claim. */
+    static final String ADMIN_ROLE = &quot;ROLE_ADMIN&quot;;
+
+    private final BootstrapAdminProperties properties;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    /**
+     * Creates the configured administrator if it is absent, and does nothing in every other case.
+     *
+     * @param args startup arguments, unused; the configuration is the only input
+     */
+    @Override
+    public void run(ApplicationArguments args) {
+<span class="fc" id="L50">        String username = properties.username();</span>
+<span class="fc" id="L51">        boolean hasUsername = StringUtils.hasText(username);</span>
+<span class="fc" id="L52">        boolean hasPassword = StringUtils.hasText(properties.password());</span>
+
+<span class="fc bfc" id="L54" title="All 4 branches covered.">        if (!hasUsername &amp;&amp; !hasPassword) {</span>
+            // the normal development and test state; silence keeps it from reading as a problem
+<span class="fc" id="L56">            return;</span>
+        }
+<span class="fc bfc" id="L58" title="All 4 branches covered.">        if (!hasUsername || !hasPassword) {</span>
+<span class="fc" id="L59">            log.warn(&quot;Bootstrap admin provisioning skipped: {} is set but {} is not.&quot;,</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">                    hasUsername ? &quot;APP_BOOTSTRAPADMIN_USERNAME&quot; : &quot;APP_BOOTSTRAPADMIN_PASSWORD&quot;,</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">                    hasUsername ? &quot;APP_BOOTSTRAPADMIN_PASSWORD&quot; : &quot;APP_BOOTSTRAPADMIN_USERNAME&quot;);</span>
+<span class="fc" id="L62">            return;</span>
+        }
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (userRepository.findByUsername(username).isPresent()) {</span>
+<span class="fc" id="L65">            log.debug(&quot;Bootstrap admin '{}' already exists; its password is left as it is.&quot;, username);</span>
+<span class="fc" id="L66">            return;</span>
+        }
+
+        // only the username is ever logged: the password must not be recoverable from any log level
+<span class="fc" id="L70">        userRepository.save(new User(username, passwordEncoder.encode(properties.password()), ADMIN_ROLE));</span>
+<span class="fc" id="L71">        log.info(&quot;Provisioned bootstrap admin account '{}'.&quot;, username);</span>
+<span class="fc" id="L72">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
