@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions · 005-demo-access · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-005-demo-access-without-credentials">ADR 005: Demo
+        Access Without Credentials</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        29, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>StockEase is a portfolio application. Its purpose is to be
+        looked at: a reviewer should reach a populated dashboard within
+        a click or two of the landing page, without an account, an email
+        confirmation, or a support conversation.</p>
+        <p>That pulls three requirements together.</p>
+        <p>Access has to be frictionless but must not mean publishing
+        credentials. A username and password printed on a landing page
+        is an invitation - shared logins get scraped, reused against
+        other endpoints, and probed by anyone who wonders what else the
+        password opens.</p>
+        <p>The data has to be disposable. Every visitor arrives with a
+        real ADMIN-shaped tool in their hands: they can close invoices,
+        delete products, register returns. That is the point - a demo
+        that only permits reading proves nothing about a system whose
+        interesting behaviour is all in its writes. So the changes have
+        to be allowed to happen and then have to go away.</p>
+        <p>And the data has to be curated. An empty database
+        demonstrates nothing, and randomly generated rows demonstrate
+        less: the profit charts need margins that differ, the due-date
+        buckets need dates spread across the coming weeks, the overdue
+        report needs invoices that are genuinely late, and the low-stock
+        view needs a product that is genuinely low. A baseline has to be
+        designed to show each of those, not sampled and hoped over.</p>
+        <hr />
+        <h2 id="decision">Decision</h2>
+        <p><strong>A passwordless demo login issues role-scoped JWTs for
+        pre-migrated demo users; a nightly reset restores a seeded
+        baseline built through the real service flows; and the whole
+        surface exists only behind
+        <code>app.demo.enabled</code>.</strong></p>
+        <p><code>POST /api/demo/login</code> takes
+        <code>{"role": "ADMIN"}</code> or <code>{"role": "USER"}</code>
+        and returns a signed JWT for the corresponding account -
+        <code>julia.brandt</code> and <code>markus.weber</code>, both
+        created by migration. No password is involved and none is
+        published. The response is byte-for-byte the shape of
+        <code>POST /api/auth/login</code>, so the frontend reuses its
+        existing authentication handling unchanged.</p>
+        <p><code>POST /api/demo/reset</code> wipes every domain table
+        and rebuilds the baseline. It is authenticated by a shared
+        secret in the <code>X-Demo-Reset-Token</code> header rather than
+        by a JWT, because the caller is a scheduler and holds no user
+        account. The same rebuild runs once at startup when the
+        catalogue is empty, so a fresh deployment never greets its first
+        visitor with blank dashboards.</p>
+        <p>The baseline is seeded exclusively through the public
+        services - product, supplier, customer, invoice, movement.
+        Nothing is inserted directly. Invoices are created and then
+        genuinely closed, so stock books through the real listener,
+        price snapshots land where the reports read them, and the audit
+        trail fills with the same rows a user’s actions would have
+        written. Demo data that took a shortcut around the domain would
+        be demo data that does not prove the domain works.</p>
+        <p><code>app.demo.enabled</code> defaults to false. With it
+        false, no demo bean is created, which means no controller is
+        mapped and the <code>/api/demo</code> paths answer 404 rather
+        than presenting a protected surface that answers 403.</p>
+        <hr />
+        <h2 id="alternatives-considered">Alternatives Considered</h2>
+        <p><strong>Printed credentials on the landing page</strong> -
+        rejected. It adds friction where the whole point is removing it:
+        the visitor has to read, copy, and type. Worse, it publishes a
+        working login pair, which invites exactly the abuse of shared
+        credentials that a public demo should not host.</p>
+        <p><strong>An OAuth demo tenant</strong> - rejected. An identity
+        provider, a tenant to configure, a client registration to keep
+        in sync, and a redirect flow to debug, all to avoid asking a
+        visitor to click a button. The infrastructure is
+        disproportionate to what it buys for a demo.</p>
+        <hr />
+        <h2 id="consequences">Consequences</h2>
+        <p>Anyone can hold a demo ADMIN token. This is accepted: the
+        data behind it is disposable and nightly-restored, and the
+        accounts it names exist only in the demo deployment.</p>
+        <p>The demo ADMIN is a genuinely role-promoted account -
+        migration V15 sets <code>julia.brandt</code> to
+        <code>ROLE_ADMIN</code> - not a token-level elevation, so
+        authorization behaves identically for demo and real users and no
+        code path treats a demo session as a special case.</p>
+        <p>Personal and real accounts are provisioned outside this
+        repository through an environment-based bootstrap. They are
+        never part of the reset: the wipe touches domain tables only and
+        leaves <code>app_user</code> untouched by construction, which is
+        pinned by a test comparing the table row by row across a
+        reset.</p>
+        <p>Daytime visitor changes are ephemeral by design. Anything a
+        visitor does survives until the nightly reset and no longer.
+        That is a feature of the demo, not a limitation of it - but it
+        does mean the demo is not a place to keep anything.</p>
+        <hr />
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-005-demo-access-without-credentials"
+      id="toc-adr-005-demo-access-without-credentials">ADR 005: Demo
+      Access Without Credentials</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives Considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
