@@ -10,7 +10,34 @@
       {{ 'landing.description' | translate: { app: 'common.appName' | translate } }}
     </p>
 
-    <!-- demo-credentials box: added when the public demo goes live -->
+    <!-- Rendered unconditionally rather than behind the demo flag: this page exists only on the
+         demo deployment, so a condition here would never once evaluate to false. -->
+    <section class="landing-demo">
+      <h2 class="landing-demo-title">{{ 'landing.demo.title' | translate }}</h2>
+
+      <div class="landing-demo-actions">
+        <button
+          matButton="filled"
+          type="button"
+          class="demo-admin"
+          [disabled]="demoPending()"
+          (click)="enterDemo('ADMIN')"
+        >
+          {{ 'landing.demo.tryAdmin' | translate }}
+        </button>
+        <button
+          matButton="outlined"
+          type="button"
+          class="demo-user"
+          [disabled]="demoPending()"
+          (click)="enterDemo('USER')"
+        >
+          {{ 'landing.demo.tryUser' | translate }}
+        </button>
+      </div>
+
+      <p class="landing-demo-notice">{{ 'landing.demo.resetNotice' | translate }}</p>
+    </section>
 
     <div class="landing-actions">
       <a matButton="filled" routerLink="/login">{{ 'landing.loginCta' | translate }}</a>

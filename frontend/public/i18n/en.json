@@ -11,6 +11,12 @@
   },
   "landing": {
     "description": "{{app}} is an inventory management application for small businesses: track products and stock levels, manage suppliers and customers, and settle purchases and sales through the invoice lifecycle. This demo runs against the live Spring Boot API.",
+    "demo": {
+      "title": "Try the demo",
+      "tryAdmin": "Try as Admin",
+      "tryUser": "Try as User",
+      "resetNotice": "Demo data - resets nightly at 03:00 UTC"
+    },
     "loginCta": "Login",
     "repository": "GitHub repository",
     "documentation": "Documentation"
@@ -282,6 +288,8 @@
   },
   "shell": {
     "logout": "Log out",
+    "demoBadge": "DEMO",
+    "demoTooltip": "Demo system - data resets nightly",
     "role": {
       "ADMIN": "Administrator",
       "USER": "User"

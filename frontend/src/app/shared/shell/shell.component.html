@@ -1,5 +1,10 @@
 <mat-toolbar color="primary">
   <span>{{ 'common.appName' | translate }}</span>
+  @if (demoMode) {
+    <span class="demo-badge" [title]="'shell.demoTooltip' | translate">
+      {{ 'shell.demoBadge' | translate }}
+    </span>
+  }
   <span class="spacer"></span>
 
   <app-language-toggle />

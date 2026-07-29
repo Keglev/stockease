@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { AuthService, TOKEN_STORAGE_KEY } from '../../core/auth/auth.service';
+import { DEMO_MODE } from '../../core/config/demo-mode';
 import { LanguageService } from '../../core/i18n/language.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { ShellComponent } from './shell.component';
@@ -20,7 +21,12 @@ const TRANSLATIONS = {
       suppliers: 'Suppliers',
       customers: 'Customers'
     },
-    shell: { logout: 'Log out', role: { ADMIN: 'Administrator', USER: 'User' } }
+    shell: {
+      logout: 'Log out',
+      demoBadge: 'DEMO',
+      demoTooltip: 'Demo system - data resets nightly',
+      role: { ADMIN: 'Administrator', USER: 'User' }
+    }
   },
   de: {
     common: { appName: 'Bestandskontrolle', language: 'Sprache' },
@@ -65,12 +71,17 @@ describe('ShellComponent', () => {
     );
   }
 
-  async function setUp(): Promise<void> {
+  function demoBadge(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('.demo-badge');
+  }
+
+  async function setUp(demoMode = false): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [ShellComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: DEMO_MODE, useValue: demoMode },
         // Registered so the logout navigation resolves instead of rejecting mid-test.
         provideRouter([
           { path: 'logout', children: [] },
@@ -137,6 +148,22 @@ describe('ShellComponent', () => {
     // The footer belongs to the content pane, not the sidenav, so it must sit inside it.
     expect(host.querySelector('mat-sidenav-content app-footer')).not.toBeNull();
     expect(host.querySelector('mat-sidenav app-footer')).toBeNull();
+  });
+
+  it('render_demoFlagEnabled_showsBadgeWithTooltip', async () => {
+    await setUp(true);
+
+    expect(demoBadge()?.textContent?.trim()).toBe('DEMO');
+    expect(demoBadge()?.getAttribute('title')).toBe('Demo system - data resets nightly');
+  });
+
+  it('render_demoFlagDisabled_omitsBadgeEntirely', async () => {
+    await setUp(false);
+
+    // The other direction is the point: the badge is a claim about the deployment, so a
+    // non-demo build must not carry it at all rather than merely hide it.
+    expect(demoBadge()).toBeNull();
+    expect(text()).not.toContain('DEMO');
   });
 
   it('logout_clicked_clearsAuthenticationState', async () => {
