@@ -39,9 +39,11 @@ from a manual correction except by who and when.
 equals the product's price, nothing is written and no audit row appears. The
 comparison is by value, not by scale: 2.50 and 2.5 are the same price.
 
-**Within one invoice, the last line wins.** Two lines for the same product leave
-the price the later line paid. This is the same rule as across invoices - the
-most recent line decides - applied to lines that happen to share a document.
+**The rule is purely across invoices.** A single invoice cannot carry two lines
+for the same product: V6 makes `(invoice_id, product_id)` unique, and a repeat
+purchase raises that line's quantity instead of adding a second line. There is
+therefore no within-invoice ordering to resolve - the most recently closed
+purchase invoice decides the price.
 
 **Creation price is the starting value.** The price entered at creation
 (ADR 018) stands until the first purchase books, and is then replaced by
