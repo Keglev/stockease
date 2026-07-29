@@ -24,9 +24,10 @@ import lombok.RequiredArgsConstructor;
 /**
  * REST controller for standalone stock corrections.
  *
- * &lt;p&gt;Records only movements that stand on their own: initial stock, loss and destruction. Purchase
- * and sale bookings are never made here - they exist exclusively as a consequence of closing an
- * invoice - and returns have their own endpoint, so this controller rejects those reasons outright.
+ * &lt;p&gt;A loss ledger, and nothing else: it records only what left the shelves without a document of its
+ * own - loss and destruction. Stock never arrives here. Incoming units exist exclusively as a
+ * consequence of closing a purchase invoice (ADR 021), sales likewise come from closing, and returns
+ * have their own endpoint, so this controller rejects every other reason outright.
  */
 @RestController
 @RequestMapping(&quot;/api/stock-movements&quot;)
@@ -34,16 +35,16 @@ import lombok.RequiredArgsConstructor;
 public class StockMovementController {
 
     /** The reasons this endpoint may record; everything else is booked elsewhere by design. */
-<span class="fc" id="L37">    private static final Set&lt;MovementReason&gt; STANDALONE_REASONS =</span>
-<span class="fc" id="L38">            EnumSet.of(MovementReason.NEW_PRODUCT, MovementReason.LOST, MovementReason.DESTROYED);</span>
+<span class="fc" id="L38">    private static final Set&lt;MovementReason&gt; STANDALONE_REASONS =</span>
+<span class="fc" id="L39">            EnumSet.of(MovementReason.LOST, MovementReason.DESTROYED);</span>
 
     private final StockMovementService stockMovementService;
     private final UserService userService;
 
     /** Resolves the authenticated principal to the user recorded against the movement. */
     private User currentUser(Principal principal) {
-<span class="fc" id="L45">        return userService.findByUsername(principal.getName())</span>
-<span class="pc" id="L46">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Authenticated user not found.&quot;));</span>
+<span class="fc" id="L46">        return userService.findByUsername(principal.getName())</span>
+<span class="pc" id="L47">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Authenticated user not found.&quot;));</span>
     }
 
     /**
@@ -60,12 +61,12 @@ public class StockMovementController {
             Principal principal) {
         // the API surface refuses the reason before the service sees it, so a client cannot fabricate a
         // purchase or sale that no invoice accounts for
-<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (!STANDALONE_REASONS.contains(request.reason())) {</span>
-<span class="fc" id="L64">            throw new InvalidMovementException(</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (!STANDALONE_REASONS.contains(request.reason())) {</span>
+<span class="fc" id="L65">            throw new InvalidMovementException(</span>
                     &quot;PURCHASE and SOLD movements exist only through invoice closing; returns use the return endpoint.&quot;);
         }
-<span class="fc" id="L67">        StockMovement recorded = stockMovementService.recordMovement(request.toCommand(), currentUser(principal));</span>
-<span class="fc" id="L68">        return ResponseEntity.ok(MovementResponse.from(recorded));</span>
+<span class="fc" id="L68">        StockMovement recorded = stockMovementService.recordMovement(request.toCommand(), currentUser(principal));</span>
+<span class="fc" id="L69">        return ResponseEntity.ok(MovementResponse.from(recorded));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

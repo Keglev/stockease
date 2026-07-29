@@ -6,27 +6,26 @@
  */
 <span class="fc" id="L7">public enum MovementReason {</span>
 
-    /** Initial stock at product creation, carries its own cost snapshot. */
-<span class="fc" id="L10">    NEW_PRODUCT(MovementType.INCREASE),</span>
-<span class="fc" id="L11">    PURCHASE(MovementType.INCREASE),</span>
+    /** Stock arrives only by closing a purchase invoice, which is the document behind it (ADR 021). */
+<span class="fc" id="L10">    PURCHASE(MovementType.INCREASE),</span>
 
     /** Customer return, refund reduces revenue. */
-<span class="fc" id="L14">    RETURN_FROM_CUSTOMER(MovementType.INCREASE),</span>
+<span class="fc" id="L13">    RETURN_FROM_CUSTOMER(MovementType.INCREASE),</span>
 
-<span class="fc" id="L16">    SOLD(MovementType.DECREASE),</span>
-<span class="fc" id="L17">    LOST(MovementType.DECREASE),</span>
-<span class="fc" id="L18">    DESTROYED(MovementType.DECREASE),</span>
-<span class="fc" id="L19">    RETURNED_TO_SUPPLIER(MovementType.DECREASE);</span>
+<span class="fc" id="L15">    SOLD(MovementType.DECREASE),</span>
+<span class="fc" id="L16">    LOST(MovementType.DECREASE),</span>
+<span class="fc" id="L17">    DESTROYED(MovementType.DECREASE),</span>
+<span class="fc" id="L18">    RETURNED_TO_SUPPLIER(MovementType.DECREASE);</span>
 
     private final MovementType type;
 
-<span class="fc" id="L23">    MovementReason(MovementType type) {</span>
-<span class="fc" id="L24">        this.type = type;</span>
-<span class="fc" id="L25">    }</span>
+<span class="fc" id="L22">    MovementReason(MovementType type) {</span>
+<span class="fc" id="L23">        this.type = type;</span>
+<span class="fc" id="L24">    }</span>
 
     /** Returns the movement direction this reason is bound to. */
     public MovementType getType() {
-<span class="fc" id="L29">        return type;</span>
+<span class="fc" id="L28">        return type;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

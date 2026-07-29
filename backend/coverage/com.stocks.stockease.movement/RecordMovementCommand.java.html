@@ -3,9 +3,9 @@
 import java.math.BigDecimal;
 
 /**
- * Request to record a stock movement; {@code unitCost} is accepted only for {@code NEW_PRODUCT},
- * {@code invoiceItemId} only for the reasons that require an invoice link, and {@code remark} only
- * for {@code LOST} and {@code DESTROYED}, which require it.
+ * Request to record a stock movement; {@code invoiceItemId} is accepted only for the reasons that
+ * require an invoice link, {@code remark} only for {@code LOST} and {@code DESTROYED}, which require
+ * it, and {@code unitCost} by no reason at all - a purchase snapshots it from its invoice line.
  *
  * @param productId product whose stock changes
  * @param reason business reason for the change, which also fixes its direction
