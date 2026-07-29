@@ -2,6 +2,7 @@
 
 import java.util.List;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,19 +37,27 @@ public class SecurityConfig {
 
     private final List&lt;String&gt; allowedOrigins;
 
+    private final List&lt;PublicEndpoint&gt; publicEndpoints;
+
     /**
      * Constructs security config with the JWT filter, custom authentication entry point, and CORS origins.
      *
      * @param jwtFilter validates JWT tokens in request headers
      * @param customAuthenticationEntryPoint sends custom 401 error responses
      * @param allowedOrigins frontend origins permitted to call the API
+     * @param publicEndpoints unauthenticated entry points contributed by other modules; empty when none
+     *        of them is active
      */
     public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint,
-<span class="fc" id="L47">            @Value(&quot;${app.cors.allowed-origins}&quot;) List&lt;String&gt; allowedOrigins) {</span>
-<span class="fc" id="L48">        this.jwtFilter = jwtFilter;</span>
-<span class="fc" id="L49">        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;</span>
-<span class="fc" id="L50">        this.allowedOrigins = allowedOrigins;</span>
-<span class="fc" id="L51">    }</span>
+            @Value(&quot;${app.cors.allowed-origins}&quot;) List&lt;String&gt; allowedOrigins,
+<span class="fc" id="L53">            ObjectProvider&lt;PublicEndpoint&gt; publicEndpoints) {</span>
+<span class="fc" id="L54">        this.jwtFilter = jwtFilter;</span>
+<span class="fc" id="L55">        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;</span>
+<span class="fc" id="L56">        this.allowedOrigins = allowedOrigins;</span>
+        // ObjectProvider rather than List injection: with no contributing module active there is no
+        // candidate bean at all, and a required List parameter would fail the context start.
+<span class="fc" id="L59">        this.publicEndpoints = publicEndpoints.orderedStream().toList();</span>
+<span class="fc" id="L60">    }</span>
 
     /**
      * Returns a BCrypt password encoder bean for credential hashing.
@@ -57,7 +66,7 @@ public class SecurityConfig {
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-<span class="fc" id="L60">        return new BCryptPasswordEncoder();</span>
+<span class="fc" id="L69">        return new BCryptPasswordEncoder();</span>
     }
 
     /**
@@ -69,7 +78,7 @@ public class SecurityConfig {
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-<span class="fc" id="L72">        return config.getAuthenticationManager();</span>
+<span class="fc" id="L81">        return config.getAuthenticationManager();</span>
     }
 
     /**
@@ -81,31 +90,35 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-<span class="fc" id="L84">        http</span>
+<span class="fc" id="L93">        http</span>
             // Disabled: stateless JWT authentication does not require CSRF tokens
-<span class="fc" id="L86">            .csrf(csrf -&gt; csrf.disable())</span>
-<span class="fc" id="L87">            .cors(cors -&gt; cors.configurationSource(corsConfigurationSource()))</span>
-<span class="fc" id="L88">            .authorizeHttpRequests(auth -&gt; auth</span>
-<span class="fc" id="L89">                .requestMatchers(&quot;/api/health&quot;).permitAll()</span>
-<span class="fc" id="L90">                .requestMatchers(&quot;/health&quot;, &quot;/health/&quot;).permitAll()</span>
-<span class="fc" id="L91">                .requestMatchers(HttpMethod.GET, &quot;/actuator/health/**&quot;).permitAll()</span>
-<span class="fc" id="L92">                .requestMatchers(HttpMethod.POST, &quot;/api/auth/login&quot;).permitAll()</span>
+<span class="fc" id="L95">            .csrf(csrf -&gt; csrf.disable())</span>
+<span class="fc" id="L96">            .cors(cors -&gt; cors.configurationSource(corsConfigurationSource()))</span>
+<span class="fc" id="L97">            .authorizeHttpRequests(auth -&gt; {</span>
+<span class="fc" id="L98">                auth.requestMatchers(&quot;/api/health&quot;).permitAll();</span>
+<span class="fc" id="L99">                auth.requestMatchers(&quot;/health&quot;, &quot;/health/&quot;).permitAll();</span>
+<span class="fc" id="L100">                auth.requestMatchers(HttpMethod.GET, &quot;/actuator/health/**&quot;).permitAll();</span>
+<span class="fc" id="L101">                auth.requestMatchers(HttpMethod.POST, &quot;/api/auth/login&quot;).permitAll();</span>
+                // contributed exemptions come before the catch-all so they actually take effect; the
+                // list is empty unless a module that publishes one is active
+<span class="fc" id="L104">                publicEndpoints.forEach(</span>
+<span class="fc" id="L105">                        endpoint -&gt; auth.requestMatchers(endpoint.method(), endpoint.pattern()).permitAll());</span>
                 // endpoint authorization lives on the controller methods (@PreAuthorize); the catch-all
                 // keeps everything authenticated
-<span class="fc" id="L95">                .anyRequest().authenticated()</span>
+<span class="fc" id="L108">                auth.anyRequest().authenticated();</span>
+<span class="fc" id="L109">            })</span>
+<span class="fc" id="L110">            .exceptionHandling(exceptions -&gt; exceptions</span>
+<span class="fc" id="L111">                .authenticationEntryPoint(customAuthenticationEntryPoint)</span>
+<span class="fc" id="L112">                .accessDeniedHandler((request, response, accessDeniedException) -&gt; {</span>
+<span class="nc" id="L113">                    response.setStatus(HttpStatus.FORBIDDEN.value());</span>
+<span class="nc" id="L114">                    response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L115">                    response.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;You are not authorized to perform this action.\&quot;}&quot;);</span>
+<span class="nc" id="L116">                })</span>
             )
-<span class="fc" id="L97">            .exceptionHandling(exceptions -&gt; exceptions</span>
-<span class="fc" id="L98">                .authenticationEntryPoint(customAuthenticationEntryPoint)</span>
-<span class="fc" id="L99">                .accessDeniedHandler((request, response, accessDeniedException) -&gt; {</span>
-<span class="nc" id="L100">                    response.setStatus(HttpStatus.FORBIDDEN.value());</span>
-<span class="nc" id="L101">                    response.setContentType(&quot;application/json&quot;);</span>
-<span class="nc" id="L102">                    response.getWriter().write(&quot;{\&quot;error\&quot;: \&quot;You are not authorized to perform this action.\&quot;}&quot;);</span>
-<span class="nc" id="L103">                })</span>
-            )
-<span class="fc" id="L105">            .sessionManagement(session -&gt; session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</span>
-<span class="fc" id="L106">            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);</span>
+<span class="fc" id="L118">            .sessionManagement(session -&gt; session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</span>
+<span class="fc" id="L119">            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);</span>
 
-<span class="fc" id="L108">        return http.build();</span>
+<span class="fc" id="L121">        return http.build();</span>
     }
 
     /**
@@ -114,12 +127,12 @@ public class SecurityConfig {
      * @return CorsConfiguration with policy rules
      */
     private @NonNull CorsConfiguration corsConfiguration() {
-<span class="fc" id="L117">        CorsConfiguration config = new CorsConfiguration();</span>
-<span class="fc" id="L118">        config.setAllowedOrigins(allowedOrigins);</span>
-<span class="fc" id="L119">        config.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));</span>
-<span class="fc" id="L120">        config.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Cache-Control&quot;, &quot;Content-Type&quot;));</span>
-<span class="fc" id="L121">        config.setAllowCredentials(true);</span>
-<span class="fc" id="L122">        return config;</span>
+<span class="fc" id="L130">        CorsConfiguration config = new CorsConfiguration();</span>
+<span class="fc" id="L131">        config.setAllowedOrigins(allowedOrigins);</span>
+<span class="fc" id="L132">        config.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));</span>
+<span class="fc" id="L133">        config.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Cache-Control&quot;, &quot;Content-Type&quot;));</span>
+<span class="fc" id="L134">        config.setAllowCredentials(true);</span>
+<span class="fc" id="L135">        return config;</span>
     }
 
     /**
@@ -128,9 +141,9 @@ public class SecurityConfig {
      * @return URL-based CORS configuration source applied to all paths
      */
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
-<span class="fc" id="L131">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
-<span class="fc" id="L132">        source.registerCorsConfiguration(&quot;/**&quot;, corsConfiguration());</span>
-<span class="fc" id="L133">        return source;</span>
+<span class="fc" id="L144">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
+<span class="fc" id="L145">        source.registerCorsConfiguration(&quot;/**&quot;, corsConfiguration());</span>
+<span class="fc" id="L146">        return source;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

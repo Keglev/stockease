@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DemoDataService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.demo</a> &gt; <span class="el_source">DemoDataService.java</span></div><h1>DemoDataService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.demo;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
+import com.stocks.stockease.customer.Customer;
+import com.stocks.stockease.customer.CustomerService;
+import com.stocks.stockease.invoice.CreateInvoiceCommand;
+import com.stocks.stockease.invoice.CreateInvoiceCommand.ItemLine;
+import com.stocks.stockease.invoice.Invoice;
+import com.stocks.stockease.invoice.InvoiceService;
+import com.stocks.stockease.invoice.InvoiceType;
+import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.RecordMovementCommand;
+import com.stocks.stockease.movement.StockMovementService;
+import com.stocks.stockease.product.Product;
+import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.security.User;
+import com.stocks.stockease.security.UserService;
+import com.stocks.stockease.supplier.Supplier;
+import com.stocks.stockease.supplier.SupplierService;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Rebuilds the demo database: a wipe of every domain table followed by a curated baseline built
+ * through the same services the API uses.
+ *
+ * &lt;p&gt;The baseline is designed to populate the product views, the movement and audit histories, and
+ * every reporting tab at once: purchases and sales at differing unit prices so profit per product has
+ * shape, invoices due across the coming three weeks plus several already overdue, returns in both
+ * directions, write-offs, a walk-in sale with no customer, and one product left below the low-stock
+ * threshold.
+ */
+@Service
+@ConditionalOnDemoMode
+@RequiredArgsConstructor
+public class DemoDataService {
+
+<span class="fc" id="L47">    private static final Logger log = LoggerFactory.getLogger(DemoDataService.class);</span>
+
+    /** The demo ADMIN (V15); closes invoices, so it is the actor on every booked movement. */
+    private static final String ADMIN_USERNAME = &quot;julia.brandt&quot;;
+
+    /** The demo USER (V10); records the hand-entered movements so the actor column is not uniform. */
+    private static final String STAFF_USERNAME = &quot;markus.weber&quot;;
+
+    /**
+     * Every domain table, children before parents.
+     *
+     * &lt;p&gt;Derived from the Flyway migrations: V2 product, V6 supplier / invoice / invoice_item,
+     * V7 stock_movement, V8 product_change_log, V11 customer. {@code app_user} is deliberately absent -
+     * accounts are permanent data that the reset must never touch - and so is
+     * {@code flyway_schema_history}, which describes the schema rather than the data in it.
+     */
+<span class="fc" id="L63">    private static final List&lt;String&gt; DOMAIN_TABLES = List.of(</span>
+            &quot;product_change_log&quot;, &quot;stock_movement&quot;, &quot;invoice_item&quot;, &quot;invoice&quot;, &quot;customer&quot;, &quot;supplier&quot;, &quot;product&quot;);
+
+    private final JdbcTemplate jdbcTemplate;
+    private final ProductService productService;
+    private final SupplierService supplierService;
+    private final CustomerService customerService;
+    private final InvoiceService invoiceService;
+    private final StockMovementService stockMovementService;
+    private final UserService userService;
+
+    /**
+     * Wipes every domain table and rebuilds the curated baseline.
+     *
+     * @throws IllegalStateException if seeding fails part-way through
+     */
+    public void resetToBaseline() {
+<span class="fc" id="L80">        wipe();</span>
+        try {
+<span class="fc" id="L82">            seed();</span>
+<span class="nc" id="L83">        } catch (RuntimeException ex) {</span>
+            // Each service call commits on its own, so a mid-seed failure leaves real, partial data
+            // behind: dashboards would render and quietly understate everything. Fail loudly instead.
+<span class="nc" id="L86">            log.error(&quot;Demo seeding failed - the demo database is left partially seeded.&quot;, ex);</span>
+<span class="nc" id="L87">            throw new IllegalStateException(&quot;Demo seeding failed; the demo data is incomplete.&quot;, ex);</span>
+<span class="fc" id="L88">        }</span>
+<span class="fc" id="L89">        log.info(&quot;Demo baseline restored.&quot;);</span>
+<span class="fc" id="L90">    }</span>
+
+    /**
+     * Deletes every row of domain data, leaving {@code app_user} and the migration history untouched.
+     *
+     * &lt;p&gt;Raw SQL rather than the domain services on purpose. The repositories are module-internal and
+     * the services rightly expose no bulk deletion - nothing in the business domain ever empties the
+     * catalogue. Wiping is infrastructure, not domain behaviour, so one statement in one place beats
+     * widening eight domain APIs with an operation only the demo would ever call. {@code CASCADE}
+     * reaches only tables that reference the listed ones, all of which are listed; {@code app_user} is
+     * referenced BY them and is therefore never in scope.
+     */
+    public void wipe() {
+<span class="fc" id="L103">        jdbcTemplate.execute(&quot;TRUNCATE TABLE &quot; + String.join(&quot;, &quot;, DOMAIN_TABLES) + &quot; RESTART IDENTITY CASCADE&quot;);</span>
+<span class="fc" id="L104">        log.info(&quot;Demo wipe removed all domain data from {} tables.&quot;, DOMAIN_TABLES.size());</span>
+<span class="fc" id="L105">    }</span>
+
+    /** Builds the baseline through the public services; every step is a real transaction of its own. */
+    private void seed() {
+<span class="fc" id="L109">        User admin = requireUser(ADMIN_USERNAME);</span>
+<span class="fc" id="L110">        User staff = requireUser(STAFF_USERNAME);</span>
+<span class="fc" id="L111">        List&lt;Supplier&gt; suppliers = seedSuppliers();</span>
+<span class="fc" id="L112">        List&lt;Customer&gt; customers = seedCustomers();</span>
+<span class="fc" id="L113">        List&lt;Product&gt; products = seedProducts();</span>
+
+        // Opening stock for the one product whose only purchase invoice is still open, booked the way
+        // the domain models initial stock: a NEW_PRODUCT movement carrying its own cost snapshot.
+<span class="fc" id="L117">        record(staff, MovementReason.NEW_PRODUCT, products.get(9), 90, null, new BigDecimal(&quot;21.50&quot;));</span>
+
+<span class="fc" id="L119">        List&lt;Invoice&gt; purchases = seedPurchaseInvoices(suppliers, products, admin);</span>
+<span class="fc" id="L120">        List&lt;Invoice&gt; sales = seedSaleInvoices(customers, products, admin);</span>
+<span class="fc" id="L121">        seedAdjustments(purchases, sales, products, staff);</span>
+<span class="fc" id="L122">        seedPayments(purchases, sales);</span>
+<span class="fc" id="L123">    }</span>
+
+    /** Loads a demo account, refusing to invent one: users are migration data, never seeded here. */
+    private User requireUser(String username) {
+<span class="pc" id="L127">        return userService.findByUsername(username).orElseThrow(() -&gt; new IllegalStateException(</span>
+                &quot;Demo user '&quot; + username + &quot;' is missing; it is created by migration, not by seeding.&quot;));
+    }
+
+    private List&lt;Supplier&gt; seedSuppliers() {
+<span class="fc" id="L132">        return List.of(</span>
+<span class="fc" id="L133">                supplierService.create(&quot;Nordwerk Handels GmbH&quot;, &quot;Hafenstraße 12, 20457 Hamburg&quot;),</span>
+<span class="fc" id="L134">                supplierService.create(&quot;Bayerische Werkzeug AG&quot;, &quot;Lindwurmstraße 88, 80337 München&quot;),</span>
+<span class="fc" id="L135">                supplierService.create(&quot;Rheinland Elektro KG&quot;, &quot;Domkloster 4, 50667 Köln&quot;),</span>
+<span class="fc" id="L136">                supplierService.create(&quot;Sachsen Logistik und Bedarf GmbH&quot;, &quot;Prager Straße 21, 01069 Dresden&quot;),</span>
+<span class="fc" id="L137">                supplierService.create(&quot;Weserbergland Papierwaren e.K.&quot;, &quot;Osterstraße 7, 31785 Hameln&quot;));</span>
+    }
+
+    private List&lt;Customer&gt; seedCustomers() {
+<span class="fc" id="L141">        return List.of(</span>
+<span class="fc" id="L142">                customerService.create(&quot;Kaufhaus Lindner GmbH&quot;, &quot;einkauf@lindner-kaufhaus.de&quot;,</span>
+                        &quot;+49 30 4422100&quot;, &quot;Kantstraße 45&quot;, &quot;Berlin&quot;),
+<span class="fc" id="L144">                customerService.create(&quot;Baumarkt Steinmeyer KG&quot;, &quot;bestellung@steinmeyer-baumarkt.de&quot;,</span>
+                        &quot;+49 511 3378120&quot;, &quot;Vahrenwalder Straße 210&quot;, &quot;Hannover&quot;),
+<span class="fc" id="L146">                customerService.create(&quot;Bürobedarf Hoffmann e.K.&quot;, &quot;kontakt@hoffmann-buero.de&quot;,</span>
+                        &quot;+49 69 2855440&quot;, &quot;Zeil 90&quot;, &quot;Frankfurt am Main&quot;),
+<span class="fc" id="L148">                customerService.create(&quot;Technik Zentrum Adler GmbH&quot;, &quot;vertrieb@adler-technik.de&quot;,</span>
+                        &quot;+49 711 6649010&quot;, &quot;Königstraße 27&quot;, &quot;Stuttgart&quot;),
+<span class="fc" id="L150">                customerService.create(&quot;Gastro Service Weinert GmbH&quot;, &quot;disposition@weinert-gastro.de&quot;,</span>
+                        &quot;+49 221 5590430&quot;, &quot;Aachener Straße 133&quot;, &quot;Köln&quot;));
+    }
+
+    /**
+     * Creates the catalogue at zero stock; every unit the demo holds arrives through a booked movement,
+     * so the cost basis the profit report reads is never an unexplained opening balance.
+     */
+    private List&lt;Product&gt; seedProducts() {
+<span class="fc" id="L159">        List&lt;Product&gt; products = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L160">        products.add(productService.create(&quot;Akkuschrauber ASB 18V&quot;, 0, 64.90));</span>
+<span class="fc" id="L161">        products.add(productService.create(&quot;Werkzeugkoffer 128-teilig&quot;, 0, 89.50));</span>
+<span class="fc" id="L162">        products.add(productService.create(&quot;Industriestaubsauger IS 30&quot;, 0, 149.00));</span>
+<span class="fc" id="L163">        products.add(productService.create(&quot;LED-Baustrahler 50W&quot;, 0, 32.75));</span>
+<span class="fc" id="L164">        products.add(productService.create(&quot;Kabeltrommel 25m H07RN-F&quot;, 0, 44.20));</span>
+<span class="fc" id="L165">        products.add(productService.create(&quot;Sicherheitsschuhe S3 Größe 43&quot;, 0, 58.40));</span>
+<span class="fc" id="L166">        products.add(productService.create(&quot;Arbeitshandschuhe Nitril 12er-Pack&quot;, 0, 11.95));</span>
+<span class="fc" id="L167">        products.add(productService.create(&quot;Bürostuhl Ergo Line&quot;, 0, 179.00));</span>
+<span class="fc" id="L168">        products.add(productService.create(&quot;Aktenschrank Stahl 4 Fächer&quot;, 0, 214.50));</span>
+<span class="fc" id="L169">        products.add(productService.create(&quot;Kopierpapier A4 80g Karton&quot;, 0, 27.30));</span>
+<span class="fc" id="L170">        products.add(productService.create(&quot;Kaffeevollautomat Pro 300&quot;, 0, 429.00));</span>
+<span class="fc" id="L171">        products.add(productService.create(&quot;Reinigungswagen Kompakt&quot;, 0, 96.80));</span>
+<span class="fc" id="L172">        return products;</span>
+    }
+
+    /**
+     * Purchases from all five suppliers, closed except the last so an OPEN purchase exists. Due dates
+     * straddle today: one long overdue, two inside the default due-soon window, the rest across the
+     * coming three weeks so the bucket chart has columns.
+     */
+    private List&lt;Invoice&gt; seedPurchaseInvoices(List&lt;Supplier&gt; suppliers, List&lt;Product&gt; products, User admin) {
+<span class="fc" id="L181">        List&lt;Invoice&gt; invoices = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L182">        invoices.add(closedPurchase(suppliers.get(0), days(-24), admin,</span>
+<span class="fc" id="L183">                line(products.get(0), 40, &quot;58.00&quot;), line(products.get(1), 25, &quot;80.00&quot;)));</span>
+<span class="fc" id="L184">        invoices.add(closedPurchase(suppliers.get(1), days(5), admin,</span>
+<span class="fc" id="L185">                line(products.get(2), 12, &quot;132.00&quot;), line(products.get(3), 60, &quot;26.50&quot;)));</span>
+<span class="fc" id="L186">        invoices.add(closedPurchase(suppliers.get(2), days(12), admin,</span>
+<span class="fc" id="L187">                line(products.get(4), 35, &quot;38.00&quot;), line(products.get(5), 30, &quot;49.00&quot;)));</span>
+<span class="fc" id="L188">        invoices.add(closedPurchase(suppliers.get(3), days(18), admin,</span>
+<span class="fc" id="L189">                line(products.get(6), 200, &quot;8.90&quot;), line(products.get(11), 10, &quot;78.00&quot;)));</span>
+        // second purchase of product 0 at a different unit price: profit per product must not collapse
+        // to one cost figure
+<span class="fc" id="L192">        invoices.add(closedPurchase(suppliers.get(0), days(3), admin,</span>
+<span class="fc" id="L193">                line(products.get(0), 10, &quot;61.50&quot;), line(products.get(7), 20, &quot;142.00&quot;),</span>
+<span class="fc" id="L194">                line(products.get(8), 8, &quot;170.00&quot;), line(products.get(10), 9, &quot;352.00&quot;)));</span>
+<span class="fc" id="L195">        invoices.add(openPurchase(suppliers.get(4), days(9), line(products.get(9), 80, &quot;21.50&quot;)));</span>
+<span class="fc" id="L196">        return invoices;</span>
+    }
+
+    /**
+     * Sales across four named customers plus one walk-in with no customer at all, closed except the
+     * last. Two are already overdue; margins differ per line so the profit charts are not flat.
+     */
+    private List&lt;Invoice&gt; seedSaleInvoices(List&lt;Customer&gt; customers, List&lt;Product&gt; products, User admin) {
+<span class="fc" id="L204">        List&lt;Invoice&gt; invoices = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L205">        invoices.add(closedSale(customers.get(0), days(-16), admin,</span>
+<span class="fc" id="L206">                line(products.get(0), 8, &quot;94.90&quot;), line(products.get(3), 15, &quot;49.90&quot;)));</span>
+<span class="fc" id="L207">        invoices.add(closedSale(customers.get(1), days(6), admin,</span>
+<span class="fc" id="L208">                line(products.get(1), 6, &quot;129.00&quot;), line(products.get(5), 10, &quot;79.90&quot;)));</span>
+        // walk-in cash sale: no customer, which is what makes the reports show &quot;Cash sale&quot;
+<span class="fc" id="L210">        invoices.add(closedSale(null, days(0), admin,</span>
+<span class="fc" id="L211">                line(products.get(6), 24, &quot;18.90&quot;), line(products.get(9), 12, &quot;39.90&quot;)));</span>
+<span class="fc" id="L212">        invoices.add(closedSale(customers.get(2), days(14), admin,</span>
+<span class="fc" id="L213">                line(products.get(7), 9, &quot;239.00&quot;), line(products.get(8), 5, &quot;289.00&quot;)));</span>
+<span class="fc" id="L214">        invoices.add(closedSale(customers.get(3), days(20), admin,</span>
+<span class="fc" id="L215">                line(products.get(2), 4, &quot;199.00&quot;), line(products.get(10), 2, &quot;549.00&quot;)));</span>
+<span class="fc" id="L216">        invoices.add(closedSale(customers.get(0), days(-4), admin,</span>
+<span class="fc" id="L217">                line(products.get(4), 9, &quot;69.90&quot;), line(products.get(0), 4, &quot;89.90&quot;)));</span>
+<span class="fc" id="L218">        invoices.add(openSale(customers.get(4), days(11), line(products.get(11), 3, &quot;139.00&quot;)));</span>
+<span class="fc" id="L219">        return invoices;</span>
+    }
+
+    /**
+     * The movements the seeder records by hand.
+     *
+     * &lt;p&gt;Deliberately only these four reasons. PURCHASE and SOLD are booked by the invoice module's
+     * own listener when an invoice closes, and {@code StockMovementService.validateNotAlreadyRecorded}
+     * rejects a second one per line - recording them here would fail, and rightly so.
+     */
+    private void seedAdjustments(List&lt;Invoice&gt; purchases, List&lt;Invoice&gt; sales, List&lt;Product&gt; products, User staff) {
+<span class="fc" id="L230">        Product drill = products.get(0);</span>
+        // partial customer return against the first sale line: 2 of the 8 units come back
+<span class="fc" id="L232">        record(staff, MovementReason.RETURN_FROM_CUSTOMER, drill, 2, itemId(sales.get(0), 0), null);</span>
+        // return to supplier against the first purchase line: 5 of the 40 units go back
+<span class="fc" id="L234">        record(staff, MovementReason.RETURNED_TO_SUPPLIER, drill, 5, itemId(purchases.get(0), 0), null);</span>
+<span class="fc" id="L235">        record(staff, MovementReason.LOST, drill, 3, null, null);</span>
+<span class="fc" id="L236">        record(staff, MovementReason.DESTROYED, products.get(1), 2, null, null);</span>
+<span class="fc" id="L237">    }</span>
+
+    /** Settles two invoices so the due-date and overdue reports distinguish paid from outstanding. */
+    private void seedPayments(List&lt;Invoice&gt; purchases, List&lt;Invoice&gt; sales) {
+<span class="fc" id="L241">        invoiceService.markAsPaid(purchases.get(2).getId());</span>
+<span class="fc" id="L242">        invoiceService.markAsPaid(sales.get(2).getId());</span>
+<span class="fc" id="L243">    }</span>
+
+    private Invoice closedPurchase(Supplier supplier, LocalDate dueDate, User admin, ItemLine... lines) {
+<span class="fc" id="L246">        Invoice invoice = openPurchase(supplier, dueDate, lines);</span>
+<span class="fc" id="L247">        invoiceService.close(invoice.getId(), admin);</span>
+<span class="fc" id="L248">        return invoice;</span>
+    }
+
+    private Invoice openPurchase(Supplier supplier, LocalDate dueDate, ItemLine... lines) {
+<span class="fc" id="L252">        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, supplier.getId(),</span>
+<span class="fc" id="L253">                null, dueDate, new BigDecimal(&quot;2.50&quot;), BigDecimal.ZERO, List.of(lines)));</span>
+    }
+
+    private Invoice closedSale(Customer customer, LocalDate dueDate, User admin, ItemLine... lines) {
+<span class="fc" id="L257">        Invoice invoice = openSale(customer, dueDate, lines);</span>
+<span class="fc" id="L258">        invoiceService.close(invoice.getId(), admin);</span>
+<span class="fc" id="L259">        return invoice;</span>
+    }
+
+    private Invoice openSale(Customer customer, LocalDate dueDate, ItemLine... lines) {
+<span class="fc bfc" id="L263" title="All 2 branches covered.">        Long customerId = customer == null ? null : customer.getId();</span>
+<span class="fc" id="L264">        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, null, customerId,</span>
+<span class="fc" id="L265">                dueDate, new BigDecimal(&quot;1.50&quot;), BigDecimal.ZERO, List.of(lines)));</span>
+    }
+
+    private void record(User user, MovementReason reason, Product product, int quantity, Long invoiceItemId,
+            BigDecimal unitCost) {
+<span class="fc" id="L270">        stockMovementService.recordMovement(</span>
+<span class="fc" id="L271">                new RecordMovementCommand(product.getId(), reason, quantity, invoiceItemId, unitCost), user);</span>
+<span class="fc" id="L272">    }</span>
+
+    private static ItemLine line(Product product, int quantity, String unitPrice) {
+<span class="fc" id="L275">        return new ItemLine(product.getId(), quantity, new BigDecimal(unitPrice));</span>
+    }
+
+    private static Long itemId(Invoice invoice, int index) {
+<span class="fc" id="L279">        return invoice.getItems().get(index).getId();</span>
+    }
+
+    private static LocalDate days(int offset) {
+<span class="fc" id="L283">        return LocalDate.now().plusDays(offset);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
