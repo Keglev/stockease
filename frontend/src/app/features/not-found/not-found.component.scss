@@ -1,0 +1,49 @@
+.not-found-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.not-found-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.not-found-content {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.not-found-card {
+  width: 100%;
+  max-width: 26rem;
+  text-align: center;
+}
+
+.not-found-code {
+  // Carries no information a screen reader needs; the title beneath states the same thing.
+  margin: 0;
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-display-large);
+  line-height: 1;
+}
+
+.not-found-title {
+  margin: 0.5rem 0 0;
+  font: var(--mat-sys-headline-small);
+}
+
+.not-found-message {
+  margin: 0.5rem 0 1.25rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}

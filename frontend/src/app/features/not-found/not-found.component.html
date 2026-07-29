@@ -1,0 +1,23 @@
+<div class="not-found-page">
+  <header class="not-found-header">
+    <app-language-toggle />
+    <app-theme-toggle />
+  </header>
+
+  <main class="not-found-content">
+    <mat-card class="not-found-card">
+      <mat-card-content>
+        <p class="not-found-code" aria-hidden="true">404</p>
+        <h1 class="not-found-title">{{ 'notFound.title' | translate }}</h1>
+        <p class="not-found-message">{{ 'notFound.message' | translate }}</p>
+
+        <!-- Both links are offered unconditionally: the guards on /app decide what an
+             unauthenticated visitor actually gets, so this page never has to ask. -->
+        <nav class="not-found-actions">
+          <a matButton="filled" routerLink="/">{{ 'notFound.goHome' | translate }}</a>
+          <a matButton="outlined" routerLink="/app">{{ 'notFound.goDashboard' | translate }}</a>
+        </nav>
+      </mat-card-content>
+    </mat-card>
+  </main>
+</div>

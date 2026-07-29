@@ -3,11 +3,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { LanguageToggleComponent } from '../../../shared/language-toggle/language-toggle.component';
 import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.component';
 
@@ -20,6 +22,7 @@ import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     TranslatePipe
   ],
@@ -31,7 +34,13 @@ export class LoginComponent {
   private readonly router = inject(Router);
 
   protected readonly pending = signal(false);
+
+  // Two signals rather than one string: a translated failure has to stay translated when the
+  // visitor switches language mid-page, which only a live key in the template achieves.
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly errorKey = signal<string | null>(null);
+
+  protected readonly passwordVisible = signal(false);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     username: ['', Validators.required],
@@ -44,6 +53,7 @@ export class LoginComponent {
     }
     this.pending.set(true);
     this.errorMessage.set(null);
+    this.errorKey.set(null);
 
     const { username, password } = this.form.getRawValue();
     this.auth.login(username, password).subscribe({
@@ -53,8 +63,17 @@ export class LoginComponent {
       },
       error: (error: Error) => {
         this.pending.set(false);
-        this.errorMessage.set(error.message);
+        // Backend messages are English by design. Known cases are translated here at the
+        // consumer; unknown ones pass through honestly rather than being guessed at.
+        const rejectedCredentials = error instanceof ApiError && error.status === 401;
+        this.errorKey.set(rejectedCredentials ? 'login.invalidCredentials' : null);
+        this.errorMessage.set(rejectedCredentials ? null : error.message);
       }
     });
+  }
+
+  /** Reveals or masks the password so a visitor can check what they typed. */
+  protected togglePasswordVisibility(): void {
+    this.passwordVisible.update((visible) => !visible);
   }
 }

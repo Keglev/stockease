@@ -104,5 +104,13 @@ export const routes: Routes = [
       }
     ]
   },
-  { path: '**', redirectTo: '' }
+  // MUST stay last: the router takes the first match, so a wildcard declared any earlier would
+  // swallow every route beneath it. An unmatched /app child also lands here rather than inside
+  // the shell - the parent match is abandoned once no child matches, and the full URL falls
+  // through to this entry.
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent)
+  }
 ];
