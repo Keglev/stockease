@@ -47,4 +47,4 @@ Aenderungsprotokollierung und Berichte in einer einzigen Spring-Boot-Anwendung.
 
 - [Vollstaendige arc42-Dokumentation](index-de.md) - [English version](index.md)
 - [Fachmodule](05-domains/index.md) (EN)
-- [Architekturentscheidungen](09-decisions/index.md) (EN)
+- [Architekturentscheidungen](../../decisions/index.md) (EN)

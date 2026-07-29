@@ -1,6 +1,6 @@
 # ADR 008: Documentation Structure
 
-**Status**: Accepted
+**Status**: Accepted; partially superseded by ADR 017 (decision-log location)
 **Date**: July 23, 2026
 
 ---
