@@ -27,7 +27,7 @@ import ch.qos.logback.core.read.ListAppender;
  */
 class BootstrapAdminInitializerTest {
 
-    private static final String RAW_PASSWORD = "s3cret-bootstrap-pw";
+    private static final String RAW_PASSWORD = "fake-test-password-1";
 
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;

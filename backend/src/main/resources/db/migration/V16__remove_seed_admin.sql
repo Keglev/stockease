@@ -1,5 +1,5 @@
--- Removes the 'admin' account seeded by V3. Its password ('admin123') is hardcoded in
--- V3__seed_data.java and therefore public in this repository's history, so the account is a
+-- Removes the 'admin' account seeded by V3. Its password was committed in plain text to
+-- V3__seed_data.java and is therefore public in this repository's history, so the account is a
 -- standing credential leak wherever the migration has run - production included. It is replaced
 -- by BootstrapAdminInitializer, which provisions a personal admin from environment variables at
 -- startup; no credential ever enters the repository again.

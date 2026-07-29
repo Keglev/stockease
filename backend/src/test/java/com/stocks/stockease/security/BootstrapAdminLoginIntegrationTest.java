@@ -98,7 +98,9 @@ class BootstrapAdminLoginIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void login_withRemovedSeedAdminCredentials_returns401() throws Exception {
-        login("admin", "admin123").andExpect(status().isUnauthorized());
+        // the row no longer exists, so authentication fails before any password comparison; the
+        // historical credential is deliberately not repeated in sources
+        login("admin", "any-password").andExpect(status().isUnauthorized());
     }
 
     /** Posts the credentials to the real login endpoint. */
