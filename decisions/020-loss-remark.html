@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions · 020-loss-remark · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-020-losses-carry-a-remark-from-a-fixed-taxonomy">ADR
+        020: Losses Carry a Remark from a Fixed Taxonomy</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        29, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>Every movement in the system says why it happened. PURCHASE
+        and SOLD point at the invoice line that caused them, the return
+        reasons point at the item they reverse, NEW_PRODUCT carries the
+        cost basis of an opening balance. The reason enum is the
+        explanation, and it is enough - except for two members of
+        it.</p>
+        <p>LOST and DESTROYED recorded that units left the building and
+        stopped there. A warehouse manager reading the loss report could
+        see that four crates of drill bits were written off and had no
+        way to learn whether they expired, were smashed in transit,
+        arrived unusable from the supplier, or simply went missing on
+        site. Those are different problems with different owners: one is
+        a purchasing conversation, one is a carrier claim, one is a
+        shelf-life policy. The report totalled them into a single number
+        labelled “loss”.</p>
+        <p>Free text was the obvious first answer and the wrong one. A
+        note field produces “broken”, “Broken”, “kaputt” and “see mail
+        from Tuesday” in the same column, which is unreadable to a
+        report and unusable as a filter.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>LOST and DESTROYED movements carry a mandatory remark
+        drawn from a fixed taxonomy</strong>: EXPIRED,
+        IN_TRANSIT_TO_CUSTOMER, INTERNAL, FROM_SUPPLIER. Every other
+        reason forbids the field. A movement whose reason and remark
+        disagree does not exist.</p>
+        <p><strong>One taxonomy serves both reasons.</strong> “What
+        happened to it” has the same answers whether the units are
+        written off as lost or as destroyed, and the distinction between
+        the two reasons is about the units’ fate, not its cause. A
+        shared list is also what keeps the loss report groupable across
+        the pair - two parallel enums would make “how much did expiry
+        cost us” a question that has to be asked twice and added up.</p>
+        <p><strong>The rule is enforced at three layers, and they are
+        not redundant.</strong> The form adds and removes the control
+        with the reason, so an invalid combination cannot be expressed
+        in the UI. The service validates the pair and answers with a
+        message an operator can act on, because the UI is not the only
+        client. The database CHECK -
+        <code>(reason IN ('LOST','DESTROYED')) = (movement_remark IS NOT NULL)</code>
+        - makes the inconsistent pair unrepresentable, following V12’s
+        counterparty constraint. Boolean equality states requiredness
+        and prohibition in one expression: the column is present exactly
+        when the reason calls for it.</p>
+        <p><strong>The remark is informational for now.</strong> Losses
+        are valued identically whichever remark they carry; the loss
+        report’s figures do not change with this decision. What changes
+        is that the data to group them by now exists.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Free-text note.</strong> Rejected above: it optimizes
+        for the writer and defeats every reader. A taxonomy costs an
+        occasional “none of these fit” and returns a column that can be
+        counted.</p>
+        <p><strong>Optional remark.</strong> Rejected as the worst of
+        both. Optional fields on corrections go unfilled precisely when
+        the day is busy, which is when losses happen, so the data would
+        be missing exactly where it matters and the report would need an
+        “unknown” bucket large enough to swamp the real ones.</p>
+        <p><strong>A separate loss-reason table.</strong> Rejected as
+        premature. A lookup table earns its join when the values change
+        without a deploy or carry attributes of their own. These do
+        neither yet; an enum with a CHECK is the cheaper form of the
+        same guarantee, and the migration to a table stays open.</p>
+        <p><strong>Per-reason taxonomies for LOST and
+        DESTROYED.</strong> Rejected: see above. It splits one question
+        across two lists for no gain.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li>The loss report can group by cause when a requirement for it
+        appears; no further modelling is needed, only the query.</li>
+        <li>Recording a loss is one field slower. That is the intended
+        trade: the field is the whole point of the change.</li>
+        <li>Existing rows had no remark to recover, so V17 backfills
+        them as INTERNAL - the neutral member, honest about saying
+        nothing more than “a loss inside the business”. The deployed
+        data is the demo baseline, which the nightly reset (ADR 005)
+        replaces wholesale, so the backfilled values live at most a
+        day.</li>
+        <li>Adding a taxonomy member is a migration-free enum change
+        plus two translation keys. Removing one is not, and should be
+        treated as the breaking change it is.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-020-losses-carry-a-remark-from-a-fixed-taxonomy"
+      id="toc-adr-020-losses-carry-a-remark-from-a-fixed-taxonomy">ADR
+      020: Losses Carry a Remark from a Fixed Taxonomy</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
