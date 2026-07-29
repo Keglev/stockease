@@ -71,6 +71,50 @@ convert_arch() {
   done
 }
 
+# The decision log sits at docs/decisions, one level above the per-tier trees, because it
+# records backend, frontend and cross-cutting decisions in one sequence (ADR 017). It therefore
+# needs its own pass: convert_arch only walks docs/<context>/architecture. Output goes to
+# target/docs/decisions/, so the deployed address is /stockease/decisions/index.html and each
+# architecture tree's section 9 pointer reaches it with ../../../decisions/index.html.
+#
+# The pages carry the backend sidebar for now: it is the only populated nav, and its "Docs"
+# group links the log. Revisit when the frontend tree gives nav-frontend real content.
+convert_decisions() {
+  local SRC_DIR="$DOCS_DIR/decisions"
+  local DST_DIR="$OUTPUT_DIR/decisions"
+
+  if [ ! -d "$SRC_DIR" ]; then
+    echo "ℹ️  No decision log at $SRC_DIR — skipping"
+    return 0
+  fi
+
+  local count
+  count=$(find "$SRC_DIR" -type f -name "*.md" | wc -l)
+  [ "$count" -eq 0 ] && echo "ℹ️  No .md files in $SRC_DIR — skipping decisions" && return 0
+
+  echo "==> [build-architecture-docs] Converting $count file(s) for the decision log"
+  mkdir -p "$DST_DIR"
+
+  find "$SRC_DIR" -type f -name "*.md" | while read -r md; do
+    rel="${md#$SRC_DIR/}"
+    out="$DST_DIR/${rel%.md}.html"
+    mkdir -p "$(dirname "$out")"
+
+    pandoc "$md" \
+      --from markdown --to html \
+      --data-dir="$DATA_DIR" \
+      --template "$TEMPLATE" \
+      --lua-filter "$LUA_FILTER" \
+      --metadata=title:"Decisions · ${rel%.md}" \
+      --metadata=lang:"en" \
+      --metadata=backendnav:true \
+      --toc --toc-depth=3 --standalone \
+      -o "$out"
+    echo "  ✓ $rel (en)"
+  done
+}
+
 convert_arch backend
 convert_arch frontend
+convert_decisions
 echo "✓ Architecture docs complete"
