@@ -1,5 +1,12 @@
 <div class="detail-header">
-  <h1>{{ 'invoices.detail.title' | translate }}{{ invoice() ? ' #' + invoice()!.id : '' }}</h1>
+  <h1>
+    {{ 'invoices.detail.title' | translate }}
+    @if (invoice(); as current) {
+      <!-- The business identifier leads; the technical id stays visible beside it. -->
+      <span class="detail-number">{{ current.invoiceNumber }}</span>
+      <span class="detail-id">#{{ current.id }}</span>
+    }
+  </h1>
   <a matButton routerLink="/app/invoices" class="detail-back">
     {{ 'invoices.detail.back' | translate }}
   </a>

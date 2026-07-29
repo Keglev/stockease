@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
+import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
@@ -78,13 +80,29 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
         return new CreateInvoiceCommand.ItemLine(product.getId(), quantity, new BigDecimal("15.00"));
     }
 
+    /**
+     * Invoice numbers are unique among live invoices, and these tests commit into the container the
+     * whole suite shares, so each one takes a fresh number from a class-prefixed counter.
+     */
+    private static final AtomicInteger NUMBERS = new AtomicInteger();
+
+    private static String nextNumber() {
+        return "TST-LIFE-" + NUMBERS.incrementAndGet();
+    }
+
     private static CreateInvoiceCommand saleCommand(CreateInvoiceCommand.ItemLine... lines) {
-        return new CreateInvoiceCommand(InvoiceType.SALE, null, null, LocalDate.now(), null, null, List.of(lines));
+        return saleCommand(nextNumber(), lines);
+    }
+
+    /** Same, with the number pinned by the caller - the duplicate tests need to repeat one. */
+    private static CreateInvoiceCommand saleCommand(String number, CreateInvoiceCommand.ItemLine... lines) {
+        return new CreateInvoiceCommand(InvoiceType.SALE, number, null, null, LocalDate.now(), null, null,
+                List.of(lines));
     }
 
     private static CreateInvoiceCommand purchaseCommand(Supplier supplier, CreateInvoiceCommand.ItemLine... lines) {
-        return new CreateInvoiceCommand(InvoiceType.PURCHASE, supplier.getId(), null, LocalDate.now(),
-                null, null, List.of(lines));
+        return new CreateInvoiceCommand(InvoiceType.PURCHASE, nextNumber(), supplier.getId(), null,
+                LocalDate.now(), null, null, List.of(lines));
     }
 
     /** Counts movement rows booked against an invoice line; SQL avoids traversing a lazy link outside a session. */
@@ -113,6 +131,33 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
         Invoice reloaded = invoiceRepository.findById(created.getId()).orElseThrow();
         assertThat(reloaded.getStatus()).isEqualTo(InvoiceStatus.OPEN);
         assertThat(reloaded.getClosedAt()).isNull();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void createInvoice_withDuplicateLiveNumber_throwsDuplicateResourceException() {
+        Product product = newProduct("Lifecycle Duplicate Number", 10);
+        String number = nextNumber();
+        invoiceService.createInvoice(saleCommand(number, line(product, 1)));
+
+        assertThatThrownBy(() -> invoiceService.createInvoice(saleCommand(number, line(product, 1))))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessage("An invoice numbered '" + number + "' already exists.");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void createInvoice_reusingADeletedInvoicesNumber_succeeds() {
+        Product product = newProduct("Lifecycle Reused Number", 10);
+        String number = nextNumber();
+        Invoice first = invoiceService.createInvoice(saleCommand(number, line(product, 1)));
+        invoiceService.deleteById(first.getId());
+
+        Invoice second = invoiceService.createInvoice(saleCommand(number, line(product, 1)));
+
+        // pins the partial index's scope: uniqueness covers live invoices only
+        assertThat(second.getId()).isNotNull().isNotEqualTo(first.getId());
+        assertThat(second.getInvoiceNumber()).isEqualTo(number);
     }
 
     @Test

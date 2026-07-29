@@ -9,6 +9,8 @@ import java.util.List;
  * depends on {@code type}, and an invoice is never created without at least one line.
  *
  * @param type whether this invoice records a purchase from a supplier or a sale to a customer
+ * @param invoiceNumber operator-assigned business identifier; the supplier's document number on a
+ *        purchase, the operator's own number on a sale. Unique among live invoices.
  * @param supplierId counterparty for purchase invoices; must be {@code null} for sales
  * @param customerId counterparty for sale invoices; optional for anonymous cash sales, {@code null} for purchases
  * @param dueDate date payment falls due
@@ -16,8 +18,8 @@ import java.util.List;
  * @param fineValue accrued late-payment fine; defaults to zero when {@code null}
  * @param items the lines to create, at least one
  */
-public record CreateInvoiceCommand(InvoiceType type, Long supplierId, Long customerId, LocalDate dueDate,
-        BigDecimal interestRate, BigDecimal fineValue, List<ItemLine> items) {
+public record CreateInvoiceCommand(InvoiceType type, String invoiceNumber, Long supplierId, Long customerId,
+        LocalDate dueDate, BigDecimal interestRate, BigDecimal fineValue, List<ItemLine> items) {
 
     /**
      * A single line to create on the invoice.

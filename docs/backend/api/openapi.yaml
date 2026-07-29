@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.3.0
+  version: 2.4.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -530,6 +530,7 @@ components:
       type: object
       required:
         - id
+        - invoiceNumber
         - type
         - status
         - dueDate
@@ -543,6 +544,10 @@ components:
           type: integer
           format: int64
           example: 1
+        invoiceNumber:
+          type: string
+          description: Operator-assigned business identifier; the technical key stays `id`
+          example: RE-2026-0117
         type:
           $ref: '#/components/schemas/InvoiceType'
         status:
@@ -613,6 +618,7 @@ components:
       type: object
       required:
         - id
+        - invoiceNumber
         - type
         - status
         - dueDate
@@ -629,6 +635,10 @@ components:
           type: integer
           format: int64
           example: 1
+        invoiceNumber:
+          type: string
+          description: Operator-assigned business identifier; the technical key stays `id`
+          example: RE-2026-0117
         type:
           $ref: '#/components/schemas/InvoiceType'
         status:
@@ -722,11 +732,21 @@ components:
       type: object
       required:
         - type
+        - invoiceNumber
         - dueDate
         - items
       properties:
         type:
           $ref: '#/components/schemas/InvoiceType'
+        invoiceNumber:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: >-
+            Operator-assigned business identifier: the supplier's document number on a purchase, the
+            operator's own number on a sale. Must be unique among invoices that are not soft-deleted -
+            a deleted invoice's number may be reused. Rejected with 409 when it collides.
+          example: RE-2026-0117
         supplierId:
           type: integer
           format: int64

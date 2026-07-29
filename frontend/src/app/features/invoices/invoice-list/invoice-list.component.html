@@ -21,6 +21,11 @@
     <td mat-cell *matCellDef="let invoice">{{ invoice.id }}</td>
   </ng-container>
 
+  <ng-container matColumnDef="invoiceNumber">
+    <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.invoiceNumber' | translate }}</th>
+    <td mat-cell *matCellDef="let invoice" class="invoice-number-cell">{{ invoice.invoiceNumber }}</td>
+  </ng-container>
+
   <ng-container matColumnDef="type">
     <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.type' | translate }}</th>
     <td mat-cell *matCellDef="let invoice">

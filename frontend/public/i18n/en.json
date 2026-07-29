@@ -173,11 +173,16 @@
     },
     "columns": {
       "id": "No.",
+      "invoiceNumber": "Invoice number",
       "type": "Type",
       "status": "Status",
       "counterparty": "Counterparty",
       "dueDate": "Due date",
       "createdAt": "Created"
+    },
+    "form": {
+      "invoiceNumber": "Invoice number",
+      "invoiceNumberRequired": "Invoice number is required."
     },
     "type": {
       "PURCHASE": "Purchase",

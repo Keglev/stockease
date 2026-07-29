@@ -8,10 +8,12 @@ import com.stocks.stockease.invoice.CreateInvoiceCommand;
 import com.stocks.stockease.invoice.InvoiceType;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 /**
  * Request body for creating an invoice together with all of its lines.
@@ -20,6 +22,8 @@ import jakarta.validation.constraints.PositiveOrZero;
  * so both counterparty identifiers are nullable at this layer.
  *
  * @param type whether this invoice records a purchase from a supplier or a sale to a customer
+ * @param invoiceNumber operator-assigned business identifier; the supplier's document number on a
+ *        purchase, the operator's own number on a sale. Unique among live invoices.
  * @param supplierId counterparty for purchase invoices
  * @param customerId counterparty for sale invoices
  * @param dueDate date payment falls due
@@ -29,6 +33,9 @@ import jakarta.validation.constraints.PositiveOrZero;
  */
 public record CreateInvoiceRequest(
         @NotNull(message = "Invoice type is required.") InvoiceType type,
+        @NotNull(message = "Invoice number is required.")
+        @NotBlank(message = "Invoice number is required.")
+        @Size(max = 64, message = "Invoice number must not exceed 64 characters.") String invoiceNumber,
         Long supplierId,
         Long customerId,
         @NotNull(message = "Due date is required.") LocalDate dueDate,
@@ -59,6 +66,7 @@ public record CreateInvoiceRequest(
         List<CreateInvoiceCommand.ItemLine> lines = items.stream()
                 .map(item -> new CreateInvoiceCommand.ItemLine(item.productId(), item.quantity(), item.unitPrice()))
                 .toList();
-        return new CreateInvoiceCommand(type, supplierId, customerId, dueDate, interestRate, fineValue, lines);
+        return new CreateInvoiceCommand(type, invoiceNumber, supplierId, customerId, dueDate, interestRate,
+                fineValue, lines);
     }
 }

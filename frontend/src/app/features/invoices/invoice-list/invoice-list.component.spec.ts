@@ -24,6 +24,7 @@ const TRANSLATIONS = {
       walkIn: 'Walk-in sale',
       columns: {
         id: 'No.',
+        invoiceNumber: 'Invoice number',
         type: 'Type',
         status: 'Status',
         counterparty: 'Counterparty',
@@ -39,6 +40,7 @@ const TRANSLATIONS = {
 function invoice(overrides: Partial<InvoiceSummaryResponse>): InvoiceSummaryResponse {
   return {
     id: 1,
+    invoiceNumber: 'RE-2026-0117',
     type: 'PURCHASE',
     status: 'OPEN',
     dueDate: '2026-03-01',
@@ -142,6 +144,15 @@ describe('InvoiceListComponent', () => {
     await setUp([invoice({ paidAt: null })]);
 
     expect(host().querySelectorAll('.paid-chip').length).toBe(0);
+  });
+
+  it('render_anyInvoice_showsItsNumberInItsOwnColumn', async () => {
+    await setUp([invoice({ id: 1, invoiceNumber: 'RE-2026-0117' })]);
+
+    // scoped to the cell, so the assertion cannot pass on some other part of the row
+    const cell = host().querySelector('.invoice-number-cell');
+    expect(cell?.textContent?.trim()).toBe('RE-2026-0117');
+    expect(host().textContent).toContain('Invoice number');
   });
 
   it('render_statusValues_applyDistinctChipClasses', async () => {

@@ -59,6 +59,13 @@ public class Invoice {
     @Column(name = "invoice_type", nullable = false, length = 16)
     private InvoiceType type;
 
+    /**
+     * Operator-assigned business identifier: the supplier's document number on a purchase, the
+     * operator's own number on a sale. Unique among live invoices, enforced by a partial index.
+     */
+    @Column(name = "invoice_number", nullable = false, length = 64)
+    private String invoiceNumber;
+
     /** Supplier this invoice was issued by; {@code null} for sale invoices. */
     @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)

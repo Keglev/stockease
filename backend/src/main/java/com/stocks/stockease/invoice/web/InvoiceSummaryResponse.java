@@ -16,6 +16,7 @@ import com.stocks.stockease.invoice.InvoiceType;
  * when names are needed.
  *
  * @param id unique invoice identifier
+ * @param invoiceNumber operator-assigned business identifier; never {@code null}
  * @param type whether the invoice records a purchase or a sale
  * @param status current lifecycle state
  * @param dueDate date payment falls due
@@ -25,8 +26,9 @@ import com.stocks.stockease.invoice.InvoiceType;
  * @param paidAt moment the invoice was paid
  * @param createdAt moment the invoice was first persisted
  */
-public record InvoiceSummaryResponse(Long id, InvoiceType type, InvoiceStatus status, LocalDate dueDate,
-        Long supplierId, Long customerId, LocalDateTime closedAt, LocalDateTime paidAt, LocalDateTime createdAt) {
+public record InvoiceSummaryResponse(Long id, String invoiceNumber, InvoiceType type, InvoiceStatus status,
+        LocalDate dueDate, Long supplierId, Long customerId, LocalDateTime closedAt, LocalDateTime paidAt,
+        LocalDateTime createdAt) {
 
     /**
      * Maps an invoice to its list representation without initializing any association.
@@ -35,8 +37,8 @@ public record InvoiceSummaryResponse(Long id, InvoiceType type, InvoiceStatus st
      * @return the summary record
      */
     public static InvoiceSummaryResponse from(Invoice invoice) {
-        return new InvoiceSummaryResponse(invoice.getId(), invoice.getType(), invoice.getStatus(),
-                invoice.getDueDate(),
+        return new InvoiceSummaryResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),
+                invoice.getStatus(), invoice.getDueDate(),
                 invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),
                 invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),
                 invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt());

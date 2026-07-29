@@ -32,6 +32,16 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     boolean existsByCustomerIdAndStatus(Long customerId, InvoiceStatus status);
 
     /**
+     * Reports whether a live invoice already carries {@code invoiceNumber}; the entity's
+     * {@code @SQLRestriction} keeps soft-deleted rows out of the check, so a deleted invoice's
+     * number can be issued again exactly as the partial index allows.
+     *
+     * @param invoiceNumber business identifier to look for
+     * @return {@code true} if a live invoice already carries that number
+     */
+    boolean existsByInvoiceNumber(String invoiceNumber);
+
+    /**
      * Returns every invoice a user closed, most recently closed first.
      *
      * @param userId user identifier

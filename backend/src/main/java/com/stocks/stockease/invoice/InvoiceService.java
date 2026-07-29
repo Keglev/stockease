@@ -16,6 +16,7 @@ import com.stocks.stockease.invoice.internal.InvoiceRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.InvoiceStateException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
@@ -104,9 +105,19 @@ public class InvoiceService {
         if (command.items() == null || command.items().isEmpty()) {
             throw new IllegalArgumentException("An invoice requires at least one item.");
         }
+        if (command.invoiceNumber() == null || command.invoiceNumber().isBlank()) {
+            throw new IllegalArgumentException("Invoice number is required.");
+        }
+        // service check gives the friendly message, the partial unique index in the database is the
+        // concurrency backstop
+        if (invoiceRepository.existsByInvoiceNumber(command.invoiceNumber())) {
+            throw new DuplicateResourceException(
+                    "An invoice numbered '" + command.invoiceNumber() + "' already exists.");
+        }
 
         Invoice invoice = new Invoice();
         invoice.setType(command.type());
+        invoice.setInvoiceNumber(command.invoiceNumber());
         applyCounterparty(command, invoice);
         invoice.setStatus(InvoiceStatus.OPEN);
         invoice.setDueDate(command.dueDate());

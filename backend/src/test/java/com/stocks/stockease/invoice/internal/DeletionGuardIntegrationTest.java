@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,9 +85,17 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
         return supplierRepository.saveAndFlush(new Supplier(null, "Guard Supplier", "1 Main St", null, null));
     }
 
+    /** invoice_number is NOT NULL and unique among live rows, so every fixture takes a fresh one. */
+    private static final AtomicInteger NUMBERS = new AtomicInteger();
+
+    private static String nextNumber() {
+        return "TST-GUARD-" + NUMBERS.incrementAndGet();
+    }
+
     /** Persists a purchase invoice in the given status, optionally carrying one line for {@code product}. */
     private Invoice newInvoice(Supplier supplier, InvoiceStatus status, Product product) {
         Invoice invoice = new Invoice();
+        invoice.setInvoiceNumber(nextNumber());
         invoice.setType(InvoiceType.PURCHASE);
         invoice.setSupplier(supplier);
         invoice.setStatus(status);
@@ -114,6 +123,7 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
     /** Persists a sale invoice in the given status, billed to {@code customer}; sale invoices carry no supplier. */
     private Invoice newSaleInvoice(Customer customer, InvoiceStatus status) {
         Invoice invoice = new Invoice();
+        invoice.setInvoiceNumber(nextNumber());
         invoice.setType(InvoiceType.SALE);
         invoice.setCustomer(customer);
         invoice.setStatus(status);

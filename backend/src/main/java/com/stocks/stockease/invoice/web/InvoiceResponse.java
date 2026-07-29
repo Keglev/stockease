@@ -15,6 +15,7 @@ import com.stocks.stockease.invoice.InvoiceType;
  * through the fetch-joined detail query; building it from a list query would fail outside a session.
  *
  * @param id unique invoice identifier
+ * @param invoiceNumber operator-assigned business identifier; never {@code null}
  * @param type whether the invoice records a purchase or a sale
  * @param status current lifecycle state
  * @param dueDate date payment falls due
@@ -27,9 +28,9 @@ import com.stocks.stockease.invoice.InvoiceType;
  * @param createdAt moment the invoice was first persisted
  * @param items the invoice's lines
  */
-public record InvoiceResponse(Long id, InvoiceType type, InvoiceStatus status, LocalDate dueDate, Long supplierId,
-        String supplierName, Long customerId, String customerName, LocalDateTime closedAt, LocalDateTime paidAt,
-        LocalDateTime createdAt, List<InvoiceItemResponse> items) {
+public record InvoiceResponse(Long id, String invoiceNumber, InvoiceType type, InvoiceStatus status,
+        LocalDate dueDate, Long supplierId, String supplierName, Long customerId, String customerName,
+        LocalDateTime closedAt, LocalDateTime paidAt, LocalDateTime createdAt, List<InvoiceItemResponse> items) {
 
     /**
      * Maps a fetch-joined invoice to its detail representation.
@@ -38,7 +39,8 @@ public record InvoiceResponse(Long id, InvoiceType type, InvoiceStatus status, L
      * @return the detail record
      */
     public static InvoiceResponse from(Invoice invoice) {
-        return new InvoiceResponse(invoice.getId(), invoice.getType(), invoice.getStatus(), invoice.getDueDate(),
+        return new InvoiceResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),
+                invoice.getStatus(), invoice.getDueDate(),
                 invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),
                 invoice.getSupplier() == null ? null : invoice.getSupplier().getName(),
                 invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),

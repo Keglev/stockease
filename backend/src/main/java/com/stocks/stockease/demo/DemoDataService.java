@@ -189,25 +189,29 @@ public class DemoDataService {
      */
     private List<Invoice> seedPurchaseInvoices(List<Supplier> suppliers, List<Product> products, User admin) {
         List<Invoice> invoices = new ArrayList<>();
-        invoices.add(closedPurchase(suppliers.get(0), days(-24), admin,
+        // Purchase numbers mimic the suppliers' OWN document numbers, so each supplier follows its own
+        // house convention rather than one shared pattern - that is what an operator actually copies
+        // off the paperwork (ADR 022). Sales below use the single house sequence instead.
+        invoices.add(closedPurchase(suppliers.get(0), "RE-2026-0117", days(-24), admin,
                 line(products.get(0), 40, "58.00"), line(products.get(1), 25, "80.00")));
-        invoices.add(closedPurchase(suppliers.get(1), days(5), admin,
+        invoices.add(closedPurchase(suppliers.get(1), "BWA-2026-0442", days(5), admin,
                 line(products.get(2), 12, "132.00"), line(products.get(3), 60, "26.50")));
-        invoices.add(closedPurchase(suppliers.get(2), days(12), admin,
+        invoices.add(closedPurchase(suppliers.get(2), "2026/RH/00891", days(12), admin,
                 line(products.get(4), 35, "38.00"), line(products.get(5), 30, "49.00")));
-        invoices.add(closedPurchase(suppliers.get(3), days(18), admin,
+        invoices.add(closedPurchase(suppliers.get(3), "SL-26-004417", days(18), admin,
                 line(products.get(6), 200, "8.90"), line(products.get(11), 10, "78.00")));
         // second purchase of product 0 at a different unit price: profit per product must not collapse
         // to one cost figure
-        invoices.add(closedPurchase(suppliers.get(0), days(3), admin,
+        invoices.add(closedPurchase(suppliers.get(0), "RE-2026-0163", days(3), admin,
                 line(products.get(0), 10, "61.50"), line(products.get(7), 20, "142.00"),
                 line(products.get(8), 8, "170.00"), line(products.get(10), 9, "352.00")));
         // The paper supplier's delivered order. It is what stocks the copier paper the walk-in sale
         // sells, which the open order below cannot do: an OPEN invoice books nothing.
-        invoices.add(closedPurchase(suppliers.get(4), days(-30), admin,
+        invoices.add(closedPurchase(suppliers.get(4), "WP-2026-0075", days(-30), admin,
                 line(products.get(9), 90, "21.50")));
         // still open, so the demo has a purchase in each state; a repeat order from the same supplier
-        invoices.add(openPurchase(suppliers.get(4), days(9), line(products.get(9), 80, "21.50")));
+        invoices.add(openPurchase(suppliers.get(4), "WP-2026-0088", days(9),
+                line(products.get(9), 80, "21.50")));
         return invoices;
     }
 
@@ -217,20 +221,22 @@ public class DemoDataService {
      */
     private List<Invoice> seedSaleInvoices(List<Customer> customers, List<Product> products, User admin) {
         List<Invoice> invoices = new ArrayList<>();
-        invoices.add(closedSale(customers.get(0), days(-16), admin,
+        // One unbroken house sequence, because these are the numbers this business issues itself.
+        invoices.add(closedSale(customers.get(0), "AR-2026-0001", days(-16), admin,
                 line(products.get(0), 8, "94.90"), line(products.get(3), 15, "49.90")));
-        invoices.add(closedSale(customers.get(1), days(6), admin,
+        invoices.add(closedSale(customers.get(1), "AR-2026-0002", days(6), admin,
                 line(products.get(1), 6, "129.00"), line(products.get(5), 10, "79.90")));
         // walk-in cash sale: no customer, which is what makes the reports show "Cash sale"
-        invoices.add(closedSale(null, days(0), admin,
+        invoices.add(closedSale(null, "AR-2026-0003", days(0), admin,
                 line(products.get(6), 24, "18.90"), line(products.get(9), 12, "39.90")));
-        invoices.add(closedSale(customers.get(2), days(14), admin,
+        invoices.add(closedSale(customers.get(2), "AR-2026-0004", days(14), admin,
                 line(products.get(7), 9, "239.00"), line(products.get(8), 5, "289.00")));
-        invoices.add(closedSale(customers.get(3), days(20), admin,
+        invoices.add(closedSale(customers.get(3), "AR-2026-0005", days(20), admin,
                 line(products.get(2), 4, "199.00"), line(products.get(10), 2, "549.00")));
-        invoices.add(closedSale(customers.get(0), days(-4), admin,
+        invoices.add(closedSale(customers.get(0), "AR-2026-0006", days(-4), admin,
                 line(products.get(4), 9, "69.90"), line(products.get(0), 4, "89.90")));
-        invoices.add(openSale(customers.get(4), days(11), line(products.get(11), 3, "139.00")));
+        invoices.add(openSale(customers.get(4), "AR-2026-0007", days(11),
+                line(products.get(11), 3, "139.00")));
         return invoices;
     }
 
@@ -259,26 +265,27 @@ public class DemoDataService {
         invoiceService.markAsPaid(sales.get(2).getId());
     }
 
-    private Invoice closedPurchase(Supplier supplier, LocalDate dueDate, User admin, ItemLine... lines) {
-        Invoice invoice = openPurchase(supplier, dueDate, lines);
+    private Invoice closedPurchase(Supplier supplier, String number, LocalDate dueDate, User admin,
+            ItemLine... lines) {
+        Invoice invoice = openPurchase(supplier, number, dueDate, lines);
         invoiceService.close(invoice.getId(), admin);
         return invoice;
     }
 
-    private Invoice openPurchase(Supplier supplier, LocalDate dueDate, ItemLine... lines) {
-        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, supplier.getId(),
-                null, dueDate, new BigDecimal("2.50"), BigDecimal.ZERO, List.of(lines)));
+    private Invoice openPurchase(Supplier supplier, String number, LocalDate dueDate, ItemLine... lines) {
+        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, number,
+                supplier.getId(), null, dueDate, new BigDecimal("2.50"), BigDecimal.ZERO, List.of(lines)));
     }
 
-    private Invoice closedSale(Customer customer, LocalDate dueDate, User admin, ItemLine... lines) {
-        Invoice invoice = openSale(customer, dueDate, lines);
+    private Invoice closedSale(Customer customer, String number, LocalDate dueDate, User admin, ItemLine... lines) {
+        Invoice invoice = openSale(customer, number, dueDate, lines);
         invoiceService.close(invoice.getId(), admin);
         return invoice;
     }
 
-    private Invoice openSale(Customer customer, LocalDate dueDate, ItemLine... lines) {
+    private Invoice openSale(Customer customer, String number, LocalDate dueDate, ItemLine... lines) {
         Long customerId = customer == null ? null : customer.getId();
-        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, null, customerId,
+        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, number, null, customerId,
                 dueDate, new BigDecimal("1.50"), BigDecimal.ZERO, List.of(lines)));
     }
 
