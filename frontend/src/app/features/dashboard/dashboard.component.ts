@@ -5,12 +5,13 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map, switchMap, timer } from 'rxjs';
 
 import { DueDateBucket, ProductProfitReport, ProductResponse } from '../../core/api/api-models';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
+import { topNWithRemainder } from '../../shared/chart/chart-data';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
 import { ProductService } from '../products/product.service';
 // Deliberate cross-feature import: the reporting endpoints have one client, and the reports
@@ -19,10 +20,6 @@ import { ProductService } from '../products/product.service';
 import { ReportService } from '../reports/report.service';
 
 const HEALTH_POLL_MS = 30_000;
-
-// A horizontal bar stays readable at about ten rows; the exhaustive per-product table belongs
-// to the reports page rather than to an at-a-glance dashboard.
-const PROFIT_CHART_ROWS = 10;
 
 /**
  * First screen after login: headline counts, a low-stock alert, two report visualizations and
@@ -49,6 +46,7 @@ export class DashboardComponent implements OnInit {
   private readonly products = inject(ProductService);
   private readonly health = inject(HealthService);
   private readonly breakpoints = inject(BreakpointObserver);
+  private readonly translate = inject(TranslateService);
 
   private readonly isDesktop = toSignal(
     this.breakpoints.observe(DESKTOP_MEDIA_QUERY).pipe(map((state) => state.matches)),
@@ -123,7 +121,9 @@ export class DashboardComponent implements OnInit {
     });
 
     this.reports.profitProducts().subscribe({
-      next: (rows) => this.profitOption.set(toProfitOption(rows)),
+      // Translated at build time: the option is a snapshot, exactly as every other chart here.
+      next: (rows) =>
+        this.profitOption.set(toProfitOption(rows, this.translate.instant('charts.other'))),
       error: (err: Error) => this.fail(err)
     });
 
@@ -139,18 +139,22 @@ export class DashboardComponent implements OnInit {
   }
 }
 
-function toProfitOption(rows: ProductProfitReport[]): ChartOption {
-  const top = [...rows].sort((a, b) => b.grossProfit - a.grossProfit).slice(0, PROFIT_CHART_ROWS);
+// The label is passed in rather than translated here so the builder stays a pure function.
+function toProfitOption(rows: ProductProfitReport[], otherLabel: string): ChartOption {
+  const top = topNWithRemainder(
+    rows.map((row) => ({ name: row.name, value: row.grossProfit })),
+    otherLabel
+  );
   // A category axis draws its first entry at the bottom, so the order is reversed to put the
   // most profitable product at the top of the chart.
-  const ordered = top.reverse();
+  const ordered = [...top].reverse();
 
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
     xAxis: { type: 'value' },
-    yAxis: { type: 'category', data: ordered.map((row) => row.name) },
-    series: [{ type: 'bar', data: ordered.map((row) => row.grossProfit) }]
+    yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
+    series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
   };
 }
 

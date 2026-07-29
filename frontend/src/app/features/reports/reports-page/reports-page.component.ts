@@ -1,14 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
   DueDateBucket,
@@ -18,7 +20,10 @@ import {
   StockStatusReport,
   SupplierProfitReport
 } from '../../../core/api/api-models';
+import { LanguageService } from '../../../core/i18n/language.service';
+import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
+import { CSV_DOWNLOADER, buildCsv } from '../../../shared/csv/csv-export';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { ReportService } from '../report.service';
 
@@ -27,13 +32,15 @@ export const STOCK_TAB = 1;
 export const LOSSES_TAB = 2;
 export const DUE_TAB = 3;
 
-// The stock chart ranks rather than enumerates; the table below it carries the full list.
-const STOCK_CHART_ROWS = 15;
+const TAB_COUNT = 4;
+
+/** Which half of a tab is on screen; the two never share the vertical space any more. */
+export type ReportView = 'chart' | 'table';
 
 /**
- * Four-tab detail view over the reporting endpoints, pairing a chart with a sortable table in
- * each tab. The dashboard stays the at-a-glance summary; this page is where the full figures
- * live, which is why the profit bar here plots every product rather than a top ten.
+ * Four-tab detail view over the reporting endpoints, each tab switching between its chart and its
+ * sortable table. The dashboard stays the at-a-glance summary; this page is where the full figures
+ * live, which is why the table here is exhaustive and exportable while the chart is a top ten.
  */
 @Component({
   selector: 'app-reports-page',
@@ -42,7 +49,9 @@ const STOCK_CHART_ROWS = 15;
     CurrencyPipe,
     DatePipe,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCardModule,
+    MatIconModule,
     MatProgressBarModule,
     MatSortModule,
     MatTableModule,
@@ -56,6 +65,9 @@ const STOCK_CHART_ROWS = 15;
 export class ReportsPageComponent implements OnInit {
   private readonly reports = inject(ReportService);
   private readonly dialog = inject(MatDialog);
+  private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
+  private readonly downloadCsvFile = inject(CSV_DOWNLOADER);
 
   protected readonly profitColumns = ['name', 'sku', 'revenue', 'cost', 'grossProfit'];
   protected readonly supplierColumns = ['name', 'revenue', 'cost', 'grossProfit'];
@@ -63,6 +75,11 @@ export class ReportsPageComponent implements OnInit {
   protected readonly lossColumns = ['name', 'sku', 'lostUnits', 'destroyedUnits', 'lossValue'];
 
   protected readonly selectedTab = signal(PROFIT_TAB);
+
+  // One entry per tab so a chosen view survives leaving the tab and coming back; charts open
+  // first because the chart is what the page is scanned for.
+  private readonly views = signal<ReportView[]>(Array<ReportView>(TAB_COUNT).fill('chart'));
+
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -101,6 +118,60 @@ export class ReportsPageComponent implements OnInit {
   /** Refetches the visible tab only; the other three keep whatever they already hold. */
   protected refresh(): void {
     this.loadTab(this.selectedTab());
+  }
+
+  protected viewOf(tab: number): ReportView {
+    return this.views()[tab];
+  }
+
+  protected setView(tab: number, view: ReportView): void {
+    this.views.update((current) => current.map((entry, index) => (index === tab ? view : entry)));
+  }
+
+  /** Exports the profit table as displayed, without the deleted marker the column renders. */
+  protected exportProfit(): void {
+    this.exportCsv(
+      'profit-products.csv',
+      this.profitColumns,
+      this.profitRows().map((row) => [row.name, row.sku, row.revenue, row.cost, row.grossProfit])
+    );
+  }
+
+  protected exportSuppliers(): void {
+    this.exportCsv(
+      'profit-suppliers.csv',
+      this.supplierColumns,
+      this.supplierRows().map((row) => [row.name, row.revenue, row.cost, row.grossProfit])
+    );
+  }
+
+  protected exportStock(): void {
+    this.exportCsv(
+      'stock-status.csv',
+      this.stockColumns,
+      this.stockRows().map((row) => [
+        row.name,
+        row.sku,
+        row.soldUnits,
+        row.soldRevenue,
+        row.inStockUnits,
+        row.inStockValue
+      ])
+    );
+  }
+
+  protected exportLosses(): void {
+    this.exportCsv(
+      'losses.csv',
+      this.lossColumns,
+      this.lossRows().map((row) => [
+        row.name,
+        row.sku,
+        row.lostUnits,
+        row.destroyedUnits,
+        row.lossValue
+      ])
+    );
   }
 
   protected sortProfit(sort: Sort): void {
@@ -148,7 +219,8 @@ export class ReportsPageComponent implements OnInit {
       next: (rows) => {
         this.profitRows.set(rows);
         this.marginOption.set(toMarginOption(rows));
-        this.profitOption.set(toProfitOption(rows));
+        // Translated at build time: chart options are snapshots, as everywhere else on this page.
+        this.profitOption.set(toProfitOption(rows, this.otherLabel()));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -164,7 +236,7 @@ export class ReportsPageComponent implements OnInit {
     this.reports.stockStatus().subscribe({
       next: (rows) => {
         this.stockRows.set(rows);
-        this.stockOption.set(toStockOption(rows));
+        this.stockOption.set(toStockOption(rows, this.otherLabel()));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -175,7 +247,7 @@ export class ReportsPageComponent implements OnInit {
     this.reports.losses().subscribe({
       next: (rows) => {
         this.lossRows.set(rows);
-        this.lossOption.set(toLossOption(rows));
+        this.lossOption.set(toLossOption(rows, this.otherLabel()));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -201,6 +273,22 @@ export class ReportsPageComponent implements OnInit {
       next: (rows) => this.overdueRows.set(rows),
       error: (err: Error) => this.fail(err)
     });
+  }
+
+  private otherLabel(): string {
+    return this.translate.instant('charts.other') as string;
+  }
+
+  /** Headers and separators are resolved at click time, so the file matches the UI language. */
+  private exportCsv(
+    filename: string,
+    columns: string[],
+    rows: (string | number | null)[][]
+  ): void {
+    const headers = columns.map((column) =>
+      this.translate.instant(`reports.columns.${column}`)
+    ) as string[];
+    this.downloadCsvFile(filename, buildCsv(headers, rows, this.language.currentLang()));
   }
 
   /** Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app. */
@@ -239,37 +327,45 @@ function toMarginOption(rows: ProductProfitReport[]): ChartOption | null {
   };
 }
 
-/** Plots every product, which is what separates this page from the dashboard's top ten. */
-function toProfitOption(rows: ProductProfitReport[]): ChartOption | null {
+/**
+ * Plots the ten largest contributors plus the aggregated rest. What separates this page from the
+ * dashboard is the exhaustive table behind the toggle, not an unabridged chart, which stopped
+ * being readable the moment the inventory outgrew the seeded dataset.
+ */
+function toProfitOption(rows: ProductProfitReport[], otherLabel: string): ChartOption | null {
   if (rows.length === 0) {
     return null;
   }
-  const ordered = [...rows].sort((a, b) => a.grossProfit - b.grossProfit);
+  const ordered = topNWithRemainder(
+    rows.map((row) => ({ name: row.name, value: row.grossProfit })),
+    otherLabel
+  ).sort((a, b) => a.value - b.value);
 
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
     xAxis: { type: 'value' },
-    yAxis: { type: 'category', data: ordered.map((row) => row.name) },
-    series: [{ type: 'bar', data: ordered.map((row) => row.grossProfit) }]
+    yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
+    series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
   };
 }
 
-function toStockOption(rows: StockStatusReport[]): ChartOption | null {
+function toStockOption(rows: StockStatusReport[], otherLabel: string): ChartOption | null {
   if (rows.length === 0) {
     return null;
   }
-  const ordered = [...rows]
-    .sort((a, b) => b.inStockValue - a.inStockValue)
-    .slice(0, STOCK_CHART_ROWS)
-    .reverse();
+  // Reversed because a category axis draws its first entry at the bottom.
+  const ordered = topNWithRemainder(
+    rows.map((row) => ({ name: row.name, value: row.inStockValue })),
+    otherLabel
+  ).reverse();
 
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
     xAxis: { type: 'value' },
-    yAxis: { type: 'category', data: ordered.map((row) => row.name) },
-    series: [{ type: 'bar', data: ordered.map((row) => row.inStockValue) }]
+    yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
+    series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
   };
 }
 
@@ -277,7 +373,7 @@ function toStockOption(rows: StockStatusReport[]): ChartOption | null {
  * Builds the loss-share pie, or null when nothing has actually been written off. A pie of
  * zero-valued slices draws no arcs at all, so the empty state is the honest rendering.
  */
-function toLossOption(rows: LossReport[]): ChartOption | null {
+function toLossOption(rows: LossReport[], otherLabel: string): ChartOption | null {
   const slices = rows.filter((row) => row.lossValue > 0);
   if (slices.length === 0) {
     return null;
@@ -290,7 +386,10 @@ function toLossOption(rows: LossReport[]): ChartOption | null {
       {
         type: 'pie',
         radius: ['35%', '65%'],
-        data: slices.map((row) => ({ name: row.name, value: row.lossValue }))
+        data: topNWithRemainder(
+          slices.map((row) => ({ name: row.name, value: row.lossValue })),
+          otherLabel
+        )
       }
     ]
   };

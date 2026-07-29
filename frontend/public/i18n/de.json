@@ -74,9 +74,18 @@
     "loading": "Änderungshistorie wird geladen…",
     "back": "Zurück"
   },
+  "charts": {
+    "other": "Sonstige"
+  },
   "reports": {
     "title": "Berichte",
     "refresh": "Aktualisieren",
+    "exportCsv": "CSV exportieren",
+    "view": {
+      "chart": "Diagramm",
+      "table": "Tabelle",
+      "list": "Liste"
+    },
     "loading": "Bericht wird geladen…",
     "deletedHint": "gelöscht",
     "tabs": {

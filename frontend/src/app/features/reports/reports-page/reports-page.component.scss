@@ -31,6 +31,26 @@
   margin-bottom: 1rem;
 }
 
+.view-toggle {
+  margin-bottom: 1rem;
+}
+
+// The export sits on the heading line rather than above the table, so it reads as an action on
+// this table and not on the tab.
+.table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+// Tables whose card carries no title still put the button on the right.
+.table-heading-end {
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
 .section-title {
   margin: 0 0 0.75rem;
   font: var(--mat-sys-title-medium);
