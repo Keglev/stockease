@@ -1,0 +1,13 @@
+-- Demo mode needs a demo user on each side of the role split. V10 created
+-- julia.brandt and markus.weber both as ROLE_USER; the passwordless demo
+-- login (ADR 005) issues an ADMIN token for julia.brandt, so the account has
+-- to genuinely carry that role - the token is never elevated at issue time.
+--
+-- Role assignment belongs in a migration for the same reason V10's inserts do:
+-- the demo reset never touches app_user, so nothing in the demo module can be
+-- trusted to put this row right. V10 itself is immutable under Flyway's
+-- checksum rules, hence a new file rather than an edit.
+--
+-- markus.weber stays ROLE_USER: it is what makes the demo USER token provably
+-- a USER token.
+UPDATE app_user SET role = 'ROLE_ADMIN' WHERE username = 'julia.brandt';

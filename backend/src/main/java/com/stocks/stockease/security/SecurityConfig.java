@@ -2,6 +2,7 @@ package com.stocks.stockease.security;
 
 import java.util.List;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,18 +37,26 @@ public class SecurityConfig {
 
     private final List<String> allowedOrigins;
 
+    private final List<PublicEndpoint> publicEndpoints;
+
     /**
      * Constructs security config with the JWT filter, custom authentication entry point, and CORS origins.
      *
      * @param jwtFilter validates JWT tokens in request headers
      * @param customAuthenticationEntryPoint sends custom 401 error responses
      * @param allowedOrigins frontend origins permitted to call the API
+     * @param publicEndpoints unauthenticated entry points contributed by other modules; empty when none
+     *        of them is active
      */
     public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint,
-            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
+            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins,
+            ObjectProvider<PublicEndpoint> publicEndpoints) {
         this.jwtFilter = jwtFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
         this.allowedOrigins = allowedOrigins;
+        // ObjectProvider rather than List injection: with no contributing module active there is no
+        // candidate bean at all, and a required List parameter would fail the context start.
+        this.publicEndpoints = publicEndpoints.orderedStream().toList();
     }
 
     /**
@@ -85,15 +94,19 @@ public class SecurityConfig {
             // Disabled: stateless JWT authentication does not require CSRF tokens
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/health").permitAll()
-                .requestMatchers("/health", "/health/").permitAll()
-                .requestMatchers(HttpMethod.GET, "/actuator/health/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+            .authorizeHttpRequests(auth -> {
+                auth.requestMatchers("/api/health").permitAll();
+                auth.requestMatchers("/health", "/health/").permitAll();
+                auth.requestMatchers(HttpMethod.GET, "/actuator/health/**").permitAll();
+                auth.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll();
+                // contributed exemptions come before the catch-all so they actually take effect; the
+                // list is empty unless a module that publishes one is active
+                publicEndpoints.forEach(
+                        endpoint -> auth.requestMatchers(endpoint.method(), endpoint.pattern()).permitAll());
                 // endpoint authorization lives on the controller methods (@PreAuthorize); the catch-all
                 // keeps everything authenticated
-                .anyRequest().authenticated()
-            )
+                auth.anyRequest().authenticated();
+            })
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(customAuthenticationEntryPoint)
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
