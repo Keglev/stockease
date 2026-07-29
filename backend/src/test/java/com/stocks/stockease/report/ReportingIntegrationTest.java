@@ -19,6 +19,7 @@ import com.stocks.stockease.invoice.Invoice;
 import com.stocks.stockease.invoice.InvoiceService;
 import com.stocks.stockease.invoice.InvoiceType;
 import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementRemark;
 import com.stocks.stockease.movement.RecordMovementCommand;
 import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.product.Product;
@@ -95,7 +96,13 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     }
 
     private void record(MovementReason reason, long productId, int qty, Long itemId) {
-        stockMovementService.recordMovement(new RecordMovementCommand(productId, reason, qty, itemId, null), user);
+        // LOST and DESTROYED require a remark; these scenarios are about valuation, not about which
+        // cause was recorded, so the neutral member stands in for all of them
+        MovementRemark remark = reason == MovementReason.LOST || reason == MovementReason.DESTROYED
+                ? MovementRemark.INTERNAL
+                : null;
+        stockMovementService.recordMovement(
+                new RecordMovementCommand(productId, reason, qty, itemId, null, remark), user);
     }
 
     /** Product id and supplier id of one full purchase-sale-return-loss scenario. */
