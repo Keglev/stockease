@@ -1,3 +1,5 @@
+@use '../../../styles/breakpoints' as bp;
+
 .spacer {
   flex: 1 1 auto;
 }
@@ -7,6 +9,10 @@
 mat-toolbar {
   background: var(--mat-sys-primary-container);
   color: var(--mat-sys-on-primary-container);
+}
+
+.nav-toggle {
+  margin-right: 0.25rem;
 }
 
 // Outlined rather than filled: the badge states a fact about the deployment and should read as an
@@ -50,4 +56,45 @@ app-language-toggle {
 .shell-outlet {
   flex: 1 1 auto;
   padding: 1.5rem;
+  // Ultra-wide screens get whitespace rather than a fifth tier: past this width the layout has
+  // nothing left to rearrange, and full-bleed rows would only lengthen the eye's travel. The
+  // footer stays outside the cap so it keeps spanning the whole content pane.
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+// Full height so the help list can be pushed to the bottom edge of the drawer.
+.sidenav-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.sidenav-help {
+  margin-top: auto;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+@include bp.desktop {
+  // Narrower than Material's 360px default: on desktop the drawer is permanent, so every pixel it
+  // takes is a pixel the dashboard grid does not get. Below desktop it overlays and keeps the
+  // default width.
+  mat-sidenav {
+    width: 200px;
+  }
+}
+
+@include bp.phone {
+  // Material drops the toolbar to 56px below 600px, so the content floor follows it.
+  .shell-container,
+  .shell-content {
+    min-height: calc(100vh - 56px);
+  }
+
+  // At 360px the toolbar has to hold the hamburger, the app name, both toggles and logout. The
+  // role label is the one item that repeats information the user already has.
+  .role {
+    display: none;
+  }
 }

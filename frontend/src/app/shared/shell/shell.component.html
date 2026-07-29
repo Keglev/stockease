@@ -1,4 +1,15 @@
 <mat-toolbar color="primary">
+  @if (!isDesktop()) {
+    <button
+      matIconButton
+      type="button"
+      class="nav-toggle"
+      [attr.aria-label]="'shell.openNavigation' | translate"
+      (click)="toggleSidenav()"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+  }
   <span>{{ 'common.appName' | translate }}</span>
   @if (demoMode) {
     <span class="demo-badge" [title]="'shell.demoTooltip' | translate">
@@ -19,35 +30,68 @@
 </mat-toolbar>
 
 <mat-sidenav-container class="shell-container">
-  <mat-sidenav mode="side" opened>
-    <mat-nav-list>
-      <a
-        mat-list-item
-        routerLink="/app"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        {{ 'nav.dashboard' | translate }}
-      </a>
-      <a mat-list-item routerLink="/app/products" routerLinkActive="active">
-        {{ 'nav.products' | translate }}
-      </a>
-      <a mat-list-item routerLink="/app/invoices" routerLinkActive="active">
-        {{ 'nav.invoices' | translate }}
-      </a>
-      <a mat-list-item routerLink="/app/movements" routerLinkActive="active">
-        {{ 'nav.movements' | translate }}
-      </a>
-      <a mat-list-item routerLink="/app/reports" routerLinkActive="active">
-        {{ 'nav.reports' | translate }}
-      </a>
-      <a mat-list-item routerLink="/app/suppliers" routerLinkActive="active">
-        {{ 'nav.suppliers' | translate }}
-      </a>
-      <a mat-list-item routerLink="/app/customers" routerLinkActive="active">
-        {{ 'nav.customers' | translate }}
-      </a>
-    </mat-nav-list>
+  <!-- openedChange keeps the signal honest: in over mode Material also closes the drawer itself,
+       on a backdrop click or ESC, without going through toggleSidenav. -->
+  <mat-sidenav
+    [mode]="isDesktop() ? 'side' : 'over'"
+    [opened]="sidenavOpened()"
+    (openedChange)="sidenavOpened.set($event)"
+  >
+    <div class="sidenav-inner">
+      <mat-nav-list>
+        <a
+          mat-list-item
+          routerLink="/app"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="onNavClick()"
+        >
+          {{ 'nav.dashboard' | translate }}
+        </a>
+        <a mat-list-item routerLink="/app/products" routerLinkActive="active" (click)="onNavClick()">
+          {{ 'nav.products' | translate }}
+        </a>
+        <a mat-list-item routerLink="/app/invoices" routerLinkActive="active" (click)="onNavClick()">
+          {{ 'nav.invoices' | translate }}
+        </a>
+        <a
+          mat-list-item
+          routerLink="/app/movements"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          {{ 'nav.movements' | translate }}
+        </a>
+        <a mat-list-item routerLink="/app/reports" routerLinkActive="active" (click)="onNavClick()">
+          {{ 'nav.reports' | translate }}
+        </a>
+        <a
+          mat-list-item
+          routerLink="/app/suppliers"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          {{ 'nav.suppliers' | translate }}
+        </a>
+        <a
+          mat-list-item
+          routerLink="/app/customers"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          {{ 'nav.customers' | translate }}
+        </a>
+      </mat-nav-list>
+
+      <!-- Help is a second list pinned to the bottom edge: it is a permanent affordance rather
+           than one more section of the app, so it does not belong in the ordered primary nav. -->
+      <mat-nav-list class="sidenav-help">
+        <a mat-list-item routerLink="/app/help" routerLinkActive="active" (click)="onNavClick()">
+          <mat-icon matListItemIcon>help_outline</mat-icon>
+          {{ 'nav.help' | translate }}
+        </a>
+      </mat-nav-list>
+    </div>
   </mat-sidenav>
 
   <mat-sidenav-content class="shell-content">

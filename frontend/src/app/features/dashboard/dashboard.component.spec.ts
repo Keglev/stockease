@@ -1,5 +1,7 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
@@ -13,6 +15,7 @@ import {
 } from '../../core/api/api-models';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
+import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { ProductService } from '../products/product.service';
 import { ReportService } from '../reports/report.service';
@@ -176,6 +179,7 @@ describe('DashboardComponent', () => {
   let reports: ReportServiceStub;
   let products: ProductServiceStub;
   let health: HealthServiceStub;
+  let breakpoints: BreakpointObserverStub;
 
   /**
    * The app is zoneless, so fakeAsync is unavailable and vitest's timers stand in for the
@@ -198,11 +202,15 @@ describe('DashboardComponent', () => {
     reports = new ReportServiceStub();
     products = new ProductServiceStub();
     health = new HealthServiceStub();
+    // Pinned to desktop so every assertion below sees one fixed tier; jsdom applies no media
+    // queries, so the real observer would answer whatever matchMedia stubs out to.
+    breakpoints = new BreakpointObserverStub(true);
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         provideTestTranslations(TRANSLATIONS),
+        { provide: BreakpointObserver, useValue: breakpoints },
         { provide: ReportService, useValue: reports },
         { provide: ProductService, useValue: products },
         { provide: HealthService, useValue: health }
@@ -307,6 +315,21 @@ describe('DashboardComponent', () => {
     expect(kpiValues()[0]).toBe('42');
     expect(kpiValues()[2]).toBe('3');
   });
+
+  it('chartHeight_handsetViewport_usesTallerCharts', () => {
+    breakpoints.setMatches(false);
+    render();
+
+    // Below desktop the rows stack, so the charts trade viewport fit for readability.
+    expect(chartHeights()).toEqual(['20rem', '20rem']);
+  });
+
+  /** The height each rendered chart was handed, in template order. */
+  function chartHeights(): string[] {
+    return fixture.debugElement
+      .queryAll(By.directive(ChartStubComponent))
+      .map((chart) => (chart.componentInstance as ChartStubComponent).height());
+  }
 
   /** The four KPI values in template order: products, low stock, overdue, loss value. */
   function kpiValues(): string[] {

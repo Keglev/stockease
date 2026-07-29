@@ -56,7 +56,8 @@
     "movements": "Lagerbewegungen",
     "reports": "Berichte",
     "suppliers": "Lieferanten",
-    "customers": "Kunden"
+    "customers": "Kunden",
+    "help": "Hilfe"
   },
   "audit": {
     "productTitle": "Änderungshistorie - Produkt #{{id}}",
@@ -310,12 +311,16 @@
   },
   "shell": {
     "logout": "Abmelden",
+    "openNavigation": "Navigation öffnen",
     "demoBadge": "DEMO",
     "demoTooltip": "Demosystem - Daten werden nächtlich zurückgesetzt",
     "role": {
       "ADMIN": "Administrator",
       "USER": "Benutzer"
     }
+  },
+  "help": {
+    "title": "Hilfe"
   },
   "dashboard": {
     "title": "Übersicht",

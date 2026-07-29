@@ -1,11 +1,15 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { MatSidenav } from '@angular/material/sidenav';
 import { provideRouter, Router } from '@angular/router';
 
 import { AuthService, TOKEN_STORAGE_KEY } from '../../core/auth/auth.service';
 import { DEMO_MODE } from '../../core/config/demo-mode';
 import { LanguageService } from '../../core/i18n/language.service';
+import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { ShellComponent } from './shell.component';
 
@@ -19,10 +23,12 @@ const TRANSLATIONS = {
       movements: 'Stock movements',
       reports: 'Reports',
       suppliers: 'Suppliers',
-      customers: 'Customers'
+      customers: 'Customers',
+      help: 'Help'
     },
     shell: {
       logout: 'Log out',
+      openNavigation: 'Open navigation',
       demoBadge: 'DEMO',
       demoTooltip: 'Demo system - data resets nightly',
       role: { ADMIN: 'Administrator', USER: 'User' }
@@ -37,9 +43,14 @@ const TRANSLATIONS = {
       movements: 'Lagerbewegungen',
       reports: 'Berichte',
       suppliers: 'Lieferanten',
-      customers: 'Kunden'
+      customers: 'Kunden',
+      help: 'Hilfe'
     },
-    shell: { logout: 'Abmelden', role: { ADMIN: 'Administrator', USER: 'Benutzer' } }
+    shell: {
+      logout: 'Abmelden',
+      openNavigation: 'Navigation öffnen',
+      role: { ADMIN: 'Administrator', USER: 'Benutzer' }
+    }
   }
 };
 
@@ -53,6 +64,7 @@ function validToken(): string {
 
 describe('ShellComponent', () => {
   let fixture: ComponentFixture<ShellComponent>;
+  let breakpoints: BreakpointObserverStub;
 
   function text(): string {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -75,13 +87,36 @@ describe('ShellComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('.demo-badge');
   }
 
-  async function setUp(demoMode = false): Promise<void> {
+  function navToggle(): HTMLButtonElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.nav-toggle');
+  }
+
+  /** The drawer instance: mode and opened are inputs, so neither reaches the DOM as an attribute. */
+  function sidenav(): MatSidenav {
+    return fixture.debugElement.query(By.directive(MatSidenav)).componentInstance as MatSidenav;
+  }
+
+  function navLink(href: string): HTMLAnchorElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      `mat-nav-list a[href="${href}"]`
+    );
+  }
+
+  async function settle(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  async function setUp(demoMode = false, desktop = true): Promise<void> {
+    breakpoints = new BreakpointObserverStub(desktop);
+
     await TestBed.configureTestingModule({
       imports: [ShellComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: DEMO_MODE, useValue: demoMode },
+        { provide: BreakpointObserver, useValue: breakpoints },
         // Registered so the logout navigation resolves instead of rejecting mid-test.
         provideRouter([
           { path: 'logout', children: [] },
@@ -137,8 +172,59 @@ describe('ShellComponent', () => {
       '/app/movements',
       '/app/reports',
       '/app/suppliers',
-      '/app/customers'
+      '/app/customers',
+      // The help entry lives in its own list at the bottom of the drawer, so it comes last.
+      '/app/help'
     ]);
+  });
+
+  it('render_desktopViewport_sidenavFixedOpenWithoutHamburger', async () => {
+    await setUp(false, true);
+
+    expect(sidenav().mode).toBe('side');
+    expect(sidenav().opened).toBe(true);
+    // Nothing to toggle: the drawer is permanent furniture at this tier.
+    expect(navToggle()).toBeNull();
+  });
+
+  it('render_handsetViewport_sidenavOverlayClosedWithHamburger', async () => {
+    await setUp(false, false);
+
+    expect(sidenav().mode).toBe('over');
+    expect(sidenav().opened).toBe(false);
+    expect(navToggle()).not.toBeNull();
+    expect(navToggle()?.getAttribute('aria-label')).toBe('Open navigation');
+  });
+
+  it('toggleSidenav_hamburgerClicked_opensOverlay', async () => {
+    await setUp(false, false);
+    expect(sidenav().opened).toBe(false);
+
+    navToggle()?.click();
+    await settle();
+
+    expect(sidenav().opened).toBe(true);
+  });
+
+  it('onNavClick_handsetOverlayOpen_closesSidenav', async () => {
+    await setUp(false, false);
+    navToggle()?.click();
+    await settle();
+
+    navLink('/app')?.click();
+    await settle();
+
+    expect(sidenav().opened).toBe(false);
+  });
+
+  it('onNavClick_desktopViewport_keepsSidenavOpen', async () => {
+    await setUp(false, true);
+
+    navLink('/app')?.click();
+    await settle();
+
+    // The drawer covers nothing at this tier, so navigating must not collapse it.
+    expect(sidenav().opened).toBe(true);
   });
 
   it('render_authenticatedShell_showsFooterBelowTheOutlet', async () => {

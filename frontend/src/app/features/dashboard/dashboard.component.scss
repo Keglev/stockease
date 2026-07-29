@@ -1,3 +1,5 @@
+@use '../../../styles/breakpoints' as bp;
+
 :host {
   display: block;
 }
@@ -22,12 +24,37 @@
   margin-bottom: 1rem;
 }
 
-.kpi-row {
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+// Explicit columns per tier rather than auto-fit: the KPI row is a fixed set of four figures read
+// as one line, so how it wraps is a layout decision, not something the available width should
+// settle on its own.
+.kpi-row,
+.chart-row {
+  grid-template-columns: 1fr;
 }
 
-.chart-row {
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+@include bp.tablet {
+  .kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@include bp.desktop {
+  .kpi-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .chart-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  // Tighter vertical rhythm, only where vertical space is the binding constraint: on desktop the
+  // whole dashboard is meant to land inside one 1080p viewport.
+  .kpi-row,
+  .chart-row,
+  .low-stock-card {
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
 }
 
 .kpi-label {
