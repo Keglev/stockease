@@ -104,8 +104,10 @@ class DemoLoginIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(jwtUtil.validateToken(token)).isTrue();
         assertThat(jwtUtil.extractUsername(token)).isEqualTo("julia.brandt");
-        // the authority string as stored on the row; V15 promoted this account, the token did not
-        assertThat(jwtUtil.extractRole(token)).isEqualTo("ROLE_ADMIN");
+        // the row stores the prefixed authority; the claim carries the bare role the frontend contract expects
+        assertThat(jwtUtil.extractRole(token)).isEqualTo("ADMIN");
+        // guards the assertion above against a silent return of the "ROLE_" prefix
+        assertThat(jwtUtil.extractRole(token)).doesNotStartWith("ROLE_");
     }
 
     @Test
@@ -114,7 +116,7 @@ class DemoLoginIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(jwtUtil.validateToken(token)).isTrue();
         assertThat(jwtUtil.extractUsername(token)).isEqualTo("markus.weber");
-        assertThat(jwtUtil.extractRole(token)).isEqualTo("ROLE_USER");
+        assertThat(jwtUtil.extractRole(token)).isEqualTo("USER");
     }
 
     @Test
