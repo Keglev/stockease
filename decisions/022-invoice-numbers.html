@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions · 022-invoice-numbers · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-022-invoice-numbers-are-operator-assigned">ADR 022:
+        Invoice Numbers Are Operator-Assigned</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        29, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>Until now an invoice was identified only by its database id.
+        That works inside the application and nowhere outside it. A
+        supplier calls about “Rechnung RE-2026-0117”; the operator has
+        no way to find it except by scrolling a list and matching dates
+        and amounts. The one identifier the conversation is actually
+        about was the one the system did not record.</p>
+        <p>The two directions are not the same problem. A
+        <strong>purchase</strong> invoice already has a number - the
+        supplier printed it on the document, and it is the supplier’s
+        number, in the supplier’s format. StockEase does not get to
+        choose it; it has to store whatever arrives. A
+        <strong>sale</strong> invoice needs a number the business issues
+        itself, and in Germany that sequence is a bookkeeping obligation
+        rather than a convenience.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Every invoice carries an operator-assigned
+        <code>invoiceNumber</code>.</strong> On a purchase it is the
+        supplier’s document number, transcribed. On a sale it is the
+        operator’s own number from their own sequence. It is required at
+        creation, free text, at most 64 characters.</p>
+        <p><strong>Free text, not a generated sequence.</strong> The
+        system cannot generate a supplier’s number, and it should not
+        pretend to own the sales sequence either - that sequence usually
+        starts before StockEase and continues in the accountant’s
+        software. A field the operator fills is honest about who owns
+        the number. This is the same reasoning as ADR 018 applied to
+        invoices rather than products: an identifier the business
+        already uses is master data, not something to invent.</p>
+        <p><strong>Unique among live invoices</strong>, enforced by a
+        partial unique index on
+        <code>invoice_number WHERE deleted_at IS NULL</code>, exactly as
+        the product SKU rule in V9. A soft-deleted invoice’s number can
+        be reissued, which is what makes “delete the mistyped one and
+        re-enter it under the same number” work. The service checks
+        first for a friendly message; the index is the concurrency
+        backstop.</p>
+        <p>Uniqueness is <strong>global, not per type or per
+        counterparty</strong>. Two suppliers can in principle issue the
+        same number, and a stricter scope would be more faithful to that
+        - but the operator searching for a number wants one answer, and
+        a collision is rare enough to resolve by suffixing. Recorded
+        here so the narrowing is a decision to revisit rather than an
+        oversight.</p>
+        <p><strong>The numeric id stays the technical key.</strong> It
+        remains the primary key, the foreign key every other table
+        points at, and the routing key in the frontend -
+        <code>/app/invoices/3</code>, not
+        <code>/app/invoices/RE-2026-0117</code>. The number is a
+        business identifier and nothing more: it can be corrected, it
+        can be reused after a delete, and it must never become the thing
+        a URL or a foreign key depends on.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Generate the number.</strong> Rejected for purchases
+        outright - the number belongs to the supplier. For sales it
+        would produce a second sequence competing with the one the
+        accountant already maintains, and reconciling two sequences is
+        worse than typing one number.</p>
+        <p><strong>Make it optional.</strong> Rejected: an optional
+        identifier is absent exactly when it is needed, and the
+        uniqueness rule becomes meaningless with a pile of nulls.</p>
+        <p><strong>Use the number as the primary key.</strong> Rejected.
+        It is operator-entered, so it is typo-prone and correctable, and
+        correcting a primary key means rewriting every foreign key that
+        references it. The id/number split is the standard answer and
+        keeps corrections cheap.</p>
+        <p><strong>Scope uniqueness per supplier.</strong> Rejected for
+        now; see above.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li>An invoice can be found by the number the counterparty
+        quotes.</li>
+        <li>Creation gains one required field. Purchases copy it off the
+        document; sales take the next number in the operator’s
+        sequence.</li>
+        <li>Existing rows are backfilled by V19 with a synthetic
+        <code>INV-&lt;id&gt;</code>, which is obviously not a real
+        document number - deliberately, since none exists. The deployed
+        data is the demo baseline that the nightly reset (ADR 005)
+        replaces wholesale with properly numbered invoices.</li>
+        <li>Lists and the detail header show the number; links, routes
+        and every cross-reference still use the id. Widgets that
+        currently show only <code>#id</code> (due-soon, overdue,
+        dialogs) are unchanged for now and fold into the visual
+        pass.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-022-invoice-numbers-are-operator-assigned"
+      id="toc-adr-022-invoice-numbers-are-operator-assigned">ADR 022:
+      Invoice Numbers Are Operator-Assigned</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
