@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend · 09-decisions/index · StockEase Docs</title>
+  <title>Backend ·
+09-decisions/013-token-storage · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -96,59 +97,76 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="architecture-decision-records">Architecture Decision
-        Records</h1>
-        <p>Decisions with justification: why a design was chosen, what
-        alternatives were rejected, and which trade-offs are accepted.
-        ADRs are append-only; superseded decisions are marked, never
-        rewritten.</p>
-        <h2 id="index">Index</h2>
+        <h1 id="adr-013-jwt-in-localstorage-no-refresh-token">ADR 013:
+        JWT in localStorage, No Refresh Token</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        28, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>Authentication is a single stateless HMAC-signed JWT with a
+        ten-hour lifetime (ADR 003). There is no refresh token and no
+        server-side session to resume from. The SPA must therefore keep
+        that one token somewhere that survives a page reload, or every
+        refresh becomes a logout.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>The token is stored in
+        <code>localStorage</code></strong> and attached by an HTTP
+        interceptor (PR #68). The auth service is the only code that
+        touches the storage key; the rest of the application asks the
+        service, never the browser.</p>
+        <p>The trade-off is stated rather than glossed:
+        <strong><code>localStorage</code> is readable by any JavaScript
+        that runs on the origin, so a successful XSS reads the
+        token.</strong> That is accepted here, and the reasons are
+        specific to what this application is - a demo with disposable
+        seeded data, no third-party scripts, no analytics or tag
+        manager, and Angular’s default output escaping across every
+        template. The blast radius of the accepted risk is a demo
+        dataset, not a real one.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>httpOnly cookie.</strong> The correct answer for a
+        system holding real data: the token becomes unreadable from
+        JavaScript. Rejected here because it is not a storage swap - it
+        moves the token into the backend’s issuing response, and cookies
+        are sent automatically, which requires CSRF protection on every
+        state-changing endpoint plus cross-site cookie handling between
+        the CDN origin and the API origin. That is backend work
+        disproportionate to a demo.</p>
+        <p><strong>In memory only.</strong> Rejected: with no refresh
+        token there is nothing to restore from, so every reload and
+        every new tab would land on the login page.</p>
+        <p><strong>Short-lived token plus a refresh token.</strong>
+        Rejected: it does not remove the storage question, it duplicates
+        it - the refresh token then needs the same decision, and it is
+        the more valuable credential.</p>
+        <h2 id="consequences">Consequences</h2>
         <ul>
-        <li><a href="001-database-choice.html">ADR 001 - Database
-        Choice</a></li>
-        <li><a href="002-validation-strategy.html">ADR 002 - Validation
-        Strategy</a></li>
-        <li><a href="003-authentication-mechanism.html">ADR 003 -
-        Authentication Mechanism</a></li>
-        <li><a href="004-inventory-domain-model.html">ADR 004 -
-        Inventory Domain Model</a></li>
-        <li><a href="006-audit-and-profit-model.html">ADR 006 - Audit
-        and Profit Model</a></li>
-        <li><a href="007-modular-monolith.html">ADR 007 - Modular
-        Monolith with Spring Modulith</a></li>
-        <li><a href="008-documentation-structure.html">ADR 008 -
-        Documentation Structure</a></li>
-        <li><a href="009-sales-invoices-and-customers.html">ADR 009 -
-        Sales Invoices and Customers</a></li>
-        <li><a href="010-no-lot-tracking.html">ADR 010 - Pooled
-        Inventory - No Lot Tracking</a></li>
-        <li><a href="011-merchandise-scope-and-payment.html">ADR 011 -
-        Merchandise Scope and the Payment Fact</a></li>
-        <li><a href="012-frontend-hosting.html">ADR 012 - Frontend
-        Hosting on a CDN, Not a Container</a></li>
-        <li><a href="013-token-storage.html">ADR 013 - JWT in
-        localStorage, No Refresh Token</a></li>
-        <li><a href="014-openapi-types-only.html">ADR 014 - Types-Only
-        Generation from the OpenAPI Spec</a></li>
-        <li><a href="015-runtime-i18n.html">ADR 015 - Runtime
-        Translation over Compile-Time Localization</a></li>
-        <li><a href="016-charting-library.html">ADR 016 - Direct
-        ECharts, Not an Angular Wrapper</a></li>
+        <li>Reloads and new tabs stay signed in; logout clears the
+        key.</li>
+        <li>The token’s ten-hour expiry is the only revocation
+        mechanism, consistent with the stateless design in ADR 003.</li>
+        <li><strong>This decision is scoped to the demo.</strong> Any
+        deployment holding real customer or pricing data reopens it, and
+        the alternative to adopt is the httpOnly cookie with CSRF
+        protection described above.</li>
         </ul>
-        <p>ADR 005 is reserved for the demo-access design and will be
-        written with the demo-mode phase.</p>
-        <p><a href="../index.html">Back to Architecture Index</a></p>
+        <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
     </main>
 
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#architecture-decision-records"
-      id="toc-architecture-decision-records">Architecture Decision
-      Records</a>
+      <li><a href="#adr-013-jwt-in-localstorage-no-refresh-token"
+      id="toc-adr-013-jwt-in-localstorage-no-refresh-token">ADR 013: JWT
+      in localStorage, No Refresh Token</a>
       <ul>
-      <li><a href="#index" id="toc-index">Index</a></li>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
       </ul></li>
       </ul>
     </nav>

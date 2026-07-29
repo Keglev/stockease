@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend · 09-decisions/index · StockEase Docs</title>
+  <title>Backend ·
+09-decisions/015-runtime-i18n · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -96,59 +97,72 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="architecture-decision-records">Architecture Decision
-        Records</h1>
-        <p>Decisions with justification: why a design was chosen, what
-        alternatives were rejected, and which trade-offs are accepted.
-        ADRs are append-only; superseded decisions are marked, never
-        rewritten.</p>
-        <h2 id="index">Index</h2>
+        <h1
+        id="adr-015-runtime-translation-over-compile-time-localization">ADR
+        015: Runtime Translation over Compile-Time Localization</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        28, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The application ships in English and German, and the two must
+        be switchable from inside the running application - a visitor
+        changing language expects the current page to change, not a
+        reload onto a different site.</p>
+        <p>Angular offers two answers. <code>@angular/localize</code>
+        extracts messages at build time and produces one bundle per
+        locale. <code>ngx-translate</code> loads a JSON message file at
+        runtime and resolves keys through a pipe.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Runtime translation with <code>ngx-translate</code>
+        18</strong> (PR #72). One bundle serves both languages; the
+        locale files are static JSON fetched on demand. The startup
+        language resolves in a fixed order: <strong>stored preference,
+        then browser language, then English</strong> as the fallback.
+        The chosen language is persisted, so it survives a reload.</p>
+        <p>Backend messages stay English by design. Validation and error
+        text crosses the API as server-authored strings; translating
+        them would mean either a message catalogue in the backend or
+        key-matching in the frontend against text the backend is free to
+        reword. The UI translates its own surface.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong><code>@angular/localize</code>.</strong> Rejected on
+        the requirement, not on quality: it binds the locale at build
+        time, so switching means navigating to a separately built
+        application. It also multiplies build outputs and deployment
+        paths by the number of locales.</p>
+        <p><strong>Hand-rolled translation service.</strong> Rejected:
+        it is <code>ngx-translate</code> with the missing-key handling,
+        parameter interpolation and loader plumbing still to be
+        written.</p>
+        <h2 id="consequences">Consequences</h2>
         <ul>
-        <li><a href="001-database-choice.html">ADR 001 - Database
-        Choice</a></li>
-        <li><a href="002-validation-strategy.html">ADR 002 - Validation
-        Strategy</a></li>
-        <li><a href="003-authentication-mechanism.html">ADR 003 -
-        Authentication Mechanism</a></li>
-        <li><a href="004-inventory-domain-model.html">ADR 004 -
-        Inventory Domain Model</a></li>
-        <li><a href="006-audit-and-profit-model.html">ADR 006 - Audit
-        and Profit Model</a></li>
-        <li><a href="007-modular-monolith.html">ADR 007 - Modular
-        Monolith with Spring Modulith</a></li>
-        <li><a href="008-documentation-structure.html">ADR 008 -
-        Documentation Structure</a></li>
-        <li><a href="009-sales-invoices-and-customers.html">ADR 009 -
-        Sales Invoices and Customers</a></li>
-        <li><a href="010-no-lot-tracking.html">ADR 010 - Pooled
-        Inventory - No Lot Tracking</a></li>
-        <li><a href="011-merchandise-scope-and-payment.html">ADR 011 -
-        Merchandise Scope and the Payment Fact</a></li>
-        <li><a href="012-frontend-hosting.html">ADR 012 - Frontend
-        Hosting on a CDN, Not a Container</a></li>
-        <li><a href="013-token-storage.html">ADR 013 - JWT in
-        localStorage, No Refresh Token</a></li>
-        <li><a href="014-openapi-types-only.html">ADR 014 - Types-Only
-        Generation from the OpenAPI Spec</a></li>
-        <li><a href="015-runtime-i18n.html">ADR 015 - Runtime
-        Translation over Compile-Time Localization</a></li>
-        <li><a href="016-charting-library.html">ADR 016 - Direct
-        ECharts, Not an Angular Wrapper</a></li>
+        <li>Trade-off: no compile-time message checking; mitigated by a
+        CI-enforced key-parity test between the locale files (see the
+        translation parity spec), which fails the build when the two
+        files diverge in key set or key order.</li>
+        <li>One bundle, one deployment, and language is a user
+        preference rather than a URL.</li>
+        <li>Adding a locale is adding a JSON file and an entry in the
+        supported list; no build configuration changes.</li>
         </ul>
-        <p>ADR 005 is reserved for the demo-access design and will be
-        written with the demo-mode phase.</p>
-        <p><a href="../index.html">Back to Architecture Index</a></p>
+        <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
     </main>
 
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#architecture-decision-records"
-      id="toc-architecture-decision-records">Architecture Decision
-      Records</a>
+      <li><a
+      href="#adr-015-runtime-translation-over-compile-time-localization"
+      id="toc-adr-015-runtime-translation-over-compile-time-localization">ADR
+      015: Runtime Translation over Compile-Time Localization</a>
       <ul>
-      <li><a href="#index" id="toc-index">Index</a></li>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
       </ul></li>
       </ul>
     </nav>

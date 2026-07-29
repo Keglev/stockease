@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Backend · 09-decisions/index · StockEase Docs</title>
+  <title>Backend ·
+09-decisions/012-frontend-hosting · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -96,59 +97,74 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="architecture-decision-records">Architecture Decision
-        Records</h1>
-        <p>Decisions with justification: why a design was chosen, what
-        alternatives were rejected, and which trade-offs are accepted.
-        ADRs are append-only; superseded decisions are marked, never
-        rewritten.</p>
-        <h2 id="index">Index</h2>
+        <h1 id="adr-012-frontend-hosting-on-a-cdn-not-a-container">ADR
+        012: Frontend Hosting on a CDN, Not a Container</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        28, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The backend is a Spring Boot deployable that Koyeb builds
+        from the repository Dockerfile and runs as a container (ADR 007,
+        section 07). The Angular frontend is a different kind of
+        artifact: a static single-page application - HTML, CSS,
+        JavaScript and locale files - that talks to that backend over
+        HTTPS. The question is whether the same containerized deployment
+        path should carry it.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>The frontend is served from Vercel’s CDN</strong> at
+        <a
+        href="https://bestandskontrolle.vercel.app">bestandskontrolle.vercel.app</a>,
+        deployed by its own workflow (PR #51) and not from a
+        container.</p>
+        <p>A static bundle needs no server process. Putting one in front
+        of it - nginx in an image, a health check, a container to size
+        and keep warm - buys nothing the CDN does not already provide:
+        edge caching, HTTPS with managed certificates, and a preview
+        deployment per pull request come with the platform rather than
+        with configuration this repository would own.</p>
+        <p>The deployment paths are separate on purpose. The frontend
+        workflow gates on the frontend test suite; a backend release
+        does not redeploy the SPA and a frontend release does not
+        restart the API. Each side ships when its own checks are
+        green.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Serving the SPA from the backend container.</strong>
+        Rejected: it couples every frontend fix to a backend redeploy
+        and puts static-asset caching, compression and SPA fallback
+        routing into Spring’s responsibility, where they are
+        configuration to maintain rather than platform behaviour.</p>
+        <p><strong>A separate frontend container on Koyeb.</strong>
+        Rejected: an nginx image and its config file to maintain, paying
+        for a running process to hand out files a CDN serves closer to
+        the user for free.</p>
+        <h2 id="consequences">Consequences</h2>
         <ul>
-        <li><a href="001-database-choice.html">ADR 001 - Database
-        Choice</a></li>
-        <li><a href="002-validation-strategy.html">ADR 002 - Validation
-        Strategy</a></li>
-        <li><a href="003-authentication-mechanism.html">ADR 003 -
-        Authentication Mechanism</a></li>
-        <li><a href="004-inventory-domain-model.html">ADR 004 -
-        Inventory Domain Model</a></li>
-        <li><a href="006-audit-and-profit-model.html">ADR 006 - Audit
-        and Profit Model</a></li>
-        <li><a href="007-modular-monolith.html">ADR 007 - Modular
-        Monolith with Spring Modulith</a></li>
-        <li><a href="008-documentation-structure.html">ADR 008 -
-        Documentation Structure</a></li>
-        <li><a href="009-sales-invoices-and-customers.html">ADR 009 -
-        Sales Invoices and Customers</a></li>
-        <li><a href="010-no-lot-tracking.html">ADR 010 - Pooled
-        Inventory - No Lot Tracking</a></li>
-        <li><a href="011-merchandise-scope-and-payment.html">ADR 011 -
-        Merchandise Scope and the Payment Fact</a></li>
-        <li><a href="012-frontend-hosting.html">ADR 012 - Frontend
-        Hosting on a CDN, Not a Container</a></li>
-        <li><a href="013-token-storage.html">ADR 013 - JWT in
-        localStorage, No Refresh Token</a></li>
-        <li><a href="014-openapi-types-only.html">ADR 014 - Types-Only
-        Generation from the OpenAPI Spec</a></li>
-        <li><a href="015-runtime-i18n.html">ADR 015 - Runtime
-        Translation over Compile-Time Localization</a></li>
-        <li><a href="016-charting-library.html">ADR 016 - Direct
-        ECharts, Not an Angular Wrapper</a></li>
+        <li>No web-server configuration lives in this repository.</li>
+        <li>The frontend’s production URL is a platform concern; the
+        backend’s CORS policy names it as an allowed origin (PR
+        #66).</li>
+        <li>A frontend Dockerfile remains a queued item for local-run
+        parity only - bringing the SPA up alongside the API in one
+        compose command. It is not a production deployment path, and
+        this decision is why.</li>
         </ul>
-        <p>ADR 005 is reserved for the demo-access design and will be
-        written with the demo-mode phase.</p>
-        <p><a href="../index.html">Back to Architecture Index</a></p>
+        <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
     </main>
 
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#architecture-decision-records"
-      id="toc-architecture-decision-records">Architecture Decision
-      Records</a>
+      <li><a href="#adr-012-frontend-hosting-on-a-cdn-not-a-container"
+      id="toc-adr-012-frontend-hosting-on-a-cdn-not-a-container">ADR
+      012: Frontend Hosting on a CDN, Not a Container</a>
       <ul>
-      <li><a href="#index" id="toc-index">Index</a></li>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
       </ul></li>
       </ul>
     </nav>
