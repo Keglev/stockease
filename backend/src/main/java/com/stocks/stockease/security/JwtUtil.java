@@ -23,6 +23,9 @@ public class JwtUtil {
 
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
 
+    /** Authority prefix used by the persisted role values; never surfaced in the token claim. */
+    private static final String ROLE_PREFIX = "ROLE_";
+
     private final SecretKey key;
 
     public JwtUtil(@Value("${jwt.secret}") String secret) {
@@ -31,15 +34,18 @@ public class JwtUtil {
 
     /**
      * Generates a signed JWT with username as the subject and role as a custom claim.
+     * The "role" claim always carries the bare role ("ADMIN"/"USER"): a leading "ROLE_" prefix is
+     * stripped here, so callers may pass either form regardless of how they store it.
      *
      * @param username authenticated user's username (becomes JWT "sub" claim)
-     * @param role user's authorization role (custom "role" claim)
+     * @param role user's authorization role, with or without the "ROLE_" prefix (custom "role" claim)
      * @return compact signed JWT string
      */
     public String generateToken(String username, String role) {
+        String bareRole = role != null && role.startsWith(ROLE_PREFIX) ? role.substring(ROLE_PREFIX.length()) : role;
         return Jwts.builder()
                 .subject(username)
-                .claim("role", role)
+                .claim("role", bareRole)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key)

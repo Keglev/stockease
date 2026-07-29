@@ -42,7 +42,8 @@ class JwtUtilTest {
         String token = jwtUtil.generateToken("carol", "ROLE_USER");
 
         assertThat(jwtUtil.extractUsername(token)).isEqualTo("carol");
-        assertThat(jwtUtil.extractRole(token)).isEqualTo("ROLE_USER");
+        // the caller passes the persisted, prefixed value; the claim carries the bare role
+        assertThat(jwtUtil.extractRole(token)).isEqualTo("USER");
     }
 
     // --- validate ---
@@ -79,7 +80,14 @@ class JwtUtilTest {
     void extractRole_returnsCorrectRoleClaim() {
         String token = jwtUtil.generateToken("alice", "ROLE_ADMIN");
 
-        assertThat(jwtUtil.extractRole(token)).isEqualTo("ROLE_ADMIN");
+        assertThat(jwtUtil.extractRole(token)).isEqualTo("ADMIN");
+    }
+
+    @Test
+    void extractRole_withAlreadyBareRole_returnsItUnchanged() {
+        String token = jwtUtil.generateToken("alice", "ADMIN");
+
+        assertThat(jwtUtil.extractRole(token)).isEqualTo("ADMIN");
     }
 
     @Test
