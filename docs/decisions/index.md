@@ -31,5 +31,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 017 - Central Decision Log at the System Level](017-central-decision-log.md) - **[Cross-cutting]**
 - [ADR 018 - Product Creation is Master-Data Maintenance](018-product-master-data.md) - **[Cross-cutting]**
 - [ADR 019 - The Purchase Price Follows the Last Closed Purchase](019-last-purchase-price.md) - **[Backend]**
+- [ADR 020 - Losses Carry a Remark from a Fixed Taxonomy](020-loss-remark.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.stocks.stockease.movement.MovementReason;
+import com.stocks.stockease.movement.MovementRemark;
 import com.stocks.stockease.movement.MovementType;
 import com.stocks.stockease.movement.StockMovement;
 
@@ -23,10 +24,12 @@ import com.stocks.stockease.movement.StockMovement;
  * @param invoiceItemId invoice line this movement fulfils, or {@code null} where no link applies
  * @param soldPrice revenue snapshot per unit, set only for sales and customer returns
  * @param unitCost cost snapshot per unit, set only for initial stock and purchases
+ * @param remark why the stock was lost, set only for LOST and DESTROYED and {@code null} otherwise
  * @param createdAt moment the movement was recorded
  */
 public record MovementResponse(Long id, Long productId, Long userId, MovementType type, MovementReason reason,
-        Integer quantity, Long invoiceItemId, BigDecimal soldPrice, BigDecimal unitCost, LocalDateTime createdAt) {
+        Integer quantity, Long invoiceItemId, BigDecimal soldPrice, BigDecimal unitCost, MovementRemark remark,
+        LocalDateTime createdAt) {
 
     /**
      * Maps a recorded movement to its API representation without initializing any association.
@@ -38,6 +41,6 @@ public record MovementResponse(Long id, Long productId, Long userId, MovementTyp
         return new MovementResponse(movement.getId(), movement.getProduct().getId(), movement.getUser().getId(),
                 movement.getType(), movement.getReason(), movement.getQuantity(),
                 movement.getInvoiceItem() == null ? null : movement.getInvoiceItem().getId(),
-                movement.getSoldPrice(), movement.getUnitCost(), movement.getCreatedAt());
+                movement.getSoldPrice(), movement.getUnitCost(), movement.getRemark(), movement.getCreatedAt());
     }
 }

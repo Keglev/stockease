@@ -25,6 +25,16 @@ const TRANSLATIONS = {
       quantity: 'Quantity',
       unitCost: 'Unit cost',
       unitCostHint: 'Cost snapshot per unit',
+      form: {
+        remark: 'Remark',
+        remarkRequired: 'Please choose what happened to the stock.',
+        remarkOption: {
+          EXPIRED: 'Expired',
+          IN_TRANSIT_TO_CUSTOMER: 'In transit to customer',
+          INTERNAL: 'Internal',
+          FROM_SUPPLIER: 'From supplier'
+        }
+      },
       submit: 'Record movement',
       recorded: 'Stock movement recorded.'
     }
@@ -53,6 +63,8 @@ const RECORDED: MovementResponse = {
   invoiceItemId: null,
   soldPrice: null,
   unitCost: 7.5,
+  // null for every reason but LOST and DESTROYED; the key is always present
+  remark: null,
   createdAt: '2026-01-02T03:04:00'
 };
 
@@ -183,12 +195,88 @@ describe('MovementRecordComponent', () => {
     await settle();
     control('productId').setValue(3);
     control('quantity').setValue(2);
+    control('remark').setValue('EXPIRED');
     await settle();
 
     await submitForm();
 
     expect(movements.requests[0]).not.toHaveProperty('unitCost');
-    expect(movements.requests[0]).toEqual({ productId: 3, reason: 'DESTROYED', quantity: 2 });
+    expect(movements.requests[0]).toEqual({
+      productId: 3,
+      reason: 'DESTROYED',
+      quantity: 2,
+      remark: 'EXPIRED'
+    });
+  });
+
+  it('reasonChange_newProductToLost_addsRequiredRemarkControl', async () => {
+    expect(api().form.contains('remark')).toBe(false);
+
+    control('reason').setValue('LOST');
+    await settle();
+
+    expect(api().form.contains('remark')).toBe(true);
+    // required and empty, so a loss cannot be filed before its cause is chosen
+    expect(control('remark').value).toBeNull();
+  });
+
+  it('reasonChange_lostBackToNewProduct_removesRemarkControl', async () => {
+    control('reason').setValue('LOST');
+    await settle();
+
+    control('reason').setValue('NEW_PRODUCT');
+    await settle();
+
+    // removed, not hidden: a lingering control could leak a stale remark into the payload
+    expect(api().form.contains('remark')).toBe(false);
+  });
+
+  it('submit_lostWithoutRemark_isBlocked', async () => {
+    control('reason').setValue('LOST');
+    await settle();
+    control('productId').setValue(3);
+    control('quantity').setValue(2);
+    await settle();
+
+    expect(submitButton()?.disabled).toBe(true);
+    await submitForm();
+
+    expect(movements.requests).toEqual([]);
+  });
+
+  it('submit_lostWithRemark_sendsExactlyTheFourKeys', async () => {
+    control('reason').setValue('LOST');
+    await settle();
+    control('productId').setValue(3);
+    control('quantity').setValue(2);
+    control('remark').setValue('IN_TRANSIT_TO_CUSTOMER');
+    await settle();
+
+    await submitForm();
+
+    expect(movements.requests[0]).toEqual({
+      productId: 3,
+      reason: 'LOST',
+      quantity: 2,
+      remark: 'IN_TRANSIT_TO_CUSTOMER'
+    });
+  });
+
+  it('submit_newProductReason_omitsRemarkKey', async () => {
+    control('productId').setValue(3);
+    control('quantity').setValue(10);
+    control('unitCost').setValue(7.5);
+    await settle();
+
+    await submitForm();
+
+    // the other direction: the key set proves remark is absent, not merely null
+    expect(Object.keys(movements.requests[0]).sort()).toEqual([
+      'productId',
+      'quantity',
+      'reason',
+      'unitCost'
+    ]);
   });
 
   it('submit_success_resetsFormAndNotifies', async () => {
@@ -210,12 +298,14 @@ describe('MovementRecordComponent', () => {
     await settle();
     control('productId').setValue(3);
     control('quantity').setValue(99);
+    control('remark').setValue('INTERNAL');
     await settle();
 
     await submitForm();
 
     expect(notifications.errors).toEqual(['Insufficient stock for product Widget.']);
     expect(control('quantity').value).toBe(99);
+    expect(control('remark').value).toBe('INTERNAL');
   });
 
   it('submit_incompleteForm_isDisabled', () => {

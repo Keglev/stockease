@@ -93,11 +93,17 @@ public class StockMovementService {
                 if (command.unitCost() == null || command.unitCost().signum() <= 0) {
                     throw new InvalidMovementException("NEW_PRODUCT movements require a positive unit cost.");
                 }
+                if (command.remark() != null) {
+                    throw new InvalidMovementException("NEW_PRODUCT movements carry no remark.");
+                }
             }
             case LOST, DESTROYED -> {
                 if (command.invoiceItemId() != null || command.unitCost() != null) {
                     throw new InvalidMovementException(
                             "LOST and DESTROYED movements carry no invoice item or prices.");
+                }
+                if (command.remark() == null) {
+                    throw new InvalidMovementException("LOST and DESTROYED movements require a remark.");
                 }
             }
             default -> {
@@ -107,6 +113,10 @@ public class StockMovementService {
                 if (command.unitCost() != null) {
                     throw new InvalidMovementException(
                             "Unit cost is derived from the invoice item and must not be supplied.");
+                }
+                if (command.remark() != null) {
+                    throw new InvalidMovementException(
+                            "A remark explains a loss and must not be supplied for " + reason + " movements.");
                 }
             }
         }
@@ -156,6 +166,8 @@ public class StockMovementService {
         movement.setReason(reason);
         movement.setQuantity(command.quantity());
         movement.setInvoiceItem(item);
+        // null for every reason but LOST and DESTROYED, which validation has already required it for
+        movement.setRemark(command.remark());
         switch (reason) {
             case PURCHASE -> movement.setUnitCost(item.getUnitPrice());
             case SOLD, RETURN_FROM_CUSTOMER -> movement.setSoldPrice(item.getUnitPrice());

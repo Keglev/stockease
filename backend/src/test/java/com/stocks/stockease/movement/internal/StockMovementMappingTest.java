@@ -42,8 +42,9 @@ class StockMovementMappingTest extends AbstractIntegrationTest {
         productRepository.saveAndFlush(product);
         User user = userRepository.saveAndFlush(new User("mover", "hash", "ROLE_ADMIN"));
 
+        // remark is null: SOLD is not a loss, and the CHECK added in V17 requires it to stay null
         StockMovement movement = new StockMovement(null, product, user, MovementType.DECREASE,
-                MovementReason.SOLD, 2, null, BigDecimal.TEN, null, null);
+                MovementReason.SOLD, 2, null, BigDecimal.TEN, null, null, null);
 
         StockMovement saved = stockMovementRepository.saveAndFlush(movement);
 

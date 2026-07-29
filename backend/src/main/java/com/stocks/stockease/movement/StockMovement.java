@@ -81,6 +81,11 @@ public class StockMovement {
     @Column(name = "unit_cost")
     private BigDecimal unitCost;
 
+    /** Why the stock was lost; set for LOST and DESTROYED only, enforced by a database CHECK. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "movement_remark", length = 32)
+    private MovementRemark remark;
+
     /** Timestamp the row was first persisted, populated by JPA auditing. */
     @CreatedDate
     @Column(nullable = false, updatable = false)

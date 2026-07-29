@@ -847,7 +847,7 @@ export interface components {
             /** @example Laptop */
             name: string;
             /**
-             * @description Stock keeping unit; generated on creation when not supplied
+             * @description Stock keeping unit; assigned by the operator at creation
              * @example SKU-A1B2C3D4
              */
             sku: string;
@@ -1179,6 +1179,13 @@ export interface components {
          * @enum {string}
          */
         MovementReason: "NEW_PRODUCT" | "PURCHASE" | "RETURN_FROM_CUSTOMER" | "SOLD" | "LOST" | "DESTROYED" | "RETURNED_TO_SUPPLIER";
+        /**
+         * @description Why stock was lost or destroyed. One taxonomy serves both reasons: the question has the same
+         *     answers either way, and a shared list keeps the loss report groupable across the pair. The
+         *     value is informational - losses are valued identically whichever remark they carry.
+         * @enum {string}
+         */
+        MovementRemark: "EXPIRED" | "IN_TRANSIT_TO_CUSTOMER" | "INTERNAL" | "FROM_SUPPLIER";
         MovementResponse: {
             /**
              * Format: int64
@@ -1216,6 +1223,8 @@ export interface components {
              * @example 7.5
              */
             unitCost: number | null;
+            /** @description Why the stock was lost; set for LOST and DESTROYED, null for every other reason */
+            remark: components["schemas"]["MovementRemark"] | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
             createdAt: string;
         };
@@ -1239,6 +1248,11 @@ export interface components {
              * @example 7.5
              */
             unitCost?: number | null;
+            /**
+             * @description Conditionally required: LOST and DESTROYED movements must carry a remark explaining the loss, and every other reason must omit it. Rejected with 400 when the pair is inconsistent; a database CHECK enforces the same rule as a backstop.
+             * @example EXPIRED
+             */
+            remark?: components["schemas"]["MovementRemark"] | null;
         };
         RegisterReturnRequest: {
             /**

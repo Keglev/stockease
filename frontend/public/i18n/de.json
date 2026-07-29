@@ -141,6 +141,16 @@
     "quantity": "Menge",
     "unitCost": "Stückkosten",
     "unitCostHint": "Kostenwert je Einheit",
+    "form": {
+      "remark": "Anmerkung",
+      "remarkRequired": "Bitte wählen Sie aus, was mit der Ware geschehen ist.",
+      "remarkOption": {
+        "EXPIRED": "Abgelaufen",
+        "IN_TRANSIT_TO_CUSTOMER": "Beim Transport zum Kunden",
+        "INTERNAL": "Intern",
+        "FROM_SUPPLIER": "Vom Lieferanten"
+      }
+    },
     "submit": "Bewegung erfassen",
     "recorded": "Lagerbewegung wurde erfasst."
   },

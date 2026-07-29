@@ -75,8 +75,20 @@ class StockMovementServiceTest {
         return item;
     }
 
+    /**
+     * Builds a valid-by-default command. LOST and DESTROYED now require a remark, so one is attached
+     * for them here rather than in each test; the remark rules have their own tests below, which pass
+     * the remark explicitly.
+     */
     private static RecordMovementCommand command(MovementReason reason, int quantity, Long itemId, BigDecimal cost) {
-        return new RecordMovementCommand(PRODUCT_ID, reason, quantity, itemId, cost);
+        MovementRemark remark = reason == MovementReason.LOST || reason == MovementReason.DESTROYED
+                ? MovementRemark.INTERNAL
+                : null;
+        return new RecordMovementCommand(PRODUCT_ID, reason, quantity, itemId, cost, remark);
+    }
+
+    private static RecordMovementCommand command(MovementReason reason, MovementRemark remark) {
+        return new RecordMovementCommand(PRODUCT_ID, reason, 2, null, null, remark);
     }
 
     /** Stubs the collaborators an invoice-linked movement needs and returns the linked item. */
@@ -188,6 +200,41 @@ class StockMovementServiceTest {
         assertThat(saved.getSoldPrice()).isNull();
         assertThat(saved.getUnitCost()).isNull();
         assertThat(saved.getInvoiceItem()).isNull();
+    }
+
+    @Test
+    void recordMovement_lostWithRemark_persistsTheRemarkOnTheMovement() {
+        when(productService.adjustQuantity(anyLong(), anyInt())).thenReturn(product());
+
+        stockMovementService.recordMovement(command(MovementReason.LOST, MovementRemark.EXPIRED), user);
+
+        assertThat(savedMovement().getRemark()).isEqualTo(MovementRemark.EXPIRED);
+    }
+
+    @Test
+    void recordMovement_lostWithoutRemark_throwsInvalidMovementException() {
+        assertThatThrownBy(() -> stockMovementService
+                .recordMovement(command(MovementReason.LOST, (MovementRemark) null), user))
+                .isInstanceOf(InvalidMovementException.class)
+                .hasMessage("LOST and DESTROYED movements require a remark.");
+    }
+
+    @Test
+    void recordMovement_destroyedWithoutRemark_throwsInvalidMovementException() {
+        assertThatThrownBy(() -> stockMovementService
+                .recordMovement(command(MovementReason.DESTROYED, (MovementRemark) null), user))
+                .isInstanceOf(InvalidMovementException.class)
+                .hasMessage("LOST and DESTROYED movements require a remark.");
+    }
+
+    @Test
+    void recordMovement_newProductWithRemark_throwsInvalidMovementException() {
+        RecordMovementCommand command = new RecordMovementCommand(
+                PRODUCT_ID, MovementReason.NEW_PRODUCT, 2, null, BigDecimal.TEN, MovementRemark.EXPIRED);
+
+        assertThatThrownBy(() -> stockMovementService.recordMovement(command, user))
+                .isInstanceOf(InvalidMovementException.class)
+                .hasMessage("NEW_PRODUCT movements carry no remark.");
     }
 
     @Test
