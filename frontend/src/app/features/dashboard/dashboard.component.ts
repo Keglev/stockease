@@ -1,16 +1,15 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { map, switchMap, timer } from 'rxjs';
+import { map } from 'rxjs';
 
 import { DueDateBucket, InvoiceDueSummary, ProductResponse } from '../../core/api/api-models';
-import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
 import { ChartSlice, topNWithRemainder } from '../../shared/chart/chart-data';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
@@ -19,8 +18,6 @@ import { ProductService } from '../products/product.service';
 // pages that own it are the next feature to build on it. The shared positive-price validator
 // set the same precedent.
 import { ReportService } from '../reports/report.service';
-
-const HEALTH_POLL_MS = 30_000;
 
 /** Which half of a card is on screen; the cards open on their chart, the at-a-glance reading. */
 export type CardView = 'chart' | 'table';
@@ -32,10 +29,12 @@ const CARD_VIEWS: readonly CardView[] = ['chart', 'table'];
 const DUE_LIST_LIMIT = 8;
 
 /**
- * First screen after login: headline counts, a low-stock alert, two report visualizations and
- * the API health card. Everything but health loads on navigation and on the refresh button,
- * because the backend offers no push channel and polling every figure would cost far more than
- * the freshness is worth.
+ * First screen after login: headline counts, a low-stock alert and two report visualizations.
+ * Everything loads on navigation and on the refresh button, because the backend offers no push
+ * channel and polling every figure would cost far more than the freshness is worth.
+ *
+ * API health is deliberately absent: the footer carries the same dot and latency on every screen,
+ * so a card here polled a second time for a signal the operator could already see.
  */
 @Component({
   selector: 'app-dashboard',
@@ -55,7 +54,6 @@ const DUE_LIST_LIMIT = 8;
 export class DashboardComponent implements OnInit {
   private readonly reports = inject(ReportService);
   private readonly products = inject(ProductService);
-  private readonly health = inject(HealthService);
   private readonly breakpoints = inject(BreakpointObserver);
   private readonly translate = inject(TranslateService);
 
@@ -97,24 +95,7 @@ export class DashboardComponent implements OnInit {
   // testing the array would re-request on every switch back to a list that is correctly empty.
   private dueSoonLoaded = false;
 
-  protected readonly probe = signal<HealthProbe | null>(null);
-  protected readonly lastChecked = signal<Date | null>(null);
-
   protected readonly error = signal<string | null>(null);
-
-  constructor() {
-    // Health is the one figure worth polling: it is cheap, unauthenticated, and its whole value
-    // is being current. The refresh button deliberately leaves it alone - it has this cadence.
-    timer(0, HEALTH_POLL_MS)
-      .pipe(
-        switchMap(() => this.health.check()),
-        takeUntilDestroyed()
-      )
-      .subscribe((probe) => {
-        this.probe.set(probe);
-        this.lastChecked.set(new Date());
-      });
-  }
 
   ngOnInit(): void {
     this.load();
@@ -143,7 +124,6 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  /** Reloads every figure except health, which runs on its own timer. */
   protected refresh(): void {
     this.load();
   }

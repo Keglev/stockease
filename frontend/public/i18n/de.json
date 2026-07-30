@@ -368,13 +368,6 @@
       "profitByProduct": "Gewinn je Produkt",
       "dueDates": "Anstehende Fälligkeiten"
     },
-    "health": {
-      "title": "API-Status",
-      "up": "Erreichbar",
-      "down": "Nicht erreichbar",
-      "latency": "API-Antwortzeit: {{ms}} ms",
-      "lastChecked": "Zuletzt geprüft um {{time}}"
-    },
     "due": {
       "viewAll": "Alle Fälligkeiten"
     }

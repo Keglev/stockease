@@ -89,5 +89,17 @@ html {
   .mat-button-toggle-checked .mat-button-toggle-label-content {
     font-weight: 500;
   }
+
+  // Material ships no hover state on tab headers, so a row of tabs gave no feedback about what was
+  // clickable - the same gap the sidebar nav had before it got one. Same token and same transition
+  // as that fix, because the two are the app's two navigation surfaces and should answer alike.
+  // Only the background moves: the active tab's indicator and label colour are Material's and stay.
+  .mat-mdc-tab-header .mat-mdc-tab {
+    transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mat-mdc-tab-header .mat-mdc-tab:hover {
+    background-color: var(--mat-sys-surface-container-highest);
+  }
 }
 /* You can add global styles to this file, and also import other style files */

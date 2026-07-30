@@ -56,6 +56,20 @@
   justify-content: center;
 }
 
+// The two demo entry points take the same tertiary accent as the shell's DEMO badge, so entering
+// the demo and the mark that says you are in it read as one thing. Without this the filled button
+// is primary - indistinguishable from the ordinary login CTA directly below it, which is the one
+// distinction this section exists to draw.
+.demo-admin {
+  --mat-button-filled-container-color: var(--mat-sys-tertiary);
+  --mat-button-filled-label-text-color: var(--mat-sys-on-tertiary);
+}
+
+.demo-user {
+  --mat-button-outlined-label-text-color: var(--mat-sys-tertiary);
+  --mat-button-outlined-outline-color: var(--mat-sys-tertiary);
+}
+
 .landing-demo-notice {
   margin: 0;
   color: var(--mat-sys-on-surface-variant);
