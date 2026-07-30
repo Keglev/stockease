@@ -152,6 +152,8 @@ class ReportServiceStub {
   calls: string[] = [];
   /** Every from/to pair the page asked for, so the period presets can be asserted exactly. */
   cashFlowRanges: (string | undefined)[][] = [];
+  /** The same record for each profit endpoint, keyed by method so one period covers all three. */
+  profitRanges: Record<string, (string | undefined)[][]> = { products: [], suppliers: [], detail: [] };
   detail: ProductProfitReport = PROFIT[0];
 
   cashFlow(from?: string, to?: string): Observable<CashFlowReport> {
@@ -160,18 +162,21 @@ class ReportServiceStub {
     return of(this.cashFlowPayload);
   }
 
-  profitProducts(): Observable<ProductProfitReport[]> {
+  profitProducts(from?: string, to?: string): Observable<ProductProfitReport[]> {
     this.calls.push('profitProducts');
+    this.profitRanges['products'].push([from, to]);
     return of(this.profitPayload);
   }
 
-  profitSuppliers(): Observable<SupplierProfitReport[]> {
+  profitSuppliers(from?: string, to?: string): Observable<SupplierProfitReport[]> {
     this.calls.push('profitSuppliers');
+    this.profitRanges['suppliers'].push([from, to]);
     return of(SUPPLIERS);
   }
 
-  profitProductDetail(id: number): Observable<ProductProfitReport> {
+  profitProductDetail(id: number, from?: string, to?: string): Observable<ProductProfitReport> {
     this.calls.push(`profitProductDetail:${id}`);
+    this.profitRanges['detail'].push([from, to]);
     return of(this.detail);
   }
 
@@ -442,6 +447,50 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     await activateTab(1);
     expect(reports.cashFlowRanges).toHaveLength(1);
   });
+
+  it('profitTab_defaultPreset_requestsNoParams', async () => {
+    render();
+    await fixture.whenStable();
+
+    // 'all' is the default, and an open window is no window: neither call carries bounds.
+    expect(reports.profitRanges['products']).toEqual([[undefined, undefined]]);
+    expect(reports.profitRanges['suppliers']).toEqual([[undefined, undefined]]);
+  });
+
+  it('profitTab_presetSelected_refetchesBothCallsWithComputedRange', async () => {
+    vi.setSystemTime(new Date(2026, 2, 15, 12));
+    render();
+
+    await selectProfitPeriod('d30');
+
+    // both endpoints answer the same window - a filtered chart beside an unfiltered supplier
+    // table would be worse than no filter at all
+    expect(reports.profitRanges['products'].at(-1)).toEqual(['2026-02-13', '2026-03-15']);
+    expect(reports.profitRanges['suppliers'].at(-1)).toEqual(['2026-02-13', '2026-03-15']);
+  });
+
+  it('profitTab_rowClickDuringActivePeriod_passesPeriodToDetail', async () => {
+    vi.setSystemTime(new Date(2026, 2, 15, 12));
+    render();
+    await selectProfitPeriod('d30');
+    await showTable(0);
+
+    host().querySelector<HTMLElement>('.profit-row')?.click();
+
+    // the dialog must not contradict the table row that opened it
+    expect(reports.profitRanges['detail'].at(-1)).toEqual(['2026-02-13', '2026-03-15']);
+  });
+
+  /** Clicks a profit period preset through the component, the way the toggle group does. */
+  async function selectProfitPeriod(period: string): Promise<void> {
+    const page = fixture.componentInstance as unknown as {
+      setProfitPeriod: (value: string) => void;
+    };
+    page.setProfitPeriod(period);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   it('cashFlowTab_presetSelected_refetchesWithComputedRange', async () => {
     vi.setSystemTime(new Date(2026, 2, 15, 12));

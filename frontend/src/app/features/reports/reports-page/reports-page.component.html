@@ -17,6 +17,20 @@
 <mat-tab-group [selectedIndex]="selectedTab()" (selectedIndexChange)="activate($event)">
   <mat-tab [label]="'reports.tabs.profit' | translate">
     <div class="tab-body">
+      <!-- Placed and styled as the cash-flow tab's, so the same control reads the same way on
+           both. Each one re-queries, because the window is a server-side filter. -->
+      <mat-button-toggle-group
+        class="period-toggle"
+        hideSingleSelectionIndicator
+        [value]="profitPeriod()"
+        (valueChange)="setProfitPeriod($event)"
+      >
+        <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
+      </mat-button-toggle-group>
+
       <mat-button-toggle-group
         class="view-toggle"
         hideSingleSelectionIndicator

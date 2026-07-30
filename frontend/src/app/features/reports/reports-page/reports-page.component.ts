@@ -41,12 +41,16 @@ const TAB_COUNT = 5;
 /** Which half of a tab is on screen; the two never share the vertical space any more. */
 export type ReportView = 'chart' | 'table';
 
-/** The windows the cash-flow tab offers over payment dates. */
-export type CashFlowPeriod = 'd30' | 'd90' | 'year' | 'all';
+/**
+ * The windows the period toggles offer. One type for both tabs: they present the same four
+ * choices, and only the date each tab's endpoint compares against differs - payment dates for
+ * cash flow, booking dates for profit.
+ */
+export type ReportPeriod = 'd30' | 'd90' | 'year' | 'all';
 
 const PERIOD_DAYS: Record<'d30' | 'd90', number> = { d30: 30, d90: 90 };
 
-const PERIODS: readonly CashFlowPeriod[] = ['d30', 'd90', 'year', 'all'];
+const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'year', 'all'];
 
 /**
  * Four-tab detail view over the reporting endpoints, each tab switching between its chart and its
@@ -105,7 +109,10 @@ export class ReportsPageComponent implements OnInit {
   protected readonly cashFlow = signal<CashFlowReport | null>(null);
 
   // Presets rather than a date picker is a deliberate scope decision; a custom range is backlog.
-  protected readonly cashFlowPeriod = signal<CashFlowPeriod>('all');
+  // One signal per tab rather than one shared: the two answer different questions, and a period
+  // chosen for cash flow is not a period the reader asked profit for.
+  protected readonly cashFlowPeriod = signal<ReportPeriod>('all');
+  protected readonly profitPeriod = signal<ReportPeriod>('all');
 
   protected readonly marginOption = signal<ChartOption | null>(null);
   protected readonly profitOption = signal<ChartOption | null>(null);
@@ -191,8 +198,19 @@ export class ReportsPageComponent implements OnInit {
     );
   }
 
+  /** Switches the profit window and refetches both profit queries, which share the one period. */
+  protected setProfitPeriod(period: ReportPeriod): void {
+    // Same two guards as the cash-flow toggle: the group emits once with no value while it is
+    // being created, and re-picking the current preset is no reason to go back to the server.
+    if (!PERIODS.includes(period) || period === this.profitPeriod()) {
+      return;
+    }
+    this.profitPeriod.set(period);
+    this.loadProfit();
+  }
+
   /** Switches the cash-flow window and refetches, since the period is a server-side filter. */
-  protected setCashFlowPeriod(period: CashFlowPeriod): void {
+  protected setCashFlowPeriod(period: ReportPeriod): void {
     // Two reasons to ignore an emission. The group fires once with no value at all while it is
     // being created, and these tab bodies are built eagerly, so an unguarded handler would query
     // cash flow - over a nonsense window - before the tab was ever opened. Re-picking the current
@@ -231,7 +249,10 @@ export class ReportsPageComponent implements OnInit {
 
   /** Fetches the row's own detail before opening the dialog, which is a pure presenter. */
   protected openDetail(row: ProductProfitReport): void {
-    this.reports.profitProductDetail(row.productId).subscribe({
+    // The tab's active period, so the dialog never contradicts the table row that opened it.
+    const range = periodRange(this.profitPeriod());
+
+    this.reports.profitProductDetail(row.productId, range.from, range.to).subscribe({
       next: (detail) => this.dialog.open(ProfitDetailDialogComponent, { data: detail }),
       error: (err: Error) => this.error.set(err.message)
     });
@@ -256,9 +277,17 @@ export class ReportsPageComponent implements OnInit {
   }
 
   private loadProfit(): void {
-    this.reports.profitProducts().subscribe({
+    this.error.set(null);
+    this.loading.set(true);
+    // Both queries take the same window: a chart filtered to a period beside a supplier table that
+    // was not would be worse than no filter at all.
+    const range = periodRange(this.profitPeriod());
+
+    this.reports.profitProducts(range.from, range.to).subscribe({
       next: (rows) => {
         this.profitRows.set(rows);
+        // The gauge is derived from these rows rather than fetched, so the period reaches it with
+        // no work of its own - refetching the rows is what re-answers it for the new window.
         this.marginOption.set(toMarginOption(rows));
         // Translated at build time: chart options are snapshots, as everywhere else on this page.
         this.profitOption.set(toProfitOption(rows, this.otherLabel()));
@@ -267,7 +296,7 @@ export class ReportsPageComponent implements OnInit {
       error: (err: Error) => this.fail(err)
     });
 
-    this.reports.profitSuppliers().subscribe({
+    this.reports.profitSuppliers(range.from, range.to).subscribe({
       next: (rows) => this.supplierRows.set(rows),
       error: (err: Error) => this.fail(err)
     });
@@ -386,11 +415,12 @@ function toMarginOption(rows: ProductProfitReport[]): ChartOption | null {
 }
 
 /**
- * Turns a preset into the ISO bounds the endpoint takes, or no bounds at all for the open window.
- * Computed from the browser's date because the presets describe the operator's calendar, and the
- * backend compares against the payment date rather than a timestamp.
+ * Turns a preset into the ISO bounds the endpoints take, or no bounds at all for the open window.
+ * Computed from the browser's date because the presets describe the operator's calendar, and both
+ * backends compare against a date rather than a timestamp. Shared by the profit and cash-flow
+ * tabs: two copies of this arithmetic would be two chances to drift apart.
  */
-function periodRange(period: CashFlowPeriod): { from?: string; to?: string } {
+function periodRange(period: ReportPeriod): { from?: string; to?: string } {
   if (period === 'all') {
     return {};
   }

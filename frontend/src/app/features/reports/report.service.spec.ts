@@ -204,6 +204,70 @@ describe('ReportService', () => {
     controller.verify();
   });
 
+  it('profitProducts_withoutPeriod_requestsNoParams', () => {
+    service.profitProducts().subscribe();
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/profit/products`);
+    // An absent bound stays out of the query entirely, as on every other period endpoint.
+    expect(request.request.params.keys()).toEqual([]);
+    request.flush(PROFIT);
+
+    controller.verify();
+  });
+
+  it('profitProducts_withPeriod_serializesFromAndTo', () => {
+    service.profitProducts('2026-01-01', '2026-03-31').subscribe();
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/profit/products`);
+    expect(request.request.params.get('from')).toBe('2026-01-01');
+    expect(request.request.params.get('to')).toBe('2026-03-31');
+    request.flush(PROFIT);
+
+    controller.verify();
+  });
+
+  it('profitSuppliers_withoutPeriod_requestsNoParams', () => {
+    service.profitSuppliers().subscribe();
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/profit/suppliers`);
+    expect(request.request.params.keys()).toEqual([]);
+    request.flush(SUPPLIERS);
+
+    controller.verify();
+  });
+
+  it('profitSuppliers_withPeriod_serializesFromAndTo', () => {
+    service.profitSuppliers('2026-01-01', '2026-03-31').subscribe();
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/profit/suppliers`);
+    expect(request.request.params.get('from')).toBe('2026-01-01');
+    expect(request.request.params.get('to')).toBe('2026-03-31');
+    request.flush(SUPPLIERS);
+
+    controller.verify();
+  });
+
+  it('profitProductDetail_withoutPeriod_requestsNoParams', () => {
+    service.profitProductDetail(3).subscribe();
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/profit/products/3`);
+    expect(request.request.params.keys()).toEqual([]);
+    request.flush({ success: true, message: 'ok', data: PROFIT[0] });
+
+    controller.verify();
+  });
+
+  it('profitProductDetail_withPeriod_serializesFromAndTo', () => {
+    service.profitProductDetail(3, '2026-01-01', '2026-03-31').subscribe();
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/profit/products/3`);
+    expect(request.request.params.get('from')).toBe('2026-01-01');
+    expect(request.request.params.get('to')).toBe('2026-03-31');
+    request.flush({ success: true, message: 'ok', data: PROFIT[0] });
+
+    controller.verify();
+  });
+
   it('getCashFlow_withoutPeriod_requestsNoParams', () => {
     let emitted: CashFlowReport | undefined;
     service.cashFlow().subscribe((report) => (emitted = report));

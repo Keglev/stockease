@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.8.1
+  version: 2.9.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
