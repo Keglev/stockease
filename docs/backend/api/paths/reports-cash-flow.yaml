@@ -1,0 +1,69 @@
+get:
+  summary: Money in and out, on a payment basis
+  description: |
+    Cash flow over an optional payment window: inflow from paid SALE invoices, outflow from paid
+    PURCHASE invoices, and their difference, overall and per product.
+
+    Payment basis, not booking basis: an invoice counts on the date it was **paid**. A booked but
+    unpaid invoice is invisible here whatever the window, which is what separates this report from
+    the profit report (ADR 025).
+
+    Each line contributes its quantity net of what was returned, valued at the line's own price
+    snapshot, so a return reduces the flow of the invoice it belongs to and is realized on that
+    invoice's payment date.
+
+    Products that moved no money in the window are absent rather than listed with zeros - unlike the
+    profit report, this one lists money that moved. Soft-deleted products stay listed and flagged.
+  operationId: cashFlow
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: First payment date to count; omit for no lower bound
+      example: '2026-01-01'
+    - name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Last payment date to count, inclusive; omit for no upper bound
+      example: '2026-03-31'
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CashFlowReport'
+          example:
+            inflow: 80.00
+            outflow: 30.00
+            net: 50.00
+            products:
+              - productId: 3
+                name: Widget
+                sku: SKU-3
+                deleted: false
+                inflow: 80.00
+                outflow: 30.00
+                net: 50.00
+    '400':
+      description: The start of the period is after its end
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: The start of the period must not be after its end.
+            data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

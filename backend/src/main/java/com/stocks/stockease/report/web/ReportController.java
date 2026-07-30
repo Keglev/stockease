@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.report.CashFlowReport;
 import com.stocks.stockease.report.CustomerSummary;
 import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
@@ -34,10 +35,10 @@ import lombok.RequiredArgsConstructor;
  * response records would duplicate them without adding isolation. Every report is read-only and
  * available to both roles.
  *
- * <p>Covers profit per product and per supplier, stock status, losses, due-date buckets, due-soon and
- * overdue listings, and the per-customer purchase summary. That last one sits under this path rather
- * than under the customer API because the aggregation belongs to this module, even though what it
- * describes is a customer.
+ * <p>Covers profit per product and per supplier, cash flow, stock status, losses, due-date buckets,
+ * due-soon and overdue listings, and the per-customer purchase summary. That last one sits under this
+ * path rather than under the customer API because the aggregation belongs to this module, even though
+ * what it describes is a customer.
  */
 @RestController
 @RequestMapping("/api/reports")
@@ -85,6 +86,23 @@ public class ReportController {
         ProductProfitReport report = reportingService.profitForProduct(id, from, to)
                 .orElseThrow(() -> new EntityNotFoundException("No profit report for product with ID " + id + "."));
         return ResponseEntity.ok(new ApiResponse<>(true, "Product profit fetched successfully", report));
+    }
+
+    /**
+     * Returns money in and out over an optional payment period, overall and per product.
+     *
+     * @param from first payment date to count, or {@code null} for no lower bound
+     * @param to last payment date to count, or {@code null} for no upper bound
+     * @return the totals and the per-product breakdown
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     */
+    @GetMapping("/cash-flow")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public CashFlowReport cashFlow(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+        validatePeriod(from, to);
+        return reportingService.cashFlow(from, to);
     }
 
     /** Rejects a period whose bounds are the wrong way round; either bound alone is always valid. */

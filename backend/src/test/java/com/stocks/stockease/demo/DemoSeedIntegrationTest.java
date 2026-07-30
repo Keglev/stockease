@@ -84,6 +84,17 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void cashFlow_afterSeeding_reportsMoneyInBothDirections() throws Exception {
+        // the settled invoices are the whole point of seeding them: an all-unpaid baseline would leave
+        // this report empty and prove nothing about it
+        mockMvc.perform(get("/api/reports/cash-flow"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.inflow", Matchers.greaterThan(0.0)))
+                .andExpect(jsonPath("$.outflow", Matchers.greaterThan(0.0)))
+                .andExpect(jsonPath("$.products", Matchers.hasSize(Matchers.greaterThanOrEqualTo(4))));
+    }
+
+    @Test
     void customerSummary_afterSeeding_reportsBookedSales() throws Exception {
         Long customerId = jdbcTemplate.queryForObject("SELECT MIN(id) FROM customer", Long.class);
 
@@ -103,9 +114,9 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
         assertThat(count("product")).isEqualTo(12);
         assertThat(count("supplier")).isEqualTo(5);
         assertThat(count("customer")).isEqualTo(5);
-        // 14, not 13: the copier paper's stock used to come from an opening-balance movement and now
-        // needs a closed purchase invoice of its own (ADR 021)
-        assertThat(count("invoice")).isEqualTo(14);
+        // 14 carried the baseline before the cash-flow slice; the four settled invoices it added -
+        // two purchases and two sales - are what give that report money in both directions (ADR 025)
+        assertThat(count("invoice")).isEqualTo(18);
     }
 
     @Test
@@ -121,7 +132,7 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
         List<String> numbers = jdbcTemplate.queryForList(
                 "SELECT invoice_number FROM invoice", String.class);
 
-        assertThat(numbers).hasSize(14).doesNotContainNull().doesNotHaveDuplicates();
+        assertThat(numbers).hasSize(18).doesNotContainNull().doesNotHaveDuplicates();
         assertThat(numbers).allSatisfy(number -> assertThat(number).isNotBlank());
     }
 

@@ -36,5 +36,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 022 - Invoice Numbers Are Operator-Assigned](022-invoice-numbers.md) - **[Cross-cutting]**
 - [ADR 023 - Client-Side Chart Aggregation and CSV Export Conventions](023-chart-aggregation-and-csv.md) - **[Frontend]**
 - [ADR 024 - Gross Profit as Cost of Goods Sold, Captured at Sale](024-profit-cogs.md) - **[Cross-cutting]**
+- [ADR 025 - Cash Flow Report on a Payment Basis](025-cash-flow-payment-basis.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

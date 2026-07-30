@@ -91,6 +91,13 @@ public class ReportingService {
             rs.getLong("bought_units"), rs.getBigDecimal("bought_value"), rs.getLong("returned_units"),
             rs.getBigDecimal("returned_value"));
 
+    private static final RowMapper<CashFlowProductRow> CASH_FLOW_MAPPER = (rs, rowNum) -> {
+        BigDecimal inflow = rs.getBigDecimal("inflow");
+        BigDecimal outflow = rs.getBigDecimal("outflow");
+        return new CashFlowProductRow(rs.getLong("id"), rs.getString("name"), rs.getString("sku"),
+                rs.getBoolean("deleted"), inflow, outflow, inflow.subtract(outflow));
+    };
+
     /** An invoice naming neither supplier nor customer is an anonymous cash sale. */
     private static String counterparty(String name) {
         return name == null ? CASH_SALE : name;
@@ -327,5 +334,58 @@ public class ReportingService {
                 ORDER BY i.due_date
                 """;
         return jdbcClient.sql(sql).query(OVERDUE_MAPPER).list();
+    }
+
+    /**
+     * Returns money in and out over an optional payment period, overall and per product.
+     *
+     * <p>Payment basis: an invoice counts on the date it was paid, so booked-but-unpaid invoices are
+     * invisible here whatever the period. Each line contributes its quantity net of returns at the
+     * line's own price snapshot.
+     *
+     * @param from first payment date to count, or {@code null} for no lower bound
+     * @param to last payment date to count, or {@code null} for no upper bound
+     * @return the totals and the per-product rows, ordered by net descending
+     */
+    public CashFlowReport cashFlow(LocalDate from, LocalDate to) {
+        // Unlike the profit report this uses plain WHERE rather than a JOIN predicate: unpaid invoices
+        // are excluded by the report's own definition, so there is no zero row to preserve. A product
+        // that moved no money in the window is simply absent - a cash-flow report lists money that
+        // moved, and padding it with zeros would invite reading "nothing happened" as "nothing exists".
+        String sql = """
+                SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,
+                  COALESCE(SUM(CASE WHEN i.invoice_type = 'SALE'
+                                    THEN (ii.quantity - ii.returned_qty) * ii.unit_price
+                                    ELSE 0 END), 0) AS inflow,
+                  COALESCE(SUM(CASE WHEN i.invoice_type = 'PURCHASE'
+                                    THEN (ii.quantity - ii.returned_qty) * ii.unit_price
+                                    ELSE 0 END), 0) AS outflow
+                FROM invoice_item ii
+                JOIN invoice i ON i.id = ii.invoice_id
+                JOIN product p ON p.id = ii.product_id
+                WHERE i.paid_at IS NOT NULL AND i.deleted_at IS NULL
+                  AND (CAST(:from AS date) IS NULL OR i.paid_at >= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR i.paid_at < CAST(:to AS date) + INTERVAL '1 day')
+                GROUP BY p.id, p.name, p.sku, p.deleted_at
+                ORDER BY (COALESCE(SUM(CASE WHEN i.invoice_type = 'SALE'
+                                            THEN (ii.quantity - ii.returned_qty) * ii.unit_price
+                                            ELSE 0 END), 0)
+                        - COALESCE(SUM(CASE WHEN i.invoice_type = 'PURCHASE'
+                                            THEN (ii.quantity - ii.returned_qty) * ii.unit_price
+                                            ELSE 0 END), 0)) DESC, p.id
+                """;
+        List<CashFlowProductRow> products = jdbcClient.sql(sql)
+                .param("from", from)
+                .param("to", to)
+                .query(CASH_FLOW_MAPPER)
+                .list();
+
+        // Summed from the rows rather than fetched by a second aggregate query: every invoice line
+        // names a product, so the rows already account for every cent the query matched.
+        BigDecimal inflow = products.stream().map(CashFlowProductRow::inflow)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal outflow = products.stream().map(CashFlowProductRow::outflow)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new CashFlowReport(inflow, outflow, inflow.subtract(outflow), products);
     }
 }
