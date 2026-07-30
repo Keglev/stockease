@@ -51,12 +51,12 @@ StockEase,com.stocks.stockease.movement,MovementType,0,15,0,0,0,3,0,1,0,1
 StockEase,com.stocks.stockease.customer,CustomerService,0,66,0,0,0,14,0,5,0,5
 StockEase,com.stocks.stockease.customer,CustomerDeletedEvent,0,9,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,ProductProfitReport,0,24,0,0,0,1,0,1,0,1
-StockEase,com.stocks.stockease.report,InvoiceDueSummary,0,21,0,0,0,1,0,1,0,1
+StockEase,com.stocks.stockease.report,InvoiceDueSummary,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,CustomerSummary,0,27,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,LossReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,DueDateBucket,0,15,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,SupplierProfitReport,0,18,0,0,0,1,0,1,0,1
-StockEase,com.stocks.stockease.report,ReportingService,0,317,0,2,0,48,0,20,0,19
+StockEase,com.stocks.stockease.report,ReportingService,0,323,0,2,0,49,0,20,0,19
 StockEase,com.stocks.stockease.report,StockStatusReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice.internal,OpenInvoiceDeletionVeto,0,52,0,8,0,14,0,7,0,3
 StockEase,com.stocks.stockease.security,UserService,0,5,0,0,0,1,0,1,0,1

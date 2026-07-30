@@ -7,13 +7,14 @@ import java.time.LocalDate;
  * One unpaid invoice with what is still owed on it.
  *
  * @param invoiceId invoice identifier
+ * @param invoiceNumber operator-assigned business identifier
  * @param invoiceType {@code PURCHASE} or {@code SALE} as a plain string
  * @param counterparty supplier or customer name, or {@code Cash sale} when the invoice names neither
  * @param dueDate the date the invoice falls due
  * @param outstandingValue line values net of returned quantities
  * @param daysOverdue days past the due date, or {@code null} when the report does not compute it
  */
-<span class="fc" id="L16">public record InvoiceDueSummary(Long invoiceId, String invoiceType, String counterparty, LocalDate dueDate,</span>
-        BigDecimal outstandingValue, Long daysOverdue) {
+<span class="fc" id="L17">public record InvoiceDueSummary(Long invoiceId, String invoiceNumber, String invoiceType, String counterparty,</span>
+        LocalDate dueDate, BigDecimal outstandingValue, Long daysOverdue) {
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
