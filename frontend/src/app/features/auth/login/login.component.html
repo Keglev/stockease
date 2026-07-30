@@ -1,71 +1,82 @@
 <div class="login-page">
-  <mat-card class="login-card">
-    <mat-card-header class="login-header">
-      <mat-card-title>
-        {{ 'login.title' | translate: { app: 'common.appName' | translate } }}
-      </mat-card-title>
-      <app-language-toggle />
-      <app-theme-toggle />
-    </mat-card-header>
+  <!-- Page-level rather than inside the card, matching the landing and logout pages: sharing the
+       card header with the title left the title wrapping around the two toggles at card width. -->
+  <header class="login-page-header">
+    <app-language-toggle />
+    <app-theme-toggle />
+  </header>
 
-    <mat-card-content>
-      @if (sessionExpired) {
-        <p class="login-notice" role="status">{{ 'login.sessionExpired' | translate }}</p>
-      }
+  <main class="login-content">
+    <mat-card class="login-card">
+      <mat-card-header class="login-header">
+        <mat-card-title>
+          {{ 'login.title' | translate: { app: 'common.appName' | translate } }}
+        </mat-card-title>
+      </mat-card-header>
 
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'login.username' | translate }}</mat-label>
-          <input matInput formControlName="username" autocomplete="username" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'login.password' | translate }}</mat-label>
-          <input
-            matInput
-            [type]="passwordVisible() ? 'text' : 'password'"
-            formControlName="password"
-            autocomplete="current-password"
-          />
-          <!-- type="button" is load-bearing: the default inside a form is submit, so without it
-               revealing the password would post the form. Icon and label name the ACTION, as on
-               the theme toggle: while the password is masked the button offers to show it. -->
-          <button
-            matIconButton
-            matSuffix
-            type="button"
-            class="password-toggle"
-            [attr.aria-pressed]="passwordVisible()"
-            [attr.aria-label]="
-              (passwordVisible() ? 'login.hidePassword' : 'login.showPassword') | translate
-            "
-            [title]="(passwordVisible() ? 'login.hidePassword' : 'login.showPassword') | translate"
-            (click)="togglePasswordVisibility()"
-          >
-            <mat-icon>{{ passwordVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-        </mat-form-field>
-
-        @if (errorKey(); as key) {
-          <p class="login-error" role="alert">{{ key | translate }}</p>
-        } @else if (errorMessage(); as message) {
-          <!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
-          <p class="login-error" role="alert">{{ message }}</p>
+      <mat-card-content>
+        @if (sessionExpired) {
+          <p class="login-notice" role="status">{{ 'login.sessionExpired' | translate }}</p>
         }
 
-        <button matButton="filled" type="submit" [disabled]="pending()">
-          {{ (pending() ? 'login.submitting' : 'login.submit') | translate }}
-        </button>
-      </form>
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'login.username' | translate }}</mat-label>
+            <input matInput formControlName="username" autocomplete="username" />
+          </mat-form-field>
 
-      <!-- Outside the form and deliberately not filled: this is the way out for a visitor who
-           came here for the demo buttons, so it must not compete with the submit. -->
-      <div class="login-back">
-        <a matButton routerLink="/" class="login-back-link">
-          <mat-icon>arrow_back</mat-icon>
-          {{ 'login.backToLanding' | translate }}
-        </a>
-      </div>
-    </mat-card-content>
-  </mat-card>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'login.password' | translate }}</mat-label>
+            <input
+              matInput
+              [type]="passwordVisible() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+            />
+            <!-- type="button" is load-bearing: the default inside a form is submit, so without it
+                 revealing the password would post the form. Icon and label name the ACTION, as on
+                 the theme toggle: while the password is masked the button offers to show it. -->
+            <button
+              matIconButton
+              matSuffix
+              type="button"
+              class="password-toggle"
+              [attr.aria-pressed]="passwordVisible()"
+              [attr.aria-label]="
+                (passwordVisible() ? 'login.hidePassword' : 'login.showPassword') | translate
+              "
+              [title]="
+                (passwordVisible() ? 'login.hidePassword' : 'login.showPassword') | translate
+              "
+              (click)="togglePasswordVisibility()"
+            >
+              <mat-icon>{{ passwordVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </mat-form-field>
+
+          @if (errorKey(); as key) {
+            <p class="login-error" role="alert">{{ key | translate }}</p>
+          } @else if (errorMessage(); as message) {
+            <!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
+            <p class="login-error" role="alert">{{ message }}</p>
+          }
+
+          <button matButton="filled" type="submit" [disabled]="pending()">
+            {{ (pending() ? 'login.submitting' : 'login.submit') | translate }}
+          </button>
+        </form>
+
+        <!-- Outside the form and deliberately not filled: this is the way out for a visitor who
+             came here for the demo buttons, so it must not compete with the submit. -->
+        <div class="login-back">
+          <a matButton routerLink="/" class="login-back-link">
+            <mat-icon>arrow_back</mat-icon>
+            {{ 'login.backToLanding' | translate }}
+          </a>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </main>
+
+  <app-footer />
 </div>

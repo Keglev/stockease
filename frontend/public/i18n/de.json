@@ -17,9 +17,7 @@
       "tryUser": "Als Benutzer testen",
       "resetNotice": "Demodaten - werden nächtlich um 03:00 UTC zurückgesetzt"
     },
-    "loginCta": "Anmelden",
-    "repository": "GitHub-Repository",
-    "documentation": "Dokumentation"
+    "loginCta": "Anmelden"
   },
   "footer": {
     "tagline": "Bestandsverwaltung - Demo",

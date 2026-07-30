@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Bestandskontrolle",
+    "appName": "StockEase",
     "language": "Language",
     "themeLight": "Light mode",
     "themeDark": "Dark mode",
@@ -17,9 +17,7 @@
       "tryUser": "Try as User",
       "resetNotice": "Demo data - resets nightly at 03:00 UTC"
     },
-    "loginCta": "Login",
-    "repository": "GitHub repository",
-    "documentation": "Documentation"
+    "loginCta": "Login"
   },
   "footer": {
     "tagline": "Inventory management demo",
