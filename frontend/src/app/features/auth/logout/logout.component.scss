@@ -23,6 +23,30 @@
   text-align: center;
 }
 
+// Material lays the header out as a row for the avatar/title/subtitle trio; with a title alone it
+// still needs centring to sit over a centred card.
+.logout-card-header {
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+// The landing's section titles set the scale for the public pages, and a visitor arrives here
+// straight from one of them. A card headline at Material's default title-large would read as a
+// different product than the page it followed.
+mat-card-title {
+  font: var(--mat-sys-title-medium);
+}
+
 .logout-message {
   margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// Same rhythm as the landing's demo actions, down to the wrap: at 360px the two labels do not
+// fit on one line and stack instead of shrinking.
+.logout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
 }

@@ -39,7 +39,8 @@ describe('LoginComponent', () => {
               showPassword: 'Show password',
               hidePassword: 'Hide password',
               invalidCredentials: 'Invalid username or password',
-              sessionExpired: 'Your session has expired. Please log in again.'
+              sessionExpired: 'Your session has expired. Please log in again.',
+              backToLanding: 'Back to start page'
             }
           }
         })
@@ -49,6 +50,16 @@ describe('LoginComponent', () => {
     fixture = TestBed.createComponent(LoginComponent);
     controller = TestBed.inject(HttpTestingController);
     await fixture.whenStable();
+  });
+
+  it('render_default_showsBackToLandingLink', () => {
+    const back = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '.login-back-link'
+    );
+
+    // The way out for a visitor who came here but wanted the demo buttons.
+    expect(back?.getAttribute('href')).toBe('/');
+    expect(back?.textContent).toContain('Back to start page');
   });
 
   it('submit_rejectedCredentials_rendersTranslatedMessageNotTheBackendText', async () => {

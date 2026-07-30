@@ -29,8 +29,10 @@
     "apiLatency": "API {{ms}} ms"
   },
   "logoutPage": {
+    "title": "Abgemeldet",
     "message": "Sie wurden abgemeldet.",
-    "backToLanding": "Zur Startseite"
+    "backToLanding": "Zur Startseite",
+    "loginAgain": "Erneut anmelden"
   },
   "login": {
     "title": "Bei {{app}} anmelden",
@@ -40,6 +42,7 @@
     "hidePassword": "Passwort verbergen",
     "submit": "Anmelden",
     "submitting": "Anmeldung läuft…",
+    "backToLanding": "Zurück zur Startseite",
     "invalidCredentials": "Benutzername oder Passwort ungültig",
     "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
   },
