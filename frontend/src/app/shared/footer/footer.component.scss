@@ -13,7 +13,9 @@
   gap: 1rem 2rem;
   flex-wrap: wrap;
   padding: 0.75rem 1.5rem;
-  background: var(--mat-sys-surface-container-high);
+  // Sits between the page and the cards in dark, so the ladder reads page < footer < card. In
+  // light the footer is the heavier surface, which is what separates it from the content above.
+  background: light-dark(var(--mat-sys-surface-container-high), var(--mat-sys-surface-container));
   color: var(--mat-sys-on-surface-variant);
   border-top: 1px solid var(--mat-sys-outline-variant);
 }

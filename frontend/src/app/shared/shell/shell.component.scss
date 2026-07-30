@@ -1,5 +1,16 @@
 @use '../../../styles/breakpoints' as bp;
 
+// The shell owns the whole viewport: toolbar, then the sidenav region taking the slack, then the
+// footer. A flex column replaces the per-tier `min-height: calc(100vh - <toolbar>)` arithmetic
+// the container used to carry - that math had to be restated for every fixed-height element
+// above it, and the footer moving out of the content pane would have added a second term to
+// subtract. Letting the container grow states the same intent without tracking anyone's height.
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .spacer {
   flex: 1 1 auto;
 }
@@ -38,42 +49,62 @@ app-language-toggle {
 }
 
 .shell-container {
-  // Was a fixed height: calc(100vh - 64px). The footer now lives inside the content pane, so
-  // the container needs a floor rather than a ceiling - min-height lets a long page grow past
-  // the viewport while a short one still pushes the footer down to the bottom edge.
-  min-height: calc(100vh - 64px);
+  // Takes whatever the toolbar and footer leave, so a short page still reaches the footer at the
+  // viewport bottom and a long one scrolls without the footer floating over it.
+  flex: 1 1 auto;
 }
 
 .shell-content {
-  // Column layout so the routed view takes the slack and the footer settles beneath it.
+  // Column layout so the routed view takes the slack inside the content pane.
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 64px);
-  // Padding moves to the outlet wrapper so the footer can span the full content width.
+  // Padding lives on the outlet wrapper, which owns the content's own inset.
   padding: 0;
 }
 
 .shell-outlet {
   flex: 1 1 auto;
   padding: 1.5rem;
-  // Ultra-wide screens get whitespace rather than a fifth tier: past this width the layout has
-  // nothing left to rearrange, and full-bleed rows would only lengthen the eye's travel. The
-  // footer stays outside the cap so it keeps spanning the whole content pane.
+  // border-box is load-bearing, not a style preference. The app sets no global box-sizing reset,
+  // so under the browser default the 100% width and the 3rem of horizontal padding ADD UP: the
+  // outlet came out 48px wider than the pane on every viewport where the 1440px cap was not
+  // already binding, and since the content pane scrolls, that surfaced as a permanent horizontal
+  // scrollbar with the page toolbars' right-aligned action buttons pushed out of sight.
+  box-sizing: border-box;
   width: 100%;
+  // Ultra-wide screens get whitespace rather than a fifth tier: past this width the layout has
+  // nothing left to rearrange, and full-bleed rows would only lengthen the eye's travel.
   max-width: 1440px;
   margin-inline: auto;
 }
 
-// Full height so the help list can be pushed to the bottom edge of the drawer.
+// Full height so the nav list fills the drawer.
 .sidenav-inner {
   display: flex;
   flex-direction: column;
   min-height: 100%;
 }
 
-.sidenav-help {
-  margin-top: auto;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+// Hover and active states: Material's nav list ships neither, so a user had no feedback on what
+// was clickable and no indication of where they were.
+.sidenav-inner a[mat-list-item] {
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidenav-inner a[mat-list-item]:hover {
+  background-color: var(--mat-sys-surface-container-highest);
+}
+
+// `active` is the class routerLinkActive applies in this template; Material's own activated
+// styling is not wired up here, so the current page needs its own statement.
+.sidenav-inner a[mat-list-item].active {
+  background-color: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+
+  // M3 exposes no standalone "emphasised label" weight token, so the literal stands in for it.
+  .mdc-list-item__primary-text {
+    font-weight: 500;
+  }
 }
 
 @include bp.desktop {
@@ -86,12 +117,6 @@ app-language-toggle {
 }
 
 @include bp.phone {
-  // Material drops the toolbar to 56px below 600px, so the content floor follows it.
-  .shell-container,
-  .shell-content {
-    min-height: calc(100vh - 56px);
-  }
-
   // At 360px the toolbar has to hold the hamburger, the app name, both toggles and logout. The
   // role label is the one item that repeats information the user already has.
   .role {

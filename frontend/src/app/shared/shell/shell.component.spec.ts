@@ -120,7 +120,9 @@ describe('ShellComponent', () => {
         // Registered so the logout navigation resolves instead of rejecting mid-test.
         provideRouter([
           { path: 'logout', children: [] },
-          { path: 'app', children: [] }
+          // 'products' is declared so the active-route test can actually reach a nav target;
+          // an unmatched URL would leave every routerLinkActive off and pass for the wrong reason.
+          { path: 'app', children: [{ path: 'products', children: [] }] }
         ]),
         provideTestTranslations(TRANSLATIONS)
       ]
@@ -227,13 +229,30 @@ describe('ShellComponent', () => {
     expect(sidenav().opened).toBe(true);
   });
 
-  it('render_authenticatedShell_showsFooterBelowTheOutlet', async () => {
+  it('render_authenticatedShell_showsFooterBelowTheSidenavContainer', async () => {
     await setUp();
     const host = fixture.nativeElement as HTMLElement;
+    const children = Array.from(host.children).map((child) => child.tagName.toLowerCase());
 
-    // The footer belongs to the content pane, not the sidenav, so it must sit inside it.
-    expect(host.querySelector('mat-sidenav-content app-footer')).not.toBeNull();
+    // The footer spans the viewport, so it is a sibling of the sidenav container rather than a
+    // child of either pane - and it comes after it, which is what puts it at the page's bottom.
+    expect(children).toContain('app-footer');
+    expect(host.querySelector('mat-sidenav-content app-footer')).toBeNull();
     expect(host.querySelector('mat-sidenav app-footer')).toBeNull();
+    expect(children.indexOf('app-footer')).toBeGreaterThan(children.indexOf('mat-sidenav-container'));
+  });
+
+  it('render_activeRoute_marksExactlyOneNavItem', async () => {
+    await setUp();
+    await TestBed.inject(Router).navigateByUrl('/app/products');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const active = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('mat-nav-list a.active')
+    );
+    expect(active.length).toBe(1);
+    expect(active[0].getAttribute('href')).toBe('/app/products');
   });
 
   it('render_demoFlagEnabled_showsBadgeWithTooltip', async () => {

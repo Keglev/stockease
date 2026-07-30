@@ -164,8 +164,11 @@ function toDueDateOption(buckets: DueDateBucket[]): ChartOption {
 
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    legend: {},
-    grid: { left: 8, right: 24, top: 32, bottom: 24, containLabel: true },
+    // The legend sits below the axis rather than floating over it: with containLabel the grid's
+    // bottom inset has to cover the rotated date labels AND the legend row, which the previous
+    // 24px did not, so the two drew on top of each other at both chart heights.
+    legend: { bottom: 0 },
+    grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
     xAxis: { type: 'category', data: dates },
     yAxis: { type: 'value' },
     // One stacked series per invoice type: the bar height is what falls due on that date and

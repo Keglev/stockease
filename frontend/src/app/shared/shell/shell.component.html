@@ -81,11 +81,6 @@
         >
           {{ 'nav.customers' | translate }}
         </a>
-      </mat-nav-list>
-
-      <!-- Help is a second list pinned to the bottom edge: it is a permanent affordance rather
-           than one more section of the app, so it does not belong in the ordered primary nav. -->
-      <mat-nav-list class="sidenav-help">
         <a mat-list-item routerLink="/app/help" routerLinkActive="active" (click)="onNavClick()">
           <mat-icon matListItemIcon>help_outline</mat-icon>
           {{ 'nav.help' | translate }}
@@ -98,6 +93,9 @@
     <div class="shell-outlet">
       <router-outlet />
     </div>
-    <app-footer />
   </mat-sidenav-content>
 </mat-sidenav-container>
+
+<!-- Outside the sidenav container so it spans the whole viewport rather than only the content
+     pane, which is what makes it read as the page's base rather than the outlet's. -->
+<app-footer />
