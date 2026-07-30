@@ -25,6 +25,14 @@ form {
   gap: 0.5rem;
 }
 
+// Left-aligned against the form's edge: a back link belongs at the start of the reading
+// direction, not centred under the action it is subordinate to.
+.login-back {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.5rem;
+}
+
 .login-error {
   margin: 0 0 0.5rem;
   color: var(--mat-sys-error);

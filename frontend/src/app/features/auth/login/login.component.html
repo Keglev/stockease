@@ -57,6 +57,15 @@
           {{ (pending() ? 'login.submitting' : 'login.submit') | translate }}
         </button>
       </form>
+
+      <!-- Outside the form and deliberately not filled: this is the way out for a visitor who
+           came here for the demo buttons, so it must not compete with the submit. -->
+      <div class="login-back">
+        <a matButton routerLink="/" class="login-back-link">
+          <mat-icon>arrow_back</mat-icon>
+          {{ 'login.backToLanding' | translate }}
+        </a>
+      </div>
     </mat-card-content>
   </mat-card>
 </div>

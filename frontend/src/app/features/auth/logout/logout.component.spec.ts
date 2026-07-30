@@ -8,11 +8,21 @@ import { LogoutComponent } from './logout.component';
 const TRANSLATIONS = {
   en: {
     common: { language: 'Language' },
-    logoutPage: { message: 'You have been logged out.', backToLanding: 'Back to start page' }
+    logoutPage: {
+      title: 'Logged out',
+      message: 'You have been logged out.',
+      backToLanding: 'Back to start page',
+      loginAgain: 'Log in again'
+    }
   },
   de: {
     common: { language: 'Sprache' },
-    logoutPage: { message: 'Sie wurden abgemeldet.', backToLanding: 'Zur Startseite' }
+    logoutPage: {
+      title: 'Abgemeldet',
+      message: 'Sie wurden abgemeldet.',
+      backToLanding: 'Zur Startseite',
+      loginAgain: 'Erneut anmelden'
+    }
   }
 };
 
@@ -39,6 +49,17 @@ describe('LogoutComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'You have been logged out.'
     );
+  });
+
+  it('render_default_showsLandingAndLoginActions', () => {
+    const host = fixture.nativeElement as HTMLElement;
+    const targets = Array.from(host.querySelectorAll<HTMLAnchorElement>('.logout-actions a')).map(
+      (link) => link.getAttribute('href')
+    );
+
+    // Signing out is as often a switch of user as it is the end of the visit, so both exits exist.
+    expect(targets).toEqual(['/', '/login']);
+    expect(host.textContent).toContain('Log in again');
   });
 
   it('render_backAction_pointsAtLandingRoute', () => {

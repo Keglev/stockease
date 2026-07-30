@@ -5,7 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -24,6 +24,7 @@ import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    RouterLink,
     TranslatePipe
   ],
   templateUrl: './login.component.html',

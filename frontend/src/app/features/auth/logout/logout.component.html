@@ -6,9 +6,21 @@
 
   <main class="logout-content">
     <mat-card class="logout-card">
+      <mat-card-header class="logout-card-header">
+        <mat-card-title>{{ 'logoutPage.title' | translate }}</mat-card-title>
+      </mat-card-header>
+
       <mat-card-content>
         <p class="logout-message">{{ 'logoutPage.message' | translate }}</p>
-        <a matButton="filled" routerLink="/">{{ 'logoutPage.backToLanding' | translate }}</a>
+
+        <!-- Two exits rather than one: signing out is as often the start of signing in as a
+             different user as it is the end of the visit. -->
+        <div class="logout-actions">
+          <a matButton="filled" routerLink="/">{{ 'logoutPage.backToLanding' | translate }}</a>
+          <a matButton="outlined" routerLink="/login">
+            {{ 'logoutPage.loginAgain' | translate }}
+          </a>
+        </div>
       </mat-card-content>
     </mat-card>
   </main>

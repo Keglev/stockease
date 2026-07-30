@@ -29,8 +29,10 @@
     "apiLatency": "API {{ms}} ms"
   },
   "logoutPage": {
+    "title": "Logged out",
     "message": "You have been logged out.",
-    "backToLanding": "Back to start page"
+    "backToLanding": "Back to start page",
+    "loginAgain": "Log in again"
   },
   "login": {
     "title": "Sign in to {{app}}",
@@ -40,6 +42,7 @@
     "hidePassword": "Hide password",
     "submit": "Sign in",
     "submitting": "Signing in…",
+    "backToLanding": "Back to start page",
     "invalidCredentials": "Invalid username or password",
     "sessionExpired": "Your session has expired. Please log in again."
   },
