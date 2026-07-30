@@ -48,13 +48,20 @@ body {
 // fix is to place each layer on the container level it belongs to, which light mode also reads
 // better for, so neither scheme needs a special case.
 html {
-  // Cards move one level off the page. Material's own M3 default is surface-container-low, which
-  // is still too close to the body's surface to separate in dark.
+  // Cards move off the page background, further in dark than in light. Dark's surface ramp is
+  // compressed into a narrow band of near-blacks, so one step plus a muted hairline - the pattern
+  // GitHub's dark theme uses - is what actually reads as a raised panel. Light has range to spare
+  // and separates on the surface step alone, so its border stays transparent.
   @include mat.card-overrides(
     (
-      elevated-container-color: var(--mat-sys-surface-container),
+      elevated-container-color:
+        light-dark(var(--mat-sys-surface-container), var(--mat-sys-surface-container-high)),
     )
   );
+
+  .mat-mdc-card {
+    border: 1px solid light-dark(transparent, var(--mat-sys-outline-variant));
+  }
 
   // A table paints --mat-sys-surface by default, which is the page colour, so a table inside a
   // card punched a page-coloured hole through the card. Transparent lets it inherit whatever

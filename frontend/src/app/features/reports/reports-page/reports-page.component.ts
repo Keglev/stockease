@@ -408,8 +408,11 @@ function toDueOption(buckets: DueDateBucket[]): ChartOption | null {
 
   return {
     tooltip: { trigger: 'axis' },
-    legend: {},
-    grid: { left: 8, right: 24, top: 32, bottom: 24, containLabel: true },
+    // The legend sits below the axis rather than floating over it: with containLabel the grid's
+    // bottom inset has to cover the date labels AND the legend row, which the previous 24px did
+    // not, so the two drew on top of each other at both chart heights.
+    legend: { bottom: 0 },
+    grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
     xAxis: { type: 'category', boundaryGap: false, data: dates },
     yAxis: { type: 'value' },
     series: types.map((type) => ({

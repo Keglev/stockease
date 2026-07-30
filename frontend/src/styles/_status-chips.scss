@@ -5,27 +5,45 @@
 // deliberately low-chroma, and in a dark scheme they land close enough to the surface that a
 // chip stops reading as a coloured status at all. Dark therefore promotes every chip to its main
 // role colour, which keeps the colour identity a status chip exists for.
+//
+// Every rule also sets --mat-chip-label-text-color alongside `color`. Material paints the label
+// on an inner element with `color: var(--mat-chip-label-text-color, ...)`, and that rule is more
+// specific than anything set on the chip host, so the plain `color` declaration never reached the
+// text: dark mode rendered a light label on a light chip. The custom property inherits down to
+// the label, which is what actually moves it.
+
+/// Pairs a chip's surface with its label, setting the label through the token Material reads.
+@mixin chip-colors($background, $foreground) {
+  background-color: $background;
+  color: $foreground;
+  --mat-chip-label-text-color: #{$foreground};
+}
 
 @mixin invoice-status-chips {
   .status-chip.status-open {
-    background-color: light-dark(var(--mat-sys-tertiary-container), var(--mat-sys-tertiary));
-    color: light-dark(var(--mat-sys-on-tertiary-container), var(--mat-sys-on-tertiary));
+    @include chip-colors(
+      light-dark(var(--mat-sys-tertiary-container), var(--mat-sys-tertiary)),
+      light-dark(var(--mat-sys-on-tertiary-container), var(--mat-sys-on-tertiary))
+    );
   }
 
   .status-chip.status-closed {
-    background-color: light-dark(var(--mat-sys-secondary-container), var(--mat-sys-secondary));
-    color: light-dark(var(--mat-sys-on-secondary-container), var(--mat-sys-on-secondary));
+    @include chip-colors(
+      light-dark(var(--mat-sys-secondary-container), var(--mat-sys-secondary)),
+      light-dark(var(--mat-sys-on-secondary-container), var(--mat-sys-on-secondary))
+    );
   }
 
   .status-chip.status-fully-returned {
-    background-color: light-dark(var(--mat-sys-error-container), var(--mat-sys-error));
-    color: light-dark(var(--mat-sys-on-error-container), var(--mat-sys-on-error));
+    @include chip-colors(
+      light-dark(var(--mat-sys-error-container), var(--mat-sys-error)),
+      light-dark(var(--mat-sys-on-error-container), var(--mat-sys-on-error))
+    );
   }
 
   // The one chip that is loud in both schemes: an overdue invoice is a warning, not a state, so
   // it does not get the muted container treatment light mode gives the others.
   .overdue-chip {
-    background-color: light-dark(var(--mat-sys-error), var(--mat-sys-error));
-    color: light-dark(var(--mat-sys-on-error), var(--mat-sys-on-error));
+    @include chip-colors(var(--mat-sys-error), var(--mat-sys-on-error));
   }
 }
