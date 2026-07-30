@@ -35,7 +35,7 @@ public class SecurityConfig {
 
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
-    private final List&lt;String&gt; allowedOrigins;
+    private final List&lt;String&gt; allowedOriginPatterns;
 
     private final List&lt;PublicEndpoint&gt; publicEndpoints;
 
@@ -44,16 +44,16 @@ public class SecurityConfig {
      *
      * @param jwtFilter validates JWT tokens in request headers
      * @param customAuthenticationEntryPoint sends custom 401 error responses
-     * @param allowedOrigins frontend origins permitted to call the API
+     * @param allowedOriginPatterns frontend origins permitted to call the API
      * @param publicEndpoints unauthenticated entry points contributed by other modules; empty when none
      *        of them is active
      */
     public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint,
-            @Value(&quot;${app.cors.allowed-origins}&quot;) List&lt;String&gt; allowedOrigins,
+            @Value(&quot;${app.cors.allowed-origins}&quot;) List&lt;String&gt; allowedOriginPatterns,
 <span class="fc" id="L53">            ObjectProvider&lt;PublicEndpoint&gt; publicEndpoints) {</span>
 <span class="fc" id="L54">        this.jwtFilter = jwtFilter;</span>
 <span class="fc" id="L55">        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;</span>
-<span class="fc" id="L56">        this.allowedOrigins = allowedOrigins;</span>
+<span class="fc" id="L56">        this.allowedOriginPatterns = allowedOriginPatterns;</span>
         // ObjectProvider rather than List injection: with no contributing module active there is no
         // candidate bean at all, and a required List parameter would fail the context start.
 <span class="fc" id="L59">        this.publicEndpoints = publicEndpoints.orderedStream().toList();</span>
@@ -122,17 +122,21 @@ public class SecurityConfig {
     }
 
     /**
-     * Defines CORS policy with allowed origins, methods, headers, and credentials.
+     * Defines CORS policy with allowed origin patterns, methods, headers, and credentials.
      *
      * @return CorsConfiguration with policy rules
      */
     private @NonNull CorsConfiguration corsConfiguration() {
 <span class="fc" id="L130">        CorsConfiguration config = new CorsConfiguration();</span>
-<span class="fc" id="L131">        config.setAllowedOrigins(allowedOrigins);</span>
-<span class="fc" id="L132">        config.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));</span>
-<span class="fc" id="L133">        config.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Cache-Control&quot;, &quot;Content-Type&quot;));</span>
-<span class="fc" id="L134">        config.setAllowCredentials(true);</span>
-<span class="fc" id="L135">        return config;</span>
+        // Patterns rather than exact origins: every Vercel preview deployment gets its own host, so
+        // the set cannot be enumerated ahead of time. A bare wildcard is not an option either -
+        // allowCredentials(true) forbids it - which makes a host pattern scoped to one project the
+        // sanctioned mechanism. Exact origins are themselves valid patterns and keep matching.
+<span class="fc" id="L135">        config.setAllowedOriginPatterns(allowedOriginPatterns);</span>
+<span class="fc" id="L136">        config.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));</span>
+<span class="fc" id="L137">        config.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Cache-Control&quot;, &quot;Content-Type&quot;));</span>
+<span class="fc" id="L138">        config.setAllowCredentials(true);</span>
+<span class="fc" id="L139">        return config;</span>
     }
 
     /**
@@ -141,9 +145,9 @@ public class SecurityConfig {
      * @return URL-based CORS configuration source applied to all paths
      */
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
-<span class="fc" id="L144">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
-<span class="fc" id="L145">        source.registerCorsConfiguration(&quot;/**&quot;, corsConfiguration());</span>
-<span class="fc" id="L146">        return source;</span>
+<span class="fc" id="L148">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
+<span class="fc" id="L149">        source.registerCorsConfiguration(&quot;/**&quot;, corsConfiguration());</span>
+<span class="fc" id="L150">        return source;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
