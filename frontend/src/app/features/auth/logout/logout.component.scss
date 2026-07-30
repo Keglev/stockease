@@ -2,12 +2,14 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 1rem;
+  // Padding moves to the header and the content so the footer can span the full viewport width.
+  padding: 0;
 }
 
 .logout-header {
   display: flex;
   justify-content: flex-end;
+  padding: 1rem 1rem 0;
 }
 
 .logout-content {
@@ -15,12 +17,19 @@
   flex: 1 1 auto;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
 }
 
 .logout-card {
   width: 100%;
   max-width: 22rem;
   text-align: center;
+  // A lone card on an otherwise empty page needs a stronger surface step than an in-app card
+  // sitting among other content, and the outline carries the edge where the dark scheme's
+  // surface deltas are too subtle to read on their own. Light mode barely shows the hairline.
+  --mat-card-elevated-container-color: var(--mat-sys-surface-container-high);
+
+  border: 1px solid var(--mat-sys-outline-variant);
 }
 
 // Material lays the header out as a row for the avatar/title/subtitle trio; with a title alone it

@@ -2,8 +2,10 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import { HealthProbe, HealthService } from '../../../core/health/health.service';
 import { errorInterceptor } from '../../../core/interceptors/error.interceptor';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { LoginComponent } from './login.component';
@@ -18,6 +20,13 @@ function validToken(): string {
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.signature`;
 }
 
+/** Keeps the footer's health poll off the HTTP testing backend, where it would fail verify(). */
+class HealthServiceStub {
+  check() {
+    return of<HealthProbe>({ up: true, latencyMs: 12 });
+  }
+}
+
 describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let controller: HttpTestingController;
@@ -29,11 +38,13 @@ describe('LoginComponent', () => {
       providers: [
         provideHttpClient(withInterceptors([errorInterceptor])),
         provideHttpClientTesting(),
+        { provide: HealthService, useValue: new HealthServiceStub() },
         // Registered so the post-login navigation resolves instead of rejecting mid-test.
         provideRouter([{ path: 'app', children: [] }]),
         provideTestTranslations({
           en: {
-            common: { appName: 'Bestandskontrolle' },
+            common: { appName: 'StockEase' },
+            footer: { tagline: 'Inventory management demo', apiLatency: 'API {{ms}} ms' },
             login: {
               title: 'Sign in to {{app}}',
               showPassword: 'Show password',
@@ -60,6 +71,14 @@ describe('LoginComponent', () => {
     // The way out for a visitor who came here but wanted the demo buttons.
     expect(back?.getAttribute('href')).toBe('/');
     expect(back?.textContent).toContain('Back to start page');
+  });
+
+  it('render_default_showsFooter', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    // The public pages carry the same bottom chrome as the authenticated shell.
+    expect(host.querySelector('app-footer')).not.toBeNull();
+    expect(host.querySelector('app-footer .footer-repository')).not.toBeNull();
   });
 
   it('submit_rejectedCredentials_rendersTranslatedMessageNotTheBackendText', async () => {
@@ -144,10 +163,12 @@ describe('LoginComponent', () => {
       providers: [
         provideHttpClient(withInterceptors([errorInterceptor])),
         provideHttpClientTesting(),
+        { provide: HealthService, useValue: new HealthServiceStub() },
         provideRouter([{ path: 'app', children: [] }]),
         provideTestTranslations({
           en: {
-            common: { appName: 'Bestandskontrolle' },
+            common: { appName: 'StockEase' },
+            footer: { tagline: 'Inventory management demo', apiLatency: 'API {{ms}} ms' },
             login: {
               title: 'Sign in to {{app}}',
               showPassword: 'Show password',

@@ -5,6 +5,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService, UserRole } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/notifications/notification.service';
+import { FooterComponent } from '../../shared/footer/footer.component';
 import { LanguageToggleComponent } from '../../shared/language-toggle/language-toggle.component';
 import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
 
@@ -15,6 +16,7 @@ import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.com
 @Component({
   selector: 'app-landing',
   imports: [
+    FooterComponent,
     LanguageToggleComponent,
     ThemeToggleComponent,
     MatButtonModule,
@@ -28,9 +30,6 @@ export class LandingComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly notifications = inject(NotificationService);
-
-  protected readonly repositoryUrl = 'https://github.com/Keglev/stockease';
-  protected readonly documentationUrl = 'https://keglev.github.io/stockease/';
 
   // One flag covers both buttons rather than one each: a second click during the first request
   // would race two logins for two different roles, leaving whichever landed last in storage.

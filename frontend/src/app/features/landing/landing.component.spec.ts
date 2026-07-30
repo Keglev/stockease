@@ -4,13 +4,14 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { ApiEnvelope } from '../../core/api/api-envelope';
 import { AuthService, UserRole } from '../../core/auth/auth.service';
+import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { LandingComponent } from './landing.component';
 
 /** The rendered result once {{app}} is interpolated from common.appName. */
-const DESCRIPTION = 'Bestandskontrolle is an inventory management application for small businesses.';
+const DESCRIPTION = 'StockEase is an inventory management application for small businesses.';
 
 const TOKEN_ENVELOPE: ApiEnvelope<string> = {
   success: true,
@@ -20,7 +21,8 @@ const TOKEN_ENVELOPE: ApiEnvelope<string> = {
 
 const TRANSLATIONS = {
   en: {
-    common: { appName: 'Bestandskontrolle', language: 'Language' },
+    common: { appName: 'StockEase', language: 'Language' },
+    footer: { tagline: 'Inventory management demo', apiLatency: 'API {{ms}} ms' },
     landing: {
       description: '{{app}} is an inventory management application for small businesses.',
       demo: {
@@ -29,9 +31,7 @@ const TRANSLATIONS = {
         tryUser: 'Try as User',
         resetNotice: 'Demo data - resets nightly at 03:00 UTC'
       },
-      loginCta: 'Login',
-      repository: 'GitHub repository',
-      documentation: 'Documentation'
+      loginCta: 'Login'
     }
   },
   de: {
@@ -39,6 +39,13 @@ const TRANSLATIONS = {
     landing: { loginCta: 'Anmelden' }
   }
 };
+
+/** Keeps the footer's health poll off the network; the real probe has its own spec. */
+class HealthServiceStub {
+  check() {
+    return of<HealthProbe>({ up: true, latencyMs: 12 });
+  }
+}
 
 class AuthServiceStub {
   readonly calls: UserRole[] = [];
@@ -88,7 +95,8 @@ describe('LandingComponent', () => {
         provideRouter([{ path: 'app', children: [] }]),
         provideTestTranslations(TRANSLATIONS),
         { provide: AuthService, useValue: auth },
-        { provide: NotificationService, useValue: notifications }
+        { provide: NotificationService, useValue: notifications },
+        { provide: HealthService, useValue: new HealthServiceStub() }
       ]
     }).compileComponents();
 
@@ -110,17 +118,24 @@ describe('LandingComponent', () => {
     expect(cta?.textContent?.trim()).toBe('Login');
   });
 
-  it('render_secondaryLinks_carryRepositoryAndDocumentationUrls', () => {
+  it('render_outwardLinks_comeFromTheFooterNotTheHero', () => {
+    const host = fixture.nativeElement as HTMLElement;
     const repository = link('https://github.com/Keglev/stockease');
-    const documentation = link('https://keglev.github.io/stockease/');
 
-    expect(repository).not.toBeNull();
-    expect(documentation).not.toBeNull();
+    // The hero's own duplicate row is gone; the footer is now the single source of both links.
+    expect(host.querySelector('.landing-links')).toBeNull();
+    expect(repository?.closest('app-footer')).not.toBeNull();
     // New-tab links must not hand the opener reference to the target page.
     expect(repository?.getAttribute('rel')).toBe('noopener');
-    expect(documentation?.getAttribute('rel')).toBe('noopener');
     expect(repository?.getAttribute('target')).toBe('_blank');
-    expect(documentation?.getAttribute('target')).toBe('_blank');
+  });
+
+  it('render_default_showsFooter', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    // The public pages carry the same bottom chrome as the authenticated shell.
+    expect(host.querySelector('app-footer')).not.toBeNull();
+    expect(host.querySelector('app-footer .footer-documentation')).not.toBeNull();
   });
 
   it('render_languageToggle_isPresentBeforeLogin', () => {
