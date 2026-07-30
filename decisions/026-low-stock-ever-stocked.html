@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions · 026-low-stock-ever-stocked · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-026-low-stock-applies-only-to-ever-stocked-products">ADR
+        026: Low Stock Applies Only to Ever-Stocked Products</h1>
+        <p><strong>Scope</strong>: [Cross-cutting]
+        <strong>Status</strong>: Accepted <strong>Date</strong>: July
+        30, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>Creating a product is master-data maintenance and books no
+        stock (ADR 018): the product exists at quantity 0 until a
+        purchase invoice closes and puts the first units on the shelf
+        (ADR 021). The low-stock alert, meanwhile, asked one question —
+        is the quantity below the threshold? — and a product created two
+        minutes ago answers yes.</p>
+        <p>So every new product landed in the low-stock list
+        immediately, and the production review named it for what it is:
+        a false alarm about something that was never stocked. The demo
+        makes this visible daily, because products created by hand
+        between nightly resets appear in the alert having never been
+        purchased.</p>
+        <p>The alert exists to say <em>reorder this</em>. That sentence
+        only means something about a product the business actually
+        stocks.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Low stock scopes to products with at least one
+        purchase booking.</strong> The query requires both the quantity
+        threshold and a derived <code>ever_stocked</code> flag on
+        <code>product</code>, which the purchase booking path sets and
+        no code path ever clears.</p>
+        <ul>
+        <li><code>StockMovementService.recordMovement</code> calls
+        <code>ProductService.markEverStocked</code> for reason
+        <code>PURCHASE</code> only, inside the same transaction as the
+        quantity adjustment. Purchases are the only way stock enters
+        (ADR 021), so they are the only reason that can make a product
+        ever-stocked.</li>
+        <li><code>markEverStocked</code> is idempotent — an
+        already-marked product is left alone — and writes <strong>no
+        change-log row</strong>. The audit trail records what an
+        operator changed about the master data; this is state derived
+        from the ledger, which the operator never edits.</li>
+        <li>The flag is chosen over a query against the movement ledger
+        specifically so that <strong>the product module never reads
+        another module’s tables</strong>. The product module owns
+        <code>product</code>; the movement module owns
+        <code>stock_movement</code>. The flag keeps that boundary intact
+        and turns the alert back into a single-table query.</li>
+        <li>The one-time backfill in
+        <code>V21__add_product_ever_stocked.sql</code> does read across
+        both tables, deriving the flag from existing
+        <code>PURCHASE</code> movements. That read is legitimate where
+        it lives: a migration operates on the schema as a whole, and it
+        runs once rather than on every request.</li>
+        <li><code>ProductResponse</code> is unchanged. The flag is
+        internal query state, not API surface, and the frontend card and
+        KPI adapt through the endpoint’s contents.</li>
+        </ul>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>An <code>EXISTS</code> subquery against
+        <code>stock_movement</code> from the product
+        repository.</strong> Rejected. It needs no new column and no
+        backfill, and it cannot drift from the ledger — genuinely the
+        simpler mechanism, which is worth recording as the cost of this
+        decision. But it makes routine cross-module table access part of
+        the product module’s normal read path, which is the exact
+        coupling the modulith structure exists to prevent. A derived
+        flag pays a small maintenance duty once, at the single write
+        path, to keep the boundary the architecture is built on.</p>
+        <p><strong>Excluding quantity-zero products from the
+        alert.</strong> Rejected, and it is worth being explicit about
+        why, because it is the cheapest possible change. A product at
+        zero is not the case the alert can afford to drop — it is the
+        alert’s most urgent case. A stocked product sold down to nothing
+        is precisely what “reorder this” is for. The distinction that
+        matters is not zero versus non-zero, it is <em>never
+        stocked</em> versus <em>stocked and now empty</em>, and only
+        history can tell those apart.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li>A product purchased once and sold to zero <strong>remains
+        alerted</strong>, at zero and at every quantity below the
+        threshold.</li>
+        <li>A product that was never purchased <strong>never
+        appears</strong>, whatever its quantity.</li>
+        <li>The flag <strong>never reverts</strong>. Having been stocked
+        is historical fact, and no code path sets it false; a product
+        that empties out stays in scope.</li>
+        <li><code>ProductResponse</code> and the low-stock endpoint’s
+        shape are unchanged, so no frontend change accompanies this
+        one.</li>
+        <li>The demo seeder builds all stock through the real services,
+        so seeded products are flagged by the new path on every reseed.
+        The baseline’s one product below the threshold is purchased
+        before it is sold, so the low-stock report stays populated.</li>
+        <li>The threshold itself is untouched: still 5, still hardcoded
+        at the controller. This decision changes <em>which</em> products
+        the question is asked about, not the question.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-026-low-stock-applies-only-to-ever-stocked-products"
+      id="toc-adr-026-low-stock-applies-only-to-ever-stocked-products">ADR
+      026: Low Stock Applies Only to Ever-Stocked Products</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
