@@ -42,10 +42,10 @@ StockEase,com.stocks.stockease.invoice,InvoiceService,5,550,4,54,1,108,4,47,0,22
 StockEase,com.stocks.stockease.product,ProductChangedEvent.Field,0,27,0,0,0,5,0,1,0,1
 StockEase,com.stocks.stockease.product,Product,0,14,0,0,0,5,0,1,0,1
 StockEase,com.stocks.stockease.product,ProductChangedEvent,0,18,0,0,0,1,0,1,0,1
-StockEase,com.stocks.stockease.product,ProductService,0,312,0,18,0,61,0,25,0,16
+StockEase,com.stocks.stockease.product,ProductService,0,325,0,20,0,66,0,27,0,17
 StockEase,com.stocks.stockease.movement,RecordMovementCommand,0,30,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.movement,MovementReason,0,56,0,0,0,11,0,3,0,3
-StockEase,com.stocks.stockease.movement,StockMovementService,5,345,1,59,0,72,2,39,1,9
+StockEase,com.stocks.stockease.movement,StockMovementService,5,352,1,61,0,74,2,40,1,9
 StockEase,com.stocks.stockease.movement,MovementRemark,0,27,0,0,0,5,0,1,0,1
 StockEase,com.stocks.stockease.movement,MovementType,0,15,0,0,0,3,0,1,0,1
 StockEase,com.stocks.stockease.customer,CustomerService,0,66,0,0,0,14,0,5,0,5
