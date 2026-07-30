@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions · 024-profit-cogs · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-024-gross-profit-as-cost-of-goods-sold-captured-at-sale">ADR
+        024: Gross Profit as Cost of Goods Sold, Captured at Sale</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        30, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The original profit expression charged <strong>every
+        purchased unit</strong> as cost:</p>
+        <pre><code>cost = PURCHASE quantity × unit_cost − RETURNED_TO_SUPPLIER quantity × invoice_item.unit_price</code></pre>
+        <p>That makes buying stock look like a loss. A product bought a
+        hundred units at a time and sold ten reports a large negative
+        gross profit, and the number only turns positive once the last
+        unit leaves the shelf. The production review identified the
+        cause: the expression measured <strong>cash spent on
+        inventory</strong>, not the cost of the goods that were actually
+        sold. Those are two different questions, and the reports page
+        was answering the wrong one under the heading “gross
+        profit”.</p>
+        <p>The information needed to answer the right one was not being
+        recorded. A <code>SOLD</code> movement captured its selling
+        price but not what the units had cost, so at query time there
+        was nothing to charge against the revenue except the purchase
+        rows.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Gross profit is revenue less the cost of the units
+        sold</strong>, and the cost of a sold unit is captured
+        <strong>at the moment of the sale</strong>:</p>
+        <ul>
+        <li>A <code>SOLD</code> movement now snapshots the product’s
+        purchase price into its own <code>unit_cost</code> when the sale
+        invoice closes. This is a point-in-time fact, not a lookup: a
+        later price change must not rewrite the profit of a sale that
+        already happened.</li>
+        <li>A <code>RETURN_FROM_CUSTOMER</code> movement <strong>copies
+        the <code>unit_cost</code> of the sale it reverses</strong>,
+        found through the invoice line. The reversal therefore cancels
+        exactly what the sale booked, at both prices. Reading the
+        product’s current price here would leave a residue whenever the
+        price moved between sale and return.</li>
+        <li><code>PURCHASE</code> and <code>RETURNED_TO_SUPPLIER</code>
+        <strong>leave the profit expression entirely</strong>. They are
+        the acquisition and un-acquisition of stock: cash-flow events. A
+        payment-basis cash-flow report is the companion decision and
+        will get its own ADR; that is where supplier returns
+        belong.</li>
+        </ul>
+        <p>The profit endpoints additionally accept an optional booking
+        period (<code>from</code>, <code>to</code>) over movement dates.
+        The predicate lives in the <code>LEFT JOIN</code> condition
+        rather than in <code>WHERE</code>, so a product with no
+        movements in the window still appears with zeros instead of
+        disappearing from the report.</p>
+        <p>Both profit reports — per product and per supplier — move
+        together. They are one definition of gross profit shown two ways
+        on the same page, so a split between them would be a defect
+        rather than a nuance.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Compute COGS at query time from the product’s current
+        purchase price.</strong> Rejected: it makes historical profit a
+        function of today’s price list. Raising a price would
+        retroactively shrink the profit of every sale ever made, and the
+        reports would disagree with themselves between two page loads.
+        This is the failure the snapshot exists to prevent, and it is
+        the same reasoning that put the selling price on the movement in
+        the first place.</p>
+        <p><strong>FIFO or weighted-average cost layers.</strong>
+        Rejected as disproportionate. Real cost layering needs a ledger
+        of purchase lots, consumption against those lots, and a
+        reconciliation story when stock is lost or destroyed — a
+        bookkeeping subsystem in its own right. ADR 010 already ruled
+        out lot tracking, and ADR 019 already defines a product’s price
+        as its last closed purchase price. Snapshotting that same price
+        at the sale is consistent with both, and for a single-price-per-
+        product domain the two approaches only diverge across a price
+        change.</p>
+        <p><strong>Leaving historical rows with a NULL cost instead of
+        backfilling.</strong> Rejected: <code>NULL</code> aggregates as
+        zero cost, which would report every pre-existing sale as pure
+        profit — a worse error than an approximation.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li><strong>V20 backfills historical <code>SOLD</code> and
+        <code>RETURN_FROM_CUSTOMER</code> rows at the product’s current
+        purchase price.</strong> This is an approximation: the true
+        price at each past sale was never recorded and cannot be
+        recovered. It is exact for every product whose price never
+        changed. It is also a deliberate write to the append-only
+        movement ledger, which V18 established as something done only in
+        a migration and only on purpose; ADR 021 is the precedent.</li>
+        <li><code>MovementResponse.unitCost</code> is now populated for
+        sales and customer returns, not only for purchases. Any consumer
+        reading it as “this is a purchase” must read the reason
+        instead.</li>
+        <li>The <code>invoice_item</code> join leaves the profit query.
+        It existed solely to price supplier returns, which no longer
+        participate.</li>
+        <li>Profit can no longer go negative merely because stock is on
+        the shelf. It can still go negative honestly — selling below
+        cost does exactly that.</li>
+        <li>Seeded demo figures change sign. The seeder builds its stock
+        through the real service calls, so it picks up the new capture
+        automatically.</li>
+        <li>Supplier returns now affect <strong>no</strong> report until
+        the cash-flow report exists. That is a deliberate gap, not an
+        oversight: they were previously folded into profit, where they
+        did not belong.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-024-gross-profit-as-cost-of-goods-sold-captured-at-sale"
+      id="toc-adr-024-gross-profit-as-cost-of-goods-sold-captured-at-sale">ADR
+      024: Gross Profit as Cost of Goods Sold, Captured at Sale</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
