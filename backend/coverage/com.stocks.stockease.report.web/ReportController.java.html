@@ -115,12 +115,18 @@ public class ReportController {
     /**
      * Returns gross profit attributed to each supplier across the products it has supplied.
      *
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
      * @return one row per supplier that has supplied at least one product
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
      */
     @GetMapping(&quot;/profit/suppliers&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
-    public List&lt;SupplierProfitReport&gt; profitPerSupplier() {
-<span class="fc" id="L123">        return reportingService.profitPerSupplier();</span>
+    public List&lt;SupplierProfitReport&gt; profitPerSupplier(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+<span class="fc" id="L128">        validatePeriod(from, to);</span>
+<span class="fc" id="L129">        return reportingService.profitPerSupplier(from, to);</span>
     }
 
     /**
@@ -133,9 +139,9 @@ public class ReportController {
     @GetMapping(&quot;/customers/{id}/summary&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;CustomerSummary&gt;&gt; customerSummary(@PathVariable long id) {
-<span class="fc" id="L136">        CustomerSummary summary = reportingService.customerSummary(id)</span>
-<span class="fc" id="L137">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L138">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Customer summary fetched successfully&quot;, summary));</span>
+<span class="fc" id="L142">        CustomerSummary summary = reportingService.customerSummary(id)</span>
+<span class="fc" id="L143">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L144">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Customer summary fetched successfully&quot;, summary));</span>
     }
 
     /**
@@ -146,7 +152,7 @@ public class ReportController {
     @GetMapping(&quot;/stock-status&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;StockStatusReport&gt; stockStatus() {
-<span class="fc" id="L149">        return reportingService.stockStatus();</span>
+<span class="fc" id="L155">        return reportingService.stockStatus();</span>
     }
 
     /**
@@ -157,7 +163,7 @@ public class ReportController {
     @GetMapping(&quot;/losses&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;LossReport&gt; lossReport() {
-<span class="fc" id="L160">        return reportingService.lossReport();</span>
+<span class="fc" id="L166">        return reportingService.lossReport();</span>
     }
 
     /**
@@ -168,7 +174,7 @@ public class ReportController {
     @GetMapping(&quot;/due-dates&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;DueDateBucket&gt; dueDateBuckets() {
-<span class="fc" id="L171">        return reportingService.dueDateBuckets();</span>
+<span class="fc" id="L177">        return reportingService.dueDateBuckets();</span>
     }
 
     /**
@@ -182,10 +188,10 @@ public class ReportController {
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceDueSummary&gt; dueSoon(
             @RequestParam(defaultValue = &quot;&quot; + DEFAULT_DUE_SOON_DAYS) int days) {
-<span class="fc bfc" id="L185" title="All 2 branches covered.">        if (days &lt; 1) {</span>
-<span class="fc" id="L186">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        if (days &lt; 1) {</span>
+<span class="fc" id="L192">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
         }
-<span class="fc" id="L188">        return reportingService.dueSoon(days);</span>
+<span class="fc" id="L194">        return reportingService.dueSoon(days);</span>
     }
 
     /**
@@ -196,7 +202,7 @@ public class ReportController {
     @GetMapping(&quot;/overdue&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceDueSummary&gt; overdue() {
-<span class="fc" id="L199">        return reportingService.overdue();</span>
+<span class="fc" id="L205">        return reportingService.overdue();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
