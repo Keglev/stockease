@@ -110,6 +110,55 @@
   text-align: right;
 }
 
+.due-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.due-soon-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.due-soon-row:last-child {
+  border-bottom: none;
+}
+
+// The counterparty takes the slack so the date stays flush right, as on the reports due list.
+.due-counterparty {
+  flex: 1 1 auto;
+}
+
+.due-type,
+.due-date {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.due-none {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// The card shows only the head of the window, so the way to the rest is part of the view.
+.due-view-all {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+  text-decoration: none;
+}
+
+.due-view-all:hover,
+.due-view-all:focus-visible {
+  text-decoration: underline;
+}
+
 .section-title {
   margin: 0 0 0.75rem;
   font: var(--mat-sys-title-medium);

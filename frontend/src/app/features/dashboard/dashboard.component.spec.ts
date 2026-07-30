@@ -134,6 +134,17 @@ const MANY_PROFIT: ProductProfitReport[] = Array.from({ length: 11 }, (unused, i
   grossProfit: 60 - index
 }));
 
+/** Nine rows, so the list's cap at eight is observable rather than incidental. */
+const DUE_SOON: InvoiceDueSummary[] = Array.from({ length: 9 }, (unused, index) => ({
+  invoiceId: index + 1,
+  invoiceNumber: 'RE-2026-100' + index,
+  invoiceType: index % 2 === 0 ? 'SALE' : 'PURCHASE',
+  counterparty: 'Customer ' + index,
+  dueDate: '2026-03-0' + ((index % 9) + 1),
+  outstandingValue: 100 + index,
+  daysOverdue: null
+}));
+
 const BUCKETS: DueDateBucket[] = [
   { dueDate: '2026-03-01', invoiceType: 'SALE', invoiceCount: 2, totalValue: 60 }
 ];
@@ -171,6 +182,15 @@ class ReportServiceStub {
   overdue(): Observable<InvoiceDueSummary[]> {
     this.calls += 1;
     return of(OVERDUE);
+  }
+
+  /** Counted separately: the due list must fetch these only when it is actually opened. */
+  dueSoonRequests = 0;
+
+  dueSoon(): Observable<InvoiceDueSummary[]> {
+    this.calls += 1;
+    this.dueSoonRequests += 1;
+    return of(DUE_SOON);
   }
 }
 
@@ -220,6 +240,20 @@ describe('DashboardComponent', () => {
 
   function host(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
+  }
+
+  /** Flips the due card to its list half, the way the toggle group does. */
+  function showDueList(): void {
+    const page = fixture.componentInstance as unknown as { setDueView: (view: string) => void };
+    page.setDueView('table');
+    fixture.detectChanges();
+  }
+
+  /** Returns the due card to its chart half. */
+  function showDueChart(): void {
+    const page = fixture.componentInstance as unknown as { setDueView: (view: string) => void };
+    page.setDueView('chart');
+    fixture.detectChanges();
   }
 
   /** Flips the profit card to its table half, the way the toggle group does. */
@@ -387,6 +421,66 @@ describe('DashboardComponent', () => {
 
     // the two halves never share the card's height, as on the reports page
     expect(host().querySelector('.chart-profit app-chart')).toBeNull();
+  });
+
+  it('dueCard_chartDefault_doesNotFetchDueSoon', () => {
+    render();
+
+    // the card opens on the chart, and its buckets are a different request entirely
+    expect(reports.dueSoonRequests).toBe(0);
+    expect(host().querySelector('.due-soon-row')).toBeNull();
+  });
+
+  it('dueCard_firstListActivation_fetchesOnceAndRendersLinkedRows', () => {
+    render();
+
+    showDueList();
+
+    expect(reports.dueSoonRequests).toBe(1);
+    // nine rows come back, eight are shown; the rest live behind the reports link
+    const rows = host().querySelectorAll('.due-soon-row');
+    expect(rows.length).toBe(8);
+    expect(rows[0].querySelector('a')?.getAttribute('href')).toBe('/app/invoices/1');
+  });
+
+  it('dueCard_listView_linksOnToTheReportsPage', () => {
+    render();
+
+    showDueList();
+
+    expect(host().querySelector('.due-view-all')?.getAttribute('href')).toBe('/app/reports');
+  });
+
+  it('dueCard_switchBackAndForth_doesNotRefetch', () => {
+    render();
+    showDueList();
+
+    showDueChart();
+    showDueList();
+
+    // toggling is not a reason to re-query; the refresh button is what re-reads them
+    expect(reports.dueSoonRequests).toBe(1);
+  });
+
+  it('refresh_afterListOpened_reReadsTheDueRows', () => {
+    render();
+    showDueList();
+
+    host().querySelector<HTMLButtonElement>('.dashboard-refresh')?.click();
+    fixture.detectChanges();
+
+    // what is on screen must not survive a refresh unchanged
+    expect(reports.dueSoonRequests).toBe(2);
+  });
+
+  it('refresh_listNeverOpened_stillSkipsDueSoon', () => {
+    render();
+
+    host().querySelector<HTMLButtonElement>('.dashboard-refresh')?.click();
+    fixture.detectChanges();
+
+    // the other direction: refresh must not quietly undo the laziness
+    expect(reports.dueSoonRequests).toBe(0);
   });
 
   it('load_always_skipsTheLossReport', () => {
