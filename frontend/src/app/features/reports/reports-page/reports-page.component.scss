@@ -35,6 +35,39 @@
   margin-bottom: 1rem;
 }
 
+.period-toggle {
+  margin-bottom: 1rem;
+}
+
+// The three figures read as one line of summary, so they share a row and wrap together rather
+// than each claiming a card.
+.cash-flow-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.cash-flow-total {
+  display: flex;
+  flex-direction: column;
+}
+
+.cash-flow-label {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+.cash-flow-value {
+  font: var(--mat-sys-headline-small);
+}
+
+// Only the negative case is coloured: a positive net is the expected reading and needs no mark,
+// while money going out net is the one figure worth catching the eye.
+.cash-flow-negative {
+  color: var(--mat-sys-error);
+}
+
 // The export sits on the heading line rather than above the table, so it reads as an action on
 // this table and not on the tab.
 .table-heading {

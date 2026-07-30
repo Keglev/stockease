@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { Observable, of } from 'rxjs';
 
 import {
+  CashFlowReport,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
@@ -31,7 +32,21 @@ const TRANSLATIONS = {
       deletedHint: 'deleted',
       exportCsv: 'Export CSV',
       view: { chart: 'Chart', table: 'Table', list: 'List' },
-      tabs: { profit: 'Profit', stock: 'Stock', losses: 'Losses', dueDates: 'Due dates' },
+      period: { d30: '30 days', d90: '90 days', year: 'This year', all: 'All' },
+      cashFlow: {
+        inflow: 'Inflow',
+        outflow: 'Outflow',
+        net: 'Net',
+        columns: { name: 'Product', sku: 'SKU', inflow: 'Inflow', outflow: 'Outflow', net: 'Net' },
+        empty: 'No paid invoices in this period.'
+      },
+      tabs: {
+        profit: 'Profit',
+        cashFlow: 'Cash flow',
+        stock: 'Stock',
+        losses: 'Losses',
+        dueDates: 'Due dates'
+      },
       columns: {
         name: 'Name',
         sku: 'SKU',
@@ -121,11 +136,29 @@ class ChartStubComponent {
   readonly height = input('20rem');
 }
 
+const CASH_FLOW: CashFlowReport = {
+  inflow: 500,
+  outflow: 300,
+  net: 200,
+  products: [
+    { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, inflow: 500, outflow: 300, net: 200 }
+  ]
+};
+
 class ReportServiceStub {
   profitPayload: ProductProfitReport[] = PROFIT;
   lossPayload: LossReport[] = LOSSES;
+  cashFlowPayload: CashFlowReport = CASH_FLOW;
   calls: string[] = [];
+  /** Every from/to pair the page asked for, so the period presets can be asserted exactly. */
+  cashFlowRanges: (string | undefined)[][] = [];
   detail: ProductProfitReport = PROFIT[0];
+
+  cashFlow(from?: string, to?: string): Observable<CashFlowReport> {
+    this.calls.push('cashFlow');
+    this.cashFlowRanges.push([from, to]);
+    return of(this.cashFlowPayload);
+  }
 
   profitProducts(): Observable<ProductProfitReport[]> {
     this.calls.push('profitProducts');
@@ -207,6 +240,9 @@ describe('ReportsPageComponent', () => {
   }
 
   beforeEach(() => {
+    // Only Date is faked: the period presets compute their bounds from today, and a test reading
+    // the real clock would change its expected range every day. Timers stay real.
+    vi.useFakeTimers({ toFake: ['Date'] });
     TestBed.resetTestingModule();
     reports = new ReportServiceStub();
     dialog = { open: vi.fn() };
@@ -233,27 +269,31 @@ describe('ReportsPageComponent', () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('ngOnInit_firstRender_loadsOnlyTheProfitTab', () => {
     render();
 
     // The page must not fire all seven report queries on open.
-    expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
+expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
   });
 
   it('activate_stockTab_loadsStockOnFirstActivationOnly', async () => {
     render();
-    await activateTab(1);
+    await activateTab(2);
     expect(reports.calls).toContain('stockStatus');
 
     await activateTab(0);
-    await activateTab(1);
+    await activateTab(2);
 
     expect(reports.calls.filter((call) => call === 'stockStatus').length).toBe(1);
   });
 
   it('activate_dueTab_loadsAllThreeDueQueries', async () => {
     render();
-    await activateTab(3);
+    await activateTab(4);
 
     expect(reports.calls).toContain('dueDates');
     expect(reports.calls).toContain('dueSoon');
@@ -299,8 +339,8 @@ describe('ReportsPageComponent', () => {
 
   it('dueLists_overdueRows_renderDaysOverdueAndDueSoonRowsDoNot', async () => {
     render();
-    await activateTab(3);
-    await showTable(3);
+    await activateTab(4);
+    await showTable(4);
 
     expect(host().querySelector('.overdue-row')?.textContent).toContain('5 days late');
     expect(host().querySelector('.due-soon-row .days-overdue')).toBeNull();
@@ -308,8 +348,8 @@ describe('ReportsPageComponent', () => {
 
   it('dueLists_anyRow_linksToItsInvoice', async () => {
     render();
-    await activateTab(3);
-    await showTable(3);
+    await activateTab(4);
+    await showTable(4);
 
     // The label names the invoice the way an operator does; the href keeps the technical id,
     // which stays the routing key (ADR 022).
@@ -332,7 +372,7 @@ describe('ReportsPageComponent', () => {
     render();
     await showTable(0);
 
-    await activateTab(1);
+    await activateTab(2);
     await activateTab(0);
 
     // The view is a per-tab choice, so leaving the tab must not silently undo it.
@@ -361,7 +401,7 @@ describe('ReportsPageComponent', () => {
 
   it('refresh_onStockTab_refetchesOnlyThatTab', async () => {
     render();
-    await activateTab(1);
+    await activateTab(2);
     reports.calls = [];
 
     (fixture.nativeElement as HTMLElement)
@@ -374,7 +414,7 @@ describe('ReportsPageComponent', () => {
 
   it('lossPie_lossesRecorded_buildsPieOption', async () => {
     render();
-    await activateTab(2);
+    await activateTab(3);
 
     expect(optionOf('lossOption')).not.toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('.losses-empty')).toBeNull();
@@ -383,12 +423,85 @@ describe('ReportsPageComponent', () => {
   it('lossPie_allLossValuesZero_rendersEmptyStateInsteadOfEmptyPie', async () => {
     reports.lossPayload = [{ ...LOSSES[0], lostUnits: 0, destroyedUnits: 0, lossValue: 0 }];
     render();
-    await activateTab(2);
+    await activateTab(3);
 
     // A pie of zero-valued slices draws no arcs, so the empty state is the honest rendering.
     expect(optionOf('lossOption')).toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('.losses-empty')).not.toBeNull();
   });
+
+  it('cashFlowTab_firstActivation_loadsReportLazily', async () => {
+    render();
+    expect(reports.calls).not.toContain('cashFlow');
+
+    await activateTab(1);
+
+    // no bounds on the default 'all' window, and only on first activation
+    expect(reports.cashFlowRanges).toEqual([[undefined, undefined]]);
+    await activateTab(0);
+    await activateTab(1);
+    expect(reports.cashFlowRanges).toHaveLength(1);
+  });
+
+  it('cashFlowTab_presetSelected_refetchesWithComputedRange', async () => {
+    vi.setSystemTime(new Date(2026, 2, 15, 12));
+    render();
+    await activateTab(1);
+
+    await selectPeriod('d30');
+
+    // 30 days back from a pinned today, inclusive of today at the upper end
+    expect(reports.cashFlowRanges.at(-1)).toEqual(['2026-02-13', '2026-03-15']);
+  });
+
+  it('cashFlowTab_tableView_exportsCsvThroughSeam', async () => {
+    render();
+    await activateTab(1);
+    await showTable(1);
+
+    host().querySelector<HTMLButtonElement>('.export-cash-flow')?.click();
+
+    const [filename, content] = download.mock.calls[0] as [string, string];
+    expect(filename).toBe('cash-flow.csv');
+    expect(content).toContain('Inflow');
+  });
+
+  it('cashFlowTab_negativeNet_rendersErrorColorClass', async () => {
+    reports.cashFlowPayload = { ...CASH_FLOW, net: -200 };
+    render();
+    await activateTab(1);
+
+    // the class, not the computed colour: jsdom resolves no tokens
+    expect(host().querySelector('.cash-flow-net.cash-flow-negative')).not.toBeNull();
+  });
+
+  it('cashFlowTab_positiveNet_omitsErrorColorClass', async () => {
+    render();
+    await activateTab(1);
+
+    // the other direction: the error colour is reserved for money going out net
+    expect(host().querySelector('.cash-flow-net')).not.toBeNull();
+    expect(host().querySelector('.cash-flow-net.cash-flow-negative')).toBeNull();
+  });
+
+  it('cashFlowTab_emptyProducts_showsEmptyState', async () => {
+    reports.cashFlowPayload = { inflow: 0, outflow: 0, net: 0, products: [] };
+    render();
+    await activateTab(1);
+
+    expect(host().querySelector('.cash-flow-empty')).not.toBeNull();
+  });
+
+  /** Clicks a period preset through the component, the way the toggle group does. */
+  async function selectPeriod(period: string): Promise<void> {
+    const page = fixture.componentInstance as unknown as {
+      setCashFlowPeriod: (value: string) => void;
+    };
+    page.setCashFlowPeriod(period);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   /** Reads a chart option straight off the component; the stub renders nothing to assert on. */
   function optionOf(name: string): SeriesProbe | null {

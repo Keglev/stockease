@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
 import {
+  CashFlowReport,
   CustomerSummary,
   DueDateBucket,
   InvoiceDueSummary,
@@ -67,6 +68,15 @@ const DUE_SOON: InvoiceDueSummary[] = [
     daysOverdue: null
   }
 ];
+
+const CASH_FLOW: CashFlowReport = {
+  inflow: 80,
+  outflow: 30,
+  net: 50,
+  products: [
+    { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, inflow: 80, outflow: 30, net: 50 }
+  ]
+};
 
 const STOCK: StockStatusReport[] = [
   { productId: 3, name: 'Widget', sku: 'SKU-3', soldUnits: 4, soldRevenue: 60, inStockUnits: 6, inStockValue: 30 }
@@ -191,6 +201,31 @@ describe('ReportService', () => {
     controller.expectOne(`${BASE_URL}/stock-status`).flush(STOCK);
 
     expect(emitted).toEqual(STOCK);
+    controller.verify();
+  });
+
+  it('getCashFlow_withoutPeriod_requestsNoParams', () => {
+    let emitted: CashFlowReport | undefined;
+    service.cashFlow().subscribe((report) => (emitted = report));
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/cash-flow`);
+    // An absent bound must be absent from the query, not sent empty: the backend reads a missing
+    // parameter as "no bound" and an empty one as a parse failure.
+    expect(request.request.params.keys()).toEqual([]);
+    request.flush(CASH_FLOW);
+
+    expect(emitted).toEqual(CASH_FLOW);
+    controller.verify();
+  });
+
+  it('getCashFlow_withPeriod_serializesFromAndTo', () => {
+    service.cashFlow('2026-01-01', '2026-03-31').subscribe();
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/cash-flow`);
+    expect(request.request.params.get('from')).toBe('2026-01-01');
+    expect(request.request.params.get('to')).toBe('2026-03-31');
+    request.flush(CASH_FLOW);
+
     controller.verify();
   });
 });
