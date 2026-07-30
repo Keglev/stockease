@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +61,18 @@ public class InvoiceService {
      */
     public List<Invoice> findAll() {
         return invoiceRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    /**
+     * Returns one page of live invoices, newest first.
+     * Same rows, same order and the same uninitialized associations as {@link #findAll()}; this one
+     * only slices, which is why the ledger's growth stops being the list's problem.
+     *
+     * @param pageable the slice to return
+     * @return that page of invoices ordered by creation time descending
+     */
+    public Page<Invoice> findAll(Pageable pageable) {
+        return invoiceRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
     /**

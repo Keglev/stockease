@@ -75,3 +75,11 @@
 @if (!loading() && !error() && rows().length === 0) {
   <p class="invoice-empty">{{ 'invoices.empty' | translate }}</p>
 }
+
+<mat-paginator
+  [length]="totalElements()"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[10, 25, 50]"
+  (page)="onPage($event)"
+/>

@@ -36,6 +36,8 @@ export type CashFlowReport = components['schemas']['CashFlowReport'];
 
 export type CashFlowProductRow = components['schemas']['CashFlowProductRow'];
 
+export type PaginatedInvoices = components['schemas']['PaginatedInvoices'];
+
 export type LossReport = components['schemas']['LossReport'];
 
 export type DueDateBucket = components['schemas']['DueDateBucket'];

@@ -14,7 +14,7 @@
   <p class="customer-error" role="alert">{{ message }}</p>
 }
 
-<table mat-table [dataSource]="rows()" class="customer-table">
+<table mat-table [dataSource]="visibleRows()" class="customer-table">
   <ng-container matColumnDef="name">
     <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.name' | translate }}</th>
     <td mat-cell *matCellDef="let customer">{{ customer.name }}</td>
@@ -75,3 +75,11 @@
 @if (!loading() && !error() && rows().length === 0) {
   <p class="customer-empty">{{ 'customers.empty' | translate }}</p>
 }
+
+<mat-paginator
+  [length]="rows().length"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[10, 25, 50]"
+  (page)="onPage($event)"
+/>

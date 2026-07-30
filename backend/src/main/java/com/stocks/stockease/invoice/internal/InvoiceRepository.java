@@ -3,6 +3,8 @@ package com.stocks.stockease.invoice.internal;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -55,6 +57,17 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
      * @return all invoices ordered by creation time descending
      */
     List<Invoice> findAllByOrderByCreatedAtDesc();
+
+    /**
+     * Returns one page of live invoices, newest first.
+     *
+     * <p>The ordering is named in the method rather than left to the caller's pageable, so a page
+     * of this list can never disagree with the unpaged sibling above about what newest-first means.
+     *
+     * @param pageable the slice to return
+     * @return that page of invoices ordered by creation time descending
+     */
+    Page<Invoice> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     /**
      * Loads one invoice with its items, their products and both counterparties initialized.

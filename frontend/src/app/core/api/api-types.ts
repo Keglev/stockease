@@ -377,6 +377,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/invoices/paged": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retrieve invoices with pagination
+         * @description Returns a paginated slice of the invoice ledger with metadata, newest first. Same rows, order
+         *     and soft-delete filtering as the unpaged listing - only sliced.
+         *
+         *     Prefer this over the unpaged endpoint for anything user-facing: the ledger is the one list here
+         *     that grows without bound. Default page size is 10.
+         */
+        get: operations["getPagedInvoices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/invoices/{id}": {
         parameters: {
             query?: never;
@@ -966,6 +990,23 @@ export interface components {
         };
         ApiResponsePaginated: components["schemas"]["ApiResponse"] & {
             data: components["schemas"]["PaginatedProducts"];
+        };
+        PaginatedInvoices: {
+            content: components["schemas"]["InvoiceSummaryResponse"][];
+            /** @example 0 */
+            pageNumber: number;
+            /** @example 10 */
+            pageSize: number;
+            /**
+             * Format: int64
+             * @example 100
+             */
+            totalElements: number;
+            /** @example 10 */
+            totalPages: number;
+        };
+        ApiResponsePaginatedInvoices: components["schemas"]["ApiResponse"] & {
+            data: components["schemas"]["PaginatedInvoices"];
         };
         /** @description Bare status message returned by the low-stock and search endpoints when empty */
         MessageOnly: {
@@ -2943,6 +2984,79 @@ export interface operations {
                     "application/json": components["schemas"]["ApiResponseError"];
                 };
             };
+        };
+    };
+    getPagedInvoices: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page number (default 0) */
+                page?: number;
+                /** @description Items per page (default 10, must be positive) */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated invoices returned (ROLE_USER or ROLE_ADMIN) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": true,
+                     *       "message": "Paged invoices fetched successfully",
+                     *       "data": {
+                     *         "content": [
+                     *           {
+                     *             "id": 1,
+                     *             "invoiceNumber": "RE-2026-0117",
+                     *             "type": "PURCHASE",
+                     *             "status": "CLOSED",
+                     *             "dueDate": "2026-03-01",
+                     *             "supplierId": 7,
+                     *             "customerId": null,
+                     *             "closedAt": "2026-01-02T03:04:00",
+                     *             "paidAt": null,
+                     *             "createdAt": "2026-01-02T03:04:00"
+                     *           }
+                     *         ],
+                     *         "pageNumber": 0,
+                     *         "pageSize": 10,
+                     *         "totalElements": 100,
+                     *         "totalPages": 10
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponsePaginatedInvoices"];
+                };
+            };
+            /**
+             * @description Invalid pagination parameters - a negative page or a non-positive size. Reported by the
+             *     handler-method validation path, whose error key is not deterministic.
+             */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "Validation failed for request parameters.",
+                     *       "data": {
+                     *         "Unknown": "Unable to extract detailed validation error."
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
         };
     };
     getInvoiceById: {

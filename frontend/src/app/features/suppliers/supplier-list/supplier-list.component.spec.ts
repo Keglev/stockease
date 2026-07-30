@@ -31,10 +31,12 @@ const SUPPLIERS: SupplierResponse[] = [
 
 class SupplierServiceStub {
   removeCalls: number[] = [];
+  /** Mutable so a delete can shrink the list the component reloads. */
+  roster = [...SUPPLIERS];
   removeResult: Observable<string> = of('Supplier deleted.');
 
   getAll(): Observable<SupplierResponse[]> {
-    return of(SUPPLIERS);
+    return of(this.roster);
   }
 
   remove(id: number): Observable<string> {
@@ -77,8 +79,9 @@ describe('SupplierListComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelectorAll('.supplier-delete');
   }
 
-  async function setUp(role: 'ADMIN' | 'USER'): Promise<void> {
+  async function setUp(role: 'ADMIN' | 'USER', roster: SupplierResponse[] = SUPPLIERS): Promise<void> {
     suppliers = new SupplierServiceStub();
+    suppliers.roster = [...roster];
     notifications = new NotificationServiceStub();
     dialog = new MatDialogStub();
 
@@ -159,5 +162,40 @@ describe('SupplierListComponent', () => {
 
     expect(notifications.errors).toEqual(['Supplier has open invoices and cannot be deleted.']);
     expect(notifications.successes).toEqual([]);
+  });
+
+  it('pagination_secondPage_showsRemainingRows', async () => {
+    const many = Array.from({ length: 12 }, (unused, index) => ({ id: index + 1, name: 'Supplier ' + index, address: '1 Main St', createdAt: '2026-01-02T03:04:00' }));
+    await setUp('ADMIN', many);
+
+    const page = fixture.componentInstance as unknown as {
+      onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void;
+    };
+    page.onPage({ pageIndex: 1, pageSize: 10, length: 12 });
+    fixture.detectChanges();
+
+    // client-side: the second page is a slice of rows already in memory, with no new request
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr').length).toBe(2);
+  });
+
+  it('delete_lastRowOfLastPage_clampsPageIndex', async () => {
+    const many = Array.from({ length: 12 }, (unused, index) => ({ id: index + 1, name: 'Supplier ' + index, address: '1 Main St', createdAt: '2026-01-02T03:04:00' }));
+    await setUp('ADMIN', many);
+    const page = fixture.componentInstance as unknown as {
+      onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void;
+      pageIndex: () => number;
+    };
+    page.onPage({ pageIndex: 1, pageSize: 10, length: 12 });
+    fixture.detectChanges();
+
+    // the reload leaves ten rows, so page 1 no longer exists and the table must come back to 0
+    suppliers.roster = suppliers.roster.slice(0, 10);
+    dialog.confirmed = true;
+    deleteButtons()[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(page.pageIndex()).toBe(0);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr').length).toBe(10);
   });
 });

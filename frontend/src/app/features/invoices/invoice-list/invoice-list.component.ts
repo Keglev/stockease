@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterLink } from '@angular/router';
@@ -12,6 +13,8 @@ import { InvoiceSummaryResponse } from '../../../core/api/api-models';
 import { CustomerService } from '../../customers/customer.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { InvoiceService } from '../invoice.service';
+
+const DEFAULT_PAGE_SIZE = 10;
 
 /**
  * Today as a local calendar date in the same YYYY-MM-DD shape the API sends. Comparing the two as
@@ -35,6 +38,7 @@ function today(): string {
     DatePipe,
     MatButtonModule,
     MatChipsModule,
+    MatPaginatorModule,
     MatProgressBarModule,
     MatTableModule,
     RouterLink,
@@ -61,6 +65,9 @@ export class InvoiceListComponent implements OnInit {
   ];
 
   protected readonly rows = signal<InvoiceSummaryResponse[]>([]);
+  protected readonly totalElements = signal(0);
+  protected readonly pageIndex = signal(0);
+  protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -68,6 +75,13 @@ export class InvoiceListComponent implements OnInit {
   private readonly customerNames = signal(new Map<number, string>());
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  /** Server-side paging: every page or size change refetches rather than slicing locally. */
+  protected onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
     this.load();
   }
 
@@ -110,18 +124,20 @@ export class InvoiceListComponent implements OnInit {
     // backend builds the list without initializing associations, which is what keeps the list
     // query free of extra per-row lookups. The detail endpoint carries names instead.
     forkJoin({
-      invoices: this.invoices.getAll(),
+      invoices: this.invoices.getPagedInvoices(this.pageIndex(), this.pageSize()),
       suppliers: this.suppliers.getAll(),
       customers: this.customers.getAll()
     }).subscribe({
       next: ({ invoices, suppliers, customers }) => {
         this.supplierNames.set(new Map(suppliers.map((s) => [s.id, s.name])));
         this.customerNames.set(new Map(customers.map((c) => [c.id, c.name])));
-        this.rows.set(invoices);
+        this.rows.set(invoices.content);
+        this.totalElements.set(invoices.totalElements);
         this.loading.set(false);
       },
       error: (err: Error) => {
         this.rows.set([]);
+        this.totalElements.set(0);
         this.error.set(err.message);
         this.loading.set(false);
       }

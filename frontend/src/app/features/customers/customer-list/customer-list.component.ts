@@ -3,6 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -21,12 +22,15 @@ import {
 } from '../customer-summary-dialog/customer-summary-dialog.component';
 import { CustomerService } from '../customer.service';
 
+const DEFAULT_PAGE_SIZE = 10;
+
 @Component({
   selector: 'app-customer-list',
   imports: [
     DatePipe,
     MatButtonModule,
     MatIconModule,
+    MatPaginatorModule,
     MatProgressBarModule,
     MatTableModule,
     TranslatePipe
@@ -47,6 +51,17 @@ export class CustomerListComponent implements OnInit {
   protected readonly displayedColumns = ['name', 'email', 'phone', 'city', 'createdAt', 'actions'];
 
   protected readonly rows = signal<CustomerResponse[]>([]);
+
+  // Client-side by design: master data is bounded, and the whole array is already loaded because
+  // the dialogs and the delete guard read from it. A paged endpoint here would be machinery with
+  // no payoff - the invoice ledger is where server-side paging earns its cost.
+  protected readonly pageIndex = signal(0);
+  protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+
+  protected readonly visibleRows = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.rows().slice(start, start + this.pageSize());
+  });
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -101,6 +116,24 @@ export class CustomerListComponent implements OnInit {
     });
   }
 
+  protected onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+
+  /**
+   * Pulls the page index back when the rows behind it are gone.
+   *
+   * <p>Deleting the last row of the last page would otherwise strand the table on a page that no
+   * longer exists, showing nothing with no hint that the data moved.
+   */
+  private clampPageIndex(): void {
+    const lastPage = Math.max(0, Math.ceil(this.rows().length / this.pageSize()) - 1);
+    if (this.pageIndex() > lastPage) {
+      this.pageIndex.set(lastPage);
+    }
+  }
+
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -108,6 +141,7 @@ export class CustomerListComponent implements OnInit {
     this.customers.getAll().subscribe({
       next: (customers) => {
         this.rows.set(customers);
+        this.clampPageIndex();
         this.loading.set(false);
       },
       error: (err: Error) => {

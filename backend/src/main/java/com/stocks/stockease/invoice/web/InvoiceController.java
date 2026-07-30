@@ -3,6 +3,9 @@ package com.stocks.stockease.invoice.web;
 import java.security.Principal;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.invoice.Invoice;
@@ -19,9 +23,12 @@ import com.stocks.stockease.invoice.InvoiceService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.shared.ApiResponse;
+import com.stocks.stockease.shared.PaginatedResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -49,12 +56,35 @@ public class InvoiceController {
     /**
      * Returns every invoice, newest first.
      *
+     * <p>Prefer {@code /paged} for anything user-facing: the invoice ledger is the one list here
+     * that grows without bound, so a full read gets slower for the whole life of the deployment.
+     *
      * @return list of invoice summaries carrying counterparty identifiers only
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<InvoiceSummaryResponse> getAllInvoices() {
         return invoiceService.findAll().stream().map(InvoiceSummaryResponse::from).toList();
+    }
+
+    /**
+     * Returns a paginated slice of the invoice ledger, newest first.
+     *
+     * <p>Same rows, order and filtering as the unpaged sibling above - only sliced.
+     *
+     * @param page zero-based page index (default 0)
+     * @param size items per page (default 10, must be positive)
+     * @return {@link PaginatedResponse} with invoice summaries and pagination metadata
+     */
+    @GetMapping("/paged")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<ApiResponse<PaginatedResponse<InvoiceSummaryResponse>>> getPagedInvoices(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Positive int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<InvoiceSummaryResponse> invoices = invoiceService.findAll(pageable).map(InvoiceSummaryResponse::from);
+        PaginatedResponse<InvoiceSummaryResponse> response = new PaginatedResponse<>(invoices);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Paged invoices fetched successfully", response));
     }
 
     /**
