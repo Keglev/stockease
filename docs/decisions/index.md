@@ -35,5 +35,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 021 - Stock Enters Only Through Closed Purchase Invoices](021-stock-only-via-invoices.md) - **[Cross-cutting]**
 - [ADR 022 - Invoice Numbers Are Operator-Assigned](022-invoice-numbers.md) - **[Cross-cutting]**
 - [ADR 023 - Client-Side Chart Aggregation and CSV Export Conventions](023-chart-aggregation-and-csv.md) - **[Frontend]**
+- [ADR 024 - Gross Profit as Cost of Goods Sold, Captured at Sale](024-profit-cogs.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

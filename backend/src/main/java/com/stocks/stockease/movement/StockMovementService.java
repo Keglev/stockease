@@ -1,5 +1,6 @@
 package com.stocks.stockease.movement;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -159,12 +160,35 @@ public class StockMovementService {
         movement.setRemark(command.remark());
         switch (reason) {
             case PURCHASE -> movement.setUnitCost(item.getUnitPrice());
-            case SOLD, RETURN_FROM_CUSTOMER -> movement.setSoldPrice(item.getUnitPrice());
+            case SOLD -> {
+                movement.setSoldPrice(item.getUnitPrice());
+                // The COGS snapshot: what these units cost at the moment they left. The product's
+                // purchase price may change afterwards without rewriting this sale's profit (ADR 024).
+                movement.setUnitCost(product.getPurchasePrice());
+            }
+            case RETURN_FROM_CUSTOMER -> {
+                movement.setSoldPrice(item.getUnitPrice());
+                movement.setUnitCost(saleUnitCost(item));
+            }
             default -> {
                 // LOST, DESTROYED and RETURNED_TO_SUPPLIER carry no price snapshot
             }
         }
         return movement;
+    }
+
+    /**
+     * Reads the cost the matching sale captured, so a return reverses exactly what the sale booked.
+     */
+    private BigDecimal saleUnitCost(InvoiceItem item) {
+        // Deliberately not the product's current price: a price change between sale and return would
+        // make the reversal cancel a different amount than the sale added. After the V20 backfill
+        // every SOLD movement carries a cost, so a legitimate return always finds one.
+        return stockMovementRepository
+                .findFirstByInvoiceItemIdAndReason(item.getId(), MovementReason.SOLD)
+                .map(StockMovement::getUnitCost)
+                .orElseThrow(() -> new InvalidMovementException(
+                        "A customer return requires the stock movement of the sale it reverses."));
     }
 
     /** Reports whether the reason must be backed by an invoice line. */

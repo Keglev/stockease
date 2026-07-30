@@ -133,7 +133,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     }
 
     private ProductProfitReport profitRow(long productId) {
-        return reportingService.profitPerProduct().stream()
+        return reportingService.profitPerProduct(null, null).stream()
                 .filter(row -> row.productId() == productId).findFirst().orElseThrow();
     }
 
@@ -145,8 +145,9 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
         ProductProfitReport row = profitRow(scenario.productId());
 
         assertThat(row.revenue()).isEqualByComparingTo("90.00");
-        assertThat(row.cost()).isEqualByComparingTo("80.00");
-        assertThat(row.grossProfit()).isEqualByComparingTo("10.00");
+        // cost is the three units that stayed sold, at the 10.00 the sale captured - not the ten bought
+        assertThat(row.cost()).isEqualByComparingTo("30.00");
+        assertThat(row.grossProfit()).isEqualByComparingTo("60.00");
         assertThat(row.deleted()).isFalse();
     }
 
@@ -158,11 +159,86 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
         closedPurchase(supplier.getId(), product.getId(), 5, "20.00");
         closedSale(product.getId(), 5, "15.00");
 
-        ProductProfitReport row = reportingService.profitForProduct(product.getId()).orElseThrow();
+        ProductProfitReport row = reportingService.profitForProduct(product.getId(), null, null).orElseThrow();
 
         assertThat(row.revenue()).isEqualByComparingTo("75.00");
         assertThat(row.cost()).isEqualByComparingTo("100.00");
         assertThat(row.grossProfit()).isEqualByComparingTo("-25.00");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void profit_soldSubsetOfStock_countsOnlySoldUnitsCost() {
+        Supplier supplier = supplierService.create("RPT Subset Supplier", "1 Main St");
+        Product product = newProduct("RPT Subset Of Stock", "50.00");
+        closedPurchase(supplier.getId(), product.getId(), 10, "50.00");
+        closedSale(product.getId(), 4, "80.00");
+
+        ProductProfitReport row = profitRow(product.getId());
+
+        // the six units still on the shelf are inventory, not cost: they cost cash, not profit
+        assertThat(row.revenue()).isEqualByComparingTo("320.00");
+        assertThat(row.cost()).isEqualByComparingTo("200.00");
+        assertThat(row.grossProfit()).isEqualByComparingTo("120.00");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void profit_supplierReturn_leavesProfitUntouched() {
+        Supplier supplier = supplierService.create("RPT Supplier Return Supplier", "1 Main St");
+        Product product = newProduct("RPT Supplier Return", "50.00");
+        Invoice purchase = closedPurchase(supplier.getId(), product.getId(), 10, "50.00");
+        closedSale(product.getId(), 4, "80.00");
+        ProductProfitReport before = profitRow(product.getId());
+
+        record(MovementReason.RETURNED_TO_SUPPLIER, product.getId(), 3, firstItemId(purchase));
+
+        // sending stock back is a purchase reversal: it moves cash, and profit must not notice
+        ProductProfitReport after = profitRow(product.getId());
+        assertThat(after.revenue()).isEqualByComparingTo(before.revenue());
+        assertThat(after.cost()).isEqualByComparingTo(before.cost());
+        assertThat(after.grossProfit()).isEqualByComparingTo("120.00");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void profit_customerReturn_reversesRevenueAndCogsAtSalePrices() {
+        Supplier supplier = supplierService.create("RPT Customer Return Supplier", "1 Main St");
+        Product product = newProduct("RPT Customer Return", "50.00");
+        closedPurchase(supplier.getId(), product.getId(), 10, "50.00");
+        Invoice sale = closedSale(product.getId(), 4, "80.00");
+
+        record(MovementReason.RETURN_FROM_CUSTOMER, product.getId(), 1, firstItemId(sale));
+
+        // one unit undone on both sides: 80.00 off revenue and the 50.00 the sale had charged
+        ProductProfitReport row = profitRow(product.getId());
+        assertThat(row.revenue()).isEqualByComparingTo("240.00");
+        assertThat(row.cost()).isEqualByComparingTo("150.00");
+        assertThat(row.grossProfit()).isEqualByComparingTo("90.00");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void profit_fromToWindow_excludesMovementsOutsideRange() {
+        Supplier supplier = supplierService.create("RPT Window Supplier", "1 Main St");
+        Product product = newProduct("RPT Window Product", "50.00");
+        closedPurchase(supplier.getId(), product.getId(), 10, "50.00");
+        closedSale(product.getId(), 4, "80.00");
+        LocalDate today = LocalDate.now();
+
+        ProductProfitReport outside = rowOf(reportingService.profitPerProduct(
+                LocalDate.of(2020, 1, 1), LocalDate.of(2020, 12, 31)), product.getId());
+        ProductProfitReport inside = rowOf(reportingService.profitPerProduct(today, today), product.getId());
+
+        // a product with nothing booked in the window still appears - the date test lives in the JOIN,
+        // so the LEFT JOIN's zero row survives instead of the product dropping out of the report
+        assertThat(outside.grossProfit()).isEqualByComparingTo("0.00");
+        assertThat(inside.grossProfit()).isEqualByComparingTo("120.00");
+    }
+
+    /** Picks one product's row out of a report, failing the test when the product is absent. */
+    private static ProductProfitReport rowOf(List<ProductProfitReport> rows, long productId) {
+        return rows.stream().filter(row -> row.productId() == productId).findFirst().orElseThrow();
     }
 
     @Test
@@ -176,7 +252,8 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
         ProductProfitReport row = profitRow(product.getId());
 
         assertThat(row.deleted()).isTrue();
-        assertThat(row.cost()).isEqualByComparingTo("30.00");
+        // bought but never sold: stock on the shelf is not a cost of goods SOLD
+        assertThat(row.cost()).isEqualByComparingTo("0.00");
     }
 
     @Test
@@ -188,8 +265,8 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
                 .filter(entry -> entry.supplierId() == scenario.supplierId()).findFirst().orElseThrow();
 
         assertThat(row.revenue()).isEqualByComparingTo("90.00");
-        assertThat(row.cost()).isEqualByComparingTo("80.00");
-        assertThat(row.grossProfit()).isEqualByComparingTo("10.00");
+        assertThat(row.cost()).isEqualByComparingTo("30.00");
+        assertThat(row.grossProfit()).isEqualByComparingTo("60.00");
     }
 
     @Test
@@ -216,8 +293,9 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
         SupplierProfitReport row = rows.stream()
                 .filter(entry -> entry.supplierId().equals(supplierId)).findFirst().orElseThrow();
         assertThat(row.revenue()).isEqualByComparingTo("120.00");
-        assertThat(row.cost()).isEqualByComparingTo("110.00");
-        assertThat(row.grossProfit()).isEqualByComparingTo("10.00");
+        // the sale captured 12.00, the price the second purchase left behind (ADR 019)
+        assertThat(row.cost()).isEqualByComparingTo("48.00");
+        assertThat(row.grossProfit()).isEqualByComparingTo("72.00");
     }
 
     @Test

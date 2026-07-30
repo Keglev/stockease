@@ -1,6 +1,7 @@
 package com.stocks.stockease.movement.internal;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -27,4 +28,14 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
      * @return that user's movements ordered by creation time descending
      */
     List<StockMovement> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    /**
+     * Finds the movement of the given reason recorded against an invoice line, used by a customer
+     * return to read the cost its own sale captured.
+     *
+     * @param invoiceItemId invoice item identifier
+     * @param reason movement reason to look for
+     * @return that movement, or empty when the line carries none
+     */
+    Optional<StockMovement> findFirstByInvoiceItemIdAndReason(Long invoiceItemId, MovementReason reason);
 }

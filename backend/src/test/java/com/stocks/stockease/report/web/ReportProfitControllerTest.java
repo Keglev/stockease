@@ -1,6 +1,7 @@
 package com.stocks.stockease.report.web;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,7 +52,7 @@ class ReportProfitControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void profitPerProduct_withRows_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.profitPerProduct()).thenReturn(List.of(productProfit()));
+        Mockito.when(reportingService.profitPerProduct(null, null)).thenReturn(List.of(productProfit()));
 
         mockMvc.perform(get("/api/reports/profit/products"))
                 .andExpect(status().isOk())
@@ -60,13 +61,13 @@ class ReportProfitControllerTest {
                 .andExpect(jsonPath("$[0].deleted").value(false))
                 .andExpect(jsonPath("$[0].grossProfit").value(60.00));
 
-        Mockito.verify(reportingService).profitPerProduct();
+        Mockito.verify(reportingService).profitPerProduct(null, null);
     }
 
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void profitPerProduct_asUserRole_returns200() throws Exception {
-        Mockito.when(reportingService.profitPerProduct()).thenReturn(List.of(productProfit()));
+        Mockito.when(reportingService.profitPerProduct(null, null)).thenReturn(List.of(productProfit()));
 
         mockMvc.perform(get("/api/reports/profit/products"))
                 .andExpect(status().isOk())
@@ -74,17 +75,44 @@ class ReportProfitControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void profitPerProduct_withPeriod_passesBothBoundsThrough() throws Exception {
+        LocalDate from = LocalDate.of(2026, 1, 1);
+        LocalDate to = LocalDate.of(2026, 3, 31);
+        Mockito.when(reportingService.profitPerProduct(from, to)).thenReturn(List.of(productProfit()));
+
+        mockMvc.perform(get("/api/reports/profit/products")
+                        .param("from", "2026-01-01").param("to", "2026-03-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].productId").value(3));
+
+        Mockito.verify(reportingService).profitPerProduct(from, to);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void profitPerProduct_withStartAfterEnd_returns400() throws Exception {
+        mockMvc.perform(get("/api/reports/profit/products")
+                        .param("from", "2026-03-31").param("to", "2026-01-01"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
+
+        Mockito.verify(reportingService, Mockito.never()).profitPerProduct(Mockito.any(), Mockito.any());
+    }
+
+    @Test
     void profitPerProduct_asAnonymous_returns401() throws Exception {
         mockMvc.perform(get("/api/reports/profit/products"))
                 .andExpect(status().isUnauthorized());
 
-        Mockito.verify(reportingService, Mockito.never()).profitPerProduct();
+        Mockito.verify(reportingService, Mockito.never()).profitPerProduct(null, null);
     }
 
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void profitForProduct_withExistingProduct_returnsEnvelope() throws Exception {
-        Mockito.when(reportingService.profitForProduct(3L)).thenReturn(Optional.of(productProfit()));
+        Mockito.when(reportingService.profitForProduct(3L, null, null)).thenReturn(Optional.of(productProfit()));
 
         mockMvc.perform(get("/api/reports/profit/products/3"))
                 .andExpect(status().isOk())
@@ -97,7 +125,7 @@ class ReportProfitControllerTest {
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void profitForProduct_withUnknownProduct_returns404() throws Exception {
-        Mockito.when(reportingService.profitForProduct(9L)).thenReturn(Optional.empty());
+        Mockito.when(reportingService.profitForProduct(9L, null, null)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/reports/profit/products/9"))
                 .andExpect(status().isNotFound())

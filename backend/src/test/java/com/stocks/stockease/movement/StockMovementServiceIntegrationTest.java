@@ -143,6 +143,37 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void recordMovement_sold_capturesProductPurchasePriceAsUnitCost() {
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Sold Cost", 10, 50.0), "TST-MOVE-COGS-1"));
+        InvoiceItem item = saleItemFor(product, 4);
+
+        StockMovement saved = stockMovementService
+                .recordMovement(command(MovementReason.SOLD, product, 4, item.getId()), user);
+
+        // both halves of the margin are pinned to the moment of sale: what it earned and what it cost
+        assertThat(saved.getUnitCost()).isEqualByComparingTo(new BigDecimal("50.00"));
+        assertThat(saved.getSoldPrice()).isEqualByComparingTo(new BigDecimal("15.00"));
+    }
+
+    @Test
+    void recordMovement_returnAfterPriceChange_copiesSaleUnitCostNotCurrent() {
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Return Cost", 10, 50.0), "TST-MOVE-COGS-2"));
+        InvoiceItem item = saleItemFor(product, 4);
+        stockMovementService.recordMovement(command(MovementReason.SOLD, product, 4, item.getId()), user);
+        product.setPurchasePrice(new BigDecimal("70.00"));
+        productRepository.saveAndFlush(product);
+
+        StockMovement returned = stockMovementService
+                .recordMovement(command(MovementReason.RETURN_FROM_CUSTOMER, product, 1, item.getId()), user);
+
+        // 50.00, not today's 70.00: a reversal has to cancel exactly what the sale booked, or the
+        // price change would leave a residue in gross profit
+        assertThat(returned.getUnitCost()).isEqualByComparingTo(new BigDecimal("50.00"));
+    }
+
+    @Test
     void recordMovement_returnFromCustomer_incrementsReturnedQty() {
         Product product = productRepository.saveAndFlush(
                 withSku(new Product("Movement Return From Customer", 10, 5.0), "TST-MOVE-2"));
