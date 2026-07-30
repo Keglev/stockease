@@ -26,20 +26,35 @@ public class ReportingService {
 
     // Historical report: soft-deleted products are INCLUDED (movements reference them regardless); the
     // deleted flag lets callers mark them.
-    // Supplier-return recovery joins the invoice line because RETURNED_TO_SUPPLIER movements carry no
-    // price snapshot of their own.
-    private static final String PRODUCT_PROFIT_SELECT = """
+    //
+    // Cost is cost of goods SOLD, not cash spent on stock: only the units that left count, priced at
+    // the cost their own sale captured, and a customer return reverses revenue and cost together at
+    // the same prices. Purchases and supplier returns are absent by design - they move cash, not
+    // profit, and belong to the cash-flow report (ADR 024). That also retired the invoice_item join,
+    // which existed solely to price supplier returns.
+    private static final String PRODUCT_PROFIT_EXPRESSIONS = """
             SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,
               COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.sold_price
                                 WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.sold_price
                                 ELSE 0 END), 0) AS revenue,
-              COALESCE(SUM(CASE WHEN m.reason = 'PURCHASE' THEN m.quantity * m.unit_cost
-                                WHEN m.reason = 'RETURNED_TO_SUPPLIER' THEN -m.quantity * ii.unit_price
+              COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.unit_cost
+                                WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.unit_cost
                                 ELSE 0 END), 0) AS cost
             FROM product p
-            LEFT JOIN stock_movement m ON m.product_id = p.id
-            LEFT JOIN invoice_item ii ON ii.id = m.invoice_item_id
             """;
+
+    // The period predicate belongs to the JOIN, not to WHERE: in the WHERE clause it would discard
+    // the NULL-extended rows the LEFT JOIN produces, so a product with no movements in the window
+    // would vanish from the report instead of appearing with zeros. Casting the parameters lets one
+    // statement serve the filtered and unfiltered calls. The window is a closed range of dates, so
+    // the upper bound covers the whole of `to`.
+    private static final String PRODUCT_PROFIT_JOIN = """
+            LEFT JOIN stock_movement m ON m.product_id = p.id
+              AND (CAST(:from AS date) IS NULL OR m.created_at >= CAST(:from AS date))
+              AND (CAST(:to AS date) IS NULL OR m.created_at < CAST(:to AS date) + INTERVAL '1 day')
+            """;
+
+    private static final String PRODUCT_PROFIT_SELECT = PRODUCT_PROFIT_EXPRESSIONS + PRODUCT_PROFIT_JOIN;
 
     private static final String PRODUCT_PROFIT_GROUP = """
             GROUP BY p.id, p.name, p.sku, p.deleted_at
@@ -82,23 +97,37 @@ public class ReportingService {
     }
 
     /**
-     * Returns gross profit for every product, including soft-deleted ones.
+     * Returns gross profit for every product, including soft-deleted ones, over an optional period.
      *
+     * <p>The period is a closed range of movement dates: a movement counts when it was recorded on
+     * or between the two dates. Either bound may be null, which leaves that end open. Products
+     * without movements in the window still appear, with zeros.
+     *
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
      * @return one row per product, ordered by product ID
      */
-    public List<ProductProfitReport> profitPerProduct() {
-        return jdbcClient.sql(PRODUCT_PROFIT_SELECT + PRODUCT_PROFIT_GROUP).query(PRODUCT_PROFIT_MAPPER).list();
+    public List<ProductProfitReport> profitPerProduct(LocalDate from, LocalDate to) {
+        return jdbcClient.sql(PRODUCT_PROFIT_SELECT + PRODUCT_PROFIT_GROUP)
+                .param("from", from)
+                .param("to", to)
+                .query(PRODUCT_PROFIT_MAPPER)
+                .list();
     }
 
     /**
-     * Returns gross profit for one product.
+     * Returns gross profit for one product over an optional booking period.
      *
      * @param productId product identifier
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
      * @return the product's profit row, or empty if no such product exists
      */
-    public Optional<ProductProfitReport> profitForProduct(long productId) {
+    public Optional<ProductProfitReport> profitForProduct(long productId, LocalDate from, LocalDate to) {
         return jdbcClient.sql(PRODUCT_PROFIT_SELECT + "WHERE p.id = :id\n" + PRODUCT_PROFIT_GROUP)
                 .param("id", productId)
+                .param("from", from)
+                .param("to", to)
                 .query(PRODUCT_PROFIT_MAPPER)
                 .optional();
     }
@@ -111,18 +140,20 @@ public class ReportingService {
     public List<SupplierProfitReport> profitPerSupplier() {
         // A product purchased from several suppliers counts fully for each of them - documented
         // simplification (gross profit model, no per-supplier cost allocation).
+        // The per-product expressions repeat those of the product report on purpose: the two are one
+        // definition of gross profit and the reports page shows them side by side, so they move
+        // together (ADR 024). Only the shape around them differs - this one groups by supplier.
         String sql = """
                 WITH product_profit AS (
                   SELECT p.id,
                     COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.sold_price
                                       WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.sold_price
                                       ELSE 0 END), 0) AS revenue,
-                    COALESCE(SUM(CASE WHEN m.reason = 'PURCHASE' THEN m.quantity * m.unit_cost
-                                      WHEN m.reason = 'RETURNED_TO_SUPPLIER' THEN -m.quantity * ii.unit_price
+                    COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity * m.unit_cost
+                                      WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.unit_cost
                                       ELSE 0 END), 0) AS cost
                   FROM product p
                   LEFT JOIN stock_movement m ON m.product_id = p.id
-                  LEFT JOIN invoice_item ii ON ii.id = m.invoice_item_id
                   GROUP BY p.id
                 ), supplier_products AS (
                   SELECT DISTINCT i.supplier_id, ii.product_id

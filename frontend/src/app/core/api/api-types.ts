@@ -531,6 +531,10 @@ export interface paths {
          * Gross profit per product
          * @description One row per product, ordered by product ID. Historical report: soft-deleted products are
          *     included and flagged, because movements reference them regardless.
+         *
+         *     Cost is cost of goods sold, so stock bought but not yet sold does not reduce profit.
+         *     `from` and `to` optionally restrict the report to movements booked in that closed date range;
+         *     products with no movements in the window still appear, with zeros.
          */
         get: operations["profitPerProduct"];
         put?: never;
@@ -551,7 +555,11 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Gross profit for one product */
+        /**
+         * Gross profit for one product
+         * @description Cost is cost of goods sold, so stock bought but not yet sold does not reduce profit.
+         *     `from` and `to` optionally restrict the report to movements booked in that closed date range.
+         */
         get: operations["profitForProduct"];
         put?: never;
         post?: never;
@@ -1305,11 +1313,20 @@ export interface components {
              * @example false
              */
             deleted: boolean;
-            /** @example 100 */
+            /**
+             * @description Sold units at their sale price, less customer returns at the same price
+             * @example 100
+             */
             revenue: number;
-            /** @example 40 */
+            /**
+             * @description Cost of goods sold: the sold units at the purchase price captured on each sale, less customer returns at that same captured price. Purchases and supplier returns are excluded - they move cash, not profit.
+             * @example 40
+             */
             cost: number;
-            /** @example 60 */
+            /**
+             * @description Revenue less cost of goods sold; unsold stock does not reduce it
+             * @example 60
+             */
             grossProfit: number;
         };
         ApiResponseProductProfit: components["schemas"]["ApiResponse"] & {
@@ -3304,7 +3321,18 @@ export interface operations {
     };
     profitPerProduct: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description First booking date to count; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last booking date to count, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3333,12 +3361,39 @@ export interface operations {
                     "application/json": components["schemas"]["ProductProfitReport"][];
                 };
             };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
             401: components["responses"]["Unauthorized"];
         };
     };
     profitForProduct: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description First booking date to count; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last booking date to count, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
             header?: never;
             path: {
                 /** @description Product identifier */
@@ -3370,6 +3425,22 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["ApiResponseProductProfit"];
+                };
+            };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
                 };
             };
             401: components["responses"]["Unauthorized"];

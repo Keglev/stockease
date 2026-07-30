@@ -99,6 +99,14 @@ class StockMovementServiceTest {
         return item;
     }
 
+    /** Stubs the SOLD movement a customer return reads its cost from. */
+    private void stubSaleMovement(BigDecimal unitCost) {
+        StockMovement sale = new StockMovement();
+        sale.setUnitCost(unitCost);
+        when(stockMovementRepository.findFirstByInvoiceItemIdAndReason(ITEM_ID, MovementReason.SOLD))
+                .thenReturn(Optional.of(sale));
+    }
+
     /** Captures the movement handed to the repository. */
     private StockMovement savedMovement() {
         ArgumentCaptor<StockMovement> captor = ArgumentCaptor.forClass(StockMovement.class);
@@ -140,13 +148,15 @@ class StockMovementServiceTest {
         StockMovement saved = savedMovement();
         assertThat(saved.getType()).isEqualTo(MovementType.DECREASE);
         assertThat(saved.getSoldPrice()).isEqualByComparingTo(item.getUnitPrice());
-        assertThat(saved.getUnitCost()).isNull();
+        // the sale's COGS snapshot: the product's purchase price at this moment, not the sale price
+        assertThat(saved.getUnitCost()).isEqualByComparingTo(new BigDecimal("5.00"));
         assertThat(saved.getInvoiceItem()).isSameAs(item);
     }
 
     @Test
     void recordMovement_returnFromCustomer_increasesStockAndRegistersReturn() {
         InvoiceItem item = stubLinkedFlow(InvoiceType.SALE, 5);
+        stubSaleMovement(new BigDecimal("5.00"));
 
         stockMovementService.recordMovement(command(MovementReason.RETURN_FROM_CUSTOMER, 2, ITEM_ID, null), user);
 
@@ -155,7 +165,8 @@ class StockMovementServiceTest {
         StockMovement saved = savedMovement();
         assertThat(saved.getType()).isEqualTo(MovementType.INCREASE);
         assertThat(saved.getSoldPrice()).isEqualByComparingTo(item.getUnitPrice());
-        assertThat(saved.getUnitCost()).isNull();
+        // copied from the sale rather than re-read from the product, so the reversal is exact
+        assertThat(saved.getUnitCost()).isEqualByComparingTo(new BigDecimal("5.00"));
     }
 
     @Test
