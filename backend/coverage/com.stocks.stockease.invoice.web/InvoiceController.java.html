@@ -3,6 +3,9 @@
 import java.security.Principal;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.invoice.Invoice;
@@ -19,9 +23,12 @@ import com.stocks.stockease.invoice.InvoiceService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.shared.ApiResponse;
+import com.stocks.stockease.shared.PaginatedResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -42,19 +49,42 @@ public class InvoiceController {
 
     /** Resolves the authenticated principal to the user recorded against the close. */
     private User currentUser(Principal principal) {
-<span class="fc" id="L45">        return userService.findByUsername(principal.getName())</span>
-<span class="pc" id="L46">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Authenticated user not found.&quot;));</span>
+<span class="fc" id="L52">        return userService.findByUsername(principal.getName())</span>
+<span class="pc" id="L53">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Authenticated user not found.&quot;));</span>
     }
 
     /**
      * Returns every invoice, newest first.
+     *
+     * &lt;p&gt;Prefer {@code /paged} for anything user-facing: the invoice ledger is the one list here
+     * that grows without bound, so a full read gets slower for the whole life of the deployment.
      *
      * @return list of invoice summaries carrying counterparty identifiers only
      */
     @GetMapping
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceSummaryResponse&gt; getAllInvoices() {
-<span class="fc" id="L57">        return invoiceService.findAll().stream().map(InvoiceSummaryResponse::from).toList();</span>
+<span class="fc" id="L67">        return invoiceService.findAll().stream().map(InvoiceSummaryResponse::from).toList();</span>
+    }
+
+    /**
+     * Returns a paginated slice of the invoice ledger, newest first.
+     *
+     * &lt;p&gt;Same rows, order and filtering as the unpaged sibling above - only sliced.
+     *
+     * @param page zero-based page index (default 0)
+     * @param size items per page (default 10, must be positive)
+     * @return {@link PaginatedResponse} with invoice summaries and pagination metadata
+     */
+    @GetMapping(&quot;/paged&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;PaginatedResponse&lt;InvoiceSummaryResponse&gt;&gt;&gt; getPagedInvoices(
+            @RequestParam(defaultValue = &quot;0&quot;) @Min(0) int page,
+            @RequestParam(defaultValue = &quot;10&quot;) @Positive int size) {
+<span class="fc" id="L84">        Pageable pageable = PageRequest.of(page, size);</span>
+<span class="fc" id="L85">        Page&lt;InvoiceSummaryResponse&gt; invoices = invoiceService.findAll(pageable).map(InvoiceSummaryResponse::from);</span>
+<span class="fc" id="L86">        PaginatedResponse&lt;InvoiceSummaryResponse&gt; response = new PaginatedResponse&lt;&gt;(invoices);</span>
+<span class="fc" id="L87">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Paged invoices fetched successfully&quot;, response));</span>
     }
 
     /**
@@ -67,10 +97,10 @@ public class InvoiceController {
     @GetMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;InvoiceResponse&gt;&gt; getInvoiceById(@PathVariable long id) {
-<span class="fc" id="L70">        Invoice invoice = invoiceService.findDetailById(id)</span>
-<span class="fc" id="L71">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Invoice with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L72">        return ResponseEntity.ok(</span>
-<span class="fc" id="L73">                new ApiResponse&lt;&gt;(true, &quot;Invoice fetched successfully&quot;, InvoiceResponse.from(invoice)));</span>
+<span class="fc" id="L100">        Invoice invoice = invoiceService.findDetailById(id)</span>
+<span class="fc" id="L101">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Invoice with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L102">        return ResponseEntity.ok(</span>
+<span class="fc" id="L103">                new ApiResponse&lt;&gt;(true, &quot;Invoice fetched successfully&quot;, InvoiceResponse.from(invoice)));</span>
     }
 
     /**
@@ -82,8 +112,8 @@ public class InvoiceController {
     @PostMapping
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;InvoiceSummaryResponse&gt; createInvoice(@Valid @RequestBody CreateInvoiceRequest request) {
-<span class="fc" id="L85">        Invoice created = invoiceService.createInvoice(request.toCommand());</span>
-<span class="fc" id="L86">        return ResponseEntity.ok(InvoiceSummaryResponse.from(created));</span>
+<span class="fc" id="L115">        Invoice created = invoiceService.createInvoice(request.toCommand());</span>
+<span class="fc" id="L116">        return ResponseEntity.ok(InvoiceSummaryResponse.from(created));</span>
     }
 
     /**
@@ -97,9 +127,9 @@ public class InvoiceController {
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;InvoiceSummaryResponse&gt;&gt; closeInvoice(@PathVariable long id,
             Principal principal) {
-<span class="fc" id="L100">        Invoice closed = invoiceService.close(id, currentUser(principal));</span>
-<span class="fc" id="L101">        return ResponseEntity.ok(</span>
-<span class="fc" id="L102">                new ApiResponse&lt;&gt;(true, &quot;Invoice closed successfully&quot;, InvoiceSummaryResponse.from(closed)));</span>
+<span class="fc" id="L130">        Invoice closed = invoiceService.close(id, currentUser(principal));</span>
+<span class="fc" id="L131">        return ResponseEntity.ok(</span>
+<span class="fc" id="L132">                new ApiResponse&lt;&gt;(true, &quot;Invoice closed successfully&quot;, InvoiceSummaryResponse.from(closed)));</span>
     }
 
     /**
@@ -111,9 +141,9 @@ public class InvoiceController {
     @PatchMapping(&quot;/{id}/paid&quot;)
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;InvoiceSummaryResponse&gt;&gt; markInvoiceAsPaid(@PathVariable long id) {
-<span class="fc" id="L114">        Invoice paid = invoiceService.markAsPaid(id);</span>
-<span class="fc" id="L115">        return ResponseEntity.ok(</span>
-<span class="fc" id="L116">                new ApiResponse&lt;&gt;(true, &quot;Invoice marked as paid&quot;, InvoiceSummaryResponse.from(paid)));</span>
+<span class="fc" id="L144">        Invoice paid = invoiceService.markAsPaid(id);</span>
+<span class="fc" id="L145">        return ResponseEntity.ok(</span>
+<span class="fc" id="L146">                new ApiResponse&lt;&gt;(true, &quot;Invoice marked as paid&quot;, InvoiceSummaryResponse.from(paid)));</span>
     }
 
     /**
@@ -125,8 +155,8 @@ public class InvoiceController {
     @DeleteMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; deleteInvoice(@PathVariable long id) {
-<span class="fc" id="L128">        invoiceService.deleteById(id);</span>
-<span class="fc" id="L129">        return ResponseEntity.ok(</span>
+<span class="fc" id="L158">        invoiceService.deleteById(id);</span>
+<span class="fc" id="L159">        return ResponseEntity.ok(</span>
                 new ApiResponse&lt;&gt;(true, &quot;Invoice with ID &quot; + id + &quot; has been successfully deleted.&quot;, null));
     }
 }
