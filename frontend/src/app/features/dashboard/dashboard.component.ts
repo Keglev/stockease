@@ -3,15 +3,16 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map, switchMap, timer } from 'rxjs';
 
-import { DueDateBucket, ProductProfitReport, ProductResponse } from '../../core/api/api-models';
+import { DueDateBucket, ProductResponse } from '../../core/api/api-models';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
-import { topNWithRemainder } from '../../shared/chart/chart-data';
+import { ChartSlice, topNWithRemainder } from '../../shared/chart/chart-data';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
 import { ProductService } from '../products/product.service';
 // Deliberate cross-feature import: the reporting endpoints have one client, and the reports
@@ -20,6 +21,11 @@ import { ProductService } from '../products/product.service';
 import { ReportService } from '../reports/report.service';
 
 const HEALTH_POLL_MS = 30_000;
+
+/** Which half of a card is on screen; the cards open on their chart, the at-a-glance reading. */
+export type CardView = 'chart' | 'table';
+
+const CARD_VIEWS: readonly CardView[] = ['chart', 'table'];
 
 /**
  * First screen after login: headline counts, a low-stock alert, two report visualizations and
@@ -34,6 +40,7 @@ const HEALTH_POLL_MS = 30_000;
     CurrencyPipe,
     DatePipe,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCardModule,
     RouterLink,
     TranslatePipe
@@ -61,9 +68,21 @@ export class DashboardComponent implements OnInit {
   protected readonly totalProducts = signal(0);
   protected readonly lowStock = signal<ProductResponse[]>([]);
   protected readonly overdueCount = signal(0);
-  protected readonly lossValue = signal(0);
+  protected readonly grossProfit = signal(0);
 
-  protected readonly profitOption = signal<ChartOption | null>(null);
+  // The chart and the table are two readings of one dataset, so the slices are what the component
+  // holds and both views derive from them - null until the first load, so no empty chart flashes.
+  private readonly profitSlices = signal<ChartSlice[] | null>(null);
+
+  protected readonly profitOption = computed(() => {
+    const slices = this.profitSlices();
+    return slices ? toProfitOption(slices) : null;
+  });
+
+  protected readonly profitRows = computed(() => this.profitSlices() ?? []);
+
+  protected readonly profitView = signal<CardView>('chart');
+
   protected readonly dueDateOption = signal<ChartOption | null>(null);
 
   protected readonly probe = signal<HealthProbe | null>(null);
@@ -87,6 +106,15 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+  }
+
+  /** Switches the profit card between its chart and the same slices as rows. */
+  protected setProfitView(view: CardView): void {
+    // The group emits once with no value while it is being created; without this the card would
+    // end up on neither view. Same guard as the reports page's period presets.
+    if (CARD_VIEWS.includes(view)) {
+      this.profitView.set(view);
+    }
   }
 
   /** Reloads every figure except health, which runs on its own timer. */
@@ -114,16 +142,20 @@ export class DashboardComponent implements OnInit {
       error: (err: Error) => this.fail(err)
     });
 
-    this.reports.losses().subscribe({
-      // Display-only arithmetic over server-authoritative figures, as with the invoice totals.
-      next: (rows) => this.lossValue.set(rows.reduce((sum, row) => sum + row.lossValue, 0)),
-      error: (err: Error) => this.fail(err)
-    });
-
     this.reports.profitProducts().subscribe({
-      // Translated at build time: the option is a snapshot, exactly as every other chart here.
-      next: (rows) =>
-        this.profitOption.set(toProfitOption(rows, this.translate.instant('charts.other'))),
+      next: (rows) => {
+        // Translated at build time: the slices are a snapshot, exactly as every chart option here.
+        this.profitSlices.set(
+          topNWithRemainder(
+            rows.map((row) => ({ name: row.name, value: row.grossProfit })),
+            this.translate.instant('charts.other')
+          )
+        );
+        // Summed over every row, not over the ten plotted slices: the headline figure is the whole
+        // business, and display-only arithmetic over server-authoritative numbers is the precedent
+        // the invoice totals set.
+        this.grossProfit.set(rows.reduce((sum, row) => sum + row.grossProfit, 0));
+      },
       error: (err: Error) => this.fail(err)
     });
 
@@ -139,15 +171,12 @@ export class DashboardComponent implements OnInit {
   }
 }
 
-// The label is passed in rather than translated here so the builder stays a pure function.
-function toProfitOption(rows: ProductProfitReport[], otherLabel: string): ChartOption {
-  const top = topNWithRemainder(
-    rows.map((row) => ({ name: row.name, value: row.grossProfit })),
-    otherLabel
-  );
+// Takes the already-ranked slices rather than the raw rows, so the chart and the table below it
+// can never disagree about what the top ten are.
+function toProfitOption(slices: ChartSlice[]): ChartOption {
   // A category axis draws its first entry at the bottom, so the order is reversed to put the
   // most profitable product at the top of the chart.
-  const ordered = [...top].reverse();
+  const ordered = [...slices].reverse();
 
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },

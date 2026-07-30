@@ -360,7 +360,7 @@
       "products": "Produkte",
       "lowStock": "Bestand niedrig",
       "overdue": "Überfällige Rechnungen",
-      "lossValue": "Verlustwert"
+      "grossProfit": "Bruttogewinn"
     },
     "lowStockTitle": "Bestand niedrig",
     "lowStockNone": "Alle Produkte sind ausreichend bevorratet.",

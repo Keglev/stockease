@@ -360,7 +360,7 @@
       "products": "Products",
       "lowStock": "Low stock",
       "overdue": "Overdue invoices",
-      "lossValue": "Loss value"
+      "grossProfit": "Gross profit"
     },
     "lowStockTitle": "Low stock",
     "lowStockNone": "All products are sufficiently stocked.",

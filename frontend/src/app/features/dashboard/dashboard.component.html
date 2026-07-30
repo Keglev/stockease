@@ -35,10 +35,15 @@
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="kpi-card kpi-loss-value">
+  <mat-card class="kpi-card kpi-gross-profit">
     <mat-card-content>
-      <p class="kpi-label">{{ 'dashboard.kpi.lossValue' | translate }}</p>
-      <p class="kpi-value">{{ error() ? '—' : (lossValue() | currency: 'EUR') }}</p>
+      <p class="kpi-label">{{ 'dashboard.kpi.grossProfit' | translate }}</p>
+      <p
+        class="kpi-value"
+        [class.kpi-negative]="!error() && grossProfit() < 0"
+      >
+        {{ error() ? '—' : (grossProfit() | currency: 'EUR') }}
+      </p>
     </mat-card-content>
   </mat-card>
 </div>
@@ -65,9 +70,46 @@
 <div class="chart-row">
   <mat-card class="chart-card chart-profit">
     <mat-card-content>
-      <h2 class="section-title">{{ 'dashboard.charts.profitByProduct' | translate }}</h2>
-      @if (profitOption(); as option) {
-        <app-chart [option]="option" [height]="chartHeight()" />
+      <div class="card-heading">
+        <h2 class="section-title">{{ 'dashboard.charts.profitByProduct' | translate }}</h2>
+        <mat-button-toggle-group
+          class="card-view-toggle"
+          hideSingleSelectionIndicator
+          [value]="profitView()"
+          (valueChange)="setProfitView($event)"
+        >
+          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
+          <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      @if (profitView() === 'chart') {
+        @if (profitOption(); as option) {
+          <app-chart [option]="option" [height]="chartHeight()" />
+        }
+      } @else {
+        <!-- The chart's own slices as rows, remainder bucket included: no sorting, no export, no
+             paging. This is the picture read as numbers; the exhaustive table lives in reports. -->
+        <table class="slice-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'reports.columns.name' | translate }}</th>
+              <th scope="col" class="slice-value">
+                {{ 'reports.columns.grossProfit' | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (slice of profitRows(); track slice.name) {
+              <tr class="slice-row">
+                <td>{{ slice.name }}</td>
+                <td class="slice-value" [class.kpi-negative]="slice.value < 0">
+                  {{ slice.value | currency: 'EUR' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       }
     </mat-card-content>
   </mat-card>
