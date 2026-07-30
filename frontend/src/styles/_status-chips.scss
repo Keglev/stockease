@@ -6,20 +6,46 @@
 // chip stops reading as a coloured status at all. Dark therefore promotes every chip to its main
 // role colour, which keeps the colour identity a status chip exists for.
 //
-// Every rule also sets --mat-chip-label-text-color alongside `color`. Material paints the label
-// on an inner element with `color: var(--mat-chip-label-text-color, ...)`, and that rule is more
-// specific than anything set on the chip host, so the plain `color` declaration never reached the
-// text: dark mode rendered a light label on a light chip. The custom property inherits down to
-// the label, which is what actually moves it.
+// Both halves of a chip are set through Material's own tokens rather than through `color` and
+// `background-color`, because neither plain declaration reliably reaches the chip.
+//
+// The label was the first case: Material paints it on an inner element with
+// `color: var(--mat-chip-label-text-color, ...)`, which outranks anything set on the host, so dark
+// mode rendered a light label on a light chip until the token carried it.
+//
+// The surface is the same failure one level up, and it is why a single-class chip rendered with no
+// background at all. Material fills the chip with
+//   .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled) {
+//     background-color: var(--mat-chip-elevated-container-color, transparent);
+//   }
+// which is two classes, (0,2,0). A one-class rule of ours compiles to `.overdue-chip[_ngcontent-x]`
+// - also (0,2,0) - and Material's stylesheet is injected after the component's, so the tie went to
+// Material and the chip fell back to `transparent`. Two-class rules like `.status-chip.status-open`
+// reach (0,3,0) and won, which is exactly why the status chips looked right while the type and
+// overdue chips did not. Feeding the token instead of fighting the rule makes specificity moot:
+// Material's own declaration does the painting either way.
 
-/// Pairs a chip's surface with its label, setting the label through the token Material reads.
+/// Pairs a chip's surface with its label, setting both through the tokens Material reads.
 @mixin chip-colors($background, $foreground) {
-  background-color: $background;
-  color: $foreground;
+  --mat-chip-elevated-container-color: #{$background};
   --mat-chip-label-text-color: #{$foreground};
+  // M3 draws the 1px outline for the *unfilled* chip. Once a chip carries a surface the outline
+  // reads as a second border around a solid shape, so it goes with the fill arriving.
+  --mat-chip-outline-width: 0;
+  color: $foreground;
 }
 
 @mixin invoice-status-chips {
+  // The Art column states a classification, not a state, so it takes the neutral surface rather
+  // than one of the status colours: it sits one column from the status chip and must not compete
+  // with it. A container role in both schemes, because neutral is the point.
+  .type-chip {
+    @include chip-colors(
+      light-dark(var(--mat-sys-surface-container-highest), var(--mat-sys-surface-container-high)),
+      var(--mat-sys-on-surface)
+    );
+  }
+
   .status-chip.status-open {
     @include chip-colors(
       light-dark(var(--mat-sys-tertiary-container), var(--mat-sys-tertiary)),
@@ -38,6 +64,17 @@
     @include chip-colors(
       light-dark(var(--mat-sys-error-container), var(--mat-sys-error)),
       light-dark(var(--mat-sys-on-error-container), var(--mat-sys-on-error))
+    );
+  }
+
+  // Paid is the one unambiguously good state an invoice reaches, and primary is the only role the
+  // chips above leave unspoken for. It joins the mixin now rather than later because it sits in the
+  // same cell as the overdue chip: once its neighbours carry surfaces, a chip still wearing M3's
+  // unfilled outline reads as a different kind of thing rather than a quieter one.
+  .paid-chip {
+    @include chip-colors(
+      light-dark(var(--mat-sys-primary-container), var(--mat-sys-primary)),
+      light-dark(var(--mat-sys-on-primary-container), var(--mat-sys-on-primary))
     );
   }
 

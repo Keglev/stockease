@@ -26,16 +26,19 @@ mat-toolbar {
   margin-right: 0.25rem;
 }
 
-// Outlined rather than filled: the badge states a fact about the deployment and should read as an
-// annotation on the product name, not as a second header colour competing with the toolbar tone.
-// Both values are system tokens, so the active scheme decides the actual colours.
+// Filled, not outlined. The outlined version stated the fact quietly enough that an operator could
+// work in the demo without noticing it was one - which is the misunderstanding this badge exists to
+// prevent. Tertiary is the role M3 reserves for exactly this: an accent that belongs to the palette
+// but is neither the toolbar's primary nor an error. The pair carries its own contrast, so the
+// badge is legible on whatever toolbar tone the scheme resolves to.
 .demo-badge {
   margin-left: 0.75rem;
   padding: 0.125rem 0.5rem;
-  border: 1px solid var(--mat-sys-outline);
   border-radius: 1rem;
-  color: var(--mat-sys-on-primary-container);
+  background-color: var(--mat-sys-tertiary);
+  color: var(--mat-sys-on-tertiary);
   font: var(--mat-sys-label-small);
+  font-weight: 600;
   letter-spacing: 0.08em;
 }
 
@@ -76,6 +79,17 @@ app-language-toggle {
   // nothing left to rearrange, and full-bleed rows would only lengthen the eye's travel.
   max-width: 1440px;
   margin-inline: auto;
+}
+
+// Desktop is the one tier where vertical space is the binding constraint: the dashboard is
+// budgeted to fit a viewport without scrolling, and 1536x864 - a 1080p panel at Windows' 125%
+// scaling, which is what the machines this runs on actually report - is 216px shorter than the
+// nominal reference. The block inset gives some of that back. Horizontal padding is unchanged;
+// width was never the problem, and the tiers below keep the full inset because they scroll anyway.
+@include bp.desktop {
+  .shell-outlet {
+    padding-block: 1rem;
+  }
 }
 
 // Full height so the nav list fills the drawer.

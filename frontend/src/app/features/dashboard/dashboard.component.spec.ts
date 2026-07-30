@@ -36,14 +36,7 @@ const TRANSLATIONS = {
       },
       lowStockTitle: 'Low stock',
       lowStockNone: 'All products are sufficiently stocked.',
-      charts: { profitByProduct: 'Profit by product', dueDates: 'Upcoming due dates' },
-      health: {
-        title: 'API status',
-        up: 'Available',
-        down: 'Unavailable',
-        latency: 'API response time: {{ms}} ms',
-        lastChecked: 'Last checked at {{time}}'
-      }
+      charts: { profitByProduct: 'Profit by product', dueDates: 'Upcoming due dates' }
     }
   }
 };
@@ -208,11 +201,13 @@ class ProductServiceStub {
   }
 }
 
+/** Counts calls, so a test can prove the dashboard itself no longer polls health. */
 class HealthServiceStub {
-  probe: HealthProbe = { up: true, latencyMs: 12 };
+  checks = 0;
 
   check(): Observable<HealthProbe> {
-    return of(this.probe);
+    this.checks++;
+    return of({ up: true, latencyMs: 12 });
   }
 }
 
@@ -224,8 +219,8 @@ describe('DashboardComponent', () => {
   let breakpoints: BreakpointObserverStub;
 
   /**
-   * The app is zoneless, so fakeAsync is unavailable and vitest's timers stand in for the
-   * health poll's rxjs timer. They must be faked before the component subscribes.
+   * The app is zoneless, so fakeAsync is unavailable and vitest's timers stand in for any rxjs
+   * timer the component might start. They must be faked before it is created.
    */
   function render(): void {
     fixture = TestBed.createComponent(DashboardComponent);
@@ -366,19 +361,15 @@ describe('DashboardComponent', () => {
     expect(reports.calls).toBe(afterInit * 2);
   });
 
-  it('healthCard_probeUp_showsUpLabelAndMeasuredLatency', () => {
+  it('render_always_leavesHealthPollingToTheFooter', () => {
     render();
+    // Past the 30s cadence the removed card polled on, so a surviving subscription would show up.
+    vi.advanceTimersByTime(90_000);
 
-    expect(textOf('.health-status')).toContain('Available');
-    expect(textOf('.health-latency')).toContain('API response time: 12 ms');
-  });
-
-  it('healthCard_probeDown_showsDownLabel', () => {
-    health.probe = { up: false, latencyMs: 5000 };
-    render();
-
-    expect(textOf('.health-status')).toContain('Unavailable');
-    expect((fixture.nativeElement as HTMLElement).querySelector('.health-dot-up')).toBeNull();
+    // The footer carries the same dot and latency on every screen; a second poll here would fetch
+    // a signal the operator can already see.
+    expect(health.checks).toBe(0);
+    expect(host().querySelector('.health-card')).toBeNull();
   });
 
   it('kpiCards_loadFailed_renderEmDashInsteadOfNumbers', () => {

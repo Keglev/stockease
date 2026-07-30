@@ -368,13 +368,6 @@
       "profitByProduct": "Profit by product",
       "dueDates": "Upcoming due dates"
     },
-    "health": {
-      "title": "API status",
-      "up": "Available",
-      "down": "Unavailable",
-      "latency": "API response time: {{ms}} ms",
-      "lastChecked": "Last checked at {{time}}"
-    },
     "due": {
       "viewAll": "All due dates"
     }

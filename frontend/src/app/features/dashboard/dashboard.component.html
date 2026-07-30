@@ -160,26 +160,3 @@
     </mat-card-content>
   </mat-card>
 </div>
-
-<mat-card class="health-card">
-  <mat-card-content>
-    <h2 class="section-title">{{ 'dashboard.health.title' | translate }}</h2>
-
-    @if (probe(); as status) {
-      <p class="health-status">
-        <span class="health-dot" [class.health-dot-up]="status.up" aria-hidden="true"></span>
-        {{ (status.up ? 'dashboard.health.up' : 'dashboard.health.down') | translate }}
-      </p>
-      <!-- Round-trip time as measured in the browser, labelled as such: it is not database lag. -->
-      <p class="health-latency">
-        {{ 'dashboard.health.latency' | translate: { ms: status.latencyMs } }}
-      </p>
-    }
-
-    @if (lastChecked(); as checked) {
-      <p class="health-checked">
-        {{ 'dashboard.health.lastChecked' | translate: { time: checked | date: 'mediumTime' } }}
-      </p>
-    }
-  </mat-card-content>
-</mat-card>
