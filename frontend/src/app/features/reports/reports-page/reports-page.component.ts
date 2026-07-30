@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
+  CashFlowReport,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
@@ -28,14 +29,24 @@ import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-deta
 import { ReportService } from '../report.service';
 
 export const PROFIT_TAB = 0;
-export const STOCK_TAB = 1;
-export const LOSSES_TAB = 2;
-export const DUE_TAB = 3;
+// Cash flow sits second, next to profit: the two answer the paired questions of what the business
+// earned and what it actually collected, and reading one usually prompts the other.
+export const CASH_FLOW_TAB = 1;
+export const STOCK_TAB = 2;
+export const LOSSES_TAB = 3;
+export const DUE_TAB = 4;
 
-const TAB_COUNT = 4;
+const TAB_COUNT = 5;
 
 /** Which half of a tab is on screen; the two never share the vertical space any more. */
 export type ReportView = 'chart' | 'table';
+
+/** The windows the cash-flow tab offers over payment dates. */
+export type CashFlowPeriod = 'd30' | 'd90' | 'year' | 'all';
+
+const PERIOD_DAYS: Record<'d30' | 'd90', number> = { d30: 30, d90: 90 };
+
+const PERIODS: readonly CashFlowPeriod[] = ['d30', 'd90', 'year', 'all'];
 
 /**
  * Four-tab detail view over the reporting endpoints, each tab switching between its chart and its
@@ -73,6 +84,7 @@ export class ReportsPageComponent implements OnInit {
   protected readonly supplierColumns = ['name', 'revenue', 'cost', 'grossProfit'];
   protected readonly stockColumns = ['name', 'sku', 'soldUnits', 'soldRevenue', 'inStockUnits', 'inStockValue'];
   protected readonly lossColumns = ['name', 'sku', 'lostUnits', 'destroyedUnits', 'lossValue'];
+  protected readonly cashFlowColumns = ['name', 'sku', 'inflow', 'outflow', 'net'];
 
   protected readonly selectedTab = signal(PROFIT_TAB);
 
@@ -90,15 +102,20 @@ export class ReportsPageComponent implements OnInit {
   protected readonly buckets = signal<DueDateBucket[]>([]);
   protected readonly dueSoonRows = signal<InvoiceDueSummary[]>([]);
   protected readonly overdueRows = signal<InvoiceDueSummary[]>([]);
+  protected readonly cashFlow = signal<CashFlowReport | null>(null);
+
+  // Presets rather than a date picker is a deliberate scope decision; a custom range is backlog.
+  protected readonly cashFlowPeriod = signal<CashFlowPeriod>('all');
 
   protected readonly marginOption = signal<ChartOption | null>(null);
   protected readonly profitOption = signal<ChartOption | null>(null);
   protected readonly stockOption = signal<ChartOption | null>(null);
   protected readonly lossOption = signal<ChartOption | null>(null);
   protected readonly dueOption = signal<ChartOption | null>(null);
+  protected readonly cashFlowOption = signal<ChartOption | null>(null);
 
-  // Loading all four tabs on open would fire seven report queries against aggregate SQL for
-  // three tabs the user may never look at, so each tab fetches on its first activation only.
+  // Loading every tab on open would fire eight report queries against aggregate SQL for tabs the
+  // user may never look at, so each tab fetches on its first activation only.
   private readonly loadedTabs = new Set<number>();
 
   ngOnInit(): void {
@@ -174,6 +191,28 @@ export class ReportsPageComponent implements OnInit {
     );
   }
 
+  /** Switches the cash-flow window and refetches, since the period is a server-side filter. */
+  protected setCashFlowPeriod(period: CashFlowPeriod): void {
+    // Two reasons to ignore an emission. The group fires once with no value at all while it is
+    // being created, and these tab bodies are built eagerly, so an unguarded handler would query
+    // cash flow - over a nonsense window - before the tab was ever opened. Re-picking the current
+    // preset is likewise not a reason to go back to the server.
+    if (!PERIODS.includes(period) || period === this.cashFlowPeriod()) {
+      return;
+    }
+    this.cashFlowPeriod.set(period);
+    this.loadCashFlow();
+  }
+
+  protected exportCashFlow(): void {
+    this.exportCsv(
+      'cash-flow.csv',
+      this.cashFlowColumns,
+      (this.cashFlow()?.products ?? []).map((row) => [row.name, row.sku, row.inflow, row.outflow, row.net]),
+      'reports.cashFlow.columns.'
+    );
+  }
+
   protected sortProfit(sort: Sort): void {
     this.profitRows.update((rows) => sortRows(rows, sort));
   }
@@ -203,6 +242,8 @@ export class ReportsPageComponent implements OnInit {
     this.loading.set(true);
 
     switch (index) {
+      case CASH_FLOW_TAB:
+        return this.loadCashFlow();
       case STOCK_TAB:
         return this.loadStock();
       case LOSSES_TAB:
@@ -275,6 +316,22 @@ export class ReportsPageComponent implements OnInit {
     });
   }
 
+  private loadCashFlow(): void {
+    this.error.set(null);
+    this.loading.set(true);
+    const range = periodRange(this.cashFlowPeriod());
+
+    this.reports.cashFlow(range.from, range.to).subscribe({
+      next: (report) => {
+        this.cashFlow.set(report);
+        // Translated at build time: chart options are snapshots, as everywhere else on this page.
+        this.cashFlowOption.set(toCashFlowOption(report, this.otherLabel()));
+        this.loading.set(false);
+      },
+      error: (err: Error) => this.fail(err)
+    });
+  }
+
   private otherLabel(): string {
     return this.translate.instant('charts.other') as string;
   }
@@ -283,10 +340,11 @@ export class ReportsPageComponent implements OnInit {
   private exportCsv(
     filename: string,
     columns: string[],
-    rows: (string | number | null)[][]
+    rows: (string | number | null)[][],
+    keyPrefix = 'reports.columns.'
   ): void {
     const headers = columns.map((column) =>
-      this.translate.instant(`reports.columns.${column}`)
+      this.translate.instant(`${keyPrefix}${column}`)
     ) as string[];
     this.downloadCsvFile(filename, buildCsv(headers, rows, this.language.currentLang()));
   }
@@ -324,6 +382,54 @@ function toMarginOption(rows: ProductProfitReport[]): ChartOption | null {
         data: [{ value: margin }]
       }
     ]
+  };
+}
+
+/**
+ * Turns a preset into the ISO bounds the endpoint takes, or no bounds at all for the open window.
+ * Computed from the browser's date because the presets describe the operator's calendar, and the
+ * backend compares against the payment date rather than a timestamp.
+ */
+function periodRange(period: CashFlowPeriod): { from?: string; to?: string } {
+  if (period === 'all') {
+    return {};
+  }
+  const today = new Date();
+  if (period === 'year') {
+    return { from: isoDate(new Date(today.getFullYear(), 0, 1)), to: isoDate(today) };
+  }
+  const start = new Date(today);
+  start.setDate(start.getDate() - PERIOD_DAYS[period]);
+  return { from: isoDate(start), to: isoDate(today) };
+}
+
+/** Local calendar date in the YYYY-MM-DD shape the API takes; UTC would shift the boundary. */
+function isoDate(value: Date): string {
+  const month = `${value.getMonth() + 1}`.padStart(2, '0');
+  const day = `${value.getDate()}`.padStart(2, '0');
+  return `${value.getFullYear()}-${month}-${day}`;
+}
+
+/**
+* Plots net cash flow for the ten products that moved the most money, either direction, plus the
+* aggregated rest. Net rather than the two gross figures: one bar per product answers "did this
+* product bring money in or take it out", which is the question the tab exists for.
+*/
+function toCashFlowOption(report: CashFlowReport, otherLabel: string): ChartOption | null {
+  if (report.products.length === 0) {
+    return null;
+  }
+  const ordered = topNWithRemainder(
+    report.products.map((row) => ({ name: row.name, value: row.net })),
+    otherLabel
+  ).sort((a, b) => a.value - b.value);
+
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
+    series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
   };
 }
 

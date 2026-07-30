@@ -71,5 +71,23 @@ html {
       background-color: transparent,
     )
   );
+
+  // Selected toggles speak the same language as the sidebar's active nav item. Material's own M3
+  // default for these two tokens is already secondary-container, so pinning them here changes no
+  // colour today - it states the intent, and keeps a Material default change from quietly moving
+  // one of the app's two selected-state affordances away from the other.
+  @include mat.button-toggle-overrides(
+    (
+      selected-state-background-color: var(--mat-sys-secondary-container),
+      selected-state-text-color: var(--mat-sys-on-secondary-container),
+    )
+  );
+
+  // The weight is the part the toggle was missing. With the selection checkmark hidden, colour was
+  // carrying the whole signal, and against a dark surface that step is too quiet on a control this
+  // small - the sidebar's active item pairs the same colour with a heavier label, and so does this.
+  .mat-button-toggle-checked .mat-button-toggle-label-content {
+    font-weight: 500;
+  }
 }
 /* You can add global styles to this file, and also import other style files */

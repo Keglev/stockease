@@ -91,6 +91,7 @@
     "deletedHint": "gelöscht",
     "tabs": {
       "profit": "Gewinn",
+      "cashFlow": "Cashflow",
       "stock": "Bestand",
       "losses": "Verluste",
       "dueDates": "Fälligkeiten"
@@ -133,6 +134,25 @@
       "empty": "Derzeit sind keine Rechnungen offen.",
       "dueSoonEmpty": "In der kommenden Woche wird keine Rechnung fällig.",
       "overdueEmpty": "Keine Rechnung ist überfällig."
+    },
+    "cashFlow": {
+      "inflow": "Einzahlungen",
+      "outflow": "Auszahlungen",
+      "net": "Saldo",
+      "columns": {
+        "name": "Produkt",
+        "sku": "Artikelnummer",
+        "inflow": "Einzahlungen",
+        "outflow": "Auszahlungen",
+        "net": "Saldo"
+      },
+      "empty": "Keine bezahlten Rechnungen in diesem Zeitraum."
+    },
+    "period": {
+      "d30": "30 Tage",
+      "d90": "90 Tage",
+      "year": "Dieses Jahr",
+      "all": "Gesamt"
     }
   },
   "movements": {

@@ -32,6 +32,10 @@ export type SupplierProfitReport = components['schemas']['SupplierProfitReport']
 
 export type StockStatusReport = components['schemas']['StockStatusReport'];
 
+export type CashFlowReport = components['schemas']['CashFlowReport'];
+
+export type CashFlowProductRow = components['schemas']['CashFlowProductRow'];
+
 export type LossReport = components['schemas']['LossReport'];
 
 export type DueDateBucket = components['schemas']['DueDateBucket'];

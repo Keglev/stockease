@@ -1,10 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../core/api/api-envelope';
 import {
+  CashFlowReport,
   CustomerSummary,
   DueDateBucket,
   InvoiceDueSummary,
@@ -81,5 +82,24 @@ export class ReportService {
   /** Bare array - deliberately not unwrapped. */
   stockStatus(): Observable<StockStatusReport[]> {
     return this.http.get<StockStatusReport[]>(`${this.baseUrl}/stock-status`);
+  }
+
+  /**
+   * Reads money in and out over an optional payment window. Bare object - deliberately not
+   * unwrapped. Omitted bounds are left off the request entirely rather than sent empty, because
+   * the backend reads a missing parameter as "no bound" and an empty one as a parse failure.
+   *
+   * @param from first payment date to count, as an ISO date
+   * @param to last payment date to count, as an ISO date
+   */
+  cashFlow(from?: string, to?: string): Observable<CashFlowReport> {
+    let params = new HttpParams();
+    if (from) {
+      params = params.set('from', from);
+    }
+    if (to) {
+      params = params.set('to', to);
+    }
+    return this.http.get<CashFlowReport>(`${this.baseUrl}/cash-flow`, { params });
   }
 }

@@ -91,6 +91,7 @@
     "deletedHint": "deleted",
     "tabs": {
       "profit": "Profit",
+      "cashFlow": "Cash flow",
       "stock": "Stock",
       "losses": "Losses",
       "dueDates": "Due dates"
@@ -133,6 +134,25 @@
       "empty": "No invoices are currently outstanding.",
       "dueSoonEmpty": "No invoices fall due in the coming week.",
       "overdueEmpty": "No invoice is overdue."
+    },
+    "cashFlow": {
+      "inflow": "Inflow",
+      "outflow": "Outflow",
+      "net": "Net",
+      "columns": {
+        "name": "Product",
+        "sku": "SKU",
+        "inflow": "Inflow",
+        "outflow": "Outflow",
+        "net": "Net"
+      },
+      "empty": "No paid invoices in this period."
+    },
+    "period": {
+      "d30": "30 days",
+      "d90": "90 days",
+      "year": "This year",
+      "all": "All"
     }
   },
   "movements": {

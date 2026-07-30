@@ -194,8 +194,45 @@
     </div>
   </mat-tab>
 
-  <mat-tab [label]="'reports.tabs.stock' | translate">
+  <mat-tab [label]="'reports.tabs.cashFlow' | translate">
     <div class="tab-body">
+      <!-- Presets rather than a date picker is a deliberate scope decision; a custom range is
+           backlog. Each one re-queries, because the window is a server-side filter. -->
+      <mat-button-toggle-group
+        class="period-toggle"
+        hideSingleSelectionIndicator
+        [value]="cashFlowPeriod()"
+        (valueChange)="setCashFlowPeriod($event)"
+      >
+        <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <!-- Above the view toggle and outside it: the totals are the answer, and which half of the
+           breakdown is on screen does not change them. -->
+      @if (cashFlow(); as report) {
+        <div class="cash-flow-totals">
+          <div class="cash-flow-total">
+            <span class="cash-flow-label">{{ 'reports.cashFlow.inflow' | translate }}</span>
+            <span class="cash-flow-value cash-flow-inflow">{{ report.inflow | currency: 'EUR' }}</span>
+          </div>
+          <div class="cash-flow-total">
+            <span class="cash-flow-label">{{ 'reports.cashFlow.outflow' | translate }}</span>
+            <span class="cash-flow-value cash-flow-outflow">{{ report.outflow | currency: 'EUR' }}</span>
+          </div>
+          <div class="cash-flow-total">
+            <span class="cash-flow-label">{{ 'reports.cashFlow.net' | translate }}</span>
+            <span
+              class="cash-flow-value cash-flow-net"
+              [class.cash-flow-negative]="report.net < 0"
+              >{{ report.net | currency: 'EUR' }}</span
+            >
+          </div>
+        </div>
+      }
+
       <mat-button-toggle-group
         class="view-toggle"
         hideSingleSelectionIndicator
@@ -207,6 +244,101 @@
       </mat-button-toggle-group>
 
       @if (viewOf(1) === 'chart') {
+        <mat-card class="chart-card">
+          <mat-card-content>
+            <h2 class="section-title">{{ 'reports.cashFlow.net' | translate }}</h2>
+            @if (cashFlowOption(); as option) {
+              <app-chart [option]="option" height="24rem" />
+            } @else {
+              <p class="empty-state cash-flow-empty">{{ 'reports.cashFlow.empty' | translate }}</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <mat-card class="table-card">
+          <mat-card-content>
+            @if (cashFlow()?.products?.length) {
+              <div class="table-heading table-heading-end">
+                <button
+                  matButton="outlined"
+                  type="button"
+                  class="export-button export-cash-flow"
+                  (click)="exportCashFlow()"
+                >
+                  <mat-icon>download</mat-icon>
+                  {{ 'reports.exportCsv' | translate }}
+                </button>
+              </div>
+            }
+            @if (cashFlow()?.products?.length) {
+              <table mat-table [dataSource]="cashFlow()?.products ?? []" class="cash-flow-table">
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.cashFlow.columns.name' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">
+                    {{ row.name }}
+                    @if (row.deleted) {
+                      <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+                    }
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="sku">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.cashFlow.columns.sku' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="inflow">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.cashFlow.columns.inflow' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">{{ row.inflow | currency: 'EUR' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="outflow">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.cashFlow.columns.outflow' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">{{ row.outflow | currency: 'EUR' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="net">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.cashFlow.columns.net' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row" [class.cash-flow-negative]="row.net < 0">
+                    {{ row.net | currency: 'EUR' }}
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="cashFlowColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: cashFlowColumns"></tr>
+              </table>
+            } @else {
+              <p class="empty-state cash-flow-empty">{{ 'reports.cashFlow.empty' | translate }}</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  </mat-tab>
+
+  <mat-tab [label]="'reports.tabs.stock' | translate">
+    <div class="tab-body">
+      <mat-button-toggle-group
+        class="view-toggle"
+        hideSingleSelectionIndicator
+        [value]="viewOf(2)"
+        (valueChange)="setView(2, $event)"
+      >
+        <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      @if (viewOf(2) === 'chart') {
         <mat-card class="chart-card">
           <mat-card-content>
             <h2 class="section-title">{{ 'reports.stock.byValue' | translate }}</h2>
@@ -298,14 +430,14 @@
       <mat-button-toggle-group
         class="view-toggle"
         hideSingleSelectionIndicator
-        [value]="viewOf(2)"
-        (valueChange)="setView(2, $event)"
+        [value]="viewOf(3)"
+        (valueChange)="setView(3, $event)"
       >
         <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
         <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
       </mat-button-toggle-group>
 
-      @if (viewOf(2) === 'chart') {
+      @if (viewOf(3) === 'chart') {
         <mat-card class="chart-card">
           <mat-card-content>
             <h2 class="section-title">{{ 'reports.losses.byProduct' | translate }}</h2>
@@ -397,14 +529,14 @@
       <mat-button-toggle-group
         class="view-toggle"
         hideSingleSelectionIndicator
-        [value]="viewOf(3)"
-        (valueChange)="setView(3, $event)"
+        [value]="viewOf(4)"
+        (valueChange)="setView(4, $event)"
       >
         <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
         <mat-button-toggle value="table">{{ 'reports.view.list' | translate }}</mat-button-toggle>
       </mat-button-toggle-group>
 
-      @if (viewOf(3) === 'chart') {
+      @if (viewOf(4) === 'chart') {
         <mat-card class="chart-card">
           <mat-card-content>
             <h2 class="section-title">{{ 'reports.due.chart' | translate }}</h2>
