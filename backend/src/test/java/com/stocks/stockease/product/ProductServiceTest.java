@@ -206,9 +206,30 @@ class ProductServiceTest {
     @Test
     void findLowStock_withThreshold_returnsRepositoryResult() {
         Product product = new Product("Widget", 2, 5.0);
-        when(productRepository.findByQuantityLessThan(5)).thenReturn(List.of(product));
+        when(productRepository.findEverStockedByQuantityLessThan(5)).thenReturn(List.of(product));
 
         assertThat(productService.findLowStock(5)).containsExactly(product);
+    }
+
+    @Test
+    void markEverStocked_onUnflaggedProduct_setsTheFlag() {
+        Product product = new Product("Widget", 10, 5.0);
+
+        productService.markEverStocked(product);
+
+        assertThat(product.isEverStocked()).isTrue();
+        verify(productRepository, times(1)).save(product);
+    }
+
+    @Test
+    void markEverStocked_onAlreadyFlaggedProduct_writesNothing() {
+        Product product = new Product("Widget", 10, 5.0);
+        product.setEverStocked(true);
+
+        productService.markEverStocked(product);
+
+        assertThat(product.isEverStocked()).isTrue();
+        verify(productRepository, never()).save(any(Product.class));
     }
 
     @Test

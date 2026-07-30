@@ -56,6 +56,13 @@ public class Product {
     @Column(nullable = false)
     private String sku;
 
+    /**
+     * Whether the product has ever held stock, set by the purchase booking path and never cleared:
+     * having been stocked is historical fact, so selling the last unit does not undo it (ADR 026).
+     */
+    @Column(name = "ever_stocked", nullable = false)
+    private boolean everStocked;
+
     /** Timestamp the row was first persisted, populated by JPA auditing. */
     @CreatedDate
     @Column(nullable = false, updatable = false)

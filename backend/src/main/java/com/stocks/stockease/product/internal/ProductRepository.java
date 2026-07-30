@@ -19,13 +19,15 @@ import jakarta.persistence.LockModeType;
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     /**
-     * Returns products whose stock quantity falls below {@code threshold}, used to identify items requiring reorder.
+     * Returns products that have ever held stock and whose quantity has since fallen below
+     * {@code threshold}, used to identify items requiring reorder. A product that was never purchased
+     * is new rather than low and is excluded whatever its quantity (ADR 026).
      *
      * @param threshold quantity boundary (exclusive)
-     * @return list of products where quantity < threshold
+     * @return list of ever-stocked products where quantity < threshold
      */
-    @Query("SELECT p FROM Product p WHERE p.quantity < :threshold")
-    List<Product> findByQuantityLessThan(@Param("threshold") int threshold);
+    @Query("SELECT p FROM Product p WHERE p.quantity < :threshold AND p.everStocked = true")
+    List<Product> findEverStockedByQuantityLessThan(@Param("threshold") int threshold);
 
     /**
      * Returns all products sorted by ID ascending for deterministic ordering across API calls.

@@ -145,13 +145,32 @@ public class ProductService {
     }
 
     /**
-     * Returns products whose stock quantity falls below {@code threshold}.
+     * Returns products whose stock quantity falls below {@code threshold}, scoped to products that have
+     * ever been stocked. A product sold down to zero is the alert's most urgent case and stays listed;
+     * a product that was never purchased is new, not low, and never appears (ADR 026).
      *
      * @param threshold quantity boundary (exclusive)
-     * @return list of products below the threshold
+     * @return list of ever-stocked products below the threshold
      */
     public List<Product> findLowStock(int threshold) {
-        return productRepository.findByQuantityLessThan(threshold);
+        return productRepository.findEverStockedByQuantityLessThan(threshold);
+    }
+
+    /**
+     * Marks a product as having held stock. Idempotent: repeat calls on an already-marked product write
+     * nothing, and no path ever clears the flag.
+     *
+     * @param product the product a purchase has just booked stock onto
+     */
+    @Transactional
+    public void markEverStocked(Product product) {
+        if (product.isEverStocked()) {
+            return;
+        }
+        product.setEverStocked(true);
+        // no change-log row: this is state derived from the purchase ledger, not master data an operator
+        // edited, and the audit trail records what operators changed
+        productRepository.save(product);
     }
 
     /**
