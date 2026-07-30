@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+025-cash-flow-payment-basis · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-025-cash-flow-report-on-a-payment-basis">ADR 025:
+        Cash Flow Report on a Payment Basis</h1>
+        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
+        30, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>ADR 024 removed purchases and supplier returns from gross
+        profit. They were never profit — buying stock is not a loss and
+        sending it back is not a gain — but they are real money leaving
+        and returning, and once they left the profit report they were
+        reported nowhere at all. That was a deliberate gap with a named
+        successor: the cash-flow view.</p>
+        <p>The production review defined what it should answer:
+        <strong>money in from sales, money out to purchases, overall and
+        per product, over a period the operator chooses.</strong> That
+        is a different question from profit, and it deserves a different
+        report rather than a second column on the existing one.</p>
+        <p>The one genuinely open question was <em>when</em> money
+        counts.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Payment basis.</strong> An invoice enters the
+        cash-flow report on the date it was <strong>paid</strong>, at
+        its value net of returned quantities.</p>
+        <ul>
+        <li>Inflow is paid <code>SALE</code> invoices, outflow is paid
+        <code>PURCHASE</code> invoices, and net is inflow less outflow.
+        Both are aggregated per product and summed for the overall
+        totals.</li>
+        <li>A booked but unpaid invoice is <strong>invisible</strong>
+        here, whatever the period. On a payment basis it has not
+        happened yet.</li>
+        <li>Each line contributes
+        <code>(quantity − returned_qty) × unit_price</code>. A return
+        therefore adjusts the flow of the invoice it belongs to,
+        <strong>realized at that invoice’s payment date</strong> rather
+        than on the date the goods actually went back. This is an
+        approximation, and it is the one deliberate inaccuracy in the
+        report: refund timing is not modeled as an event of its own, so
+        there is no date to attribute it to.</li>
+        <li>Products that moved no money in the window are
+        <strong>absent</strong>, not listed with zeros. This differs
+        from the profit report on purpose: a cash-flow report lists
+        money that moved, and padding it invites reading “nothing
+        happened” as “nothing exists”. Soft-deleted products stay listed
+        and flagged — the money they moved still moved.</li>
+        <li>The overall totals are summed from the product rows rather
+        than fetched by a second aggregate query. Every invoice line
+        names a product, so the rows already account for every cent the
+        query matched.</li>
+        </ul>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Booking basis — count an invoice when it
+        closes.</strong> Rejected. It counts money that has not moved:
+        an invoice closed on generous payment terms would appear as cash
+        the business does not have. That is precisely the conflation ADR
+        024 just removed from gross profit, and repeating it one report
+        over would undo the distinction both reports exist to draw. It
+        is the simpler query — no payment date to filter on, and the
+        existing <code>status &lt;&gt; 'OPEN'</code> predicate would
+        have done — which is worth recording as the cost of this
+        decision rather than pretending there was none.</p>
+        <p><strong>Model refunds as dated cash events.</strong> Rejected
+        as disproportionate. Attributing a refund to its own date needs
+        a payments ledger: refund rows with their own amounts, dates and
+        links back to the invoice line, plus a reconciliation story when
+        a refund is partial or reversed. The domain needs none of that
+        for anything else, and the error the approximation introduces is
+        bounded — a refund is misdated only by the gap between the
+        return and the invoice’s payment.</p>
+        <p><strong>A separate cash-flow module.</strong> Rejected: this
+        is an aggregation over invoices, which is what the reporting
+        module already is. It follows the customer-summary precedent and
+        lives under <code>/api/reports</code> on the existing
+        controller.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li>Unpaid invoices are invisible to cash flow regardless of the
+        period selected. An operator looking for money still owed wants
+        the due-soon and overdue reports, which are the deliberate
+        complement to this one.</li>
+        <li>The demo seed gains <strong>four paid invoices</strong> —
+        two purchases and two sales — so the report demonstrates against
+        live data instead of rendering empty. They are new invoices
+        rather than payments applied to existing ones: settling an
+        existing invoice would remove it from the due-soon and overdue
+        listings, whose populated state the demo baseline pins.</li>
+        <li>Returns are visible in cash flow only through the reduced
+        value of their invoice. There is no per-return line, and there
+        cannot be one without the refund ledger rejected above.</li>
+        <li>The frontend tab arrives in a follow-up slice; this change
+        is backend, spec and generated types only.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-025-cash-flow-report-on-a-payment-basis"
+      id="toc-adr-025-cash-flow-report-on-a-payment-basis">ADR 025: Cash
+      Flow Report on a Payment Basis</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
