@@ -209,6 +209,13 @@ public class DemoDataService {
         // sells, which the open order below cannot do: an OPEN invoice books nothing.
         invoices.add(closedPurchase(suppliers.get(4), "WP-2026-0075", days(-30), admin,
                 line(products.get(9), 90, "21.50")));
+        // Two settled orders, so the cash-flow report has outflow to show. Their lines repeat prices
+        // these products were already bought at: a different price would reprice the product (ADR 019)
+        // and move figures the rest of the baseline pins.
+        invoices.add(closedPurchase(suppliers.get(2), "2026/RH/00934", days(-14), admin,
+                line(products.get(4), 15, "38.00"), line(products.get(5), 10, "49.00")));
+        invoices.add(closedPurchase(suppliers.get(4), "WP-2026-0091", days(-9), admin,
+                line(products.get(9), 40, "21.50")));
         // still open, so the demo has a purchase in each state; a repeat order from the same supplier
         invoices.add(openPurchase(suppliers.get(4), "WP-2026-0088", days(9),
                 line(products.get(9), 80, "21.50")));
@@ -235,6 +242,13 @@ public class DemoDataService {
                 line(products.get(2), 4, "199.00"), line(products.get(10), 2, "549.00")));
         invoices.add(closedSale(customers.get(0), "AR-2026-0006", days(-4), admin,
                 line(products.get(4), 9, "69.90"), line(products.get(0), 4, "89.90")));
+        // Two settled sales, so the cash-flow report has inflow to show against the outflow above.
+        // Both draw on well-stocked products: the one product the baseline leaves at 3 units is what
+        // keeps the low-stock report non-empty, so nothing here touches it.
+        invoices.add(closedSale(customers.get(1), "AR-2026-0008", days(-12), admin,
+                line(products.get(3), 10, "49.90"), line(products.get(4), 5, "69.90")));
+        invoices.add(closedSale(customers.get(2), "AR-2026-0009", days(-7), admin,
+                line(products.get(9), 20, "39.90"), line(products.get(6), 30, "18.90")));
         invoices.add(openSale(customers.get(4), "AR-2026-0007", days(11),
                 line(products.get(11), 3, "139.00")));
         return invoices;
@@ -259,10 +273,20 @@ public class DemoDataService {
         record(staff, MovementReason.DESTROYED, products.get(1), 2, null, null, MovementRemark.EXPIRED);
     }
 
-    /** Settles two invoices so the due-date and overdue reports distinguish paid from outstanding. */
+    /**
+     * Settles six invoices so the due-date and overdue reports distinguish paid from outstanding and
+     * the cash-flow report has both directions to show.
+     *
+     * <p>Only invoices added for this purpose are settled. Paying one of the outstanding ones would
+     * remove it from the due-soon and overdue listings, which the baseline requires to stay populated.
+     */
     private void seedPayments(List<Invoice> purchases, List<Invoice> sales) {
         invoiceService.markAsPaid(purchases.get(2).getId());
+        invoiceService.markAsPaid(purchases.get(6).getId());
+        invoiceService.markAsPaid(purchases.get(7).getId());
         invoiceService.markAsPaid(sales.get(2).getId());
+        invoiceService.markAsPaid(sales.get(6).getId());
+        invoiceService.markAsPaid(sales.get(7).getId());
     }
 
     private Invoice closedPurchase(Supplier supplier, String number, LocalDate dueDate, User admin,

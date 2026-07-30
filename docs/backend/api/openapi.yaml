@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.6.0
+  version: 2.7.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -1009,6 +1009,70 @@ components:
           type: number
           example: 60.00
 
+    CashFlowProductRow:
+      type: object
+      required:
+        - productId
+        - name
+        - sku
+        - deleted
+        - inflow
+        - outflow
+        - net
+      properties:
+        productId:
+          type: integer
+          format: int64
+          example: 3
+        name:
+          type: string
+          example: Widget
+        sku:
+          type: string
+          example: SKU-3
+        deleted:
+          type: boolean
+          description: Soft-deleted products still appear; the money they moved still moved
+          example: false
+        inflow:
+          type: number
+          description: Received through paid sale invoices, net of returned quantities
+          example: 80.00
+        outflow:
+          type: number
+          description: Spent through paid purchase invoices, net of returned quantities
+          example: 30.00
+        net:
+          type: number
+          description: Inflow less outflow
+          example: 50.00
+
+    CashFlowReport:
+      type: object
+      required:
+        - inflow
+        - outflow
+        - net
+        - products
+      properties:
+        inflow:
+          type: number
+          description: Total received through paid sale invoices
+          example: 80.00
+        outflow:
+          type: number
+          description: Total spent through paid purchase invoices
+          example: 30.00
+        net:
+          type: number
+          description: Inflow less outflow; negative when more was spent than received
+          example: 50.00
+        products:
+          type: array
+          description: Per-product breakdown, ordered by net descending
+          items:
+            $ref: '#/components/schemas/CashFlowProductRow'
+
     StockStatusReport:
       type: object
       required:
@@ -1301,6 +1365,8 @@ paths:
     $ref: './paths/reports-profit-product-detail.yaml'
   /api/reports/profit/suppliers:
     $ref: './paths/reports-profit-suppliers.yaml'
+  /api/reports/cash-flow:
+    $ref: './paths/reports-cash-flow.yaml'
   /api/reports/customers/{id}/summary:
     $ref: './paths/reports-customer-summary.yaml'
   /api/reports/stock-status:

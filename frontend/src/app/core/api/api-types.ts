@@ -591,6 +591,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Money in and out, on a payment basis
+         * @description Cash flow over an optional payment window: inflow from paid SALE invoices, outflow from paid
+         *     PURCHASE invoices, and their difference, overall and per product.
+         *
+         *     Payment basis, not booking basis: an invoice counts on the date it was **paid**. A booked but
+         *     unpaid invoice is invisible here whatever the window, which is what separates this report from
+         *     the profit report (ADR 025).
+         *
+         *     Each line contributes its quantity net of what was returned, valued at the line's own price
+         *     snapshot, so a return reduces the flow of the invoice it belongs to and is realized on that
+         *     invoice's payment date.
+         *
+         *     Products that moved no money in the window are absent rather than listed with zeros - unlike the
+         *     profit report, this one lists money that moved. Soft-deleted products stay listed and flagged.
+         */
+        get: operations["cashFlow"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/customers/{id}/summary": {
         parameters: {
             query?: never;
@@ -1346,6 +1378,56 @@ export interface components {
             cost: number;
             /** @example 60 */
             grossProfit: number;
+        };
+        CashFlowProductRow: {
+            /**
+             * Format: int64
+             * @example 3
+             */
+            productId: number;
+            /** @example Widget */
+            name: string;
+            /** @example SKU-3 */
+            sku: string;
+            /**
+             * @description Soft-deleted products still appear; the money they moved still moved
+             * @example false
+             */
+            deleted: boolean;
+            /**
+             * @description Received through paid sale invoices, net of returned quantities
+             * @example 80
+             */
+            inflow: number;
+            /**
+             * @description Spent through paid purchase invoices, net of returned quantities
+             * @example 30
+             */
+            outflow: number;
+            /**
+             * @description Inflow less outflow
+             * @example 50
+             */
+            net: number;
+        };
+        CashFlowReport: {
+            /**
+             * @description Total received through paid sale invoices
+             * @example 80
+             */
+            inflow: number;
+            /**
+             * @description Total spent through paid purchase invoices
+             * @example 30
+             */
+            outflow: number;
+            /**
+             * @description Inflow less outflow; negative when more was spent than received
+             * @example 50
+             */
+            net: number;
+            /** @description Per-product breakdown, ordered by net descending */
+            products: components["schemas"]["CashFlowProductRow"][];
         };
         StockStatusReport: {
             /**
@@ -3489,6 +3571,72 @@ export interface operations {
                      *     ]
                      */
                     "application/json": components["schemas"]["SupplierProfitReport"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    cashFlow: {
+        parameters: {
+            query?: {
+                /**
+                 * @description First payment date to count; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last payment date to count, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Report retrieved (ROLE_USER or ROLE_ADMIN) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "inflow": 80,
+                     *       "outflow": 30,
+                     *       "net": 50,
+                     *       "products": [
+                     *         {
+                     *           "productId": 3,
+                     *           "name": "Widget",
+                     *           "sku": "SKU-3",
+                     *           "deleted": false,
+                     *           "inflow": 80,
+                     *           "outflow": 30,
+                     *           "net": 50
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["CashFlowReport"];
+                };
+            };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
                 };
             };
             401: components["responses"]["Unauthorized"];
