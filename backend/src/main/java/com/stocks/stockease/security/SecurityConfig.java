@@ -35,7 +35,7 @@ public class SecurityConfig {
 
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
-    private final List<String> allowedOrigins;
+    private final List<String> allowedOriginPatterns;
 
     private final List<PublicEndpoint> publicEndpoints;
 
@@ -44,16 +44,16 @@ public class SecurityConfig {
      *
      * @param jwtFilter validates JWT tokens in request headers
      * @param customAuthenticationEntryPoint sends custom 401 error responses
-     * @param allowedOrigins frontend origins permitted to call the API
+     * @param allowedOriginPatterns frontend origins permitted to call the API
      * @param publicEndpoints unauthenticated entry points contributed by other modules; empty when none
      *        of them is active
      */
     public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint,
-            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins,
+            @Value("${app.cors.allowed-origins}") List<String> allowedOriginPatterns,
             ObjectProvider<PublicEndpoint> publicEndpoints) {
         this.jwtFilter = jwtFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
-        this.allowedOrigins = allowedOrigins;
+        this.allowedOriginPatterns = allowedOriginPatterns;
         // ObjectProvider rather than List injection: with no contributing module active there is no
         // candidate bean at all, and a required List parameter would fail the context start.
         this.publicEndpoints = publicEndpoints.orderedStream().toList();
@@ -122,13 +122,17 @@ public class SecurityConfig {
     }
 
     /**
-     * Defines CORS policy with allowed origins, methods, headers, and credentials.
+     * Defines CORS policy with allowed origin patterns, methods, headers, and credentials.
      *
      * @return CorsConfiguration with policy rules
      */
     private @NonNull CorsConfiguration corsConfiguration() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(allowedOrigins);
+        // Patterns rather than exact origins: every Vercel preview deployment gets its own host, so
+        // the set cannot be enumerated ahead of time. A bare wildcard is not an option either -
+        // allowCredentials(true) forbids it - which makes a host pattern scoped to one project the
+        // sanctioned mechanism. Exact origins are themselves valid patterns and keep matching.
+        config.setAllowedOriginPatterns(allowedOriginPatterns);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
         config.setAllowCredentials(true);
