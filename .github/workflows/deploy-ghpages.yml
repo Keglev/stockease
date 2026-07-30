@@ -80,6 +80,16 @@ jobs:
           done
           rm -rf /tmp/coverage-backup
 
+      - name: Opt gh-pages out of Vercel deployments
+        run: |
+          # Vercel's Git integration deploys every pushed branch; this branch
+          # is the published docs site, not an app. The config is read from
+          # the pushed commit, and this branch is regenerated on every
+          # publish, so the opt-out must be planted here each run.
+          echo '{ "git": { "deploymentEnabled": false } }' > vercel.json
+          mkdir -p frontend
+          cp vercel.json frontend/vercel.json
+
       - name: Inject back-to-docs link into coverage report
         run: |
           set -euo pipefail
