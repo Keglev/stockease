@@ -1390,6 +1390,11 @@ export interface components {
              * @example 1
              */
             invoiceId: number;
+            /**
+             * @description Operator-assigned business identifier
+             * @example INV-2026-001
+             */
+            invoiceNumber: string;
             /** @example SALE */
             invoiceType: string;
             /**

@@ -42,6 +42,9 @@
       @if (invoice.paidAt) {
         <mat-chip class="paid-chip">{{ 'invoices.paid' | translate }}</mat-chip>
       }
+      @if (isOverdue(invoice)) {
+        <mat-chip class="overdue-chip">{{ 'invoices.overdue' | translate }}</mat-chip>
+      }
     </td>
   </ng-container>
 

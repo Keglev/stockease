@@ -194,6 +194,7 @@ export class InvoiceDetailComponent implements OnInit {
       {
         titleKey: 'invoices.actions.closeConfirmTitle',
         messageKey: 'invoices.actions.closeConfirmMessage',
+        messageParams: this.numberParam(),
         detailKey: 'invoices.actions.closeConfirmDetail'
       },
       () => this.runClose()
@@ -204,7 +205,8 @@ export class InvoiceDetailComponent implements OnInit {
     this.confirm(
       {
         titleKey: 'invoices.actions.paidConfirmTitle',
-        messageKey: 'invoices.actions.paidConfirmMessage'
+        messageKey: 'invoices.actions.paidConfirmMessage',
+        messageParams: this.numberParam()
       },
       () => this.runMarkPaid()
     );
@@ -214,10 +216,16 @@ export class InvoiceDetailComponent implements OnInit {
     this.confirm(
       {
         titleKey: 'invoices.actions.deleteConfirmTitle',
-        messageKey: 'invoices.actions.deleteConfirmMessage'
+        messageKey: 'invoices.actions.deleteConfirmMessage',
+        messageParams: this.numberParam()
       },
       () => this.runDelete()
     );
+  }
+
+  /** Names the invoice in the prompt, so a destructive confirmation states what it acts on. */
+  private numberParam(): Record<string, unknown> {
+    return { number: this.invoice()?.invoiceNumber };
   }
 
   private confirm(data: ConfirmDialogData, action: () => void): void {

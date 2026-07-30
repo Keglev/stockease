@@ -168,6 +168,7 @@
     "create": "Neue Rechnung",
     "created": "Rechnung wurde angelegt.",
     "paid": "Bezahlt",
+    "overdue": "Überfällig",
     "walkIn": "Barverkauf",
     "returnAction": "Retoure",
     "returnDialog": {
@@ -206,16 +207,16 @@
     "actions": {
       "close": "Abschließen",
       "closeConfirmTitle": "Rechnung abschließen",
-      "closeConfirmMessage": "Möchten Sie diese Rechnung wirklich abschließen?",
+      "closeConfirmMessage": "Möchten Sie die Rechnung {{number}} wirklich abschließen?",
       "closeConfirmDetail": "Beim Abschließen werden die Lagerbewegungen aller Positionen gebucht; dies kann nicht rückgängig gemacht werden.",
       "closed": "Rechnung wurde abgeschlossen.",
       "markPaid": "Als bezahlt markieren",
       "paidConfirmTitle": "Rechnung als bezahlt markieren",
-      "paidConfirmMessage": "Möchten Sie diese Rechnung wirklich als bezahlt markieren?",
+      "paidConfirmMessage": "Möchten Sie die Rechnung {{number}} wirklich als bezahlt markieren?",
       "markedPaid": "Rechnung wurde als bezahlt markiert.",
       "delete": "Löschen",
       "deleteConfirmTitle": "Rechnung löschen",
-      "deleteConfirmMessage": "Möchten Sie diese Rechnung wirklich löschen?"
+      "deleteConfirmMessage": "Möchten Sie die Rechnung {{number}} wirklich löschen?"
     },
     "createPage": {
       "title": "Neue Rechnung",

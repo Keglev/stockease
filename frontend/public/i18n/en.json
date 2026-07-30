@@ -168,6 +168,7 @@
     "create": "New invoice",
     "created": "Invoice created.",
     "paid": "Paid",
+    "overdue": "Overdue",
     "walkIn": "Walk-in sale",
     "returnAction": "Return",
     "returnDialog": {
@@ -206,16 +207,16 @@
     "actions": {
       "close": "Close invoice",
       "closeConfirmTitle": "Close invoice",
-      "closeConfirmMessage": "Do you really want to close this invoice?",
+      "closeConfirmMessage": "Do you really want to close invoice {{number}}?",
       "closeConfirmDetail": "Closing books the stock movements for every line and cannot be undone.",
       "closed": "Invoice closed.",
       "markPaid": "Mark as paid",
       "paidConfirmTitle": "Mark invoice as paid",
-      "paidConfirmMessage": "Do you really want to mark this invoice as paid?",
+      "paidConfirmMessage": "Do you really want to mark invoice {{number}} as paid?",
       "markedPaid": "Invoice marked as paid.",
       "delete": "Delete",
       "deleteConfirmTitle": "Delete invoice",
-      "deleteConfirmMessage": "Do you really want to delete this invoice?"
+      "deleteConfirmMessage": "Do you really want to delete invoice {{number}}?"
     },
     "createPage": {
       "title": "New invoice",

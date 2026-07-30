@@ -9,6 +9,7 @@ import {
   RegisterReturnRequest
 } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { MovementService } from '../../movements/movement.service';
 import { InvoiceReturnDialogComponent } from '../invoice-return-dialog/invoice-return-dialog.component';
 import { LanguageService } from '../../../core/i18n/language.service';
@@ -129,10 +130,15 @@ class InvoiceServiceStub {
 class MatDialogStub {
   confirmed: boolean | undefined = true;
   returnResult: { quantity: number } | undefined = { quantity: 1 };
+  /** Data of the last dialog opened, so the confirmation copy's parameters can be asserted. */
+  lastData: ConfirmDialogData | undefined;
 
   /** The return dialog resolves to a quantity; the lifecycle confirmations resolve to a boolean. */
-  open(component: unknown) {
+  open(component: unknown, config?: { data?: unknown }) {
     const isReturn = component === InvoiceReturnDialogComponent;
+    if (!isReturn) {
+      this.lastData = config?.data as ConfirmDialogData;
+    }
     return { afterClosed: () => of(isReturn ? this.returnResult : this.confirmed) };
   }
 }
@@ -358,6 +364,35 @@ describe('InvoiceDetailComponent', () => {
     expect(invoices.removeCalls).toEqual([1]);
     expect(notifications.successes).toEqual(['Invoice deleted.']);
     expect(navigate).toHaveBeenCalledWith(['/app/invoices']);
+  });
+
+  it('confirmClose_dialogOpened_namesTheInvoiceByNumber', async () => {
+    await setUp(of(detail({ status: 'OPEN', invoiceNumber: 'RE-2026-0117' })));
+
+    host().querySelector<HTMLButtonElement>('.action-close')?.click();
+    await settle();
+
+    expect(dialog.lastData?.messageKey).toBe('invoices.actions.closeConfirmMessage');
+    expect(dialog.lastData?.messageParams).toEqual({ number: 'RE-2026-0117' });
+  });
+
+  it('confirmMarkPaid_dialogOpened_namesTheInvoiceByNumber', async () => {
+    await setUp(of(detail({ status: 'CLOSED', paidAt: null, invoiceNumber: 'RE-2026-0118' })));
+
+    host().querySelector<HTMLButtonElement>('.action-paid')?.click();
+    await settle();
+
+    expect(dialog.lastData?.messageParams).toEqual({ number: 'RE-2026-0118' });
+  });
+
+  it('confirmDelete_dialogOpened_namesTheInvoiceByNumber', async () => {
+    await setUp(of(detail({ status: 'OPEN', invoiceNumber: 'RE-2026-0119' })));
+
+    host().querySelector<HTMLButtonElement>('.action-delete')?.click();
+    await settle();
+
+    // A destructive prompt must state which invoice it is about to act on.
+    expect(dialog.lastData?.messageParams).toEqual({ number: 'RE-2026-0119' });
   });
 
   it('returnAction_openInvoice_hidesReturnButton', async () => {

@@ -426,7 +426,10 @@
                 <ul class="due-list">
                   @for (row of dueSoonRows(); track row.invoiceId) {
                     <li class="due-soon-row">
-                      <a [routerLink]="['/app/invoices', row.invoiceId]">#{{ row.invoiceId }}</a>
+                      <!-- The label is the business number, the route key stays the technical id:
+                           the number identifies the invoice to people, the id to the system
+                           (ADR 022). -->
+                      <a [routerLink]="['/app/invoices', row.invoiceId]">{{ row.invoiceNumber }}</a>
                       <span class="due-type">{{
                         'invoices.type.' + row.invoiceType | translate
                       }}</span>
@@ -448,7 +451,8 @@
                 <ul class="due-list">
                   @for (row of overdueRows(); track row.invoiceId) {
                     <li class="overdue-row">
-                      <a [routerLink]="['/app/invoices', row.invoiceId]">#{{ row.invoiceId }}</a>
+                      <!-- Business number as the label, technical id as the route key; see above. -->
+                      <a [routerLink]="['/app/invoices', row.invoiceId]">{{ row.invoiceNumber }}</a>
                       <span class="due-type">{{
                         'invoices.type.' + row.invoiceType | translate
                       }}</span>

@@ -285,6 +285,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
                 .filter(entry -> entry.invoiceId().equals(late.getId())).findFirst().orElseThrow();
         assertThat(row.daysOverdue()).isEqualTo(1L);
         assertThat(row.counterparty()).isEqualTo("RPT Overdue Supplier");
+        assertThat(row.invoiceNumber()).isEqualTo(late.getInvoiceNumber());
     }
 
     /** A closed purchase invoice that fell due yesterday. */
@@ -305,7 +306,9 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
 
         List<InvoiceDueSummary> rows = reportingService.dueSoon(7);
 
-        assertThat(rows).anyMatch(row -> row.invoiceId().equals(soon.getId()));
         assertThat(rows).noneMatch(row -> row.invoiceId().equals(later.getId()));
+        InvoiceDueSummary row = rows.stream()
+                .filter(entry -> entry.invoiceId().equals(soon.getId())).findFirst().orElseThrow();
+        assertThat(row.invoiceNumber()).isEqualTo(soon.getInvoiceNumber());
     }
 }
