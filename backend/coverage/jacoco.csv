@@ -1,5 +1,5 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-StockEase,com.stocks.stockease.demo,DemoDataService,17,958,0,2,3,108,1,22,1,21
+StockEase,com.stocks.stockease.demo,DemoDataService,17,1128,0,2,3,120,1,22,1,21
 StockEase,com.stocks.stockease.demo,DemoConfiguration,0,15,0,0,0,3,0,3,0,3
 StockEase,com.stocks.stockease.demo,DemoProperties,0,9,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.demo,DemoStartupSeeder,7,23,2,2,3,5,2,2,0,2
@@ -7,7 +7,7 @@ StockEase,com.stocks.stockease,StockEaseApplication,5,3,0,0,2,1,1,1,1,1
 StockEase,com.stocks.stockease.audit.internal,ProductChangedListener,0,32,0,0,0,8,0,1,0,1
 StockEase,com.stocks.stockease.config,JpaAuditingConfig,0,3,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.config,FlywayConfiguration,0,38,0,2,0,14,0,3,0,2
-StockEase,com.stocks.stockease.report.web,ReportController,0,107,1,7,0,20,1,15,0,12
+StockEase,com.stocks.stockease.report.web,ReportController,0,116,1,7,0,22,1,16,0,13
 StockEase,com.stocks.stockease.audit.web,ChangeLogResponse,0,44,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.audit.web,AuditController,0,18,0,0,0,2,0,2,0,2
 StockEase,com.stocks.stockease.product.web,ProductController,5,221,0,6,0,38,1,16,1,13
@@ -54,10 +54,12 @@ StockEase,com.stocks.stockease.report,ProductProfitReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,InvoiceDueSummary,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,CustomerSummary,0,27,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,LossReport,0,24,0,0,0,1,0,1,0,1
+StockEase,com.stocks.stockease.report,CashFlowProductRow,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,DueDateBucket,0,15,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,SupplierProfitReport,0,18,0,0,0,1,0,1,0,1
-StockEase,com.stocks.stockease.report,ReportingService,0,335,0,2,0,55,0,20,0,19
+StockEase,com.stocks.stockease.report,ReportingService,0,411,0,2,0,71,0,22,0,21
 StockEase,com.stocks.stockease.report,StockStatusReport,0,24,0,0,0,1,0,1,0,1
+StockEase,com.stocks.stockease.report,CashFlowReport,0,15,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice.internal,OpenInvoiceDeletionVeto,0,52,0,8,0,14,0,7,0,3
 StockEase,com.stocks.stockease.security,UserService,0,5,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.security,User,0,12,0,0,0,5,0,1,0,1

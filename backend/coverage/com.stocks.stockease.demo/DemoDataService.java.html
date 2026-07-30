@@ -209,10 +209,17 @@ public class DemoDataService {
         // sells, which the open order below cannot do: an OPEN invoice books nothing.
 <span class="fc" id="L210">        invoices.add(closedPurchase(suppliers.get(4), &quot;WP-2026-0075&quot;, days(-30), admin,</span>
 <span class="fc" id="L211">                line(products.get(9), 90, &quot;21.50&quot;)));</span>
+        // Two settled orders, so the cash-flow report has outflow to show. Their lines repeat prices
+        // these products were already bought at: a different price would reprice the product (ADR 019)
+        // and move figures the rest of the baseline pins.
+<span class="fc" id="L215">        invoices.add(closedPurchase(suppliers.get(2), &quot;2026/RH/00934&quot;, days(-14), admin,</span>
+<span class="fc" id="L216">                line(products.get(4), 15, &quot;38.00&quot;), line(products.get(5), 10, &quot;49.00&quot;)));</span>
+<span class="fc" id="L217">        invoices.add(closedPurchase(suppliers.get(4), &quot;WP-2026-0091&quot;, days(-9), admin,</span>
+<span class="fc" id="L218">                line(products.get(9), 40, &quot;21.50&quot;)));</span>
         // still open, so the demo has a purchase in each state; a repeat order from the same supplier
-<span class="fc" id="L213">        invoices.add(openPurchase(suppliers.get(4), &quot;WP-2026-0088&quot;, days(9),</span>
-<span class="fc" id="L214">                line(products.get(9), 80, &quot;21.50&quot;)));</span>
-<span class="fc" id="L215">        return invoices;</span>
+<span class="fc" id="L220">        invoices.add(openPurchase(suppliers.get(4), &quot;WP-2026-0088&quot;, days(9),</span>
+<span class="fc" id="L221">                line(products.get(9), 80, &quot;21.50&quot;)));</span>
+<span class="fc" id="L222">        return invoices;</span>
     }
 
     /**
@@ -220,24 +227,31 @@ public class DemoDataService {
      * last. Two are already overdue; margins differ per line so the profit charts are not flat.
      */
     private List&lt;Invoice&gt; seedSaleInvoices(List&lt;Customer&gt; customers, List&lt;Product&gt; products, User admin) {
-<span class="fc" id="L223">        List&lt;Invoice&gt; invoices = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L230">        List&lt;Invoice&gt; invoices = new ArrayList&lt;&gt;();</span>
         // One unbroken house sequence, because these are the numbers this business issues itself.
-<span class="fc" id="L225">        invoices.add(closedSale(customers.get(0), &quot;AR-2026-0001&quot;, days(-16), admin,</span>
-<span class="fc" id="L226">                line(products.get(0), 8, &quot;94.90&quot;), line(products.get(3), 15, &quot;49.90&quot;)));</span>
-<span class="fc" id="L227">        invoices.add(closedSale(customers.get(1), &quot;AR-2026-0002&quot;, days(6), admin,</span>
-<span class="fc" id="L228">                line(products.get(1), 6, &quot;129.00&quot;), line(products.get(5), 10, &quot;79.90&quot;)));</span>
+<span class="fc" id="L232">        invoices.add(closedSale(customers.get(0), &quot;AR-2026-0001&quot;, days(-16), admin,</span>
+<span class="fc" id="L233">                line(products.get(0), 8, &quot;94.90&quot;), line(products.get(3), 15, &quot;49.90&quot;)));</span>
+<span class="fc" id="L234">        invoices.add(closedSale(customers.get(1), &quot;AR-2026-0002&quot;, days(6), admin,</span>
+<span class="fc" id="L235">                line(products.get(1), 6, &quot;129.00&quot;), line(products.get(5), 10, &quot;79.90&quot;)));</span>
         // walk-in cash sale: no customer, which is what makes the reports show &quot;Cash sale&quot;
-<span class="fc" id="L230">        invoices.add(closedSale(null, &quot;AR-2026-0003&quot;, days(0), admin,</span>
-<span class="fc" id="L231">                line(products.get(6), 24, &quot;18.90&quot;), line(products.get(9), 12, &quot;39.90&quot;)));</span>
-<span class="fc" id="L232">        invoices.add(closedSale(customers.get(2), &quot;AR-2026-0004&quot;, days(14), admin,</span>
-<span class="fc" id="L233">                line(products.get(7), 9, &quot;239.00&quot;), line(products.get(8), 5, &quot;289.00&quot;)));</span>
-<span class="fc" id="L234">        invoices.add(closedSale(customers.get(3), &quot;AR-2026-0005&quot;, days(20), admin,</span>
-<span class="fc" id="L235">                line(products.get(2), 4, &quot;199.00&quot;), line(products.get(10), 2, &quot;549.00&quot;)));</span>
-<span class="fc" id="L236">        invoices.add(closedSale(customers.get(0), &quot;AR-2026-0006&quot;, days(-4), admin,</span>
-<span class="fc" id="L237">                line(products.get(4), 9, &quot;69.90&quot;), line(products.get(0), 4, &quot;89.90&quot;)));</span>
-<span class="fc" id="L238">        invoices.add(openSale(customers.get(4), &quot;AR-2026-0007&quot;, days(11),</span>
-<span class="fc" id="L239">                line(products.get(11), 3, &quot;139.00&quot;)));</span>
-<span class="fc" id="L240">        return invoices;</span>
+<span class="fc" id="L237">        invoices.add(closedSale(null, &quot;AR-2026-0003&quot;, days(0), admin,</span>
+<span class="fc" id="L238">                line(products.get(6), 24, &quot;18.90&quot;), line(products.get(9), 12, &quot;39.90&quot;)));</span>
+<span class="fc" id="L239">        invoices.add(closedSale(customers.get(2), &quot;AR-2026-0004&quot;, days(14), admin,</span>
+<span class="fc" id="L240">                line(products.get(7), 9, &quot;239.00&quot;), line(products.get(8), 5, &quot;289.00&quot;)));</span>
+<span class="fc" id="L241">        invoices.add(closedSale(customers.get(3), &quot;AR-2026-0005&quot;, days(20), admin,</span>
+<span class="fc" id="L242">                line(products.get(2), 4, &quot;199.00&quot;), line(products.get(10), 2, &quot;549.00&quot;)));</span>
+<span class="fc" id="L243">        invoices.add(closedSale(customers.get(0), &quot;AR-2026-0006&quot;, days(-4), admin,</span>
+<span class="fc" id="L244">                line(products.get(4), 9, &quot;69.90&quot;), line(products.get(0), 4, &quot;89.90&quot;)));</span>
+        // Two settled sales, so the cash-flow report has inflow to show against the outflow above.
+        // Both draw on well-stocked products: the one product the baseline leaves at 3 units is what
+        // keeps the low-stock report non-empty, so nothing here touches it.
+<span class="fc" id="L248">        invoices.add(closedSale(customers.get(1), &quot;AR-2026-0008&quot;, days(-12), admin,</span>
+<span class="fc" id="L249">                line(products.get(3), 10, &quot;49.90&quot;), line(products.get(4), 5, &quot;69.90&quot;)));</span>
+<span class="fc" id="L250">        invoices.add(closedSale(customers.get(2), &quot;AR-2026-0009&quot;, days(-7), admin,</span>
+<span class="fc" id="L251">                line(products.get(9), 20, &quot;39.90&quot;), line(products.get(6), 30, &quot;18.90&quot;)));</span>
+<span class="fc" id="L252">        invoices.add(openSale(customers.get(4), &quot;AR-2026-0007&quot;, days(11),</span>
+<span class="fc" id="L253">                line(products.get(11), 3, &quot;139.00&quot;)));</span>
+<span class="fc" id="L254">        return invoices;</span>
     }
 
     /**
@@ -248,68 +262,78 @@ public class DemoDataService {
      * rejects a second one per line - recording them here would fail, and rightly so.
      */
     private void seedAdjustments(List&lt;Invoice&gt; purchases, List&lt;Invoice&gt; sales, List&lt;Product&gt; products, User staff) {
-<span class="fc" id="L251">        Product drill = products.get(0);</span>
+<span class="fc" id="L265">        Product drill = products.get(0);</span>
         // partial customer return against the first sale line: 2 of the 8 units come back
-<span class="fc" id="L253">        record(staff, MovementReason.RETURN_FROM_CUSTOMER, drill, 2, itemId(sales.get(0), 0), null);</span>
+<span class="fc" id="L267">        record(staff, MovementReason.RETURN_FROM_CUSTOMER, drill, 2, itemId(sales.get(0), 0), null);</span>
         // return to supplier against the first purchase line: 5 of the 40 units go back
-<span class="fc" id="L255">        record(staff, MovementReason.RETURNED_TO_SUPPLIER, drill, 5, itemId(purchases.get(0), 0), null);</span>
+<span class="fc" id="L269">        record(staff, MovementReason.RETURNED_TO_SUPPLIER, drill, 5, itemId(purchases.get(0), 0), null);</span>
         // two different remarks on purpose: the loss report is only worth grouping if the baseline
         // shows the taxonomy has more than one member in use
-<span class="fc" id="L258">        record(staff, MovementReason.LOST, drill, 3, null, null, MovementRemark.IN_TRANSIT_TO_CUSTOMER);</span>
-<span class="fc" id="L259">        record(staff, MovementReason.DESTROYED, products.get(1), 2, null, null, MovementRemark.EXPIRED);</span>
-<span class="fc" id="L260">    }</span>
+<span class="fc" id="L272">        record(staff, MovementReason.LOST, drill, 3, null, null, MovementRemark.IN_TRANSIT_TO_CUSTOMER);</span>
+<span class="fc" id="L273">        record(staff, MovementReason.DESTROYED, products.get(1), 2, null, null, MovementRemark.EXPIRED);</span>
+<span class="fc" id="L274">    }</span>
 
-    /** Settles two invoices so the due-date and overdue reports distinguish paid from outstanding. */
+    /**
+     * Settles six invoices so the due-date and overdue reports distinguish paid from outstanding and
+     * the cash-flow report has both directions to show.
+     *
+     * &lt;p&gt;Only invoices added for this purpose are settled. Paying one of the outstanding ones would
+     * remove it from the due-soon and overdue listings, which the baseline requires to stay populated.
+     */
     private void seedPayments(List&lt;Invoice&gt; purchases, List&lt;Invoice&gt; sales) {
-<span class="fc" id="L264">        invoiceService.markAsPaid(purchases.get(2).getId());</span>
-<span class="fc" id="L265">        invoiceService.markAsPaid(sales.get(2).getId());</span>
-<span class="fc" id="L266">    }</span>
+<span class="fc" id="L284">        invoiceService.markAsPaid(purchases.get(2).getId());</span>
+<span class="fc" id="L285">        invoiceService.markAsPaid(purchases.get(6).getId());</span>
+<span class="fc" id="L286">        invoiceService.markAsPaid(purchases.get(7).getId());</span>
+<span class="fc" id="L287">        invoiceService.markAsPaid(sales.get(2).getId());</span>
+<span class="fc" id="L288">        invoiceService.markAsPaid(sales.get(6).getId());</span>
+<span class="fc" id="L289">        invoiceService.markAsPaid(sales.get(7).getId());</span>
+<span class="fc" id="L290">    }</span>
 
     private Invoice closedPurchase(Supplier supplier, String number, LocalDate dueDate, User admin,
             ItemLine... lines) {
-<span class="fc" id="L270">        Invoice invoice = openPurchase(supplier, number, dueDate, lines);</span>
-<span class="fc" id="L271">        invoiceService.close(invoice.getId(), admin);</span>
-<span class="fc" id="L272">        return invoice;</span>
+<span class="fc" id="L294">        Invoice invoice = openPurchase(supplier, number, dueDate, lines);</span>
+<span class="fc" id="L295">        invoiceService.close(invoice.getId(), admin);</span>
+<span class="fc" id="L296">        return invoice;</span>
     }
 
     private Invoice openPurchase(Supplier supplier, String number, LocalDate dueDate, ItemLine... lines) {
-<span class="fc" id="L276">        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, number,</span>
-<span class="fc" id="L277">                supplier.getId(), null, dueDate, new BigDecimal(&quot;2.50&quot;), BigDecimal.ZERO, List.of(lines)));</span>
+<span class="fc" id="L300">        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, number,</span>
+<span class="fc" id="L301">                supplier.getId(), null, dueDate, new BigDecimal(&quot;2.50&quot;), BigDecimal.ZERO, List.of(lines)));</span>
     }
 
     private Invoice closedSale(Customer customer, String number, LocalDate dueDate, User admin, ItemLine... lines) {
-<span class="fc" id="L281">        Invoice invoice = openSale(customer, number, dueDate, lines);</span>
-<span class="fc" id="L282">        invoiceService.close(invoice.getId(), admin);</span>
-<span class="fc" id="L283">        return invoice;</span>
+<span class="fc" id="L305">        Invoice invoice = openSale(customer, number, dueDate, lines);</span>
+<span class="fc" id="L306">        invoiceService.close(invoice.getId(), admin);</span>
+<span class="fc" id="L307">        return invoice;</span>
     }
 
     private Invoice openSale(Customer customer, String number, LocalDate dueDate, ItemLine... lines) {
-<span class="fc bfc" id="L287" title="All 2 branches covered.">        Long customerId = customer == null ? null : customer.getId();</span>
-<span class="fc" id="L288">        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, number, null, customerId,</span>
-<span class="fc" id="L289">                dueDate, new BigDecimal(&quot;1.50&quot;), BigDecimal.ZERO, List.of(lines)));</span>
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        Long customerId = customer == null ? null : customer.getId();</span>
+<span class="fc" id="L312">        return invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, number, null, customerId,</span>
+<span class="fc" id="L313">                dueDate, new BigDecimal(&quot;1.50&quot;), BigDecimal.ZERO, List.of(lines)));</span>
     }
 
     private void record(User user, MovementReason reason, Product product, int quantity, Long invoiceItemId,
             BigDecimal unitCost) {
-<span class="fc" id="L294">        record(user, reason, product, quantity, invoiceItemId, unitCost, null);</span>
-<span class="fc" id="L295">    }</span>
+<span class="fc" id="L318">        record(user, reason, product, quantity, invoiceItemId, unitCost, null);</span>
+<span class="fc" id="L319">    }</span>
 
     private void record(User user, MovementReason reason, Product product, int quantity, Long invoiceItemId,
             BigDecimal unitCost, MovementRemark remark) {
-<span class="fc" id="L299">        stockMovementService.recordMovement(</span>
-<span class="fc" id="L300">                new RecordMovementCommand(product.getId(), reason, quantity, invoiceItemId, unitCost, remark), user);</span>
-<span class="fc" id="L301">    }</span>
+<span class="fc" id="L323">        stockMovementService.recordMovement(</span>
+<span class="fc" id="L324">                new RecordMovementCommand(product.getId(), reason, quantity, invoiceItemId, unitCost, remark), user);</span>
+<span class="fc" id="L325">    }</span>
 
     private static ItemLine line(Product product, int quantity, String unitPrice) {
-<span class="fc" id="L304">        return new ItemLine(product.getId(), quantity, new BigDecimal(unitPrice));</span>
+<span class="fc" id="L328">        return new ItemLine(product.getId(), quantity, new BigDecimal(unitPrice));</span>
     }
 
     private static Long itemId(Invoice invoice, int index) {
-<span class="fc" id="L308">        return invoice.getItems().get(index).getId();</span>
+<span class="fc" id="L332">        return invoice.getItems().get(index).getId();</span>
     }
 
     private static LocalDate days(int offset) {
-<span class="fc" id="L312">        return LocalDate.now().plusDays(offset);</span>
+<span class="fc" id="L336">        return LocalDate.now().plusDays(offset);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
