@@ -9,7 +9,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map, switchMap, timer } from 'rxjs';
 
-import { DueDateBucket, ProductResponse } from '../../core/api/api-models';
+import { DueDateBucket, InvoiceDueSummary, ProductResponse } from '../../core/api/api-models';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
 import { ChartSlice, topNWithRemainder } from '../../shared/chart/chart-data';
@@ -26,6 +26,10 @@ const HEALTH_POLL_MS = 30_000;
 export type CardView = 'chart' | 'table';
 
 const CARD_VIEWS: readonly CardView[] = ['chart', 'table'];
+
+// The dashboard shows the head of the list and points at the reports page for the rest; eight rows
+// is what fits beside the profit card without the row growing past one 1080p viewport.
+const DUE_LIST_LIMIT = 8;
 
 /**
  * First screen after login: headline counts, a low-stock alert, two report visualizations and
@@ -85,6 +89,14 @@ export class DashboardComponent implements OnInit {
 
   protected readonly dueDateOption = signal<ChartOption | null>(null);
 
+  protected readonly dueView = signal<CardView>('chart');
+
+  protected readonly dueSoonRows = signal<InvoiceDueSummary[]>([]);
+
+  // Guards the fetch rather than the rows: an empty due-soon window is a legitimate answer, and
+  // testing the array would re-request on every switch back to a list that is correctly empty.
+  private dueSoonLoaded = false;
+
   protected readonly probe = signal<HealthProbe | null>(null);
   protected readonly lastChecked = signal<Date | null>(null);
 
@@ -114,6 +126,20 @@ export class DashboardComponent implements OnInit {
     // end up on neither view. Same guard as the reports page's period presets.
     if (CARD_VIEWS.includes(view)) {
       this.profitView.set(view);
+    }
+  }
+
+  /**
+   * Switches the due card between the bucket chart and the invoices behind the same window.
+   */
+  protected setDueView(view: CardView): void {
+    // Same guard as the profit card: the group emits once with no value while it is being created.
+    if (!CARD_VIEWS.includes(view)) {
+      return;
+    }
+    this.dueView.set(view);
+    if (view === 'table' && !this.dueSoonLoaded) {
+      this.loadDueSoon();
     }
   }
 
@@ -162,6 +188,33 @@ export class DashboardComponent implements OnInit {
     this.reports.dueDates().subscribe({
       next: (buckets) => this.dueDateOption.set(toDueDateOption(buckets)),
       error: (err: Error) => this.fail(err)
+    });
+
+    // Only once the list has actually been opened: refresh re-reads what is on screen, while
+    // fetching this unconditionally would undo the laziness the list was built for.
+    if (this.dueSoonLoaded) {
+      this.loadDueSoon();
+    }
+  }
+
+  /**
+   * Fetches the invoices behind the due window, on the first switch to the list only.
+   *
+   * <p>The chart above is built from server-aggregated buckets, which carry a date, a type and a
+   * total but no invoice identity - so the rows cannot come from it and need their own request.
+   * The reports due tab established the same duality: one window, read as a shape or as invoices.
+   * Lazy because a user who never leaves the chart should not pay for a query they never see, and
+   * the window itself is the backend's own default so both surfaces describe the same seven days.
+   */
+  private loadDueSoon(): void {
+    this.dueSoonLoaded = true;
+    this.reports.dueSoon().subscribe({
+      next: (rows) => this.dueSoonRows.set(rows.slice(0, DUE_LIST_LIMIT)),
+      error: (err: Error) => {
+        // Retryable: a failed load must not leave the card permanently empty behind a true flag.
+        this.dueSoonLoaded = false;
+        this.fail(err);
+      }
     });
   }
 

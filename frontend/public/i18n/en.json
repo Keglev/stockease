@@ -374,6 +374,9 @@
       "down": "Unavailable",
       "latency": "API response time: {{ms}} ms",
       "lastChecked": "Last checked at {{time}}"
+    },
+    "due": {
+      "viewAll": "All due dates"
     }
   },
   "products": {
