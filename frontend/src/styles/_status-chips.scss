@@ -1,0 +1,31 @@
+// Invoice status chip colours, shared by the invoice list and the invoice detail page so the two
+// cannot drift apart - they carried the same three rules verbatim before.
+//
+// Each rule is a light/dark pair rather than a single container token. The container roles are
+// deliberately low-chroma, and in a dark scheme they land close enough to the surface that a
+// chip stops reading as a coloured status at all. Dark therefore promotes every chip to its main
+// role colour, which keeps the colour identity a status chip exists for.
+
+@mixin invoice-status-chips {
+  .status-chip.status-open {
+    background-color: light-dark(var(--mat-sys-tertiary-container), var(--mat-sys-tertiary));
+    color: light-dark(var(--mat-sys-on-tertiary-container), var(--mat-sys-on-tertiary));
+  }
+
+  .status-chip.status-closed {
+    background-color: light-dark(var(--mat-sys-secondary-container), var(--mat-sys-secondary));
+    color: light-dark(var(--mat-sys-on-secondary-container), var(--mat-sys-on-secondary));
+  }
+
+  .status-chip.status-fully-returned {
+    background-color: light-dark(var(--mat-sys-error-container), var(--mat-sys-error));
+    color: light-dark(var(--mat-sys-on-error-container), var(--mat-sys-on-error));
+  }
+
+  // The one chip that is loud in both schemes: an overdue invoice is a warning, not a state, so
+  // it does not get the muted container treatment light mode gives the others.
+  .overdue-chip {
+    background-color: light-dark(var(--mat-sys-error), var(--mat-sys-error));
+    color: light-dark(var(--mat-sys-on-error), var(--mat-sys-on-error));
+  }
+}

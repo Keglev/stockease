@@ -62,13 +62,14 @@ public class ReportingService {
     };
 
     private static final RowMapper<InvoiceDueSummary> DUE_SOON_MAPPER = (rs, rowNum) -> new InvoiceDueSummary(
-            rs.getLong("id"), rs.getString("invoice_type"), counterparty(rs.getString("counterparty")),
-            rs.getObject("due_date", LocalDate.class), rs.getBigDecimal("outstanding"), null);
+            rs.getLong("id"), rs.getString("invoice_number"), rs.getString("invoice_type"),
+            counterparty(rs.getString("counterparty")), rs.getObject("due_date", LocalDate.class),
+            rs.getBigDecimal("outstanding"), null);
 
     private static final RowMapper<InvoiceDueSummary> OVERDUE_MAPPER = (rs, rowNum) -> new InvoiceDueSummary(
-            rs.getLong("id"), rs.getString("invoice_type"), counterparty(rs.getString("counterparty")),
-            rs.getObject("due_date", LocalDate.class), rs.getBigDecimal("outstanding"),
-            rs.getLong("days_overdue"));
+            rs.getLong("id"), rs.getString("invoice_number"), rs.getString("invoice_type"),
+            counterparty(rs.getString("counterparty")), rs.getObject("due_date", LocalDate.class),
+            rs.getBigDecimal("outstanding"), rs.getLong("days_overdue"));
 
     private static final RowMapper<CustomerSummary> CUSTOMER_SUMMARY_MAPPER = (rs, rowNum) -> new CustomerSummary(
             rs.getLong("id"), rs.getString("name"), rs.getBoolean("deleted"), rs.getLong("sale_invoice_count"),
@@ -259,7 +260,8 @@ public class ReportingService {
      */
     public List<InvoiceDueSummary> dueSoon(int days) {
         String sql = """
-                SELECT i.id, i.invoice_type, COALESCE(s.name, c.name) AS counterparty, i.due_date, t.outstanding
+                SELECT i.id, i.invoice_number, i.invoice_type, COALESCE(s.name, c.name) AS counterparty,
+                  i.due_date, t.outstanding
                 FROM invoice i
                 LEFT JOIN supplier s ON s.id = i.supplier_id
                 LEFT JOIN customer c ON c.id = i.customer_id
@@ -281,8 +283,8 @@ public class ReportingService {
     public List<InvoiceDueSummary> overdue() {
         // The derived overdue predicate: booked (CLOSED), unpaid, past due. Never stored.
         String sql = """
-                SELECT i.id, i.invoice_type, COALESCE(s.name, c.name) AS counterparty, i.due_date, t.outstanding,
-                  (CURRENT_DATE - i.due_date) AS days_overdue
+                SELECT i.id, i.invoice_number, i.invoice_type, COALESCE(s.name, c.name) AS counterparty,
+                  i.due_date, t.outstanding, (CURRENT_DATE - i.due_date) AS days_overdue
                 FROM invoice i
                 LEFT JOIN supplier s ON s.id = i.supplier_id
                 LEFT JOIN customer c ON c.id = i.customer_id

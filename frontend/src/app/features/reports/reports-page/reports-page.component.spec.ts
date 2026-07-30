@@ -93,6 +93,7 @@ const BUCKETS: DueDateBucket[] = [
 const DUE_SOON: InvoiceDueSummary[] = [
   {
     invoiceId: 9,
+    invoiceNumber: 'RE-2026-0009',
     invoiceType: 'PURCHASE',
     counterparty: 'Acme',
     dueDate: '2026-03-05',
@@ -104,6 +105,7 @@ const DUE_SOON: InvoiceDueSummary[] = [
 const OVERDUE: InvoiceDueSummary[] = [
   {
     invoiceId: 1,
+    invoiceNumber: 'RE-2026-0001',
     invoiceType: 'SALE',
     counterparty: 'Jane Doe',
     dueDate: '2026-02-01',
@@ -309,7 +311,11 @@ describe('ReportsPageComponent', () => {
     await activateTab(3);
     await showTable(3);
 
-    expect(host().querySelector('.overdue-row a')?.getAttribute('href')).toBe('/app/invoices/1');
+    // The label names the invoice the way an operator does; the href keeps the technical id,
+    // which stays the routing key (ADR 022).
+    const link = host().querySelector('.overdue-row a');
+    expect(link?.getAttribute('href')).toBe('/app/invoices/1');
+    expect(link?.textContent?.trim()).toBe('RE-2026-0001');
   });
 
   it('toggleView_tableSelected_showsTableAndHidesChart', async () => {

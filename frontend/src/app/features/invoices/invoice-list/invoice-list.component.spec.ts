@@ -21,6 +21,7 @@ const TRANSLATIONS = {
       empty: 'No invoices found.',
       create: 'New invoice',
       paid: 'Paid',
+      overdue: 'Overdue',
       walkIn: 'Walk-in sale',
       columns: {
         id: 'No.',
@@ -102,6 +103,14 @@ describe('InvoiceListComponent', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.resetTestingModule();
+    // Only Date is faked: the overdue predicate compares against today, and a test that reads the
+    // real clock changes its answer at midnight. Timers stay real so nothing else is affected.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 2, 15, 12));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('load_invoicesReturned_rendersOneRowPerInvoice', async () => {
@@ -144,6 +153,29 @@ describe('InvoiceListComponent', () => {
     await setUp([invoice({ paidAt: null })]);
 
     expect(host().querySelectorAll('.paid-chip').length).toBe(0);
+  });
+
+  it('overdueChip_closedUnpaidPastDue_isRendered', async () => {
+    await setUp([invoice({ status: 'CLOSED', paidAt: null, dueDate: '2026-03-01' })]);
+
+    expect(host().querySelectorAll('.overdue-chip').length).toBe(1);
+    expect(rowText(0)).toContain('Overdue');
+  });
+
+  it('overdueChip_closedButPaid_isAbsent', async () => {
+    await setUp([
+      invoice({ status: 'CLOSED', paidAt: '2026-03-02T10:00:00', dueDate: '2026-03-01' })
+    ]);
+
+    // Settled after the due date is not overdue; the debt is gone.
+    expect(host().querySelectorAll('.overdue-chip').length).toBe(0);
+  });
+
+  it('overdueChip_openInvoicePastDue_isAbsent', async () => {
+    await setUp([invoice({ status: 'OPEN', paidAt: null, dueDate: '2026-03-01' })]);
+
+    // An open invoice is not booked yet, so it cannot be past due on the backend's definition.
+    expect(host().querySelectorAll('.overdue-chip').length).toBe(0);
   });
 
   it('render_anyInvoice_showsItsNumberInItsOwnColumn', async () => {

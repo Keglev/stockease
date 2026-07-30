@@ -40,4 +40,29 @@ body {
   margin: 0;
   height: 100%;
 }
+
+// Surface levels are corrected here, globally, rather than in the components that looked wrong.
+// The dark-mode root cause was not any single component's styling: cards, tables and the page
+// body all resolved to --mat-sys-surface, so in a dark scheme - where the whole ramp is
+// compressed into a narrow band of near-blacks - every panel dissolved into the background. The
+// fix is to place each layer on the container level it belongs to, which light mode also reads
+// better for, so neither scheme needs a special case.
+html {
+  // Cards move one level off the page. Material's own M3 default is surface-container-low, which
+  // is still too close to the body's surface to separate in dark.
+  @include mat.card-overrides(
+    (
+      elevated-container-color: var(--mat-sys-surface-container),
+    )
+  );
+
+  // A table paints --mat-sys-surface by default, which is the page colour, so a table inside a
+  // card punched a page-coloured hole through the card. Transparent lets it inherit whatever
+  // surface it was dropped onto.
+  @include mat.table-overrides(
+    (
+      background-color: transparent,
+    )
+  );
+}
 /* You can add global styles to this file, and also import other style files */

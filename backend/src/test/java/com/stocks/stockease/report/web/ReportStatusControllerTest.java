@@ -53,7 +53,8 @@ class ReportStatusControllerTest {
     }
 
     private static InvoiceDueSummary dueSummary(Long daysOverdue) {
-        return new InvoiceDueSummary(1L, "SALE", "Jane Doe", DUE_DATE, new BigDecimal("30.00"), daysOverdue);
+        return new InvoiceDueSummary(1L, "INV-1", "SALE", "Jane Doe", DUE_DATE, new BigDecimal("30.00"),
+                daysOverdue);
     }
 
     @Test

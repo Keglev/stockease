@@ -14,6 +14,18 @@ import { SupplierService } from '../../suppliers/supplier.service';
 import { InvoiceService } from '../invoice.service';
 
 /**
+ * Today as a local calendar date in the same YYYY-MM-DD shape the API sends. Comparing the two as
+ * strings avoids parsing a date-only value, which JavaScript reads as UTC midnight and would put
+ * the boundary in the wrong day for anyone west of Greenwich.
+ */
+function today(): string {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, '0');
+  const day = `${now.getDate()}`.padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+/**
  * Lists invoices newest first, as returned by the backend. Counterparty names are resolved
  * against separately loaded supplier and customer lookups.
  */
@@ -77,6 +89,13 @@ export class InvoiceListComponent implements OnInit {
       return 'status-closed';
     }
     return status === 'FULLY_RETURNED' ? 'status-fully-returned' : 'status-open';
+  }
+
+  /** Mirrors the backend's overdue predicate: booked, unpaid, past due. */
+  protected isOverdue(invoice: InvoiceSummaryResponse): boolean {
+    // Derived for display only - the backend computes the same three conditions on demand in the
+    // overdue report and never stores an overdue flag, so there is nothing here to read instead.
+    return invoice.status === 'CLOSED' && invoice.paidAt == null && invoice.dueDate < today();
   }
 
   protected openDetail(invoice: InvoiceSummaryResponse): void {

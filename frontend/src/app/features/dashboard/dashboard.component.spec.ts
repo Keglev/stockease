@@ -89,6 +89,7 @@ const LOSSES: LossReport[] = [
 const OVERDUE: InvoiceDueSummary[] = [
   {
     invoiceId: 1,
+    invoiceNumber: 'RE-2026-0001',
     invoiceType: 'SALE',
     counterparty: 'Jane Doe',
     dueDate: '2026-03-01',
@@ -97,6 +98,7 @@ const OVERDUE: InvoiceDueSummary[] = [
   },
   {
     invoiceId: 2,
+    invoiceNumber: 'RE-2026-0002',
     invoiceType: 'PURCHASE',
     counterparty: 'Acme',
     dueDate: '2026-03-02',
@@ -105,6 +107,7 @@ const OVERDUE: InvoiceDueSummary[] = [
   },
   {
     invoiceId: 3,
+    invoiceNumber: 'RE-2026-0003',
     invoiceType: 'SALE',
     counterparty: 'John Roe',
     dueDate: '2026-03-03',

@@ -1,3 +1,7 @@
+@use '../../../../styles/status-chips' as chips;
+
+@include chips.invoice-status-chips;
+
 :host {
   display: block;
 }
@@ -18,22 +22,8 @@
   cursor: pointer;
 }
 
-.status-chip.status-open {
-  background-color: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
-}
-
-.status-chip.status-closed {
-  background-color: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-}
-
-.status-chip.status-fully-returned {
-  background-color: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
-}
-
-.paid-chip {
+.paid-chip,
+.overdue-chip {
   margin-left: 0.25rem;
 }
 
