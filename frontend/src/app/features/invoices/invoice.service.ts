@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
@@ -7,7 +7,8 @@ import { ApiEnvelope } from '../../core/api/api-envelope';
 import {
   CreateInvoiceRequest,
   InvoiceResponse,
-  InvoiceSummaryResponse
+  InvoiceSummaryResponse,
+  PaginatedInvoices
 } from '../../core/api/api-models';
 
 /**
@@ -27,6 +28,21 @@ export class InvoiceService {
   /** Bare array, already ordered newest first by the backend - deliberately not unwrapped. */
   getAll(): Observable<InvoiceSummaryResponse[]> {
     return this.http.get<InvoiceSummaryResponse[]>(this.baseUrl);
+  }
+
+  /**
+   * Reads one page of the ledger, newest first - the same rows and order as {@link getAll}, sliced.
+   * Enveloped, unlike its unpaged sibling, because the page metadata travels in the envelope.
+   *
+   * @param page zero-based page index
+   * @param size items per page
+   */
+  getPagedInvoices(page: number, size: number): Observable<PaginatedInvoices> {
+    const params = new HttpParams().set('page', page).set('size', size);
+
+    return this.http
+      .get<ApiEnvelope<PaginatedInvoices>>(`${this.baseUrl}/paged`, { params })
+      .pipe(map((envelope) => envelope.data as PaginatedInvoices));
   }
 
   /** Enveloped detail - unwrapped to the payload the components consume. */

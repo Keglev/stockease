@@ -14,7 +14,7 @@
   <p class="supplier-error" role="alert">{{ message }}</p>
 }
 
-<table mat-table [dataSource]="rows()" class="supplier-table">
+<table mat-table [dataSource]="visibleRows()" class="supplier-table">
   <ng-container matColumnDef="name">
     <th mat-header-cell *matHeaderCellDef>{{ 'suppliers.columns.name' | translate }}</th>
     <td mat-cell *matCellDef="let supplier">{{ supplier.name }}</td>
@@ -62,3 +62,11 @@
 @if (!loading() && !error() && rows().length === 0) {
   <p class="supplier-empty">{{ 'suppliers.empty' | translate }}</p>
 }
+
+<mat-paginator
+  [length]="rows().length"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[10, 25, 50]"
+  (page)="onPage($event)"
+/>

@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 import {
   CustomerResponse,
   InvoiceSummaryResponse,
+  PaginatedInvoices,
   SupplierResponse
 } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
@@ -70,8 +71,28 @@ const CUSTOMERS: CustomerResponse[] = [
   }
 ];
 
+/** Serves one page out of the given rows, recording what the component asked for. */
+class InvoiceServiceStub {
+  readonly requests: { page: number; size: number }[] = [];
+
+  constructor(private readonly all: InvoiceSummaryResponse[]) {}
+
+  getPagedInvoices(page: number, size: number): Observable<PaginatedInvoices> {
+    this.requests.push({ page, size });
+    const start = page * size;
+    return of({
+      content: this.all.slice(start, start + size),
+      pageNumber: page,
+      pageSize: size,
+      totalElements: this.all.length,
+      totalPages: Math.max(1, Math.ceil(this.all.length / size))
+    });
+  }
+}
+
 describe('InvoiceListComponent', () => {
   let fixture: ComponentFixture<InvoiceListComponent>;
+  let invoiceService: InvoiceServiceStub;
 
   function host(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -82,12 +103,13 @@ describe('InvoiceListComponent', () => {
   }
 
   async function setUp(invoices: InvoiceSummaryResponse[]): Promise<void> {
+    invoiceService = new InvoiceServiceStub(invoices);
     await TestBed.configureTestingModule({
       imports: [InvoiceListComponent],
       providers: [
         provideRouter([]),
         provideTestTranslations(TRANSLATIONS),
-        { provide: InvoiceService, useValue: { getAll: (): Observable<InvoiceSummaryResponse[]> => of(invoices) } },
+        { provide: InvoiceService, useValue: invoiceService },
         { provide: SupplierService, useValue: { getAll: () => of(SUPPLIERS) } },
         { provide: CustomerService, useValue: { getAll: () => of(CUSTOMERS) } }
       ]
@@ -206,6 +228,34 @@ describe('InvoiceListComponent', () => {
     const create = host().querySelector<HTMLAnchorElement>('.invoice-create');
     expect(create).not.toBeNull();
     expect(create?.getAttribute('href')).toBe('/app/invoices/new');
+  });
+
+  it('load_firstRender_requestsTheFirstPageOfTen', async () => {
+    await setUp([invoice({ id: 1 })]);
+
+    expect(invoiceService.requests).toEqual([{ page: 0, size: 10 }]);
+  });
+
+  it('pageChange_event_requestsThatPage', async () => {
+    await setUp(Array.from({ length: 25 }, (unused, index) => invoice({ id: index + 1 })));
+
+    const page = fixture.componentInstance as unknown as {
+      onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void;
+    };
+    page.onPage({ pageIndex: 2, pageSize: 5, length: 25 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // server-side: the page change is a request, not a local slice
+    expect(invoiceService.requests.at(-1)).toEqual({ page: 2, size: 5 });
+  });
+
+  it('load_pagedEnvelope_rendersOnlyThatPage', async () => {
+    await setUp(Array.from({ length: 25 }, (unused, index) => invoice({ id: index + 1 })));
+
+    // the table shows the page, and the paginator learns the ledger's true size from the envelope
+    expect(host().querySelectorAll('tbody tr').length).toBe(10);
+    expect(host().querySelector('mat-paginator')).not.toBeNull();
   });
 
   it('load_backendOrder_isRenderedUnchanged', async () => {
