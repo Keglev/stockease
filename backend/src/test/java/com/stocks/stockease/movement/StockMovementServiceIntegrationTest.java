@@ -174,6 +174,43 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void recordMovement_purchase_flipsEverStockedOnce() {
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Ever Stocked", 0, 5.0), "TST-MOVE-EVER-1"));
+        InvoiceItem first = purchaseItemFor(product, 6);
+        InvoiceItem second = purchaseItemFor(product, 4);
+
+        stockMovementService.recordMovement(command(MovementReason.PURCHASE, product, 6, first.getId()), user);
+        assertThat(productRepository.findById(product.getId()).orElseThrow().isEverStocked()).isTrue();
+
+        stockMovementService.recordMovement(command(MovementReason.PURCHASE, product, 4, second.getId()), user);
+
+        assertThat(productRepository.findById(product.getId()).orElseThrow().isEverStocked()).isTrue();
+        // the flip is derived state, not an operator edit, so neither purchase may leave an audit row -
+        // and a second flip would be the one thing that could produce one
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM product_change_log WHERE product_id = ?", Long.class, product.getId()))
+                .isZero();
+    }
+
+    @Test
+    void recordMovement_lossOnUnstockedProduct_neverFlips() {
+        // stock rules make this near-unreachable with real data - a product at zero cannot lose units -
+        // so the fixture starts it stocked without a purchase, to isolate what the reason alone does
+        Product product = productRepository.saveAndFlush(
+                withSku(new Product("Movement Loss No Flip", 5, 5.0), "TST-MOVE-EVER-2"));
+
+        stockMovementService.recordMovement(
+                new RecordMovementCommand(product.getId(), MovementReason.LOST, 2, null, null,
+                        MovementRemark.IN_TRANSIT_TO_CUSTOMER),
+                user);
+
+        Product reloaded = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(reloaded.getQuantity()).isEqualTo(3);
+        assertThat(reloaded.isEverStocked()).isFalse();
+    }
+
+    @Test
     void recordMovement_returnFromCustomer_incrementsReturnedQty() {
         Product product = productRepository.saveAndFlush(
                 withSku(new Product("Movement Return From Customer", 10, 5.0), "TST-MOVE-2"));

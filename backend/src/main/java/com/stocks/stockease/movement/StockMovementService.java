@@ -80,6 +80,11 @@ public class StockMovementService {
 
         int delta = reason.getType() == MovementType.INCREASE ? command.quantity() : -command.quantity();
         Product product = productService.adjustQuantity(command.productId(), delta);
+        if (reason == MovementReason.PURCHASE) {
+            // a purchase is the only way stock enters (ADR 021), so it is the only reason that can make a
+            // product ever-stocked; the flag rides the same transaction as the quantity it derives from
+            productService.markEverStocked(product);
+        }
 
         return stockMovementRepository.save(buildMovement(command, reason, user, product, item));
     }

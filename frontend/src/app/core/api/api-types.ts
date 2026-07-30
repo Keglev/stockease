@@ -140,7 +140,9 @@ export interface paths {
         };
         /**
          * Get products with critically low stock
-         * @description Returns products whose quantity is below the reorder threshold of 5 units.
+         * @description Returns products whose quantity is below the reorder threshold of 5 units, scoped to products
+         *     that have ever been stocked. A product sold down to zero stays listed; a product that has never
+         *     been purchased is treated as new rather than low and never appears, whatever its quantity.
          *     When every product is adequately stocked the endpoint returns a bare status message object
          *     instead of an empty array.
          */
