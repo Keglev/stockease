@@ -23,6 +23,8 @@ import { DashboardComponent } from './dashboard.component';
 
 const TRANSLATIONS = {
   en: {
+    charts: { other: 'Other' },
+    reports: { view: { chart: 'Chart', table: 'Table' }, columns: { name: 'Name', grossProfit: 'Gross profit' } },
     dashboard: {
       title: 'Dashboard',
       refresh: 'Refresh',
@@ -30,7 +32,7 @@ const TRANSLATIONS = {
         products: 'Products',
         lowStock: 'Low stock',
         overdue: 'Overdue invoices',
-        lossValue: 'Loss value'
+        grossProfit: 'Gross profit'
       },
       lowStockTitle: 'Low stock',
       lowStockNone: 'All products are sufficiently stocked.',
@@ -117,8 +119,20 @@ const OVERDUE: InvoiceDueSummary[] = [
 ];
 
 const PROFIT: ProductProfitReport[] = [
-  { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 100, cost: 40, grossProfit: 60 }
+  { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 100, cost: 40, grossProfit: 60 },
+  { productId: 4, name: 'Gadget', sku: 'SKU-4', deleted: false, revenue: 60, cost: 35, grossProfit: 25 }
 ];
+
+/** Eleven products, so topNWithRemainder has a remainder to bucket. */
+const MANY_PROFIT: ProductProfitReport[] = Array.from({ length: 11 }, (unused, index) => ({
+  productId: index + 1,
+  name: 'Product ' + index,
+  sku: 'SKU-' + index,
+  deleted: false,
+  revenue: 100,
+  cost: 40,
+  grossProfit: 60 - index
+}));
 
 const BUCKETS: DueDateBucket[] = [
   { dueDate: '2026-03-01', invoiceType: 'SALE', invoiceCount: 2, totalValue: 60 }
@@ -133,10 +147,11 @@ class ChartStubComponent {
 
 class ReportServiceStub {
   calls = 0;
+  profitPayload: ProductProfitReport[] = PROFIT;
 
   profitProducts(): Observable<ProductProfitReport[]> {
     this.calls += 1;
-    return of(PROFIT);
+    return of(this.profitPayload);
   }
 
   dueDates(): Observable<DueDateBucket[]> {
@@ -144,8 +159,12 @@ class ReportServiceStub {
     return of(BUCKETS);
   }
 
+  /** Still offered, and deliberately counted: the dashboard must no longer ask for it. */
+  lossRequests = 0;
+
   losses(): Observable<LossReport[]> {
     this.calls += 1;
+    this.lossRequests += 1;
     return of(LOSSES);
   }
 
@@ -199,6 +218,17 @@ describe('DashboardComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelector(selector)?.textContent ?? '';
   }
 
+  function host(): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  /** Flips the profit card to its table half, the way the toggle group does. */
+  function showProfitTable(): void {
+    const page = fixture.componentInstance as unknown as { setProfitView: (view: string) => void };
+    page.setProfitView('table');
+    fixture.detectChanges();
+  }
+
   beforeEach(() => {
     vi.useFakeTimers();
     TestBed.resetTestingModule();
@@ -236,10 +266,27 @@ describe('DashboardComponent', () => {
     expect(textOf('.kpi-products .kpi-value')).toContain('42');
   });
 
-  it('ngOnInit_lossReports_showsSummedLossValue', () => {
+  it('kpi_profitRows_sumsGrossProfit', () => {
     render();
 
-    expect(textOf('.kpi-loss-value .kpi-value')).toContain('20.00');
+    // summed over every row the profit report returned, not over the ten the chart plots
+    expect(textOf('.kpi-gross-profit .kpi-value')).toContain('85.00');
+  });
+
+  it('kpi_negativeProfitSum_rendersErrorColorClass', () => {
+    reports.profitPayload = [{ ...PROFIT[0], grossProfit: -40 }];
+    render();
+
+    // the class, not the computed colour: jsdom resolves no tokens
+    expect(host().querySelector('.kpi-gross-profit .kpi-negative')).not.toBeNull();
+  });
+
+  it('kpi_positiveProfitSum_omitsErrorColorClass', () => {
+    render();
+
+    // the other direction, so the assertion above cannot pass on an always-present class
+    expect(host().querySelector('.kpi-gross-profit .kpi-value')).not.toBeNull();
+    expect(host().querySelector('.kpi-gross-profit .kpi-negative')).toBeNull();
   });
 
   it('ngOnInit_overdueInvoices_showsRowCount', () => {
@@ -280,7 +327,8 @@ describe('DashboardComponent', () => {
       ?.click();
     fixture.detectChanges();
 
-    expect(afterInit).toBe(4);
+    // three, not four: the loss report left the dashboard with the KPI it fed
+    expect(afterInit).toBe(3);
     expect(reports.calls).toBe(afterInit * 2);
   });
 
@@ -307,7 +355,7 @@ describe('DashboardComponent', () => {
     // and the low-stock list, so it would pass or fail for reasons that are not this behaviour
     expect(kpiValues()).toEqual(['—', '—', '—', '—']);
     expect(kpiValues().join('')).not.toContain('42');
-    expect(kpiValues().join('')).not.toContain('20.00');
+    expect(kpiValues().join('')).not.toContain('85.00');
   });
 
   it('kpiCards_loadedWithoutError_renderTheirNumbers', () => {
@@ -317,6 +365,35 @@ describe('DashboardComponent', () => {
     expect(kpiValues().join('')).not.toContain('—');
     expect(kpiValues()[0]).toBe('42');
     expect(kpiValues()[2]).toBe('3');
+  });
+
+  it('profitCard_tableView_rendersSameSlicesAsChart', () => {
+    reports.profitPayload = MANY_PROFIT;
+    render();
+    expect(host().querySelector('.slice-table')).toBeNull();
+
+    showProfitTable();
+
+    // ten products plus the aggregated remainder, the exact slices the chart plots
+    const rows = host().querySelectorAll('.slice-row');
+    expect(rows.length).toBe(11);
+    expect(host().querySelector('.slice-table')?.textContent).toContain('Other');
+  });
+
+  it('profitCard_tableView_replacesTheChart', () => {
+    render();
+
+    showProfitTable();
+
+    // the two halves never share the card's height, as on the reports page
+    expect(host().querySelector('.chart-profit app-chart')).toBeNull();
+  });
+
+  it('load_always_skipsTheLossReport', () => {
+    render();
+
+    // the gross-profit KPI comes from rows the chart already needed, so this request is gone
+    expect(reports.lossRequests).toBe(0);
   });
 
   it('chartHeight_handsetViewport_usesTallerCharts', () => {
