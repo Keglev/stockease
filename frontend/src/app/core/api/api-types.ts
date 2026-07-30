@@ -607,6 +607,9 @@ export interface paths {
          * @description One row per supplier that has supplied at least one product, ordered by supplier ID.
          *     Documented simplification: a product purchased from several suppliers counts fully for each of
          *     them - this is a gross profit model with no per-supplier cost allocation.
+         *
+         *     `from` and `to` optionally restrict the report to movements booked in that closed date range;
+         *     suppliers with no movements in the window still appear, with zeros.
          */
         get: operations["profitPerSupplier"];
         put?: never;
@@ -3662,7 +3665,18 @@ export interface operations {
     };
     profitPerSupplier: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description First booking date to count; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last booking date to count, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3687,6 +3701,22 @@ export interface operations {
                      *     ]
                      */
                     "application/json": components["schemas"]["SupplierProfitReport"][];
+                };
+            };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
                 };
             };
             401: components["responses"]["Unauthorized"];

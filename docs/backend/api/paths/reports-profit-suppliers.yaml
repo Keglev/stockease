@@ -4,11 +4,31 @@ get:
     One row per supplier that has supplied at least one product, ordered by supplier ID.
     Documented simplification: a product purchased from several suppliers counts fully for each of
     them - this is a gross profit model with no per-supplier cost allocation.
+
+    `from` and `to` optionally restrict the report to movements booked in that closed date range;
+    suppliers with no movements in the window still appear, with zeros.
   operationId: profitPerSupplier
   tags:
     - Reports
   security:
     - BearerAuth: []
+  parameters:
+    - name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: First booking date to count; omit for no lower bound
+      example: '2026-01-01'
+    - name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Last booking date to count, inclusive; omit for no upper bound
+      example: '2026-03-31'
   responses:
     '200':
       description: Report retrieved (ROLE_USER or ROLE_ADMIN)
@@ -24,5 +44,15 @@ get:
               revenue: 100.00
               cost: 40.00
               grossProfit: 60.00
+    '400':
+      description: The start of the period is after its end
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: The start of the period must not be after its end.
+            data: null
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'

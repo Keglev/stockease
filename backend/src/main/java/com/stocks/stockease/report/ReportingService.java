@@ -140,16 +140,25 @@ public class ReportingService {
     }
 
     /**
-     * Returns gross profit attributed to each supplier across the products it has supplied.
+     * Returns gross profit attributed to each supplier across the products it has supplied, over an
+     * optional period.
      *
+     * <p>The period is a closed range of movement dates, exactly as the product reports read it: a
+     * movement counts when it was recorded on or between the two dates. Either bound may be null,
+     * which leaves that end open. Suppliers without movements in the window still appear, with zeros.
+     *
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
      * @return one row per supplier that has supplied at least one product, ordered by supplier ID
      */
-    public List<SupplierProfitReport> profitPerSupplier() {
+    public List<SupplierProfitReport> profitPerSupplier(LocalDate from, LocalDate to) {
         // A product purchased from several suppliers counts fully for each of them - documented
         // simplification (gross profit model, no per-supplier cost allocation).
         // The per-product expressions repeat those of the product report on purpose: the two are one
         // definition of gross profit and the reports page shows them side by side, so they move
         // together (ADR 024). Only the shape around them differs - this one groups by supplier.
+        // The period join is the product report's own constant rather than a copy of it, so the two
+        // cannot answer the same period differently.
         String sql = """
                 WITH product_profit AS (
                   SELECT p.id,
@@ -160,7 +169,7 @@ public class ReportingService {
                                       WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity * m.unit_cost
                                       ELSE 0 END), 0) AS cost
                   FROM product p
-                  LEFT JOIN stock_movement m ON m.product_id = p.id
+                """ + PRODUCT_PROFIT_JOIN + """
                   GROUP BY p.id
                 ), supplier_products AS (
                   SELECT DISTINCT i.supplier_id, ii.product_id
@@ -174,12 +183,15 @@ public class ReportingService {
                 GROUP BY s.id, s.name
                 ORDER BY s.id
                 """;
-        return jdbcClient.sql(sql).query((rs, rowNum) -> {
-            BigDecimal revenue = rs.getBigDecimal("revenue");
-            BigDecimal cost = rs.getBigDecimal("cost");
-            return new SupplierProfitReport(rs.getLong("id"), rs.getString("name"), revenue, cost,
-                    revenue.subtract(cost));
-        }).list();
+        return jdbcClient.sql(sql)
+                .param("from", from)
+                .param("to", to)
+                .query((rs, rowNum) -> {
+                    BigDecimal revenue = rs.getBigDecimal("revenue");
+                    BigDecimal cost = rs.getBigDecimal("cost");
+                    return new SupplierProfitReport(rs.getLong("id"), rs.getString("name"), revenue, cost,
+                            revenue.subtract(cost));
+                }).list();
     }
 
     /**

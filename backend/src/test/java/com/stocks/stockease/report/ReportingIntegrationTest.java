@@ -261,7 +261,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     void profitPerSupplier_aggregatesSuppliedProducts() {
         Scenario scenario = scenarioA("RPT Alpha Supplier View");
 
-        SupplierProfitReport row = reportingService.profitPerSupplier().stream()
+        SupplierProfitReport row = reportingService.profitPerSupplier(null, null).stream()
                 .filter(entry -> entry.supplierId() == scenario.supplierId()).findFirst().orElseThrow();
 
         assertThat(row.revenue()).isEqualByComparingTo("90.00");
@@ -279,13 +279,50 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
         closedPurchase(second.getId(), product.getId(), 5, "12.00");
         closedSale(product.getId(), 4, "30.00");
 
-        List<SupplierProfitReport> rows = reportingService.profitPerSupplier();
+        List<SupplierProfitReport> rows = reportingService.profitPerSupplier(null, null);
 
         // pins the intended double-counting: a product bought from several suppliers counts fully for
         // each. Changing this to per-supplier cost allocation would be a design change requiring an ADR
         // update, not a bug fix.
         assertFullAttribution(rows, first.getId());
         assertFullAttribution(rows, second.getId());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void profitPerSupplier_fromToWindow_excludesMovementsOutsideRange() {
+        Scenario scenario = scenarioA("RPT Supplier Window");
+        LocalDate today = LocalDate.now();
+
+        SupplierProfitReport outside = supplierRow(reportingService.profitPerSupplier(
+                LocalDate.of(2020, 1, 1), LocalDate.of(2020, 12, 31)), scenario.supplierId());
+        SupplierProfitReport inside = supplierRow(
+                reportingService.profitPerSupplier(today, today), scenario.supplierId());
+
+        assertThat(outside.grossProfit()).isEqualByComparingTo("0.00");
+        // same figures the unfiltered report gives, so the window narrows rather than reshapes
+        assertThat(inside.grossProfit()).isEqualByComparingTo("60.00");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void profitPerSupplier_supplierWithoutInRangeMovements_keepsZeroRow() {
+        Scenario scenario = scenarioA("RPT Supplier Zero Row");
+
+        List<SupplierProfitReport> rows = reportingService.profitPerSupplier(
+                LocalDate.of(2020, 1, 1), LocalDate.of(2020, 12, 31));
+
+        // the date test lives in the JOIN, so the LEFT JOIN's zero row survives and the supplier stays
+        // listed instead of dropping out of the report entirely
+        SupplierProfitReport row = supplierRow(rows, scenario.supplierId());
+        assertThat(row.revenue()).isEqualByComparingTo("0.00");
+        assertThat(row.cost()).isEqualByComparingTo("0.00");
+        assertThat(row.grossProfit()).isEqualByComparingTo("0.00");
+    }
+
+    /** Picks one supplier's row out of a report, failing the test when the supplier is absent. */
+    private static SupplierProfitReport supplierRow(List<SupplierProfitReport> rows, Long supplierId) {
+        return rows.stream().filter(row -> row.supplierId().equals(supplierId)).findFirst().orElseThrow();
     }
 
     /** Asserts the supplier carries the shared product's whole revenue, cost and gross profit. */

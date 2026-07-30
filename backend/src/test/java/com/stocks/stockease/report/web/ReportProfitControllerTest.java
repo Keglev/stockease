@@ -137,7 +137,7 @@ class ReportProfitControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void profitPerSupplier_withRows_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.profitPerSupplier()).thenReturn(List.of(new SupplierProfitReport(
+        Mockito.when(reportingService.profitPerSupplier(null, null)).thenReturn(List.of(new SupplierProfitReport(
                 7L, "Acme", new BigDecimal("100.00"), new BigDecimal("40.00"), new BigDecimal("60.00"))));
 
         mockMvc.perform(get("/api/reports/profit/suppliers"))
@@ -146,16 +146,44 @@ class ReportProfitControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Acme"))
                 .andExpect(jsonPath("$[0].grossProfit").value(60.00));
 
-        Mockito.verify(reportingService).profitPerSupplier();
+        Mockito.verify(reportingService).profitPerSupplier(null, null);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void profitPerSupplier_withNoRows_returnsEmptyList() throws Exception {
-        Mockito.when(reportingService.profitPerSupplier()).thenReturn(List.of());
+        Mockito.when(reportingService.profitPerSupplier(null, null)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/reports/profit/suppliers"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void profitPerSupplier_withPeriod_passesBothBoundsThrough() throws Exception {
+        LocalDate from = LocalDate.of(2026, 1, 1);
+        LocalDate to = LocalDate.of(2026, 3, 31);
+        Mockito.when(reportingService.profitPerSupplier(from, to)).thenReturn(List.of(new SupplierProfitReport(
+                7L, "Acme", new BigDecimal("100.00"), new BigDecimal("40.00"), new BigDecimal("60.00"))));
+
+        mockMvc.perform(get("/api/reports/profit/suppliers")
+                        .param("from", "2026-01-01").param("to", "2026-03-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].supplierId").value(7));
+
+        Mockito.verify(reportingService).profitPerSupplier(from, to);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void profitPerSupplier_withStartAfterEnd_returns400() throws Exception {
+        mockMvc.perform(get("/api/reports/profit/suppliers")
+                        .param("from", "2026-03-31").param("to", "2026-01-01"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
+
+        Mockito.verify(reportingService, Mockito.never()).profitPerSupplier(Mockito.any(), Mockito.any());
     }
 }

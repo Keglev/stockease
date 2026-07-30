@@ -115,12 +115,18 @@ public class ReportController {
     /**
      * Returns gross profit attributed to each supplier across the products it has supplied.
      *
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
      * @return one row per supplier that has supplied at least one product
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
      */
     @GetMapping("/profit/suppliers")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public List<SupplierProfitReport> profitPerSupplier() {
-        return reportingService.profitPerSupplier();
+    public List<SupplierProfitReport> profitPerSupplier(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+        validatePeriod(from, to);
+        return reportingService.profitPerSupplier(from, to);
     }
 
     /**

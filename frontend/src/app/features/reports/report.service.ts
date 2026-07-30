@@ -27,25 +27,51 @@ export class ReportService {
 
   private readonly baseUrl = `${environment.apiBaseUrl}/api/reports`;
 
-  /** Bare array - deliberately not unwrapped. */
-  profitProducts(): Observable<ProductProfitReport[]> {
-    return this.http.get<ProductProfitReport[]>(`${this.baseUrl}/profit/products`);
+  /**
+   * Builds the optional period query. Omitted bounds are left off the request entirely rather than
+   * sent empty, because the backend reads a missing parameter as "no bound" and an empty one as a
+   * parse failure.
+   */
+  private periodParams(from?: string, to?: string): HttpParams {
+    let params = new HttpParams();
+    if (from) {
+      params = params.set('from', from);
+    }
+    if (to) {
+      params = params.set('to', to);
+    }
+    return params;
   }
 
   /**
-   * Reads the profit row for one product. This is one of the two reporting endpoints that ARE
-   * enveloped - the controller returns ApiResponse<ProductProfitReport> where the list
-   * endpoints return their records bare - so the payload is unwrapped here.
+   * Bare array - deliberately not unwrapped. The optional window is a range of booking dates,
+   * which is a different basis from the payment dates cash flow reads.
    */
-  profitProductDetail(id: number): Observable<ProductProfitReport> {
+  profitProducts(from?: string, to?: string): Observable<ProductProfitReport[]> {
+    return this.http.get<ProductProfitReport[]>(`${this.baseUrl}/profit/products`, {
+      params: this.periodParams(from, to)
+    });
+  }
+
+  /**
+   * Reads the profit row for one product over the same optional booking window. This is one of the
+   * two reporting endpoints that ARE enveloped - the controller returns
+   * ApiResponse<ProductProfitReport> where the list endpoints return their records bare - so the
+   * payload is unwrapped here.
+   */
+  profitProductDetail(id: number, from?: string, to?: string): Observable<ProductProfitReport> {
     return this.http
-      .get<ApiEnvelope<ProductProfitReport>>(`${this.baseUrl}/profit/products/${id}`)
+      .get<ApiEnvelope<ProductProfitReport>>(`${this.baseUrl}/profit/products/${id}`, {
+        params: this.periodParams(from, to)
+      })
       .pipe(map((envelope) => envelope.data as ProductProfitReport));
   }
 
-  /** Bare array - deliberately not unwrapped. */
-  profitSuppliers(): Observable<SupplierProfitReport[]> {
-    return this.http.get<SupplierProfitReport[]>(`${this.baseUrl}/profit/suppliers`);
+  /** Bare array - deliberately not unwrapped; same booking window as the product report. */
+  profitSuppliers(from?: string, to?: string): Observable<SupplierProfitReport[]> {
+    return this.http.get<SupplierProfitReport[]>(`${this.baseUrl}/profit/suppliers`, {
+      params: this.periodParams(from, to)
+    });
   }
 
   /**
@@ -86,20 +112,14 @@ export class ReportService {
 
   /**
    * Reads money in and out over an optional payment window. Bare object - deliberately not
-   * unwrapped. Omitted bounds are left off the request entirely rather than sent empty, because
-   * the backend reads a missing parameter as "no bound" and an empty one as a parse failure.
+   * unwrapped.
    *
    * @param from first payment date to count, as an ISO date
    * @param to last payment date to count, as an ISO date
    */
   cashFlow(from?: string, to?: string): Observable<CashFlowReport> {
-    let params = new HttpParams();
-    if (from) {
-      params = params.set('from', from);
-    }
-    if (to) {
-      params = params.set('to', to);
-    }
-    return this.http.get<CashFlowReport>(`${this.baseUrl}/cash-flow`, { params });
+    return this.http.get<CashFlowReport>(`${this.baseUrl}/cash-flow`, {
+      params: this.periodParams(from, to)
+    });
   }
 }
