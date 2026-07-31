@@ -1,5 +1,6 @@
 package com.stocks.stockease.audit.web;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.stocks.stockease.audit.AuditService;
+import com.stocks.stockease.audit.ChangeLogEntryResponse;
 import com.stocks.stockease.audit.ChangedField;
 import com.stocks.stockease.audit.ProductChangeLog;
 import com.stocks.stockease.config.test.TestConfig;
@@ -143,5 +145,59 @@ class AuditControllerTest {
                 .andExpect(status().isUnauthorized());
 
         Mockito.verify(auditService, Mockito.never()).findChangesByProduct(3L);
+    }
+
+    private static ChangeLogEntryResponse entry() {
+        return new ChangeLogEntryResponse(2L, 3L, "Widget", "SKU-3", false, "julia.brandt",
+                ChangedField.NAME, "Old name", "New name", CREATED_AT);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void getChanges_withEntries_returnsEnrichedRecordsDirectly() throws Exception {
+        Mockito.when(auditService.findChanges(null, null)).thenReturn(List.of(entry()));
+
+        mockMvc.perform(get("/api/audit/changes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].username").value("julia.brandt"))
+                .andExpect(jsonPath("$[0].productName").value("Widget"))
+                .andExpect(jsonPath("$[0].sku").value("SKU-3"))
+                .andExpect(jsonPath("$[0].productDeleted").value(false))
+                .andExpect(jsonPath("$[0].field").value("NAME"));
+
+        Mockito.verify(auditService).findChanges(null, null);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void getChanges_withPeriod_passesBothBoundsThrough() throws Exception {
+        LocalDate from = LocalDate.of(2026, 1, 1);
+        LocalDate to = LocalDate.of(2026, 3, 31);
+        Mockito.when(auditService.findChanges(from, to)).thenReturn(List.of(entry()));
+
+        mockMvc.perform(get("/api/audit/changes").param("from", "2026-01-01").param("to", "2026-03-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(2));
+
+        Mockito.verify(auditService).findChanges(from, to);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void getChanges_withStartAfterEnd_returns400() throws Exception {
+        mockMvc.perform(get("/api/audit/changes").param("from", "2026-03-31").param("to", "2026-01-01"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
+
+        Mockito.verify(auditService, Mockito.never()).findChanges(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void getChanges_asAnonymous_returns401() throws Exception {
+        mockMvc.perform(get("/api/audit/changes"))
+                .andExpect(status().isUnauthorized());
+
+        Mockito.verify(auditService, Mockito.never()).findChanges(Mockito.any(), Mockito.any());
     }
 }

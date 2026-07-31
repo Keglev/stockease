@@ -94,7 +94,8 @@
       "cashFlow": "Cash flow",
       "stock": "Stock",
       "losses": "Losses",
-      "dueDates": "Due dates"
+      "dueDates": "Due dates",
+      "changes": "Changes"
     },
     "columns": {
       "name": "Name",
@@ -156,7 +157,19 @@
       "year": "This year",
       "all": "All"
     },
-    "filter": "Filter by name or SKU"
+    "filter": "Filter by name or SKU",
+    "changes": {
+      "allUsers": "All users",
+      "empty": "No changes in this period.",
+      "columns": {
+        "time": "Time",
+        "user": "User",
+        "product": "Product",
+        "field": "Field",
+        "oldValue": "Old value",
+        "newValue": "New value"
+      }
+    }
   },
   "movements": {
     "title": "Record stock movement",

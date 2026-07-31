@@ -827,6 +827,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audit/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recent product changes across the system
+         * @description The newest product changes, ordered by change time descending, each carrying the username and
+         *     the product's name and SKU rather than bare IDs - what a report showing who changed what needs.
+         *
+         *     `from` and `to` optionally restrict the listing to changes recorded in that closed date range.
+         *
+         *     At most **500** rows are returned. This feeds a report view, not an export: an unbounded log
+         *     would grow the payload without bound as the system ages.
+         *
+         *     A product that has since been soft-deleted stays listed and flagged, as in every report - the
+         *     change it records really happened, and retiring the product afterwards does not unmake it.
+         */
+        get: operations["getChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/audit/users/{userId}/changes": {
         parameters: {
             query?: never;
@@ -1681,6 +1710,47 @@ export interface components {
              * @example 11
              */
             userId: number;
+            field: components["schemas"]["ChangedField"];
+            /**
+             * @description Null for lifecycle events that carry no value
+             * @example Old name
+             */
+            oldValue: string | null;
+            /** @example New name */
+            newValue: string | null;
+            /** @description ISO-8601 local date-time, serialized without a zone offset */
+            createdAt: string;
+        };
+        /**
+         * @description A change log row enriched with the names behind its foreign keys, for the changes report.
+         *     Deliberately separate from ChangeLogResponse, which carries bare IDs and is pinned by the
+         *     per-user and per-product listings.
+         */
+        ChangeLogEntryResponse: {
+            /**
+             * Format: int64
+             * @example 2
+             */
+            id: number;
+            /**
+             * Format: int64
+             * @example 3
+             */
+            productId: number;
+            /** @example Widget */
+            productName: string;
+            /** @example SKU-3 */
+            sku: string;
+            /**
+             * @description Whether the product has since been soft-deleted; it stays listed either way
+             * @example false
+             */
+            productDeleted: boolean;
+            /**
+             * @description The account that made the change
+             * @example julia.brandt
+             */
+            username: string;
             field: components["schemas"]["ChangedField"];
             /**
              * @description Null for lifecycle events that carry no value
@@ -4170,6 +4240,70 @@ export interface operations {
                      *     ]
                      */
                     "application/json": components["schemas"]["InvoiceDueSummary"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getChanges: {
+        parameters: {
+            query?: {
+                /**
+                 * @description First change date to include; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last change date to include, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Change log retrieved (ROLE_USER or ROLE_ADMIN); empty array when nothing changed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "id": 2,
+                     *         "productId": 3,
+                     *         "productName": "Widget",
+                     *         "sku": "SKU-3",
+                     *         "productDeleted": false,
+                     *         "username": "julia.brandt",
+                     *         "field": "NAME",
+                     *         "oldValue": "Old name",
+                     *         "newValue": "New name",
+                     *         "createdAt": "2026-01-02T03:04:00"
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["ChangeLogEntryResponse"][];
+                };
+            };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
                 };
             };
             401: components["responses"]["Unauthorized"];

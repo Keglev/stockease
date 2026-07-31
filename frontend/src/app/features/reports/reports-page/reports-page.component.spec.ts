@@ -8,6 +8,7 @@ import { Observable, of } from 'rxjs';
 import {
   CashFlowReport,
   CashFlowTimelineBucket,
+  ChangeLogEntryResponse,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
@@ -19,12 +20,16 @@ import { ChartComponent, ChartOption } from '../../../shared/chart/chart.compone
 import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
+import { AuditService } from '../../audit/audit.service';
 import { ReportService } from '../report.service';
 import { ReportsPageComponent } from './reports-page.component';
 
 const TRANSLATIONS = {
   en: {
     invoices: { type: { PURCHASE: 'Purchase', SALE: 'Sale' } },
+    audit: {
+      field: { NAME: 'Name', PURCHASE_PRICE: 'Purchase price', DELETED: 'Deleted', RESTORED: 'Restored' }
+    },
     charts: { other: 'Other' },
     reports: {
       title: 'Reports',
@@ -47,7 +52,20 @@ const TRANSLATIONS = {
         cashFlow: 'Cash flow',
         stock: 'Stock',
         losses: 'Losses',
-        dueDates: 'Due dates'
+        dueDates: 'Due dates',
+        changes: 'Changes'
+      },
+      changes: {
+        allUsers: 'All users',
+        empty: 'No changes in this period.',
+        columns: {
+          time: 'Time',
+          user: 'User',
+          product: 'Product',
+          field: 'Field',
+          oldValue: 'Old value',
+          newValue: 'New value'
+        }
       },
       columns: {
         name: 'Name',
@@ -159,6 +177,45 @@ const TIMELINE: CashFlowTimelineBucket[] = [
   { month: '2026-03', inflow: 500, outflow: 0, net: 500 }
 ];
 
+const CHANGES: ChangeLogEntryResponse[] = [
+  {
+    id: 2,
+    productId: 3,
+    productName: 'Widget',
+    sku: 'SKU-3',
+    productDeleted: false,
+    username: 'julia.brandt',
+    field: 'NAME',
+    oldValue: 'Old name',
+    newValue: 'Widget',
+    createdAt: '2026-03-14T10:00:00'
+  },
+  {
+    id: 1,
+    productId: 4,
+    productName: 'Gadget',
+    sku: 'ABC-4',
+    productDeleted: true,
+    username: 'markus.weber',
+    field: 'PURCHASE_PRICE',
+    oldValue: '10.00',
+    newValue: '12.00',
+    createdAt: '2026-03-13T09:00:00'
+  }
+];
+
+class AuditServiceStub {
+  changePayload: ChangeLogEntryResponse[] = CHANGES;
+  calls = 0;
+  ranges: (string | undefined)[][] = [];
+
+  changes(from?: string, to?: string): Observable<ChangeLogEntryResponse[]> {
+    this.calls++;
+    this.ranges.push([from, to]);
+    return of(this.changePayload);
+  }
+}
+
 class ReportServiceStub {
   profitPayload: ProductProfitReport[] = PROFIT;
   lossPayload: LossReport[] = LOSSES;
@@ -233,6 +290,7 @@ class ReportServiceStub {
 describe('ReportsPageComponent', () => {
   let fixture: ComponentFixture<ReportsPageComponent>;
   let reports: ReportServiceStub;
+  let audit: AuditServiceStub;
   let dialog: { open: ReturnType<typeof vi.fn> };
   let download: ReturnType<typeof vi.fn>;
 
@@ -278,6 +336,7 @@ describe('ReportsPageComponent', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     TestBed.resetTestingModule();
     reports = new ReportServiceStub();
+    audit = new AuditServiceStub();
     dialog = { open: vi.fn() };
     download = vi.fn();
 
@@ -290,6 +349,7 @@ describe('ReportsPageComponent', () => {
         provideRouter([]),
         provideTestTranslations(TRANSLATIONS),
         { provide: ReportService, useValue: reports },
+        { provide: AuditService, useValue: audit },
         { provide: MatDialog, useValue: dialog },
         // A provider stub rather than a module mock, for the reason ADR 016 records: the module
         // registry is shared across the specs in a Vitest worker, a TestBed is not.
@@ -462,6 +522,69 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(optionOf('lossOption')).toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('.losses-empty')).not.toBeNull();
   });
+
+  it('changesTab_firstActivation_loadsLazily', async () => {
+    render();
+    expect(audit.calls).toBe(0);
+
+    await activateTab(5);
+
+    // no bounds on the default 'all' window, and only on first activation
+    expect(audit.ranges).toEqual([[undefined, undefined]]);
+    await activateTab(0);
+    await activateTab(5);
+    expect(audit.calls).toBe(1);
+  });
+
+  it('changesTab_presetChange_refetchesWithComputedRange', async () => {
+    vi.setSystemTime(new Date(2026, 2, 15, 12));
+    render();
+    await activateTab(5);
+
+    await selectChangePeriod('d30');
+
+    expect(audit.ranges.at(-1)).toEqual(['2026-02-13', '2026-03-15']);
+  });
+
+  it('changesTab_userSelected_narrowsRowsAndExport', async () => {
+    render();
+    await activateTab(5);
+
+    await setFilter('setChangeUser', 'markus.weber');
+
+    expect(host().querySelectorAll('.change-table tbody tr').length).toBe(1);
+    host().querySelector<HTMLButtonElement>('.export-changes')?.click();
+
+    // the download carries the narrowed view, with the field label translated as the table shows it
+    const [filename, content] = download.mock.calls[0] as [string, string];
+    expect(filename).toBe('changes.csv');
+    expect(content).toContain('markus.weber');
+    expect(content).toContain('Purchase price');
+    expect(content).not.toContain('julia.brandt');
+  });
+
+  it('changesTab_textFilter_matchesNameOrSku', async () => {
+    render();
+    await activateTab(5);
+
+    await setFilter('setChangeFilter', 'abc-4');
+
+    // matched on SKU, not on the product name, which shares no substring with it
+    const rows = host().querySelectorAll('.change-table tbody tr');
+    expect(rows.length).toBe(1);
+    expect(rows[0].textContent).toContain('Gadget');
+  });
+
+  /** Clicks a changes period preset through the component, the way the toggle group does. */
+  async function selectChangePeriod(period: string): Promise<void> {
+    const page = fixture.componentInstance as unknown as {
+      setChangePeriod: (value: string) => void;
+    };
+    page.setChangePeriod(period);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   it('stockTab_totalsStrip_sumsLoadedRows', async () => {
     render();

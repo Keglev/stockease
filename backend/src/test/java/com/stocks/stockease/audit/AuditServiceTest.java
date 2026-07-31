@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.simple.JdbcClient;
 
 import com.stocks.stockease.audit.internal.ProductChangeLogRepository;
 
@@ -23,7 +24,9 @@ class AuditServiceTest {
     @BeforeEach
     void setUp() {
         productChangeLogRepository = mock(ProductChangeLogRepository.class);
-        auditService = new AuditService(productChangeLogRepository);
+        // The enriched listing's JdbcClient is irrelevant to the two delegations tested here, and a
+        // mock of it would only assert that this class does not use it.
+        auditService = new AuditService(productChangeLogRepository, mock(JdbcClient.class));
     }
 
     @Test

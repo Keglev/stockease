@@ -94,7 +94,8 @@
       "cashFlow": "Cashflow",
       "stock": "Bestand",
       "losses": "Verluste",
-      "dueDates": "Fälligkeiten"
+      "dueDates": "Fälligkeiten",
+      "changes": "Änderungen"
     },
     "columns": {
       "name": "Name",
@@ -156,7 +157,19 @@
       "year": "Dieses Jahr",
       "all": "Gesamt"
     },
-    "filter": "Nach Name oder Artikelnummer filtern"
+    "filter": "Nach Name oder Artikelnummer filtern",
+    "changes": {
+      "allUsers": "Alle Benutzer",
+      "empty": "Keine Änderungen in diesem Zeitraum.",
+      "columns": {
+        "time": "Zeitpunkt",
+        "user": "Benutzer",
+        "product": "Produkt",
+        "field": "Feld",
+        "oldValue": "Alter Wert",
+        "newValue": "Neuer Wert"
+      }
+    }
   },
   "movements": {
     "title": "Lagerbewegung erfassen",

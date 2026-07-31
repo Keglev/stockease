@@ -1,0 +1,67 @@
+get:
+  summary: Recent product changes across the system
+  description: |
+    The newest product changes, ordered by change time descending, each carrying the username and
+    the product's name and SKU rather than bare IDs - what a report showing who changed what needs.
+
+    `from` and `to` optionally restrict the listing to changes recorded in that closed date range.
+
+    At most **500** rows are returned. This feeds a report view, not an export: an unbounded log
+    would grow the payload without bound as the system ages.
+
+    A product that has since been soft-deleted stays listed and flagged, as in every report - the
+    change it records really happened, and retiring the product afterwards does not unmake it.
+  operationId: getChanges
+  tags:
+    - Audit
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: First change date to include; omit for no lower bound
+      example: '2026-01-01'
+    - name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Last change date to include, inclusive; omit for no upper bound
+      example: '2026-03-31'
+  responses:
+    '200':
+      description: Change log retrieved (ROLE_USER or ROLE_ADMIN); empty array when nothing changed
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/ChangeLogEntryResponse'
+          example:
+            - id: 2
+              productId: 3
+              productName: Widget
+              sku: SKU-3
+              productDeleted: false
+              username: julia.brandt
+              field: NAME
+              oldValue: Old name
+              newValue: New name
+              createdAt: '2026-01-02T03:04:00'
+    '400':
+      description: The start of the period is after its end
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: The start of the period must not be after its end.
+            data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
