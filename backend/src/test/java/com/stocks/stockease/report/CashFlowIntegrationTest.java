@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.stocks.stockease.customer.Customer;
@@ -54,6 +55,9 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private User user;
 
@@ -180,6 +184,76 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
     private static BigDecimal sumOf(List<CashFlowProductRow> rows,
             java.util.function.Function<CashFlowProductRow, BigDecimal> field) {
         return rows.stream().map(field).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Settles an invoice and dates the settlement, which {@code markAsPaid} always stamps as now.
+     *
+     * <p>Backdating in SQL rather than through a service is the same call the demo module makes for
+     * the same reason (ADR 027): no business operation sets a payment date, and adding one so a test
+     * can reach the past would put a test concern into a production signature.
+     */
+    private void paidOn(Invoice invoice, LocalDate date) {
+        invoiceService.markAsPaid(invoice.getId());
+        jdbcTemplate.update("UPDATE invoice SET paid_at = ? WHERE id = ?", date.atStartOfDay(), invoice.getId());
+    }
+
+    /**
+     * The timeline over one year only.
+     *
+     * <p>These tests commit and share a database, so every one of them owns a distinct year: a window
+     * is what makes the buckets provably this test's own rather than whatever else has been paid.
+     */
+    private List<CashFlowTimelineBucket> timelineOf(int year) {
+        return reportingService.cashFlowTimeline(LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31));
+    }
+
+    @Test
+    void cashFlowTimeline_paidFlowsAcrossMonths_bucketsChronologically() {
+        Customer customer = customerService.create("CF TL Spread Customer", null, null, null, null);
+        Product product = newProduct("CF TL Spread Product", 40);
+        Supplier supplier = supplierService.create("CF TL Spread Supplier", "1 Main St");
+        // settled out of order, so the ordering asserted below is the query's and not the insert's
+        paidOn(closedSale(customer.getId(), line(product, 5, "20.00")), LocalDate.of(2019, 4, 15));
+        paidOn(closedPurchase(supplier.getId(), line(product, 6, "9.00")), LocalDate.of(2019, 2, 10));
+
+        List<CashFlowTimelineBucket> months = timelineOf(2019);
+
+        assertThat(months).extracting(CashFlowTimelineBucket::month).containsExactly("2019-02", "2019-04");
+        assertThat(months.get(0).outflow()).isEqualByComparingTo("54.00");
+        assertThat(months.get(1).inflow()).isEqualByComparingTo("100.00");
+        // March moved no money and is absent rather than zero-filled
+        assertThat(months).hasSize(2);
+    }
+
+    @Test
+    void cashFlowTimeline_windowExcludesMonth_omitsBucket() {
+        Customer customer = customerService.create("CF TL Window Customer", null, null, null, null);
+        Product product = newProduct("CF TL Window Product", 40);
+        paidOn(closedSale(customer.getId(), line(product, 5, "20.00")), LocalDate.of(2018, 3, 9));
+        paidOn(closedSale(customer.getId(), line(product, 4, "20.00")), LocalDate.of(2018, 8, 9));
+
+        List<CashFlowTimelineBucket> narrowed = reportingService.cashFlowTimeline(
+                LocalDate.of(2018, 8, 1), LocalDate.of(2018, 8, 31));
+
+        assertThat(timelineOf(2018)).extracting(CashFlowTimelineBucket::month).containsExactly("2018-03", "2018-08");
+        assertThat(narrowed).extracting(CashFlowTimelineBucket::month).containsExactly("2018-08");
+        assertThat(narrowed.get(0).inflow()).isEqualByComparingTo("80.00");
+    }
+
+    @Test
+    void cashFlowTimeline_monthWithOnlyOutflow_negativeNet() {
+        Product product = newProduct("CF TL Outflow Product", 40);
+        Supplier supplier = supplierService.create("CF TL Outflow Supplier", "1 Main St");
+        paidOn(closedPurchase(supplier.getId(), line(product, 7, "12.00")), LocalDate.of(2017, 6, 20));
+
+        List<CashFlowTimelineBucket> months = timelineOf(2017);
+
+        assertThat(months).hasSize(1);
+        assertThat(months.get(0).inflow()).isEqualByComparingTo("0.00");
+        assertThat(months.get(0).outflow()).isEqualByComparingTo("84.00");
+        // a month that only spent is the case the net sign exists to show
+        assertThat(months.get(0).net()).isEqualByComparingTo("-84.00");
     }
 
     @Test

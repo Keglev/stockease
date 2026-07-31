@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.report.CashFlowReport;
+import com.stocks.stockease.report.CashFlowTimelineBucket;
 import com.stocks.stockease.report.CustomerSummary;
 import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
@@ -103,6 +104,23 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
         return reportingService.cashFlow(from, to);
+    }
+
+    /**
+     * Returns money in and out per calendar month over an optional payment period.
+     *
+     * @param from first payment date to count, or {@code null} for no lower bound
+     * @param to last payment date to count, or {@code null} for no upper bound
+     * @return one bucket per month that moved money, oldest first
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     */
+    @GetMapping("/cash-flow/timeline")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<CashFlowTimelineBucket> cashFlowTimeline(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+        validatePeriod(from, to);
+        return reportingService.cashFlowTimeline(from, to);
     }
 
     /** Rejects a period whose bounds are the wrong way round; either bound alone is always valid. */

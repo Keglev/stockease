@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -7,6 +7,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
@@ -14,6 +16,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
   CashFlowReport,
+  CashFlowTimelineBucket,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
@@ -42,15 +45,15 @@ const TAB_COUNT = 5;
 export type ReportView = 'chart' | 'table';
 
 /**
- * The windows the period toggles offer. One type for both tabs: they present the same four
- * choices, and only the date each tab's endpoint compares against differs - payment dates for
- * cash flow, booking dates for profit.
+ * The windows the period toggles offer. One type for both tabs: they present the same choices,
+ * and only the date each tab's endpoint compares against differs - payment dates for cash flow,
+ * booking dates for profit.
  */
-export type ReportPeriod = 'd30' | 'd90' | 'year' | 'all';
+export type ReportPeriod = 'd30' | 'd90' | 'd180' | 'year' | 'all';
 
-const PERIOD_DAYS: Record<'d30' | 'd90', number> = { d30: 30, d90: 90 };
+const PERIOD_DAYS: Record<'d30' | 'd90' | 'd180', number> = { d30: 30, d90: 90, d180: 180 };
 
-const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'year', 'all'];
+const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 
 /**
  * Four-tab detail view over the reporting endpoints, each tab switching between its chart and its
@@ -66,7 +69,9 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'year', 'all'];
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressBarModule,
     MatSortModule,
     MatTableModule,
@@ -107,6 +112,46 @@ export class ReportsPageComponent implements OnInit {
   protected readonly dueSoonRows = signal<InvoiceDueSummary[]>([]);
   protected readonly overdueRows = signal<InvoiceDueSummary[]>([]);
   protected readonly cashFlow = signal<CashFlowReport | null>(null);
+  protected readonly cashFlowMonths = signal<CashFlowTimelineBucket[]>([]);
+
+  /**
+   * Free-text narrowing of the per-product table by name or SKU.
+   *
+   * <p>Supplier is deliberately not a filter dimension here. Attributing cash to a supplier means
+   * deciding how a product bought from several of them splits, which is the same allocation question
+   * the supplier-profit report documents as unsolved (ADR 024) - it belongs to the supplier
+   * traceability design, not to a text box.
+   */
+  protected readonly cashFlowFilter = signal('');
+
+  protected readonly cashFlowRows = computed(() => {
+    const needle = this.cashFlowFilter().trim().toLowerCase();
+    const rows = this.cashFlow()?.products ?? [];
+    if (!needle) {
+      return rows;
+    }
+    return rows.filter(
+      (row) => row.name.toLowerCase().includes(needle) || row.sku.toLowerCase().includes(needle)
+    );
+  });
+
+  /**
+   * The totals strip, summed from the monthly buckets.
+   *
+   * <p>Same figures the per-product report reports: both endpoints aggregate the same paid lines
+   * through one shared SQL fragment and differ only in what they group by, so a month total and a
+   * product total can never disagree. Reading them from the timeline is what lets the per-product
+   * call stay lazy without the strip going blank on the chart view.
+   */
+  protected readonly cashFlowTotals = computed(() => {
+    const months = this.cashFlowMonths();
+    if (months.length === 0) {
+      return null;
+    }
+    const inflow = months.reduce((sum, month) => sum + month.inflow, 0);
+    const outflow = months.reduce((sum, month) => sum + month.outflow, 0);
+    return { inflow, outflow, net: inflow - outflow };
+  });
 
   // Presets rather than a date picker is a deliberate scope decision; a custom range is backlog.
   // One signal per tab rather than one shared: the two answer different questions, and a period
@@ -124,6 +169,11 @@ export class ReportsPageComponent implements OnInit {
   // Loading every tab on open would fire eight report queries against aggregate SQL for tabs the
   // user may never look at, so each tab fetches on its first activation only.
   private readonly loadedTabs = new Set<number>();
+
+  // Guards the fetch rather than the rows, as the dashboard's due card does: the per-product
+  // breakdown is only ever on screen in the table half, and a reader who never opens it should not
+  // pay for the query.
+  private cashFlowProductsLoaded = false;
 
   ngOnInit(): void {
     this.activate(PROFIT_TAB);
@@ -150,6 +200,9 @@ export class ReportsPageComponent implements OnInit {
 
   protected setView(tab: number, view: ReportView): void {
     this.views.update((current) => current.map((entry, index) => (index === tab ? view : entry)));
+    if (tab === CASH_FLOW_TAB && view === 'table' && !this.cashFlowProductsLoaded) {
+      this.loadCashFlowProducts();
+    }
   }
 
   /** Exports the profit table as displayed, without the deleted marker the column renders. */
@@ -222,11 +275,17 @@ export class ReportsPageComponent implements OnInit {
     this.loadCashFlow();
   }
 
+  protected setCashFlowFilter(value: string): void {
+    this.cashFlowFilter.set(value);
+  }
+
   protected exportCashFlow(): void {
     this.exportCsv(
       'cash-flow.csv',
       this.cashFlowColumns,
-      (this.cashFlow()?.products ?? []).map((row) => [row.name, row.sku, row.inflow, row.outflow, row.net]),
+      // The filtered rows, not all of them: the export mirrors what the user is looking at, so a
+      // narrowed table and its download tell the same story.
+      this.cashFlowRows().map((row) => [row.name, row.sku, row.inflow, row.outflow, row.net]),
       'reports.cashFlow.columns.'
     );
   }
@@ -350,15 +409,39 @@ export class ReportsPageComponent implements OnInit {
     this.loading.set(true);
     const range = periodRange(this.cashFlowPeriod());
 
-    this.reports.cashFlow(range.from, range.to).subscribe({
-      next: (report) => {
-        this.cashFlow.set(report);
+    this.reports.cashFlowTimeline(range.from, range.to).subscribe({
+      next: (months) => {
+        this.cashFlowMonths.set(months);
         // Translated at build time: chart options are snapshots, as everywhere else on this page.
-        this.cashFlowOption.set(toCashFlowOption(report, this.otherLabel()));
+        this.cashFlowOption.set(toCashFlowOption(months, this.cashFlowLabels()));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
     });
+
+    // Only when the reader has already opened the table; otherwise the first switch fetches it.
+    if (this.cashFlowProductsLoaded) {
+      this.loadCashFlowProducts();
+    }
+  }
+
+  private loadCashFlowProducts(): void {
+    this.cashFlowProductsLoaded = true;
+    const range = periodRange(this.cashFlowPeriod());
+
+    this.reports.cashFlow(range.from, range.to).subscribe({
+      next: (report) => this.cashFlow.set(report),
+      error: (err: Error) => this.fail(err)
+    });
+  }
+
+  /** The three series names, resolved at build time like every other chart label on this page. */
+  private cashFlowLabels(): CashFlowLabels {
+    return {
+      inflow: this.translate.instant('reports.cashFlow.inflow') as string,
+      outflow: this.translate.instant('reports.cashFlow.outflow') as string,
+      net: this.translate.instant('reports.cashFlow.net') as string
+    };
   }
 
   private otherLabel(): string {
@@ -440,26 +523,42 @@ function isoDate(value: Date): string {
   return `${value.getFullYear()}-${month}-${day}`;
 }
 
+/** The three translated series names the cash-flow chart labels its legend with. */
+interface CashFlowLabels {
+  inflow: string;
+  outflow: string;
+  net: string;
+}
+
 /**
-* Plots net cash flow for the ten products that moved the most money, either direction, plus the
-* aggregated rest. Net rather than the two gross figures: one bar per product answers "did this
-* product bring money in or take it out", which is the question the tab exists for.
-*/
-function toCashFlowOption(report: CashFlowReport, otherLabel: string): ChartOption | null {
-  if (report.products.length === 0) {
+ * Plots money in and out per month, with the running net as a line over the two bars.
+ *
+ * <p>A timeline rather than a bar per product: cash flow is a question about when money moved, and
+ * the per-product breakdown that used to be drawn here answers a different one - which is why it now
+ * lives in the table half, where a reader can filter and export it.
+ *
+ * <p>The months are drawn exactly as delivered. The endpoint omits months that moved no money, so
+ * an idle month is a gap between categories rather than a zero column claiming activity was measured
+ * and found to be nothing.
+ */
+function toCashFlowOption(months: CashFlowTimelineBucket[], labels: CashFlowLabels): ChartOption | null {
+  if (months.length === 0) {
     return null;
   }
-  const ordered = topNWithRemainder(
-    report.products.map((row) => ({ name: row.name, value: row.net })),
-    otherLabel
-  ).sort((a, b) => a.value - b.value);
 
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
-    xAxis: { type: 'value' },
-    yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
-    series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
+    // Same inset as the due chart: with containLabel the bottom has to clear the axis labels AND
+    // the legend row, which a smaller value lets the two draw on top of each other.
+    legend: { bottom: 0 },
+    grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
+    xAxis: { type: 'category', data: months.map((month) => month.month) },
+    yAxis: { type: 'value' },
+    series: [
+      { name: labels.inflow, type: 'bar', data: months.map((month) => month.inflow) },
+      { name: labels.outflow, type: 'bar', data: months.map((month) => month.outflow) },
+      { name: labels.net, type: 'line', data: months.map((month) => month.net) }
+    ]
   };
 }
 

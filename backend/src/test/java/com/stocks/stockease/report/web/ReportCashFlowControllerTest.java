@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.report.CashFlowProductRow;
 import com.stocks.stockease.report.CashFlowReport;
+import com.stocks.stockease.report.CashFlowTimelineBucket;
 import com.stocks.stockease.report.ReportingService;
 
 /** Slice tests for GET /api/reports/cash-flow. */
@@ -100,5 +101,59 @@ class ReportCashFlowControllerTest {
                 .andExpect(status().isUnauthorized());
 
         Mockito.verify(reportingService, Mockito.never()).cashFlow(Mockito.any(), Mockito.any());
+    }
+
+    private static List<CashFlowTimelineBucket> timeline() {
+        return List.of(new CashFlowTimelineBucket("2026-02", new BigDecimal("0.00"), new BigDecimal("45.00"),
+                new BigDecimal("-45.00")));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void cashFlowTimeline_withBuckets_returnsRecordsDirectly() throws Exception {
+        Mockito.when(reportingService.cashFlowTimeline(null, null)).thenReturn(timeline());
+
+        mockMvc.perform(get("/api/reports/cash-flow/timeline"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].month").value("2026-02"))
+                .andExpect(jsonPath("$[0].outflow").value(45.00))
+                .andExpect(jsonPath("$[0].net").value(-45.00));
+
+        Mockito.verify(reportingService).cashFlowTimeline(null, null);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void cashFlowTimeline_withPeriod_passesBothBoundsThrough() throws Exception {
+        LocalDate from = LocalDate.of(2026, 1, 1);
+        LocalDate to = LocalDate.of(2026, 3, 31);
+        Mockito.when(reportingService.cashFlowTimeline(from, to)).thenReturn(timeline());
+
+        mockMvc.perform(get("/api/reports/cash-flow/timeline")
+                        .param("from", "2026-01-01").param("to", "2026-03-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].month").value("2026-02"));
+
+        Mockito.verify(reportingService).cashFlowTimeline(from, to);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void cashFlowTimeline_withStartAfterEnd_returns400() throws Exception {
+        mockMvc.perform(get("/api/reports/cash-flow/timeline")
+                        .param("from", "2026-03-31").param("to", "2026-01-01"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
+
+        Mockito.verify(reportingService, Mockito.never()).cashFlowTimeline(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void cashFlowTimeline_asAnonymous_returns401() throws Exception {
+        mockMvc.perform(get("/api/reports/cash-flow/timeline"))
+                .andExpect(status().isUnauthorized());
+
+        Mockito.verify(reportingService, Mockito.never()).cashFlowTimeline(Mockito.any(), Mockito.any());
     }
 }

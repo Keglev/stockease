@@ -146,11 +146,13 @@
         "outflow": "Auszahlungen",
         "net": "Saldo"
       },
-      "empty": "Keine bezahlten Rechnungen in diesem Zeitraum."
+      "empty": "Keine bezahlten Rechnungen in diesem Zeitraum.",
+      "filter": "Nach Name oder Artikelnummer filtern"
     },
     "period": {
       "d30": "30 Tage",
       "d90": "90 Tage",
+      "d180": "180 Tage",
       "year": "Dieses Jahr",
       "all": "Gesamt"
     }

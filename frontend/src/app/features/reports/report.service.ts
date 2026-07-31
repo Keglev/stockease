@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../core/api/api-envelope';
 import {
   CashFlowReport,
+  CashFlowTimelineBucket,
   CustomerSummary,
   DueDateBucket,
   InvoiceDueSummary,
@@ -119,6 +120,19 @@ export class ReportService {
    */
   cashFlow(from?: string, to?: string): Observable<CashFlowReport> {
     return this.http.get<CashFlowReport>(`${this.baseUrl}/cash-flow`, {
+      params: this.periodParams(from, to)
+    });
+  }
+
+  /**
+   * Reads the same cash flow grouped by month instead of by product. Bare array - deliberately not
+   * unwrapped. Months that moved no money are absent, so the series is not dense.
+   *
+   * @param from first payment date to count, as an ISO date
+   * @param to last payment date to count, as an ISO date
+   */
+  cashFlowTimeline(from?: string, to?: string): Observable<CashFlowTimelineBucket[]> {
+    return this.http.get<CashFlowTimelineBucket[]>(`${this.baseUrl}/cash-flow/timeline`, {
       params: this.periodParams(from, to)
     });
   }

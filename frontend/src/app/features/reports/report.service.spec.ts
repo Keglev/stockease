@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import {
   CashFlowReport,
+  CashFlowTimelineBucket,
   CustomerSummary,
   DueDateBucket,
   InvoiceDueSummary,
@@ -77,6 +78,11 @@ const CASH_FLOW: CashFlowReport = {
     { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, inflow: 80, outflow: 30, net: 50 }
   ]
 };
+
+const TIMELINE: CashFlowTimelineBucket[] = [
+  { month: '2026-02', inflow: 0, outflow: 45, net: -45 },
+  { month: '2026-03', inflow: 80, outflow: 30, net: 50 }
+];
 
 const STOCK: StockStatusReport[] = [
   { productId: 3, name: 'Widget', sku: 'SKU-3', soldUnits: 4, soldRevenue: 60, inStockUnits: 6, inStockValue: 30 }
@@ -279,6 +285,34 @@ describe('ReportService', () => {
     request.flush(CASH_FLOW);
 
     expect(emitted).toEqual(CASH_FLOW);
+    controller.verify();
+  });
+
+  it('cashFlowTimeline_withoutPeriod_requestsNoParams', () => {
+    let emitted: CashFlowTimelineBucket[] | undefined;
+    service.cashFlowTimeline().subscribe((rows) => (emitted = rows));
+
+    const request = controller.expectOne(
+      (candidate) => candidate.url === `${BASE_URL}/cash-flow/timeline`
+    );
+    expect(request.request.params.keys()).toEqual([]);
+    request.flush(TIMELINE);
+
+    // Bare array like every other list endpoint on this controller.
+    expect(emitted).toEqual(TIMELINE);
+    controller.verify();
+  });
+
+  it('cashFlowTimeline_withPeriod_serializesFromAndTo', () => {
+    service.cashFlowTimeline('2026-01-01', '2026-03-31').subscribe();
+
+    const request = controller.expectOne(
+      (candidate) => candidate.url === `${BASE_URL}/cash-flow/timeline`
+    );
+    expect(request.request.params.get('from')).toBe('2026-01-01');
+    expect(request.request.params.get('to')).toBe('2026-03-31');
+    request.flush(TIMELINE);
+
     controller.verify();
   });
 
