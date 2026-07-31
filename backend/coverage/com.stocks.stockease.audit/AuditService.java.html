@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuditService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.audit</a> &gt; <span class="el_source">AuditService.java</span></div><h1>AuditService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.audit;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +22,46 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class AuditService {
 
+    /**
+     * Most rows the changes listing will return.
+     *
+     * &lt;p&gt;This feeds a report view, not an export: a reader scans the recent history, and an
+     * unbounded log would grow the payload without bound as the system ages. Raising the ceiling is
+     * a one-constant change if a period ever legitimately holds more than this.
+     */
+    private static final int CHANGES_LIMIT = 500;
+
+    /**
+     * Enriched change rows, newest first, over an optional closed range of change dates.
+     *
+     * &lt;p&gt;Native and hand-mapped rather than JPQL, for the reason every report query is: {@code Product}
+     * carries an {@code @SQLRestriction} that hides soft-deleted rows from every mapped query, and a
+     * change made to a product that was retired afterwards is still a change that happened. The two
+     * joins also make the N+1 question moot - one statement returns every column the report renders,
+     * so no lazy association is ever touched.
+     */
+    private static final String CHANGES_SQL = &quot;&quot;&quot;
+            SELECT c.id, p.id AS product_id, p.name AS product_name, p.sku,
+              (p.deleted_at IS NOT NULL) AS product_deleted, u.username, c.field,
+              c.old_value, c.new_value, c.created_at
+            FROM product_change_log c
+            JOIN product p ON p.id = c.product_id
+            JOIN app_user u ON u.id = c.user_id
+            WHERE (CAST(:from AS date) IS NULL OR c.created_at &gt;= CAST(:from AS date))
+              AND (CAST(:to AS date) IS NULL OR c.created_at &lt; CAST(:to AS date) + INTERVAL '1 day')
+            ORDER BY c.created_at DESC, c.id DESC
+            LIMIT :limit
+            &quot;&quot;&quot;;
+
+<span class="fc" id="L56">    private static final RowMapper&lt;ChangeLogEntryResponse&gt; CHANGES_MAPPER = (rs, rowNum) -&gt;</span>
+<span class="fc" id="L57">            new ChangeLogEntryResponse(rs.getLong(&quot;id&quot;), rs.getLong(&quot;product_id&quot;),</span>
+<span class="fc" id="L58">                    rs.getString(&quot;product_name&quot;), rs.getString(&quot;sku&quot;), rs.getBoolean(&quot;product_deleted&quot;),</span>
+<span class="fc" id="L59">                    rs.getString(&quot;username&quot;), ChangedField.valueOf(rs.getString(&quot;field&quot;)),</span>
+<span class="fc" id="L60">                    rs.getString(&quot;old_value&quot;), rs.getString(&quot;new_value&quot;),</span>
+<span class="fc" id="L61">                    rs.getObject(&quot;created_at&quot;, LocalDateTime.class));</span>
+
     private final ProductChangeLogRepository productChangeLogRepository;
+    private final JdbcClient jdbcClient;
 
     /**
      * Returns every product change a user made, newest first.
@@ -27,7 +70,7 @@ public class AuditService {
      * @return that user's change log entries ordered by creation time descending
      */
     public List&lt;ProductChangeLog&gt; findChangesByUser(long userId) {
-<span class="fc" id="L30">        return productChangeLogRepository.findByUserIdOrderByCreatedAtDesc(userId);</span>
+<span class="fc" id="L73">        return productChangeLogRepository.findByUserIdOrderByCreatedAtDesc(userId);</span>
     }
 
     /**
@@ -37,7 +80,27 @@ public class AuditService {
      * @return that product's change log entries ordered by creation time descending
      */
     public List&lt;ProductChangeLog&gt; findChangesByProduct(long productId) {
-<span class="fc" id="L40">        return productChangeLogRepository.findByProductIdOrderByCreatedAtDesc(productId);</span>
+<span class="fc" id="L83">        return productChangeLogRepository.findByProductIdOrderByCreatedAtDesc(productId);</span>
+    }
+
+    /**
+     * Returns recent product changes across the system, newest first, enriched with the username and
+     * the product's identity.
+     *
+     * &lt;p&gt;The period is a closed range of change dates, read as every other report reads its window.
+     * At most {@value #CHANGES_LIMIT} rows come back.
+     *
+     * @param from first change date to include, or {@code null} for no lower bound
+     * @param to last change date to include, or {@code null} for no upper bound
+     * @return the newest changes in the window, ordered by change time descending
+     */
+    public List&lt;ChangeLogEntryResponse&gt; findChanges(LocalDate from, LocalDate to) {
+<span class="fc" id="L98">        return jdbcClient.sql(CHANGES_SQL)</span>
+<span class="fc" id="L99">                .param(&quot;from&quot;, from)</span>
+<span class="fc" id="L100">                .param(&quot;to&quot;, to)</span>
+<span class="fc" id="L101">                .param(&quot;limit&quot;, CHANGES_LIMIT)</span>
+<span class="fc" id="L102">                .query(CHANGES_MAPPER)</span>
+<span class="fc" id="L103">                .list();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChangeLogEntryResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.audit</a> &gt; <span class="el_source">ChangeLogEntryResponse.java</span></div><h1>ChangeLogEntryResponse.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.audit;
+
+import java.time.LocalDateTime;
+
+/**
+ * One change-log row enriched with the names behind its foreign keys, for the changes report.
+ *
+ * &lt;p&gt;A second DTO beside {@link com.stocks.stockease.audit.web.ChangeLogResponse} rather than a widening of it. That one carries
+ * bare {@code productId} and {@code userId} and is pinned by the per-user and per-product listings
+ * its consumers already read; a report that renders &quot;who changed what&quot; needs the username and the
+ * product's identity, and nothing about those consumers wants the extra columns.
+ *
+ * &lt;p&gt;A soft-deleted product keeps appearing here, flagged, as in every report: the change it records
+ * was really made, and retiring the product afterwards does not unmake it.
+ *
+ * @param id change log entry identifier
+ * @param productId product the change was made to
+ * @param productName that product's name
+ * @param sku that product's stock keeping unit
+ * @param productDeleted whether the product has since been soft-deleted
+ * @param username the account that made the change
+ * @param field attribute that changed
+ * @param oldValue value before the change; {@code null} for lifecycle events that carry no value
+ * @param newValue value after the change; {@code null} for lifecycle events that carry no value
+ * @param createdAt when the change was recorded
+ */
+<span class="fc" id="L27">public record ChangeLogEntryResponse(Long id, Long productId, String productName, String sku,</span>
+        boolean productDeleted, String username, ChangedField field, String oldValue, String newValue,
+        LocalDateTime createdAt) {
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
