@@ -50,10 +50,9 @@
   // Tighter vertical rhythm, only where vertical space is the binding constraint: on desktop the
   // whole dashboard is meant to land inside one viewport, and the viewport that has to hold it is
   // 1536x864 - a 1080p panel at 125% scaling - not the nominal 1080p the figure used to assume.
-  // The gap stays at 0.75rem; it is the three stacked margins that were paying for the overflow.
+  // The gap stays at 0.75rem; it is the stacked margins that were paying for the overflow.
   .kpi-row,
-  .chart-row,
-  .low-stock-card {
+  .chart-row {
     gap: 0.75rem;
     margin-bottom: 0.5rem;
   }
@@ -166,42 +165,43 @@
   font: var(--mat-sys-title-medium);
 }
 
-.low-stock-card {
-  margin-bottom: 1rem;
-}
-
-// The alert state borrows the error colour rather than a bespoke one, so it reads the same
-// as every other warning in the app and follows the theme.
-.low-stock-alert {
-  border: 1px solid var(--mat-sys-error);
-}
-
-.low-stock-list {
-  margin: 0;
+// The KPI's button fills its card and carries no chrome of its own, so the card still reads as a
+// figure rather than as a control sitting inside one. The affordance is the hover below.
+.kpi-button {
+  display: block;
+  width: 100%;
   padding: 0;
-  list-style: none;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.low-stock-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+.kpi-button .kpi-label,
+.kpi-button .kpi-value {
+  display: block;
 }
 
-.low-stock-row:last-child {
-  border-bottom: none;
+// The sidebar's hover token, as the report tabs use: this is the third clickable surface in the app
+// and it should answer the pointer the same way the other two do.
+.kpi-actionable {
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.low-stock-quantity {
-  color: var(--mat-sys-error);
-  font: var(--mat-sys-title-small);
+.kpi-actionable:hover {
+  background-color: var(--mat-sys-surface-container-highest);
 }
 
-.low-stock-none {
-  margin: 0;
-  color: var(--mat-sys-on-surface-variant);
+// Material's focus ring lands on the inner button, which is inset from the card edge; moving it out
+// to the card keeps keyboard focus as visible here as the hover is to a pointer.
+.kpi-button:focus-visible {
+  outline: none;
+}
+
+.kpi-actionable:has(.kpi-button:focus-visible) {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
 }
 

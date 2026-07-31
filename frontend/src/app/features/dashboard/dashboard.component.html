@@ -21,10 +21,25 @@
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="kpi-card kpi-low-stock">
+  <!-- A real button, not a card with a click handler: the list behind it has to be reachable by
+       keyboard and announced as an action, which only button semantics give for free. Inert under
+       error, because the em dash means the rows were never loaded - there is nothing to open. -->
+  <mat-card class="kpi-card kpi-low-stock" [class.kpi-actionable]="!error()">
     <mat-card-content>
-      <p class="kpi-label">{{ 'dashboard.kpi.lowStock' | translate }}</p>
-      <p class="kpi-value">{{ error() ? '—' : lowStock().length }}</p>
+      @if (error()) {
+        <p class="kpi-label">{{ 'dashboard.kpi.lowStock' | translate }}</p>
+        <p class="kpi-value">—</p>
+      } @else {
+        <button
+          type="button"
+          class="kpi-button low-stock-open"
+          [attr.aria-label]="'dashboard.kpi.lowStockOpen' | translate"
+          (click)="openLowStock()"
+        >
+          <span class="kpi-label">{{ 'dashboard.kpi.lowStock' | translate }}</span>
+          <span class="kpi-value">{{ lowStock().length }}</span>
+        </button>
+      }
     </mat-card-content>
   </mat-card>
 
@@ -48,24 +63,6 @@
   </mat-card>
 </div>
 
-<mat-card class="low-stock-card" [class.low-stock-alert]="lowStock().length > 0">
-  <mat-card-content>
-    <h2 class="section-title">{{ 'dashboard.lowStockTitle' | translate }}</h2>
-
-    @if (lowStock().length > 0) {
-      <ul class="low-stock-list">
-        @for (product of lowStock(); track product.id) {
-          <li class="low-stock-row">
-            <a routerLink="/app/products">{{ product.name }}</a>
-            <span class="low-stock-quantity">{{ product.quantity }}</span>
-          </li>
-        }
-      </ul>
-    } @else {
-      <p class="low-stock-none">{{ 'dashboard.lowStockNone' | translate }}</p>
-    }
-  </mat-card-content>
-</mat-card>
 
 <div class="chart-row">
   <mat-card class="chart-card chart-profit">

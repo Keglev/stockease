@@ -5,6 +5,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs';
@@ -18,6 +19,7 @@ import { ProductService } from '../products/product.service';
 // pages that own it are the next feature to build on it. The shared positive-price validator
 // set the same precedent.
 import { ReportService } from '../reports/report.service';
+import { LowStockDialogComponent } from './low-stock-dialog/low-stock-dialog.component';
 
 /** Which half of a card is on screen; the cards open on their chart, the at-a-glance reading. */
 export type CardView = 'chart' | 'table';
@@ -29,9 +31,12 @@ const CARD_VIEWS: readonly CardView[] = ['chart', 'table'];
 const DUE_LIST_LIMIT = 8;
 
 /**
- * First screen after login: headline counts, a low-stock alert and two report visualizations.
- * Everything loads on navigation and on the refresh button, because the backend offers no push
- * channel and polling every figure would cost far more than the freshness is worth.
+ * First screen after login: headline counts and two report visualizations. Everything loads on
+ * navigation and on the refresh button, because the backend offers no push channel and polling
+ * every figure would cost far more than the freshness is worth.
+ *
+ * <p>The low-stock products are loaded here but shown in a dialog behind their KPI. A section of
+ * their own wasted the space when three products were low and overran the page when fifty were.</p>
  *
  * API health is deliberately absent: the footer carries the same dot and latency on every screen,
  * so a card here polled a second time for a signal the operator could already see.
@@ -54,6 +59,7 @@ const DUE_LIST_LIMIT = 8;
 export class DashboardComponent implements OnInit {
   private readonly reports = inject(ReportService);
   private readonly products = inject(ProductService);
+  private readonly dialog = inject(MatDialog);
   private readonly breakpoints = inject(BreakpointObserver);
   private readonly translate = inject(TranslateService);
 
@@ -63,8 +69,8 @@ export class DashboardComponent implements OnInit {
     { initialValue: this.breakpoints.isMatched(DESKTOP_MEDIA_QUERY) }
   );
 
-  // Shorter on desktop so the KPI row, the low-stock card and both charts fit one 1080p viewport;
-  // below desktop the rows stack anyway and the taller chart is the more readable one.
+  // Shorter on desktop so the KPI row and both charts fit one viewport without scrolling; below
+  // desktop the rows stack anyway and the taller chart is the more readable one.
   protected readonly chartHeight = computed(() => (this.isDesktop() ? '15rem' : '20rem'));
 
   protected readonly totalProducts = signal(0);
@@ -126,6 +132,16 @@ export class DashboardComponent implements OnInit {
 
   protected refresh(): void {
     this.load();
+  }
+
+  /**
+   * Opens the low-stock list over the rows the KPI already counted.
+   *
+   * <p>Handed in rather than refetched: the count on the card and the list behind it are the same
+   * answer, and asking twice is the only way they could come to disagree.
+   */
+  protected openLowStock(): void {
+    this.dialog.open(LowStockDialogComponent, { data: { products: this.lowStock() } });
   }
 
   private load(): void {
