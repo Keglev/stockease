@@ -146,11 +146,13 @@
         "outflow": "Outflow",
         "net": "Net"
       },
-      "empty": "No paid invoices in this period."
+      "empty": "No paid invoices in this period.",
+      "filter": "Filter by name or SKU"
     },
     "period": {
       "d30": "30 days",
       "d90": "90 days",
+      "d180": "180 days",
       "year": "This year",
       "all": "All"
     }

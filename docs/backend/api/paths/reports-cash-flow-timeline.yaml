@@ -1,0 +1,65 @@
+get:
+  summary: Money in and out per month, on a payment basis
+  description: |
+    The same cash flow as `/api/reports/cash-flow`, grouped by the calendar month an invoice was
+    paid in rather than by product: inflow from paid SALE invoices, outflow from paid PURCHASE
+    invoices, and their difference, one bucket per month, oldest first.
+
+    Payment basis, net-of-returns line values and the optional window are identical to the
+    per-product sibling (ADR 025); only the grouping differs, so a month's figures always agree with
+    the product rows underneath the same window.
+
+    Months that moved no money are **absent** rather than returned as zeros - an idle month is a gap
+    in the series, matching how the per-product report omits products that moved nothing.
+  operationId: cashFlowTimeline
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: First payment date to count; omit for no lower bound
+      example: '2026-01-01'
+    - name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Last payment date to count, inclusive; omit for no upper bound
+      example: '2026-03-31'
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/CashFlowTimelineBucket'
+          example:
+            - month: '2026-02'
+              inflow: 0.00
+              outflow: 45.00
+              net: -45.00
+            - month: '2026-03'
+              inflow: 80.00
+              outflow: 30.00
+              net: 50.00
+    '400':
+      description: The start of the period is after its end
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: The start of the period must not be after its end.
+            data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

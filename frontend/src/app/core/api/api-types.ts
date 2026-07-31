@@ -652,6 +652,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/cash-flow/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Money in and out per month, on a payment basis
+         * @description The same cash flow as `/api/reports/cash-flow`, grouped by the calendar month an invoice was
+         *     paid in rather than by product: inflow from paid SALE invoices, outflow from paid PURCHASE
+         *     invoices, and their difference, one bucket per month, oldest first.
+         *
+         *     Payment basis, net-of-returns line values and the optional window are identical to the
+         *     per-product sibling (ADR 025); only the grouping differs, so a month's figures always agree with
+         *     the product rows underneath the same window.
+         *
+         *     Months that moved no money are **absent** rather than returned as zeros - an idle month is a gap
+         *     in the series, matching how the per-product report omits products that moved nothing.
+         */
+        get: operations["cashFlowTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/customers/{id}/summary": {
         parameters: {
             query?: never;
@@ -1474,6 +1503,28 @@ export interface components {
             net: number;
             /** @description Per-product breakdown, ordered by net descending */
             products: components["schemas"]["CashFlowProductRow"][];
+        };
+        CashFlowTimelineBucket: {
+            /**
+             * @description The month this bucket covers, as ISO yyyy-MM
+             * @example 2026-03
+             */
+            month: string;
+            /**
+             * @description Money received that month through paid sale invoices
+             * @example 80
+             */
+            inflow: number;
+            /**
+             * @description Money spent that month through paid purchase invoices
+             * @example 30
+             */
+            outflow: number;
+            /**
+             * @description Inflow less outflow; negative in a month that spent more than it received
+             * @example 50
+             */
+            net: number;
         };
         StockStatusReport: {
             /**
@@ -3767,6 +3818,70 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["CashFlowReport"];
+                };
+            };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    cashFlowTimeline: {
+        parameters: {
+            query?: {
+                /**
+                 * @description First payment date to count; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last payment date to count, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Report retrieved (ROLE_USER or ROLE_ADMIN) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "month": "2026-02",
+                     *         "inflow": 0,
+                     *         "outflow": 45,
+                     *         "net": -45
+                     *       },
+                     *       {
+                     *         "month": "2026-03",
+                     *         "inflow": 80,
+                     *         "outflow": 30,
+                     *         "net": 50
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["CashFlowTimelineBucket"][];
                 };
             };
             /** @description The start of the period is after its end */

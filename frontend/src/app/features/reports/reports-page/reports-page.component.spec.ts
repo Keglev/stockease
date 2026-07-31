@@ -7,6 +7,7 @@ import { Observable, of } from 'rxjs';
 
 import {
   CashFlowReport,
+  CashFlowTimelineBucket,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
@@ -32,13 +33,14 @@ const TRANSLATIONS = {
       deletedHint: 'deleted',
       exportCsv: 'Export CSV',
       view: { chart: 'Chart', table: 'Table', list: 'List' },
-      period: { d30: '30 days', d90: '90 days', year: 'This year', all: 'All' },
+      period: { d30: '30 days', d90: '90 days', d180: '180 days', year: 'This year', all: 'All' },
       cashFlow: {
         inflow: 'Inflow',
         outflow: 'Outflow',
         net: 'Net',
         columns: { name: 'Product', sku: 'SKU', inflow: 'Inflow', outflow: 'Outflow', net: 'Net' },
-        empty: 'No paid invoices in this period.'
+        empty: 'No paid invoices in this period.',
+        filter: 'Filter by name or SKU'
       },
       tabs: {
         profit: 'Profit',
@@ -141,17 +143,27 @@ const CASH_FLOW: CashFlowReport = {
   outflow: 300,
   net: 200,
   products: [
-    { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, inflow: 500, outflow: 300, net: 200 }
+    { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, inflow: 500, outflow: 300, net: 200 },
+    // A second row whose name and SKU share no substring with the first, so a filter test can prove
+    // it narrowed rather than happening to match everything.
+    { productId: 4, name: 'Gadget', sku: 'ABC-4', deleted: false, inflow: 0, outflow: 0, net: 0 }
   ]
 };
+
+const TIMELINE: CashFlowTimelineBucket[] = [
+  { month: '2026-02', inflow: 0, outflow: 300, net: -300 },
+  { month: '2026-03', inflow: 500, outflow: 0, net: 500 }
+];
 
 class ReportServiceStub {
   profitPayload: ProductProfitReport[] = PROFIT;
   lossPayload: LossReport[] = LOSSES;
   cashFlowPayload: CashFlowReport = CASH_FLOW;
   calls: string[] = [];
+  timelinePayload: CashFlowTimelineBucket[] = TIMELINE;
   /** Every from/to pair the page asked for, so the period presets can be asserted exactly. */
   cashFlowRanges: (string | undefined)[][] = [];
+  timelineRanges: (string | undefined)[][] = [];
   /** The same record for each profit endpoint, keyed by method so one period covers all three. */
   profitRanges: Record<string, (string | undefined)[][]> = { products: [], suppliers: [], detail: [] };
   detail: ProductProfitReport = PROFIT[0];
@@ -160,6 +172,12 @@ class ReportServiceStub {
     this.calls.push('cashFlow');
     this.cashFlowRanges.push([from, to]);
     return of(this.cashFlowPayload);
+  }
+
+  cashFlowTimeline(from?: string, to?: string): Observable<CashFlowTimelineBucket[]> {
+    this.calls.push('cashFlowTimeline');
+    this.timelineRanges.push([from, to]);
+    return of(this.timelinePayload);
   }
 
   profitProducts(from?: string, to?: string): Observable<ProductProfitReport[]> {
@@ -435,17 +453,17 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect((fixture.nativeElement as HTMLElement).querySelector('.losses-empty')).not.toBeNull();
   });
 
-  it('cashFlowTab_firstActivation_loadsReportLazily', async () => {
+  it('cashFlowTab_firstActivation_loadsTimelineLazily', async () => {
     render();
-    expect(reports.calls).not.toContain('cashFlow');
+    expect(reports.calls).not.toContain('cashFlowTimeline');
 
     await activateTab(1);
 
     // no bounds on the default 'all' window, and only on first activation
-    expect(reports.cashFlowRanges).toEqual([[undefined, undefined]]);
+    expect(reports.timelineRanges).toEqual([[undefined, undefined]]);
     await activateTab(0);
     await activateTab(1);
-    expect(reports.cashFlowRanges).toHaveLength(1);
+    expect(reports.timelineRanges).toHaveLength(1);
   });
 
   it('profitTab_defaultPreset_requestsNoParams', async () => {
@@ -492,7 +510,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     fixture.detectChanges();
   }
 
-  it('cashFlowTab_presetSelected_refetchesWithComputedRange', async () => {
+  it('timelineChart_presetChange_refetches', async () => {
     vi.setSystemTime(new Date(2026, 2, 15, 12));
     render();
     await activateTab(1);
@@ -500,7 +518,46 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     await selectPeriod('d30');
 
     // 30 days back from a pinned today, inclusive of today at the upper end
-    expect(reports.cashFlowRanges.at(-1)).toEqual(['2026-02-13', '2026-03-15']);
+    expect(reports.timelineRanges.at(-1)).toEqual(['2026-02-13', '2026-03-15']);
+  });
+
+  it('period_d180_computesRange', async () => {
+    vi.setSystemTime(new Date(2026, 2, 15, 12));
+    render();
+    await activateTab(1);
+
+    await selectPeriod('d180');
+
+    // 180 days back from the pinned today, the same arithmetic the shorter presets use
+    expect(reports.timelineRanges.at(-1)).toEqual(['2025-09-16', '2026-03-15']);
+  });
+
+  it('tableView_firstSwitch_lazilyLoadsProducts', async () => {
+    render();
+    await activateTab(1);
+
+    // the chart half needs only the timeline; the per-product query waits for a reader who wants it
+    expect(reports.calls).not.toContain('cashFlow');
+
+    await showTable(1);
+
+    expect(reports.cashFlowRanges).toEqual([[undefined, undefined]]);
+  });
+
+  it('tableFilter_matchesNameOrSku_narrowsRowsAndExport', async () => {
+    render();
+    await activateTab(1);
+    await showTable(1);
+
+    await setCashFlowFilter('gadget');
+
+    expect(host().querySelectorAll('.cash-flow-table tbody tr').length).toBe(1);
+    host().querySelector<HTMLButtonElement>('.export-cash-flow')?.click();
+
+    // the download mirrors the narrowed table rather than the whole report
+    const [, content] = download.mock.calls[0] as [string, string];
+    expect(content).toContain('Gadget');
+    expect(content).not.toContain('Widget');
   });
 
   it('cashFlowTab_tableView_exportsCsvThroughSeam', async () => {
@@ -516,7 +573,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
   });
 
   it('cashFlowTab_negativeNet_rendersErrorColorClass', async () => {
-    reports.cashFlowPayload = { ...CASH_FLOW, net: -200 };
+    reports.timelinePayload = [{ month: '2026-03', inflow: 100, outflow: 300, net: -200 }];
     render();
     await activateTab(1);
 
@@ -533,13 +590,24 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(host().querySelector('.cash-flow-net.cash-flow-negative')).toBeNull();
   });
 
-  it('cashFlowTab_emptyProducts_showsEmptyState', async () => {
-    reports.cashFlowPayload = { inflow: 0, outflow: 0, net: 0, products: [] };
+  it('cashFlowTab_emptyTimeline_showsEmptyState', async () => {
+    reports.timelinePayload = [];
     render();
     await activateTab(1);
 
     expect(host().querySelector('.cash-flow-empty')).not.toBeNull();
   });
+
+  /** Types into the cash-flow filter through the component, the way the input does. */
+  async function setCashFlowFilter(value: string): Promise<void> {
+    const page = fixture.componentInstance as unknown as {
+      setCashFlowFilter: (value: string) => void;
+    };
+    page.setCashFlowFilter(value);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   /** Clicks a period preset through the component, the way the toggle group does. */
   async function selectPeriod(period: string): Promise<void> {

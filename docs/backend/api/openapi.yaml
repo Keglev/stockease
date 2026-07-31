@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.9.0
+  version: 2.10.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -1110,6 +1110,31 @@ components:
           items:
             $ref: '#/components/schemas/CashFlowProductRow'
 
+    CashFlowTimelineBucket:
+      type: object
+      required:
+        - month
+        - inflow
+        - outflow
+        - net
+      properties:
+        month:
+          type: string
+          description: The month this bucket covers, as ISO yyyy-MM
+          example: '2026-03'
+        inflow:
+          type: number
+          description: Money received that month through paid sale invoices
+          example: 80.00
+        outflow:
+          type: number
+          description: Money spent that month through paid purchase invoices
+          example: 30.00
+        net:
+          type: number
+          description: Inflow less outflow; negative in a month that spent more than it received
+          example: 50.00
+
     StockStatusReport:
       type: object
       required:
@@ -1406,6 +1431,8 @@ paths:
     $ref: './paths/reports-profit-suppliers.yaml'
   /api/reports/cash-flow:
     $ref: './paths/reports-cash-flow.yaml'
+  /api/reports/cash-flow/timeline:
+    $ref: './paths/reports-cash-flow-timeline.yaml'
   /api/reports/customers/{id}/summary:
     $ref: './paths/reports-customer-summary.yaml'
   /api/reports/stock-status:

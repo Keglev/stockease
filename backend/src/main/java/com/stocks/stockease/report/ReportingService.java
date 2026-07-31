@@ -61,6 +61,40 @@ public class ReportingService {
             ORDER BY p.id
             """;
 
+    // The two cash-flow reports answer the same question at different groupings, so the definition of
+    // the question lives here once. Sharing the fragments is what keeps a timeline month and the
+    // product rows underneath it from ever summing to different figures - the same reason the profit
+    // queries share PRODUCT_PROFIT_JOIN rather than repeating its predicate.
+
+    /** Money received, netting each line's returned quantity out of its value at the line's own price. */
+    private static final String CASH_FLOW_INFLOW = """
+            COALESCE(SUM(CASE WHEN i.invoice_type = 'SALE'
+                              THEN (ii.quantity - ii.returned_qty) * ii.unit_price
+                              ELSE 0 END), 0)""";
+
+    /** Money spent, on the same net-of-returns basis as the inflow above. */
+    private static final String CASH_FLOW_OUTFLOW = """
+            COALESCE(SUM(CASE WHEN i.invoice_type = 'PURCHASE'
+                              THEN (ii.quantity - ii.returned_qty) * ii.unit_price
+                              ELSE 0 END), 0)""";
+
+    /**
+     * The paid lines a cash-flow query reads, through the payment-date window it reads them in.
+     *
+     * <p>Plain WHERE rather than a JOIN predicate, unlike the profit queries: unpaid invoices are
+     * excluded by the report's own definition, so there is no zero row to preserve. Anything that
+     * moved no money in the window is simply absent - a cash-flow report lists money that moved, and
+     * padding it with zeros would invite reading "nothing happened" as "nothing exists".
+     */
+    private static final String CASH_FLOW_SOURCE = """
+            FROM invoice_item ii
+            JOIN invoice i ON i.id = ii.invoice_id
+            JOIN product p ON p.id = ii.product_id
+            WHERE i.paid_at IS NOT NULL AND i.deleted_at IS NULL
+              AND (CAST(:from AS date) IS NULL OR i.paid_at >= CAST(:from AS date))
+              AND (CAST(:to AS date) IS NULL OR i.paid_at < CAST(:to AS date) + INTERVAL '1 day')
+            """;
+
     /** Outstanding value per invoice, netting out quantities already returned. */
     private static final String OUTSTANDING_SUBQUERY = """
             JOIN (SELECT ii.invoice_id, SUM((ii.quantity - ii.returned_qty) * ii.unit_price) AS outstanding
@@ -96,6 +130,12 @@ public class ReportingService {
         BigDecimal outflow = rs.getBigDecimal("outflow");
         return new CashFlowProductRow(rs.getLong("id"), rs.getString("name"), rs.getString("sku"),
                 rs.getBoolean("deleted"), inflow, outflow, inflow.subtract(outflow));
+    };
+
+    private static final RowMapper<CashFlowTimelineBucket> CASH_FLOW_TIMELINE_MAPPER = (rs, rowNum) -> {
+        BigDecimal inflow = rs.getBigDecimal("inflow");
+        BigDecimal outflow = rs.getBigDecimal("outflow");
+        return new CashFlowTimelineBucket(rs.getString("month"), inflow, outflow, inflow.subtract(outflow));
     };
 
     /** An invoice naming neither supplier nor customer is an anonymous cash sale. */
@@ -360,32 +400,12 @@ public class ReportingService {
      * @return the totals and the per-product rows, ordered by net descending
      */
     public CashFlowReport cashFlow(LocalDate from, LocalDate to) {
-        // Unlike the profit report this uses plain WHERE rather than a JOIN predicate: unpaid invoices
-        // are excluded by the report's own definition, so there is no zero row to preserve. A product
-        // that moved no money in the window is simply absent - a cash-flow report lists money that
-        // moved, and padding it with zeros would invite reading "nothing happened" as "nothing exists".
-        String sql = """
-                SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,
-                  COALESCE(SUM(CASE WHEN i.invoice_type = 'SALE'
-                                    THEN (ii.quantity - ii.returned_qty) * ii.unit_price
-                                    ELSE 0 END), 0) AS inflow,
-                  COALESCE(SUM(CASE WHEN i.invoice_type = 'PURCHASE'
-                                    THEN (ii.quantity - ii.returned_qty) * ii.unit_price
-                                    ELSE 0 END), 0) AS outflow
-                FROM invoice_item ii
-                JOIN invoice i ON i.id = ii.invoice_id
-                JOIN product p ON p.id = ii.product_id
-                WHERE i.paid_at IS NOT NULL AND i.deleted_at IS NULL
-                  AND (CAST(:from AS date) IS NULL OR i.paid_at >= CAST(:from AS date))
-                  AND (CAST(:to AS date) IS NULL OR i.paid_at < CAST(:to AS date) + INTERVAL '1 day')
-                GROUP BY p.id, p.name, p.sku, p.deleted_at
-                ORDER BY (COALESCE(SUM(CASE WHEN i.invoice_type = 'SALE'
-                                            THEN (ii.quantity - ii.returned_qty) * ii.unit_price
-                                            ELSE 0 END), 0)
-                        - COALESCE(SUM(CASE WHEN i.invoice_type = 'PURCHASE'
-                                            THEN (ii.quantity - ii.returned_qty) * ii.unit_price
-                                            ELSE 0 END), 0)) DESC, p.id
-                """;
+        String sql = "SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,\n"
+                + CASH_FLOW_INFLOW + " AS inflow,\n"
+                + CASH_FLOW_OUTFLOW + " AS outflow\n"
+                + CASH_FLOW_SOURCE
+                + "GROUP BY p.id, p.name, p.sku, p.deleted_at\n"
+                + "ORDER BY (" + CASH_FLOW_INFLOW + " - " + CASH_FLOW_OUTFLOW + ") DESC, p.id\n";
         List<CashFlowProductRow> products = jdbcClient.sql(sql)
                 .param("from", from)
                 .param("to", to)
@@ -399,5 +419,33 @@ public class ReportingService {
         BigDecimal outflow = products.stream().map(CashFlowProductRow::outflow)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new CashFlowReport(inflow, outflow, inflow.subtract(outflow), products);
+    }
+
+    /**
+     * Returns money in and out per calendar month over an optional payment period.
+     *
+     * <p>The same payment basis, the same net-of-returns line value and the same window as
+     * {@link #cashFlow}, regrouped by the month an invoice was paid in rather than by product.
+     *
+     * @param from first payment date to count, or {@code null} for no lower bound
+     * @param to last payment date to count, or {@code null} for no upper bound
+     * @return one bucket per month that moved money, oldest first
+     */
+    public List<CashFlowTimelineBucket> cashFlowTimeline(LocalDate from, LocalDate to) {
+        // A month nothing was paid in produces no bucket rather than a zero one. Generating the empty
+        // months would need a date series bounded by the open-ended window this endpoint accepts, and
+        // the chart plots the categories it is handed - so an idle month is a gap in the axis, which
+        // is what an idle month is.
+        String sql = "SELECT to_char(date_trunc('month', i.paid_at), 'YYYY-MM') AS month,\n"
+                + CASH_FLOW_INFLOW + " AS inflow,\n"
+                + CASH_FLOW_OUTFLOW + " AS outflow\n"
+                + CASH_FLOW_SOURCE
+                + "GROUP BY date_trunc('month', i.paid_at)\n"
+                + "ORDER BY date_trunc('month', i.paid_at)\n";
+        return jdbcClient.sql(sql)
+                .param("from", from)
+                .param("to", to)
+                .query(CASH_FLOW_TIMELINE_MAPPER)
+                .list();
     }
 }
