@@ -124,15 +124,54 @@ export class ReportsPageComponent implements OnInit {
    */
   protected readonly cashFlowFilter = signal('');
 
-  protected readonly cashFlowRows = computed(() => {
-    const needle = this.cashFlowFilter().trim().toLowerCase();
-    const rows = this.cashFlow()?.products ?? [];
-    if (!needle) {
-      return rows;
+  protected readonly cashFlowRows = computed(() =>
+    matchingNameOrSku(this.cashFlow()?.products ?? [], this.cashFlowFilter())
+  );
+
+  /** The same narrowing on the stock and loss tables; the question a reader asks of a product
+   *  list does not change with which report they are reading. */
+  protected readonly stockFilter = signal('');
+  protected readonly lossFilter = signal('');
+
+  protected readonly filteredStockRows = computed(() =>
+    matchingNameOrSku(this.stockRows(), this.stockFilter())
+  );
+
+  protected readonly filteredLossRows = computed(() =>
+    matchingNameOrSku(this.lossRows(), this.lossFilter())
+  );
+
+  /**
+   * The stock tab's headline figures, summed from the rows the tab already loaded.
+   *
+   * <p>Derived rather than fetched, so a single source answers both halves of the tab: a strip and
+   * the table beneath it cannot disagree when the strip is the table added up. The unfiltered rows
+   * on purpose - the strip states what the business holds, which a text box must not appear to
+   * change.
+   */
+  protected readonly stockTotals = computed(() => {
+    const rows = this.stockRows();
+    if (rows.length === 0) {
+      return null;
     }
-    return rows.filter(
-      (row) => row.name.toLowerCase().includes(needle) || row.sku.toLowerCase().includes(needle)
-    );
+    return {
+      value: rows.reduce((sum, row) => sum + row.inStockValue, 0),
+      units: rows.reduce((sum, row) => sum + row.inStockUnits, 0),
+      products: rows.length
+    };
+  });
+
+  /** The losses tab's headline figures, on the same derivation and the same unfiltered basis. */
+  protected readonly lossTotals = computed(() => {
+    const rows = this.lossRows();
+    if (rows.length === 0) {
+      return null;
+    }
+    return {
+      value: rows.reduce((sum, row) => sum + row.lossValue, 0),
+      lost: rows.reduce((sum, row) => sum + row.lostUnits, 0),
+      destroyed: rows.reduce((sum, row) => sum + row.destroyedUnits, 0)
+    };
   });
 
   /**
@@ -158,6 +197,7 @@ export class ReportsPageComponent implements OnInit {
   // chosen for cash flow is not a period the reader asked profit for.
   protected readonly cashFlowPeriod = signal<ReportPeriod>('all');
   protected readonly profitPeriod = signal<ReportPeriod>('all');
+  protected readonly lossPeriod = signal<ReportPeriod>('all');
 
   protected readonly marginOption = signal<ChartOption | null>(null);
   protected readonly profitOption = signal<ChartOption | null>(null);
@@ -226,7 +266,8 @@ export class ReportsPageComponent implements OnInit {
     this.exportCsv(
       'stock-status.csv',
       this.stockColumns,
-      this.stockRows().map((row) => [
+      // The filtered rows, as on the cash-flow tab: the export mirrors what the user is looking at.
+      this.filteredStockRows().map((row) => [
         row.name,
         row.sku,
         row.soldUnits,
@@ -241,7 +282,7 @@ export class ReportsPageComponent implements OnInit {
     this.exportCsv(
       'losses.csv',
       this.lossColumns,
-      this.lossRows().map((row) => [
+      this.filteredLossRows().map((row) => [
         row.name,
         row.sku,
         row.lostUnits,
@@ -249,6 +290,25 @@ export class ReportsPageComponent implements OnInit {
         row.lossValue
       ])
     );
+  }
+
+  protected setStockFilter(value: string): void {
+    this.stockFilter.set(value);
+  }
+
+  protected setLossFilter(value: string): void {
+    this.lossFilter.set(value);
+  }
+
+  /** Switches the loss window and refetches, since the period is a server-side filter. */
+  protected setLossPeriod(period: ReportPeriod): void {
+    // Same two guards as the other toggles: the group emits once with no value while it is being
+    // created, and re-picking the current preset is no reason to go back to the server.
+    if (!PERIODS.includes(period) || period === this.lossPeriod()) {
+      return;
+    }
+    this.lossPeriod.set(period);
+    this.loadLosses();
   }
 
   /** Switches the profit window and refetches both profit queries, which share the one period. */
@@ -373,9 +433,15 @@ export class ReportsPageComponent implements OnInit {
   }
 
   private loadLosses(): void {
-    this.reports.losses().subscribe({
+    this.error.set(null);
+    this.loading.set(true);
+    const range = periodRange(this.lossPeriod());
+
+    this.reports.losses(range.from, range.to).subscribe({
       next: (rows) => {
         this.lossRows.set(rows);
+        // The strip is derived from these rows, so refetching them is what re-answers it for the
+        // new window - the period reaches the totals with no work of its own.
         this.lossOption.set(toLossOption(rows, this.otherLabel()));
         this.loading.set(false);
       },
@@ -514,6 +580,22 @@ function periodRange(period: ReportPeriod): { from?: string; to?: string } {
   const start = new Date(today);
   start.setDate(start.getDate() - PERIOD_DAYS[period]);
   return { from: isoDate(start), to: isoDate(today) };
+}
+
+/**
+ * Narrows report rows to those whose name or SKU contains {@code needle}, ignoring case.
+ *
+ * <p>One predicate for all three filtered tables. They ask the reader the same question, so three
+ * copies would only be three chances for them to start answering it differently.
+ */
+function matchingNameOrSku<T extends { name: string; sku: string }>(rows: T[], needle: string): T[] {
+  const term = needle.trim().toLowerCase();
+  if (!term) {
+    return rows;
+  }
+  return rows.filter(
+    (row) => row.name.toLowerCase().includes(term) || row.sku.toLowerCase().includes(term)
+  );
 }
 
 /** Local calendar date in the YYYY-MM-DD shape the API takes; UTC would shift the boundary. */

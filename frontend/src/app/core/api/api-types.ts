@@ -748,6 +748,11 @@ export interface paths {
          * @description One row per product with at least one loss movement, ordered by product ID.
          *     Documented approximation: loss lines are valued at the product's current purchase price, because
          *     pooled stock carries no per-unit cost.
+         *
+         *     `from` and `to` optionally restrict the report to write-offs booked in that closed date range.
+         *     Unlike the profit report, the window **narrows** this one: a product with no losses in the range
+         *     is absent rather than listed with zeros, which is the unwindowed report's own rule - it lists
+         *     only products that lost something.
          */
         get: operations["lossReport"];
         put?: never;
@@ -3995,7 +4000,18 @@ export interface operations {
     };
     lossReport: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description First booking date to count; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last booking date to count, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -4022,6 +4038,22 @@ export interface operations {
                      *     ]
                      */
                     "application/json": components["schemas"]["LossReport"][];
+                };
+            };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
                 };
             };
             401: components["responses"]["Unauthorized"];

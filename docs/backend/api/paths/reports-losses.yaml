@@ -4,11 +4,33 @@ get:
     One row per product with at least one loss movement, ordered by product ID.
     Documented approximation: loss lines are valued at the product's current purchase price, because
     pooled stock carries no per-unit cost.
+
+    `from` and `to` optionally restrict the report to write-offs booked in that closed date range.
+    Unlike the profit report, the window **narrows** this one: a product with no losses in the range
+    is absent rather than listed with zeros, which is the unwindowed report's own rule - it lists
+    only products that lost something.
   operationId: lossReport
   tags:
     - Reports
   security:
     - BearerAuth: []
+  parameters:
+    - name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: First booking date to count; omit for no lower bound
+      example: '2026-01-01'
+    - name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Last booking date to count, inclusive; omit for no upper bound
+      example: '2026-03-31'
   responses:
     '200':
       description: Report retrieved (ROLE_USER or ROLE_ADMIN)
@@ -26,5 +48,15 @@ get:
               lostUnits: 2
               destroyedUnits: 1
               lossValue: 15.00
+    '400':
+      description: The start of the period is after its end
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: The start of the period must not be after its end.
+            data: null
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'

@@ -264,13 +264,27 @@ public class ReportingService {
     }
 
     /**
-     * Returns units written off as lost or destroyed, valued at each product's current purchase price.
+     * Returns units written off as lost or destroyed over an optional period, valued at each
+     * product's current purchase price.
      *
-     * @return one row per product with at least one loss movement, ordered by product ID
+     * <p>The period is a closed range of movement dates, read the same way the profit report reads
+     * them: a write-off counts when it was recorded on or between the two dates. Either bound may be
+     * null, which leaves that end open.
+     *
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
+     * @return one row per product with at least one loss movement in the window, ordered by product ID
      */
-    public List<LossReport> lossReport() {
+    public List<LossReport> lossReport(LocalDate from, LocalDate to) {
         // Loss lines are valued at the product's CURRENT purchase price: pooled stock has no per-unit
         // cost, so this is a documented approximation consistent with the gross profit model.
+        //
+        // The window joins the reason filter rather than sitting in a WHERE clause, as in the profit
+        // queries - but here it narrows the report rather than preserving zero rows, because this
+        // join is an INNER one. That is the existing semantics continued, not a new decision: the
+        // unwindowed query already lists only products that lost something, so a product that lost
+        // nothing in the window has nothing to report and drops out exactly as one that never lost
+        // anything does. A losses report lists losses.
         String sql = """
                 SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,
                   COALESCE(SUM(CASE WHEN m.reason = 'LOST' THEN m.quantity ELSE 0 END), 0) AS lost_units,
@@ -278,12 +292,18 @@ public class ReportingService {
                   SUM(m.quantity) * p.purchase_price AS loss_value
                 FROM product p
                 JOIN stock_movement m ON m.product_id = p.id AND m.reason IN ('LOST','DESTROYED')
+                  AND (CAST(:from AS date) IS NULL OR m.created_at >= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR m.created_at < CAST(:to AS date) + INTERVAL '1 day')
                 GROUP BY p.id, p.name, p.sku, p.deleted_at, p.purchase_price
                 ORDER BY p.id
                 """;
-        return jdbcClient.sql(sql).query((rs, rowNum) -> new LossReport(rs.getLong("id"), rs.getString("name"),
-                rs.getString("sku"), rs.getBoolean("deleted"), rs.getInt("lost_units"),
-                rs.getInt("destroyed_units"), rs.getBigDecimal("loss_value"))).list();
+        return jdbcClient.sql(sql)
+                .param("from", from)
+                .param("to", to)
+                .query((rs, rowNum) -> new LossReport(rs.getLong("id"), rs.getString("name"),
+                        rs.getString("sku"), rs.getBoolean("deleted"), rs.getInt("lost_units"),
+                        rs.getInt("destroyed_units"), rs.getBigDecimal("loss_value")))
+                .list();
     }
 
     /**

@@ -75,8 +75,7 @@ class ReportStatusControllerTest {
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void lossReport_withRows_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.lossReport()).thenReturn(List.of(new LossReport(
-                3L, "Widget", "SKU-3", false, 2, 1, new BigDecimal("15.00"))));
+        Mockito.when(reportingService.lossReport(null, null)).thenReturn(List.of(losses()));
 
         mockMvc.perform(get("/api/reports/losses"))
                 .andExpect(status().isOk())
@@ -84,7 +83,36 @@ class ReportStatusControllerTest {
                 .andExpect(jsonPath("$[0].destroyedUnits").value(1))
                 .andExpect(jsonPath("$[0].lossValue").value(15.00));
 
-        Mockito.verify(reportingService).lossReport();
+        Mockito.verify(reportingService).lossReport(null, null);
+    }
+
+    private static LossReport losses() {
+        return new LossReport(3L, "Widget", "SKU-3", false, 2, 1, new BigDecimal("15.00"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void lossReport_withPeriod_passesBothBoundsThrough() throws Exception {
+        LocalDate from = LocalDate.of(2026, 1, 1);
+        LocalDate to = LocalDate.of(2026, 3, 31);
+        Mockito.when(reportingService.lossReport(from, to)).thenReturn(List.of(losses()));
+
+        mockMvc.perform(get("/api/reports/losses").param("from", "2026-01-01").param("to", "2026-03-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].lostUnits").value(2));
+
+        Mockito.verify(reportingService).lossReport(from, to);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void lossReport_withStartAfterEnd_returns400() throws Exception {
+        mockMvc.perform(get("/api/reports/losses").param("from", "2026-03-31").param("to", "2026-01-01"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
+
+        Mockito.verify(reportingService, Mockito.never()).lossReport(Mockito.any(), Mockito.any());
     }
 
     @Test
