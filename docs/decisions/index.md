@@ -38,5 +38,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 024 - Gross Profit as Cost of Goods Sold, Captured at Sale](024-profit-cogs.md) - **[Cross-cutting]**
 - [ADR 025 - Cash Flow Report on a Payment Basis](025-cash-flow-payment-basis.md) - **[Cross-cutting]**
 - [ADR 026 - Low Stock Applies Only to Ever-Stocked Products](026-low-stock-ever-stocked.md) - **[Cross-cutting]**
+- [ADR 027 - Deterministic Temporal Spread of Demo Data](027-demo-temporal-spread.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

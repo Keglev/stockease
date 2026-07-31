@@ -39,6 +39,10 @@ import lombok.RequiredArgsConstructor;
  * shape, invoices due across the coming three weeks plus several already overdue, returns in both
  * directions, write-offs, a walk-in sale with no customer, and one product left below the low-stock
  * threshold.
+ *
+ * <p>The services stamp every row with the instant the seed runs, so {@link DemoTemporalSpread}
+ * backdates the finished baseline across the past six months (ADR 027). Read the two together: the
+ * quantities, prices and due dates are decided here, and only the moments are decided there.
  */
 @Service
 @ConditionalOnDemoMode
@@ -65,6 +69,7 @@ public class DemoDataService {
             "product_change_log", "stock_movement", "invoice_item", "invoice", "customer", "supplier", "product");
 
     private final JdbcTemplate jdbcTemplate;
+    private final DemoTemporalSpread temporalSpread;
     private final ProductService productService;
     private final SupplierService supplierService;
     private final CustomerService customerService;
@@ -81,6 +86,9 @@ public class DemoDataService {
         wipe();
         try {
             seed();
+            // Runs after the seed rather than during it: the services stamp their own rows, so the
+            // only moment the history can be spread apart is once it all exists (ADR 027).
+            temporalSpread.apply();
         } catch (RuntimeException ex) {
             // Each service call commits on its own, so a mid-seed failure leaves real, partial data
             // behind: dashboards would render and quietly understate everything. Fail loudly instead.
