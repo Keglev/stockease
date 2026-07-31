@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -17,6 +18,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   CashFlowReport,
   CashFlowTimelineBucket,
+  ChangeLogEntryResponse,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
@@ -29,6 +31,7 @@ import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
 import { CSV_DOWNLOADER, buildCsv } from '../../../shared/csv/csv-export';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
+import { AuditService } from '../../audit/audit.service';
 import { ReportService } from '../report.service';
 
 export const PROFIT_TAB = 0;
@@ -38,8 +41,14 @@ export const CASH_FLOW_TAB = 1;
 export const STOCK_TAB = 2;
 export const LOSSES_TAB = 3;
 export const DUE_TAB = 4;
+// Last, and appended rather than slotted in: the audit trail answers a different kind of question
+// from the five figures before it, and renumbering them would touch every tab's tests to say so.
+export const CHANGES_TAB = 5;
 
-const TAB_COUNT = 5;
+const TAB_COUNT = 6;
+
+/** Sentinel for the changes tab's user select; no account can collide with it. */
+const ALL_USERS = '';
 
 /** Which half of a tab is on screen; the two never share the vertical space any more. */
 export type ReportView = 'chart' | 'table';
@@ -56,9 +65,12 @@ const PERIOD_DAYS: Record<'d30' | 'd90' | 'd180', number> = { d30: 30, d90: 90, 
 const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 
 /**
- * Four-tab detail view over the reporting endpoints, each tab switching between its chart and its
- * sortable table. The dashboard stays the at-a-glance summary; this page is where the full figures
- * live, which is why the table here is exhaustive and exportable while the chart is a top ten.
+ * Detail view over the reporting endpoints, each tab switching between its chart and its sortable
+ * table. The dashboard stays the at-a-glance summary; this page is where the full figures live,
+ * which is why the tables here are exhaustive and exportable while the charts are a top ten.
+ *
+ * <p>The changes tab is the one exception, and reads the audit module rather than the reporting
+ * one: it lists events rather than figures, so it has a table and no chart.
  */
 @Component({
   selector: 'app-reports-page',
@@ -73,6 +85,7 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
+    MatSelectModule,
     MatSortModule,
     MatTableModule,
     MatTabsModule,
@@ -84,6 +97,9 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 })
 export class ReportsPageComponent implements OnInit {
   private readonly reports = inject(ReportService);
+  // Cross-feature, as the dashboard reads the reporting client: the change log belongs to the audit
+  // module, and a report over it consumes that module's API rather than copying its endpoint.
+  private readonly audit = inject(AuditService);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
@@ -94,6 +110,7 @@ export class ReportsPageComponent implements OnInit {
   protected readonly stockColumns = ['name', 'sku', 'soldUnits', 'soldRevenue', 'inStockUnits', 'inStockValue'];
   protected readonly lossColumns = ['name', 'sku', 'lostUnits', 'destroyedUnits', 'lossValue'];
   protected readonly cashFlowColumns = ['name', 'sku', 'inflow', 'outflow', 'net'];
+  protected readonly changeColumns = ['time', 'user', 'product', 'field', 'oldValue', 'newValue'];
 
   protected readonly selectedTab = signal(PROFIT_TAB);
 
@@ -198,6 +215,40 @@ export class ReportsPageComponent implements OnInit {
   protected readonly cashFlowPeriod = signal<ReportPeriod>('all');
   protected readonly profitPeriod = signal<ReportPeriod>('all');
   protected readonly lossPeriod = signal<ReportPeriod>('all');
+  protected readonly changePeriod = signal<ReportPeriod>('all');
+
+  protected readonly changeRows = signal<ChangeLogEntryResponse[]>([]);
+
+  /**
+   * Narrowing by the person who made the change.
+   *
+   * <p>The options come from the loaded rows rather than from a user directory. A listing of
+   * accounts would be a second endpoint, a second authorization question and a list dominated by
+   * people who have changed nothing - and this demo has two actors. The rows already name everyone
+   * who appears in them, which is exactly the set worth offering.
+   */
+  protected readonly changeUser = signal(ALL_USERS);
+  protected readonly changeFilter = signal('');
+
+  protected readonly changeUsernames = computed(() =>
+    [...new Set(this.changeRows().map((row) => row.username))].sort()
+  );
+
+  protected readonly filteredChangeRows = computed(() => {
+    const user = this.changeUser();
+    const byUser = user === ALL_USERS
+      ? this.changeRows()
+      : this.changeRows().filter((row) => row.username === user);
+    // The row's product is what the text filter reads, so the shared predicate needs it named
+    // the way every other table names it.
+    const needle = this.changeFilter().trim().toLowerCase();
+    if (!needle) {
+      return byUser;
+    }
+    return byUser.filter(
+      (row) => row.productName.toLowerCase().includes(needle) || row.sku.toLowerCase().includes(needle)
+    );
+  });
 
   protected readonly marginOption = signal<ChartOption | null>(null);
   protected readonly profitOption = signal<ChartOption | null>(null);
@@ -300,6 +351,42 @@ export class ReportsPageComponent implements OnInit {
     this.lossFilter.set(value);
   }
 
+  protected setChangeFilter(value: string): void {
+    this.changeFilter.set(value);
+  }
+
+  protected setChangeUser(value: string): void {
+    this.changeUser.set(value);
+  }
+
+  /** Switches the changes window and refetches, since the period is a server-side filter. */
+  protected setChangePeriod(period: ReportPeriod): void {
+    // Same two guards as every other preset group on this page.
+    if (!PERIODS.includes(period) || period === this.changePeriod()) {
+      return;
+    }
+    this.changePeriod.set(period);
+    this.loadChanges();
+  }
+
+  protected exportChanges(): void {
+    this.exportCsv(
+      'changes.csv',
+      this.changeColumns,
+      // Every active narrowing at once: the period is already in the data, and the user and text
+      // filters are applied here, so the download says what the screen says.
+      this.filteredChangeRows().map((row) => [
+        row.createdAt,
+        row.username,
+        row.productName,
+        this.translate.instant('audit.field.' + row.field) as string,
+        row.oldValue,
+        row.newValue
+      ]),
+      'reports.changes.columns.'
+    );
+  }
+
   /** Switches the loss window and refetches, since the period is a server-side filter. */
   protected setLossPeriod(period: ReportPeriod): void {
     // Same two guards as the other toggles: the group emits once with no value while it is being
@@ -390,6 +477,8 @@ export class ReportsPageComponent implements OnInit {
         return this.loadLosses();
       case DUE_TAB:
         return this.loadDue();
+      case CHANGES_TAB:
+        return this.loadChanges();
       default:
         return this.loadProfit();
     }
@@ -426,6 +515,25 @@ export class ReportsPageComponent implements OnInit {
       next: (rows) => {
         this.stockRows.set(rows);
         this.stockOption.set(toStockOption(rows, this.otherLabel()));
+        this.loading.set(false);
+      },
+      error: (err: Error) => this.fail(err)
+    });
+  }
+
+  private loadChanges(): void {
+    this.error.set(null);
+    this.loading.set(true);
+    const range = periodRange(this.changePeriod());
+
+    this.audit.changes(range.from, range.to).subscribe({
+      next: (rows) => {
+        this.changeRows.set(rows);
+        // The user options derive from these rows, so a narrower period can retire the account the
+        // select is sitting on; falling back to all beats filtering against a name that is gone.
+        if (!rows.some((row) => row.username === this.changeUser())) {
+          this.changeUser.set(ALL_USERS);
+        }
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)

@@ -1,14 +1,19 @@
 package com.stocks.stockease.audit.web;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.audit.AuditService;
+import com.stocks.stockease.audit.ChangeLogEntryResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,5 +52,36 @@ public class AuditController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<ChangeLogResponse> getChangesByProduct(@PathVariable long productId) {
         return auditService.findChangesByProduct(productId).stream().map(ChangeLogResponse::from).toList();
+    }
+
+    /**
+     * Returns recent product changes across the system, newest first, with the names behind the IDs.
+     *
+     * @param from first change date to include, or {@code null} for no lower bound
+     * @param to last change date to include, or {@code null} for no upper bound
+     * @return the newest changes in the window, capped server-side
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     */
+    @GetMapping("/changes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<ChangeLogEntryResponse> getChanges(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+        validatePeriod(from, to);
+        return auditService.findChanges(from, to);
+    }
+
+    /**
+     * Rejects a period whose bounds are the wrong way round; either bound alone is always valid.
+     *
+     * <p>Restated here rather than imported from the reporting controller that carries the identical
+     * check. The two modules share no code by design, and a web-layer helper is not an API either of
+     * them offers the other - six lines duplicated is the cheaper of the two couplings, and the
+     * shared exception handler already gives both the same 400 and the same message.
+     */
+    private static void validatePeriod(LocalDate from, LocalDate to) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new IllegalArgumentException("The start of the period must not be after its end.");
+        }
     }
 }
