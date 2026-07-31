@@ -1,6 +1,7 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
@@ -189,6 +190,8 @@ class ReportServiceStub {
 
 class ProductServiceStub {
   lowStockRows: ProductResponse[] = [WIDGET];
+  /** Counts fetches, so opening the dialog can be shown to reuse the rows rather than reload them. */
+  lowStockCalls = 0;
   /** Set to make the paged call fail, which is what puts the component into its error state. */
   pagedFailure: Error | null = null;
 
@@ -197,7 +200,18 @@ class ProductServiceStub {
   }
 
   lowStock(): Observable<ProductResponse[]> {
+    this.lowStockCalls++;
     return of(this.lowStockRows);
+  }
+}
+
+/** The established dialog stub, recording what was opened and with what data. */
+class MatDialogStub {
+  openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
+
+  open(component: unknown, config?: { data?: unknown }) {
+    this.openCalls.push({ component, config });
+    return { afterClosed: () => of(undefined) };
   }
 }
 
@@ -216,6 +230,7 @@ describe('DashboardComponent', () => {
   let reports: ReportServiceStub;
   let products: ProductServiceStub;
   let health: HealthServiceStub;
+  let dialog: MatDialogStub;
   let breakpoints: BreakpointObserverStub;
 
   /**
@@ -264,6 +279,7 @@ describe('DashboardComponent', () => {
     reports = new ReportServiceStub();
     products = new ProductServiceStub();
     health = new HealthServiceStub();
+    dialog = new MatDialogStub();
     // Pinned to desktop so every assertion below sees one fixed tier; jsdom applies no media
     // queries, so the real observer would answer whatever matchMedia stubs out to.
     breakpoints = new BreakpointObserverStub(true);
@@ -275,7 +291,8 @@ describe('DashboardComponent', () => {
         { provide: BreakpointObserver, useValue: breakpoints },
         { provide: ReportService, useValue: reports },
         { provide: ProductService, useValue: products },
-        { provide: HealthService, useValue: health }
+        { provide: HealthService, useValue: health },
+        { provide: MatDialog, useValue: dialog }
       ]
     });
     TestBed.overrideComponent(DashboardComponent, {
@@ -330,21 +347,25 @@ describe('DashboardComponent', () => {
     expect(textOf('.kpi-low-stock .kpi-value').trim()).toBe('1');
   });
 
-  it('lowStockAlert_productsBelowThreshold_rendersOneRowPerProduct', () => {
+  it('kpiLowStock_clicked_opensDialogWithLoadedRows', () => {
     render();
 
-    const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('.low-stock-row');
-    expect(rows.length).toBe(1);
-    expect(rows[0].textContent).toContain('Widget');
-    expect(rows[0].querySelector('a')?.getAttribute('href')).toBe('/app/products');
+    host().querySelector<HTMLButtonElement>('.low-stock-open')?.click();
+
+    // the rows already on the component, not a second request: the count and the list behind it
+    // are one answer
+    expect(products.lowStockCalls).toBe(1);
+    expect(dialog.openCalls).toHaveLength(1);
+    expect(dialog.openCalls[0].config?.data).toEqual({ products: [WIDGET] });
   });
 
-  it('lowStockAlert_noLowStock_rendersAllClearLine', () => {
-    products.lowStockRows = [];
+  it('kpiLowStock_errorState_staysInert', () => {
+    products.pagedFailure = new Error('Authentication required.');
     render();
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('.low-stock-row')).toBeNull();
-    expect(textOf('.low-stock-none')).toContain('All products are sufficiently stocked.');
+    // the em dash means the rows never loaded, so there is nothing the card could open
+    expect(host().querySelector('.low-stock-open')).toBeNull();
+    expect(textOf('.kpi-low-stock .kpi-value').trim()).toBe('—');
   });
 
   it('refresh_clicked_reinvokesEveryReportLoad', () => {

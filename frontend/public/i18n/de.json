@@ -362,7 +362,8 @@
       "products": "Produkte",
       "lowStock": "Bestand niedrig",
       "overdue": "Überfällige Rechnungen",
-      "grossProfit": "Bruttogewinn"
+      "grossProfit": "Bruttogewinn",
+      "lowStockOpen": "Produkte mit niedrigem Bestand anzeigen"
     },
     "lowStockTitle": "Bestand niedrig",
     "lowStockNone": "Alle Produkte sind ausreichend bevorratet.",

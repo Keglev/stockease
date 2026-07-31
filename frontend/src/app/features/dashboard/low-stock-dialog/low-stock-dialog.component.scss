@@ -1,0 +1,52 @@
+// Roughly eight rows before the body scrolls. The cap is the point of moving the list here: the
+// card it replaces grew with the data, so three low products wasted space and fifty ran off the
+// page. Material's own 65vh default would reintroduce the second half of that on a tall screen.
+mat-dialog-content {
+  max-height: 20rem;
+  // A floor as well as a ceiling: sized to content alone, a single low product renders a dialog
+  // narrow enough to read as a tooltip rather than as the list it is. Capped at the viewport so
+  // the floor never becomes the reason it overflows on a phone.
+  min-width: min(26rem, 70vw);
+}
+
+// The rows keep the retired card's own styling: the list did not change, only where it lives.
+.low-stock-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.low-stock-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.low-stock-row:last-child {
+  border-bottom: none;
+}
+
+// The name takes the slack so the SKU and the quantity stay flush right whatever the name's length,
+// which is what lets a scrolling list read as columns without being a table.
+.low-stock-name {
+  flex: 1 1 auto;
+}
+
+.low-stock-sku {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.low-stock-quantity {
+  min-width: 2ch;
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-title-small);
+  text-align: right;
+}
+
+.low-stock-none {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}

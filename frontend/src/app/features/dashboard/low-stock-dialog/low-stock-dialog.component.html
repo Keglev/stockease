@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>{{ 'dashboard.lowStockTitle' | translate }}</h2>
+
+<mat-dialog-content>
+  @if (products.length > 0) {
+    <ul class="low-stock-list">
+      @for (product of products; track product.id) {
+        <li class="low-stock-row">
+          <a class="low-stock-name" routerLink="/app/products" (click)="close()">{{ product.name }}</a>
+          <span class="low-stock-sku">{{ product.sku }}</span>
+          <span class="low-stock-quantity">{{ product.quantity }}</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="low-stock-none">{{ 'dashboard.lowStockNone' | translate }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" class="low-stock-close" mat-dialog-close>
+    {{ 'common.close' | translate }}
+  </button>
+</mat-dialog-actions>
