@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CashFlowTimelineBucket.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.report</a> &gt; <span class="el_source">CashFlowTimelineBucket.java</span></div><h1>CashFlowTimelineBucket.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.report;
+
+import java.math.BigDecimal;
+
+/**
+ * One calendar month of cash flow, on the same payment basis as the per-product report: money counts
+ * in the month its invoice was paid, and each line contributes its quantity net of returns at the
+ * line's own price snapshot (ADR 025).
+ *
+ * &lt;p&gt;Only months that actually moved money produce a bucket. A month with no paid invoice is absent
+ * rather than zero-filled - the same reasoning the product rows follow, and what the chart's category
+ * axis is built to render.
+ *
+ * @param month the month this bucket covers, as ISO {@code yyyy-MM}
+ * @param inflow money received that month through paid sale invoices
+ * @param outflow money spent that month through paid purchase invoices
+ * @param net inflow less outflow; negative in a month that spent more than it received
+ */
+<span class="fc" id="L19">public record CashFlowTimelineBucket(String month, BigDecimal inflow, BigDecimal outflow, BigDecimal net) {</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
