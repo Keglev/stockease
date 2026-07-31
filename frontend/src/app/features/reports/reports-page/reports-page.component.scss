@@ -41,24 +41,24 @@
 
 // The three figures read as one line of summary, so they share a row and wrap together rather
 // than each claiming a card.
-.cash-flow-totals {
+.totals-strip {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem 2.5rem;
   margin-bottom: 1rem;
 }
 
-.cash-flow-total {
+.total-item {
   display: flex;
   flex-direction: column;
 }
 
-.cash-flow-label {
+.total-label {
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-label-large);
 }
 
-.cash-flow-value {
+.total-value {
   font: var(--mat-sys-headline-small);
 }
 

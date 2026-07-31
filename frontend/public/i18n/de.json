@@ -120,7 +120,8 @@
     },
     "stock": {
       "byValue": "Produkte nach Bestandswert",
-      "empty": "Derzeit ist kein Produkt am Lager."
+      "empty": "Derzeit ist kein Produkt am Lager.",
+      "productCount": "Produkte"
     },
     "losses": {
       "byProduct": "Verlustanteil je Produkt",
@@ -146,8 +147,7 @@
         "outflow": "Auszahlungen",
         "net": "Saldo"
       },
-      "empty": "Keine bezahlten Rechnungen in diesem Zeitraum.",
-      "filter": "Nach Name oder Artikelnummer filtern"
+      "empty": "Keine bezahlten Rechnungen in diesem Zeitraum."
     },
     "period": {
       "d30": "30 Tage",
@@ -155,7 +155,8 @@
       "d180": "180 Tage",
       "year": "Dieses Jahr",
       "all": "Gesamt"
-    }
+    },
+    "filter": "Nach Name oder Artikelnummer filtern"
   },
   "movements": {
     "title": "Lagerbewegung erfassen",

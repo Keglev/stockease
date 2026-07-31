@@ -96,9 +96,14 @@ export class ReportService {
     return this.http.get<DueDateBucket[]>(`${this.baseUrl}/due-dates`);
   }
 
-  /** Bare array - deliberately not unwrapped. */
-  losses(): Observable<LossReport[]> {
-    return this.http.get<LossReport[]>(`${this.baseUrl}/losses`);
+  /**
+   * Bare array - deliberately not unwrapped. The optional window is a range of booking dates, as on
+   * the profit report; unlike it, a product with no losses in range is absent rather than zeroed.
+   */
+  losses(from?: string, to?: string): Observable<LossReport[]> {
+    return this.http.get<LossReport[]>(`${this.baseUrl}/losses`, {
+      params: this.periodParams(from, to)
+    });
   }
 
   /** Bare array - deliberately not unwrapped. */

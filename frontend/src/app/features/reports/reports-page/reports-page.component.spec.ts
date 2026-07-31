@@ -96,11 +96,15 @@ const SUPPLIERS: SupplierProfitReport[] = [
 ];
 
 const STOCK: StockStatusReport[] = [
-  { productId: 3, name: 'Widget', sku: 'SKU-3', soldUnits: 4, soldRevenue: 60, inStockUnits: 6, inStockValue: 30 }
+  { productId: 3, name: 'Widget', sku: 'SKU-3', soldUnits: 4, soldRevenue: 60, inStockUnits: 6, inStockValue: 30 },
+  // A second row sharing no substring with the first, so a filter test proves narrowing and a
+  // totals test proves summing rather than echoing one row.
+  { productId: 4, name: 'Gadget', sku: 'ABC-4', soldUnits: 1, soldRevenue: 10, inStockUnits: 4, inStockValue: 20 }
 ];
 
 const LOSSES: LossReport[] = [
-  { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, lostUnits: 2, destroyedUnits: 1, lossValue: 15 }
+  { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, lostUnits: 2, destroyedUnits: 1, lossValue: 15 },
+  { productId: 4, name: 'Gadget', sku: 'ABC-4', deleted: false, lostUnits: 3, destroyedUnits: 4, lossValue: 25 }
 ];
 
 const BUCKETS: DueDateBucket[] = [
@@ -164,6 +168,7 @@ class ReportServiceStub {
   /** Every from/to pair the page asked for, so the period presets can be asserted exactly. */
   cashFlowRanges: (string | undefined)[][] = [];
   timelineRanges: (string | undefined)[][] = [];
+  lossRanges: (string | undefined)[][] = [];
   /** The same record for each profit endpoint, keyed by method so one period covers all three. */
   profitRanges: Record<string, (string | undefined)[][]> = { products: [], suppliers: [], detail: [] };
   detail: ProductProfitReport = PROFIT[0];
@@ -203,8 +208,9 @@ class ReportServiceStub {
     return of(STOCK);
   }
 
-  losses(): Observable<LossReport[]> {
+  losses(from?: string, to?: string): Observable<LossReport[]> {
     this.calls.push('losses');
+    this.lossRanges.push([from, to]);
     return of(this.lossPayload);
   }
 
@@ -248,6 +254,10 @@ describe('ReportsPageComponent', () => {
 
   function host(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
+  }
+
+  function textOf(selector: string): string {
+    return host().querySelector(selector)?.textContent ?? '';
   }
 
   /**
@@ -452,6 +462,86 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(optionOf('lossOption')).toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('.losses-empty')).not.toBeNull();
   });
+
+  it('stockTab_totalsStrip_sumsLoadedRows', async () => {
+    render();
+    await activateTab(2);
+
+    // 30 + 20, 6 + 4, and two rows: the strip is the table added up, so the two cannot disagree
+    expect(textOf('.stock-total-value')).toContain('50');
+    expect(textOf('.stock-total-units').trim()).toBe('10');
+    expect(textOf('.stock-total-products').trim()).toBe('2');
+  });
+
+  it('lossesTab_totalsStrip_sumsValueLostAndDestroyed', async () => {
+    render();
+    await activateTab(3);
+
+    expect(textOf('.loss-total-value')).toContain('40');
+    expect(textOf('.loss-total-lost').trim()).toBe('5');
+    expect(textOf('.loss-total-destroyed').trim()).toBe('5');
+  });
+
+  it('lossesTab_presetChange_refetchesWithComputedRange', async () => {
+    vi.setSystemTime(new Date(2026, 2, 15, 12));
+    render();
+    await activateTab(3);
+
+    await selectLossPeriod('d90');
+
+    // write-offs count on their booking date, so this is the profit tab's arithmetic, not cash flow's
+    expect(reports.lossRanges.at(-1)).toEqual(['2025-12-15', '2026-03-15']);
+  });
+
+  it('stockTab_filter_narrowsRowsAndExport', async () => {
+    render();
+    await activateTab(2);
+    await showTable(2);
+
+    await setFilter('setStockFilter', 'abc-4');
+
+    expect(host().querySelectorAll('.stock-table tbody tr').length).toBe(1);
+    host().querySelector<HTMLButtonElement>('.export-stock')?.click();
+
+    const [, content] = download.mock.calls[0] as [string, string];
+    expect(content).toContain('Gadget');
+    expect(content).not.toContain('Widget');
+  });
+
+  it('lossesTab_filter_narrowsRowsAndExport', async () => {
+    render();
+    await activateTab(3);
+    await showTable(3);
+
+    await setFilter('setLossFilter', 'widget');
+
+    expect(host().querySelectorAll('.loss-table tbody tr').length).toBe(1);
+    host().querySelector<HTMLButtonElement>('.export-losses')?.click();
+
+    const [, content] = download.mock.calls[0] as [string, string];
+    expect(content).toContain('Widget');
+    expect(content).not.toContain('Gadget');
+  });
+
+  /** Types into one of the tabs' filters through the component, the way its input does. */
+  async function setFilter(method: string, value: string): Promise<void> {
+    const page = fixture.componentInstance as unknown as Record<string, (value: string) => void>;
+    page[method](value);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  /** Clicks a loss period preset through the component, the way the toggle group does. */
+  async function selectLossPeriod(period: string): Promise<void> {
+    const page = fixture.componentInstance as unknown as {
+      setLossPeriod: (value: string) => void;
+    };
+    page.setLossPeriod(period);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   it('cashFlowTab_firstActivation_loadsTimelineLazily', async () => {
     render();

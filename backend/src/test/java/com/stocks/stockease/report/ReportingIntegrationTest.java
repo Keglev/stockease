@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -358,12 +359,44 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     void lossReport_lostUnits_valuedAtCurrentPurchasePrice() {
         Scenario scenario = scenarioA("RPT Alpha Loss View");
 
-        LossReport row = reportingService.lossReport().stream()
-                .filter(entry -> entry.productId() == scenario.productId()).findFirst().orElseThrow();
+        LossReport row = lossRow(scenario.productId(), null, null).orElseThrow();
 
         assertThat(row.lostUnits()).isEqualTo(1);
         assertThat(row.destroyedUnits()).isEqualTo(0);
         assertThat(row.lossValue()).isEqualByComparingTo("10.00");
+    }
+
+    /** One product's loss row over an optional window, absent when it lost nothing in range. */
+    private Optional<LossReport> lossRow(long productId, LocalDate from, LocalDate to) {
+        return reportingService.lossReport(from, to).stream()
+                .filter(entry -> entry.productId() == productId).findFirst();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void losses_fromToWindow_excludesMovementsOutsideRange() {
+        Scenario scenario = scenarioA("RPT Loss Window");
+        LocalDate today = LocalDate.now();
+
+        assertThat(lossRow(scenario.productId(), today, today).orElseThrow().lostUnits()).isEqualTo(1);
+        assertThat(lossRow(scenario.productId(), LocalDate.of(2020, 1, 1), LocalDate.of(2020, 12, 31)))
+                .isEmpty();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void losses_windowWithoutLossesForAProduct_dropsItRatherThanZeroingIt() {
+        Scenario scenario = scenarioA("RPT Loss Drop");
+
+        List<LossReport> outOfRange = reportingService.lossReport(
+                LocalDate.of(2020, 1, 1), LocalDate.of(2020, 12, 31));
+
+        // The opposite of the profit report, and deliberately: that one LEFT JOINs so every product
+        // is listed, while this one INNER JOINs and already lists only products that lost something.
+        // A product with no losses in the window has nothing to report, exactly as one that never
+        // lost anything has nothing to report.
+        assertThat(outOfRange).noneMatch(row -> row.productId() == scenario.productId());
+        assertThat(outOfRange).allSatisfy(row -> assertThat(row.lossValue()).isNotNull());
     }
 
     @Test

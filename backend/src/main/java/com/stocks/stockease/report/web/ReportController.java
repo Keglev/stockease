@@ -176,12 +176,18 @@ public class ReportController {
     /**
      * Returns units written off as lost or destroyed.
      *
-     * @return one row per product with at least one loss movement
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
+     * @return one row per product with at least one loss movement in the window
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
      */
     @GetMapping("/losses")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public List<LossReport> lossReport() {
-        return reportingService.lossReport();
+    public List<LossReport> lossReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+        validatePeriod(from, to);
+        return reportingService.lossReport(from, to);
     }
 
     /**

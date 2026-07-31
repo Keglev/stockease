@@ -120,7 +120,8 @@
     },
     "stock": {
       "byValue": "Products by stock value",
-      "empty": "No products are currently in stock."
+      "empty": "No products are currently in stock.",
+      "productCount": "Products"
     },
     "losses": {
       "byProduct": "Loss share by product",
@@ -146,8 +147,7 @@
         "outflow": "Outflow",
         "net": "Net"
       },
-      "empty": "No paid invoices in this period.",
-      "filter": "Filter by name or SKU"
+      "empty": "No paid invoices in this period."
     },
     "period": {
       "d30": "30 days",
@@ -155,7 +155,8 @@
       "d180": "180 days",
       "year": "This year",
       "all": "All"
-    }
+    },
+    "filter": "Filter by name or SKU"
   },
   "movements": {
     "title": "Record stock movement",
