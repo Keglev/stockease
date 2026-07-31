@@ -176,12 +176,18 @@ public class ReportController {
     /**
      * Returns units written off as lost or destroyed.
      *
-     * @return one row per product with at least one loss movement
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
+     * @return one row per product with at least one loss movement in the window
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
      */
     @GetMapping(&quot;/losses&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
-    public List&lt;LossReport&gt; lossReport() {
-<span class="fc" id="L184">        return reportingService.lossReport();</span>
+    public List&lt;LossReport&gt; lossReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+<span class="fc" id="L189">        validatePeriod(from, to);</span>
+<span class="fc" id="L190">        return reportingService.lossReport(from, to);</span>
     }
 
     /**
@@ -192,7 +198,7 @@ public class ReportController {
     @GetMapping(&quot;/due-dates&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;DueDateBucket&gt; dueDateBuckets() {
-<span class="fc" id="L195">        return reportingService.dueDateBuckets();</span>
+<span class="fc" id="L201">        return reportingService.dueDateBuckets();</span>
     }
 
     /**
@@ -206,10 +212,10 @@ public class ReportController {
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceDueSummary&gt; dueSoon(
             @RequestParam(defaultValue = &quot;&quot; + DEFAULT_DUE_SOON_DAYS) int days) {
-<span class="fc bfc" id="L209" title="All 2 branches covered.">        if (days &lt; 1) {</span>
-<span class="fc" id="L210">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        if (days &lt; 1) {</span>
+<span class="fc" id="L216">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
         }
-<span class="fc" id="L212">        return reportingService.dueSoon(days);</span>
+<span class="fc" id="L218">        return reportingService.dueSoon(days);</span>
     }
 
     /**
@@ -220,7 +226,7 @@ public class ReportController {
     @GetMapping(&quot;/overdue&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceDueSummary&gt; overdue() {
-<span class="fc" id="L223">        return reportingService.overdue();</span>
+<span class="fc" id="L229">        return reportingService.overdue();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

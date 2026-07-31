@@ -8,7 +8,7 @@ StockEase,com.stocks.stockease,StockEaseApplication,5,3,0,0,2,1,1,1,1,1
 StockEase,com.stocks.stockease.audit.internal,ProductChangedListener,0,32,0,0,0,8,0,1,0,1
 StockEase,com.stocks.stockease.config,JpaAuditingConfig,0,3,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.config,FlywayConfiguration,0,38,0,2,0,14,0,3,0,2
-StockEase,com.stocks.stockease.report.web,ReportController,0,130,1,7,0,25,1,17,0,14
+StockEase,com.stocks.stockease.report.web,ReportController,0,135,1,7,0,26,1,17,0,14
 StockEase,com.stocks.stockease.audit.web,ChangeLogResponse,0,44,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.audit.web,AuditController,0,18,0,0,0,2,0,2,0,2
 StockEase,com.stocks.stockease.product.web,ProductController,5,221,0,6,0,38,1,16,1,13
@@ -59,7 +59,7 @@ StockEase,com.stocks.stockease.report,CashFlowProductRow,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,DueDateBucket,0,15,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,CashFlowTimelineBucket,0,15,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,SupplierProfitReport,0,18,0,0,0,1,0,1,0,1
-StockEase,com.stocks.stockease.report,ReportingService,0,455,0,2,0,84,0,24,0,23
+StockEase,com.stocks.stockease.report,ReportingService,0,461,0,2,0,88,0,24,0,23
 StockEase,com.stocks.stockease.report,StockStatusReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,CashFlowReport,0,15,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice.internal,OpenInvoiceDeletionVeto,0,52,0,8,0,14,0,7,0,3
