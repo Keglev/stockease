@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DemoTemporalSpread.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.demo</a> &gt; <span class="el_source">DemoTemporalSpread.java</span></div><h1>DemoTemporalSpread.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.demo;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Backdates the seeded baseline across the past six months.
+ *
+ * &lt;p&gt;The seed runs through the real services, so every row it creates is stamped with the instant the
+ * seeding ran. That leaves the whole business history in one moment: the 30-day, 90-day and year
+ * period presets all select the same rows, and any time series over the baseline is a single point.
+ * This step moves that history apart afterwards (ADR 026 is unaffected; the decision here is ADR 027).
+ *
+ * &lt;p&gt;Raw SQL against other modules' tables, for the same reason the wipe is: rewriting audit
+ * timestamps is not behaviour any business service offers, and the alternative - threading an
+ * explicit clock through {@code createInvoice}, {@code close}, {@code recordMovement} and
+ * {@code markAsPaid} - would put a demo concern into four production signatures. The demo module
+ * already owns exactly this kind of cross-table infrastructure work.
+ *
+ * &lt;p&gt;Every shift is a &lt;em&gt;relative&lt;/em&gt; interval subtracted from a row's existing timestamp rather
+ * than an absolute moment assigned to it. That is what preserves causality for free: the seed already
+ * wrote its rows in causal order within one instant, and subtracting one constant per invoice moves
+ * that whole group without reordering anything inside it.
+ */
+@Service
+@ConditionalOnDemoMode
+@RequiredArgsConstructor
+public class DemoTemporalSpread {
+
+<span class="fc" id="L38">    private static final Logger log = LoggerFactory.getLogger(DemoTemporalSpread.class);</span>
+
+    /**
+     * How many days back each seeded invoice's own moment moves - its creation, its close, the
+     * movements that close booked, and the price changes it wrote.
+     *
+     * &lt;p&gt;Fixed values, never generated: the demo baseline is a contract that has to reproduce
+     * identically on every nightly reset, and a randomised spread would make &quot;what the demo shows&quot;
+     * unanswerable. This table is the single place the shape of the history is tuned.
+     *
+     * &lt;p&gt;Three constraints shape the numbers, and any edit has to keep all three:
+     * &lt;ul&gt;
+     *   &lt;li&gt;&lt;b&gt;Purchases precede the sales that draw on them.&lt;/b&gt; A sale's offset is smaller than the
+     *       offset of every purchase stocking the products it sells, so no product is sold before the
+     *       invoice that first put it on the shelf. The tightest of these is AR-2026-0004 and
+     *       AR-2026-0005, both bounded by RE-2026-0163 at 96.&lt;/li&gt;
+     *   &lt;li&gt;&lt;b&gt;All three period bands are populated.&lt;/b&gt; Three closed invoices book movements inside
+     *       30 days, four more inside 90, and everything falls inside 180 - so the profit presets
+     *       return visibly different result sets rather than three copies of one answer.&lt;/li&gt;
+     *   &lt;li&gt;&lt;b&gt;Paid dates land in all three bands too.&lt;/b&gt; Cash flow filters on the payment date, not
+     *       the booking date (ADR 025), so the presets there only differ if the settlements are spread
+     *       as well: WP-2026-0091 and the two settled sales inside 30 days, 2026/RH/00934 between 30
+     *       and 90, 2026/RH/00891 and AR-2026-0003 older than 90.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * &lt;p&gt;The two OPEN invoices carry offsets like the rest, but book no movements - an open invoice
+     * books nothing (ADR 021) - so they only move their own creation date.
+     */
+<span class="fc" id="L66">    private static final Map&lt;String, Integer&gt; INVOICE_AGE_DAYS = invoiceAgeDays();</span>
+
+    private static Map&lt;String, Integer&gt; invoiceAgeDays() {
+<span class="fc" id="L69">        Map&lt;String, Integer&gt; plan = new LinkedHashMap&lt;&gt;();</span>
+        // Purchases, oldest first: the stock has to exist before anything sells it.
+<span class="fc" id="L71">        plan.put(&quot;RE-2026-0117&quot;, 168);</span>
+<span class="fc" id="L72">        plan.put(&quot;WP-2026-0075&quot;, 160);</span>
+<span class="fc" id="L73">        plan.put(&quot;BWA-2026-0442&quot;, 145);</span>
+<span class="fc" id="L74">        plan.put(&quot;2026/RH/00891&quot;, 130);</span>
+<span class="fc" id="L75">        plan.put(&quot;SL-26-004417&quot;, 112);</span>
+<span class="fc" id="L76">        plan.put(&quot;RE-2026-0163&quot;, 96);</span>
+<span class="fc" id="L77">        plan.put(&quot;2026/RH/00934&quot;, 62);</span>
+<span class="fc" id="L78">        plan.put(&quot;WP-2026-0091&quot;, 24);</span>
+<span class="fc" id="L79">        plan.put(&quot;WP-2026-0088&quot;, 6);</span>
+        // Sales, each below the offset of every purchase that stocked it.
+<span class="fc" id="L81">        plan.put(&quot;AR-2026-0001&quot;, 138);</span>
+<span class="fc" id="L82">        plan.put(&quot;AR-2026-0002&quot;, 120);</span>
+<span class="fc" id="L83">        plan.put(&quot;AR-2026-0003&quot;, 104);</span>
+<span class="fc" id="L84">        plan.put(&quot;AR-2026-0004&quot;, 88);</span>
+<span class="fc" id="L85">        plan.put(&quot;AR-2026-0005&quot;, 72);</span>
+<span class="fc" id="L86">        plan.put(&quot;AR-2026-0006&quot;, 45);</span>
+<span class="fc" id="L87">        plan.put(&quot;AR-2026-0008&quot;, 20);</span>
+<span class="fc" id="L88">        plan.put(&quot;AR-2026-0009&quot;, 9);</span>
+<span class="fc" id="L89">        plan.put(&quot;AR-2026-0007&quot;, 3);</span>
+<span class="fc" id="L90">        return Map.copyOf(plan);</span>
+    }
+
+    /**
+     * Days between an invoice's shifted close and its settlement, for the invoices the seed pays.
+     *
+     * &lt;p&gt;Varied rather than constant so the demo does not suggest every customer pays on the same
+     * schedule, and small enough that a payment never crosses out of the band its invoice was placed
+     * in by the table above.
+     */
+<span class="fc" id="L100">    private static final Map&lt;String, Integer&gt; PAYMENT_LAG_DAYS = Map.of(</span>
+<span class="fc" id="L101">            &quot;2026/RH/00891&quot;, 3,</span>
+<span class="fc" id="L102">            &quot;2026/RH/00934&quot;, 2,</span>
+<span class="fc" id="L103">            &quot;WP-2026-0091&quot;, 1,</span>
+<span class="fc" id="L104">            &quot;AR-2026-0003&quot;, 3,</span>
+<span class="fc" id="L105">            &quot;AR-2026-0008&quot;, 2,</span>
+<span class="fc" id="L106">            &quot;AR-2026-0009&quot;, 1);</span>
+
+    /**
+     * Offsets for the two write-offs, which hang off no invoice and so need placing themselves.
+     *
+     * &lt;p&gt;Keyed by reason because the baseline books exactly one of each. Both sit well inside the
+     * spread and long after the purchases that stocked the products they write down.
+     */
+<span class="fc" id="L114">    private static final Map&lt;String, Integer&gt; LOSS_AGE_DAYS = Map.of(</span>
+<span class="fc" id="L115">            &quot;LOST&quot;, 55,</span>
+<span class="fc" id="L116">            &quot;DESTROYED&quot;, 33);</span>
+
+    /** Days a product is created before the first movement that touches it. */
+    private static final int PRODUCT_LEAD_DAYS = 2;
+
+    private final JdbcTemplate jdbcTemplate;
+
+    /**
+     * Moves the seeded history apart, then refuses to leave it standing if the result is incoherent.
+     *
+     * &lt;p&gt;One transaction, unlike the seed: the seed's steps are independent business operations that
+     * each stand on their own, whereas a half-applied spread is history that contradicts itself.
+     *
+     * @throws IllegalStateException if the shifted data violates a causal ordering
+     */
+    @Transactional
+    public void apply() {
+<span class="fc" id="L133">        INVOICE_AGE_DAYS.forEach(this::shiftInvoice);</span>
+<span class="fc" id="L134">        PAYMENT_LAG_DAYS.forEach(this::settle);</span>
+<span class="fc" id="L135">        LOSS_AGE_DAYS.forEach(this::shiftLoss);</span>
+<span class="fc" id="L136">        shiftProducts();</span>
+<span class="fc" id="L137">        verify();</span>
+<span class="fc" id="L138">        log.info(&quot;Demo history spread across the past {} days.&quot;, INVOICE_AGE_DAYS.values().stream()</span>
+<span class="fc" id="L139">                .mapToInt(Integer::intValue).max().orElse(0));</span>
+<span class="fc" id="L140">    }</span>
+
+    /**
+     * Moves one invoice and everything born from closing it back by {@code days}.
+     *
+     * &lt;p&gt;The due date is deliberately absent from every statement here. Due dates are the baseline's
+     * designed anchors - they are what put invoices in the overdue and due-soon windows - so they are
+     * placed relative to today on purpose and must keep pointing where the seeder aimed them.
+     */
+    private void shiftInvoice(String invoiceNumber, int days) {
+<span class="fc" id="L150">        String interval = days + &quot; days&quot;;</span>
+
+<span class="fc" id="L152">        jdbcTemplate.update(&quot;&quot;&quot;</span>
+                UPDATE invoice
+                SET created_at = created_at - CAST(? AS interval),
+                    closed_at = closed_at - CAST(? AS interval)
+                WHERE invoice_number = ?
+                &quot;&quot;&quot;, interval, interval, invoiceNumber);
+
+        // Movements reach their invoice through the line they fulfil; the returns booked by hand hang
+        // off a line too, so they travel with the invoice they reverse rather than needing their own
+        // offset.
+<span class="fc" id="L162">        jdbcTemplate.update(&quot;&quot;&quot;</span>
+                UPDATE stock_movement m
+                SET created_at = m.created_at - CAST(? AS interval)
+                FROM invoice_item ii JOIN invoice i ON i.id = ii.invoice_id
+                WHERE m.invoice_item_id = ii.id AND i.invoice_number = ?
+                &quot;&quot;&quot;, interval, invoiceNumber);
+
+        // A price-change row carries no invoice reference, so it is matched by what it recorded: a
+        // close reprices a product to that invoice's line price (ADR 019), and V6 makes
+        // (invoice_id, product_id) unique, so at most one line per product per invoice can have
+        // written it. Comparing numerically, because the log stores the value as text.
+<span class="fc" id="L173">        jdbcTemplate.update(&quot;&quot;&quot;</span>
+                UPDATE product_change_log c
+                SET created_at = c.created_at - CAST(? AS interval)
+                FROM invoice_item ii JOIN invoice i ON i.id = ii.invoice_id
+                WHERE c.product_id = ii.product_id
+                  AND c.field = 'PURCHASE_PRICE'
+                  AND CAST(c.new_value AS numeric) = ii.unit_price
+                  AND i.invoice_number = ?
+                &quot;&quot;&quot;, interval, invoiceNumber);
+<span class="fc" id="L182">    }</span>
+
+    /** Places a settlement a fixed lag after the invoice's now-shifted close, never before it. */
+    private void settle(String invoiceNumber, int lagDays) {
+<span class="fc" id="L186">        jdbcTemplate.update(&quot;&quot;&quot;</span>
+                UPDATE invoice
+                SET paid_at = created_at + CAST(? AS interval)
+                WHERE invoice_number = ? AND paid_at IS NOT NULL
+                &quot;&quot;&quot;, lagDays + &quot; days&quot;, invoiceNumber);
+<span class="fc" id="L191">    }</span>
+
+    /** Places a write-off, which no invoice accounts for and which therefore carries its own date. */
+    private void shiftLoss(String reason, int days) {
+<span class="fc" id="L195">        jdbcTemplate.update(&quot;&quot;&quot;</span>
+                UPDATE stock_movement
+                SET created_at = created_at - CAST(? AS interval)
+                WHERE reason = ? AND invoice_item_id IS NULL
+                &quot;&quot;&quot;, days + &quot; days&quot;, reason);
+<span class="fc" id="L200">    }</span>
+
+    /**
+     * Pulls each product back before the first movement that touches it.
+     *
+     * &lt;p&gt;Derived from the movements rather than given its own offset, because the constraint is a
+     * relationship, not a date: a catalogue entry created after the delivery it received is the one
+     * thing this step could plausibly get wrong, and deriving it makes that unrepresentable. A product
+     * no movement touches keeps its seeded timestamp - there is nothing to be older than.
+     */
+    private void shiftProducts() {
+<span class="fc" id="L211">        jdbcTemplate.update(&quot;&quot;&quot;</span>
+                UPDATE product p
+                SET created_at = first_touch.moment - CAST(? AS interval)
+                FROM (SELECT product_id, MIN(created_at) AS moment FROM stock_movement GROUP BY product_id) first_touch
+                WHERE first_touch.product_id = p.id
+                &quot;&quot;&quot;, PRODUCT_LEAD_DAYS + &quot; days&quot;);
+<span class="fc" id="L217">    }</span>
+
+    /**
+     * Refuses to hand back history that contradicts itself.
+     *
+     * &lt;p&gt;The seed already fails loudly rather than leaving a partial baseline behind, and incoherent
+     * timestamps deserve the same treatment: they would not break a page, they would quietly make the
+     * demo argue against the invariants the application enforces.
+     */
+    private void verify() {
+<span class="fc" id="L227">        long movementsBeforeTheirProduct = count(&quot;&quot;&quot;</span>
+                SELECT COUNT(*) FROM stock_movement m JOIN product p ON p.id = m.product_id
+                WHERE m.created_at &lt; p.created_at
+                &quot;&quot;&quot;);
+<span class="fc" id="L231">        long paymentsBeforeTheirInvoice = count(&quot;&quot;&quot;</span>
+                SELECT COUNT(*) FROM invoice WHERE paid_at IS NOT NULL AND paid_at &lt; created_at
+                &quot;&quot;&quot;);
+<span class="fc" id="L234">        long futureHistory = count(&quot;&quot;&quot;</span>
+                SELECT COUNT(*) FROM stock_movement WHERE created_at &gt; now()
+                &quot;&quot;&quot;);
+
+<span class="pc bpc" id="L238" title="3 of 6 branches missed.">        if (movementsBeforeTheirProduct &gt; 0 || paymentsBeforeTheirInvoice &gt; 0 || futureHistory &gt; 0) {</span>
+<span class="nc" id="L239">            throw new IllegalStateException(&quot;Demo temporal spread produced incoherent history: &quot;</span>
+                    + movementsBeforeTheirProduct + &quot; movement(s) predate their product, &quot;
+                    + paymentsBeforeTheirInvoice + &quot; payment(s) predate their invoice, &quot;
+                    + futureHistory + &quot; movement(s) are dated in the future.&quot;);
+        }
+<span class="fc" id="L244">    }</span>
+
+    private long count(String sql) {
+<span class="fc" id="L247">        Long rows = jdbcTemplate.queryForObject(sql, Long.class);</span>
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">        return rows == null ? 0L : rows;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
