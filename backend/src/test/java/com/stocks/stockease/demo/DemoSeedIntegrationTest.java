@@ -1,6 +1,7 @@
 package com.stocks.stockease.demo;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,6 +20,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.stocks.stockease.report.CashFlowReport;
+import com.stocks.stockease.report.ProductProfitReport;
+import com.stocks.stockease.report.ReportingService;
 import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /**
@@ -40,6 +44,9 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private ReportingService reportingService;
 
     @BeforeEach
     void seedBaseline() {
@@ -144,6 +151,79 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
                 "SELECT purchase_price FROM product WHERE sku = 'WKZ-0001'", BigDecimal.class);
 
         assertThat(price).isEqualByComparingTo("61.50");
+    }
+
+    @Test
+    void seed_always_spreadsMovementsAcrossPeriodBands() {
+        long within30 = movementsWithinDays(30);
+        long within90 = movementsWithinDays(90);
+        long within180 = movementsWithinDays(180);
+
+        // strictly widening, so a period preset selects a different set at each step rather than
+        // three copies of one answer - which is the whole defect this spread exists to fix
+        assertThat(within30).isPositive();
+        assertThat(within90).isGreaterThan(within30);
+        assertThat(within180).isGreaterThan(within90);
+        assertThat(within180).isEqualTo(count("stock_movement"));
+    }
+
+    @Test
+    void seed_always_spreadsPaidDatesAcrossBands() {
+        // cash flow filters on the payment date, not the booking date (ADR 025), so its presets only
+        // differ if the settlements are spread as well as the closes
+        assertThat(paidBetweenDays(0, 30)).isPositive();
+        assertThat(paidBetweenDays(30, 90)).isPositive();
+        assertThat(paidBetweenDays(90, 365)).isPositive();
+    }
+
+    @Test
+    void seed_always_preservesCausalOrdering() {
+        assertThat(scalar("""
+                SELECT COUNT(*) FROM stock_movement m JOIN product p ON p.id = m.product_id
+                WHERE m.created_at < p.created_at
+                """)).isZero();
+        assertThat(scalar(
+                "SELECT COUNT(*) FROM invoice WHERE paid_at IS NOT NULL AND paid_at < created_at")).isZero();
+        assertThat(scalar("SELECT COUNT(*) FROM stock_movement WHERE created_at > now()")).isZero();
+    }
+
+    @Test
+    void seed_periodWindows_yieldDifferentProfitAndCashFlow() {
+        LocalDate from = LocalDate.now().minusDays(30);
+        LocalDate today = LocalDate.now();
+
+        List<ProductProfitReport> allTimeProfit = reportingService.profitPerProduct(null, null);
+        List<ProductProfitReport> recentProfit = reportingService.profitPerProduct(from, today);
+        CashFlowReport allTimeCash = reportingService.cashFlow(null, null);
+        CashFlowReport recentCash = reportingService.cashFlow(from, today);
+
+        // the user-visible fix: before the spread every window held everything, so these pairs were
+        // equal and the presets looked broken
+        assertThat(totalProfit(recentProfit)).isNotEqualByComparingTo(totalProfit(allTimeProfit));
+        assertThat(recentCash.inflow()).isNotEqualByComparingTo(allTimeCash.inflow());
+        assertThat(recentCash.outflow()).isNotEqualByComparingTo(allTimeCash.outflow());
+        // still populated rather than merely different: an empty window would "differ" too
+        assertThat(totalProfit(recentProfit)).isNotZero();
+        assertThat(recentCash.inflow()).isGreaterThan(BigDecimal.ZERO);
+    }
+
+    private static BigDecimal totalProfit(List<ProductProfitReport> rows) {
+        return rows.stream().map(ProductProfitReport::grossProfit).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private long movementsWithinDays(int days) {
+        return scalar("SELECT COUNT(*) FROM stock_movement WHERE created_at >= now() - INTERVAL '" + days + " days'");
+    }
+
+    private long paidBetweenDays(int fromDaysAgo, int toDaysAgo) {
+        return scalar("SELECT COUNT(*) FROM invoice WHERE paid_at IS NOT NULL"
+                + " AND paid_at <= now() - INTERVAL '" + fromDaysAgo + " days'"
+                + " AND paid_at > now() - INTERVAL '" + toDaysAgo + " days'");
+    }
+
+    private long scalar(String sql) {
+        Long rows = jdbcTemplate.queryForObject(sql, Long.class);
+        return rows == null ? 0L : rows;
     }
 
     private long count(String table) {
