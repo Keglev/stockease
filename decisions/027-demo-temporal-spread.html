@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions · 027-demo-temporal-spread · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-027-deterministic-temporal-spread-of-demo-data">ADR
+        027: Deterministic Temporal Spread of Demo Data</h1>
+        <p><strong>Scope</strong>: [Cross-cutting]
+        <strong>Status</strong>: Accepted <strong>Date</strong>: July
+        30, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The demo seeder builds its baseline exclusively through the
+        real services (ADR 021 and the module-ownership line the whole
+        demo module holds). That is the right way to build it — every
+        unit of stock has a document behind it, every price derives from
+        a close — but it has one consequence nobody designed:
+        <strong>every row is stamped with the instant the seed
+        ran.</strong></p>
+        <p>So the entire business history of the demo lives in a single
+        moment. Invoices created seconds apart, movements booked by
+        their closes, the payments applied afterwards, the price changes
+        the closes wrote — all within one second of each other, roughly
+        180 days’ worth of narrative compressed to a point.</p>
+        <p>The production review found what that costs:</p>
+        <ul>
+        <li>The period presets on the profit and cash-flow tabs — 30
+        days, 90 days, this year, all — <strong>return identical
+        results</strong>. Every window contains everything, so the
+        control appears broken. The feature that shipped two slices ago
+        cannot be demonstrated by the data it was built to filter.</li>
+        <li>Any time series over this baseline is <strong>a single
+        point</strong>. The charts that would plot booking or payment
+        activity over a period have nothing to plot.</li>
+        <li>The <code>Erstellt am</code> column reads as one timestamp
+        repeated eighteen times, which reads as test data rather than a
+        business.</li>
+        </ul>
+        <p>Due dates are the one exception, and deliberately so: the
+        seeder places them relative to today precisely because the
+        overdue and due-soon reports need populated windows. Those
+        anchors already work.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>After the service-driven seed completes, the demo
+        module backdates the finished baseline across the past ~180
+        days, by direct SQL, using a fixed offset table.</strong></p>
+        <ul>
+        <li>Each seeded invoice has a <strong>fixed age in
+        days</strong>, listed in one constant table keyed by invoice
+        number. Its creation, its close, the movements that close
+        booked, and the price-change rows it wrote all move back by that
+        same amount.</li>
+        <li>Settlements are placed a <strong>small fixed lag</strong>
+        (1–3 days, varied per invoice) after the shifted close, so a
+        payment can never precede the invoice it pays.</li>
+        <li>The two write-offs hang off no invoice and carry
+        <strong>their own offsets</strong>.</li>
+        <li>Each product is pulled back to <strong>shortly before the
+        first movement that touches it</strong>, derived rather than
+        assigned, so a catalogue entry can never postdate the delivery
+        it received.</li>
+        <li><strong>Due dates are not touched.</strong> They are
+        designed anchors, not history.</li>
+        <li><strong>No value moves</strong> — quantities, prices, unit
+        costs and statuses are exactly what the seeder decided. This
+        step moves time and nothing else.</li>
+        </ul>
+        <p>Two properties of the mechanism are load-bearing:</p>
+        <p><strong>Shifts are relative, not absolute.</strong> Each
+        statement subtracts an interval from a row’s existing timestamp
+        instead of assigning it a computed moment. The seed already
+        wrote its rows in causal order within that one instant, so
+        subtracting one constant per invoice moves the whole group
+        without reordering anything inside it. Intra-invoice ordering is
+        preserved by construction rather than by arithmetic that could
+        be got wrong.</p>
+        <p><strong>It runs as direct SQL from the demo module.</strong>
+        Rewriting audit timestamps is not behaviour any business service
+        offers or should. The demo module is already the place that
+        legitimately reaches across module tables — the nightly wipe
+        truncates seven of them for exactly this kind of reason — and
+        this step extends that precedent rather than setting a new
+        one.</p>
+        <p>The step ends with a <strong>verification query</strong> that
+        fails loudly if any movement predates its product, any payment
+        predates its invoice, or any history landed in the future. The
+        seeder already refuses to leave a partial baseline behind;
+        incoherent history deserves the same treatment, because it would
+        not break a page — it would quietly make the demo argue against
+        the invariants the application enforces everywhere else.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Thread explicit timestamps through the production
+        service signatures.</strong> Rejected.
+        <code>createInvoice</code>, <code>close</code>,
+        <code>recordMovement</code> and <code>markAsPaid</code> would
+        each grow a clock parameter, or the application would grow an
+        injected <code>Clock</code>, so that one non-production caller
+        could ask for a date in the past. That is a demo concern pushed
+        into four production APIs and into every test and call site that
+        touches them. It is also the more “correct-looking” option,
+        which is worth recording as the cost of this decision: the SQL
+        here duplicates knowledge of which tables carry timestamps, and
+        that duplication is the price of keeping the production surface
+        clean.</p>
+        <p><strong>Randomised offsets.</strong> Rejected, and this is
+        the sharper of the two. A randomised spread would look more
+        natural and would make the baseline unreproducible — “what does
+        the demo show?” would have no answer, the pinned guarantees
+        would hold only probabilistically, and a failing integration
+        test could not be reproduced from the same seed. The demo
+        baseline is a contract. Every number in the offset table is
+        fixed, and there is no random source anywhere in the path.</p>
+        <p><strong>Clock manipulation, Testcontainers-style.</strong>
+        Rejected because it does not exist. The timestamps come from
+        PostgreSQL’s <code>now()</code> column defaults and from JPA
+        auditing inside a live application; there is no seam to freeze
+        or advance a running database’s clock across a sequence of
+        committed service calls, and faking the JVM clock would not move
+        the DB defaults.</p>
+        <p><strong>Shift the due dates too, for consistency.</strong>
+        Rejected. Due dates are what put invoices into the overdue and
+        due-soon windows, which are pinned guarantees. Moving them would
+        empty exactly the reports the seeder works hardest to
+        populate.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li>Seeded <code>Erstellt am</code> dates now read as
+        <strong>months of trading history</strong> rather than one
+        repeated timestamp.</li>
+        <li>The <strong>period presets differ</strong>: profit filters
+        on movement dates (booking basis) and cash flow on payment dates
+        (ADR 025), and the offset table places activity in the 30-day,
+        90-day and older-than-90 bands for both — so the two filters
+        answer differently from each other as well as across
+        windows.</li>
+        <li><strong>Time-series features can be built against the
+        demo.</strong> The charts that were unbuildable now have a
+        distribution to draw.</li>
+        <li><strong>The offset table is the single place the shape of
+        history is tuned.</strong> Changing when something happened is
+        one number, not a rewrite. Its comment carries the three
+        constraints any edit has to preserve: purchases before the sales
+        that draw on them, all three booking bands populated, all three
+        payment bands populated.</li>
+        <li>The step <strong>duplicates knowledge</strong> of which
+        columns carry timestamps. A future table with its own
+        <code>created_at</code> will not be spread until it is added
+        here — accepted deliberately over the alternative of a clock
+        parameter on four production methods.</li>
+        <li>Nothing about the API changes: <strong>no spec bump, no
+        migration, no frontend work.</strong> The same endpoints return
+        the same shapes over better-distributed data.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-027-deterministic-temporal-spread-of-demo-data"
+      id="toc-adr-027-deterministic-temporal-spread-of-demo-data">ADR
+      027: Deterministic Temporal Spread of Demo Data</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
