@@ -13,7 +13,7 @@ const TRANSLATIONS = {
     footer: { tagline: 'Inventory management demo', apiLatency: 'API {{ms}} ms' },
     logoutPage: {
       title: 'Logged out',
-      message: 'You have been logged out.',
+      message: 'You have been logged out. Thank you for using {{app}}.',
       backToLanding: 'Back to start page',
       loginAgain: 'Log in again'
     }
@@ -22,7 +22,7 @@ const TRANSLATIONS = {
     common: { appName: 'Bestandskontrolle', language: 'Sprache' },
     logoutPage: {
       title: 'Abgemeldet',
-      message: 'Sie wurden abgemeldet.',
+      message: 'Sie wurden abgemeldet. Danke, dass Sie {{app}} genutzt haben.',
       backToLanding: 'Zur Startseite',
       loginAgain: 'Erneut anmelden'
     }
@@ -59,10 +59,13 @@ describe('LogoutComponent', () => {
     await fixture.whenStable();
   });
 
-  it('render_defaultLanguage_showsLoggedOutMessage', () => {
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'You have been logged out.'
-    );
+  it('render_default_showsAcknowledgedMessageWithAppName', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    // the app name is interpolated, so each language thanks the visitor for its own product name
+    expect(host.textContent).toContain('You have been logged out. Thank you for using StockEase.');
+    // the confirmation the message alone did not carry
+    expect(host.querySelector('.logout-icon')?.textContent?.trim()).toBe('check_circle');
   });
 
   it('render_default_showsLandingAndLoginActions', () => {

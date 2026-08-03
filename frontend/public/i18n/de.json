@@ -17,7 +17,14 @@
       "tryUser": "Als Benutzer testen",
       "resetNotice": "Demodaten - werden nächtlich um 03:00 UTC zurückgesetzt"
     },
-    "loginCta": "Anmelden"
+    "loginCta": "Anmelden",
+    "screenshots": {
+      "title": "Ein Blick in die Anwendung",
+      "dashboard": "Dashboard mit Kennzahlen und Diagrammen",
+      "profit": "Gewinnbericht auf Wareneinsatzbasis",
+      "cashflow": "Cashflow im Zeitverlauf auf Zahlungsbasis",
+      "duedates": "Überwachung der Fälligkeiten"
+    }
   },
   "footer": {
     "tagline": "Bestandsverwaltung - Demo",
@@ -28,7 +35,7 @@
   },
   "logoutPage": {
     "title": "Abgemeldet",
-    "message": "Sie wurden abgemeldet.",
+    "message": "Sie wurden abgemeldet. Danke, dass Sie {{app}} genutzt haben.",
     "backToLanding": "Zur Startseite",
     "loginAgain": "Erneut anmelden"
   },
@@ -46,9 +53,9 @@
   },
   "notFound": {
     "title": "Seite nicht gefunden",
+    "outOfStock": "Diese Seite ist nicht auf Lager.",
     "message": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
-    "goHome": "Zur Startseite",
-    "goDashboard": "Zum Dashboard"
+    "goHome": "Zur Startseite"
   },
   "nav": {
     "dashboard": "Übersicht",

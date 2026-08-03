@@ -7,11 +7,16 @@
   <main class="logout-content">
     <mat-card class="logout-card">
       <mat-card-header class="logout-card-header">
+        <!-- Confirmation, not success: nothing was achieved here, something was completed. Tertiary
+             rather than a green this palette does not define. -->
+        <mat-icon class="logout-icon" aria-hidden="true">check_circle</mat-icon>
         <mat-card-title>{{ 'logoutPage.title' | translate }}</mat-card-title>
       </mat-card-header>
 
       <mat-card-content>
-        <p class="logout-message">{{ 'logoutPage.message' | translate }}</p>
+        <p class="logout-message">
+          {{ 'logoutPage.message' | translate: { app: 'common.appName' | translate } }}
+        </p>
 
         <!-- Two exits rather than one: signing out is as often the start of signing in as a
              different user as it is the end of the visit. -->

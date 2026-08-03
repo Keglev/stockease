@@ -6,6 +6,7 @@ import { ApiEnvelope } from '../../core/api/api-envelope';
 import { AuthService, UserRole } from '../../core/auth/auth.service';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { LanguageService } from '../../core/i18n/language.service';
+import { ThemeService } from '../../core/theme/theme.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { LandingComponent } from './landing.component';
@@ -31,12 +32,28 @@ const TRANSLATIONS = {
         tryUser: 'Try as User',
         resetNotice: 'Demo data - resets nightly at 03:00 UTC'
       },
-      loginCta: 'Login'
+      loginCta: 'Login',
+      screenshots: {
+        title: 'A look inside',
+        dashboard: 'Dashboard with key figures and charts',
+        profit: 'COGS-based profit reporting',
+        cashflow: 'Payment-basis cash flow over time',
+        duedates: 'Due-date monitoring'
+      }
     }
   },
   de: {
     common: { appName: 'Bestandskontrolle', language: 'Sprache' },
-    landing: { loginCta: 'Anmelden' }
+    landing: {
+      loginCta: 'Anmelden',
+      screenshots: {
+        title: 'Ein Blick in die Anwendung',
+        dashboard: 'Dashboard mit Kennzahlen und Diagrammen',
+        profit: 'Gewinnbericht auf Wareneinsatzbasis',
+        cashflow: 'Cashflow im Zeitverlauf auf Zahlungsbasis',
+        duedates: 'Überwachung der Fälligkeiten'
+      }
+    }
   }
 };
 
@@ -109,6 +126,50 @@ describe('LandingComponent', () => {
 
   it('render_defaultLanguage_showsTranslatedDescription', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(DESCRIPTION);
+  });
+
+  /** Points the page at one language/theme pair and lets the recomputed sources render. */
+  async function choose(lang: string, theme: string): Promise<void> {
+    TestBed.inject(LanguageService).setLanguage(lang);
+    TestBed.inject(ThemeService).setTheme(theme);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function screenshotSources(): (string | null)[] {
+    return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.landing-screenshot img')).map((img) =>
+      img.getAttribute('src')
+    );
+  }
+
+  it('screenshots_default_renderFourFiguresWithComputedSrc', async () => {
+    await choose('de', 'light');
+
+    expect(screenshotSources()).toEqual([
+      '/assets/landing/dashboard-de-light.png',
+      '/assets/landing/profit-de-light.png',
+      '/assets/landing/cashflow-de-light.png',
+      '/assets/landing/duedates-de-light.png'
+    ]);
+    // A screenshot with no alt is a decoration, and these carry the argument of the section
+    const alts = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.landing-screenshot img'));
+    expect(alts).toHaveLength(4);
+    expect(alts.every((img) => (img.getAttribute('alt') ?? '').length > 0)).toBe(true);
+  });
+
+  it('screenshots_languageAndThemeChange_swapAllSources', async () => {
+    await choose('de', 'light');
+
+    await choose('en', 'dark');
+
+    // all four follow both toggles at once - the swap is what the section exists to demonstrate
+    expect(screenshotSources()).toEqual([
+      '/assets/landing/dashboard-en-dark.png',
+      '/assets/landing/profit-en-dark.png',
+      '/assets/landing/cashflow-en-dark.png',
+      '/assets/landing/duedates-en-dark.png'
+    ]);
   });
 
   it('render_loginCta_pointsAtLoginRoute', () => {
