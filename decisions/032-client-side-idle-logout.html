@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+032-client-side-idle-logout · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-032-idle-sign-out-is-a-client-concern-with-a-warning">ADR
+        032: Idle Sign-Out Is a Client Concern, With a Warning</h1>
+        <p><strong>Scope</strong>: [Cross-cutting]
+        <strong>Status</strong>: Accepted <strong>Date</strong>: August
+        3, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The application authenticates with a single JWT, held in
+        <code>localStorage</code> (ADR 013), and <code>JwtUtil</code>
+        issues it with a <strong>ten-hour</strong> lifetime
+        (<code>EXPIRATION_TIME = 1000 * 60 * 60 * 10</code>). There is
+        no refresh token and no server-side session record.</p>
+        <p>That design has one consequence nobody had addressed:
+        <strong>a token stays valid on an unattended screen.</strong> A
+        user who signs in at nine and walks away at ten leaves a browser
+        that can act as them until seven in the evening. On a warehouse
+        terminal or a shared desk that is the realistic exposure, and it
+        is not one the backend can close - the server sees requests, and
+        a user who has walked away makes none. Silence is
+        indistinguishable from a user who is reading.</p>
+        <p>The application already has an expiry experience, built for
+        the other case: the 401 interceptor calls
+        <code>auth.logout()</code> and navigates to <code>/login</code>
+        with <code>reason=expired</code>, and the login page shows
+        <code>login.sessionExpired</code>. It is tested and it reads
+        correctly. What it lacks is any way to be triggered by
+        inactivity rather than by a rejected request.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Idle sign-out is implemented on the client, after 30
+        minutes of inactivity, with a warning 2 minutes before, and it
+        lands on exactly the existing <code>reason=expired</code>
+        destination.</strong></p>
+        <p><code>IdleLogoutService</code> arms two timers and re-arms
+        both on activity - <code>mousedown</code>, <code>keydown</code>,
+        <code>touchstart</code>, <code>wheel</code> on the document,
+        plus router <code>NavigationEnd</code>. Re-arming is throttled
+        to once a second, because a scroll gesture would otherwise
+        rebuild the timers on every wheel tick; the cost is that
+        activity in the final second before a deadline may not register,
+        which against a thirty-minute window is not a distinction worth
+        paying for.</p>
+        <p><strong>Both durations are product rulings, deliberately not
+        user-configurable.</strong> A setting that lets a reader extend
+        their own idle window is a setting that gets set to “never”,
+        which is the same as not having the feature.</p>
+        <p><strong>The service is started by the shell</strong>, not at
+        bootstrap. The shell <em>is</em> the authenticated area - it
+        exists only behind the guard - so the timer cannot run while a
+        visitor reads the landing page, and it stops when the shell is
+        destroyed.</p>
+        <p><strong>The warning is a snackbar with no
+        auto-dismiss.</strong> A warning that disappears on its own is
+        worse than none: it leaves the reader signed out with no memory
+        of having been told. It goes when it is answered, when activity
+        elsewhere clears it, or when the logout it announced actually
+        happens. Its action button counts as activity and is reported
+        explicitly, because that click lands inside the CDK overlay and
+        raises no document event the service listens for.</p>
+        <p><strong>The destination is byte-identical to the
+        interceptor’s</strong> -
+        <code>router.navigate(['/login'], { queryParams: { reason: 'expired' } })</code>.
+        One expiry path, one tested experience. A second “you were
+        signed out for inactivity” screen would be a second thing to
+        translate, style and keep correct, and the user’s question in
+        both cases is the same: why am I looking at a login form?</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Refresh tokens with a short-lived access
+        token.</strong> Rejected, and this is the decision worth being
+        explicit about. It is the textbook answer, and it would make
+        idle timeout a server concern: stop refreshing, the session
+        dies. The cost is a second token, a rotation endpoint,
+        refresh-race handling when several requests expire at once,
+        revocation storage, and a decision about where the refresh token
+        lives that reopens ADR 013. That is a substantial auth surface
+        for a portfolio inventory system whose threat model is an
+        unattended screen. The single-token design is a deliberate
+        simplification, and this ADR keeps it.</p>
+        <p><strong>Server-side session tracking with a last-seen
+        timestamp.</strong> Rejected. It makes every request a write,
+        and it still cannot see a user who is reading rather than
+        clicking - the server would sign out someone in the middle of a
+        long report because they had not made a request in thirty
+        minutes.</p>
+        <p><strong>A shorter hard token lifetime instead of an idle
+        timer.</strong> Rejected: it signs out active users. Ten hours
+        is chosen to cover a working day, and cutting it to thirty
+        minutes would put a login form in front of someone
+        mid-invoice.</p>
+        <p><strong>No warning, just the sign-out.</strong> Rejected.
+        Thirty minutes is long enough that the sign-out arrives as a
+        surprise, and unsaved work in an open invoice form is lost with
+        it. Two minutes is time to finish a sentence and click.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li><strong>An active user is still signed out at the token’s
+        hard limit.</strong> The idle timer bounds the walk-away case;
+        the ten-hour expiry bounds everything else, and someone working
+        a long shift will meet it. When they do, the 401 interceptor
+        delivers them to the same screen with the same message.</li>
+        <li><strong>Idle detection does not survive a closed
+        tab.</strong> The timers live in the page, so closing the
+        browser leaves a token valid until its own expiry. The next
+        request with it gets a 401 once that lapses, and the interceptor
+        covers the case - but until then the token is live. Closing that
+        hole is what refresh tokens are for, and this ADR declines them
+        knowingly.</li>
+        <li><strong>The idle window is not visible to the
+        backend</strong>, so nothing server-side can be reasoned about
+        from it. Any future audit of “when did this session end” would
+        see the token’s issue and expiry, not the moment the client gave
+        up.</li>
+        <li><strong>The settings page now states the rule</strong> (“You
+        will be signed out automatically after 30 minutes of
+        inactivity”), because a timeout the user cannot discover is one
+        they experience only as a fault.</li>
+        <li><strong>Two constants carry the design</strong>,
+        <code>IDLE_TIMEOUT_MS</code> and <code>IDLE_WARNING_MS</code>.
+        Changing the policy is changing those two numbers, not the logic
+        around them.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-032-idle-sign-out-is-a-client-concern-with-a-warning"
+      id="toc-adr-032-idle-sign-out-is-a-client-concern-with-a-warning">ADR
+      032: Idle Sign-Out Is a Client Concern, With a Warning</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
