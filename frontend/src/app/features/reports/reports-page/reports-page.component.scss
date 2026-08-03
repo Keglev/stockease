@@ -48,6 +48,29 @@
   margin-bottom: 1rem;
 }
 
+// One row for the figures and the view toggle, on the tabs that have both. The toggle used to take
+// a line of its own directly beneath a strip that already had free width to its right, which cost a
+// whole row of vertical space on three tabs for nothing.
+.strip-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  // The children carry the row's margin now, so they must not add their own inside it.
+  .totals-strip,
+  .view-toggle {
+    margin-bottom: 0;
+  }
+
+  // Pushed right by auto margin rather than by space-between, so the toggle still sits at the end
+  // when the strip is absent - which is what a period with no data renders.
+  .view-toggle {
+    margin-left: auto;
+  }
+}
+
 .total-item {
   display: flex;
   flex-direction: column;
