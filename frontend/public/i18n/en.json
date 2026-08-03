@@ -445,7 +445,9 @@
     "role": {
       "ADMIN": "Administrator",
       "USER": "User"
-    }
+    },
+    "idleWarning": "You will be signed out in 2 minutes due to inactivity.",
+    "idleStay": "Stay signed in"
   },
   "help": {
     "title": "Help",
@@ -475,6 +477,13 @@
       "auto": "Automatic (follows language)",
       "date": "Date format",
       "number": "Numbers & currency"
+    },
+    "session": {
+      "title": "Session",
+      "username": "Username",
+      "role": "Role",
+      "loginTime": "Signed in since",
+      "idleNote": "You will be signed out automatically after 30 minutes of inactivity."
     }
   },
   "dashboard": {

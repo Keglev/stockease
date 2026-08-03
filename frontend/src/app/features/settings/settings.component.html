@@ -71,4 +71,34 @@
       </mat-form-field>
     </mat-card-content>
   </mat-card>
+
+  <mat-card class="settings-card">
+    <mat-card-content>
+      <h2 class="settings-section-title">{{ 'settings.session.title' | translate }}</h2>
+
+      <!-- Read-only facts about the current token, not settings. They sit here because this is
+           where a reader comes to ask "who am I signed in as?" - and the idle note below only
+           makes sense next to them. -->
+      <dl class="settings-facts">
+        <dt>{{ 'settings.session.username' | translate }}</dt>
+        <dd class="settings-username">{{ username() ?? '—' }}</dd>
+
+        <dt>{{ 'settings.session.role' | translate }}</dt>
+        <dd class="settings-role">
+          @if (role(); as currentRole) {
+            {{ 'shell.role.' + currentRole | translate }}
+          } @else {
+            —
+          }
+        </dd>
+
+        <dt>{{ 'settings.session.loginTime' | translate }}</dt>
+        <!-- An em dash rather than an empty cell when the token carries no iat: a blank row reads
+             as a rendering fault, where a dash says the value is genuinely not there. -->
+        <dd class="settings-login-time">{{ (loginTime() | appDateTime) || '—' }}</dd>
+      </dl>
+
+      <p class="settings-idle-note">{{ 'settings.session.idleNote' | translate }}</p>
+    </mat-card-content>
+  </mat-card>
 </div>

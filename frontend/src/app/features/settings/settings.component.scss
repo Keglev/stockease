@@ -35,3 +35,25 @@
 .settings-date-format {
   margin-bottom: 1rem;
 }
+
+// Label above value rather than a two-column grid: at phone width a side-by-side pair would give
+// the timestamp - the longest value here - a column too narrow to hold it on one line.
+.settings-facts {
+  margin: 0;
+}
+
+.settings-facts dt {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+.settings-facts dd {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-body-large);
+}
+
+.settings-idle-note {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}

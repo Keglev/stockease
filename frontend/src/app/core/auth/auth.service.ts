@@ -14,6 +14,8 @@ interface JwtPayload {
   sub?: string;
   role?: string;
   exp?: number;
+  /** Issued-at, seconds since the epoch; the backend has always set it, nothing read it until now. */
+  iat?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +40,25 @@ export class AuthService {
     }
     const role = this.payload()?.role;
     return role === 'ADMIN' || role === 'USER' ? role : null;
+  });
+
+  /**
+   * Who the token says is signed in, for display only.
+   *
+   * <p>Not gated on {@link isAuthenticated}, unlike {@link role}: that one guards what the UI
+   * offers, so an expired token must answer null. This one only labels a settings row.
+   */
+  readonly username = computed<string | null>(() => this.payload()?.sub ?? null);
+
+  /**
+   * When this session began, from the token's `iat` claim.
+   *
+   * <p>Null when the claim is missing rather than falling back to "now": a made-up sign-in time
+   * would look exactly like a real one, and the settings row shows an em dash instead.
+   */
+  readonly loginTime = computed<Date | null>(() => {
+    const iat = this.payload()?.iat;
+    return typeof iat === 'number' ? new Date(iat * 1000) : null;
   });
 
   constructor() {

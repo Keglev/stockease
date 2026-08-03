@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatButtonToggle } from '@angular/material/button-toggle';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
@@ -8,10 +8,10 @@ import { Router, RouterOutlet, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { routes } from '../../app.routes';
-import { TOKEN_STORAGE_KEY } from '../../core/auth/auth.service';
+import { AuthService, TOKEN_STORAGE_KEY } from '../../core/auth/auth.service';
 import { FormatService } from '../../core/format/format.service';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
-import { LanguageService } from '../../core/i18n/language.service';
+import { LANGUAGE_STORAGE_KEY, LanguageService } from '../../core/i18n/language.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
@@ -20,10 +20,18 @@ import { SettingsComponent } from './settings.component';
 const TRANSLATIONS = {
   en: {
     common: { language: 'Language', themeLight: 'Light mode', themeDark: 'Dark mode' },
+    shell: { role: { ADMIN: 'Administrator', USER: 'User' } },
     settings: {
       title: 'Settings',
       appearance: { title: 'Appearance' },
       language: { en: 'English', de: 'Deutsch' },
+      session: {
+        title: 'Session',
+        username: 'Username',
+        role: 'Role',
+        loginTime: 'Signed in since',
+        idleNote: 'You will be signed out automatically after 30 minutes of inactivity.'
+      },
       formats: {
         title: 'Formats',
         auto: 'Automatic (follows language)',
@@ -34,10 +42,18 @@ const TRANSLATIONS = {
   },
   de: {
     common: { language: 'Sprache', themeLight: 'Helles Design', themeDark: 'Dunkles Design' },
+    shell: { role: { ADMIN: 'Administrator', USER: 'Benutzer' } },
     settings: {
       title: 'Einstellungen',
       appearance: { title: 'Darstellung' },
       language: { en: 'English', de: 'Deutsch' },
+      session: {
+        title: 'Sitzung',
+        username: 'Benutzername',
+        role: 'Rolle',
+        loginTime: 'Angemeldet seit',
+        idleNote: 'Nach 30 Minuten Inaktivität werden Sie automatisch abgemeldet.'
+      },
       formats: {
         title: 'Formate',
         auto: 'Automatisch (folgt der Sprache)',
@@ -53,12 +69,32 @@ describe('SettingsComponent', () => {
   let theme: ThemeService;
   let language: LanguageService;
 
-  async function setUp(): Promise<void> {
+  /** The token facts the Session section displays; the page only reads them. */
+  interface Session {
+    username: string | null;
+    role: 'ADMIN' | 'USER' | null;
+    loginTime: Date | null;
+  }
+
+  const SIGNED_IN: Session = { username: 'alice', role: 'ADMIN', loginTime: new Date(2026, 11, 31, 15, 4) };
+
+  async function setUp(session: Session = SIGNED_IN): Promise<void> {
     localStorage.clear();
+    // Pinned, because the Session row renders a timestamp: without it the expected format would
+    // depend on the browser language and so on spec file order.
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [SettingsComponent],
       providers: [
+        {
+          provide: AuthService,
+          useValue: {
+            username: signal(session.username),
+            role: signal(session.role),
+            loginTime: signal(session.loginTime)
+          }
+        },
         { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
         provideTestTranslations(TRANSLATIONS)
       ]
@@ -282,6 +318,30 @@ describe('SettingsComponent', () => {
       .toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
     expect(host().querySelector('.settings-number-format .mat-mdc-select-value')?.textContent)
       .toContain('1,234.56');
+  });
+
+  it('render_signedInSession_showsUsernameRoleAndFormattedTime', async () => {
+    await setUp({ username: 'alice', role: 'ADMIN', loginTime: new Date(2026, 11, 31, 15, 4) });
+
+    expect(host().querySelector('.settings-username')?.textContent?.trim()).toBe('alice');
+    expect(host().querySelector('.settings-role')?.textContent?.trim()).toBe('Administrator');
+    // Through the same pipe the rest of the app uses, so it follows language and format overrides.
+    expect(host().querySelector('.settings-login-time')?.textContent?.trim()).toBe('12/31/2026 03:04 PM');
+  });
+
+  it('render_missingSessionClaims_showsEmDashesNotBlanks', async () => {
+    await setUp({ username: null, role: null, loginTime: null });
+
+    // A blank cell reads as a rendering fault; the dash says the value is genuinely absent.
+    expect(host().querySelector('.settings-username')?.textContent?.trim()).toBe('—');
+    expect(host().querySelector('.settings-role')?.textContent?.trim()).toBe('—');
+    expect(host().querySelector('.settings-login-time')?.textContent?.trim()).toBe('—');
+  });
+
+  it('render_sessionSection_carriesTheIdleNote', async () => {
+    await setUp();
+
+    expect(host().querySelector('.settings-idle-note')?.textContent).toContain('30 minutes');
   });
 
   it('route_appSettings_resolvesInsideTheShell', async () => {

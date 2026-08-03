@@ -1,15 +1,17 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSnackBar, MatSnackBarRef, TextOnlySnackBar } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { IdleLogoutService } from '../../core/auth/idle-logout.service';
 import { DEMO_MODE } from '../../core/config/demo-mode';
 import { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from '../../core/layout/layout';
 import { FooterComponent } from '../footer/footer.component';
@@ -58,6 +60,14 @@ export class ShellComponent {
 
   protected readonly sidenavOpened = signal(this.isDesktop());
 
+  private readonly idle = inject(IdleLogoutService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly translate = inject(TranslateService);
+
+  /** The open warning, so activity elsewhere and the logout itself can take it back. */
+  private warningRef: MatSnackBarRef<TextOnlySnackBar> | null = null;
+
   constructor() {
     this.breakpoints
       .observe(PHONE_MEDIA_QUERY)
@@ -73,6 +83,33 @@ export class ShellComponent {
         // on desktop it is permanent furniture, below desktop it is a transient overlay.
         this.sidenavOpened.set(state.matches);
       });
+
+    // Started here rather than at bootstrap because this component IS the authenticated area: it
+    // exists only behind the guard, so the timer cannot run while a visitor reads the landing page.
+    this.idle.start();
+    this.destroyRef.onDestroy(() => {
+      this.idle.stop();
+      this.warningRef?.dismiss();
+    });
+
+    effect(() => (this.idle.warningActive() ? this.showWarning() : this.warningRef?.dismiss()));
+  }
+
+  /**
+   * Raises the idle warning, and keeps a handle so it can be taken back.
+   *
+   * <p>No duration: a warning that disappears on its own is worse than none, because it leaves the
+   * reader signed out with no memory of being told. It goes when it is answered, when activity
+   * elsewhere clears the warning, or when the logout it announced actually happens.
+   */
+  private showWarning(): void {
+    this.warningRef = this.snackBar.open(
+      this.translate.instant('shell.idleWarning') as string,
+      this.translate.instant('shell.idleStay') as string
+    );
+    // Pressing the action is activity the service cannot see: the click lands in the overlay, not
+    // on the document, so it is reported rather than inferred.
+    this.warningRef.onAction().subscribe(() => this.idle.notifyActivity());
   }
 
   protected toggleSidenav(): void {

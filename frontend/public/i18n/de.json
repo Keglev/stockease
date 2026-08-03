@@ -445,7 +445,9 @@
     "role": {
       "ADMIN": "Administrator",
       "USER": "Benutzer"
-    }
+    },
+    "idleWarning": "Sie werden in 2 Minuten wegen Inaktivität abgemeldet.",
+    "idleStay": "Angemeldet bleiben"
   },
   "help": {
     "title": "Hilfe",
@@ -475,6 +477,13 @@
       "auto": "Automatisch (folgt der Sprache)",
       "date": "Datumsformat",
       "number": "Zahlen & Währung"
+    },
+    "session": {
+      "title": "Sitzung",
+      "username": "Benutzername",
+      "role": "Rolle",
+      "loginTime": "Angemeldet seit",
+      "idleNote": "Nach 30 Minuten Inaktivität werden Sie automatisch abgemeldet."
     }
   },
   "dashboard": {

@@ -140,4 +140,42 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBe(true);
     expect(service.role()).toBe('ADMIN');
   });
+
+  it('username_tokenWithSub_readsIt', () => {
+    localStorage.setItem(TOKEN_STORAGE_KEY, futureToken());
+    const { service } = setUp();
+
+    expect(service.username()).toBe('alice');
+  });
+
+  it('loginTime_tokenWithIat_convertsSecondsToADate', () => {
+    const issued = Math.floor(Date.UTC(2026, 7, 3, 9, 30) / 1000);
+    localStorage.setItem(
+      TOKEN_STORAGE_KEY,
+      tokenWith({ sub: 'alice', role: 'USER', exp: Math.floor(Date.now() / 1000) + 3600, iat: issued })
+    );
+    const { service } = setUp();
+
+    // JWT counts seconds, JavaScript milliseconds; the factor of a thousand is the whole method.
+    expect(service.loginTime()?.getTime()).toBe(issued * 1000);
+  });
+
+  it('sessionFacts_tokenWithoutThoseClaims_areNull', () => {
+    localStorage.setItem(
+      TOKEN_STORAGE_KEY,
+      tokenWith({ role: 'USER', exp: Math.floor(Date.now() / 1000) + 3600 })
+    );
+    const { service } = setUp();
+
+    // Null rather than a guess: an invented sign-in time is indistinguishable from a real one.
+    expect(service.username()).toBeNull();
+    expect(service.loginTime()).toBeNull();
+  });
+
+  it('sessionFacts_noToken_areNull', () => {
+    const { service } = setUp();
+
+    expect(service.username()).toBeNull();
+    expect(service.loginTime()).toBeNull();
+  });
 });
