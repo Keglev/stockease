@@ -1,6 +1,5 @@
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -31,6 +30,7 @@ import {
   SupplierProfitReport,
   SupplierResponse
 } from '../../../core/api/api-models';
+import { FormatService } from '../../../core/format/format.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
@@ -40,6 +40,9 @@ import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-deta
 import { AuditService } from '../../audit/audit.service';
 import { ReportService } from '../report.service';
 import { SupplierService } from '../../suppliers/supplier.service';
+import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
+import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
+import { AppDatePipe } from '../../../shared/format/app-date.pipe';
 
 export const PROFIT_TAB = 0;
 // Cash flow sits second, next to profit: the two answer the paired questions of what the business
@@ -85,9 +88,7 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 @Component({
   selector: 'app-reports-page',
   imports: [
-    ChartComponent,
-    CurrencyPipe,
-    DatePipe,
+    AppCurrencyPipe, AppDateTimePipe, AppDatePipe, ChartComponent,
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
@@ -117,6 +118,7 @@ export class ReportsPageComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
+  private readonly format = inject(FormatService);
   private readonly downloadCsvFile = inject(CSV_DOWNLOADER);
 
   protected readonly profitColumns = ['name', 'sku', 'revenue', 'cost', 'grossProfit'];
@@ -498,7 +500,9 @@ export class ReportsPageComponent implements OnInit {
       // Every active narrowing at once: the period is already in the data, and the user and text
       // filters are applied here, so the download says what the screen says.
       this.filteredChangeRows().map((row) => [
-        row.createdAt,
+        // Through the same service the screen's column uses, so the file matches what was on
+        // screen instead of shipping a raw ISO timestamp beside localized numbers.
+        this.format.formatDateTime(row.createdAt),
         row.username,
         row.productName,
         this.translate.instant('audit.field.' + row.field) as string,
@@ -835,7 +839,7 @@ export class ReportsPageComponent implements OnInit {
     const headers = columns.map((column) =>
       this.translate.instant(`${keyPrefix}${column}`)
     ) as string[];
-    this.downloadCsvFile(filename, buildCsv(headers, rows, this.language.currentLang()));
+    this.downloadCsvFile(filename, buildCsv(headers, rows, this.format.numberLocale()));
   }
 
   /** Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app. */

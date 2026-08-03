@@ -152,6 +152,23 @@ describe('ProductListComponent', () => {
     expect(host().textContent).toContain('Laptop');
   });
 
+  it('priceCell_germanLanguage_rendersGermanCurrencyNotEnUs', async () => {
+    await setUp(of(pageWith(['Laptop'])));
+
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+
+    // The defect this closes: with no LOCALE_ID registered the app rendered "€99.50" here in both
+    // languages. The pipe now asks FormatService, so a German reader sees a German amount.
+    // Normalised on code points: which no-break space Intl puts before the symbol varies by ICU
+    // version, and this assertion is about the currency format rather than about that.
+    const text = [...(host().textContent ?? '')]
+      .map((ch) => ([0xa0, 0x202f].includes(ch.codePointAt(0) ?? 0) ? ' ' : ch))
+      .join('');
+    expect(text).toContain('99,50 €');
+    expect(text).not.toContain('€99.50');
+  });
+
   it('load_serviceErrors_rendersErrorMessage', async () => {
     await setUp(throwError(() => new Error('Authentication required.')));
 

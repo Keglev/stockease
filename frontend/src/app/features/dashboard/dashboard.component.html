@@ -57,7 +57,7 @@
         class="kpi-value"
         [class.kpi-negative]="!error() && grossProfit() < 0"
       >
-        {{ error() ? '—' : (grossProfit() | currency: 'EUR') }}
+        {{ error() ? '—' : (grossProfit() | appCurrency) }}
       </p>
     </mat-card-content>
   </mat-card>
@@ -101,7 +101,7 @@
               <tr class="slice-row">
                 <td>{{ slice.name }}</td>
                 <td class="slice-value" [class.kpi-negative]="slice.value < 0">
-                  {{ slice.value | currency: 'EUR' }}
+                  {{ slice.value | appCurrency }}
                 </td>
               </tr>
             }
@@ -143,7 +143,7 @@
                 <a [routerLink]="['/app/invoices', row.invoiceId]">{{ row.invoiceNumber }}</a>
                 <span class="due-type">{{ 'invoices.type.' + row.invoiceType | translate }}</span>
                 <span class="due-counterparty">{{ row.counterparty }}</span>
-                <span class="due-date">{{ row.dueDate | date: 'mediumDate' }}</span>
+                <span class="due-date">{{ row.dueDate | appDate }}</span>
               </li>
             }
           </ul>

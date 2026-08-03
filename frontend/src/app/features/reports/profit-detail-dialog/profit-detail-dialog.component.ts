@@ -1,10 +1,10 @@
-import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProductProfitReport } from '../../../core/api/api-models';
+import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 
 /**
  * Read-only drill-down on one product's profit row, opened from the profit table. It is a pure
@@ -12,7 +12,7 @@ import { ProductProfitReport } from '../../../core/api/api-models';
  */
 @Component({
   selector: 'app-profit-detail-dialog',
-  imports: [CurrencyPipe, MatButtonModule, MatDialogModule, TranslatePipe],
+  imports: [AppCurrencyPipe, MatButtonModule, MatDialogModule, TranslatePipe],
   templateUrl: './profit-detail-dialog.component.html',
   styleUrl: './profit-detail-dialog.component.scss'
 })

@@ -469,6 +469,12 @@
     "language": {
       "en": "English",
       "de": "Deutsch"
+    },
+    "formats": {
+      "title": "Formats",
+      "auto": "Automatic (follows language)",
+      "date": "Date format",
+      "number": "Numbers & currency"
     }
   },
   "dashboard": {
