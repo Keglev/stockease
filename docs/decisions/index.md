@@ -43,5 +43,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 029 - Help Content as Typed, Lazy-Loaded Modules](029-help-content-architecture.md) - **[Frontend]**
 - [ADR 030 - User Preferences Live in localStorage, Not on the Server](030-settings-in-local-storage.md) - **[Frontend]**
 - [ADR 031 - Runtime Date and Currency Formatting Through Intl, Not LOCALE_ID](031-runtime-formatting-via-intl.md) - **[Frontend]**
+- [ADR 032 - Idle Sign-Out Is a Client Concern, With a Warning](032-client-side-idle-logout.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

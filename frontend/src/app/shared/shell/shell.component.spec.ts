@@ -1,12 +1,16 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MatSidenav } from '@angular/material/sidenav';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter, Router } from '@angular/router';
+import { Subject } from 'rxjs';
 
 import { AuthService, TOKEN_STORAGE_KEY } from '../../core/auth/auth.service';
+import { IdleLogoutService } from '../../core/auth/idle-logout.service';
 import { DEMO_MODE } from '../../core/config/demo-mode';
 import { LanguageService } from '../../core/i18n/language.service';
 import { PHONE_MEDIA_QUERY } from '../../core/layout/layout';
@@ -32,7 +36,9 @@ const TRANSLATIONS = {
       openNavigation: 'Open navigation',
       demoBadge: 'DEMO',
       demoTooltip: 'Demo system - data resets nightly',
-      role: { ADMIN: 'Administrator', USER: 'User' }
+      role: { ADMIN: 'Administrator', USER: 'User' },
+      idleWarning: 'You will be signed out in 2 minutes.',
+      idleStay: 'Stay signed in'
     }
   },
   de: {
@@ -50,7 +56,9 @@ const TRANSLATIONS = {
     shell: {
       logout: 'Abmelden',
       openNavigation: 'Navigation öffnen',
-      role: { ADMIN: 'Administrator', USER: 'Benutzer' }
+      role: { ADMIN: 'Administrator', USER: 'Benutzer' },
+      idleWarning: 'Sie werden in 2 Minuten abgemeldet.',
+      idleStay: 'Angemeldet bleiben'
     }
   }
 };
@@ -63,9 +71,54 @@ function validToken(): string {
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.signature`;
 }
 
+/** Records the shell's calls, so arming and disarming are observable without real timers. */
+class IdleLogoutServiceStub {
+  starts = 0;
+  stops = 0;
+  activityReports = 0;
+  readonly warning = signal(false);
+  readonly warningActive = this.warning.asReadonly();
+
+  start(): void {
+    this.starts++;
+  }
+
+  stop(): void {
+    this.stops++;
+  }
+
+  notifyActivity(): void {
+    this.activityReports++;
+  }
+}
+
+/**
+ * Stands in for MatSnackBar. A provider stub rather than the real overlay for the reason ADR 016
+ * records for the chart engine: the overlay container is shared across a Vitest worker, a
+ * TestBed is not - and the action here is a subscription, which a stub can hand back directly.
+ */
+class MatSnackBarStub {
+  readonly opened: [string, string | undefined][] = [];
+  dismissed = 0;
+  private action = new Subject<void>();
+
+  open(message: string, action?: string) {
+    this.opened.push([message, action]);
+    this.action = new Subject<void>();
+    return { onAction: () => this.action.asObservable(), dismiss: () => this.dismissed++ };
+  }
+
+  /** What pressing "Stay signed in" does. */
+  pressAction(): void {
+    this.action.next();
+  }
+}
+
 describe('ShellComponent', () => {
   let fixture: ComponentFixture<ShellComponent>;
   let breakpoints: BreakpointObserverStub;
+  let idle: IdleLogoutServiceStub;
+  let snackBar: MatSnackBarStub;
 
   function text(): string {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -112,6 +165,8 @@ describe('ShellComponent', () => {
     // Both tiers pinned explicitly: desktop=false alone means tablet, where the toolbar is still the
     // wide one. Only the phone tier drops the role label and the logout text.
     breakpoints = new BreakpointObserverStub(desktop, { [PHONE_MEDIA_QUERY]: phone });
+    idle = new IdleLogoutServiceStub();
+    snackBar = new MatSnackBarStub();
 
     await TestBed.configureTestingModule({
       imports: [ShellComponent],
@@ -120,6 +175,8 @@ describe('ShellComponent', () => {
         provideHttpClientTesting(),
         { provide: DEMO_MODE, useValue: demoMode },
         { provide: BreakpointObserver, useValue: breakpoints },
+        { provide: IdleLogoutService, useValue: idle },
+        { provide: MatSnackBar, useValue: snackBar },
         // Registered so the logout navigation resolves instead of rejecting mid-test.
         provideRouter([
           { path: 'logout', children: [] },
@@ -400,6 +457,53 @@ describe('ShellComponent', () => {
 
     // The same handler the toolbar calls; the duplication is in the markup, not in the behaviour.
     expect(auth.isAuthenticated()).toBe(false);
+  });
+
+  it('shell_created_startsTheIdleTimer', async () => {
+    await setUp();
+
+    // The shell is the authenticated area, so arming here is what keeps the timer off public pages.
+    expect(idle.starts).toBe(1);
+    expect(idle.stops).toBe(0);
+  });
+
+  it('shell_destroyed_stopsTheIdleTimer', async () => {
+    await setUp();
+
+    fixture.destroy();
+
+    expect(idle.stops).toBe(1);
+  });
+
+  it('idleWarning_raised_opensASnackbarWithTheStayAction', async () => {
+    await setUp();
+
+    idle.warning.set(true);
+    await settle();
+
+    expect(snackBar.opened).toEqual([['You will be signed out in 2 minutes.', 'Stay signed in']]);
+  });
+
+  it('idleWarningAction_pressed_reportsActivityToTheIdleService', async () => {
+    await setUp();
+    idle.warning.set(true);
+    await settle();
+
+    snackBar.pressAction();
+
+    // The click lands inside the overlay, so the service cannot see it as a document event.
+    expect(idle.activityReports).toBe(1);
+  });
+
+  it('idleWarning_cleared_dismissesTheSnackbar', async () => {
+    await setUp();
+    idle.warning.set(true);
+    await settle();
+
+    idle.warning.set(false);
+    await settle();
+
+    expect(snackBar.dismissed).toBe(1);
   });
 
   it('logout_clicked_clearsAuthenticationState', async () => {

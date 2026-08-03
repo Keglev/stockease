@@ -5,9 +5,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '@ngx-translate/core';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { DATE_FORMATS, FormatService, NUMBER_FORMATS } from '../../core/format/format.service';
 import { LanguageService, SUPPORTED_LANGUAGES } from '../../core/i18n/language.service';
 import { THEME_MODES, ThemeService } from '../../core/theme/theme.service';
+import { AppDateTimePipe } from '../../shared/format/app-date-time.pipe';
 
 /** The amount the number options are previewed with; large enough to show a grouping separator. */
 const SAMPLE_AMOUNT = 1234.56;
@@ -27,7 +29,8 @@ const SAMPLE_AMOUNT = 1234.56;
     MatCardModule,
     MatFormFieldModule,
     MatSelectModule,
-    TranslatePipe
+    TranslatePipe,
+    AppDateTimePipe
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
@@ -36,6 +39,12 @@ export class SettingsComponent {
   private readonly theme = inject(ThemeService);
   private readonly language = inject(LanguageService);
   private readonly format = inject(FormatService);
+  private readonly auth = inject(AuthService);
+
+  // Read straight off the auth service: these describe the token, and this page only displays them.
+  protected readonly username = this.auth.username;
+  protected readonly role = this.auth.role;
+  protected readonly loginTime = this.auth.loginTime;
 
   protected readonly themes = THEME_MODES;
   protected readonly languages = SUPPORTED_LANGUAGES;
