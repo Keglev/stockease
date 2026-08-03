@@ -281,6 +281,17 @@ describe('ShellComponent', () => {
     );
   }
 
+  /** Asserted on the element rather than a literal: the name is what differs most between languages. */
+  function appName(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('mat-toolbar .app-name');
+  }
+
+  it('toolbar_desktopTier_showsTheAppName', async () => {
+    await setUp();
+
+    expect(appName()?.textContent?.trim().length).toBeGreaterThan(0);
+  });
+
   it('toolbar_phoneTier_showsIconLogoutAndNoRoleText', async () => {
     localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
     await setUp(false, false, true);
@@ -309,24 +320,23 @@ describe('ShellComponent', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.role')?.textContent?.trim()).toBe('User');
   });
 
-  it('toolbar_tabletTier_keepsTextLogoutAndRoleText', async () => {
+  it('toolbar_tabletTier_showsNameAndTextLogoutButNoRoleText', async () => {
     localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
     await setUp(false, false, false);
 
-    // Below desktop is not automatically phone: the tablet toolbar is unchanged by this tier.
-    expect(logoutIcon()).toBeNull();
+    // The tablet keeps the full name - in German it is the widest item in the row - and pays for it
+    // with the role label, which is the one thing there that repeats what the user already knows.
+    expect(appName()?.textContent?.trim().length).toBeGreaterThan(0);
     expect(logoutButton()).not.toBeNull();
-    expect((fixture.nativeElement as HTMLElement).querySelector('.role')).not.toBeNull();
+    expect(logoutIcon()).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.role')).toBeNull();
   });
 
-  it('toolbar_phoneTier_keepsAppNameAndDemoBadge', async () => {
+  it('toolbar_phoneTier_dropsTheNameButKeepsTheDemoBadge', async () => {
     await setUp(true, false, true);
 
-    // The identity of the deployment survives the narrowing; only the repeated label goes. Asserted
-    // on the rendered span rather than a literal, so the check does not depend on the active
-    // language - and the app name is exactly the term that differs most between the two.
-    const name = (fixture.nativeElement as HTMLElement).querySelector('mat-toolbar > span:not(.spacer):not(.demo-badge):not(.role)');
-    expect(name?.textContent?.trim().length).toBeGreaterThan(0);
+    // The name is the single widest item, and the hamburger and badge already say where you are.
+    expect(appName()).toBeNull();
     expect(demoBadge()).not.toBeNull();
   });
 

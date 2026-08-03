@@ -10,7 +10,12 @@
       <mat-icon>menu</mat-icon>
     </button>
   }
-  <span>{{ 'common.appName' | translate }}</span>
+  <!-- Dropped at phone width, where it is the single widest item in the row and the one the
+       hamburger and the badge already stand in for. "Bestandskontrolle" is 177px against
+       "StockEase"'s 103px, which is why the German toolbar overflowed further than the English one. -->
+  @if (!isPhone()) {
+    <span class="app-name">{{ 'common.appName' | translate }}</span>
+  }
   @if (demoMode) {
     <span class="demo-badge" [title]="'shell.demoTooltip' | translate">
       {{ 'shell.demoBadge' | translate }}
@@ -21,9 +26,10 @@
   <app-language-toggle />
   <app-theme-toggle />
 
-  <!-- Dropped from the DOM at phone width rather than hidden with CSS: the label is being removed
-       because it does not fit, and a display:none span still announces itself to a screen reader. -->
-  @if (!isPhone() && role(); as currentRole) {
+  <!-- Desktop only, not merely non-phone: the tablet toolbar has to hold the full app name, and at
+       600px in German that is what the role label costs. Dropped from the DOM rather than hidden
+       with CSS, because a display:none span still announces itself to a screen reader. -->
+  @if (isDesktop() && role(); as currentRole) {
     <span class="role">{{ 'shell.role.' + currentRole | translate }}</span>
   }
 
