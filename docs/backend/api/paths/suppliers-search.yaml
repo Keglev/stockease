@@ -1,0 +1,43 @@
+get:
+  summary: Search suppliers by name
+  description: |
+    Case-insensitive substring search over live suppliers, built for the typeahead pickers: results
+    are alphabetical and capped at 20, and soft-deleted suppliers are excluded because the list
+    exists to be picked from.
+
+    Nothing matching returns **200 with an empty array**, deliberately unlike
+    `GET /api/products/search`, which answers 204 with a body. That shape is a documented defect
+    rather than a convention worth carrying onto new surface; ADR 028 records the divergence, and
+    correcting the older endpoint is tracked separately.
+
+    The cap is not pagination. A term that matches more than twenty suppliers is a term to narrow,
+    which is why the client requires three characters before it asks at all.
+  operationId: searchSuppliersByName
+  tags:
+    - Suppliers
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: name
+      in: query
+      required: true
+      description: Search term (substring, case-insensitive)
+      schema:
+        type: string
+        example: acme
+  responses:
+    '200':
+      description: Matching suppliers, empty if none match (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/SupplierResponse'
+          example:
+            - id: 1
+              name: Acme Trading
+              address: 1 Main St
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

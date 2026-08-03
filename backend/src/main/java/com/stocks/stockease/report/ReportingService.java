@@ -2,6 +2,7 @@ package com.stocks.stockease.report;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +10,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.stocks.stockease.shared.SearchLimits;
 
 import lombok.RequiredArgsConstructor;
 
@@ -95,6 +98,46 @@ public class ReportingService {
               AND (CAST(:to AS date) IS NULL OR i.paid_at < CAST(:to AS date) + INTERVAL '1 day')
             """;
 
+    /**
+     * The one predicate that scopes a cash-flow query to a single product.
+     *
+     * <p>A fragment rather than a second copy of each query for the same reason the inflow and
+     * outflow expressions are shared: the timeline and the per-product rows must never disagree
+     * about what a product's cash flow is, and a forked query is how they would start to. Null
+     * {@code productId} leaves every line in, so the unscoped call is the same query it always was.
+     */
+    private static final String CASH_FLOW_PRODUCT_FILTER = """
+              AND (CAST(:productId AS bigint) IS NULL OR ii.product_id = :productId)
+            """;
+
+    /**
+     * The products one supplier has actually sold this business, matched by name.
+     *
+     * <p>The linkage runs through the purchase ledger rather than through master data, because there
+     * is no supplier column on a product: a product belongs to whoever was invoiced for it. Stock
+     * enters only through closed purchase invoices (ADR 021), so every stocked product is reachable
+     * this way - and a product bought from two suppliers is reachable under both, which is correct
+     * rather than a duplicate to be resolved. DISTINCT collapses the repeat purchases of one product
+     * from one supplier, which is what makes this a picker rather than a purchase history.
+     *
+     * <p>Soft-deleted products are excluded, matching the product API's own search: this list exists
+     * to be picked from, and a retired product is not something to start a new enquiry about. The
+     * history endpoints still answer for one reached by identifier.
+     */
+    private static final String SUPPLIER_PRODUCT_SEARCH = """
+            SELECT DISTINCT p.id, p.name, p.sku, p.quantity, p.purchase_price, p.created_at
+            FROM invoice_item ii
+            JOIN invoice i ON i.id = ii.invoice_id
+            JOIN product p ON p.id = ii.product_id
+            WHERE i.supplier_id = :supplierId
+              AND i.invoice_type = 'PURCHASE'
+              AND i.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              AND p.name ILIKE '%' || :name || '%'
+            ORDER BY p.name
+            LIMIT :limit
+            """;
+
     /** Outstanding value per invoice, netting out quantities already returned. */
     private static final String OUTSTANDING_SUBQUERY = """
             JOIN (SELECT ii.invoice_id, SUM((ii.quantity - ii.returned_qty) * ii.unit_price) AS outstanding
@@ -130,6 +173,15 @@ public class ReportingService {
         BigDecimal outflow = rs.getBigDecimal("outflow");
         return new CashFlowProductRow(rs.getLong("id"), rs.getString("name"), rs.getString("sku"),
                 rs.getBoolean("deleted"), inflow, outflow, inflow.subtract(outflow));
+    };
+
+    private static final RowMapper<SupplierProduct> SUPPLIER_PRODUCT_MAPPER = (rs, rowNum) -> {
+        BigDecimal price = rs.getBigDecimal("purchase_price");
+        int quantity = rs.getInt("quantity");
+        // Derived here rather than selected, matching how the product API mints the same field.
+        return new SupplierProduct(rs.getLong("id"), rs.getString("name"), rs.getString("sku"), quantity, price,
+                price == null ? null : price.multiply(BigDecimal.valueOf(quantity)),
+                rs.getObject("created_at", LocalDateTime.class));
     };
 
     private static final RowMapper<CashFlowTimelineBucket> CASH_FLOW_TIMELINE_MAPPER = (rs, rowNum) -> {
@@ -521,21 +573,74 @@ public class ReportingService {
      * @param to last payment date to count, or {@code null} for no upper bound
      * @return one bucket per month that moved money, oldest first
      */
-    public List<CashFlowTimelineBucket> cashFlowTimeline(LocalDate from, LocalDate to) {
+    public List<CashFlowTimelineBucket> cashFlowTimeline(LocalDate from, LocalDate to, Long productId) {
         // A month nothing was paid in produces no bucket rather than a zero one. Generating the empty
         // months would need a date series bounded by the open-ended window this endpoint accepts, and
         // the chart plots the categories it is handed - so an idle month is a gap in the axis, which
-        // is what an idle month is.
+        // is what an idle month is. Scoping to a product only narrows which lines are counted, so a
+        // product with a quiet month has a gap there for the same reason the whole business does.
         String sql = "SELECT to_char(date_trunc('month', i.paid_at), 'YYYY-MM') AS month,\n"
                 + CASH_FLOW_INFLOW + " AS inflow,\n"
                 + CASH_FLOW_OUTFLOW + " AS outflow\n"
                 + CASH_FLOW_SOURCE
+                + CASH_FLOW_PRODUCT_FILTER
                 + "GROUP BY date_trunc('month', i.paid_at)\n"
                 + "ORDER BY date_trunc('month', i.paid_at)\n";
         return jdbcClient.sql(sql)
                 .param("from", from)
                 .param("to", to)
+                .param("productId", productId)
                 .query(CASH_FLOW_TIMELINE_MAPPER)
                 .list();
+    }
+
+    /**
+     * Reports whether a product row exists at all, soft-deleted or not.
+     *
+     * <p>Native for the same reason {@link #stockHistory} is: {@code @SQLRestriction} hides retired
+     * products from every mapped query, and a report asked about one should 404 only when there is
+     * no such product, never because it has since been retired.
+     *
+     * @param productId product identifier
+     * @return {@code true} if a product row carries that identifier
+     */
+    public boolean productExists(long productId) {
+        return jdbcClient.sql("SELECT 1 FROM product WHERE id = :id")
+                .param("id", productId)
+                .query(Integer.class)
+                .optional()
+                .isPresent();
+    }
+
+    /**
+     * Searches the products one supplier has sold this business, by a case-insensitive name match.
+     *
+     * <p>Discovery follows the supply relationship rather than the catalogue: the caller has already
+     * named a supplier, and the useful next question is which of that supplier's products they mean.
+     * See {@link #SUPPLIER_PRODUCT_SEARCH} for how the linkage is drawn and why a product bought from
+     * two suppliers answers under both.
+     *
+     * @param supplierId supplier identifier
+     * @param name search substring (case-insensitive)
+     * @return the supplier's matching products, alphabetical, capped for typeahead use; empty if the
+     *         supplier has bought nothing matching, or empty optional if no such live supplier exists
+     */
+    public Optional<List<SupplierProduct>> supplierProducts(long supplierId, String name) {
+        // Mapped-query semantics on purpose, unlike the product check above: this list is a picker,
+        // and a soft-deleted supplier is not one to start a new enquiry against.
+        Integer found = jdbcClient.sql("SELECT 1 FROM supplier WHERE id = :id AND deleted_at IS NULL")
+                .param("id", supplierId)
+                .query(Integer.class)
+                .optional()
+                .orElse(null);
+        if (found == null) {
+            return Optional.empty();
+        }
+        return Optional.of(jdbcClient.sql(SUPPLIER_PRODUCT_SEARCH)
+                .param("supplierId", supplierId)
+                .param("name", name)
+                .param("limit", SearchLimits.TYPEAHEAD_LIMIT)
+                .query(SUPPLIER_PRODUCT_MAPPER)
+                .list());
     }
 }

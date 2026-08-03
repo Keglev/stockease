@@ -111,7 +111,7 @@ class ReportCashFlowControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void cashFlowTimeline_withBuckets_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.cashFlowTimeline(null, null)).thenReturn(timeline());
+        Mockito.when(reportingService.cashFlowTimeline(null, null, null)).thenReturn(timeline());
 
         mockMvc.perform(get("/api/reports/cash-flow/timeline"))
                 .andExpect(status().isOk())
@@ -119,7 +119,7 @@ class ReportCashFlowControllerTest {
                 .andExpect(jsonPath("$[0].outflow").value(45.00))
                 .andExpect(jsonPath("$[0].net").value(-45.00));
 
-        Mockito.verify(reportingService).cashFlowTimeline(null, null);
+        Mockito.verify(reportingService).cashFlowTimeline(null, null, null);
     }
 
     @Test
@@ -127,14 +127,14 @@ class ReportCashFlowControllerTest {
     void cashFlowTimeline_withPeriod_passesBothBoundsThrough() throws Exception {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 3, 31);
-        Mockito.when(reportingService.cashFlowTimeline(from, to)).thenReturn(timeline());
+        Mockito.when(reportingService.cashFlowTimeline(from, to, null)).thenReturn(timeline());
 
         mockMvc.perform(get("/api/reports/cash-flow/timeline")
                         .param("from", "2026-01-01").param("to", "2026-03-31"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].month").value("2026-02"));
 
-        Mockito.verify(reportingService).cashFlowTimeline(from, to);
+        Mockito.verify(reportingService).cashFlowTimeline(from, to, null);
     }
 
     @Test
@@ -146,7 +146,34 @@ class ReportCashFlowControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
 
-        Mockito.verify(reportingService, Mockito.never()).cashFlowTimeline(Mockito.any(), Mockito.any());
+        Mockito.verify(reportingService, Mockito.never()).cashFlowTimeline(Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void cashFlowTimeline_withProductId_scopesTheSeries() throws Exception {
+        Mockito.when(reportingService.productExists(7L)).thenReturn(true);
+        Mockito.when(reportingService.cashFlowTimeline(null, null, 7L)).thenReturn(timeline());
+
+        mockMvc.perform(get("/api/reports/cash-flow/timeline").param("productId", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].month").value("2026-02"));
+
+        Mockito.verify(reportingService).cashFlowTimeline(null, null, 7L);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void cashFlowTimeline_withUnknownProductId_returns404() throws Exception {
+        Mockito.when(reportingService.productExists(999L)).thenReturn(false);
+
+        mockMvc.perform(get("/api/reports/cash-flow/timeline").param("productId", "999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Entity not found: Product with ID 999 not found."));
+
+        // an unknown product is the caller's mistake, not an empty series
+        Mockito.verify(reportingService, Mockito.never()).cashFlowTimeline(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -154,6 +181,6 @@ class ReportCashFlowControllerTest {
         mockMvc.perform(get("/api/reports/cash-flow/timeline"))
                 .andExpect(status().isUnauthorized());
 
-        Mockito.verify(reportingService, Mockito.never()).cashFlowTimeline(Mockito.any(), Mockito.any());
+        Mockito.verify(reportingService, Mockito.never()).cashFlowTimeline(Mockito.any(), Mockito.any(), Mockito.any());
     }
 }

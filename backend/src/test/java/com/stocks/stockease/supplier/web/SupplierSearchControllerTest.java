@@ -1,0 +1,78 @@
+package com.stocks.stockease.supplier.web;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.stocks.stockease.config.test.TestConfig;
+import com.stocks.stockease.supplier.Supplier;
+import com.stocks.stockease.supplier.SupplierService;
+
+/** Slice tests for GET /api/suppliers/search, the supplier typeahead. */
+@ExtendWith(MockitoExtension.class)
+@WebMvcTest(SupplierController.class)
+@Import({TestConfig.class, SupplierMethodSecurityTestConfig.class})
+class SupplierSearchControllerTest {
+
+    @MockitoBean
+    private SupplierService supplierService;
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    private Supplier supplier;
+
+    @SuppressWarnings("unused")
+    @BeforeEach
+    void setUpMocks() {
+        supplier = new Supplier(1L, "Acme", "1 Main St", LocalDateTime.of(2026, 1, 2, 3, 4), null);
+        // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
+        Mockito.reset(supplierService);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void searchSuppliersByName_withMatches_returnsMappedList() throws Exception {
+        Mockito.when(supplierService.searchByName("acm")).thenReturn(List.of(supplier));
+
+        mockMvc.perform(get("/api/suppliers/search").param("name", "acm"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Acme"));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void searchSuppliersByName_withNoMatches_returns200WithEmptyArray() throws Exception {
+        Mockito.when(supplierService.searchByName("zzz")).thenReturn(List.of());
+
+        // 200 with [], not the 204-with-body of GET /api/products/search: that shape is a documented
+        // defect the spec itself flags, and ADR 028 records why new search surface does not copy it
+        mockMvc.perform(get("/api/suppliers/search").param("name", "zzz"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    void searchSuppliersByName_asAnonymous_returns401() throws Exception {
+        mockMvc.perform(get("/api/suppliers/search").param("name", "acm"))
+                .andExpect(status().isUnauthorized());
+
+        Mockito.verify(supplierService, Mockito.never()).searchByName(Mockito.any());
+    }
+}

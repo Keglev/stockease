@@ -1,0 +1,21 @@
+:host {
+  display: block;
+  // Wide enough for a supplier or product name without wrapping, capped so a pair of these sits on
+  // one row on desktop rather than stretching to whatever the toolbar leaves.
+  width: 100%;
+  max-width: 20rem;
+}
+
+.typeahead-field {
+  width: 100%;
+}
+
+// A hairline under the field rather than the default 4px bar: this reports that suggestions are on
+// their way, which is a smaller event than a report loading and should not read like one.
+.typeahead-progress {
+  --mat-progress-bar-track-height: 2px;
+}
+
+.typeahead-no-matches {
+  color: var(--mat-sys-on-surface-variant);
+}

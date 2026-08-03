@@ -107,6 +107,31 @@
   margin-bottom: 0.75rem;
 }
 
+// The cascading pickers, read left to right in the order they must be filled. Wraps rather than
+// shrinks below tablet: two search fields squeezed onto one phone line leave neither wide enough to
+// show a product name, which is the whole thing the reader is matching against.
+.search-row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+// The Show button aligns with the fields' boxes rather than their full height, which includes the
+// label above them.
+.search-row button {
+  margin-top: 0.5rem;
+}
+
+// States what the series currently covers, so a scoped timeline is never unexplained - and says
+// "all products" rather than going blank when nothing is scoped.
+.search-scope {
+  margin: 1rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
 .section-title {
   margin: 0 0 0.75rem;
   font: var(--mat-sys-title-medium);

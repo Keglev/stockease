@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.shared.ApiResponse;
@@ -43,6 +44,24 @@ public class SupplierController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<SupplierResponse> getAllSuppliers() {
         return supplierService.findAll().stream().map(SupplierResponse::from).toList();
+    }
+
+    /**
+     * Searches live suppliers by name using a case-insensitive substring match.
+     *
+     * <p>Built for the typeahead pickers: the result is capped and alphabetical, and nothing
+     * matching answers an empty array rather than the 204-with-body that
+     * {@code GET /api/products/search} returns. That endpoint's shape is a documented defect, not a
+     * convention worth carrying onto new surface (ADR 028). Behavior defined in
+     * {@code docs/backend/api/paths/suppliers-search.yaml}.
+     *
+     * @param name search term (substring, case-insensitive)
+     * @return HTTP 200 with the matching suppliers, empty if none match
+     */
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<SupplierResponse> searchSuppliersByName(@RequestParam String name) {
+        return supplierService.searchByName(name).stream().map(SupplierResponse::from).toList();
     }
 
     /**

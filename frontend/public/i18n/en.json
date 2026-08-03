@@ -203,6 +203,7 @@
       "overdueEmpty": "No invoice is overdue."
     },
     "cashFlow": {
+      "allProducts": "All products",
       "inflow": "Inflow",
       "outflow": "Outflow",
       "net": "Net",
@@ -235,7 +236,13 @@
         "newValue": "New value"
       }
     },
+    "search": {
+      "supplier": "Search supplier (min. 3 letters)",
+      "product": "Search product",
+      "noMatches": "No matches"
+    },
     "analytics": {
+      "show": "Show",
       "selectProduct": "Select a product to analyze",
       "priceHistory": "Purchase price over time",
       "stockVsSales": "Stock level vs. units sold",

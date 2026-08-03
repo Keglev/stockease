@@ -167,6 +167,14 @@ export interface paths {
          * @description Case-insensitive substring search. For example, searching "apple" returns products like
          *     "Apple Juice", "APPLE", "Green Apple", etc.
          *     Returns 204 NO_CONTENT when nothing matches.
+         *
+         *     **Known defects, scheduled for correction (unchanged here).** This endpoint answers 204 with a
+         *     body, which is unconventional by HTTP spec, and applies no cap, so a broad term returns the
+         *     whole catalogue. The typeahead endpoints added in 2.14.0 - `/api/suppliers/search` and
+         *     `/api/reports/suppliers/{id}/products/search` - deliberately do neither: they answer 200 with an
+         *     empty array and cap at 20. ADR 028 records why new surface diverges rather than copying this
+         *     shape, and correcting this endpoint is tracked as its own item so the change lands with its own
+         *     contract note for existing callers.
          */
         get: operations["searchProductsByName"];
         put?: never;
@@ -290,6 +298,36 @@ export interface paths {
          *     names this supplier, which surfaces as 409 and rolls the whole transaction back.
          */
         delete: operations["deleteSupplier"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/suppliers/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search suppliers by name
+         * @description Case-insensitive substring search over live suppliers, built for the typeahead pickers: results
+         *     are alphabetical and capped at 20, and soft-deleted suppliers are excluded because the list
+         *     exists to be picked from.
+         *
+         *     Nothing matching returns **200 with an empty array**, deliberately unlike
+         *     `GET /api/products/search`, which answers 204 with a body. That shape is a documented defect
+         *     rather than a convention worth carrying onto new surface; ADR 028 records the divergence, and
+         *     correcting the older endpoint is tracked separately.
+         *
+         *     The cap is not pagination. A term that matches more than twenty suppliers is a term to narrow,
+         *     which is why the client requires three characters before it asks at all.
+         */
+        get: operations["searchSuppliersByName"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -671,8 +709,54 @@ export interface paths {
          *
          *     Months that moved no money are **absent** rather than returned as zeros - an idle month is a gap
          *     in the series, matching how the per-product report omits products that moved nothing.
+         *
+         *     An optional `productId` narrows every bucket to that product's invoice lines. The predicate is a
+         *     shared SQL fragment that matches everything when the parameter is absent, so the unscoped series
+         *     is the same query it always was, and a scoped month always agrees with that product's row in the
+         *     per-product sibling over the same window. A product that moved no money in a month has a gap
+         *     there for the same reason the whole business does.
          */
         get: operations["cashFlowTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/suppliers/{id}/products/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Supplier identifier */
+                id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * Search the products one supplier has sold this business
+         * @description Case-insensitive substring search over the distinct products reachable from that supplier's
+         *     non-deleted, closed purchase invoices. There is no supplier column on a product: a product is a
+         *     supplier's because that supplier was invoiced for it, and since stock enters only through closed
+         *     purchase invoices (ADR 021), every stocked product is reachable this way.
+         *
+         *     A product bought from two suppliers answers under both. That is correct rather than a duplicate
+         *     to resolve - both suppliers really did sell it to us - and repeat purchases of one product from
+         *     one supplier collapse to a single entry, which is what makes this a picker rather than a
+         *     purchase history.
+         *
+         *     Results are alphabetical and capped at 20, and soft-deleted products are excluded, matching the
+         *     supplier typeahead. Nothing matching returns **200 with an empty array**; only an unknown or
+         *     retired supplier yields 404. ADR 028 records why this differs from `GET /api/products/search`.
+         *
+         *     The path sits under `/api/reports` rather than under the supplier API because the aggregation is
+         *     the reporting module's - the linkage is drawn through the purchase ledger, which the supplier
+         *     module cannot read - even though what it describes is a supplier's catalogue. The same reasoning
+         *     placed the customer summary here.
+         */
+        get: operations["supplierProducts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1593,6 +1677,39 @@ export interface components {
              * @example 50
              */
             net: number;
+        };
+        /**
+         * @description A product one supplier has sold this business, reached through the purchase ledger. Carries
+         *     the same fields as `ProductResponse` so either search can feed the same picker, but it is the
+         *     reporting module's own record: that module depends on no other module's types.
+         */
+        SupplierProduct: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            id: number;
+            /** @example Laptop */
+            name: string;
+            /** @example SKU-A1B2C3D4 */
+            sku: string;
+            /**
+             * @description Units currently in stock
+             * @example 50
+             */
+            quantity: number;
+            /** @example 999.99 */
+            purchasePrice: number;
+            /**
+             * @description Stock value, purchase price times quantity
+             * @example 49999.5
+             */
+            totalValue: number;
+            /**
+             * @description ISO-8601 local date-time, serialized without a zone offset
+             * @example 2026-01-02T03:04:00
+             */
+            createdAt: string;
         };
         StockStatusReport: {
             /**
@@ -2850,6 +2967,40 @@ export interface operations {
             };
         };
     };
+    searchSuppliersByName: {
+        parameters: {
+            query: {
+                /** @description Search term (substring, case-insensitive) */
+                name: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching suppliers, empty if none match (ROLE_USER or ROLE_ADMIN) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "id": 1,
+                     *         "name": "Acme Trading",
+                     *         "address": "1 Main St",
+                     *         "createdAt": "2026-01-02T03:04:00"
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["SupplierResponse"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
     getAllCustomers: {
         parameters: {
             query?: never;
@@ -3983,6 +4134,11 @@ export interface operations {
                  * @example 2026-03-31
                  */
                 to?: string;
+                /**
+                 * @description Scope every bucket to one product's lines; omit for the whole business
+                 * @example 3
+                 */
+                productId?: number;
             };
             header?: never;
             path?: never;
@@ -4032,6 +4188,78 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            /** @description `productId` names no product */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "Entity not found: Product with ID 999 not found.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
+        };
+    };
+    supplierProducts: {
+        parameters: {
+            query: {
+                /** @description Search term (substring, case-insensitive) */
+                name: string;
+            };
+            header?: never;
+            path: {
+                /** @description Supplier identifier */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The supplier's matching products, empty if none match (ROLE_USER or ROLE_ADMIN) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "id": 1,
+                     *         "name": "Laptop",
+                     *         "sku": "SKU-A1B2C3D4",
+                     *         "quantity": 50,
+                     *         "purchasePrice": 999.99,
+                     *         "totalValue": 49999.5,
+                     *         "createdAt": "2026-01-02T03:04:00"
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["SupplierProduct"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description No live supplier with that ID */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "Entity not found: Supplier with ID 999 not found.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
         };
     };
     customerSummary: {

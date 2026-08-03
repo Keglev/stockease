@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 import {
   CashFlowReport,
@@ -14,17 +14,18 @@ import {
   InvoiceDueSummary,
   LossReport,
   ProductProfitReport,
-  ProductResponse,
   StockHistoryPoint,
   StockStatusReport,
-  SupplierProfitReport
+  SupplierProduct,
+  SupplierProfitReport,
+  SupplierResponse
 } from '../../../core/api/api-models';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
 import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
-import { ProductService } from '../../products/product.service';
+import { SupplierService } from '../../suppliers/supplier.service';
 import { ReportService } from '../report.service';
 import { ReportsPageComponent } from './reports-page.component';
 
@@ -48,6 +49,7 @@ const TRANSLATIONS = {
         outflow: 'Outflow',
         net: 'Net',
         columns: { name: 'Product', sku: 'SKU', inflow: 'Inflow', outflow: 'Outflow', net: 'Net' },
+        allProducts: 'All products',
         empty: 'No paid invoices in this period.',
         filter: 'Filter by name or SKU'
       },
@@ -94,7 +96,9 @@ const TRANSLATIONS = {
         empty: 'No profit has been recorded yet.',
         suppliersEmpty: 'No supplier has supplied a product yet.'
       },
+      search: { supplier: 'Search supplier', product: 'Search product', noMatches: 'No matches' },
       analytics: {
+        show: 'Show',
         selectProduct: 'Select a product to analyze',
         priceHistory: 'Purchase price over time',
         stockVsSales: 'Stock level vs. units sold',
@@ -232,14 +236,16 @@ const STOCK_HISTORY: StockHistoryPoint[] = [
   { date: '2026-03-14', stockLevel: 32, cumulativeSoldUnits: 8 }
 ];
 
-const PRODUCTS: ProductResponse[] = [
-  { id: 3, name: 'Widget', sku: 'SKU-3', quantity: 32, purchasePrice: 14, totalValue: 448,
-    createdAt: '2026-01-02T03:04:00' }
-];
+/** The supplier typeahead's source; the page never sends the supplier, only searches within it. */
+class SupplierServiceStub {
+  terms: string[] = [];
+  payload: SupplierResponse[] = [
+    { id: 5, name: 'Acme', address: '1 Main St', createdAt: '2026-01-02T03:04:00' }
+  ];
 
-class ProductServiceStub {
-  getAll(): Observable<ProductResponse[]> {
-    return of(PRODUCTS);
+  search(name: string): Observable<SupplierResponse[]> {
+    this.terms.push(name);
+    return of(this.payload);
   }
 }
 
@@ -284,10 +290,33 @@ class ReportServiceStub {
     return of(this.cashFlowPayload);
   }
 
-  cashFlowTimeline(from?: string, to?: string): Observable<CashFlowTimelineBucket[]> {
+  /** Every productId the timeline was asked for, undefined meaning the whole business. */
+  timelineProductIds: (number | undefined)[] = [];
+
+  /** Fails only the scoped call, so the unscoped activation fetch still populates the tab. */
+  timelineFailsWhenScoped = false;
+
+  cashFlowTimeline(from?: string, to?: string, productId?: number): Observable<CashFlowTimelineBucket[]> {
     this.calls.push('cashFlowTimeline');
     this.timelineRanges.push([from, to]);
-    return of(this.timelinePayload);
+    this.timelineProductIds.push(productId);
+    return this.timelineFailsWhenScoped && productId !== undefined
+      ? throwError(() => new Error('Report unavailable.'))
+      : of(this.timelinePayload);
+  }
+
+  /** Search terms the scoped product typeahead sent, so "nothing is fetched" can be asserted. */
+  supplierProductTerms: string[] = [];
+  supplierProductPayload: SupplierProduct[] = [];
+
+  /** Stands in for the preview environment, whose backend does not serve this endpoint yet. */
+  supplierProductsFails = false;
+
+  supplierProducts(supplierId: number, name: string): Observable<SupplierProduct[]> {
+    this.supplierProductTerms.push(name);
+    return this.supplierProductsFails
+      ? throwError(() => new Error('404 Not Found'))
+      : of(this.supplierProductPayload);
   }
 
   profitProducts(from?: string, to?: string): Observable<ProductProfitReport[]> {
@@ -349,6 +378,7 @@ describe('ReportsPageComponent', () => {
   let fixture: ComponentFixture<ReportsPageComponent>;
   let reports: ReportServiceStub;
   let audit: AuditServiceStub;
+  let suppliers: SupplierServiceStub;
   let dialog: { open: ReturnType<typeof vi.fn> };
   let download: ReturnType<typeof vi.fn>;
 
@@ -395,6 +425,7 @@ describe('ReportsPageComponent', () => {
     TestBed.resetTestingModule();
     reports = new ReportServiceStub();
     audit = new AuditServiceStub();
+    suppliers = new SupplierServiceStub();
     dialog = { open: vi.fn() };
     download = vi.fn();
 
@@ -408,7 +439,7 @@ describe('ReportsPageComponent', () => {
         provideTestTranslations(TRANSLATIONS),
         { provide: ReportService, useValue: reports },
         { provide: AuditService, useValue: audit },
-        { provide: ProductService, useValue: new ProductServiceStub() },
+        { provide: SupplierService, useValue: suppliers },
         { provide: MatDialog, useValue: dialog },
         // A provider stub rather than a module mock, for the reason ADR 016 records: the module
         // registry is shared across the specs in a Vitest worker, a TestBed is not.
@@ -582,20 +613,59 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect((fixture.nativeElement as HTMLElement).querySelector('.losses-empty')).not.toBeNull();
   });
 
-  it('analyticsTab_noProduct_showsSelectPrompt', async () => {
+  it('analyticsTab_noProduct_showsSelectPromptAndFetchesNoCatalogue', async () => {
     render();
     await activateTab(6);
 
-    // nothing is preselected, so neither series is fetched until a product is chosen
+    // The tab now fetches nothing at all on activation: the pickers query as they are typed into,
+    // where the old full-list select pulled the whole catalogue down to offer one row of it.
     expect(host().querySelector('.analytics-prompt')).not.toBeNull();
     expect(reports.calls).not.toContain('stockHistory');
+    expect(reports.supplierProductTerms).toEqual([]);
   });
 
-  it('analyticsTab_productChosen_fetchesBothSeries', async () => {
+  it('analytics_productChosenWithoutShow_fetchesNothing', async () => {
     render();
     await activateTab(6);
 
     await chooseAnalyticsProduct(3);
+
+    // choosing states an interest; the Show button is where the user asks. Until then the tab is
+    // exactly as it was, prompt included.
+    expect(reports.historyIds).toEqual([]);
+    expect(audit.productChangeIds).toEqual([]);
+    expect(host().querySelector('.analytics-prompt')).not.toBeNull();
+  });
+
+  it('analytics_activatedWithNothingShown_clearsTheLoadingBar', async () => {
+    render();
+
+    await activateTab(6);
+
+    // loadTab raises the bar for every tab; the analytics tab is the only one that can then decide
+    // it has nothing to fetch, so it has to lower it again rather than leave it running forever
+    expect(host().querySelector('mat-progress-bar')).toBeNull();
+  });
+
+  it('analytics_searchFails_leavesTheTabUsable', async () => {
+    render();
+    await activateTab(6);
+    reports.supplierProductsFails = true;
+
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    await settle();
+
+    // A failing suggestion query is not the tab's error: nothing was asked for yet.
+    expect(host().querySelector('mat-progress-bar')).toBeNull();
+    expect(host().querySelector('.reports-error')).toBeNull();
+  });
+
+  it('analytics_show_fetchesBothSeries', async () => {
+    render();
+    await activateTab(6);
+    await chooseAnalyticsProduct(3);
+
+    await showAnalytics();
 
     // the stock series from the reporting endpoint, the price series from the audit trail
     expect(reports.historyIds).toEqual([3]);
@@ -603,15 +673,42 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(host().querySelector('.analytics-prompt')).toBeNull();
   });
 
-  it('analyticsTab_presetChange_refetchesStockHistoryWithRange', async () => {
+  it('analytics_productSwitchedWithoutShow_keepsShowingTheOldOne', async () => {
+    render();
+    await activateTab(6);
+    await chooseAnalyticsProduct(3);
+    await showAnalytics();
+
+    await chooseAnalyticsProduct(4);
+
+    // switching the picked product is not a request, so nothing is refetched for it
+    expect(reports.historyIds).toEqual([3]);
+  });
+
+  it('analytics_presetChangeWhileShown_refetches', async () => {
     vi.setSystemTime(new Date(2026, 2, 15, 12));
+    render();
+    await activateTab(6);
+    await chooseAnalyticsProduct(3);
+    await showAnalytics();
+
+    await selectAnalyticsPeriod('d90');
+
+    // presets re-query the product already shown: that is the user's standing request, and the
+    // window is which slice of it they want rather than a new subject
+    expect(reports.historyRanges.at(-1)).toEqual(['2025-12-15', '2026-03-15']);
+    expect(reports.historyIds).toEqual([3, 3]);
+  });
+
+  it('analytics_presetChangeBeforeShow_fetchesNothing', async () => {
     render();
     await activateTab(6);
     await chooseAnalyticsProduct(3);
 
     await selectAnalyticsPeriod('d90');
 
-    expect(reports.historyRanges.at(-1)).toEqual(['2025-12-15', '2026-03-15']);
+    // there is no standing request to re-run yet
+    expect(reports.historyIds).toEqual([]);
   });
 
   it('analyticsTab_priceRowsUnparseable_skipsThem', async () => {
@@ -622,6 +719,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     render();
     await activateTab(6);
     await chooseAnalyticsProduct(3);
+    await showAnalytics();
 
     // one usable point is left, and one point is not a history: the no-changes state shows instead
     // of a line drawn through a value that was never a number
@@ -629,15 +727,51 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(host().querySelector('.analytics-no-prices')).not.toBeNull();
   });
 
-  /** Picks a product through the component, the way the select does. */
-  async function chooseAnalyticsProduct(productId: number): Promise<void> {
-    const page = fixture.componentInstance as unknown as {
-      setAnalyticsProduct: (value: number) => void;
+  /** A row of the shape the supplier-scoped product search answers with. */
+  function productRow(id: number): SupplierProduct {
+    return {
+      id,
+      name: `Product ${id}`,
+      sku: `SKU-${id}`,
+      quantity: 1,
+      purchasePrice: 1,
+      totalValue: 1,
+      createdAt: '2026-01-02T03:04:00'
     };
-    page.setAnalyticsProduct(productId);
+  }
+
+  /** Access to the handlers the typeaheads and the Show button call. */
+  function page(): {
+    setAnalyticsSupplier: (value: SupplierResponse | null) => void;
+    setAnalyticsProduct: (value: SupplierProduct | null) => void;
+    showAnalytics: () => void;
+    setAnalyticsPeriod: (value: string) => void;
+    setCashFlowSupplier: (value: SupplierResponse | null) => void;
+    setCashFlowProduct: (value: SupplierProduct | null) => void;
+  } {
+    return fixture.componentInstance as never;
+  }
+
+  async function settle(): Promise<void> {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
+  }
+
+  /**
+   * Picks a product without asking for it, which is now the whole of choosing: the cascade sets a
+   * supplier first, and only the Show button fetches.
+   */
+  async function chooseAnalyticsProduct(productId: number): Promise<void> {
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setAnalyticsProduct(productRow(productId));
+    await settle();
+  }
+
+  /** Presses Show, the only control that fetches the two analytics series. */
+  async function showAnalytics(): Promise<void> {
+    page().showAnalytics();
+    await settle();
   }
 
   /** Clicks an analytics period preset through the component, the way the toggle group does. */
@@ -805,6 +939,63 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     await activateTab(0);
     await activateTab(1);
     expect(reports.timelineRanges).toHaveLength(1);
+  });
+
+  it('cashflow_productScoped_refetchesTimelineWithParam', async () => {
+    render();
+    await activateTab(1);
+
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowProduct(productRow(3));
+    await settle();
+
+    // the timeline is refetched scoped; the first call was the unscoped one on activation
+    expect(reports.timelineProductIds).toEqual([undefined, 3]);
+    // the table is untouched: it already answers the per-product question in rows
+    expect(reports.calls.filter((call) => call === 'cashFlow')).toEqual([]);
+    expect(host().textContent).toContain('Product 3');
+  });
+
+  it('cashflow_scopedFetchFails_clearsTheLoadingBarAndReportsIt', async () => {
+    render();
+    await activateTab(1);
+    reports.timelineFailsWhenScoped = true;
+
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowProduct(productRow(3));
+    await settle();
+
+    // Unlike a suggestion query, this IS the report the reader asked for, so it surfaces - but the
+    // bar comes down either way. Pinned because the analytics tab lost exactly this property.
+    expect(host().querySelector('mat-progress-bar')).toBeNull();
+    expect(host().querySelector('.reports-error')?.textContent).toContain('Report unavailable.');
+  });
+
+  it('cashflow_clear_returnsToAllProducts', async () => {
+    render();
+    await activateTab(1);
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowProduct(productRow(3));
+    await settle();
+
+    page().setCashFlowProduct(null);
+    await settle();
+
+    expect(reports.timelineProductIds).toEqual([undefined, 3, undefined]);
+    // and the scope line says so rather than going blank
+    expect(host().textContent).toContain('All products');
+  });
+
+  it('cashflow_supplierChangedWithNoProductScoped_doesNotRefetch', async () => {
+    render();
+    await activateTab(1);
+
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    await settle();
+
+    // the supplier is a navigation aid, never a query dimension: it narrows the product search and
+    // nothing else, so choosing one asks the server nothing
+    expect(reports.timelineProductIds).toEqual([undefined]);
   });
 
   it('profitTab_defaultPreset_requestsNoParams', async () => {

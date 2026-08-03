@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.SearchLimits;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -41,6 +43,17 @@ public class SupplierService {
      */
     public List<Supplier> findAll() {
         return supplierRepository.findAll();
+    }
+
+    /**
+     * Searches live suppliers by a case-insensitive substring match on name, capped for typeahead use.
+     *
+     * @param name search substring
+     * @return matching suppliers, alphabetical, at most {@link SearchLimits#TYPEAHEAD_LIMIT} of them
+     */
+    public List<Supplier> searchByName(String name) {
+        return supplierRepository.findByNameContainingIgnoreCaseOrderByNameAsc(
+                name, Limit.of(SearchLimits.TYPEAHEAD_LIMIT));
     }
 
     /**

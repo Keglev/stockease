@@ -226,6 +226,36 @@
         <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
       </mat-button-toggle-group>
 
+      <!-- Scopes the TIMELINE and the totals derived from it. The supplier narrows which products
+           can be searched and is never sent: cash flow by supplier would be a different report from
+           this one. Clearing the product returns to the whole business; the table below is
+           untouched, because it already answers the per-product question in rows. -->
+      <div class="search-row">
+        <app-typeahead
+          class="cash-flow-supplier-search"
+          [label]="'reports.search.supplier'"
+          [search]="searchSuppliers"
+          [displayWith]="supplierLabel"
+          (selected)="setCashFlowSupplier($event)"
+        />
+        <app-typeahead
+          #cashFlowProductField
+          class="cash-flow-product-search"
+          [label]="'reports.search.product'"
+          [search]="searchCashFlowProducts"
+          [displayWith]="productLabel"
+          [disabled]="cashFlowSupplier() === null"
+          (selected)="setCashFlowProduct($event)"
+        />
+        <p class="search-scope">
+          @if (cashFlowProduct(); as product) {
+            {{ product.name }}
+          } @else {
+            {{ 'reports.cashFlow.allProducts' | translate }}
+          }
+        </p>
+      </div>
+
       <!-- The view toggle shares the strip's line rather than claiming one below it: the
            figures are the answer and the toggle only chooses how the detail is drawn, so
            the two belong on one row. Wraps on narrow screens. -->
@@ -836,19 +866,35 @@
       <!-- Charts only, and no CSV: these are two derived series, and the rows behind them are
            already exportable elsewhere - the price changes in the Changes tab, the movements in the
            movement ledger. A download here would duplicate both. -->
-      <div class="table-heading table-heading-end">
-        <mat-form-field class="report-filter" appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'reports.analytics.selectProduct' | translate }}</mat-label>
-          <mat-select
-            class="analytics-product-select"
-            [value]="analyticsProductId()"
-            (valueChange)="setAnalyticsProduct($event)"
-          >
-            @for (product of analyticsProducts(); track product.id) {
-              <mat-option [value]="product.id">{{ product.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+      <!-- Supplier first, then that supplier's products, then an explicit ask. The supplier narrows
+           the search and is never sent: these two series are a product's own history, which no
+           supplier scopes. -->
+      <div class="search-row">
+        <app-typeahead
+          class="analytics-supplier-search"
+          [label]="'reports.search.supplier'"
+          [search]="searchSuppliers"
+          [displayWith]="supplierLabel"
+          (selected)="setAnalyticsSupplier($event)"
+        />
+        <app-typeahead
+          #analyticsProductField
+          class="analytics-product-search"
+          [label]="'reports.search.product'"
+          [search]="searchAnalyticsProducts"
+          [displayWith]="productLabel"
+          [disabled]="analyticsSupplier() === null"
+          (selected)="setAnalyticsProduct($event)"
+        />
+        <button
+          matButton="filled"
+          type="button"
+          class="analytics-show"
+          [disabled]="!canShowAnalytics()"
+          (click)="showAnalytics()"
+        >
+          {{ 'reports.analytics.show' | translate }}
+        </button>
       </div>
 
       <mat-button-toggle-group
@@ -864,7 +910,9 @@
         <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
       </mat-button-toggle-group>
 
-      @if (analyticsProductId() === null) {
+      <!-- Keyed on what is SHOWN, not what is picked: choosing a product without pressing Show
+           leaves this prompt exactly where it was, which is what makes the gate visible. -->
+      @if (analyticsShownProductId() === null) {
         <p class="empty-state analytics-prompt">
           {{ 'reports.analytics.selectProduct' | translate }}
         </p>

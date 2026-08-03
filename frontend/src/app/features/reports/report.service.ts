@@ -14,6 +14,7 @@ import {
   ProductProfitReport,
   StockHistoryPoint,
   StockStatusReport,
+  SupplierProduct,
   SupplierProfitReport
 } from '../../core/api/api-models';
 
@@ -152,10 +153,31 @@ export class ReportService {
    *
    * @param from first payment date to count, as an ISO date
    * @param to last payment date to count, as an ISO date
+   * @param productId scope every bucket to one product, or omit for the whole business
    */
-  cashFlowTimeline(from?: string, to?: string): Observable<CashFlowTimelineBucket[]> {
-    return this.http.get<CashFlowTimelineBucket[]>(`${this.baseUrl}/cash-flow/timeline`, {
-      params: this.periodParams(from, to)
+  cashFlowTimeline(from?: string, to?: string, productId?: number): Observable<CashFlowTimelineBucket[]> {
+    let params = this.periodParams(from, to);
+    // Left off entirely when absent, as the period bounds are: the backend reads a missing
+    // parameter as "the whole business" and would reject an empty one.
+    if (productId !== undefined) {
+      params = params.set('productId', productId);
+    }
+    return this.http.get<CashFlowTimelineBucket[]>(`${this.baseUrl}/cash-flow/timeline`, { params });
+  }
+
+  /**
+   * Searches the products one supplier has sold this business, for the typeahead pickers.
+   *
+   * <p>Bare array, empty when nothing matches. Under this module's path rather than the supplier
+   * API's because the purchase-linkage aggregation belongs to the reporting module, which is why
+   * this method lives on this service rather than on the supplier one.
+   *
+   * @param supplierId supplier whose purchases scope the search
+   * @param name search substring, case-insensitive
+   */
+  supplierProducts(supplierId: number, name: string): Observable<SupplierProduct[]> {
+    return this.http.get<SupplierProduct[]>(`${this.baseUrl}/suppliers/${supplierId}/products/search`, {
+      params: new HttpParams().set('name', name)
     });
   }
 }

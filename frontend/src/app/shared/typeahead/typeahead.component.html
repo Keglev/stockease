@@ -1,0 +1,44 @@
+<mat-form-field class="typeahead-field" appearance="outline" subscriptSizing="dynamic">
+  <mat-label>{{ label() | translate }}</mat-label>
+
+  <input
+    matInput
+    class="typeahead-input"
+    type="text"
+    autocomplete="off"
+    [value]="term()"
+    [disabled]="disabled()"
+    [matAutocomplete]="panel"
+    (input)="onInput($any($event.target).value)"
+  />
+
+  @if (hasValue() && !disabled()) {
+    <button
+      matIconButton
+      matSuffix
+      type="button"
+      class="typeahead-clear"
+      [attr.aria-label]="'common.close' | translate"
+      (click)="clear()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+
+  <mat-autocomplete #panel="matAutocomplete" (optionSelected)="onSelected($event)">
+    @for (option of options(); track $index) {
+      <mat-option [value]="option">{{ displayWith()(option) }}</mat-option>
+    }
+    <!-- Not a selectable option: it is the absence of options, and making it clickable would let a
+         user choose "nothing found" as though it were a row. -->
+    @if (showNoMatches()) {
+      <mat-option class="typeahead-no-matches" disabled>
+        {{ 'reports.search.noMatches' | translate }}
+      </mat-option>
+    }
+  </mat-autocomplete>
+</mat-form-field>
+
+@if (searching()) {
+  <mat-progress-bar class="typeahead-progress" mode="indeterminate" />
+}

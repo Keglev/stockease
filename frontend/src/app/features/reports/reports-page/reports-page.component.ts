@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Observable, of } from 'rxjs';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -24,19 +25,21 @@ import {
   InvoiceDueSummary,
   LossReport,
   ProductProfitReport,
-  ProductResponse,
   StockHistoryPoint,
   StockStatusReport,
-  SupplierProfitReport
+  SupplierProduct,
+  SupplierProfitReport,
+  SupplierResponse
 } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
 import { CSV_DOWNLOADER, buildCsv } from '../../../shared/csv/csv-export';
+import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
-import { ProductService } from '../../products/product.service';
 import { ReportService } from '../report.service';
+import { SupplierService } from '../../suppliers/supplier.service';
 
 export const PROFIT_TAB = 0;
 // Cash flow sits second, next to profit: the two answer the paired questions of what the business
@@ -97,7 +100,8 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
     MatTableModule,
     MatTabsModule,
     RouterLink,
-    TranslatePipe
+    TranslatePipe,
+    TypeaheadComponent
   ],
   templateUrl: './reports-page.component.html',
   styleUrl: './reports-page.component.scss'
@@ -107,8 +111,9 @@ export class ReportsPageComponent implements OnInit {
   // Cross-feature, as the dashboard reads the reporting client: the change log belongs to the audit
   // module, and a report over it consumes that module's API rather than copying its endpoint.
   private readonly audit = inject(AuditService);
-  // The analytics picker needs the catalogue, which the movement form reads the same way.
-  private readonly products = inject(ProductService);
+  // The supplier typeaheads read the supplier module's own search; the scoped product search is the
+  // reporting module's, so it comes off ReportService above.
+  private readonly suppliers = inject(SupplierService);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
@@ -228,20 +233,61 @@ export class ReportsPageComponent implements OnInit {
   protected readonly analyticsPeriod = signal<ReportPeriod>('all');
 
   /**
-   * The product the analytics tab is charting, or null until one is chosen.
+   * The supplier each tab's product search is scoped to, and the product chosen under it.
    *
-   * <p>Nothing is preselected: the first product in the catalogue is not a meaningful default, and
-   * a chart of it would read as an answer to a question nobody asked.
+   * <p>The supplier is a navigation aid, not a query dimension. Neither tab ever sends it: it
+   * decides which products the second field can offer, and nothing else. Cash flow scoped by
+   * supplier would be a different report from the one this tab shows, and the analytics series are
+   * a product's own history, which no supplier narrows.
    */
-  protected readonly analyticsProductId = signal<number | null>(null);
+  protected readonly analyticsSupplier = signal<SupplierResponse | null>(null);
+  protected readonly cashFlowSupplier = signal<SupplierResponse | null>(null);
 
   /**
-   * The whole catalogue, for the picker.
+   * The product the analytics tab would chart, and the one it is charting.
    *
-   * <p>The full list at demo scale; the product search endpoint is the path if a catalogue ever
-   * outgrows a select. Loaded from the same service call the movement form's picker uses.
+   * <p>Two signals rather than one, because choosing is not asking. Nothing is fetched until the
+   * Show button is pressed, so the tab can hold a picked product that no chart on screen reflects -
+   * which is the entire point of the gate.
    */
-  protected readonly analyticsProducts = signal<ProductResponse[]>([]);
+  protected readonly analyticsProduct = signal<SupplierProduct | null>(null);
+  protected readonly analyticsShownProductId = signal<number | null>(null);
+
+  /** The product the cash-flow timeline is scoped to, or null for the whole business. */
+  protected readonly cashFlowProduct = signal<SupplierProduct | null>(null);
+
+  /** Enabled only once a product is picked; with nothing picked there is nothing to show. */
+  protected readonly canShowAnalytics = computed(() => this.analyticsProduct() !== null);
+
+  // The typeahead owns the text in its field, so clearing the signal alone would leave the previous
+  // supplier's product still spelled out in a field that can no longer offer it.
+  private readonly analyticsProductField =
+    viewChild<TypeaheadComponent<SupplierProduct>>('analyticsProductField');
+
+  private readonly cashFlowProductField =
+    viewChild<TypeaheadComponent<SupplierProduct>>('cashFlowProductField');
+
+  /** How a supplier and a product read in the typeahead panels. */
+  protected readonly supplierLabel = (supplier: SupplierResponse): string => supplier.name;
+  protected readonly productLabel = (product: SupplierProduct): string => product.name;
+
+  /** Searches bound into the typeaheads; arrow properties so `this` survives the input binding. */
+  protected readonly searchSuppliers = (term: string): Observable<SupplierResponse[]> =>
+    this.suppliers.search(term);
+
+  protected readonly searchAnalyticsProducts = (term: string): Observable<SupplierProduct[]> =>
+    this.searchProductsOf(this.analyticsSupplier(), term);
+
+  protected readonly searchCashFlowProducts = (term: string): Observable<SupplierProduct[]> =>
+    this.searchProductsOf(this.cashFlowSupplier(), term);
+
+  /** No supplier means no scope to search within, and the field is disabled in that state anyway. */
+  private searchProductsOf(supplier: SupplierResponse | null, term: string): Observable<SupplierProduct[]> {
+    if (supplier?.id == null) {
+      return of([]);
+    }
+    return this.reports.supplierProducts(supplier.id, term);
+  }
 
   protected readonly stockHistory = signal<StockHistoryPoint[]>([]);
   protected readonly priceHistory = signal<PricePoint[]>([]);
@@ -391,19 +437,46 @@ export class ReportsPageComponent implements OnInit {
     this.changeUser.set(value);
   }
 
-  protected setAnalyticsProduct(productId: number): void {
-    this.analyticsProductId.set(productId);
+  /**
+   * Narrows which products the analytics search can offer.
+   *
+   * <p>Empties the product field with it: the one that was picked came from the previous supplier's
+   * catalogue, and leaving it under a field naming a different supplier would misdescribe it. The
+   * reset emits null, so the product signal clears through the ordinary path rather than a second
+   * one. Whatever is already charted stays on screen - the user has not asked a new question yet.
+   */
+  protected setAnalyticsSupplier(supplier: SupplierResponse | null): void {
+    this.analyticsSupplier.set(supplier);
+    this.analyticsProductField()?.reset();
+  }
+
+  protected setAnalyticsProduct(product: SupplierProduct | null): void {
+    // Deliberately no fetch. Picking a product states what the user is interested in; the Show
+    // button is where they ask for it, and until then the charts keep answering the last question.
+    this.analyticsProduct.set(product);
+  }
+
+  /** The only path that fetches the two analytics series. */
+  protected showAnalytics(): void {
+    const product = this.analyticsProduct();
+    if (product?.id == null) {
+      return;
+    }
+    this.analyticsShownProductId.set(product.id);
     this.loadAnalytics();
   }
 
-  /** Switches the analytics window and refetches both series over the chosen product. */
+  /** Switches the analytics window and refetches both series over the shown product. */
   protected setAnalyticsPeriod(period: ReportPeriod): void {
     // Same two guards as every other preset group on this page.
     if (!PERIODS.includes(period) || period === this.analyticsPeriod()) {
       return;
     }
     this.analyticsPeriod.set(period);
-    if (this.analyticsProductId() !== null) {
+    // Refetches without a second press of Show, and only for a product already on screen. Asking
+    // for a product is a standing request: the user wants that product's history, and a period is
+    // which slice of it they want to see - not a new question about a different subject.
+    if (this.analyticsShownProductId() !== null) {
       this.loadAnalytics();
     }
   }
@@ -572,18 +645,22 @@ export class ReportsPageComponent implements OnInit {
     });
   }
 
-  /** Loads only the picker; the charts wait for a product, because there is nothing to chart yet. */
+  /**
+   * Fetches the two series for the product the user has asked to see.
+   *
+   * <p>Nothing is loaded when the tab opens, and no catalogue is fetched at all: the pickers query
+   * as they are typed into. A tab that fetched on activation would be answering a question about a
+   * product nobody had named yet.
+   */
   private loadAnalytics(): void {
     this.error.set(null);
-    if (this.analyticsProducts().length === 0) {
-      this.products.getAll().subscribe({
-        next: (rows) => this.analyticsProducts.set(rows),
-        error: (err: Error) => this.fail(err)
-      });
-    }
 
-    const productId = this.analyticsProductId();
+    const productId = this.analyticsShownProductId();
     if (productId === null) {
+      // loadTab raises the bar before dispatching, because every other tab fetches something on
+      // activation. This is the one tab that can decide it has nothing to fetch, so it has to lower
+      // the bar again - otherwise opening it leaves an indeterminate bar running over an idle page.
+      this.loading.set(false);
       return;
     }
     this.loading.set(true);
@@ -671,12 +748,45 @@ export class ReportsPageComponent implements OnInit {
     });
   }
 
+  /**
+   * Narrows which products the cash-flow search can offer; see {@link setAnalyticsSupplier}.
+   *
+   * <p>Clearing the product returns the timeline to the whole business, because a scoped series
+   * under a field that no longer names a product would have nothing on screen explaining it.
+   */
+  protected setCashFlowSupplier(supplier: SupplierResponse | null): void {
+    this.cashFlowSupplier.set(supplier);
+    // Emits null, which returns the timeline to all products if one was scoped and does nothing if
+    // none was; the guard in setCashFlowProduct decides which.
+    this.cashFlowProductField()?.reset();
+  }
+
+  /**
+   * Scopes the timeline to one product, or back to the whole business when cleared.
+   *
+   * <p>Refetches immediately, unlike the analytics tab: there is already a series on screen, and
+   * this changes what it covers rather than answering a question that had no answer before. The
+   * per-product table below is untouched - it already answers the per-product question in rows, and
+   * scoping it to one of them would leave a table of one.
+   */
+  protected setCashFlowProduct(product: SupplierProduct | null): void {
+    // Same guard as every preset toggle on this page: re-picking what is already scoped, or
+    // clearing a field that scoped nothing, is no reason to go back to the server.
+    if ((this.cashFlowProduct()?.id ?? null) === (product?.id ?? null)) {
+      return;
+    }
+    this.cashFlowProduct.set(product);
+    this.loadCashFlow();
+  }
+
   private loadCashFlow(): void {
     this.error.set(null);
     this.loading.set(true);
     const range = periodRange(this.cashFlowPeriod());
+    // undefined rather than null so the service leaves the parameter off entirely.
+    const productId = this.cashFlowProduct()?.id ?? undefined;
 
-    this.reports.cashFlowTimeline(range.from, range.to).subscribe({
+    this.reports.cashFlowTimeline(range.from, range.to, productId).subscribe({
       next: (months) => {
         this.cashFlowMonths.set(months);
         // Translated at build time: chart options are snapshots, as everywhere else on this page.

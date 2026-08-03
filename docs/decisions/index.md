@@ -39,5 +39,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 025 - Cash Flow Report on a Payment Basis](025-cash-flow-payment-basis.md) - **[Cross-cutting]**
 - [ADR 026 - Low Stock Applies Only to Ever-Stocked Products](026-low-stock-ever-stocked.md) - **[Cross-cutting]**
 - [ADR 027 - Deterministic Temporal Spread of Demo Data](027-demo-temporal-spread.md) - **[Cross-cutting]**
+- [ADR 028 - Search-First Navigation and Supplier-Scoped Product Discovery](028-supplier-traceability-search.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

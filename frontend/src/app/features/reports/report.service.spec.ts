@@ -12,6 +12,7 @@ import {
   LossReport,
   ProductProfitReport,
   StockStatusReport,
+  SupplierProduct,
   SupplierProfitReport
 } from '../../core/api/api-models';
 import { ReportService } from './report.service';
@@ -313,6 +314,47 @@ describe('ReportService', () => {
     expect(request.request.params.get('to')).toBe('2026-03-31');
     request.flush(TIMELINE);
 
+    controller.verify();
+  });
+
+  it('cashFlowTimeline_withProductId_serializesTheScope', () => {
+    service.cashFlowTimeline(undefined, undefined, 3).subscribe();
+
+    const request = controller.expectOne(
+      (candidate) => candidate.url === `${BASE_URL}/cash-flow/timeline`
+    );
+    expect(request.request.params.get('productId')).toBe('3');
+    expect(request.request.params.keys()).toEqual(['productId']);
+    request.flush(TIMELINE);
+
+    controller.verify();
+  });
+
+  it('cashFlowTimeline_withoutProductId_omitsTheParam', () => {
+    service.cashFlowTimeline('2026-01-01').subscribe();
+
+    const request = controller.expectOne(
+      (candidate) => candidate.url === `${BASE_URL}/cash-flow/timeline`
+    );
+    // Absent rather than empty: the backend reads a missing parameter as "the whole business".
+    expect(request.request.params.has('productId')).toBe(false);
+    request.flush(TIMELINE);
+
+    controller.verify();
+  });
+
+  it('supplierProducts_withTerm_requestsTheScopedSearchPath', () => {
+    let emitted: SupplierProduct[] | undefined;
+    service.supplierProducts(7, 'lap').subscribe((rows) => (emitted = rows));
+
+    const request = controller.expectOne(
+      (candidate) => candidate.url === `${BASE_URL}/suppliers/7/products/search`
+    );
+    expect(request.request.params.get('name')).toBe('lap');
+    request.flush([]);
+
+    // 200 with an empty array is the endpoint's no-match answer, so the caller gets a list either way
+    expect(emitted).toEqual([]);
     controller.verify();
   });
 
