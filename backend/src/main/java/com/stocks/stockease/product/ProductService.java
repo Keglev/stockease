@@ -274,13 +274,4 @@ public class ProductService {
         }
         return saved;
     }
-
-    /**
-     * Calculates the aggregate inventory value across all products.
-     *
-     * @return sum of quantity times purchase price across all products
-     */
-    public double getTotalStockValue() {
-        return productRepository.calculateTotalStockValue();
-    }
 }

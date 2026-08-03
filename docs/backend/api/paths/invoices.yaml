@@ -3,6 +3,8 @@ get:
   description: |
     Returns every invoice, newest first, as summaries. Counterparties appear as identifiers only -
     names and lines belong to the detail endpoint.
+
+    Provided for API completeness; the bundled UI reads this resource through its paged endpoint.
   operationId: getAllInvoices
   tags:
     - Invoices

@@ -1,6 +1,9 @@
 get:
   summary: Retrieve a single product by ID
-  description: Returns the product if it exists, otherwise 404.
+  description: |
+    Returns the product if it exists, otherwise 404.
+
+    Provided for API completeness; the bundled UI reads this resource through its list endpoints.
   operationId: getProductById
   tags:
     - Products

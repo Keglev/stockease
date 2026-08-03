@@ -12,6 +12,8 @@ get:
   description: |
     There is deliberately no PUT counterpart: customer master-data management is out of scope for
     this API by design.
+
+    Provided for API completeness; the bundled UI reads this resource through its list endpoints.
   operationId: getCustomerById
   tags:
     - Customers

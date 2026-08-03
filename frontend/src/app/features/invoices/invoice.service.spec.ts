@@ -71,32 +71,6 @@ describe('InvoiceService', () => {
     controller = TestBed.inject(HttpTestingController);
   });
 
-  it('getAll_bareArrayResponse_emitsPayloadUnchanged', () => {
-    let emitted: InvoiceSummaryResponse[] | undefined;
-    service.getAll().subscribe((invoices) => (emitted = invoices));
-
-    const request = controller.expectOne(BASE_URL);
-    expect(request.request.method).toBe('GET');
-    request.flush([SUMMARY]);
-
-    // The collection endpoint is not enveloped: the array must arrive untouched.
-    expect(emitted).toEqual([SUMMARY]);
-    expect(emitted?.[0]).not.toHaveProperty('data');
-    controller.verify();
-  });
-
-  it('getAll_backendOrdering_isPreserved', () => {
-    let emitted: InvoiceSummaryResponse[] | undefined;
-    service.getAll().subscribe((invoices) => (emitted = invoices));
-
-    const newest = { ...SUMMARY, id: 9 };
-    controller.expectOne(BASE_URL).flush([newest, SUMMARY]);
-
-    // The backend already orders newest first; the service must not re-sort.
-    expect(emitted?.map((invoice) => invoice.id)).toEqual([9, 1]);
-    controller.verify();
-  });
-
   it('getById_envelopedResponse_emitsUnwrappedData', () => {
     let emitted: InvoiceResponse | undefined;
     service.getById(1).subscribe((invoice) => (emitted = invoice));
@@ -169,8 +143,8 @@ describe('InvoiceService', () => {
     controller.verify();
   });
 
-  // The three lifecycle endpoints are ENVELOPED, in contrast to the bare getAll and create
-  // above: the mixed shape is per-endpoint backend contract, so each is pinned separately.
+  // The three lifecycle endpoints are ENVELOPED, in contrast to the bare create above: the mixed
+  // shape is per-endpoint backend contract, so each is pinned separately.
 
   it('close_envelopedResponse_emitsUnwrappedSummary', () => {
     let emitted: InvoiceSummaryResponse | undefined;
