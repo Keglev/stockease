@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+// The same reading measure the help page uses. This page is a short column of one-line decisions,
+// and letting the cards span a 1440px outlet would put each control a screen-width from its label.
+.settings-page {
+  max-width: 48rem;
+}
+
+.settings-title {
+  margin: 0 0 1.5rem;
+  font: var(--mat-sys-headline-medium);
+}
+
+.settings-card {
+  margin-bottom: 1rem;
+}
+
+.settings-section-title {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-title-medium);
+}

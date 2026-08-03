@@ -122,6 +122,7 @@
     "reports": "Reports",
     "suppliers": "Suppliers",
     "customers": "Customers",
+    "settings": "Settings",
     "help": "Help"
   },
   "audit": {
@@ -458,6 +459,16 @@
       "partners": "Suppliers & customers",
       "demo": "Demo mode & roles",
       "languageTheme": "Language & theme"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": {
+      "title": "Appearance"
+    },
+    "language": {
+      "en": "English",
+      "de": "Deutsch"
     }
   },
   "dashboard": {

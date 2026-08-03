@@ -118,13 +118,39 @@ app-language-toggle {
   min-height: 100%;
 }
 
+// Pushes the bottom list down when there is room and collapses to nothing when there is not, so a
+// short viewport scrolls the drawer instead of overlapping the entries above it.
+.sidenav-spacer {
+  flex: 1 1 auto;
+}
+
+// A line rather than a gap: on a short viewport the spacer is zero and logout sits directly under
+// the last entry, where nothing else would say it is a different kind of thing.
+.sidenav-bottom {
+  flex: 0 0 auto;
+  padding-top: 0;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+// Material's action list leaves its buttons at the browser default width; the nav items above are
+// full-bleed, and a logout row inset from them would read as a stray control.
+.sidenav-logout {
+  width: 100%;
+  text-align: start;
+}
+
 // Hover and active states: Material's nav list ships neither, so a user had no feedback on what
 // was clickable and no indication of where they were.
-.sidenav-inner a[mat-list-item] {
+// The logout button is included: it sits in the same column as the links and a row that does not
+// respond to the pointer reads as decoration. Only the `.active` rule below stays anchor-only,
+// because a command is never the current page.
+.sidenav-inner a[mat-list-item],
+.sidenav-inner button[mat-list-item] {
   transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidenav-inner a[mat-list-item]:hover {
+.sidenav-inner a[mat-list-item]:hover,
+.sidenav-inner button[mat-list-item]:hover {
   background-color: var(--mat-sys-surface-container-highest);
 }
 

@@ -178,7 +178,9 @@ describe('ShellComponent', () => {
       '/app/reports',
       '/app/suppliers',
       '/app/customers',
-      // The help entry lives in its own list at the bottom of the drawer, so it comes last.
+      // Settings then help close the list: both are about the application rather than the
+      // business, so they sit after the seven working areas rather than among them.
+      '/app/settings',
       '/app/help'
     ]);
   });
@@ -348,6 +350,55 @@ describe('ShellComponent', () => {
     logoutIcon()?.click();
     await fixture.whenStable();
 
+    expect(auth.isAuthenticated()).toBe(false);
+  });
+
+  /** The drawer's own logout, which is a command rather than a destination. */
+  function sidebarLogout(): HTMLButtonElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '.sidenav-logout'
+    );
+  }
+
+  it('sidebar_default_offersSettingsAboveHelp', async () => {
+    await setUp();
+    const hrefs = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
+        'mat-nav-list a[mat-list-item]'
+      )
+    ).map((link) => link.getAttribute('href'));
+
+    expect(navLink('/app/settings')).not.toBeNull();
+    // Help stays last in the top list; settings is the entry immediately before it.
+    expect(hrefs.at(-1)).toBe('/app/help');
+    expect(hrefs.at(-2)).toBe('/app/settings');
+  });
+
+  it('sidebarLogout_desktop_isPresentBelowTheNavEntries', async () => {
+    await setUp();
+
+    // Outside the nav list: it is an action, so it must never take routerLinkActive.
+    expect(sidebarLogout()).not.toBeNull();
+    expect(sidebarLogout()?.closest('mat-nav-list')).toBeNull();
+    expect(sidebarLogout()?.textContent).toContain('Log out');
+  });
+
+  it('sidebarLogout_phoneTier_isStillPresent', async () => {
+    await setUp(false, false, true);
+
+    // Pinned at the bottom at every tier, so the drawer answers the same way on a phone.
+    expect(sidebarLogout()).not.toBeNull();
+  });
+
+  it('sidebarLogout_clicked_clearsAuthenticationState', async () => {
+    localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
+    await setUp();
+    const auth = TestBed.inject(AuthService);
+
+    sidebarLogout()?.click();
+    await fixture.whenStable();
+
+    // The same handler the toolbar calls; the duplication is in the markup, not in the behaviour.
     expect(auth.isAuthenticated()).toBe(false);
   });
 
