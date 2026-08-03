@@ -11,15 +11,13 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { FooterComponent } from '../../../shared/footer/footer.component';
-import { LanguageToggleComponent } from '../../../shared/language-toggle/language-toggle.component';
-import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.component';
+import { PublicHeaderComponent } from '../../../shared/public-header/public-header.component';
 
 @Component({
   selector: 'app-login',
   imports: [
     FooterComponent,
-    LanguageToggleComponent,
-    ThemeToggleComponent,
+    PublicHeaderComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,

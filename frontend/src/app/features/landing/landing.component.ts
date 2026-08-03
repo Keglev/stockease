@@ -1,15 +1,16 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService, UserRole } from '../../core/auth/auth.service';
+import { DOCUMENTATION_URL, REPOSITORY_URL } from '../../core/config/external-links';
 import { LanguageService } from '../../core/i18n/language.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { FooterComponent } from '../../shared/footer/footer.component';
-import { LanguageToggleComponent } from '../../shared/language-toggle/language-toggle.component';
-import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
+import { PublicHeaderComponent } from '../../shared/public-header/public-header.component';
 
 /** The four screens the landing shows, in the order a visitor meets them inside the app. */
 const SCREENSHOT_PAGES = ['dashboard', 'profit', 'cashflow', 'duedates'] as const;
@@ -19,6 +20,23 @@ const SCREENSHOT_WIDTH = 1913;
 const SCREENSHOT_HEIGHT = 868;
 
 /**
+ * The six capability cards, each an icon plus a `landing.features.<key>` title/text pair. Held as
+ * data rather than six hand-written blocks in the template: the cards differ only in those three
+ * values, and a repeated block invites the seventh to be written slightly differently.
+ */
+const FEATURES = [
+  { key: 'inventory', icon: 'inventory_2' },
+  { key: 'invoices', icon: 'receipt_long' },
+  { key: 'profit', icon: 'payments' },
+  { key: 'cashflow', icon: 'account_balance' },
+  { key: 'audit', icon: 'history' },
+  { key: 'i18n', icon: 'translate' }
+] as const;
+
+/** The walkthrough steps, numbered in the template from their position here. */
+const STEPS = ['one', 'two', 'three'] as const;
+
+/**
  * Public entry page: describes the application and offers the two ways into it, a normal login
  * and one-click demo access. It is the only route that calls the demo-login endpoint.
  */
@@ -26,9 +44,9 @@ const SCREENSHOT_HEIGHT = 868;
   selector: 'app-landing',
   imports: [
     FooterComponent,
-    LanguageToggleComponent,
-    ThemeToggleComponent,
+    PublicHeaderComponent,
     MatButtonModule,
+    MatIconModule,
     RouterLink,
     TranslatePipe
   ],
@@ -45,11 +63,18 @@ export class LandingComponent {
   protected readonly screenshotWidth = SCREENSHOT_WIDTH;
   protected readonly screenshotHeight = SCREENSHOT_HEIGHT;
 
+  protected readonly features = FEATURES;
+  protected readonly steps = STEPS;
+
+  protected readonly documentationUrl = DOCUMENTATION_URL;
+  protected readonly repositoryUrl = REPOSITORY_URL;
+
   /**
    * The four screenshots, re-pointed whenever the visitor changes language or theme.
    *
    * <p>Sixteen assets exist under a strict naming contract - `<page>-<lang>-<theme>.png` for the
-   * four pages, both languages and both schemes - and four are on screen at a time. Recomputing the
+   * four pages, both languages and both schemes - and four are on screen at a time, one staged in
+   * the hero and three in the gallery further down. Recomputing the
    * paths from the page's own toggles is the entire point: a landing page can claim it is
    * translated and themed, or it can change in front of the visitor when they press the toggles,
    * and the second is the only one that proves anything.
@@ -62,6 +87,15 @@ export class LandingComponent {
       src: `/assets/landing/${page}-${lang}-${theme}.png`
     }));
   });
+
+  /**
+   * The dashboard shot, staged large in the hero: it is the screen a visitor lands on inside the
+   * app, so it is the one that has to carry the first impression.
+   */
+  protected readonly heroScreenshot = computed(() => this.screenshots()[0]);
+
+  /** The remaining three, staged small in the gallery further down the page. */
+  protected readonly galleryScreenshots = computed(() => this.screenshots().slice(1));
 
   // One flag covers both buttons rather than one each: a second click during the first request
   // would race two logins for two different roles, leaving whichever landed last in storage.

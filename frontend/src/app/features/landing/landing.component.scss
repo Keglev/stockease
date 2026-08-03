@@ -4,64 +4,95 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  // Padding moves to the header and the hero so the footer can span the full viewport width,
-  // as it does in the authenticated shell.
+  // Padding lives on the sections, so the header, the credibility band and the footer can each
+  // span the full viewport width.
   padding: 0;
 }
 
-.landing-header {
-  display: flex;
-  justify-content: flex-end;
-  padding: 1rem 1rem 0;
-}
-
-.landing-hero {
-  display: flex;
+.landing-main {
   flex: 1 1 auto;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
-  text-align: center;
 }
 
-.landing-title {
+// Every section shares one measure and one horizontal inset, so the page reads as a single column
+// of blocks rather than a stack of independently centred things. Past 1200px the layout has
+// nothing left to rearrange, so it stops growing - the same reasoning as the shell's outlet cap.
+.landing-section {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 3rem 1.5rem;
+}
+
+@include bp.phone {
+  .landing-section {
+    padding: 2rem 1rem;
+  }
+}
+
+.section-title {
+  margin: 0;
+  font: var(--mat-sys-headline-medium);
+}
+
+.section-subtitle {
+  max-width: 44rem;
+  margin: 0.75rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Hero
+// ---------------------------------------------------------------------------------------------
+
+// Single column below desktop with the text first in source order, so the stacked order needs no
+// reordering rule and the copy is what a phone visitor meets first.
+.landing-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: center;
+  padding-top: 4rem;
+}
+
+@include bp.desktop {
+  .landing-hero {
+    // 45/55: the screenshot is the wider half because it is 2.2:1 and would otherwise render too
+    // small to make out a single figure in it.
+    grid-template-columns: 45fr 55fr;
+    gap: 3rem;
+  }
+}
+
+.hero-eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-label-large);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.hero-headline {
   margin: 0;
   font: var(--mat-sys-display-small);
 }
 
-.landing-description {
-  // Keeps the paragraph at a comfortable reading measure on wide screens.
-  max-width: 34rem;
-  margin: 0;
+.hero-description {
+  margin: 1rem 0 0;
   color: var(--mat-sys-on-surface-variant);
-}
-
-.landing-demo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-.landing-demo-title {
-  margin: 0;
-  font: var(--mat-sys-title-medium);
 }
 
 .landing-demo-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  justify-content: center;
+  margin-top: 1.5rem;
 }
 
 // The two demo entry points take the same tertiary accent as the shell's DEMO badge, so entering
 // the demo and the mark that says you are in it read as one thing. Without this the filled button
-// is primary - indistinguishable from the ordinary login CTA directly below it, which is the one
-// distinction this section exists to draw.
+// is primary - indistinguishable from the ordinary login CTA beside it, which is the one
+// distinction these buttons exist to draw.
 .demo-admin {
   --mat-button-filled-container-color: var(--mat-sys-tertiary);
   --mat-button-filled-label-text-color: var(--mat-sys-on-tertiary);
@@ -73,56 +104,210 @@
 }
 
 .landing-demo-notice {
-  margin: 0;
+  margin: 0.75rem 0 0;
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-body-small);
 }
 
-.landing-actions {
-  margin-top: 0.5rem;
+.hero-figure {
+  margin: 0;
+  min-width: 0;
 }
 
-.landing-screenshots {
+// ---------------------------------------------------------------------------------------------
+// Browser-frame mockup, shared by the hero shot and the gallery
+// ---------------------------------------------------------------------------------------------
+
+// The screenshots are artifacts of another surface, and dropping them straight onto the page left
+// the visitor unsure where the product ended and this page began. A chrome-like frame says "this
+// is a window into the app" in a way a plain border does not - and it is pure CSS, so it costs no
+// asset and stays correct in both schemes.
+.browser-frame {
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+  background: var(--mat-sys-surface-container);
+  box-shadow: var(--mat-sys-level2);
+}
+
+.browser-bar {
+  display: flex;
+  gap: 0.375rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.browser-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--mat-sys-outline-variant);
+}
+
+.browser-frame img {
+  display: block;
   width: 100%;
-  margin-top: 1.5rem;
+  height: auto;
 }
 
-.landing-screenshots-title {
-  margin: 0 0 1rem;
-  font: var(--mat-sys-title-medium);
-}
+// ---------------------------------------------------------------------------------------------
+// Feature grid
+// ---------------------------------------------------------------------------------------------
 
-// One column below desktop and two above it. A screenshot of a dense reporting page is unreadable
-// at half a phone's width, so narrow screens get the full width rather than a shrunken pair.
-.landing-screenshot-grid {
+// One column on a phone, two on a tablet, three on desktop. Six cards at two columns is the same
+// shape as three at one; the tier that matters is the phone, where a three-across grid would put
+// four words on a line.
+.feature-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
+  margin-top: 2rem;
 }
 
-@include bp.desktop {
-  .landing-screenshot-grid {
+@include bp.tablet {
+  .feature-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-.landing-screenshot {
-  margin: 0;
+@include bp.desktop {
+  .feature-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-// Framed rather than bled into the page: these are artifacts of another surface, and a border says
-// where the product ends and this page begins - in both schemes, which is why it is a token.
-.landing-screenshot img {
-  display: block;
-  width: 100%;
-  height: auto;
+.feature-card {
+  padding: 1.5rem;
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-surface-container-low);
 }
 
-.landing-screenshot figcaption {
-  margin-top: 0.5rem;
+.feature-icon {
+  width: 2rem;
+  height: 2rem;
+  color: var(--mat-sys-primary);
+  font-size: 2rem;
+}
+
+.feature-title {
+  margin: 0.75rem 0 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.feature-text {
+  margin: 0.5rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+// ---------------------------------------------------------------------------------------------
+// How it works
+// ---------------------------------------------------------------------------------------------
+
+.step-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@include bp.desktop {
+  .step-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.step-number {
+  display: flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  font: var(--mat-sys-title-medium);
+}
+
+.step-title {
+  margin: 1rem 0 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.step-text {
+  margin: 0.5rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Screenshot gallery
+// ---------------------------------------------------------------------------------------------
+
+// Three across on desktop, one below it. A screenshot of a dense reporting page is unreadable at
+// a third of a phone's width, so narrow screens get the full width rather than a shrunken row -
+// and every shot links to its own full-size file for the detail no tier can render.
+.gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+@include bp.desktop {
+  .gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.gallery-item {
+  margin: 0;
+  min-width: 0;
+}
+
+.gallery-item figcaption {
+  margin-top: 0.75rem;
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-body-small);
   text-align: center;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Credibility band and closing call to action
+// ---------------------------------------------------------------------------------------------
+
+// Full-bleed rather than another 1200px block: the surface step is what separates the engineering
+// argument from the product pitch above and the invitation below it.
+.landing-band {
+  background: var(--mat-sys-surface-container);
+}
+
+.band-text {
+  max-width: 52rem;
+  margin: 1rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.band-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+// The only centred section on the page: a closing invitation has nothing beside it to align to.
+.landing-cta {
+  padding-bottom: 4rem;
+  text-align: center;
+}
+
+.landing-cta .section-subtitle {
+  margin-inline: auto;
+}
+
+.landing-cta .landing-demo-actions {
+  justify-content: center;
 }

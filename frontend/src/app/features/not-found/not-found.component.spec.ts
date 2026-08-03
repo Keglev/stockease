@@ -78,9 +78,9 @@ describe('NotFoundComponent', () => {
       (anchor) => anchor.getAttribute('href')
     );
 
-    // the public chrome this page was missing: toggles above, footer below
-    expect(host.querySelector('app-language-toggle')).not.toBeNull();
-    expect(host.querySelector('app-theme-toggle')).not.toBeNull();
+    // the public chrome: the shared brand header above - which carries both toggles - footer below
+    expect(host.querySelector('app-public-header app-language-toggle')).not.toBeNull();
+    expect(host.querySelector('app-public-header app-theme-toggle')).not.toBeNull();
     expect(host.querySelector('app-footer')).not.toBeNull();
     expect(host.textContent).toContain('This page is out of stock.');
     // login rather than the dashboard: an unmatched URL says nothing about whether a session exists

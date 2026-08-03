@@ -26,6 +26,7 @@ const TRANSLATIONS = {
     footer: { tagline: 'Inventory management demo', apiLatency: 'API {{ms}} ms' },
     landing: {
       description: '{{app}} is an inventory management application for small businesses.',
+      hero: { eyebrow: 'INVENTORY MANAGEMENT', headline: "Know what's in stock." },
       demo: {
         title: 'Try the demo',
         tryAdmin: 'Try as Admin',
@@ -39,7 +40,30 @@ const TRANSLATIONS = {
         profit: 'COGS-based profit reporting',
         cashflow: 'Payment-basis cash flow over time',
         duedates: 'Due-date monitoring'
-      }
+      },
+      features: {
+        title: "What's inside",
+        subtitle: 'Six building blocks.',
+        inventory: { title: 'Products and stock', text: 'Master data.' },
+        invoices: { title: 'Invoice lifecycle', text: 'Purchases and sales.' },
+        profit: { title: 'Honest profit', text: 'Cost at the moment of sale.' },
+        cashflow: { title: 'Cash flow over time', text: 'Money counts when paid.' },
+        audit: { title: 'Complete history', text: 'Every change with its actor.' },
+        i18n: { title: 'German and English', text: 'Both languages, both themes.' }
+      },
+      steps: {
+        title: 'How it works',
+        one: { title: 'Open the demo', text: 'One click.' },
+        two: { title: 'Run stock through invoices', text: 'Book purchases and sales.' },
+        three: { title: 'Read the numbers', text: 'Seven reports.' }
+      },
+      tech: {
+        title: 'Built like production software',
+        text: 'Spring Boot on Java 21.',
+        docs: 'Read the architecture docs',
+        source: 'View source on GitHub'
+      },
+      cta: { title: 'See it with real data', text: 'The demo resets nightly.' }
     }
   },
   de: {
@@ -137,14 +161,18 @@ describe('LandingComponent', () => {
     fixture.detectChanges();
   }
 
+  /** Hero shot first, then the gallery's three - the order the page stages them in. */
   function screenshotSources(): (string | null)[] {
-    return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.landing-screenshot img')).map((img) =>
-      img.getAttribute('src')
-    );
+    return Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.hero-figure img, .gallery-item img'
+      )
+    ).map((img) => img.getAttribute('src'));
   }
 
-  it('screenshots_default_renderFourFiguresWithComputedSrc', async () => {
+  it('screenshots_default_stageTheDashboardInTheHeroAndTheRestInTheGallery', async () => {
     await choose('de', 'light');
+    const host = fixture.nativeElement as HTMLElement;
 
     expect(screenshotSources()).toEqual([
       '/assets/landing/dashboard-de-light.png',
@@ -152,24 +180,34 @@ describe('LandingComponent', () => {
       '/assets/landing/cashflow-de-light.png',
       '/assets/landing/duedates-de-light.png'
     ]);
-    // A screenshot with no alt is a decoration, and these carry the argument of the section
-    const alts = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.landing-screenshot img'));
-    expect(alts).toHaveLength(4);
-    expect(alts.every((img) => (img.getAttribute('alt') ?? '').length > 0)).toBe(true);
+    // the dashboard is the hero's alone; the gallery carries the three reporting screens
+    expect(host.querySelectorAll('.hero-figure img')).toHaveLength(1);
+    expect(host.querySelectorAll('.gallery-item img')).toHaveLength(3);
+    // A screenshot with no alt is a decoration, and these carry the argument of the page
+    const shots = Array.from(host.querySelectorAll('.hero-figure img, .gallery-item img'));
+    expect(shots.every((img) => (img.getAttribute('alt') ?? '').length > 0)).toBe(true);
   });
 
-  it('screenshots_languageAndThemeChange_swapAllSources', async () => {
+  it('screenshots_languageAndThemeChange_swapHeroAndGallerySources', async () => {
     await choose('de', 'light');
 
     await choose('en', 'dark');
 
-    // all four follow both toggles at once - the swap is what the section exists to demonstrate
+    // all four follow both toggles at once - the swap is what the screenshots exist to demonstrate
     expect(screenshotSources()).toEqual([
       '/assets/landing/dashboard-en-dark.png',
       '/assets/landing/profit-en-dark.png',
       '/assets/landing/cashflow-en-dark.png',
       '/assets/landing/duedates-en-dark.png'
     ]);
+  });
+
+  it('render_heroShot_loadsEagerlyWhileTheGalleryWaits', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    // Above the fold, so deferring it would show the visitor an empty frame on arrival.
+    expect(host.querySelector('.hero-figure img')?.getAttribute('loading')).toBe('eager');
+    expect(host.querySelector('.gallery-item img')?.getAttribute('loading')).toBe('lazy');
   });
 
   it('render_loginCta_pointsAtLoginRoute', () => {
@@ -179,16 +217,52 @@ describe('LandingComponent', () => {
     expect(cta?.textContent?.trim()).toBe('Login');
   });
 
-  it('render_outwardLinks_comeFromTheFooterNotTheHero', () => {
+  it('render_credibilityBand_linksTheDocsAndTheRepositorySafely', () => {
     const host = fixture.nativeElement as HTMLElement;
-    const repository = link('https://github.com/Keglev/stockease');
+    const actions = Array.from(host.querySelectorAll<HTMLAnchorElement>('.band-actions a'));
 
-    // The hero's own duplicate row is gone; the footer is now the single source of both links.
-    expect(host.querySelector('.landing-links')).toBeNull();
-    expect(repository?.closest('app-footer')).not.toBeNull();
+    // Both destinations come from the same constants the footer reads, so they cannot drift.
+    expect(actions.map((anchor) => anchor.getAttribute('href'))).toEqual([
+      'https://keglev.github.io/stockease/',
+      'https://github.com/Keglev/stockease'
+    ]);
     // New-tab links must not hand the opener reference to the target page.
-    expect(repository?.getAttribute('rel')).toBe('noopener');
-    expect(repository?.getAttribute('target')).toBe('_blank');
+    expect(actions.every((anchor) => anchor.getAttribute('rel') === 'noopener')).toBe(true);
+    expect(actions.every((anchor) => anchor.getAttribute('target') === '_blank')).toBe(true);
+  });
+
+  it('render_default_showsSixFeatureCardsAndThreeSteps', () => {
+    const host = fixture.nativeElement as HTMLElement;
+    const icons = Array.from(host.querySelectorAll('.feature-icon')).map((icon) =>
+      icon.textContent?.trim()
+    );
+
+    expect(host.querySelectorAll('.feature-card')).toHaveLength(6);
+    expect(icons).toEqual([
+      'inventory_2',
+      'receipt_long',
+      'payments',
+      'account_balance',
+      'history',
+      'translate'
+    ]);
+    expect(host.querySelectorAll('.step')).toHaveLength(3);
+    // The visible numerals are the walkthrough's order, which the copy alone does not state.
+    expect(Array.from(host.querySelectorAll('.step-number')).map((n) => n.textContent)).toEqual([
+      '1',
+      '2',
+      '3'
+    ]);
+  });
+
+  it('render_closingBand_repeatsTheDemoEntryAndTheLoginCta', () => {
+    const actions = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.landing-cta .landing-demo-actions *')
+    );
+
+    // A visitor who scrolled this far lost the hero's buttons long ago.
+    expect(actions.some((element) => element.classList.contains('demo-admin'))).toBe(true);
+    expect(actions.some((element) => element.getAttribute('href') === '/login')).toBe(true);
   });
 
   it('render_default_showsFooter', () => {
@@ -199,16 +273,14 @@ describe('LandingComponent', () => {
     expect(host.querySelector('app-footer .footer-documentation')).not.toBeNull();
   });
 
-  it('render_languageToggle_isPresentBeforeLogin', () => {
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('app-language-toggle')
-    ).not.toBeNull();
-  });
+  it('render_default_showsTheSharedPublicHeaderWithBothToggles', () => {
+    const header = (fixture.nativeElement as HTMLElement).querySelector('app-public-header');
 
-  it('render_themeToggle_isPresentBeforeLogin', () => {
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('app-theme-toggle')
-    ).not.toBeNull();
+    // The toggles moved into the brand header; they must still be reachable before login, because
+    // the screenshots below only prove anything if the visitor can press them.
+    expect(header).not.toBeNull();
+    expect(header?.querySelector('app-language-toggle')).not.toBeNull();
+    expect(header?.querySelector('app-theme-toggle')).not.toBeNull();
   });
 
   it('render_demoBlock_showsBothRolesAndTheResetNotice', () => {

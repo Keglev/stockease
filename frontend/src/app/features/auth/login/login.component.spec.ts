@@ -141,6 +141,15 @@ describe('LoginComponent', () => {
     controller.verify();
   });
 
+  it('render_default_showsTheSharedPublicHeaderInsteadOfFloatingToggles', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    // The toggles used to float in the page's top-right corner with nothing naming the product.
+    expect(host.querySelector('.login-page-header')).toBeNull();
+    expect(host.querySelector('app-public-header app-language-toggle')).not.toBeNull();
+    expect(host.querySelector('app-public-header app-theme-toggle')).not.toBeNull();
+  });
+
   it('render_withoutExpiredReason_showsNoSessionNotice', () => {
     // the other direction of the pin: an ordinary visit to /login explains nothing it should not
     expect((fixture.nativeElement as HTMLElement).querySelector('.login-notice')).toBeNull();

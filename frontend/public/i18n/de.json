@@ -11,6 +11,10 @@
   },
   "landing": {
     "description": "{{app}} ist eine Bestandsverwaltung für kleine Unternehmen: Produkte und Lagerbestände verfolgen, Lieferanten und Kunden verwalten sowie Ein- und Verkäufe über den Rechnungslauf abwickeln. Diese Demo arbeitet mit der aktiven Spring-Boot-API.",
+    "hero": {
+      "eyebrow": "BESTANDSVERWALTUNG FÜR KLEINE UNTERNEHMEN",
+      "headline": "Wissen, was auf Lager ist - und was es einbringt."
+    },
     "demo": {
       "title": "Demo ausprobieren",
       "tryAdmin": "Als Admin testen",
@@ -24,6 +28,59 @@
       "profit": "Gewinnbericht auf Wareneinsatzbasis",
       "cashflow": "Cashflow im Zeitverlauf auf Zahlungsbasis",
       "duedates": "Überwachung der Fälligkeiten"
+    },
+    "features": {
+      "title": "Funktionsumfang",
+      "subtitle": "Sechs Bausteine, entworfen als zusammenhängende Domäne und nicht als lose Sammlung von CRUD-Masken.",
+      "inventory": {
+        "title": "Produkte und Bestand",
+        "text": "Stammdaten mit vergebenen Artikelnummern; Bestand entsteht ausschließlich über abgeschlossene Einkaufsrechnungen."
+      },
+      "invoices": {
+        "title": "Rechnungslauf",
+        "text": "Ein- und Verkäufe mit Retouren, Zahlungsverfolgung und vergebenen Rechnungsnummern."
+      },
+      "profit": {
+        "title": "Ehrlicher Gewinn",
+        "text": "Der Bruttogewinn belastet nur verkaufte Ware - der Wareneinsatz wird beim Verkauf festgehalten und übersteht Preisänderungen."
+      },
+      "cashflow": {
+        "title": "Cashflow im Zeitverlauf",
+        "text": "Geld zählt bei Zahlung: Ein- und Auszahlungen sowie Saldo, gesamt und je Produkt."
+      },
+      "audit": {
+        "title": "Lückenlose Historie",
+        "text": "Jede Preisänderung und Lagerbewegung wird mit Verursacher erfasst - und ist als Bericht lesbar."
+      },
+      "i18n": {
+        "title": "Deutsch und Englisch, hell und dunkel",
+        "text": "Die gesamte Oberfläche gibt es in beiden Sprachen und beiden Designs - diese Seite eingeschlossen."
+      }
+    },
+    "steps": {
+      "title": "So funktioniert es",
+      "one": {
+        "title": "Demo öffnen",
+        "text": "Ein Klick als Admin oder Benutzer - mit Beispieldaten, täglich zurückgesetzt."
+      },
+      "two": {
+        "title": "Bestand über Rechnungen führen",
+        "text": "Produkte anlegen, Ein- und Verkäufe buchen, Verluste mit Begründung erfassen."
+      },
+      "three": {
+        "title": "Zahlen lesen",
+        "text": "Sieben Berichte machen aus dem Journal Gewinn, Cashflow, Bestandsverlauf und Änderungshistorie."
+      }
+    },
+    "tech": {
+      "title": "Gebaut wie Produktionssoftware",
+      "text": "Spring Boot auf Java 21 mit Spring-Modulith-Architektur, PostgreSQL mit Flyway-geführtem Schema und Angular mit Material 3. Jede Änderung durchläuft die CI mit der vollständigen Testsuite; die Architektur ist nach arc42 dokumentiert - mit einer Entscheidungsvorlage zu jedem Kompromiss.",
+      "docs": "Architekturdokumentation lesen",
+      "source": "Quellcode auf GitHub ansehen"
+    },
+    "cta": {
+      "title": "Mit echten Daten ansehen",
+      "text": "Die Demo läuft gegen die Live-API und wird täglich zurückgesetzt - kein Klick ist von Dauer."
     }
   },
   "footer": {

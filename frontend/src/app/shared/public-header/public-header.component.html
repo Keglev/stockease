@@ -1,0 +1,10 @@
+<mat-toolbar color="primary">
+  <!-- The name is the link home rather than a separate "back" control: on three of the four pages
+       the landing is where the visitor came from, and on the landing itself it is inert. -->
+  <a class="public-header-name" routerLink="/">{{ 'common.appName' | translate }}</a>
+
+  <span class="spacer"></span>
+
+  <app-language-toggle />
+  <app-theme-toggle />
+</mat-toolbar>

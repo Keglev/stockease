@@ -1,19 +1,159 @@
 <div class="landing-page">
-  <header class="landing-header">
-    <app-language-toggle />
-    <app-theme-toggle />
-  </header>
+  <app-public-header />
 
-  <main class="landing-hero">
-    <h1 class="landing-title">{{ 'common.appName' | translate }}</h1>
-    <p class="landing-description">
-      {{ 'landing.description' | translate: { app: 'common.appName' | translate } }}
-    </p>
+  <main class="landing-main">
+    <!-- HERO. Text leads on every tier; on desktop the framed dashboard sits beside it, because
+         the claim in the headline is one a screenshot can settle faster than a paragraph. -->
+    <section class="landing-section landing-hero">
+      <div class="hero-text">
+        <p class="hero-eyebrow">{{ 'landing.hero.eyebrow' | translate }}</p>
+        <h1 class="hero-headline">{{ 'landing.hero.headline' | translate }}</h1>
+        <p class="hero-description">
+          {{ 'landing.description' | translate: { app: 'common.appName' | translate } }}
+        </p>
 
-    <!-- Rendered unconditionally rather than behind the demo flag: this page exists only on the
-         demo deployment, so a condition here would never once evaluate to false. -->
-    <section class="landing-demo">
-      <h2 class="landing-demo-title">{{ 'landing.demo.title' | translate }}</h2>
+        <!-- Rendered unconditionally rather than behind the demo flag: this page exists only on the
+             demo deployment, so a condition here would never once evaluate to false. -->
+        <div class="landing-demo-actions">
+          <button
+            matButton="filled"
+            type="button"
+            class="demo-admin"
+            [disabled]="demoPending()"
+            (click)="enterDemo('ADMIN')"
+          >
+            {{ 'landing.demo.tryAdmin' | translate }}
+          </button>
+          <button
+            matButton="outlined"
+            type="button"
+            class="demo-user"
+            [disabled]="demoPending()"
+            (click)="enterDemo('USER')"
+          >
+            {{ 'landing.demo.tryUser' | translate }}
+          </button>
+        </div>
+
+        <p class="landing-demo-notice">{{ 'landing.demo.resetNotice' | translate }}</p>
+      </div>
+
+      <!-- The source follows the header's toggles, as the gallery's do. That is the argument the
+           whole screenshot mechanism exists to make: the page demonstrates the translation and
+           theming in front of the visitor rather than describing them. -->
+      @if (heroScreenshot(); as shot) {
+        <figure class="hero-figure">
+          <div class="browser-frame">
+            <div class="browser-bar" aria-hidden="true">
+              <span class="browser-dot"></span>
+              <span class="browser-dot"></span>
+              <span class="browser-dot"></span>
+            </div>
+            <!-- Opens the same file the frame already shows: the detail a screenshot exists to
+                 show needs full size. -->
+            <a [href]="shot.src" target="_blank" rel="noopener">
+              <img
+                [src]="shot.src"
+                [alt]="'landing.screenshots.' + shot.page | translate"
+                [width]="screenshotWidth"
+                [height]="screenshotHeight"
+                loading="eager"
+              />
+            </a>
+          </div>
+        </figure>
+      }
+    </section>
+
+    <!-- FEATURE GRID -->
+    <section class="landing-section landing-features">
+      <h2 class="section-title">{{ 'landing.features.title' | translate }}</h2>
+      <p class="section-subtitle">{{ 'landing.features.subtitle' | translate }}</p>
+
+      <div class="feature-grid">
+        @for (feature of features; track feature.key) {
+          <article class="feature-card">
+            <mat-icon class="feature-icon" aria-hidden="true">{{ feature.icon }}</mat-icon>
+            <h3 class="feature-title">
+              {{ 'landing.features.' + feature.key + '.title' | translate }}
+            </h3>
+            <p class="feature-text">
+              {{ 'landing.features.' + feature.key + '.text' | translate }}
+            </p>
+          </article>
+        }
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="landing-section landing-steps">
+      <h2 class="section-title">{{ 'landing.steps.title' | translate }}</h2>
+
+      <ol class="step-list">
+        @for (step of steps; track step; let index = $index) {
+          <li class="step">
+            <!-- The visible numeral is the list's own ordinal; hidden from assistive tech because
+                 the <ol> already conveys the order. -->
+            <span class="step-number" aria-hidden="true">{{ index + 1 }}</span>
+            <h3 class="step-title">{{ 'landing.steps.' + step + '.title' | translate }}</h3>
+            <p class="step-text">{{ 'landing.steps.' + step + '.text' | translate }}</p>
+          </li>
+        }
+      </ol>
+    </section>
+
+    <!-- SCREENSHOT GALLERY: the three reporting screens the hero does not show. -->
+    <section class="landing-section landing-gallery">
+      <h2 class="section-title">{{ 'landing.screenshots.title' | translate }}</h2>
+
+      <div class="gallery-grid">
+        @for (shot of galleryScreenshots(); track shot.page) {
+          <figure class="gallery-item">
+            <div class="browser-frame">
+              <div class="browser-bar" aria-hidden="true">
+                <span class="browser-dot"></span>
+                <span class="browser-dot"></span>
+                <span class="browser-dot"></span>
+              </div>
+              <a [href]="shot.src" target="_blank" rel="noopener">
+                <img
+                  [src]="shot.src"
+                  [alt]="'landing.screenshots.' + shot.page | translate"
+                  [width]="screenshotWidth"
+                  [height]="screenshotHeight"
+                  loading="lazy"
+                />
+              </a>
+            </div>
+            <figcaption>{{ 'landing.screenshots.' + shot.page | translate }}</figcaption>
+          </figure>
+        }
+      </div>
+    </section>
+
+    <!-- CREDIBILITY BAND: full-bleed surface step, so the engineering claim reads as an aside to
+         the product pitch rather than another feature of it. -->
+    <section class="landing-band landing-tech">
+      <div class="landing-section band-inner">
+        <h2 class="section-title">{{ 'landing.tech.title' | translate }}</h2>
+        <p class="band-text">{{ 'landing.tech.text' | translate }}</p>
+
+        <div class="band-actions">
+          <a matButton="outlined" [href]="documentationUrl" target="_blank" rel="noopener">
+            {{ 'landing.tech.docs' | translate }}
+          </a>
+          <a matButton="outlined" [href]="repositoryUrl" target="_blank" rel="noopener">
+            {{ 'landing.tech.source' | translate }}
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLOSING CTA: the demo button once more, because a visitor who read this far scrolled the
+         hero's copy off screen long ago. -->
+    <section class="landing-section landing-cta">
+      <h2 class="section-title">{{ 'landing.cta.title' | translate }}</h2>
+      <p class="section-subtitle">{{ 'landing.cta.text' | translate }}</p>
 
       <div class="landing-demo-actions">
         <button
@@ -25,49 +165,9 @@
         >
           {{ 'landing.demo.tryAdmin' | translate }}
         </button>
-        <button
-          matButton="outlined"
-          type="button"
-          class="demo-user"
-          [disabled]="demoPending()"
-          (click)="enterDemo('USER')"
-        >
-          {{ 'landing.demo.tryUser' | translate }}
-        </button>
-      </div>
-
-      <p class="landing-demo-notice">{{ 'landing.demo.resetNotice' | translate }}</p>
-    </section>
-
-    <!-- The sources follow the toggles in the header above, so pressing either one changes all four
-         shots. That is the argument: the page demonstrates the translation and theming rather than
-         describing them. -->
-    <section class="landing-screenshots">
-      <h2 class="landing-screenshots-title">{{ 'landing.screenshots.title' | translate }}</h2>
-
-      <div class="landing-screenshot-grid">
-        @for (shot of screenshots(); track shot.page) {
-          <figure class="landing-screenshot">
-            <!-- Opens the same file the figure already shows: the grid renders these small, and the
-                 detail a screenshot exists to show needs full size. -->
-            <a [href]="shot.src" target="_blank" rel="noopener">
-              <img
-                [src]="shot.src"
-                [alt]="'landing.screenshots.' + shot.page | translate"
-                [width]="screenshotWidth"
-                [height]="screenshotHeight"
-                loading="lazy"
-              />
-            </a>
-            <figcaption>{{ 'landing.screenshots.' + shot.page | translate }}</figcaption>
-          </figure>
-        }
+        <a matButton="filled" routerLink="/login">{{ 'landing.loginCta' | translate }}</a>
       </div>
     </section>
-
-    <div class="landing-actions">
-      <a matButton="filled" routerLink="/login">{{ 'landing.loginCta' | translate }}</a>
-    </div>
   </main>
 
   <app-footer />

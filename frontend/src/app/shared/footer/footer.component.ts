@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { switchMap, timer } from 'rxjs';
 
+import { DOCUMENTATION_URL, REPOSITORY_URL } from '../../core/config/external-links';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 
 const HEALTH_POLL_MS = 30_000;
@@ -21,10 +22,10 @@ const HEALTH_POLL_MS = 30_000;
 export class FooterComponent {
   private readonly health = inject(HealthService);
 
-  // The app's only outward links now that the landing's own row is gone; both open in a new tab
-  // so the session is never lost.
-  protected readonly repositoryUrl = 'https://github.com/Keglev/stockease';
-  protected readonly documentationUrl = 'https://keglev.github.io/stockease/';
+  // Both open in a new tab so the session is never lost. The literals moved to core/config once
+  // the landing's credibility band began linking the same two destinations.
+  protected readonly repositoryUrl = REPOSITORY_URL;
+  protected readonly documentationUrl = DOCUMENTATION_URL;
 
   protected readonly probe = signal<HealthProbe | null>(null);
 
