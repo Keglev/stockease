@@ -96,6 +96,23 @@ public class ProductController {
     }
 
     /**
+     * Lists soft-deleted products for the restore view (ADMIN only).
+     *
+     * &lt;p&gt;Unpaged and ordered by name: the recycle bin is a short administrative list. An empty bin is a
+     * successful empty list, not a 404. Behavior defined in
+     * {@code docs/backend/api/paths/products-deleted.yaml}.
+     *
+     * @return HTTP 200 with the soft-deleted products, empty list when none are deleted
+     */
+    @GetMapping(&quot;/deleted&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;List&lt;ProductResponse&gt;&gt;&gt; getDeletedProducts() {
+<span class="fc" id="L110">        List&lt;ProductResponse&gt; deleted = productService.getDeletedProducts().stream()</span>
+<span class="fc" id="L111">                .map(ProductResponse::from).toList();</span>
+<span class="fc" id="L112">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Deleted products fetched successfully&quot;, deleted));</span>
+    }
+
+    /**
      * Returns a single product by its ID.
      *
      * &lt;p&gt;Behavior defined in {@code docs/api/paths/products.yaml}.
@@ -106,11 +123,11 @@ public class ProductController {
     @GetMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;ProductResponse&gt;&gt; getProductById(@PathVariable long id) {
-<span class="fc" id="L109">        return productService.findById(id)</span>
-<span class="fc" id="L110">                .map(product -&gt; ResponseEntity.ok(</span>
-<span class="fc" id="L111">                        new ApiResponse&lt;&gt;(true, &quot;Product fetched successfully&quot;, ProductResponse.from(product))))</span>
-<span class="fc" id="L112">                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
-<span class="fc" id="L113">                        .body(new ApiResponse&lt;&gt;(false, &quot;The product with ID &quot; + id + &quot; does not exist.&quot;, null)));</span>
+<span class="fc" id="L126">        return productService.findById(id)</span>
+<span class="fc" id="L127">                .map(product -&gt; ResponseEntity.ok(</span>
+<span class="fc" id="L128">                        new ApiResponse&lt;&gt;(true, &quot;Product fetched successfully&quot;, ProductResponse.from(product))))</span>
+<span class="fc" id="L129">                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L130">                        .body(new ApiResponse&lt;&gt;(false, &quot;The product with ID &quot; + id + &quot; does not exist.&quot;, null)));</span>
     }
 
     /**
@@ -127,9 +144,9 @@ public class ProductController {
     @PostMapping
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ProductResponse&gt; createProduct(@Valid @RequestBody CreateProductRequest request) {
-<span class="fc" id="L130">        log.debug(&quot;Received request to create product: {}&quot;, request);</span>
-<span class="fc" id="L131">        Product savedProduct = productService.create(request.getName(), request.getSku(), request.getPurchasePrice());</span>
-<span class="fc" id="L132">        return ResponseEntity.ok(ProductResponse.from(savedProduct));</span>
+<span class="fc" id="L147">        log.debug(&quot;Received request to create product: {}&quot;, request);</span>
+<span class="fc" id="L148">        Product savedProduct = productService.create(request.getName(), request.getSku(), request.getPurchasePrice());</span>
+<span class="fc" id="L149">        return ResponseEntity.ok(ProductResponse.from(savedProduct));</span>
     }
 
     /**
@@ -144,14 +161,34 @@ public class ProductController {
     @DeleteMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; deleteProduct(@PathVariable long id, Principal principal) {
-<span class="fc" id="L147">        log.info(&quot;Entering deleteProduct method with ID: {}&quot;, id);</span>
-<span class="fc bfc" id="L148" title="All 2 branches covered.">        if (!productService.deleteById(id, currentUser(principal))) {</span>
-<span class="fc" id="L149">            return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
-<span class="fc" id="L150">                    .body(new ApiResponse&lt;&gt;(false, &quot;Cannot delete. Product with ID &quot; + id + &quot; does not exist.&quot;, null));</span>
+<span class="fc" id="L164">        log.info(&quot;Entering deleteProduct method with ID: {}&quot;, id);</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">        if (!productService.deleteById(id, currentUser(principal))) {</span>
+<span class="fc" id="L166">            return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L167">                    .body(new ApiResponse&lt;&gt;(false, &quot;Cannot delete. Product with ID &quot; + id + &quot; does not exist.&quot;, null));</span>
         }
-<span class="fc" id="L152">        return ResponseEntity.ok(</span>
+<span class="fc" id="L169">        return ResponseEntity.ok(</span>
                 new ApiResponse&lt;&gt;(true, &quot;Product with ID &quot; + id + &quot; has been successfully deleted.&quot;, null)
         );
+    }
+
+    /**
+     * Restores a soft-deleted product (ADMIN only).
+     *
+     * &lt;p&gt;Not destructive, so no confirmation step guards it. The restore is refused when a live product
+     * has since taken the deleted product's name or SKU, because both are unique among live rows.
+     * Behavior defined in {@code docs/backend/api/paths/products-restore.yaml}.
+     *
+     * @param id product identifier to restore
+     * @param principal authenticated user, recorded against the restore in the change log
+     * @return HTTP 200 with the restored product; HTTP 404 if no soft-deleted product carries that ID
+     *         (unknown or still live), HTTP 409 if a live product already uses its name or SKU
+     */
+    @PostMapping(&quot;/{id}/restore&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;ProductResponse&gt;&gt; restoreProduct(@PathVariable long id, Principal principal) {
+<span class="fc" id="L189">        Product restored = productService.restore(id, currentUser(principal));</span>
+<span class="fc" id="L190">        return ResponseEntity.ok(</span>
+<span class="fc" id="L191">                new ApiResponse&lt;&gt;(true, &quot;Product restored successfully&quot;, ProductResponse.from(restored)));</span>
     }
 
     /**
@@ -166,11 +203,11 @@ public class ProductController {
     @GetMapping(&quot;/low-stock&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;?&gt; getLowStockProducts() {
-<span class="fc" id="L169">        List&lt;Product&gt; lowStockProducts = productService.findLowStock(5);</span>
-<span class="fc bfc" id="L170" title="All 2 branches covered.">        if (lowStockProducts.isEmpty()) {</span>
-<span class="fc" id="L171">            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;All products are sufficiently stocked.&quot;));</span>
+<span class="fc" id="L206">        List&lt;Product&gt; lowStockProducts = productService.findLowStock(5);</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        if (lowStockProducts.isEmpty()) {</span>
+<span class="fc" id="L208">            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;All products are sufficiently stocked.&quot;));</span>
         }
-<span class="fc" id="L173">        return ResponseEntity.ok(lowStockProducts.stream().map(ProductResponse::from).toList());</span>
+<span class="fc" id="L210">        return ResponseEntity.ok(lowStockProducts.stream().map(ProductResponse::from).toList());</span>
     }
 
     /**
@@ -185,12 +222,12 @@ public class ProductController {
     @GetMapping(&quot;/search&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;?&gt; searchProductsByName(@RequestParam String name) {
-<span class="fc" id="L188">        List&lt;Product&gt; products = productService.searchByName(name);</span>
-<span class="fc bfc" id="L189" title="All 2 branches covered.">        if (products.isEmpty()) {</span>
-<span class="fc" id="L190">            return ResponseEntity.status(HttpStatus.NO_CONTENT)</span>
-<span class="fc" id="L191">                    .body(Map.of(&quot;message&quot;, &quot;No products found matching the name: &quot; + name));</span>
+<span class="fc" id="L225">        List&lt;Product&gt; products = productService.searchByName(name);</span>
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        if (products.isEmpty()) {</span>
+<span class="fc" id="L227">            return ResponseEntity.status(HttpStatus.NO_CONTENT)</span>
+<span class="fc" id="L228">                    .body(Map.of(&quot;message&quot;, &quot;No products found matching the name: &quot; + name));</span>
         }
-<span class="fc" id="L193">        return ResponseEntity.ok(products.stream().map(ProductResponse::from).toList());</span>
+<span class="fc" id="L230">        return ResponseEntity.ok(products.stream().map(ProductResponse::from).toList());</span>
     }
 
     /**
@@ -207,9 +244,9 @@ public class ProductController {
     @PutMapping(&quot;/{id}/price&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;ProductResponse&gt;&gt; updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request, Principal principal) {
-<span class="fc" id="L210">        Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()), currentUser(principal));</span>
-<span class="fc" id="L211">        return ResponseEntity.ok(</span>
-<span class="fc" id="L212">                new ApiResponse&lt;&gt;(true, &quot;Price updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
+<span class="fc" id="L247">        Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()), currentUser(principal));</span>
+<span class="fc" id="L248">        return ResponseEntity.ok(</span>
+<span class="fc" id="L249">                new ApiResponse&lt;&gt;(true, &quot;Price updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
     }
 
     /**
@@ -226,9 +263,9 @@ public class ProductController {
     @PutMapping(&quot;/{id}/name&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;ProductResponse&gt;&gt; updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request, Principal principal) {
-<span class="fc" id="L229">        Product updatedProduct = productService.updateName(id, request.getName(), currentUser(principal));</span>
-<span class="fc" id="L230">        return ResponseEntity.ok(</span>
-<span class="fc" id="L231">                new ApiResponse&lt;&gt;(true, &quot;Name updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
+<span class="fc" id="L266">        Product updatedProduct = productService.updateName(id, request.getName(), currentUser(principal));</span>
+<span class="fc" id="L267">        return ResponseEntity.ok(</span>
+<span class="fc" id="L268">                new ApiResponse&lt;&gt;(true, &quot;Name updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
     }
 
     /**
@@ -243,8 +280,8 @@ public class ProductController {
     @GetMapping(&quot;/total-stock-value&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;Double&gt;&gt; getTotalStockValue() {
-<span class="fc" id="L246">        double totalStockValue = productService.getTotalStockValue();</span>
-<span class="fc" id="L247">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Total stock value fetched successfully&quot;, totalStockValue));</span>
+<span class="fc" id="L283">        double totalStockValue = productService.getTotalStockValue();</span>
+<span class="fc" id="L284">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Total stock value fetched successfully&quot;, totalStockValue));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
