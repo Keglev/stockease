@@ -61,11 +61,24 @@ class SupplierSearchControllerTest {
     void searchSuppliersByName_withNoMatches_returns200WithEmptyArray() throws Exception {
         Mockito.when(supplierService.searchByName("zzz")).thenReturn(List.of());
 
-        // 200 with [], not the 204-with-body of GET /api/products/search: that shape is a documented
-        // defect the spec itself flags, and ADR 028 records why new search surface does not copy it
+        // 200 with [] rather than a 204 carrying a body. GET /api/products/search answered the latter
+        // until 2.16.0 corrected it; ADR 028 records why this endpoint did not copy that shape.
         mockMvc.perform(get("/api/suppliers/search").param("name", "zzz"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[]"));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void searchSuppliersByName_withoutNameParam_returns400() throws Exception {
+        // proves the missing-parameter 400 is the shared handler's behaviour rather than something
+        // the product search does for itself: this endpoint gained it without being touched
+        mockMvc.perform(get("/api/suppliers/search"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data.name").value("required parameter is missing"));
+
+        Mockito.verify(supplierService, Mockito.never()).searchByName(Mockito.any());
     }
 
     @Test

@@ -222,17 +222,23 @@ export interface paths {
         };
         /**
          * Search products by name
-         * @description Case-insensitive substring search. For example, searching "apple" returns products like
-         *     "Apple Juice", "APPLE", "Green Apple", etc.
-         *     Returns 204 NO_CONTENT when nothing matches.
+         * @description Case-insensitive substring search over live products, built for the typeahead pickers: results
+         *     are alphabetical and capped at 20, and soft-deleted products are excluded because the list
+         *     exists to be picked from. For example, searching "apple" returns products like "Apple Juice",
+         *     "APPLE" and "Green Apple".
          *
-         *     **Known defects, scheduled for correction (unchanged here).** This endpoint answers 204 with a
-         *     body, which is unconventional by HTTP spec, and applies no cap, so a broad term returns the
-         *     whole catalogue. The typeahead endpoints added in 2.14.0 - `/api/suppliers/search` and
-         *     `/api/reports/suppliers/{id}/products/search` - deliberately do neither: they answer 200 with an
-         *     empty array and cap at 20. ADR 028 records why new surface diverges rather than copying this
-         *     shape, and correcting this endpoint is tracked as its own item so the change lands with its own
-         *     contract note for existing callers.
+         *     Nothing matching returns **200 with an empty array**.
+         *
+         *     The cap is not pagination. A term that matches more than twenty products is a term to narrow.
+         *
+         *     Omitting `name` is a 400 naming the missing parameter, not a 500.
+         *
+         *     **Changed in 2.16.0.** This endpoint previously answered 204 with a body on no matches and
+         *     applied no cap or ordering, and omitting `name` produced a 500. It now carries the same contract
+         *     as `/api/suppliers/search` and `/api/reports/suppliers/{id}/products/search`; ADR 028 records why
+         *     those endpoints diverged rather than copying the older shape. A caller that branched on 204 must
+         *     switch to testing the array for emptiness, and one that relied on receiving every match must
+         *     narrow its term.
          */
         get: operations["searchProductsByName"];
         put?: never;
@@ -374,10 +380,10 @@ export interface paths {
          *     are alphabetical and capped at 20, and soft-deleted suppliers are excluded because the list
          *     exists to be picked from.
          *
-         *     Nothing matching returns **200 with an empty array**, deliberately unlike
-         *     `GET /api/products/search`, which answers 204 with a body. That shape is a documented defect
-         *     rather than a convention worth carrying onto new surface; ADR 028 records the divergence, and
-         *     correcting the older endpoint is tracked separately.
+         *     Nothing matching returns **200 with an empty array**. `GET /api/products/search` predated this
+         *     contract and answered 204 with a body; ADR 028 records why this endpoint diverged rather than
+         *     copying that shape, and 2.16.0 corrected the older endpoint to match. All three searches now
+         *     behave alike.
          *
          *     The cap is not pagination. A term that matches more than twenty suppliers is a term to narrow,
          *     which is why the client requires three characters before it asks at all.
@@ -807,7 +813,8 @@ export interface paths {
          *
          *     Results are alphabetical and capped at 20, and soft-deleted products are excluded, matching the
          *     supplier typeahead. Nothing matching returns **200 with an empty array**; only an unknown or
-         *     retired supplier yields 404. ADR 028 records why this differs from `GET /api/products/search`.
+         *     retired supplier yields 404. ADR 028 records why this diverged from the older
+         *     `GET /api/products/search`, which 2.16.0 corrected to the same contract.
          *
          *     The path sits under `/api/reports` rather than under the supplier API because the aggregation is
          *     the reporting module's - the linkage is drawn through the purchase ledger, which the supplier
@@ -2035,9 +2042,11 @@ export interface components {
             };
         };
         /**
-         * @description Bean Validation rejected the request body before the service was reached. `data` maps each
-         *     offending field to its message; a field violating several constraints at once has its
-         *     messages sorted and joined with `"; "`.
+         * @description The request was rejected before the service was reached - either Bean Validation refused the
+         *     body, or a required query parameter was invalid or absent. `data` maps each offending field
+         *     or parameter to its message; a field violating several constraints at once has its messages
+         *     sorted and joined with `"; "`. A parameter that was simply left out reports
+         *     `required parameter is missing`.
          */
         ValidationError: {
             headers: {
@@ -2626,45 +2635,16 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Matching products found */
+            /** @description Matching products, empty if none match (ROLE_USER or ROLE_ADMIN) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example [
-                     *       {
-                     *         "id": 1,
-                     *         "name": "Laptop",
-                     *         "sku": "SKU-A1B2C3D4",
-                     *         "quantity": 50,
-                     *         "purchasePrice": 999.99,
-                     *         "totalValue": 49999.5,
-                     *         "createdAt": "2026-01-02T03:04:00"
-                     *       }
-                     *     ]
-                     */
                     "application/json": components["schemas"]["ProductList"];
                 };
             };
-            /**
-             * @description No matching products found.
-             *     Note: despite using HTTP 204, this response includes a body (unconventional by HTTP spec).
-             */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "message": "No products found matching the name: laptop"
-                     *     }
-                     */
-                    "application/json": components["schemas"]["MessageOnly"];
-                };
-            };
+            400: components["responses"]["ValidationError"];
             401: components["responses"]["Unauthorized"];
         };
     };

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.InsufficientStockException;
+import com.stocks.stockease.shared.SearchLimits;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -184,13 +186,16 @@ public class ProductService {
     }
 
     /**
-     * Searches products by a case-insensitive substring match on name.
+     * Searches live products by a case-insensitive substring match on name, capped for typeahead use.
+     * Same contract as the supplier and supplier-product searches (ADR 028): alphabetical, soft-deleted
+     * rows excluded, at most {@link SearchLimits#TYPEAHEAD_LIMIT} rows.
      *
      * @param name search substring
-     * @return list of matching products
+     * @return matching products, alphabetical, at most {@link SearchLimits#TYPEAHEAD_LIMIT} of them
      */
     public List<Product> searchByName(String name) {
-        return productRepository.findByNameContainingIgnoreCase(name);
+        return productRepository.findByNameContainingIgnoreCaseOrderByNameAsc(
+                name, Limit.of(SearchLimits.TYPEAHEAD_LIMIT));
     }
 
     /**

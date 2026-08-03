@@ -1,17 +1,23 @@
 get:
   summary: Search products by name
   description: |
-    Case-insensitive substring search. For example, searching "apple" returns products like
-    "Apple Juice", "APPLE", "Green Apple", etc.
-    Returns 204 NO_CONTENT when nothing matches.
+    Case-insensitive substring search over live products, built for the typeahead pickers: results
+    are alphabetical and capped at 20, and soft-deleted products are excluded because the list
+    exists to be picked from. For example, searching "apple" returns products like "Apple Juice",
+    "APPLE" and "Green Apple".
 
-    **Known defects, scheduled for correction (unchanged here).** This endpoint answers 204 with a
-    body, which is unconventional by HTTP spec, and applies no cap, so a broad term returns the
-    whole catalogue. The typeahead endpoints added in 2.14.0 - `/api/suppliers/search` and
-    `/api/reports/suppliers/{id}/products/search` - deliberately do neither: they answer 200 with an
-    empty array and cap at 20. ADR 028 records why new surface diverges rather than copying this
-    shape, and correcting this endpoint is tracked as its own item so the change lands with its own
-    contract note for existing callers.
+    Nothing matching returns **200 with an empty array**.
+
+    The cap is not pagination. A term that matches more than twenty products is a term to narrow.
+
+    Omitting `name` is a 400 naming the missing parameter, not a 500.
+
+    **Changed in 2.16.0.** This endpoint previously answered 204 with a body on no matches and
+    applied no cap or ordering, and omitting `name` produced a 500. It now carries the same contract
+    as `/api/suppliers/search` and `/api/reports/suppliers/{id}/products/search`; ADR 028 records why
+    those endpoints diverged rather than copying the older shape. A caller that branched on 204 must
+    switch to testing the array for emptiness, and one that relied on receiving every match must
+    narrow its term.
   operationId: searchProductsByName
   tags:
     - Products
@@ -27,28 +33,26 @@ get:
         example: laptop
   responses:
     '200':
-      description: Matching products found
+      description: Matching products, empty if none match (ROLE_USER or ROLE_ADMIN)
       content:
         application/json:
           schema:
             $ref: '../openapi.yaml#/components/schemas/ProductList'
-          example:
-            - id: 1
-              name: Laptop
-              sku: SKU-A1B2C3D4
-              quantity: 50
-              purchasePrice: 999.99
-              totalValue: 49999.50
-              createdAt: '2026-01-02T03:04:00'
-    '204':
-      description: |
-        No matching products found.
-        Note: despite using HTTP 204, this response includes a body (unconventional by HTTP spec).
-      content:
-        application/json:
-          schema:
-            $ref: '../openapi.yaml#/components/schemas/MessageOnly'
-          example:
-            message: 'No products found matching the name: laptop'
+          examples:
+            matches:
+              summary: Products matching the term
+              value:
+                - id: 1
+                  name: Laptop
+                  sku: SKU-A1B2C3D4
+                  quantity: 50
+                  purchasePrice: 999.99
+                  totalValue: 49999.50
+                  createdAt: '2026-01-02T03:04:00'
+            empty:
+              summary: Nothing matches
+              value: []
+    '400':
+      $ref: '../openapi.yaml#/components/responses/ValidationError'
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'

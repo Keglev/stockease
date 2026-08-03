@@ -22,7 +22,8 @@ get:
 
     Results are alphabetical and capped at 20, and soft-deleted products are excluded, matching the
     supplier typeahead. Nothing matching returns **200 with an empty array**; only an unknown or
-    retired supplier yields 404. ADR 028 records why this differs from `GET /api/products/search`.
+    retired supplier yields 404. ADR 028 records why this diverged from the older
+    `GET /api/products/search`, which 2.16.0 corrected to the same contract.
 
     The path sits under `/api/reports` rather than under the supplier API because the aggregation is
     the reporting module's - the linkage is drawn through the purchase ledger, which the supplier

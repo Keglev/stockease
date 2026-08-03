@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.15.0
+  version: 2.16.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -106,9 +106,11 @@ components:
             data: null
     ValidationError:
       description: |
-        Bean Validation rejected the request body before the service was reached. `data` maps each
-        offending field to its message; a field violating several constraints at once has its
-        messages sorted and joined with `"; "`.
+        The request was rejected before the service was reached - either Bean Validation refused the
+        body, or a required query parameter was invalid or absent. `data` maps each offending field
+        or parameter to its message; a field violating several constraints at once has its messages
+        sorted and joined with `"; "`. A parameter that was simply left out reports
+        `required parameter is missing`.
       content:
         application/json:
           schema:
