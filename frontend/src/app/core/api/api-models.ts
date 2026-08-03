@@ -32,6 +32,8 @@ export type SupplierProfitReport = components['schemas']['SupplierProfitReport']
 
 export type StockStatusReport = components['schemas']['StockStatusReport'];
 
+export type StockHistoryPoint = components['schemas']['StockHistoryPoint'];
+
 export type CashFlowReport = components['schemas']['CashFlowReport'];
 
 export type CashFlowProductRow = components['schemas']['CashFlowProductRow'];

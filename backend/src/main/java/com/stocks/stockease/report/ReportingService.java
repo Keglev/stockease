@@ -235,6 +235,76 @@ public class ReportingService {
     }
 
     /**
+     * Returns one product's stock level and cumulative sales over the days that moved it.
+     *
+     * <p>Derivable at all only because the ledger is complete: stock enters and leaves exclusively
+     * through booked movements (ADR 021), and V18 removed the pre-ledger rows that once made the
+     * running sum disagree with the product's own quantity. The final point therefore equals that
+     * quantity, which is the invariant the tests pin.
+     *
+     * <p>A soft-deleted product still answers - what it did is history, and retiring it does not
+     * unmake it.
+     *
+     * @param productId product identifier
+     * @param from first day to return, or {@code null} for no lower bound
+     * @param to last day to return, or {@code null} for no upper bound
+     * @return the product's history within the window, oldest first, or empty if no such product
+     *         exists; a product that never moved answers an empty list rather than an empty optional
+     */
+    public Optional<List<StockHistoryPoint>> stockHistory(long productId, LocalDate from, LocalDate to) {
+        // Native, so a soft-deleted product is still found: @SQLRestriction hides those from every
+        // mapped query, and this report exists to show what happened rather than what is current.
+        Integer found = jdbcClient.sql("SELECT 1 FROM product WHERE id = :id")
+                .param("id", productId)
+                .query(Integer.class)
+                .optional()
+                .orElse(null);
+        if (found == null) {
+            return Optional.empty();
+        }
+
+        // The window is applied AFTER the running sums, and that ordering is the whole correctness
+        // of this query. Filtering the movements first would restart the count inside the window, so
+        // a product bought a year ago and asked about over the last 30 days would appear to have
+        // begun at zero. The sums run over every movement the product ever had; the outer WHERE only
+        // decides which of the resulting points are returned.
+        //
+        // The sign comes from the movement's own persisted type rather than from a list of reasons
+        // restated here. That column is written from MovementReason.getType(), which is the same
+        // authority StockMovementService.recordMovement reads to compute its delta - so the two can
+        // never disagree about which way a reason moves stock.
+        String sql = """
+                WITH daily AS (
+                  SELECT CAST(m.created_at AS date) AS day,
+                    SUM(CASE WHEN m.type = 'INCREASE' THEN m.quantity ELSE -m.quantity END) AS net_change,
+                    SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity
+                             WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity
+                             ELSE 0 END) AS net_sold
+                  FROM stock_movement m
+                  WHERE m.product_id = :id
+                  GROUP BY CAST(m.created_at AS date)
+                ), running AS (
+                  SELECT day,
+                    SUM(net_change) OVER (ORDER BY day) AS stock_level,
+                    SUM(net_sold) OVER (ORDER BY day) AS sold_units
+                  FROM daily
+                )
+                SELECT day, stock_level, sold_units
+                FROM running
+                WHERE (CAST(:from AS date) IS NULL OR day >= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR day <= CAST(:to AS date))
+                ORDER BY day
+                """;
+        return Optional.of(jdbcClient.sql(sql)
+                .param("id", productId)
+                .param("from", from)
+                .param("to", to)
+                .query((rs, rowNum) -> new StockHistoryPoint(rs.getObject("day", LocalDate.class),
+                        rs.getInt("stock_level"), rs.getInt("sold_units")))
+                .list());
+    }
+
+    /**
      * Returns what each live product has sold and what it still holds.
      *
      * @return one row per live product, ordered by product ID

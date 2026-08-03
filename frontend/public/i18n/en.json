@@ -95,7 +95,8 @@
       "stock": "Stock",
       "losses": "Losses",
       "dueDates": "Due dates",
-      "changes": "Changes"
+      "changes": "Changes",
+      "analytics": "Analytics"
     },
     "columns": {
       "name": "Name",
@@ -169,6 +170,14 @@
         "oldValue": "Old value",
         "newValue": "New value"
       }
+    },
+    "analytics": {
+      "selectProduct": "Select a product to analyze",
+      "priceHistory": "Purchase price over time",
+      "stockVsSales": "Stock level vs. units sold",
+      "stockLevel": "Stock level",
+      "soldUnits": "Units sold",
+      "noPriceChanges": "No price changes recorded."
     }
   },
   "movements": {

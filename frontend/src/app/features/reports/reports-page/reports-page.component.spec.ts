@@ -9,10 +9,13 @@ import {
   CashFlowReport,
   CashFlowTimelineBucket,
   ChangeLogEntryResponse,
+  ChangeLogResponse,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
   ProductProfitReport,
+  ProductResponse,
+  StockHistoryPoint,
   StockStatusReport,
   SupplierProfitReport
 } from '../../../core/api/api-models';
@@ -21,6 +24,7 @@ import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
+import { ProductService } from '../../products/product.service';
 import { ReportService } from '../report.service';
 import { ReportsPageComponent } from './reports-page.component';
 
@@ -53,7 +57,8 @@ const TRANSLATIONS = {
         stock: 'Stock',
         losses: 'Losses',
         dueDates: 'Due dates',
-        changes: 'Changes'
+        changes: 'Changes',
+        analytics: 'Analytics'
       },
       changes: {
         allUsers: 'All users',
@@ -88,6 +93,14 @@ const TRANSLATIONS = {
         suppliers: 'Profit per supplier',
         empty: 'No profit has been recorded yet.',
         suppliersEmpty: 'No supplier has supplied a product yet.'
+      },
+      analytics: {
+        selectProduct: 'Select a product to analyze',
+        priceHistory: 'Purchase price over time',
+        stockVsSales: 'Stock level vs. units sold',
+        stockLevel: 'Stock level',
+        soldUnits: 'Units sold',
+        noPriceChanges: 'No price changes recorded.'
       },
       stock: { byValue: 'Products by stock value', empty: 'No products are currently in stock.' },
       losses: { byProduct: 'Loss share by product', empty: 'No losses have been recorded.' },
@@ -204,6 +217,32 @@ const CHANGES: ChangeLogEntryResponse[] = [
   }
 ];
 
+/** Newest first, as the endpoint orders it; one row is deliberately not a number. */
+const PRODUCT_CHANGES: ChangeLogResponse[] = [
+  { id: 4, productId: 3, userId: 11, field: 'PURCHASE_PRICE', oldValue: '12.00', newValue: '14.00',
+    createdAt: '2026-03-14T10:00:00' },
+  { id: 3, productId: 3, userId: 11, field: 'NAME', oldValue: 'Old', newValue: 'Widget',
+    createdAt: '2026-03-13T10:00:00' },
+  { id: 2, productId: 3, userId: 11, field: 'PURCHASE_PRICE', oldValue: '10.00', newValue: '12.00',
+    createdAt: '2026-03-12T10:00:00' }
+];
+
+const STOCK_HISTORY: StockHistoryPoint[] = [
+  { date: '2026-03-12', stockLevel: 40, cumulativeSoldUnits: 0 },
+  { date: '2026-03-14', stockLevel: 32, cumulativeSoldUnits: 8 }
+];
+
+const PRODUCTS: ProductResponse[] = [
+  { id: 3, name: 'Widget', sku: 'SKU-3', quantity: 32, purchasePrice: 14, totalValue: 448,
+    createdAt: '2026-01-02T03:04:00' }
+];
+
+class ProductServiceStub {
+  getAll(): Observable<ProductResponse[]> {
+    return of(PRODUCTS);
+  }
+}
+
 class AuditServiceStub {
   changePayload: ChangeLogEntryResponse[] = CHANGES;
   calls = 0;
@@ -213,6 +252,15 @@ class AuditServiceStub {
     this.calls++;
     this.ranges.push([from, to]);
     return of(this.changePayload);
+  }
+
+  /** The per-product listing the analytics tab reads its price series from. */
+  productChangePayload: ChangeLogResponse[] = PRODUCT_CHANGES;
+  productChangeIds: number[] = [];
+
+  productChanges(productId: number): Observable<ChangeLogResponse[]> {
+    this.productChangeIds.push(productId);
+    return of(this.productChangePayload);
   }
 }
 
@@ -263,6 +311,16 @@ class ReportServiceStub {
   stockStatus(): Observable<StockStatusReport[]> {
     this.calls.push('stockStatus');
     return of(STOCK);
+  }
+
+  historyIds: number[] = [];
+  historyRanges: (string | undefined)[][] = [];
+
+  stockHistory(productId: number, from?: string, to?: string): Observable<StockHistoryPoint[]> {
+    this.calls.push('stockHistory');
+    this.historyIds.push(productId);
+    this.historyRanges.push([from, to]);
+    return of(STOCK_HISTORY);
   }
 
   losses(from?: string, to?: string): Observable<LossReport[]> {
@@ -350,6 +408,7 @@ describe('ReportsPageComponent', () => {
         provideTestTranslations(TRANSLATIONS),
         { provide: ReportService, useValue: reports },
         { provide: AuditService, useValue: audit },
+        { provide: ProductService, useValue: new ProductServiceStub() },
         { provide: MatDialog, useValue: dialog },
         // A provider stub rather than a module mock, for the reason ADR 016 records: the module
         // registry is shared across the specs in a Vitest worker, a TestBed is not.
@@ -522,6 +581,75 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(optionOf('lossOption')).toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('.losses-empty')).not.toBeNull();
   });
+
+  it('analyticsTab_noProduct_showsSelectPrompt', async () => {
+    render();
+    await activateTab(6);
+
+    // nothing is preselected, so neither series is fetched until a product is chosen
+    expect(host().querySelector('.analytics-prompt')).not.toBeNull();
+    expect(reports.calls).not.toContain('stockHistory');
+  });
+
+  it('analyticsTab_productChosen_fetchesBothSeries', async () => {
+    render();
+    await activateTab(6);
+
+    await chooseAnalyticsProduct(3);
+
+    // the stock series from the reporting endpoint, the price series from the audit trail
+    expect(reports.historyIds).toEqual([3]);
+    expect(audit.productChangeIds).toEqual([3]);
+    expect(host().querySelector('.analytics-prompt')).toBeNull();
+  });
+
+  it('analyticsTab_presetChange_refetchesStockHistoryWithRange', async () => {
+    vi.setSystemTime(new Date(2026, 2, 15, 12));
+    render();
+    await activateTab(6);
+    await chooseAnalyticsProduct(3);
+
+    await selectAnalyticsPeriod('d90');
+
+    expect(reports.historyRanges.at(-1)).toEqual(['2025-12-15', '2026-03-15']);
+  });
+
+  it('analyticsTab_priceRowsUnparseable_skipsThem', async () => {
+    audit.productChangePayload = [
+      { ...PRODUCT_CHANGES[0], newValue: 'not a price' },
+      PRODUCT_CHANGES[2]
+    ];
+    render();
+    await activateTab(6);
+    await chooseAnalyticsProduct(3);
+
+    // one usable point is left, and one point is not a history: the no-changes state shows instead
+    // of a line drawn through a value that was never a number
+    expect(optionOf('analyticsPriceOption')).toBeNull();
+    expect(host().querySelector('.analytics-no-prices')).not.toBeNull();
+  });
+
+  /** Picks a product through the component, the way the select does. */
+  async function chooseAnalyticsProduct(productId: number): Promise<void> {
+    const page = fixture.componentInstance as unknown as {
+      setAnalyticsProduct: (value: number) => void;
+    };
+    page.setAnalyticsProduct(productId);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  /** Clicks an analytics period preset through the component, the way the toggle group does. */
+  async function selectAnalyticsPeriod(period: string): Promise<void> {
+    const page = fixture.componentInstance as unknown as {
+      setAnalyticsPeriod: (value: string) => void;
+    };
+    page.setAnalyticsPeriod(period);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
 
   it('changesTab_firstActivation_loadsLazily', async () => {
     render();

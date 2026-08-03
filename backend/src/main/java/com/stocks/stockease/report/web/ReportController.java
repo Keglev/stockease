@@ -21,6 +21,7 @@ import com.stocks.stockease.report.InvoiceDueSummary;
 import com.stocks.stockease.report.LossReport;
 import com.stocks.stockease.report.ProductProfitReport;
 import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.StockHistoryPoint;
 import com.stocks.stockease.report.StockStatusReport;
 import com.stocks.stockease.report.SupplierProfitReport;
 import com.stocks.stockease.shared.ApiResponse;
@@ -121,6 +122,28 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
         return reportingService.cashFlowTimeline(from, to);
+    }
+
+    /**
+     * Returns one product's stock level and cumulative units sold over the days that moved it.
+     *
+     * @param id product identifier
+     * @param from first day to return, or {@code null} for no lower bound
+     * @param to last day to return, or {@code null} for no upper bound
+     * @return the product's history within the window, oldest first
+     * @throws EntityNotFoundException if no such product exists
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     */
+    @GetMapping("/products/{id}/stock-history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<StockHistoryPoint> stockHistory(@PathVariable long id,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+        validatePeriod(from, to);
+        // An empty optional means no such product; an empty list means one that never moved. Only
+        // the first is a 404 - a product nobody has traded yet has a real, empty history.
+        return reportingService.stockHistory(id, from, to)
+                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
     }
 
     /** Rejects a period whose bounds are the wrong way round; either bound alone is always valid. */

@@ -12,6 +12,7 @@ import {
   InvoiceDueSummary,
   LossReport,
   ProductProfitReport,
+  StockHistoryPoint,
   StockStatusReport,
   SupplierProfitReport
 } from '../../core/api/api-models';
@@ -114,6 +115,22 @@ export class ReportService {
   /** Bare array - deliberately not unwrapped. */
   stockStatus(): Observable<StockStatusReport[]> {
     return this.http.get<StockStatusReport[]>(`${this.baseUrl}/stock-status`);
+  }
+
+  /**
+   * Reads one product's stock level and cumulative sales per day it moved. Bare array.
+   *
+   * <p>The window narrows which points come back, not where the running totals start, so a short
+   * period over a long-lived product still opens at the level it had reached.
+   *
+   * @param productId product to chart
+   * @param from first day to return, as an ISO date
+   * @param to last day to return, as an ISO date
+   */
+  stockHistory(productId: number, from?: string, to?: string): Observable<StockHistoryPoint[]> {
+    return this.http.get<StockHistoryPoint[]>(`${this.baseUrl}/products/${productId}/stock-history`, {
+      params: this.periodParams(from, to)
+    });
   }
 
   /**
