@@ -5,8 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { FooterComponent } from '../../shared/footer/footer.component';
-import { LanguageToggleComponent } from '../../shared/language-toggle/language-toggle.component';
-import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
+import { PublicHeaderComponent } from '../../shared/public-header/public-header.component';
 
 /**
  * Rendered by the wildcard route for any URL the router cannot match. It stands outside the
@@ -16,8 +15,7 @@ import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.com
   selector: 'app-not-found',
   imports: [
     FooterComponent,
-    LanguageToggleComponent,
-    ThemeToggleComponent,
+    PublicHeaderComponent,
     MatButtonModule,
     MatCardModule,
     RouterLink,

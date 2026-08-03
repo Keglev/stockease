@@ -79,6 +79,15 @@ describe('LogoutComponent', () => {
     expect(host.textContent).toContain('Log in again');
   });
 
+  it('render_default_showsTheSharedPublicHeaderInsteadOfFloatingToggles', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    // The toggles used to float in the page's top-right corner with nothing naming the product.
+    expect(host.querySelector('.logout-header')).toBeNull();
+    expect(host.querySelector('app-public-header app-language-toggle')).not.toBeNull();
+    expect(host.querySelector('app-public-header app-theme-toggle')).not.toBeNull();
+  });
+
   it('render_default_showsFooter', () => {
     const host = fixture.nativeElement as HTMLElement;
 
@@ -88,8 +97,10 @@ describe('LogoutComponent', () => {
   });
 
   it('render_backAction_pointsAtLandingRoute', () => {
+    // Scoped to the card's actions: the brand header now carries its own link to '/', and an
+    // unscoped lookup would assert against that one instead.
     const back = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
-      'a[href="/"]'
+      '.logout-actions a[href="/"]'
     );
 
     expect(back).not.toBeNull();

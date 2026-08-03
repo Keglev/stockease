@@ -1,0 +1,28 @@
+// The same tone the authenticated shell's toolbar carries, deliberately: the public pages and the
+// application are one product, and a different header colour would announce a seam that does not
+// exist. It also means the language toggle's selected-state pair - which is calibrated against
+// primary-container in the light scheme - resolves here exactly as it does in the shell.
+mat-toolbar {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+// Reads as the product's name, not as a link: the underline and link colour would make the brand
+// look like navigation. The pointer and the focus ring still say it is actionable.
+.public-header-name {
+  color: inherit;
+  font: var(--mat-sys-title-medium);
+  text-decoration: none;
+}
+
+.public-header-name:hover {
+  text-decoration: underline;
+}
+
+app-language-toggle {
+  margin-right: 0.75rem;
+}

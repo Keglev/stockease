@@ -2,14 +2,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  // Padding moves to the header and the content so the footer can span the full viewport width.
+  // The brand header and the footer both span the full viewport width; the content owns its inset.
   padding: 0;
-}
-
-.login-page-header {
-  display: flex;
-  justify-content: flex-end;
-  padding: 1rem 1rem 0;
 }
 
 .login-content {
@@ -31,7 +25,7 @@
   border: 1px solid var(--mat-sys-outline-variant);
 }
 
-// The toggles moved out to the page header, so the title is the header's only occupant.
+// The toggles live in the shared brand header, so the title is this header's only occupant.
 .login-header {
   margin-bottom: 0.5rem;
 }
