@@ -106,11 +106,35 @@
         >
           {{ 'nav.customers' | translate }}
         </a>
+        <a
+          mat-list-item
+          routerLink="/app/settings"
+          routerLinkActive="active"
+          (click)="onNavClick()"
+        >
+          <mat-icon matListItemIcon>settings</mat-icon>
+          {{ 'nav.settings' | translate }}
+        </a>
         <a mat-list-item routerLink="/app/help" routerLinkActive="active" (click)="onNavClick()">
           <mat-icon matListItemIcon>help_outline</mat-icon>
           {{ 'nav.help' | translate }}
         </a>
       </mat-nav-list>
+
+      <!-- Takes whatever the nav list leaves, which is what pins logout to the bottom at every
+           tier rather than letting it float under the last entry on a tall screen. -->
+      <span class="sidenav-spacer"></span>
+
+      <!-- An action list rather than a nav list: this is a command, not a destination, so it is a
+           button and never carries routerLinkActive. Duplicating the toolbar's logout is
+           deliberate - the toolbar's is an icon on phones, and the drawer is where a reader who is
+           already navigating looks for it. -->
+      <mat-action-list class="sidenav-bottom">
+        <button mat-list-item type="button" class="sidenav-logout" (click)="logout()">
+          <mat-icon matListItemIcon>logout</mat-icon>
+          {{ 'shell.logout' | translate }}
+        </button>
+      </mat-action-list>
     </div>
   </mat-sidenav>
 
