@@ -1,9 +1,20 @@
 <div class="product-toolbar">
   <h1>{{ 'products.title' | translate }}</h1>
   @if (isAdmin()) {
-    <button matButton="filled" type="button" class="product-create" (click)="openCreate()">
-      {{ 'products.create' | translate }}
-    </button>
+    <div class="product-toolbar-actions">
+      <!-- Admin-only: restoring is administration, and the backend answers 403 on both endpoints
+           regardless of what renders here. -->
+      <mat-slide-toggle
+        class="product-show-deleted"
+        [checked]="showDeleted()"
+        (change)="onToggleDeleted($event.checked)"
+      >
+        {{ 'products.showDeleted' | translate }}
+      </mat-slide-toggle>
+      <button matButton="filled" type="button" class="product-create" (click)="openCreate()">
+        {{ 'products.create' | translate }}
+      </button>
+    </div>
   }
 </div>
 
@@ -16,7 +27,7 @@
   <p class="product-error" role="alert">{{ message }}</p>
 }
 
-<table mat-table [dataSource]="rows()" class="product-table">
+<table mat-table [dataSource]="visibleRows()" class="product-table">
   <ng-container matColumnDef="name">
     <th mat-header-cell *matHeaderCellDef>{{ 'products.columns.name' | translate }}</th>
     <td mat-cell *matCellDef="let product">{{ product.name }}</td>
@@ -96,18 +107,51 @@
     </td>
   </ng-container>
 
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  <!-- Deleted view only: states why the row is muted, so the styling is never the only signal. -->
+  <ng-container matColumnDef="status">
+    <th mat-header-cell *matHeaderCellDef>{{ 'products.columns.status' | translate }}</th>
+    <td mat-cell *matCellDef="let product">
+      <!-- Not `disabled`: that renders Material's label at 38% alpha, which drops the chip below a
+           legible contrast. The chip is inert because nothing binds a click, not because it is
+           disabled. -->
+      <mat-chip class="status-chip status-deleted">
+        {{ 'products.deletedChip' | translate }}
+      </mat-chip>
+    </td>
+  </ng-container>
+
+  <!-- Restore is not destructive, so it is a direct button with no confirmation step. -->
+  <ng-container matColumnDef="deletedActions">
+    <th mat-header-cell *matHeaderCellDef>{{ 'products.columns.actions' | translate }}</th>
+    <td mat-cell *matCellDef="let product">
+      <button matButton type="button" class="product-restore" (click)="restore(product)">
+        {{ 'products.restore' | translate }}
+      </button>
+    </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="visibleColumns()"></tr>
+  <tr
+    mat-row
+    *matRowDef="let row; columns: visibleColumns()"
+    [class.product-row-deleted]="showDeleted()"
+  ></tr>
 </table>
 
-@if (!loading() && !error() && rows().length === 0) {
-  <p class="product-empty">{{ 'products.empty' | translate }}</p>
+@if (!loading() && !error() && visibleRows().length === 0) {
+  <p class="product-empty">
+    {{ (showDeleted() ? 'products.deletedEmpty' : 'products.empty') | translate }}
+  </p>
 }
 
-<mat-paginator
-  [length]="totalElements()"
-  [pageIndex]="pageIndex()"
-  [pageSize]="pageSize()"
-  [pageSizeOptions]="[10, 25, 50]"
-  (page)="onPage($event)"
-/>
+<!-- The deleted set is fetched unpaged, so its paginator would state a page count that means
+     nothing. It returns with the live view. -->
+@if (!showDeleted()) {
+  <mat-paginator
+    [length]="totalElements()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[10, 25, 50]"
+    (page)="onPage($event)"
+  />
+}

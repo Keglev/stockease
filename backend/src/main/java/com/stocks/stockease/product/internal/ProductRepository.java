@@ -92,6 +92,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findDeletedById(@Param("id") long id);
 
     /**
+     * Lists every soft-deleted product alphabetically by name, ignoring case. Native for the same reason
+     * as {@link #findDeletedById}: {@code @SQLRestriction} hides soft-deleted rows from mapped queries,
+     * so the recycle-bin listing needs the sanctioned bypass.
+     *
+     * @return soft-deleted products ordered by name, case-insensitively ascending
+     */
+    @Query(value = "SELECT * FROM product WHERE deleted_at IS NOT NULL ORDER BY LOWER(name) ASC",
+            nativeQuery = true)
+    List<Product> findAllDeleted();
+
+    /**
      * Loads a product for update, holding a pessimistic write lock until the surrounding transaction commits
      * so concurrent stock adjustments serialize rather than interleave on a stale quantity.
      *

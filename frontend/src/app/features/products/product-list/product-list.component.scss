@@ -1,3 +1,5 @@
+@use '../../../../styles/status-chips' as chips;
+
 :host {
   display: block;
 }
@@ -8,6 +10,32 @@
   gap: 1rem;
   align-items: center;
   justify-content: space-between;
+}
+
+.product-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+// Deleted rows are context for the restore action, not live inventory, so they recede. Opacity is
+// deliberately not the whole signal: the row also carries a Deleted chip, because a muted row alone
+// would leave the state invisible to anyone who cannot resolve the contrast difference.
+.product-row-deleted {
+  .mat-mdc-cell {
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+// The one status this table shows, taking the same token treatment as the invoice chips so the two
+// tables cannot drift apart. Error roles: deleted is the removal state, and the chip sits next to a
+// Restore button that undoes it.
+.status-chip.status-deleted {
+  @include chips.chip-colors(
+    light-dark(var(--mat-sys-error-container), var(--mat-sys-error)),
+    light-dark(var(--mat-sys-on-error-container), var(--mat-sys-on-error))
+  );
 }
 
 .product-table {

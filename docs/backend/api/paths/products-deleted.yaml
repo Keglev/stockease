@@ -1,0 +1,53 @@
+get:
+  summary: List soft-deleted products (ADMIN only)
+  description: |
+    Returns the products that have been soft-deleted, ordered alphabetically by name ignoring case.
+    The listing is unpaged: the recycle bin is a short administrative list rather than a browsable
+    catalogue, and the product list UI hides its paginator while showing it.
+
+    Soft-deleted rows are hidden from every other product query by the entity's `@SQLRestriction`,
+    so this endpoint reads them through an explicit native query. An empty bin is a successful empty
+    array, not a 404.
+  operationId: getDeletedProducts
+  tags:
+    - Products
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Soft-deleted products, empty when nothing is deleted
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseProductList'
+          examples:
+            deleted:
+              summary: Two products in the bin
+              value:
+                success: true
+                message: Deleted products fetched successfully
+                data:
+                  - id: 7
+                    name: Anodized Bracket
+                    sku: SKU-B7C8D9E0
+                    quantity: 0
+                    purchasePrice: 12.50
+                    totalValue: 0.00
+                    createdAt: '2026-01-02T03:04:00'
+                  - id: 3
+                    name: laptop stand
+                    sku: SKU-A1B2C3D4
+                    quantity: 4
+                    purchasePrice: 39.00
+                    totalValue: 156.00
+                    createdAt: '2026-01-05T09:15:00'
+            empty:
+              summary: Nothing deleted
+              value:
+                success: true
+                message: Deleted products fetched successfully
+                data: []
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '403':
+      $ref: '../openapi.yaml#/components/responses/Forbidden'

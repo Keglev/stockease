@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.14.0
+  version: 2.15.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -289,6 +289,16 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/ProductResponse'
+
+    ApiResponseProductList:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              $ref: '#/components/schemas/ProductList'
 
     CreateProductRequest:
       type: object
@@ -1499,6 +1509,10 @@ paths:
     $ref: './paths/products.yaml'
   /api/products/{id}:
     $ref: './paths/products-detail.yaml'
+  /api/products/deleted:
+    $ref: './paths/products-deleted.yaml'
+  /api/products/{id}/restore:
+    $ref: './paths/products-restore.yaml'
   /api/products/paged:
     $ref: './paths/products-paged.yaml'
   /api/products/low-stock:
