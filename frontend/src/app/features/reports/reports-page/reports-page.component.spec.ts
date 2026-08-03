@@ -331,10 +331,15 @@ class ReportServiceStub {
     return of(SUPPLIERS);
   }
 
+  /** The row is on screen but its detail fetch fails - a deleted product, or a dropped request. */
+  detailFails = false;
+
   profitProductDetail(id: number, from?: string, to?: string): Observable<ProductProfitReport> {
     this.calls.push(`profitProductDetail:${id}`);
     this.profitRanges['detail'].push([from, to]);
-    return of(this.detail);
+    return this.detailFails
+      ? throwError(() => new Error('Product with ID 3 not found.'))
+      : of(this.detail);
   }
 
   stockStatus(): Observable<StockStatusReport[]> {
@@ -518,6 +523,22 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
 
     expect(reports.calls).toContain('profitProductDetail:3');
     expect(dialog.open).toHaveBeenCalledWith(ProfitDetailDialogComponent, { data: PROFIT[0] });
+  });
+
+  it('rowClick_detailFetchFails_surfacesTheErrorAndOpensNoDialog', async () => {
+    reports.detailFails = true;
+    render();
+    await showTable(0);
+
+    host().querySelector<HTMLElement>('.profit-row')?.click();
+    fixture.detectChanges();
+
+    // Both halves matter: the dialog is a pure presenter, so opening it on a failed fetch would
+    // render an empty shell rather than an error the reader can act on.
+    expect(host().querySelector('.reports-error')?.textContent).toContain(
+      'Product with ID 3 not found.'
+    );
+    expect(dialog.open).not.toHaveBeenCalled();
   });
 
   it('dueLists_overdueRows_renderDaysOverdueAndDueSoonRowsDoNot', async () => {
