@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.SearchLimits;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -31,7 +33,7 @@ public class SupplierService {
      * @return the supplier, or empty if none exists with that ID
      */
     public Optional&lt;Supplier&gt; findById(long id) {
-<span class="fc" id="L34">        return supplierRepository.findById(id);</span>
+<span class="fc" id="L36">        return supplierRepository.findById(id);</span>
     }
 
     /**
@@ -40,7 +42,18 @@ public class SupplierService {
      * @return list of all suppliers that have not been soft-deleted
      */
     public List&lt;Supplier&gt; findAll() {
-<span class="fc" id="L43">        return supplierRepository.findAll();</span>
+<span class="fc" id="L45">        return supplierRepository.findAll();</span>
+    }
+
+    /**
+     * Searches live suppliers by a case-insensitive substring match on name, capped for typeahead use.
+     *
+     * @param name search substring
+     * @return matching suppliers, alphabetical, at most {@link SearchLimits#TYPEAHEAD_LIMIT} of them
+     */
+    public List&lt;Supplier&gt; searchByName(String name) {
+<span class="fc" id="L55">        return supplierRepository.findByNameContainingIgnoreCaseOrderByNameAsc(</span>
+<span class="fc" id="L56">                name, Limit.of(SearchLimits.TYPEAHEAD_LIMIT));</span>
     }
 
     /**
@@ -53,11 +66,11 @@ public class SupplierService {
      */
     @Transactional
     public Supplier create(String name, String address) {
-<span class="fc" id="L56">        requireNameAndAddress(name, address);</span>
-<span class="fc" id="L57">        Supplier supplier = new Supplier();</span>
-<span class="fc" id="L58">        supplier.setName(name);</span>
-<span class="fc" id="L59">        supplier.setAddress(address);</span>
-<span class="fc" id="L60">        return supplierRepository.save(supplier);</span>
+<span class="fc" id="L69">        requireNameAndAddress(name, address);</span>
+<span class="fc" id="L70">        Supplier supplier = new Supplier();</span>
+<span class="fc" id="L71">        supplier.setName(name);</span>
+<span class="fc" id="L72">        supplier.setAddress(address);</span>
+<span class="fc" id="L73">        return supplierRepository.save(supplier);</span>
     }
 
     /**
@@ -72,12 +85,12 @@ public class SupplierService {
      */
     @Transactional
     public Supplier update(long id, String name, String address) {
-<span class="fc" id="L75">        Supplier supplier = supplierRepository.findById(id)</span>
-<span class="fc" id="L76">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L77">        requireNameAndAddress(name, address);</span>
-<span class="fc" id="L78">        supplier.setName(name);</span>
-<span class="fc" id="L79">        supplier.setAddress(address);</span>
-<span class="fc" id="L80">        return supplierRepository.save(supplier);</span>
+<span class="fc" id="L88">        Supplier supplier = supplierRepository.findById(id)</span>
+<span class="fc" id="L89">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L90">        requireNameAndAddress(name, address);</span>
+<span class="fc" id="L91">        supplier.setName(name);</span>
+<span class="fc" id="L92">        supplier.setAddress(address);</span>
+<span class="fc" id="L93">        return supplierRepository.save(supplier);</span>
     }
 
     /**
@@ -90,19 +103,19 @@ public class SupplierService {
      */
     @Transactional
     public void deleteById(long id) {
-<span class="fc" id="L93">        Supplier supplier = supplierRepository.findById(id)</span>
-<span class="fc" id="L94">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L106">        Supplier supplier = supplierRepository.findById(id)</span>
+<span class="fc" id="L107">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
         // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
         // rolls back the transaction
-<span class="fc" id="L97">        eventPublisher.publishEvent(new SupplierDeletedEvent(supplier.getId(), supplier.getName()));</span>
-<span class="fc" id="L98">        supplierRepository.delete(supplier);</span>
-<span class="fc" id="L99">    }</span>
+<span class="fc" id="L110">        eventPublisher.publishEvent(new SupplierDeletedEvent(supplier.getId(), supplier.getName()));</span>
+<span class="fc" id="L111">        supplierRepository.delete(supplier);</span>
+<span class="fc" id="L112">    }</span>
 
     /** Rejects a missing or blank name or address with the shared message. */
     private static void requireNameAndAddress(String name, String address) {
-<span class="pc bpc" id="L103" title="2 of 8 branches missed.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
-<span class="fc" id="L104">            throw new IllegalArgumentException(&quot;Supplier name and address are required.&quot;);</span>
+<span class="pc bpc" id="L116" title="2 of 8 branches missed.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
+<span class="fc" id="L117">            throw new IllegalArgumentException(&quot;Supplier name and address are required.&quot;);</span>
         }
-<span class="fc" id="L106">    }</span>
+<span class="fc" id="L119">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

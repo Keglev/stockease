@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.shared.ApiResponse;
@@ -42,7 +43,25 @@ public class SupplierController {
     @GetMapping
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;SupplierResponse&gt; getAllSuppliers() {
-<span class="fc" id="L45">        return supplierService.findAll().stream().map(SupplierResponse::from).toList();</span>
+<span class="fc" id="L46">        return supplierService.findAll().stream().map(SupplierResponse::from).toList();</span>
+    }
+
+    /**
+     * Searches live suppliers by name using a case-insensitive substring match.
+     *
+     * &lt;p&gt;Built for the typeahead pickers: the result is capped and alphabetical, and nothing
+     * matching answers an empty array rather than the 204-with-body that
+     * {@code GET /api/products/search} returns. That endpoint's shape is a documented defect, not a
+     * convention worth carrying onto new surface (ADR 028). Behavior defined in
+     * {@code docs/backend/api/paths/suppliers-search.yaml}.
+     *
+     * @param name search term (substring, case-insensitive)
+     * @return HTTP 200 with the matching suppliers, empty if none match
+     */
+    @GetMapping(&quot;/search&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;SupplierResponse&gt; searchSuppliersByName(@RequestParam String name) {
+<span class="fc" id="L64">        return supplierService.searchByName(name).stream().map(SupplierResponse::from).toList();</span>
     }
 
     /**
@@ -55,10 +74,10 @@ public class SupplierController {
     @GetMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;SupplierResponse&gt;&gt; getSupplierById(@PathVariable long id) {
-<span class="fc" id="L58">        Supplier supplier = supplierService.findById(id)</span>
-<span class="fc" id="L59">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L60">        return ResponseEntity.ok(</span>
-<span class="fc" id="L61">                new ApiResponse&lt;&gt;(true, &quot;Supplier fetched successfully&quot;, SupplierResponse.from(supplier)));</span>
+<span class="fc" id="L77">        Supplier supplier = supplierService.findById(id)</span>
+<span class="fc" id="L78">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L79">        return ResponseEntity.ok(</span>
+<span class="fc" id="L80">                new ApiResponse&lt;&gt;(true, &quot;Supplier fetched successfully&quot;, SupplierResponse.from(supplier)));</span>
     }
 
     /**
@@ -70,8 +89,8 @@ public class SupplierController {
     @PostMapping
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;SupplierResponse&gt; createSupplier(@Valid @RequestBody CreateSupplierRequest request) {
-<span class="fc" id="L73">        Supplier saved = supplierService.create(request.name(), request.address());</span>
-<span class="fc" id="L74">        return ResponseEntity.ok(SupplierResponse.from(saved));</span>
+<span class="fc" id="L92">        Supplier saved = supplierService.create(request.name(), request.address());</span>
+<span class="fc" id="L93">        return ResponseEntity.ok(SupplierResponse.from(saved));</span>
     }
 
     /**
@@ -86,9 +105,9 @@ public class SupplierController {
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;SupplierResponse&gt;&gt; updateSupplier(@PathVariable long id,
             @Valid @RequestBody UpdateSupplierRequest request) {
-<span class="fc" id="L89">        Supplier updated = supplierService.update(id, request.name(), request.address());</span>
-<span class="fc" id="L90">        return ResponseEntity.ok(</span>
-<span class="fc" id="L91">                new ApiResponse&lt;&gt;(true, &quot;Supplier updated successfully&quot;, SupplierResponse.from(updated)));</span>
+<span class="fc" id="L108">        Supplier updated = supplierService.update(id, request.name(), request.address());</span>
+<span class="fc" id="L109">        return ResponseEntity.ok(</span>
+<span class="fc" id="L110">                new ApiResponse&lt;&gt;(true, &quot;Supplier updated successfully&quot;, SupplierResponse.from(updated)));</span>
     }
 
     /**
@@ -101,8 +120,8 @@ public class SupplierController {
     @DeleteMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; deleteSupplier(@PathVariable long id) {
-<span class="fc" id="L104">        supplierService.deleteById(id);</span>
-<span class="fc" id="L105">        return ResponseEntity.ok(</span>
+<span class="fc" id="L123">        supplierService.deleteById(id);</span>
+<span class="fc" id="L124">        return ResponseEntity.ok(</span>
                 new ApiResponse&lt;&gt;(true, &quot;Supplier with ID &quot; + id + &quot; has been successfully deleted.&quot;, null));
     }
 }
