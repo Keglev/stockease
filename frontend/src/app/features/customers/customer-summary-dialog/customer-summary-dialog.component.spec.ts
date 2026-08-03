@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, of, throwError } from 'rxjs';
 
 import { CustomerSummary } from '../../../core/api/api-models';
-import { LanguageService } from '../../../core/i18n/language.service';
+import { LANGUAGE_STORAGE_KEY, LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ReportService } from '../../reports/report.service';
@@ -87,6 +87,11 @@ describe('CustomerSummaryDialogComponent', () => {
   }
 
   beforeEach(() => {
+    // Cleared and pinned, not merely cleared: LanguageService resolves from storage first, so
+    // without this the rendered currency depended on whichever spec file happened to run before
+    // this one - which passed locally and failed in CI on the same commit.
+    localStorage.clear();
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
     TestBed.resetTestingModule();
     reports = new ReportServiceStub();
     notifications = new NotificationServiceStub();
@@ -104,9 +109,11 @@ describe('CustomerSummaryDialogComponent', () => {
 
     expect(textOf('.summary-invoice-count')).toBe('3');
     expect(textOf('.summary-bought-units')).toBe('12');
-    expect(textOf('.summary-bought-value')).toContain('240.00');
+    // The whole rendered amount rather than a substring of the digits: with the language pinned
+    // above this pins the format too, which a bare "240.00" did not.
+    expect(textOf('.summary-bought-value')).toBe('€240.00');
     expect(textOf('.summary-returned-units')).toBe('2');
-    expect(textOf('.summary-returned-value')).toContain('40.00');
+    expect(textOf('.summary-returned-value')).toBe('€40.00');
   });
 
   it('render_allZeroSummary_stillShowsTheFigures', async () => {

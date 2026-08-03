@@ -15,6 +15,7 @@ import {
   ProductResponse
 } from '../../core/api/api-models';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
+import { LANGUAGE_STORAGE_KEY } from '../../core/i18n/language.service';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
@@ -274,6 +275,10 @@ describe('DashboardComponent', () => {
   }
 
   beforeEach(() => {
+    // Pinned for the same reason the customer-summary spec pins it: LanguageService resolves from
+    // storage first, so a currency assertion here would otherwise depend on spec file order.
+    localStorage.clear();
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
     vi.useFakeTimers();
     TestBed.resetTestingModule();
     reports = new ReportServiceStub();
@@ -316,7 +321,8 @@ describe('DashboardComponent', () => {
     render();
 
     // summed over every row the profit report returned, not over the ten the chart plots
-    expect(textOf('.kpi-gross-profit .kpi-value')).toContain('85.00');
+    // The full rendered amount, so the language pinned in beforeEach also pins the format.
+    expect(textOf('.kpi-gross-profit .kpi-value').trim()).toBe('€85.00');
   });
 
   it('kpi_negativeProfitSum_rendersErrorColorClass', () => {
