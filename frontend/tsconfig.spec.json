@@ -16,6 +16,9 @@
   },
   "include": [
     "src/**/*.d.ts",
-    "src/**/*.spec.ts"
+    "src/**/*.spec.ts",
+    /* Not a spec, so the glob above misses it, but it is test code and uses the vitest globals
+       declared here - listed so it is type-checked rather than silently unchecked by both projects. */
+    "src/app/testing/global-test-setup.ts"
   ]
 }
