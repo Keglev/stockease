@@ -235,13 +235,83 @@ public class ReportingService {
     }
 
     /**
+     * Returns one product's stock level and cumulative sales over the days that moved it.
+     *
+     * &lt;p&gt;Derivable at all only because the ledger is complete: stock enters and leaves exclusively
+     * through booked movements (ADR 021), and V18 removed the pre-ledger rows that once made the
+     * running sum disagree with the product's own quantity. The final point therefore equals that
+     * quantity, which is the invariant the tests pin.
+     *
+     * &lt;p&gt;A soft-deleted product still answers - what it did is history, and retiring it does not
+     * unmake it.
+     *
+     * @param productId product identifier
+     * @param from first day to return, or {@code null} for no lower bound
+     * @param to last day to return, or {@code null} for no upper bound
+     * @return the product's history within the window, oldest first, or empty if no such product
+     *         exists; a product that never moved answers an empty list rather than an empty optional
+     */
+    public Optional&lt;List&lt;StockHistoryPoint&gt;&gt; stockHistory(long productId, LocalDate from, LocalDate to) {
+        // Native, so a soft-deleted product is still found: @SQLRestriction hides those from every
+        // mapped query, and this report exists to show what happened rather than what is current.
+<span class="fc" id="L257">        Integer found = jdbcClient.sql(&quot;SELECT 1 FROM product WHERE id = :id&quot;)</span>
+<span class="fc" id="L258">                .param(&quot;id&quot;, productId)</span>
+<span class="fc" id="L259">                .query(Integer.class)</span>
+<span class="fc" id="L260">                .optional()</span>
+<span class="fc" id="L261">                .orElse(null);</span>
+<span class="fc bfc" id="L262" title="All 2 branches covered.">        if (found == null) {</span>
+<span class="fc" id="L263">            return Optional.empty();</span>
+        }
+
+        // The window is applied AFTER the running sums, and that ordering is the whole correctness
+        // of this query. Filtering the movements first would restart the count inside the window, so
+        // a product bought a year ago and asked about over the last 30 days would appear to have
+        // begun at zero. The sums run over every movement the product ever had; the outer WHERE only
+        // decides which of the resulting points are returned.
+        //
+        // The sign comes from the movement's own persisted type rather than from a list of reasons
+        // restated here. That column is written from MovementReason.getType(), which is the same
+        // authority StockMovementService.recordMovement reads to compute its delta - so the two can
+        // never disagree about which way a reason moves stock.
+<span class="fc" id="L276">        String sql = &quot;&quot;&quot;</span>
+                WITH daily AS (
+                  SELECT CAST(m.created_at AS date) AS day,
+                    SUM(CASE WHEN m.type = 'INCREASE' THEN m.quantity ELSE -m.quantity END) AS net_change,
+                    SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity
+                             WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity
+                             ELSE 0 END) AS net_sold
+                  FROM stock_movement m
+                  WHERE m.product_id = :id
+                  GROUP BY CAST(m.created_at AS date)
+                ), running AS (
+                  SELECT day,
+                    SUM(net_change) OVER (ORDER BY day) AS stock_level,
+                    SUM(net_sold) OVER (ORDER BY day) AS sold_units
+                  FROM daily
+                )
+                SELECT day, stock_level, sold_units
+                FROM running
+                WHERE (CAST(:from AS date) IS NULL OR day &gt;= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR day &lt;= CAST(:to AS date))
+                ORDER BY day
+                &quot;&quot;&quot;;
+<span class="fc" id="L298">        return Optional.of(jdbcClient.sql(sql)</span>
+<span class="fc" id="L299">                .param(&quot;id&quot;, productId)</span>
+<span class="fc" id="L300">                .param(&quot;from&quot;, from)</span>
+<span class="fc" id="L301">                .param(&quot;to&quot;, to)</span>
+<span class="fc" id="L302">                .query((rs, rowNum) -&gt; new StockHistoryPoint(rs.getObject(&quot;day&quot;, LocalDate.class),</span>
+<span class="fc" id="L303">                        rs.getInt(&quot;stock_level&quot;), rs.getInt(&quot;sold_units&quot;)))</span>
+<span class="fc" id="L304">                .list());</span>
+    }
+
+    /**
      * Returns what each live product has sold and what it still holds.
      *
      * @return one row per live product, ordered by product ID
      */
     public List&lt;StockStatusReport&gt; stockStatus() {
         // Current-state report: soft-deleted products are EXCLUDED (their stock is not operational).
-<span class="fc" id="L244">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L314">        String sql = &quot;&quot;&quot;</span>
                 SELECT p.id, p.name, p.sku,
                   COALESCE(SUM(CASE WHEN m.reason = 'SOLD' THEN m.quantity
                                     WHEN m.reason = 'RETURN_FROM_CUSTOMER' THEN -m.quantity
@@ -257,10 +327,10 @@ public class ReportingService {
                 GROUP BY p.id, p.name, p.sku, p.quantity, p.purchase_price
                 ORDER BY p.id
                 &quot;&quot;&quot;;
-<span class="fc" id="L260">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new StockStatusReport(rs.getLong(&quot;id&quot;),</span>
-<span class="fc" id="L261">                rs.getString(&quot;name&quot;), rs.getString(&quot;sku&quot;), rs.getInt(&quot;sold_units&quot;),</span>
-<span class="fc" id="L262">                rs.getBigDecimal(&quot;sold_revenue&quot;), rs.getInt(&quot;in_stock_units&quot;),</span>
-<span class="fc" id="L263">                rs.getBigDecimal(&quot;in_stock_value&quot;))).list();</span>
+<span class="fc" id="L330">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new StockStatusReport(rs.getLong(&quot;id&quot;),</span>
+<span class="fc" id="L331">                rs.getString(&quot;name&quot;), rs.getString(&quot;sku&quot;), rs.getInt(&quot;sold_units&quot;),</span>
+<span class="fc" id="L332">                rs.getBigDecimal(&quot;sold_revenue&quot;), rs.getInt(&quot;in_stock_units&quot;),</span>
+<span class="fc" id="L333">                rs.getBigDecimal(&quot;in_stock_value&quot;))).list();</span>
     }
 
     /**
@@ -285,7 +355,7 @@ public class ReportingService {
         // unwindowed query already lists only products that lost something, so a product that lost
         // nothing in the window has nothing to report and drops out exactly as one that never lost
         // anything does. A losses report lists losses.
-<span class="fc" id="L288">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L358">        String sql = &quot;&quot;&quot;</span>
                 SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,
                   COALESCE(SUM(CASE WHEN m.reason = 'LOST' THEN m.quantity ELSE 0 END), 0) AS lost_units,
                   COALESCE(SUM(CASE WHEN m.reason = 'DESTROYED' THEN m.quantity ELSE 0 END), 0) AS destroyed_units,
@@ -297,13 +367,13 @@ public class ReportingService {
                 GROUP BY p.id, p.name, p.sku, p.deleted_at, p.purchase_price
                 ORDER BY p.id
                 &quot;&quot;&quot;;
-<span class="fc" id="L300">        return jdbcClient.sql(sql)</span>
-<span class="fc" id="L301">                .param(&quot;from&quot;, from)</span>
-<span class="fc" id="L302">                .param(&quot;to&quot;, to)</span>
-<span class="fc" id="L303">                .query((rs, rowNum) -&gt; new LossReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;),</span>
-<span class="fc" id="L304">                        rs.getString(&quot;sku&quot;), rs.getBoolean(&quot;deleted&quot;), rs.getInt(&quot;lost_units&quot;),</span>
-<span class="fc" id="L305">                        rs.getInt(&quot;destroyed_units&quot;), rs.getBigDecimal(&quot;loss_value&quot;)))</span>
-<span class="fc" id="L306">                .list();</span>
+<span class="fc" id="L370">        return jdbcClient.sql(sql)</span>
+<span class="fc" id="L371">                .param(&quot;from&quot;, from)</span>
+<span class="fc" id="L372">                .param(&quot;to&quot;, to)</span>
+<span class="fc" id="L373">                .query((rs, rowNum) -&gt; new LossReport(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;),</span>
+<span class="fc" id="L374">                        rs.getString(&quot;sku&quot;), rs.getBoolean(&quot;deleted&quot;), rs.getInt(&quot;lost_units&quot;),</span>
+<span class="fc" id="L375">                        rs.getInt(&quot;destroyed_units&quot;), rs.getBigDecimal(&quot;loss_value&quot;)))</span>
+<span class="fc" id="L376">                .list();</span>
     }
 
     /**
@@ -321,7 +391,7 @@ public class ReportingService {
         // customer's own row whenever it has no booked sale, turning a zero-filled summary into &quot;no such
         // customer&quot;. Soft-deleted invoices need no exclusion here - only OPEN invoices can be deleted, and
         // OPEN is already excluded.
-<span class="fc" id="L324">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L394">        String sql = &quot;&quot;&quot;</span>
                 SELECT c.id, c.name, (c.deleted_at IS NOT NULL) AS deleted,
                   COUNT(DISTINCT i.id) AS sale_invoice_count,
                   COALESCE(SUM(ii.quantity), 0) AS bought_units,
@@ -335,7 +405,7 @@ public class ReportingService {
                 WHERE c.id = :id
                 GROUP BY c.id, c.name, c.deleted_at
                 &quot;&quot;&quot;;
-<span class="fc" id="L338">        return jdbcClient.sql(sql).param(&quot;id&quot;, customerId).query(CUSTOMER_SUMMARY_MAPPER).optional();</span>
+<span class="fc" id="L408">        return jdbcClient.sql(sql).param(&quot;id&quot;, customerId).query(CUSTOMER_SUMMARY_MAPPER).optional();</span>
     }
 
     /**
@@ -346,7 +416,7 @@ public class ReportingService {
     public List&lt;DueDateBucket&gt; dueDateBuckets() {
         // Unpaid, live invoices only; FULLY_RETURNED is excluded because nothing is owed on it.
         // Outstanding value nets out returned quantities.
-<span class="fc" id="L349">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L419">        String sql = &quot;&quot;&quot;</span>
                 SELECT i.due_date, i.invoice_type, COUNT(*) AS invoice_count,
                   COALESCE(SUM(t.outstanding), 0) AS total_value
                 FROM invoice i
@@ -357,9 +427,9 @@ public class ReportingService {
                 GROUP BY i.due_date, i.invoice_type
                 ORDER BY i.due_date
                 &quot;&quot;&quot;;
-<span class="fc" id="L360">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new DueDateBucket(</span>
-<span class="fc" id="L361">                rs.getObject(&quot;due_date&quot;, LocalDate.class), rs.getString(&quot;invoice_type&quot;),</span>
-<span class="fc" id="L362">                rs.getLong(&quot;invoice_count&quot;), rs.getBigDecimal(&quot;total_value&quot;))).list();</span>
+<span class="fc" id="L430">        return jdbcClient.sql(sql).query((rs, rowNum) -&gt; new DueDateBucket(</span>
+<span class="fc" id="L431">                rs.getObject(&quot;due_date&quot;, LocalDate.class), rs.getString(&quot;invoice_type&quot;),</span>
+<span class="fc" id="L432">                rs.getLong(&quot;invoice_count&quot;), rs.getBigDecimal(&quot;total_value&quot;))).list();</span>
     }
 
     /**
@@ -369,7 +439,7 @@ public class ReportingService {
      * @return the matching invoices, ordered by due date
      */
     public List&lt;InvoiceDueSummary&gt; dueSoon(int days) {
-<span class="fc" id="L372">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L442">        String sql = &quot;&quot;&quot;</span>
                 SELECT i.id, i.invoice_number, i.invoice_type, COALESCE(s.name, c.name) AS counterparty,
                   i.due_date, t.outstanding
                 FROM invoice i
@@ -382,7 +452,7 @@ public class ReportingService {
                   AND i.due_date &lt;= CURRENT_DATE + :days
                 ORDER BY i.due_date
                 &quot;&quot;&quot;;
-<span class="fc" id="L385">        return jdbcClient.sql(sql).param(&quot;days&quot;, days).query(DUE_SOON_MAPPER).list();</span>
+<span class="fc" id="L455">        return jdbcClient.sql(sql).param(&quot;days&quot;, days).query(DUE_SOON_MAPPER).list();</span>
     }
 
     /**
@@ -392,7 +462,7 @@ public class ReportingService {
      */
     public List&lt;InvoiceDueSummary&gt; overdue() {
         // The derived overdue predicate: booked (CLOSED), unpaid, past due. Never stored.
-<span class="fc" id="L395">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L465">        String sql = &quot;&quot;&quot;</span>
                 SELECT i.id, i.invoice_number, i.invoice_type, COALESCE(s.name, c.name) AS counterparty,
                   i.due_date, t.outstanding, (CURRENT_DATE - i.due_date) AS days_overdue
                 FROM invoice i
@@ -405,7 +475,7 @@ public class ReportingService {
                   AND i.due_date &lt; CURRENT_DATE
                 ORDER BY i.due_date
                 &quot;&quot;&quot;;
-<span class="fc" id="L408">        return jdbcClient.sql(sql).query(OVERDUE_MAPPER).list();</span>
+<span class="fc" id="L478">        return jdbcClient.sql(sql).query(OVERDUE_MAPPER).list();</span>
     }
 
     /**
@@ -420,25 +490,25 @@ public class ReportingService {
      * @return the totals and the per-product rows, ordered by net descending
      */
     public CashFlowReport cashFlow(LocalDate from, LocalDate to) {
-<span class="fc" id="L423">        String sql = &quot;SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,\n&quot;</span>
+<span class="fc" id="L493">        String sql = &quot;SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,\n&quot;</span>
                 + CASH_FLOW_INFLOW + &quot; AS inflow,\n&quot;
                 + CASH_FLOW_OUTFLOW + &quot; AS outflow\n&quot;
                 + CASH_FLOW_SOURCE
                 + &quot;GROUP BY p.id, p.name, p.sku, p.deleted_at\n&quot;
                 + &quot;ORDER BY (&quot; + CASH_FLOW_INFLOW + &quot; - &quot; + CASH_FLOW_OUTFLOW + &quot;) DESC, p.id\n&quot;;
-<span class="fc" id="L429">        List&lt;CashFlowProductRow&gt; products = jdbcClient.sql(sql)</span>
-<span class="fc" id="L430">                .param(&quot;from&quot;, from)</span>
-<span class="fc" id="L431">                .param(&quot;to&quot;, to)</span>
-<span class="fc" id="L432">                .query(CASH_FLOW_MAPPER)</span>
-<span class="fc" id="L433">                .list();</span>
+<span class="fc" id="L499">        List&lt;CashFlowProductRow&gt; products = jdbcClient.sql(sql)</span>
+<span class="fc" id="L500">                .param(&quot;from&quot;, from)</span>
+<span class="fc" id="L501">                .param(&quot;to&quot;, to)</span>
+<span class="fc" id="L502">                .query(CASH_FLOW_MAPPER)</span>
+<span class="fc" id="L503">                .list();</span>
 
         // Summed from the rows rather than fetched by a second aggregate query: every invoice line
         // names a product, so the rows already account for every cent the query matched.
-<span class="fc" id="L437">        BigDecimal inflow = products.stream().map(CashFlowProductRow::inflow)</span>
-<span class="fc" id="L438">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
-<span class="fc" id="L439">        BigDecimal outflow = products.stream().map(CashFlowProductRow::outflow)</span>
-<span class="fc" id="L440">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
-<span class="fc" id="L441">        return new CashFlowReport(inflow, outflow, inflow.subtract(outflow), products);</span>
+<span class="fc" id="L507">        BigDecimal inflow = products.stream().map(CashFlowProductRow::inflow)</span>
+<span class="fc" id="L508">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+<span class="fc" id="L509">        BigDecimal outflow = products.stream().map(CashFlowProductRow::outflow)</span>
+<span class="fc" id="L510">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+<span class="fc" id="L511">        return new CashFlowReport(inflow, outflow, inflow.subtract(outflow), products);</span>
     }
 
     /**
@@ -456,17 +526,17 @@ public class ReportingService {
         // months would need a date series bounded by the open-ended window this endpoint accepts, and
         // the chart plots the categories it is handed - so an idle month is a gap in the axis, which
         // is what an idle month is.
-<span class="fc" id="L459">        String sql = &quot;SELECT to_char(date_trunc('month', i.paid_at), 'YYYY-MM') AS month,\n&quot;</span>
+<span class="fc" id="L529">        String sql = &quot;SELECT to_char(date_trunc('month', i.paid_at), 'YYYY-MM') AS month,\n&quot;</span>
                 + CASH_FLOW_INFLOW + &quot; AS inflow,\n&quot;
                 + CASH_FLOW_OUTFLOW + &quot; AS outflow\n&quot;
                 + CASH_FLOW_SOURCE
                 + &quot;GROUP BY date_trunc('month', i.paid_at)\n&quot;
                 + &quot;ORDER BY date_trunc('month', i.paid_at)\n&quot;;
-<span class="fc" id="L465">        return jdbcClient.sql(sql)</span>
-<span class="fc" id="L466">                .param(&quot;from&quot;, from)</span>
-<span class="fc" id="L467">                .param(&quot;to&quot;, to)</span>
-<span class="fc" id="L468">                .query(CASH_FLOW_TIMELINE_MAPPER)</span>
-<span class="fc" id="L469">                .list();</span>
+<span class="fc" id="L535">        return jdbcClient.sql(sql)</span>
+<span class="fc" id="L536">                .param(&quot;from&quot;, from)</span>
+<span class="fc" id="L537">                .param(&quot;to&quot;, to)</span>
+<span class="fc" id="L538">                .query(CASH_FLOW_TIMELINE_MAPPER)</span>
+<span class="fc" id="L539">                .list();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
