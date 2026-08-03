@@ -1,3 +1,5 @@
+@use '../../../styles/breakpoints' as bp;
+
 .landing-page {
   display: flex;
   flex-direction: column;
@@ -78,4 +80,49 @@
 
 .landing-actions {
   margin-top: 0.5rem;
+}
+
+.landing-screenshots {
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
+.landing-screenshots-title {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-title-medium);
+}
+
+// One column below desktop and two above it. A screenshot of a dense reporting page is unreadable
+// at half a phone's width, so narrow screens get the full width rather than a shrunken pair.
+.landing-screenshot-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@include bp.desktop {
+  .landing-screenshot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.landing-screenshot {
+  margin: 0;
+}
+
+// Framed rather than bled into the page: these are artifacts of another surface, and a border says
+// where the product ends and this page begins - in both schemes, which is why it is a token.
+.landing-screenshot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.5rem;
+}
+
+.landing-screenshot figcaption {
+  margin-top: 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+  text-align: center;
 }

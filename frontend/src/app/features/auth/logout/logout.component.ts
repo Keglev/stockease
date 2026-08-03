@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -16,6 +17,7 @@ import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.
     ThemeToggleComponent,
     MatButtonModule,
     MatCardModule,
+    MatIconModule,
     RouterLink,
     TranslatePipe
   ],

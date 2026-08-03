@@ -35,8 +35,18 @@
 // Material lays the header out as a row for the avatar/title/subtitle trio; with a title alone it
 // still needs centring to sit over a centred card.
 .logout-card-header {
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.5rem;
   margin-bottom: 0.5rem;
+}
+
+.logout-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--mat-sys-tertiary);
+  font-size: 2.5rem;
 }
 
 // The landing's section titles set the scale for the public pages, and a visitor arrives here

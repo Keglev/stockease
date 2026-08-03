@@ -17,7 +17,14 @@
       "tryUser": "Try as User",
       "resetNotice": "Demo data - resets nightly at 03:00 UTC"
     },
-    "loginCta": "Login"
+    "loginCta": "Login",
+    "screenshots": {
+      "title": "A look inside",
+      "dashboard": "Dashboard with key figures and charts",
+      "profit": "COGS-based profit reporting",
+      "cashflow": "Payment-basis cash flow over time",
+      "duedates": "Due-date monitoring"
+    }
   },
   "footer": {
     "tagline": "Inventory management demo",
@@ -28,7 +35,7 @@
   },
   "logoutPage": {
     "title": "Logged out",
-    "message": "You have been logged out.",
+    "message": "You have been logged out. Thank you for using {{app}}.",
     "backToLanding": "Back to start page",
     "loginAgain": "Log in again"
   },
@@ -46,9 +53,9 @@
   },
   "notFound": {
     "title": "Page not found",
+    "outOfStock": "This page is out of stock.",
     "message": "The page you were looking for does not exist or has moved.",
-    "goHome": "To the start page",
-    "goDashboard": "To the dashboard"
+    "goHome": "To the start page"
   },
   "nav": {
     "dashboard": "Overview",

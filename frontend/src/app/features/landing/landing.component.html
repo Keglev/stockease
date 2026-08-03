@@ -39,6 +39,32 @@
       <p class="landing-demo-notice">{{ 'landing.demo.resetNotice' | translate }}</p>
     </section>
 
+    <!-- The sources follow the toggles in the header above, so pressing either one changes all four
+         shots. That is the argument: the page demonstrates the translation and theming rather than
+         describing them. -->
+    <section class="landing-screenshots">
+      <h2 class="landing-screenshots-title">{{ 'landing.screenshots.title' | translate }}</h2>
+
+      <div class="landing-screenshot-grid">
+        @for (shot of screenshots(); track shot.page) {
+          <figure class="landing-screenshot">
+            <!-- Opens the same file the figure already shows: the grid renders these small, and the
+                 detail a screenshot exists to show needs full size. -->
+            <a [href]="shot.src" target="_blank" rel="noopener">
+              <img
+                [src]="shot.src"
+                [alt]="'landing.screenshots.' + shot.page | translate"
+                [width]="screenshotWidth"
+                [height]="screenshotHeight"
+                loading="lazy"
+              />
+            </a>
+            <figcaption>{{ 'landing.screenshots.' + shot.page | translate }}</figcaption>
+          </figure>
+        }
+      </div>
+    </section>
+
     <div class="landing-actions">
       <a matButton="filled" routerLink="/login">{{ 'landing.loginCta' | translate }}</a>
     </div>
