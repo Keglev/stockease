@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+029-help-content-architecture · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="adr-029-help-content-as-typed-lazy-loaded-modules">ADR
+        029: Help Content as Typed, Lazy-Loaded Modules</h1>
+        <p><strong>Scope</strong>: [Frontend] <strong>Status</strong>:
+        Accepted <strong>Date</strong>: August 3, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The application ships an in-app manual at
+        <code>/app/help</code>: eight topics of prose, each several
+        paragraphs long, in English and German. That is a large body of
+        text by this application’s standards - considerably more words
+        than the entire rest of the interface put together.</p>
+        <p>The obvious home for it is <code>public/i18n/en.json</code>
+        and <code>de.json</code>, which is where every other translated
+        string lives. Those two files have three properties that make
+        them the wrong home for prose:</p>
+        <ul>
+        <li><strong>They are loaded eagerly, in full, before the first
+        screen paints.</strong> The ngx-translate HTTP loader fetches
+        one file per language and the app waits for it. Every byte of
+        help prose would be downloaded by a visitor who came to look at
+        the dashboard and will never open the manual.</li>
+        <li><strong>They are already large enough to be a known
+        problem.</strong> Splitting them per feature is a pending piece
+        of work (ADR 015 chose runtime translation and accepted this
+        file as the cost). Multiplying their size by the help text first
+        would make that split harder, not easier.</li>
+        <li><strong>They give prose no structure.</strong> A help topic
+        is not a string: it is an ordered list of sections, each a
+        heading plus paragraphs plus an optional bullet list. Expressed
+        as flat keys, that structure lives only in the template that
+        happens to read them, and the two languages agree on it only by
+        convention.</li>
+        </ul>
+        <p>The parity question is the sharpest of the three. CI enforces
+        key parity across <code>en.json</code> and <code>de.json</code>,
+        so a missing translation is caught. But parity of <em>keys</em>
+        is not parity of <em>structure</em>: nothing would stop the
+        German manual from growing a section the English one lacks, and
+        nothing would order the two the same way.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Help prose lives in typed TypeScript modules inside
+        the help feature, loaded with the help route. Only the topic
+        titles go through ngx-translate.</strong></p>
+        <p>Three files beside the component:</p>
+        <ul>
+        <li><code>help-content.types.ts</code> - the
+        <code>HelpTopicId</code> union, and the <code>HelpSection</code>
+        and <code>HelpTopic</code> interfaces. The id union is the same
+        value in three places: the route’s <code>:topic</code> segment,
+        the <code>help.topics.*</code> translation key, and the key the
+        two language modules are paired on.</li>
+        <li><code>help-content.en.ts</code> and
+        <code>help-content.de.ts</code> - each exporting
+        <code>HELP_TOPICS: readonly HelpTopic[]</code>, typed against
+        those interfaces.</li>
+        </ul>
+        <p>Both modules are imported by the help component, which the
+        router loads lazily, so the prose travels in the help chunk and
+        is fetched the first time somebody opens the manual. Nothing
+        outside the help feature imports them.</p>
+        <p><strong>Parity is guaranteed twice, structurally and by
+        test.</strong> The shared interfaces force the shape - a section
+        without a heading or paragraphs will not compile.
+        <code>help-content.spec.ts</code> forces the rest: identical
+        topic ids in identical order, identical section ids within each
+        topic, and no empty heading, paragraph or bullet in either
+        language. That is a stronger guarantee than the i18n files get,
+        because key parity would not have caught a reordered or extra
+        section.</p>
+        <p><strong>Topic titles stay in <code>en.json</code> /
+        <code>de.json</code></strong> as <code>help.topics.*</code>,
+        plus <code>help.selectTopic</code> for the mobile picker. They
+        are short, they are needed by the nav rather than by the body,
+        and routing them through the normal pipe means the nav
+        re-renders on a language change exactly like every other label
+        in the app. The body follows by selecting the matching module
+        from the same language signal, so both halves switch together
+        with no reload and no request.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Keys in <code>en.json</code> / <code>de.json</code>,
+        like everything else.</strong> Rejected. It puts the largest
+        text in the application into the one bundle that is fetched
+        before the first paint, for a page most visitors never open, and
+        it makes the pending split of those files worse in proportion to
+        how good the manual gets. It also flattens the section structure
+        into a naming convention, so the two languages would agree on
+        shape only by discipline.</p>
+        <p><strong>Separate JSON files behind a second ngx-translate
+        loader.</strong> Rejected, and this is the closer call, because
+        it keeps the prose out of the eager bundle. But those files
+        would sit outside the parity check CI runs over
+        <code>en.json</code> and <code>de.json</code> - the guarantee
+        would be recreated as a gap rather than kept. JSON also gives up
+        the type safety: a mistyped field is a runtime blank instead of
+        a build failure, and there is nothing to assert against but the
+        file itself.</p>
+        <p><strong>Markdown files rendered at runtime.</strong>
+        Rejected. It reads well as an authoring format, but it needs a
+        Markdown parser - a new dependency for one page - and rendering
+        authored HTML means either trusting the pipeline or sanitising
+        it. The prose here is paragraphs and bullets; the structure the
+        interfaces describe covers it without a parser.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li><strong>The eagerly-loaded translation files stay the size
+        they are.</strong> The manual costs nothing to a visitor who
+        never opens it, and the pending per-feature split of
+        <code>en.json</code> / <code>de.json</code> is no harder than it
+        was.</li>
+        <li><strong>Prose is type-checked.</strong> A topic missing from
+        one language is a compile error at the <code>HelpTopicId</code>
+        union; a malformed section is a compile error at the
+        interface.</li>
+        <li><strong>The parity guarantee is testable, and
+        tested.</strong> <code>help-content.spec.ts</code> was verified
+        to fail by temporarily renaming one German section id - the
+        check is not vacuous.</li>
+        <li><strong>Translators need a TypeScript file, not a JSON
+        file.</strong> This is the real cost of the decision and it is
+        worth stating plainly: help prose can no longer be edited by
+        someone who only knows the translation files. The modules are
+        plain string literals in an array, so the edit is mechanical,
+        but it is an edit in source and it goes through review and CI
+        like any other.</li>
+        <li><strong>The pattern is available, not mandated.</strong>
+        Nothing else in the application has enough prose to need it. If
+        a second long-form page appears - a printable invoice guide, an
+        onboarding tour - this is the shape it should take, and if none
+        does, the help feature carries the pattern alone without
+        imposing it.</li>
+        </ul>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#adr-029-help-content-as-typed-lazy-loaded-modules"
+      id="toc-adr-029-help-content-as-typed-lazy-loaded-modules">ADR
+      029: Help Content as Typed, Lazy-Loaded Modules</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
