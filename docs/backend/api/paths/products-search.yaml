@@ -4,6 +4,14 @@ get:
     Case-insensitive substring search. For example, searching "apple" returns products like
     "Apple Juice", "APPLE", "Green Apple", etc.
     Returns 204 NO_CONTENT when nothing matches.
+
+    **Known defects, scheduled for correction (unchanged here).** This endpoint answers 204 with a
+    body, which is unconventional by HTTP spec, and applies no cap, so a broad term returns the
+    whole catalogue. The typeahead endpoints added in 2.14.0 - `/api/suppliers/search` and
+    `/api/reports/suppliers/{id}/products/search` - deliberately do neither: they answer 200 with an
+    empty array and cap at 20. ADR 028 records why new surface diverges rather than copying this
+    shape, and correcting this endpoint is tracked as its own item so the change lands with its own
+    contract note for existing callers.
   operationId: searchProductsByName
   tags:
     - Products

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
@@ -19,6 +19,18 @@ export class SupplierService {
   /** Bare array - deliberately not unwrapped. */
   getAll(): Observable<SupplierResponse[]> {
     return this.http.get<SupplierResponse[]>(this.baseUrl);
+  }
+
+  /**
+   * Suppliers whose name contains {@code name}, for the typeahead pickers.
+   *
+   * <p>Bare array, and empty when nothing matches rather than the 204 the older product search
+   * answers with - the caller can treat the result as a list unconditionally.
+   */
+  search(name: string): Observable<SupplierResponse[]> {
+    return this.http.get<SupplierResponse[]>(`${this.baseUrl}/search`, {
+      params: new HttpParams().set('name', name)
+    });
   }
 
   /** Bare object - deliberately not unwrapped. */

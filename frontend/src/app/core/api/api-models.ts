@@ -40,6 +40,8 @@ export type CashFlowProductRow = components['schemas']['CashFlowProductRow'];
 
 export type CashFlowTimelineBucket = components['schemas']['CashFlowTimelineBucket'];
 
+export type SupplierProduct = components['schemas']['SupplierProduct'];
+
 export type PaginatedInvoices = components['schemas']['PaginatedInvoices'];
 
 export type LossReport = components['schemas']['LossReport'];

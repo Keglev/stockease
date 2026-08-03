@@ -205,7 +205,7 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
      * is what makes the buckets provably this test's own rather than whatever else has been paid.
      */
     private List<CashFlowTimelineBucket> timelineOf(int year) {
-        return reportingService.cashFlowTimeline(LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31));
+        return reportingService.cashFlowTimeline(LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31), null);
     }
 
     @Test
@@ -234,7 +234,7 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
         paidOn(closedSale(customer.getId(), line(product, 4, "20.00")), LocalDate.of(2018, 8, 9));
 
         List<CashFlowTimelineBucket> narrowed = reportingService.cashFlowTimeline(
-                LocalDate.of(2018, 8, 1), LocalDate.of(2018, 8, 31));
+                LocalDate.of(2018, 8, 1), LocalDate.of(2018, 8, 31), null);
 
         assertThat(timelineOf(2018)).extracting(CashFlowTimelineBucket::month).containsExactly("2018-03", "2018-08");
         assertThat(narrowed).extracting(CashFlowTimelineBucket::month).containsExactly("2018-08");
@@ -254,6 +254,42 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
         assertThat(months.get(0).outflow()).isEqualByComparingTo("84.00");
         // a month that only spent is the case the net sign exists to show
         assertThat(months.get(0).net()).isEqualByComparingTo("-84.00");
+    }
+
+    @Test
+    void cashFlowTimeline_scopedToProduct_countsOnlyThatProductsLines() {
+        Customer customer = customerService.create("CF TL Scope Customer", null, null, null, null);
+        Product asked = newProduct("CF TL Scope Asked", 40);
+        Product other = newProduct("CF TL Scope Other", 40);
+        paidOn(closedSale(customer.getId(), line(asked, 5, "20.00")), LocalDate.of(2016, 5, 12));
+        paidOn(closedSale(customer.getId(), line(other, 9, "30.00")), LocalDate.of(2016, 5, 20));
+
+        List<CashFlowTimelineBucket> scoped = reportingService.cashFlowTimeline(
+                LocalDate.of(2016, 1, 1), LocalDate.of(2016, 12, 31), asked.getId());
+
+        // the unscoped series carries both sales in the same month; the scoped one carries one
+        assertThat(timelineOf(2016).get(0).inflow()).isEqualByComparingTo("370.00");
+        assertThat(scoped).extracting(CashFlowTimelineBucket::month).containsExactly("2016-05");
+        assertThat(scoped.get(0).inflow()).isEqualByComparingTo("100.00");
+    }
+
+    @Test
+    void cashFlowTimeline_scopedToProduct_agreesWithThatProductsRow() {
+        Customer customer = customerService.create("CF TL Agree Customer", null, null, null, null);
+        Product product = newProduct("CF TL Agree Product", 40);
+        Supplier supplier = supplierService.create("CF TL Agree Supplier", "1 Main St");
+        paidOn(closedSale(customer.getId(), line(product, 5, "20.00")), LocalDate.of(2015, 7, 3));
+        paidOn(closedPurchase(supplier.getId(), line(product, 6, "9.00")), LocalDate.of(2015, 7, 8));
+
+        List<CashFlowTimelineBucket> scoped = reportingService.cashFlowTimeline(
+                LocalDate.of(2015, 1, 1), LocalDate.of(2015, 12, 31), product.getId());
+
+        // the shared fragments are what guarantee this: a scoped month and the product's own row are
+        // the same question at two groupings, and a forked query is how they would start to disagree
+        CashFlowProductRow row = rowFor(product.getId(), LocalDate.of(2015, 1, 1), LocalDate.of(2015, 12, 31))
+                .orElseThrow();
+        assertThat(scoped.get(0).inflow()).isEqualByComparingTo(row.inflow());
+        assertThat(scoped.get(0).outflow()).isEqualByComparingTo(row.outflow());
     }
 
     @Test

@@ -23,6 +23,7 @@ import com.stocks.stockease.report.ProductProfitReport;
 import com.stocks.stockease.report.ReportingService;
 import com.stocks.stockease.report.StockHistoryPoint;
 import com.stocks.stockease.report.StockStatusReport;
+import com.stocks.stockease.report.SupplierProduct;
 import com.stocks.stockease.report.SupplierProfitReport;
 import com.stocks.stockease.shared.ApiResponse;
 
@@ -38,9 +39,10 @@ import lombok.RequiredArgsConstructor;
  * available to both roles.
  *
  * <p>Covers profit per product and per supplier, cash flow, stock status, losses, due-date buckets,
- * due-soon and overdue listings, and the per-customer purchase summary. That last one sits under this
- * path rather than under the customer API because the aggregation belongs to this module, even though
- * what it describes is a customer.
+ * due-soon and overdue listings, the per-customer purchase summary and the per-supplier product
+ * search. Those last two sit under this path rather than under the customer and supplier APIs because
+ * the aggregation belongs to this module, even though what they describe is a customer and a
+ * supplier's catalogue.
  */
 @RestController
 @RequestMapping("/api/reports")
@@ -110,18 +112,54 @@ public class ReportController {
     /**
      * Returns money in and out per calendar month over an optional payment period.
      *
+     * <p>An optional {@code productId} narrows every bucket to one product's lines. The unscoped
+     * call is unchanged: the predicate is a shared fragment that matches everything when the
+     * parameter is absent, so the whole-business series is the same query it always was.
+     *
      * @param from first payment date to count, or {@code null} for no lower bound
      * @param to last payment date to count, or {@code null} for no upper bound
+     * @param productId product to scope the series to, or {@code null} for the whole business
      * @return one bucket per month that moved money, oldest first
+     * @throws EntityNotFoundException if {@code productId} names no product
      * @throws IllegalArgumentException if {@code from} is after {@code to}
      */
     @GetMapping("/cash-flow/timeline")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<CashFlowTimelineBucket> cashFlowTimeline(
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to,
+            @RequestParam(required = false) Long productId) {
         validatePeriod(from, to);
-        return reportingService.cashFlowTimeline(from, to);
+        // Checked rather than left to return an empty series, matching the stock-history endpoint: a
+        // product that moved no money and a product that does not exist are different answers, and
+        // only the second is the caller's mistake.
+        if (productId != null && !reportingService.productExists(productId)) {
+            throw new EntityNotFoundException("Product with ID " + productId + " not found.");
+        }
+        return reportingService.cashFlowTimeline(from, to, productId);
+    }
+
+    /**
+     * Searches the products one supplier has sold this business, by a case-insensitive name match.
+     *
+     * <p>Sits under {@code /api/reports} rather than under the supplier API because the aggregation
+     * is this module's - the linkage is drawn through the purchase ledger, which the supplier module
+     * cannot read - even though what it describes is a supplier's catalogue. The same reasoning put
+     * the customer summary here.
+     *
+     * <p>Nothing matching answers an empty array, not the 204-with-body of
+     * {@code GET /api/products/search}; ADR 028 records why new search surface diverges there.
+     *
+     * @param id supplier identifier
+     * @param name search term (substring, case-insensitive)
+     * @return HTTP 200 with the supplier's matching products, empty if none match
+     * @throws EntityNotFoundException if no live supplier exists with the given ID
+     */
+    @GetMapping("/suppliers/{id}/products/search")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<SupplierProduct> supplierProducts(@PathVariable long id, @RequestParam String name) {
+        return reportingService.supplierProducts(id, name)
+                .orElseThrow(() -> new EntityNotFoundException("Supplier with ID " + id + " not found."));
     }
 
     /**

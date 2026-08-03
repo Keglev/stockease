@@ -203,6 +203,7 @@
       "overdueEmpty": "Keine Rechnung ist überfällig."
     },
     "cashFlow": {
+      "allProducts": "Alle Produkte",
       "inflow": "Einzahlungen",
       "outflow": "Auszahlungen",
       "net": "Saldo",
@@ -235,7 +236,13 @@
         "newValue": "Neuer Wert"
       }
     },
+    "search": {
+      "supplier": "Lieferant suchen (mind. 3 Buchstaben)",
+      "product": "Produkt suchen",
+      "noMatches": "Keine Treffer"
+    },
     "analytics": {
+      "show": "Anzeigen",
       "selectProduct": "Produkt für die Analyse wählen",
       "priceHistory": "Einkaufspreis im Zeitverlauf",
       "stockVsSales": "Bestand vs. verkaufte Einheiten",

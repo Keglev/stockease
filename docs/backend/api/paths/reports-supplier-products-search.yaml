@@ -1,0 +1,72 @@
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+    description: Supplier identifier
+
+get:
+  summary: Search the products one supplier has sold this business
+  description: |
+    Case-insensitive substring search over the distinct products reachable from that supplier's
+    non-deleted, closed purchase invoices. There is no supplier column on a product: a product is a
+    supplier's because that supplier was invoiced for it, and since stock enters only through closed
+    purchase invoices (ADR 021), every stocked product is reachable this way.
+
+    A product bought from two suppliers answers under both. That is correct rather than a duplicate
+    to resolve - both suppliers really did sell it to us - and repeat purchases of one product from
+    one supplier collapse to a single entry, which is what makes this a picker rather than a
+    purchase history.
+
+    Results are alphabetical and capped at 20, and soft-deleted products are excluded, matching the
+    supplier typeahead. Nothing matching returns **200 with an empty array**; only an unknown or
+    retired supplier yields 404. ADR 028 records why this differs from `GET /api/products/search`.
+
+    The path sits under `/api/reports` rather than under the supplier API because the aggregation is
+    the reporting module's - the linkage is drawn through the purchase ledger, which the supplier
+    module cannot read - even though what it describes is a supplier's catalogue. The same reasoning
+    placed the customer summary here.
+  operationId: supplierProducts
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: name
+      in: query
+      required: true
+      description: Search term (substring, case-insensitive)
+      schema:
+        type: string
+        example: laptop
+  responses:
+    '200':
+      description: The supplier's matching products, empty if none match (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/SupplierProduct'
+          example:
+            - id: 1
+              name: Laptop
+              sku: SKU-A1B2C3D4
+              quantity: 50
+              purchasePrice: 999.99
+              totalValue: 49999.50
+              createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No live supplier with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Supplier with ID 999 not found.'
+            data: null

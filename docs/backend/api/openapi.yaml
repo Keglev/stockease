@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.13.0
+  version: 2.14.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -1135,6 +1135,47 @@ components:
           description: Inflow less outflow; negative in a month that spent more than it received
           example: 50.00
 
+    SupplierProduct:
+      type: object
+      description: |
+        A product one supplier has sold this business, reached through the purchase ledger. Carries
+        the same fields as `ProductResponse` so either search can feed the same picker, but it is the
+        reporting module's own record: that module depends on no other module's types.
+      required:
+        - id
+        - name
+        - sku
+        - quantity
+        - purchasePrice
+        - totalValue
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Laptop
+        sku:
+          type: string
+          example: SKU-A1B2C3D4
+        quantity:
+          type: integer
+          description: Units currently in stock
+          example: 50
+        purchasePrice:
+          type: number
+          example: 999.99
+        totalValue:
+          type: number
+          description: Stock value, purchase price times quantity
+          example: 49999.50
+        createdAt:
+          type: string
+          description: ISO-8601 local date-time, serialized without a zone offset
+          example: '2026-01-02T03:04:00'
+
     StockStatusReport:
       type: object
       required:
@@ -1476,6 +1517,8 @@ paths:
     $ref: './paths/suppliers.yaml'
   /api/suppliers/{id}:
     $ref: './paths/suppliers-detail.yaml'
+  /api/suppliers/search:
+    $ref: './paths/suppliers-search.yaml'
 
   # customers
   /api/customers:
@@ -1512,6 +1555,8 @@ paths:
     $ref: './paths/reports-cash-flow.yaml'
   /api/reports/cash-flow/timeline:
     $ref: './paths/reports-cash-flow-timeline.yaml'
+  /api/reports/suppliers/{id}/products/search:
+    $ref: './paths/reports-supplier-products-search.yaml'
   /api/reports/customers/{id}/summary:
     $ref: './paths/reports-customer-summary.yaml'
   /api/reports/products/{id}/stock-history:

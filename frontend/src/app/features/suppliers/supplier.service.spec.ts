@@ -41,6 +41,29 @@ describe('SupplierService', () => {
     controller.verify();
   });
 
+  it('search_withTerm_requestsTheSearchPathWithNameParam', () => {
+    let emitted: SupplierResponse[] | undefined;
+    service.search('acm').subscribe((suppliers) => (emitted = suppliers));
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/search`);
+    expect(request.request.params.get('name')).toBe('acm');
+    request.flush([ACME]);
+
+    expect(emitted).toEqual([ACME]);
+    controller.verify();
+  });
+
+  it('search_noMatches_emitsAnEmptyArray', () => {
+    let emitted: SupplierResponse[] | undefined;
+    service.search('zzz').subscribe((suppliers) => (emitted = suppliers));
+
+    // 200 with [], not the 204 the older product search answers with, so this is a list not a null
+    controller.expectOne((candidate) => candidate.url === `${BASE_URL}/search`).flush([]);
+
+    expect(emitted).toEqual([]);
+    controller.verify();
+  });
+
   it('create_bareObjectResponse_emitsPayloadUnchanged', () => {
     let emitted: SupplierResponse | undefined;
     service.create('Acme', '1 Main St').subscribe((supplier) => (emitted = supplier));

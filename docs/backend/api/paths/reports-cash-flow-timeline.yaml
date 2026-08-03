@@ -11,6 +11,12 @@ get:
 
     Months that moved no money are **absent** rather than returned as zeros - an idle month is a gap
     in the series, matching how the per-product report omits products that moved nothing.
+
+    An optional `productId` narrows every bucket to that product's invoice lines. The predicate is a
+    shared SQL fragment that matches everything when the parameter is absent, so the unscoped series
+    is the same query it always was, and a scoped month always agrees with that product's row in the
+    per-product sibling over the same window. A product that moved no money in a month has a gap
+    there for the same reason the whole business does.
   operationId: cashFlowTimeline
   tags:
     - Reports
@@ -33,6 +39,14 @@ get:
         format: date
       description: Last payment date to count, inclusive; omit for no upper bound
       example: '2026-03-31'
+    - name: productId
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      description: Scope every bucket to one product's lines; omit for the whole business
+      example: 3
   responses:
     '200':
       description: Report retrieved (ROLE_USER or ROLE_ADMIN)
@@ -63,3 +77,13 @@ get:
             data: null
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: '`productId` names no product'
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Product with ID 999 not found.'
+            data: null
