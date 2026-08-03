@@ -1,4 +1,3 @@
-import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -7,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { CustomerSummary } from '../../../core/api/api-models';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { ReportService } from '../../reports/report.service';
+import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 
 export interface CustomerSummaryDialogData {
   customerId: number;
@@ -19,7 +19,7 @@ export interface CustomerSummaryDialogData {
  */
 @Component({
   selector: 'app-customer-summary-dialog',
-  imports: [CurrencyPipe, MatButtonModule, MatDialogModule, TranslatePipe],
+  imports: [AppCurrencyPipe, MatButtonModule, MatDialogModule, TranslatePipe],
   templateUrl: './customer-summary-dialog.component.html',
   styleUrl: './customer-summary-dialog.component.scss'
 })

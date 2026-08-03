@@ -9,6 +9,7 @@ import { of } from 'rxjs';
 
 import { routes } from '../../app.routes';
 import { TOKEN_STORAGE_KEY } from '../../core/auth/auth.service';
+import { FormatService } from '../../core/format/format.service';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { ThemeService } from '../../core/theme/theme.service';
@@ -22,7 +23,13 @@ const TRANSLATIONS = {
     settings: {
       title: 'Settings',
       appearance: { title: 'Appearance' },
-      language: { en: 'English', de: 'Deutsch' }
+      language: { en: 'English', de: 'Deutsch' },
+      formats: {
+        title: 'Formats',
+        auto: 'Automatic (follows language)',
+        date: 'Date format',
+        number: 'Numbers & currency'
+      }
     }
   },
   de: {
@@ -30,7 +37,13 @@ const TRANSLATIONS = {
     settings: {
       title: 'Einstellungen',
       appearance: { title: 'Darstellung' },
-      language: { en: 'English', de: 'Deutsch' }
+      language: { en: 'English', de: 'Deutsch' },
+      formats: {
+        title: 'Formate',
+        auto: 'Automatisch (folgt der Sprache)',
+        date: 'Datumsformat',
+        number: 'Zahlen & Währung'
+      }
     }
   }
 };
@@ -210,6 +223,65 @@ describe('SettingsComponent', () => {
     // their own, which is the one label that must not be translated.
     expect(labelOf('settings-language', 'en')).toBe('English');
     expect(labelOf('settings-language', 'de')).toBe('Deutsch');
+  });
+
+  /** The options of one select, opened so the overlay renders them. */
+  function selectOptions(cssClass: string): HTMLElement[] {
+    const trigger = host().querySelector<HTMLElement>(`.${cssClass} .mat-mdc-select-trigger`);
+    trigger?.click();
+    fixture.detectChanges();
+    return Array.from(document.querySelectorAll<HTMLElement>('mat-option'));
+  }
+
+  it('render_default_showsTheFormatsSection', async () => {
+    await setUp();
+
+    expect(host().textContent).toContain('Formats');
+    expect(host().querySelector('.settings-date-format')).not.toBeNull();
+    expect(host().querySelector('.settings-number-format')).not.toBeNull();
+  });
+
+  it('render_dateOptions_labelEachChoiceWithALiveExample', async () => {
+    await setUp();
+
+    const labels = selectOptions('settings-date-format').map((o) => o.textContent?.trim() ?? '');
+
+    // Automatic is worded; the rest show today's date, which needs no translation.
+    expect(labels[0]).toBe('Automatic (follows language)');
+    expect(labels[1]).toMatch(/^\d{2}\.\d{2}\.\d{4}$/);
+    expect(labels[3]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('selectDateFormat_chosen_writesThroughToFormatService', async () => {
+    await setUp();
+
+    selectOptions('settings-date-format')[3].click();
+    await settle();
+
+    expect(TestBed.inject(FormatService).dateFormat()).toBe('ymdDash');
+  });
+
+  it('selectNumberFormat_chosen_writesThroughToFormatService', async () => {
+    await setUp();
+
+    selectOptions('settings-number-format')[1].click();
+    await settle();
+
+    expect(TestBed.inject(FormatService).numberFormat()).toBe('de');
+    expect(TestBed.inject(FormatService).numberLocale()).toBe('de-DE');
+  });
+
+  it('render_storedFormats_initialiseBothSelects', async () => {
+    await setUp();
+    const format = TestBed.inject(FormatService);
+    format.setDateFormat('mdySlash');
+    format.setNumberFormat('en');
+    await settle();
+
+    expect(host().querySelector('.settings-date-format .mat-mdc-select-value')?.textContent)
+      .toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+    expect(host().querySelector('.settings-number-format .mat-mdc-select-value')?.textContent)
+      .toContain('1,234.56');
   });
 
   it('route_appSettings_resolvesInsideTheShell', async () => {

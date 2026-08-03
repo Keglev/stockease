@@ -1,5 +1,4 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,15 +23,15 @@ import {
   ProductEditMode
 } from '../product-edit-dialog/product-edit-dialog.component';
 import { ProductService } from '../product.service';
+import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
+import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 
 const DEFAULT_PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-product-list',
   imports: [
-    CurrencyPipe,
-    DatePipe,
-    MatButtonModule,
+    AppCurrencyPipe, AppDateTimePipe, MatButtonModule,
     MatIconModule,
     MatMenuModule,
     MatPaginatorModule,

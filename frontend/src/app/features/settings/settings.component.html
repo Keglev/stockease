@@ -39,4 +39,36 @@
       </mat-button-toggle-group>
     </mat-card-content>
   </mat-card>
+
+  <mat-card class="settings-card">
+    <mat-card-content>
+      <h2 class="settings-section-title">{{ 'settings.formats.title' | translate }}</h2>
+
+      <!-- Selects rather than toggle groups: four date options do not fit a phone row, and unlike
+           the two above these are not a binary the reader flips between. -->
+      <mat-form-field class="settings-date-format" appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'settings.formats.date' | translate }}</mat-label>
+        <mat-select [value]="currentDateFormat()" (valueChange)="setDateFormat($event)">
+          @for (option of dateOptions(); track option.value) {
+            <!-- Today's date rendered the way this option would render it. The example needs no
+                 translation and answers "which one is that?" before the question is asked. -->
+            <mat-option [value]="option.value">
+              {{ option.preview || ('settings.formats.auto' | translate) }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="settings-number-format" appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'settings.formats.number' | translate }}</mat-label>
+        <mat-select [value]="currentNumberFormat()" (valueChange)="setNumberFormat($event)">
+          @for (option of numberOptions(); track option.value) {
+            <mat-option [value]="option.value">
+              {{ option.preview || ('settings.formats.auto' | translate) }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
 </div>

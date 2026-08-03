@@ -21,3 +21,17 @@
   margin: 0 0 1rem;
   font: var(--mat-sys-title-medium);
 }
+
+// Stacked rather than side by side, and capped: two selects on one row would each be too narrow
+// for their longest example at phone width, and full-bleed on desktop they would stretch a
+// two-word answer across the card.
+.settings-date-format,
+.settings-number-format {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.settings-date-format {
+  margin-bottom: 1rem;
+}

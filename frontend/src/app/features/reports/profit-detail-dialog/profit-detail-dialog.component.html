@@ -6,13 +6,13 @@
     <dd class="detail-sku">{{ detail.sku }}</dd>
 
     <dt>{{ 'reports.columns.revenue' | translate }}</dt>
-    <dd class="detail-revenue">{{ detail.revenue | currency: 'EUR' }}</dd>
+    <dd class="detail-revenue">{{ detail.revenue | appCurrency }}</dd>
 
     <dt>{{ 'reports.columns.cost' | translate }}</dt>
-    <dd class="detail-cost">{{ detail.cost | currency: 'EUR' }}</dd>
+    <dd class="detail-cost">{{ detail.cost | appCurrency }}</dd>
 
     <dt>{{ 'reports.columns.grossProfit' | translate }}</dt>
-    <dd class="detail-gross-profit">{{ detail.grossProfit | currency: 'EUR' }}</dd>
+    <dd class="detail-gross-profit">{{ detail.grossProfit | appCurrency }}</dd>
   </dl>
 
   @if (detail.deleted) {

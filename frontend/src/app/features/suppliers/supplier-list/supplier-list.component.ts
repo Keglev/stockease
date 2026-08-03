@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -20,14 +19,14 @@ import {
   SupplierFormDialogData
 } from '../supplier-form-dialog/supplier-form-dialog.component';
 import { SupplierService } from '../supplier.service';
+import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 
 const DEFAULT_PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-supplier-list',
   imports: [
-    DatePipe,
-    MatButtonModule,
+    AppDateTimePipe, MatButtonModule,
     MatIconModule,
     MatPaginatorModule,
     MatProgressBarModule,

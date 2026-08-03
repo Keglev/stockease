@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
@@ -8,6 +7,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { ChangeLogResponse } from '../../../core/api/api-models';
 import { AuditService } from '../audit.service';
+import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 
 /** Which of the two audit queries this page is showing. */
 export type HistoryMode = 'product' | 'user';
@@ -22,8 +22,7 @@ const LIFECYCLE_FIELDS = ['DELETED', 'RESTORED'];
 @Component({
   selector: 'app-change-history',
   imports: [
-    DatePipe,
-    MatButtonModule,
+    AppDateTimePipe, MatButtonModule,
     MatProgressBarModule,
     RouterLink,
     TranslatePipe

@@ -75,25 +75,25 @@
 
         <div class="detail-fact">
           <dt>{{ 'invoices.detail.dueDate' | translate }}</dt>
-          <dd>{{ current.dueDate | date: 'mediumDate' }}</dd>
+          <dd>{{ current.dueDate | appDate }}</dd>
         </div>
 
         <div class="detail-fact">
           <dt>{{ 'invoices.detail.createdAt' | translate }}</dt>
-          <dd>{{ current.createdAt | date: 'medium' }}</dd>
+          <dd>{{ current.createdAt | appDateTime }}</dd>
         </div>
 
         @if (current.closedAt) {
           <div class="detail-fact detail-closed">
             <dt>{{ 'invoices.detail.closedAt' | translate }}</dt>
-            <dd>{{ current.closedAt | date: 'medium' }}</dd>
+            <dd>{{ current.closedAt | appDateTime }}</dd>
           </div>
         }
 
         @if (current.paidAt) {
           <div class="detail-fact detail-paid">
             <dt>{{ 'invoices.detail.paidAt' | translate }}</dt>
-            <dd>{{ current.paidAt | date: 'medium' }}</dd>
+            <dd>{{ current.paidAt | appDateTime }}</dd>
           </div>
         }
       </dl>
@@ -115,7 +115,7 @@
 
     <ng-container matColumnDef="unitPrice">
       <th mat-header-cell *matHeaderCellDef>{{ 'invoices.detail.unitPrice' | translate }}</th>
-      <td mat-cell *matCellDef="let item">{{ item.unitPrice | currency: 'EUR' }}</td>
+      <td mat-cell *matCellDef="let item">{{ item.unitPrice | appCurrency }}</td>
     </ng-container>
 
     <ng-container matColumnDef="returnedQty">
@@ -126,7 +126,7 @@
     <ng-container matColumnDef="lineTotal">
       <th mat-header-cell *matHeaderCellDef>{{ 'invoices.detail.lineTotal' | translate }}</th>
       <td mat-cell *matCellDef="let item" class="line-total">
-        {{ lineTotal(item) | currency: 'EUR' }}
+        {{ lineTotal(item) | appCurrency }}
       </td>
     </ng-container>
 
@@ -153,6 +153,6 @@
 
   <p class="invoice-total">
     <span>{{ 'invoices.detail.total' | translate }}</span>
-    <span class="invoice-total-value">{{ total() | currency: 'EUR' }}</span>
+    <span class="invoice-total-value">{{ total() | appCurrency }}</span>
   </p>
 }

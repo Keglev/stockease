@@ -6,11 +6,15 @@
 
 import { InjectionToken } from '@angular/core';
 
-import { SupportedLanguage } from '../../core/i18n/language.service';
+/**
+ * Field separator per number locale, and it is keyed on the NUMBER locale rather than on the
+ * interface language on purpose: a decimal comma and a comma separator cannot coexist in one file.
+ * A reader on the English interface who has set German numbers (ADR 031) gets `1234,56`, so the
+ * file has to switch to semicolons with it or arrive in the spreadsheet as a single column.
+ */
+const SEPARATORS: Record<string, string> = { 'en-US': ',', 'de-DE': ';' };
 
-const SEPARATORS: Record<SupportedLanguage, string> = { en: ',', de: ';' };
-
-const LOCALES: Record<SupportedLanguage, string> = { en: 'en-US', de: 'de-DE' };
+const FALLBACK_SEPARATOR = ',';
 
 // Excel decides a file's encoding from its first bytes, and without this it reads UTF-8 umlauts
 // in product and supplier names as mojibake. Built from the code point rather than written as a
@@ -19,15 +23,20 @@ const BYTE_ORDER_MARK = String.fromCharCode(0xfeff);
 
 const LINE_ENDING = '\r\n';
 
-/** Renders headers and rows as one CSV string, localized separators included. */
+/**
+ * Renders headers and rows as one CSV string, localized separators included.
+ *
+ * <p>Takes the effective number locale rather than the interface language, so a format override
+ * reaches the download as well as the screen; callers read it from `FormatService.numberLocale()`.
+ */
 export function buildCsv(
   headers: string[],
   rows: (string | number | null)[][],
-  lang: SupportedLanguage
+  numberLocale: string
 ): string {
-  const separator = SEPARATORS[lang];
+  const separator = SEPARATORS[numberLocale] ?? FALLBACK_SEPARATOR;
   const lines = [headers, ...rows].map((row) =>
-    row.map((field) => quote(format(field, lang), separator)).join(separator)
+    row.map((field) => quote(format(field, numberLocale), separator)).join(separator)
   );
 
   return BYTE_ORDER_MARK + lines.join(LINE_ENDING) + LINE_ENDING;
@@ -53,14 +62,14 @@ export const CSV_DOWNLOADER = new InjectionToken<CsvDownloader>('CSV_DOWNLOADER'
   factory: () => downloadCsv
 });
 
-function format(field: string | number | null, lang: SupportedLanguage): string {
+function format(field: string | number | null, numberLocale: string): string {
   if (field === null) {
     return '';
   }
   if (typeof field === 'number') {
     // Grouping is off on purpose: a thousands separator is itself a field separator in one of
     // the two locales, and the quoting would survive it but a spreadsheet import would not.
-    return field.toLocaleString(LOCALES[lang], { useGrouping: false, maximumFractionDigits: 20 });
+    return field.toLocaleString(numberLocale, { useGrouping: false, maximumFractionDigits: 20 });
   }
   return field;
 }

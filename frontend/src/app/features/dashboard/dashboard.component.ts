@@ -1,7 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CurrencyPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -20,6 +19,8 @@ import { ProductService } from '../products/product.service';
 // set the same precedent.
 import { ReportService } from '../reports/report.service';
 import { LowStockDialogComponent } from './low-stock-dialog/low-stock-dialog.component';
+import { AppCurrencyPipe } from '../../shared/format/app-currency.pipe';
+import { AppDatePipe } from '../../shared/format/app-date.pipe';
 
 /** Which half of a card is on screen; the cards open on their chart, the at-a-glance reading. */
 export type CardView = 'chart' | 'table';
@@ -44,9 +45,7 @@ const DUE_LIST_LIMIT = 8;
 @Component({
   selector: 'app-dashboard',
   imports: [
-    ChartComponent,
-    CurrencyPipe,
-    DatePipe,
+    AppCurrencyPipe, AppDatePipe, ChartComponent,
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,

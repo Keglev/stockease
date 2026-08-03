@@ -37,7 +37,7 @@
 
   <ng-container matColumnDef="createdAt">
     <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.createdAt' | translate }}</th>
-    <td mat-cell *matCellDef="let customer">{{ customer.createdAt | date: 'medium' }}</td>
+    <td mat-cell *matCellDef="let customer">{{ customer.createdAt | appDateTime }}</td>
   </ng-container>
 
   <!-- Summary and delete only: the API has no customer update endpoint, so no edit action

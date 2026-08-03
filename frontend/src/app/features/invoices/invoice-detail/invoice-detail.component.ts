@@ -1,4 +1,3 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -24,6 +23,9 @@ import {
   InvoiceReturnDialogResult
 } from '../invoice-return-dialog/invoice-return-dialog.component';
 import { InvoiceService } from '../invoice.service';
+import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
+import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
+import { AppDatePipe } from '../../../shared/format/app-date.pipe';
 
 /**
  * Shows one invoice with its line items. Monetary totals are derived here rather than read
@@ -32,9 +34,7 @@ import { InvoiceService } from '../invoice.service';
 @Component({
   selector: 'app-invoice-detail',
   imports: [
-    CurrencyPipe,
-    DatePipe,
-    MatButtonModule,
+    AppCurrencyPipe, AppDateTimePipe, AppDatePipe, MatButtonModule,
     MatCardModule,
     MatChipsModule,
     MatProgressBarModule,

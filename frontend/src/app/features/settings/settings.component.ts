@@ -1,10 +1,16 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '@ngx-translate/core';
 
+import { DATE_FORMATS, FormatService, NUMBER_FORMATS } from '../../core/format/format.service';
 import { LanguageService, SUPPORTED_LANGUAGES } from '../../core/i18n/language.service';
 import { THEME_MODES, ThemeService } from '../../core/theme/theme.service';
+
+/** The amount the number options are previewed with; large enough to show a grouping separator. */
+const SAMPLE_AMOUNT = 1234.56;
 
 /**
  * Where the preferences scattered across the toolbar are stated in one place.
@@ -16,13 +22,20 @@ import { THEME_MODES, ThemeService } from '../../core/theme/theme.service';
  */
 @Component({
   selector: 'app-settings',
-  imports: [MatButtonToggleModule, MatCardModule, TranslatePipe],
+  imports: [
+    MatButtonToggleModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    TranslatePipe
+  ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
 })
 export class SettingsComponent {
   private readonly theme = inject(ThemeService);
   private readonly language = inject(LanguageService);
+  private readonly format = inject(FormatService);
 
   protected readonly themes = THEME_MODES;
   protected readonly languages = SUPPORTED_LANGUAGES;
@@ -48,5 +61,39 @@ export class SettingsComponent {
 
   protected setLanguage(lang: string): void {
     this.language.setLanguage(lang);
+  }
+
+  /**
+   * The format options, each previewed with a real value rendered the way that option would render
+   * it. The preview IS the label - "31.12.2026" needs no translating and settles what "dmyDot"
+   * means faster than any wording could, in either language.
+   *
+   * <p>Computed, so the previews follow the interface language while 'auto' is selected and the
+   * reader can see what automatic currently resolves to.
+   */
+  protected readonly dateOptions = computed(() =>
+    DATE_FORMATS.map((value) => ({
+      value,
+      // Today rather than a fixed date: a reader checks a format against the date they know it is.
+      preview: value === 'auto' ? '' : this.format.previewDate(value, new Date())
+    }))
+  );
+
+  protected readonly numberOptions = computed(() =>
+    NUMBER_FORMATS.map((value) => ({
+      value,
+      preview: value === 'auto' ? '' : this.format.previewCurrency(value, SAMPLE_AMOUNT)
+    }))
+  );
+
+  protected readonly currentDateFormat = this.format.dateFormat;
+  protected readonly currentNumberFormat = this.format.numberFormat;
+
+  protected setDateFormat(value: string): void {
+    this.format.setDateFormat(value);
+  }
+
+  protected setNumberFormat(value: string): void {
+    this.format.setNumberFormat(value);
   }
 }

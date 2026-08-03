@@ -114,21 +114,21 @@
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.revenue' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.revenue | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.revenue | appCurrency }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="cost">
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.cost' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.cost | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.cost | appCurrency }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="grossProfit">
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.grossProfit' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.grossProfit | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.grossProfit | appCurrency }}</td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="profitColumns"></tr>
@@ -182,21 +182,21 @@
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.revenue' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.revenue | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.revenue | appCurrency }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="cost">
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.cost' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.cost | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.cost | appCurrency }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="grossProfit">
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.grossProfit' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.grossProfit | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.grossProfit | appCurrency }}</td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="supplierColumns"></tr>
@@ -264,18 +264,18 @@
           <div class="totals-strip">
             <div class="total-item">
               <span class="total-label">{{ 'reports.cashFlow.inflow' | translate }}</span>
-              <span class="total-value cash-flow-inflow">{{ report.inflow | currency: 'EUR' }}</span>
+              <span class="total-value cash-flow-inflow">{{ report.inflow | appCurrency }}</span>
             </div>
             <div class="total-item">
               <span class="total-label">{{ 'reports.cashFlow.outflow' | translate }}</span>
-              <span class="total-value cash-flow-outflow">{{ report.outflow | currency: 'EUR' }}</span>
+              <span class="total-value cash-flow-outflow">{{ report.outflow | appCurrency }}</span>
             </div>
             <div class="total-item">
               <span class="total-label">{{ 'reports.cashFlow.net' | translate }}</span>
               <span
                 class="total-value cash-flow-net"
                 [class.cash-flow-negative]="report.net < 0"
-                >{{ report.net | currency: 'EUR' }}</span
+                >{{ report.net | appCurrency }}</span
               >
             </div>
           </div>
@@ -353,14 +353,14 @@
                   <th mat-header-cell *matHeaderCellDef>
                     {{ 'reports.cashFlow.columns.inflow' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.inflow | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.inflow | appCurrency }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="outflow">
                   <th mat-header-cell *matHeaderCellDef>
                     {{ 'reports.cashFlow.columns.outflow' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.outflow | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.outflow | appCurrency }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="net">
@@ -368,7 +368,7 @@
                     {{ 'reports.cashFlow.columns.net' | translate }}
                   </th>
                   <td mat-cell *matCellDef="let row" [class.cash-flow-negative]="row.net < 0">
-                    {{ row.net | currency: 'EUR' }}
+                    {{ row.net | appCurrency }}
                   </td>
                 </ng-container>
 
@@ -394,7 +394,7 @@
           <div class="totals-strip">
             <div class="total-item">
               <span class="total-label">{{ 'reports.columns.inStockValue' | translate }}</span>
-              <span class="total-value stock-total-value">{{ totals.value | currency: 'EUR' }}</span>
+              <span class="total-value stock-total-value">{{ totals.value | appCurrency }}</span>
             </div>
             <div class="total-item">
               <span class="total-label">{{ 'reports.columns.inStockUnits' | translate }}</span>
@@ -487,7 +487,7 @@
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.soldRevenue' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.soldRevenue | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.soldRevenue | appCurrency }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="inStockUnits">
@@ -501,7 +501,7 @@
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.inStockValue' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.inStockValue | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.inStockValue | appCurrency }}</td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="stockColumns"></tr>
@@ -539,7 +539,7 @@
           <div class="totals-strip">
             <div class="total-item">
               <span class="total-label">{{ 'reports.columns.lossValue' | translate }}</span>
-              <span class="total-value loss-total-value">{{ totals.value | currency: 'EUR' }}</span>
+              <span class="total-value loss-total-value">{{ totals.value | appCurrency }}</span>
             </div>
             <div class="total-item">
               <span class="total-label">{{ 'reports.columns.lostUnits' | translate }}</span>
@@ -644,7 +644,7 @@
                   <th mat-header-cell *matHeaderCellDef mat-sort-header>
                     {{ 'reports.columns.lossValue' | translate }}
                   </th>
-                  <td mat-cell *matCellDef="let row">{{ row.lossValue | currency: 'EUR' }}</td>
+                  <td mat-cell *matCellDef="let row">{{ row.lossValue | appCurrency }}</td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="lossColumns"></tr>
@@ -701,7 +701,7 @@
                         'invoices.type.' + row.invoiceType | translate
                       }}</span>
                       <span class="due-counterparty">{{ row.counterparty }}</span>
-                      <span class="due-date">{{ row.dueDate | date: 'mediumDate' }}</span>
+                      <span class="due-date">{{ row.dueDate | appDate }}</span>
                     </li>
                   }
                 </ul>
@@ -724,7 +724,7 @@
                         'invoices.type.' + row.invoiceType | translate
                       }}</span>
                       <span class="due-counterparty">{{ row.counterparty }}</span>
-                      <span class="due-date">{{ row.dueDate | date: 'mediumDate' }}</span>
+                      <span class="due-date">{{ row.dueDate | appDate }}</span>
                       <!-- Only the overdue query computes this; due-soon rows carry null by design. -->
                       @if (row.daysOverdue !== null) {
                         <span class="days-overdue">
@@ -809,7 +809,7 @@
                 </th>
                 <!-- The same format the product's own history uses, so one change reads alike wherever
                      it is seen. -->
-                <td mat-cell *matCellDef="let row">{{ row.createdAt | date: 'medium' }}</td>
+                <td mat-cell *matCellDef="let row">{{ row.createdAt | appDateTime }}</td>
               </ng-container>
 
               <ng-container matColumnDef="user">

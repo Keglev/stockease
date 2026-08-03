@@ -42,5 +42,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 028 - Search-First Navigation and Supplier-Scoped Product Discovery](028-supplier-traceability-search.md) - **[Cross-cutting]**
 - [ADR 029 - Help Content as Typed, Lazy-Loaded Modules](029-help-content-architecture.md) - **[Frontend]**
 - [ADR 030 - User Preferences Live in localStorage, Not on the Server](030-settings-in-local-storage.md) - **[Frontend]**
+- [ADR 031 - Runtime Date and Currency Formatting Through Intl, Not LOCALE_ID](031-runtime-formatting-via-intl.md) - **[Frontend]**
 
 [Back to Documentation Home](/stockease/)

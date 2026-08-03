@@ -25,13 +25,13 @@
       <dd class="summary-bought-units">{{ figures.boughtUnits }}</dd>
 
       <dt>{{ 'customers.summary.boughtValue' | translate }}</dt>
-      <dd class="summary-bought-value">{{ figures.boughtValue | currency: 'EUR' }}</dd>
+      <dd class="summary-bought-value">{{ figures.boughtValue | appCurrency }}</dd>
 
       <dt>{{ 'customers.summary.returnedUnits' | translate }}</dt>
       <dd class="summary-returned-units">{{ figures.returnedUnits }}</dd>
 
       <dt>{{ 'customers.summary.returnedValue' | translate }}</dt>
-      <dd class="summary-returned-value">{{ figures.returnedValue | currency: 'EUR' }}</dd>
+      <dd class="summary-returned-value">{{ figures.returnedValue | appCurrency }}</dd>
     </dl>
   }
 </mat-dialog-content>

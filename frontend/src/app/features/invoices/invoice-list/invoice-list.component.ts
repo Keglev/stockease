@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -13,6 +12,8 @@ import { InvoiceSummaryResponse } from '../../../core/api/api-models';
 import { CustomerService } from '../../customers/customer.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { InvoiceService } from '../invoice.service';
+import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
+import { AppDatePipe } from '../../../shared/format/app-date.pipe';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -35,8 +36,7 @@ function today(): string {
 @Component({
   selector: 'app-invoice-list',
   imports: [
-    DatePipe,
-    MatButtonModule,
+    AppDateTimePipe, AppDatePipe, MatButtonModule,
     MatChipsModule,
     MatPaginatorModule,
     MatProgressBarModule,
