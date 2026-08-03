@@ -266,21 +266,5 @@ public class ProductController {
 <span class="fc" id="L266">        return ResponseEntity.ok(</span>
 <span class="fc" id="L267">                new ApiResponse&lt;&gt;(true, &quot;Name updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
     }
-
-    /**
-     * Calculates the aggregate inventory value across all products.
-     *
-     * &lt;p&gt;Executes a database-level aggregate ({@code SUM(quantity * purchasePrice)}) via
-     * {@link ProductService#getTotalStockValue()}. Behavior defined in
-     * {@code docs/api/paths/products.yaml}.
-     *
-     * @return HTTP 200 with the total stock value as a {@link Double}
-     */
-    @GetMapping(&quot;/total-stock-value&quot;)
-    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
-    public ResponseEntity&lt;ApiResponse&lt;Double&gt;&gt; getTotalStockValue() {
-<span class="fc" id="L282">        double totalStockValue = productService.getTotalStockValue();</span>
-<span class="fc" id="L283">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Total stock value fetched successfully&quot;, totalStockValue));</span>
-    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
