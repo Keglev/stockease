@@ -1,3 +1,5 @@
+@use '../../../styles/breakpoints' as bp;
+
 .lang-toggle {
   display: flex;
   gap: 0.125rem;
@@ -5,6 +7,13 @@
 
 .lang-button {
   min-width: 3rem;
+
+  // The labels are two characters, so the 3rem floor is comfort rather than fit. At phone width the
+  // toolbar is a single non-wrapping row competing for every pixel, and this is the one place that
+  // gives some back without removing anything: the toggle stays two buttons, just narrower ones.
+  @include bp.phone {
+    min-width: 2.25rem;
+  }
 
   &.active {
     // A light/dark pair rather than one container token, because the toolbar behind this button is

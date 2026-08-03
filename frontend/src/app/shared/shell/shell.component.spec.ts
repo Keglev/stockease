@@ -9,6 +9,7 @@ import { provideRouter, Router } from '@angular/router';
 import { AuthService, TOKEN_STORAGE_KEY } from '../../core/auth/auth.service';
 import { DEMO_MODE } from '../../core/config/demo-mode';
 import { LanguageService } from '../../core/i18n/language.service';
+import { PHONE_MEDIA_QUERY } from '../../core/layout/layout';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { ShellComponent } from './shell.component';
@@ -107,8 +108,10 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
   }
 
-  async function setUp(demoMode = false, desktop = true): Promise<void> {
-    breakpoints = new BreakpointObserverStub(desktop);
+  async function setUp(demoMode = false, desktop = true, phone = false): Promise<void> {
+    // Both tiers pinned explicitly: desktop=false alone means tablet, where the toolbar is still the
+    // wide one. Only the phone tier drops the role label and the logout text.
+    breakpoints = new BreakpointObserverStub(desktop, { [PHONE_MEDIA_QUERY]: phone });
 
     await TestBed.configureTestingModule({
       imports: [ShellComponent],
@@ -269,6 +272,83 @@ describe('ShellComponent', () => {
     // non-demo build must not carry it at all rather than merely hide it.
     expect(demoBadge()).toBeNull();
     expect(text()).not.toContain('DEMO');
+  });
+
+  /** The icon-only logout the phone tier substitutes for the text button. */
+  function logoutIcon(): HTMLButtonElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'button.logout-icon'
+    );
+  }
+
+  /** Asserted on the element rather than a literal: the name is what differs most between languages. */
+  function appName(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('mat-toolbar .app-name');
+  }
+
+  it('toolbar_desktopTier_showsTheAppName', async () => {
+    await setUp();
+
+    expect(appName()?.textContent?.trim().length).toBeGreaterThan(0);
+  });
+
+  it('toolbar_phoneTier_showsIconLogoutAndNoRoleText', async () => {
+    localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
+    await setUp(false, false, true);
+
+    // Absent from the DOM rather than hidden: a display:none label still has an accessible name.
+    expect((fixture.nativeElement as HTMLElement).querySelector('.role')).toBeNull();
+    expect(logoutButton()).toBeNull();
+    expect(logoutIcon()).not.toBeNull();
+    expect(logoutIcon()?.textContent?.trim()).toBe('logout');
+  });
+
+  it('toolbar_phoneTier_namesTheIconLogoutForAssistiveTech', async () => {
+    await setUp(false, false, true);
+
+    // Dropping the visible label is only acceptable while the button keeps its name.
+    expect(logoutIcon()?.getAttribute('aria-label')).toBe('Log out');
+    expect(logoutIcon()?.getAttribute('title')).toBe('Log out');
+  });
+
+  it('toolbar_desktopTier_keepsTextLogoutAndRoleText', async () => {
+    localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
+    await setUp();
+
+    expect(logoutIcon()).toBeNull();
+    expect(logoutButton()?.textContent?.trim()).toBe('Log out');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.role')?.textContent?.trim()).toBe('User');
+  });
+
+  it('toolbar_tabletTier_showsNameAndTextLogoutButNoRoleText', async () => {
+    localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
+    await setUp(false, false, false);
+
+    // The tablet keeps the full name - in German it is the widest item in the row - and pays for it
+    // with the role label, which is the one thing there that repeats what the user already knows.
+    expect(appName()?.textContent?.trim().length).toBeGreaterThan(0);
+    expect(logoutButton()).not.toBeNull();
+    expect(logoutIcon()).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.role')).toBeNull();
+  });
+
+  it('toolbar_phoneTier_dropsTheNameButKeepsTheDemoBadge', async () => {
+    await setUp(true, false, true);
+
+    // The name is the single widest item, and the hamburger and badge already say where you are.
+    expect(appName()).toBeNull();
+    expect(demoBadge()).not.toBeNull();
+  });
+
+  it('logoutIcon_clicked_clearsAuthenticationState', async () => {
+    localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
+    await setUp(false, false, true);
+    const auth = TestBed.inject(AuthService);
+
+    logoutIcon()?.click();
+    await fixture.whenStable();
+
+    expect(auth.isAuthenticated()).toBe(false);
   });
 
   it('logout_clicked_clearsAuthenticationState', async () => {

@@ -11,6 +11,25 @@
   min-height: 100vh;
 }
 
+// The name takes the slack, and shrinks before it overflows. This is a structural backstop rather
+// than the phone fix: with the name absent at phone and the role absent below desktop, no tested
+// viewport truncates in either language. It is here so that a longer product name, a third toggle
+// or a wider translation degrades into an ellipsis instead of pushing the toolbar past the
+// viewport, which is the failure this whole change exists to remove.
+//
+// min-width: 0 is load-bearing - a flex item's default min-width is auto, which refuses to shrink
+// below its content and is exactly why the row overflowed rather than compressing.
+.app-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// Still carries the right-hand cluster's alignment on its own at phone width, where the name that
+// would otherwise absorb the slack is not rendered. Above phone the two share it, which pushes the
+// cluster fully right either way.
 .spacer {
   flex: 1 1 auto;
 }
@@ -130,10 +149,7 @@ app-language-toggle {
   }
 }
 
-@include bp.phone {
-  // At 360px the toolbar has to hold the hamburger, the app name, both toggles and logout. The
-  // role label is the one item that repeats information the user already has.
-  .role {
-    display: none;
-  }
-}
+// The phone tier's `.role { display: none }` is gone: the template drops the span from the DOM
+// below desktop instead, so there is no hidden element left for a rule to hide. The reason for
+// dropping it is unchanged - the role label repeats information the user already has, and the
+// toolbar is a single non-wrapping row that cannot afford it below desktop in German.
