@@ -819,4 +819,69 @@
       </mat-card>
     </div>
   </mat-tab>
+
+  <mat-tab [label]="'reports.tabs.analytics' | translate">
+    <div class="tab-body">
+      <!-- Charts only, and no CSV: these are two derived series, and the rows behind them are
+           already exportable elsewhere - the price changes in the Changes tab, the movements in the
+           movement ledger. A download here would duplicate both. -->
+      <div class="table-heading table-heading-end">
+        <mat-form-field class="report-filter" appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'reports.analytics.selectProduct' | translate }}</mat-label>
+          <mat-select
+            class="analytics-product-select"
+            [value]="analyticsProductId()"
+            (valueChange)="setAnalyticsProduct($event)"
+          >
+            @for (product of analyticsProducts(); track product.id) {
+              <mat-option [value]="product.id">{{ product.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-button-toggle-group
+        class="period-toggle"
+        hideSingleSelectionIndicator
+        [value]="analyticsPeriod()"
+        (valueChange)="setAnalyticsPeriod($event)"
+      >
+        <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="d180">{{ 'reports.period.d180' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
+        <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      @if (analyticsProductId() === null) {
+        <p class="empty-state analytics-prompt">
+          {{ 'reports.analytics.selectProduct' | translate }}
+        </p>
+      } @else {
+        <mat-card class="chart-card">
+          <mat-card-content>
+            <h2 class="section-title">{{ 'reports.analytics.priceHistory' | translate }}</h2>
+            @if (analyticsPriceOption(); as option) {
+              <app-chart [option]="option" height="20rem" />
+            } @else {
+              <p class="empty-state analytics-no-prices">
+                {{ 'reports.analytics.noPriceChanges' | translate }}
+              </p>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card">
+          <mat-card-content>
+            <h2 class="section-title">{{ 'reports.analytics.stockVsSales' | translate }}</h2>
+            @if (analyticsStockOption(); as option) {
+              <app-chart [option]="option" height="24rem" />
+            } @else {
+              <p class="empty-state analytics-no-stock">{{ 'reports.stock.empty' | translate }}</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  </mat-tab>
 </mat-tab-group>

@@ -715,6 +715,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/products/{id}/stock-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Product identifier */
+                id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * One product's stock level and cumulative sales over time
+         * @description A chronological series for one product: units on hand and units sold to customers, as of the end
+         *     of each day that moved it. Days with no movement produce no point.
+         *
+         *     Derived from the movement ledger, which is complete by construction - stock enters and leaves
+         *     exclusively through booked movements (ADR 021) - so the final point equals the product's current
+         *     quantity.
+         *
+         *     `from` and `to` optionally narrow **which points are returned**, not where the counting starts.
+         *     Both figures are running totals over the product's whole history, so a 30-day window over a
+         *     product bought a year ago still opens at the level it had reached, never at zero.
+         *
+         *     A soft-deleted product still answers: what it did is history.
+         */
+        get: operations["stockHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/stock-status": {
         parameters: {
             query?: never;
@@ -1578,6 +1612,28 @@ export interface components {
             inStockUnits: number;
             /** @example 30 */
             inStockValue: number;
+        };
+        /**
+         * @description One product's stock position at the end of a day that moved it. Days with no movement
+         *     produce no point: they hold whatever the day before left.
+         */
+        StockHistoryPoint: {
+            /**
+             * Format: date
+             * @description The day these figures are as of, at its end
+             * @example 2026-03-14
+             */
+            date: string;
+            /**
+             * @description Units on hand after that day's movements, counted from the start of history
+             * @example 32
+             */
+            stockLevel: number;
+            /**
+             * @description Units sold to customers by then, net of what they returned
+             * @example 12
+             */
+            cumulativeSoldUnits: number;
         };
         LossReport: {
             /**
@@ -4026,6 +4082,90 @@ export interface operations {
                      * @example {
                      *       "success": false,
                      *       "message": "Entity not found: Customer with ID 999 not found.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
+        };
+    };
+    stockHistory: {
+        parameters: {
+            query?: {
+                /**
+                 * @description First day to return; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last day to return, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Product identifier */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /**
+             * @description History retrieved (ROLE_USER or ROLE_ADMIN); an empty array for a product that has never
+             *     moved, which is a real answer rather than a missing one
+             */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "date": "2026-03-10",
+                     *         "stockLevel": 40,
+                     *         "cumulativeSoldUnits": 0
+                     *       },
+                     *       {
+                     *         "date": "2026-03-14",
+                     *         "stockLevel": 32,
+                     *         "cumulativeSoldUnits": 8
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["StockHistoryPoint"][];
+                };
+            };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description No product with that identifier exists */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "Entity not found: Product with ID 9 not found.",
                      *       "data": null
                      *     }
                      */

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.12.0
+  version: 2.13.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -1169,6 +1169,30 @@ components:
           type: number
           example: 30.00
 
+    StockHistoryPoint:
+      type: object
+      description: |
+        One product's stock position at the end of a day that moved it. Days with no movement
+        produce no point: they hold whatever the day before left.
+      required:
+        - date
+        - stockLevel
+        - cumulativeSoldUnits
+      properties:
+        date:
+          type: string
+          format: date
+          description: The day these figures are as of, at its end
+          example: '2026-03-14'
+        stockLevel:
+          type: integer
+          description: Units on hand after that day's movements, counted from the start of history
+          example: 32
+        cumulativeSoldUnits:
+          type: integer
+          description: Units sold to customers by then, net of what they returned
+          example: 12
+
     LossReport:
       type: object
       required:
@@ -1490,6 +1514,8 @@ paths:
     $ref: './paths/reports-cash-flow-timeline.yaml'
   /api/reports/customers/{id}/summary:
     $ref: './paths/reports-customer-summary.yaml'
+  /api/reports/products/{id}/stock-history:
+    $ref: './paths/reports-product-stock-history.yaml'
   /api/reports/stock-status:
     $ref: './paths/reports-stock-status.yaml'
   /api/reports/losses:

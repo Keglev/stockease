@@ -3,6 +3,7 @@ package com.stocks.stockease.report.web;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
 import com.stocks.stockease.report.LossReport;
 import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.StockHistoryPoint;
 import com.stocks.stockease.report.StockStatusReport;
 
 /** Slice tests for the stock, loss and due-date endpoints under /api/reports. */
@@ -187,5 +189,70 @@ class ReportStatusControllerTest {
                 .andExpect(status().isUnauthorized());
 
         Mockito.verify(reportingService, Mockito.never()).overdue();
+    }
+
+    private static List<StockHistoryPoint> history() {
+        return List.of(new StockHistoryPoint(LocalDate.of(2026, 3, 14), 32, 8));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
+    void stockHistory_withPoints_returnsRecordsDirectly() throws Exception {
+        Mockito.when(reportingService.stockHistory(3L, null, null)).thenReturn(Optional.of(history()));
+
+        mockMvc.perform(get("/api/reports/products/3/stock-history"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].date").value("2026-03-14"))
+                .andExpect(jsonPath("$[0].stockLevel").value(32))
+                .andExpect(jsonPath("$[0].cumulativeSoldUnits").value(8));
+
+        Mockito.verify(reportingService).stockHistory(3L, null, null);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void stockHistory_withPeriod_passesBothBoundsThrough() throws Exception {
+        LocalDate from = LocalDate.of(2026, 1, 1);
+        LocalDate to = LocalDate.of(2026, 3, 31);
+        Mockito.when(reportingService.stockHistory(3L, from, to)).thenReturn(Optional.of(history()));
+
+        mockMvc.perform(get("/api/reports/products/3/stock-history")
+                        .param("from", "2026-01-01").param("to", "2026-03-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].stockLevel").value(32));
+
+        Mockito.verify(reportingService).stockHistory(3L, from, to);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void stockHistory_unknownProduct_returns404() throws Exception {
+        Mockito.when(reportingService.stockHistory(9L, null, null)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/reports/products/9/stock-history"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Entity not found: Product with ID 9 not found."));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void stockHistory_withStartAfterEnd_returns400() throws Exception {
+        mockMvc.perform(get("/api/reports/products/3/stock-history")
+                        .param("from", "2026-03-31").param("to", "2026-01-01"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
+
+        Mockito.verify(reportingService, Mockito.never()).stockHistory(Mockito.anyLong(), Mockito.any(),
+                Mockito.any());
+    }
+
+    @Test
+    void stockHistory_asAnonymous_returns401() throws Exception {
+        mockMvc.perform(get("/api/reports/products/3/stock-history"))
+                .andExpect(status().isUnauthorized());
+
+        Mockito.verify(reportingService, Mockito.never()).stockHistory(Mockito.anyLong(), Mockito.any(),
+                Mockito.any());
     }
 }

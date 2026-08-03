@@ -19,10 +19,13 @@ import {
   CashFlowReport,
   CashFlowTimelineBucket,
   ChangeLogEntryResponse,
+  ChangeLogResponse,
   DueDateBucket,
   InvoiceDueSummary,
   LossReport,
   ProductProfitReport,
+  ProductResponse,
+  StockHistoryPoint,
   StockStatusReport,
   SupplierProfitReport
 } from '../../../core/api/api-models';
@@ -32,6 +35,7 @@ import { ChartComponent, ChartOption } from '../../../shared/chart/chart.compone
 import { CSV_DOWNLOADER, buildCsv } from '../../../shared/csv/csv-export';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
+import { ProductService } from '../../products/product.service';
 import { ReportService } from '../report.service';
 
 export const PROFIT_TAB = 0;
@@ -44,8 +48,11 @@ export const DUE_TAB = 4;
 // Last, and appended rather than slotted in: the audit trail answers a different kind of question
 // from the five figures before it, and renumbering them would touch every tab's tests to say so.
 export const CHANGES_TAB = 5;
+// Appended last for the same reason the changes tab was: it asks about one product rather than the
+// whole business, and renumbering the six before it would touch every tab's tests to say so.
+export const ANALYTICS_TAB = 6;
 
-const TAB_COUNT = 6;
+const TAB_COUNT = 7;
 
 /** Sentinel for the changes tab's user select; no account can collide with it. */
 const ALL_USERS = '';
@@ -100,6 +107,8 @@ export class ReportsPageComponent implements OnInit {
   // Cross-feature, as the dashboard reads the reporting client: the change log belongs to the audit
   // module, and a report over it consumes that module's API rather than copying its endpoint.
   private readonly audit = inject(AuditService);
+  // The analytics picker needs the catalogue, which the movement form reads the same way.
+  private readonly products = inject(ProductService);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
@@ -216,6 +225,29 @@ export class ReportsPageComponent implements OnInit {
   protected readonly profitPeriod = signal<ReportPeriod>('all');
   protected readonly lossPeriod = signal<ReportPeriod>('all');
   protected readonly changePeriod = signal<ReportPeriod>('all');
+  protected readonly analyticsPeriod = signal<ReportPeriod>('all');
+
+  /**
+   * The product the analytics tab is charting, or null until one is chosen.
+   *
+   * <p>Nothing is preselected: the first product in the catalogue is not a meaningful default, and
+   * a chart of it would read as an answer to a question nobody asked.
+   */
+  protected readonly analyticsProductId = signal<number | null>(null);
+
+  /**
+   * The whole catalogue, for the picker.
+   *
+   * <p>The full list at demo scale; the product search endpoint is the path if a catalogue ever
+   * outgrows a select. Loaded from the same service call the movement form's picker uses.
+   */
+  protected readonly analyticsProducts = signal<ProductResponse[]>([]);
+
+  protected readonly stockHistory = signal<StockHistoryPoint[]>([]);
+  protected readonly priceHistory = signal<PricePoint[]>([]);
+
+  protected readonly analyticsStockOption = signal<ChartOption | null>(null);
+  protected readonly analyticsPriceOption = signal<ChartOption | null>(null);
 
   protected readonly changeRows = signal<ChangeLogEntryResponse[]>([]);
 
@@ -359,6 +391,23 @@ export class ReportsPageComponent implements OnInit {
     this.changeUser.set(value);
   }
 
+  protected setAnalyticsProduct(productId: number): void {
+    this.analyticsProductId.set(productId);
+    this.loadAnalytics();
+  }
+
+  /** Switches the analytics window and refetches both series over the chosen product. */
+  protected setAnalyticsPeriod(period: ReportPeriod): void {
+    // Same two guards as every other preset group on this page.
+    if (!PERIODS.includes(period) || period === this.analyticsPeriod()) {
+      return;
+    }
+    this.analyticsPeriod.set(period);
+    if (this.analyticsProductId() !== null) {
+      this.loadAnalytics();
+    }
+  }
+
   /** Switches the changes window and refetches, since the period is a server-side filter. */
   protected setChangePeriod(period: ReportPeriod): void {
     // Same two guards as every other preset group on this page.
@@ -479,6 +528,8 @@ export class ReportsPageComponent implements OnInit {
         return this.loadDue();
       case CHANGES_TAB:
         return this.loadChanges();
+      case ANALYTICS_TAB:
+        return this.loadAnalytics();
       default:
         return this.loadProfit();
     }
@@ -516,6 +567,48 @@ export class ReportsPageComponent implements OnInit {
         this.stockRows.set(rows);
         this.stockOption.set(toStockOption(rows, this.otherLabel()));
         this.loading.set(false);
+      },
+      error: (err: Error) => this.fail(err)
+    });
+  }
+
+  /** Loads only the picker; the charts wait for a product, because there is nothing to chart yet. */
+  private loadAnalytics(): void {
+    this.error.set(null);
+    if (this.analyticsProducts().length === 0) {
+      this.products.getAll().subscribe({
+        next: (rows) => this.analyticsProducts.set(rows),
+        error: (err: Error) => this.fail(err)
+      });
+    }
+
+    const productId = this.analyticsProductId();
+    if (productId === null) {
+      return;
+    }
+    this.loading.set(true);
+    const range = periodRange(this.analyticsPeriod());
+
+    this.reports.stockHistory(productId, range.from, range.to).subscribe({
+      next: (points) => {
+        this.stockHistory.set(points);
+        // Translated at build time: chart options are snapshots, as everywhere else on this page.
+        this.analyticsStockOption.set(toStockHistoryOption(points, {
+          stock: this.translate.instant('reports.analytics.stockLevel') as string,
+          sold: this.translate.instant('reports.analytics.soldUnits') as string
+        }));
+        this.loading.set(false);
+      },
+      error: (err: Error) => this.fail(err)
+    });
+
+    // The price series comes from the audit trail rather than a reporting endpoint: a price change
+    // is something a person did, and the change log is where that already lives.
+    this.audit.productChanges(productId).subscribe({
+      next: (rows) => {
+        const points = toPricePoints(rows, range);
+        this.priceHistory.set(points);
+        this.analyticsPriceOption.set(toPriceHistoryOption(points));
       },
       error: (err: Error) => this.fail(err)
     });
@@ -688,6 +781,85 @@ function periodRange(period: ReportPeriod): { from?: string; to?: string } {
   const start = new Date(today);
   start.setDate(start.getDate() - PERIOD_DAYS[period]);
   return { from: isoDate(start), to: isoDate(today) };
+}
+
+/** One purchase price and the day it took effect. */
+interface PricePoint {
+  date: string;
+  price: number;
+}
+
+/**
+ * Turns change-log rows into the price series, keeping only what can actually be plotted.
+ *
+ * <p>Rows whose new value will not parse as a number are skipped rather than plotted as zero or
+ * NaN. The log stores values as free text by design - that is what lets a new loggable field need
+ * no schema change - so a non-numeric value here is a correctly recorded change of something that
+ * is not a price, not corruption.
+ *
+ * <p>The window is applied here rather than by the endpoint: the per-product change listing takes
+ * no period, and asking for one would widen an API two other screens already depend on.
+ */
+function toPricePoints(rows: ChangeLogResponse[], range: { from?: string; to?: string }): PricePoint[] {
+  return rows
+    .filter((row) => row.field === 'PURCHASE_PRICE')
+    .filter((row) => (!range.from || row.createdAt >= range.from)
+      && (!range.to || row.createdAt <= `${range.to}T23:59:59`))
+    .map((row) => ({ date: row.createdAt.slice(0, 10), price: Number(row.newValue) }))
+    .filter((point) => Number.isFinite(point.price))
+    // The listing arrives newest first; a time axis reads the other way.
+    .reverse();
+}
+
+/**
+ * Plots the purchase price as a step line: a price holds until it is changed, so the sloped line an
+ * ordinary series would draw between two points would show prices that were never charged.
+ *
+ * <p>Null below two points: one price is a fact, not a history, and a single-point line renders as
+ * an empty plot area that looks broken. The template shows the no-changes state instead.
+ */
+function toPriceHistoryOption(points: PricePoint[]): ChartOption | null {
+  if (points.length < 2) {
+    return null;
+  }
+
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { left: 8, right: 24, top: 16, bottom: 24, containLabel: true },
+    xAxis: { type: 'category', data: points.map((point) => point.date) },
+    yAxis: { type: 'value' },
+    series: [{ type: 'line', step: 'end', data: points.map((point) => point.price) }]
+  };
+}
+
+/**
+ * Plots stock level against cumulative units sold over the days a product moved.
+ *
+ * <p>The stock series steps and the sales series does not, and the difference is the point: stock
+ * holds its level between movements, while cumulative sales are a total that only ever grows. The
+ * two together answer which products sell and which sit.
+ */
+function toStockHistoryOption(
+  points: StockHistoryPoint[],
+  labels: { stock: string; sold: string }
+): ChartOption | null {
+  if (points.length === 0) {
+    return null;
+  }
+
+  return {
+    tooltip: { trigger: 'axis' },
+    // Same inset as the other legended charts: the bottom has to clear the date labels and the
+    // legend row, which a smaller value lets draw over each other.
+    legend: { bottom: 0 },
+    grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
+    xAxis: { type: 'category', data: points.map((point) => point.date) },
+    yAxis: { type: 'value' },
+    series: [
+      { name: labels.stock, type: 'line', step: 'end', data: points.map((point) => point.stockLevel) },
+      { name: labels.sold, type: 'line', data: points.map((point) => point.cumulativeSoldUnits) }
+    ]
+  };
 }
 
 /**

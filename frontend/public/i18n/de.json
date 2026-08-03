@@ -95,7 +95,8 @@
       "stock": "Bestand",
       "losses": "Verluste",
       "dueDates": "Fälligkeiten",
-      "changes": "Änderungen"
+      "changes": "Änderungen",
+      "analytics": "Analyse"
     },
     "columns": {
       "name": "Name",
@@ -169,6 +170,14 @@
         "oldValue": "Alter Wert",
         "newValue": "Neuer Wert"
       }
+    },
+    "analytics": {
+      "selectProduct": "Produkt für die Analyse wählen",
+      "priceHistory": "Einkaufspreis im Zeitverlauf",
+      "stockVsSales": "Bestand vs. verkaufte Einheiten",
+      "stockLevel": "Bestand",
+      "soldUnits": "Verkaufte Einheiten",
+      "noPriceChanges": "Keine Preisänderungen erfasst."
     }
   },
   "movements": {
