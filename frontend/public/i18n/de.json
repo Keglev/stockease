@@ -515,6 +515,7 @@
       "purchasePrice": "Einkaufspreis",
       "totalValue": "Gesamtwert",
       "createdAt": "Erstellt am",
+      "status": "Status",
       "actions": "Aktionen"
     },
     "loading": "Produkte werden geladen…",
@@ -527,6 +528,12 @@
     "created": "Produkt wurde angelegt.",
     "renamed": "Produkt wurde umbenannt.",
     "priceChanged": "Preis wurde aktualisiert.",
+    "showDeleted": "Gelöschte anzeigen",
+    "deletedChip": "Gelöscht",
+    "deletedEmpty": "Keine gelöschten Produkte.",
+    "restore": "Wiederherstellen",
+    "restored": "Produkt wiederhergestellt",
+    "restoreConflict": "Wiederherstellen nicht möglich: Name oder SKU wird bereits von einem aktiven Produkt verwendet.",
     "delete": {
       "action": "Löschen",
       "title": "Produkt löschen",

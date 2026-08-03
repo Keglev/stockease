@@ -115,6 +115,16 @@ public class ProductService {
     }
 
     /**
+     * Lists soft-deleted products alphabetically by name, so an administrator can pick one to restore.
+     * Unpaged: the recycle bin is a short administrative list, not a browsable catalogue.
+     *
+     * @return soft-deleted products ordered case-insensitively by name
+     */
+    public List<Product> getDeletedProducts() {
+        return productRepository.findAllDeleted();
+    }
+
+    /**
      * Revives a soft-deleted product, provided no live product has since taken its name or SKU.
      *
      * @param id product identifier

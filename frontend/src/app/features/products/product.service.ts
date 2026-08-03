@@ -67,6 +67,26 @@ export class ProductService {
       .pipe(map((envelope) => envelope.data as ProductResponse));
   }
 
+  /**
+   * Lists soft-deleted products for the restore view (ADMIN only). Unpaged and enveloped: the
+   * recycle bin is a short administrative list, so the caller hides its paginator while showing it.
+   */
+  getDeleted(): Observable<ProductResponse[]> {
+    return this.http
+      .get<ApiEnvelope<ProductResponse[]>>(`${this.baseUrl}/deleted`)
+      .pipe(map((envelope) => envelope.data as ProductResponse[]));
+  }
+
+  /**
+   * Revives a soft-deleted product (ADMIN only). Answers 409 when a live product has since taken
+   * the deleted product's name or SKU, which the caller surfaces as its own conflict message.
+   */
+  restore(id: number): Observable<ProductResponse> {
+    return this.http
+      .post<ApiEnvelope<ProductResponse>>(`${this.baseUrl}/${id}/restore`, {})
+      .pipe(map((envelope) => envelope.data as ProductResponse));
+  }
+
   /** Emits the backend's own message so the caller can surface it verbatim. */
   remove(id: number): Observable<string> {
     return this.http

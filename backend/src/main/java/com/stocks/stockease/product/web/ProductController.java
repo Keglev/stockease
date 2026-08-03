@@ -96,6 +96,23 @@ public class ProductController {
     }
 
     /**
+     * Lists soft-deleted products for the restore view (ADMIN only).
+     *
+     * <p>Unpaged and ordered by name: the recycle bin is a short administrative list. An empty bin is a
+     * successful empty list, not a 404. Behavior defined in
+     * {@code docs/backend/api/paths/products-deleted.yaml}.
+     *
+     * @return HTTP 200 with the soft-deleted products, empty list when none are deleted
+     */
+    @GetMapping("/deleted")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getDeletedProducts() {
+        List<ProductResponse> deleted = productService.getDeletedProducts().stream()
+                .map(ProductResponse::from).toList();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Deleted products fetched successfully", deleted));
+    }
+
+    /**
      * Returns a single product by its ID.
      *
      * <p>Behavior defined in {@code docs/api/paths/products.yaml}.
@@ -152,6 +169,26 @@ public class ProductController {
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Product with ID " + id + " has been successfully deleted.", null)
         );
+    }
+
+    /**
+     * Restores a soft-deleted product (ADMIN only).
+     *
+     * <p>Not destructive, so no confirmation step guards it. The restore is refused when a live product
+     * has since taken the deleted product's name or SKU, because both are unique among live rows.
+     * Behavior defined in {@code docs/backend/api/paths/products-restore.yaml}.
+     *
+     * @param id product identifier to restore
+     * @param principal authenticated user, recorded against the restore in the change log
+     * @return HTTP 200 with the restored product; HTTP 404 if no soft-deleted product carries that ID
+     *         (unknown or still live), HTTP 409 if a live product already uses its name or SKU
+     */
+    @PostMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ProductResponse>> restoreProduct(@PathVariable long id, Principal principal) {
+        Product restored = productService.restore(id, currentUser(principal));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Product restored successfully", ProductResponse.from(restored)));
     }
 
     /**

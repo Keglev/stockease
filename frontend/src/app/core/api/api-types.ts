@@ -110,6 +110,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/products/deleted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List soft-deleted products (ADMIN only)
+         * @description Returns the products that have been soft-deleted, ordered alphabetically by name ignoring case.
+         *     The listing is unpaged: the recycle bin is a short administrative list rather than a browsable
+         *     catalogue, and the product list UI hides its paginator while showing it.
+         *
+         *     Soft-deleted rows are hidden from every other product query by the entity's `@SQLRestriction`,
+         *     so this endpoint reads them through an explicit native query. An empty bin is a successful empty
+         *     array, not a 404.
+         */
+        get: operations["getDeletedProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/products/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore a soft-deleted product (ADMIN only)
+         * @description Clears the soft-delete stamp so the product answers ordinary product queries again, and records a
+         *     `RESTORED` entry in the change log against the calling user. Restoring is not destructive and the
+         *     UI offers it without a confirmation step.
+         *
+         *     Product names and SKUs are unique among live rows only, so a deleted product's name or SKU can be
+         *     claimed by a new product while it sits in the bin. When that has happened the restore is refused
+         *     with 409 and the product stays deleted - no change-log entry is written. Resolving the collision
+         *     means renaming or re-SKU-ing the live product first. The service checks both attributes for a
+         *     friendly message; the partial unique indexes on the table are the concurrency backstop.
+         *
+         *     The 404 covers two cases that are deliberately indistinguishable to the caller: no product carries
+         *     that ID at all, and the product exists but is already live. Neither is a soft-deleted product that
+         *     could be restored.
+         */
+        post: operations["restoreProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/products/paged": {
         parameters: {
             query?: never;
@@ -1127,6 +1185,9 @@ export interface components {
             data: components["schemas"]["ProductResponse"];
         };
         ProductList: components["schemas"]["ProductResponse"][];
+        ApiResponseProductList: components["schemas"]["ApiResponse"] & {
+            data: components["schemas"]["ProductList"];
+        };
         CreateProductRequest: {
             /**
              * @description Must not be blank
@@ -2364,6 +2425,99 @@ export interface operations {
                      *       "data": null
                      *     }
                      */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
+        };
+    };
+    getDeletedProducts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Soft-deleted products, empty when nothing is deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponseProductList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    restoreProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Identifier of the soft-deleted product to restore */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Product restored and now live */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": true,
+                     *       "message": "Product restored successfully",
+                     *       "data": {
+                     *         "id": 1,
+                     *         "name": "Laptop",
+                     *         "sku": "SKU-A1B2C3D4",
+                     *         "quantity": 50,
+                     *         "purchasePrice": 999.99,
+                     *         "totalValue": 49999.5,
+                     *         "createdAt": "2026-01-02T03:04:00"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseProduct"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /**
+             * @description No soft-deleted product carries that ID - either it does not exist or it is already live.
+             *     Raised through the shared handler, so the message carries the `Entity not found: ` prefix.
+             */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "Entity not found: No soft-deleted product with ID 999 found.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
+            /**
+             * @description A live product already carries the deleted product's name or SKU. The product remains
+             *     deleted and no change-log entry is written.
+             */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["ApiResponseError"];
                 };
             };

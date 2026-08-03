@@ -3,8 +3,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
-import { PaginatedProducts } from '../../../core/api/api-models';
+import { PaginatedProducts, ProductResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
@@ -28,8 +29,15 @@ const TRANSLATIONS = {
         purchasePrice: 'Purchase Price',
         totalValue: 'Total Value',
         createdAt: 'Created',
+        status: 'Status',
         actions: 'Actions'
       },
+      showDeleted: 'Show deleted',
+      deletedChip: 'Deleted',
+      deletedEmpty: 'No deleted products.',
+      restore: 'Restore',
+      restored: 'Product restored',
+      restoreConflict: 'Cannot restore: a live product already uses this name or SKU.',
       delete: { action: 'Delete', title: 'Delete product', message: 'Delete "{{name}}"?' }
     }
   }
@@ -53,11 +61,27 @@ function pageWith(names: string[], totalElements = names.length): PaginatedProdu
   };
 }
 
+function deletedProduct(id: number, name: string): ProductResponse {
+  return {
+    id,
+    name,
+    sku: `SKU-${id}`,
+    quantity: 4,
+    purchasePrice: 39,
+    totalValue: 156,
+    createdAt: '2026-01-02T03:04:00'
+  };
+}
+
 class ProductServiceStub {
   calls: { page: number; size: number }[] = [];
   response: Observable<PaginatedProducts> = of(pageWith([]));
   removeCalls: number[] = [];
   removeResult: Observable<string> = of('Product deleted.');
+  deletedCalls = 0;
+  deletedResult: Observable<ProductResponse[]> = of([deletedProduct(7, 'Retired Bracket')]);
+  restoreCalls: number[] = [];
+  restoreResult: Observable<ProductResponse> = of(deletedProduct(7, 'Retired Bracket'));
 
   getPagedProducts(page: number, size: number): Observable<PaginatedProducts> {
     this.calls.push({ page, size });
@@ -67,6 +91,16 @@ class ProductServiceStub {
   remove(id: number): Observable<string> {
     this.removeCalls.push(id);
     return this.removeResult;
+  }
+
+  getDeleted(): Observable<ProductResponse[]> {
+    this.deletedCalls += 1;
+    return this.deletedResult;
+  }
+
+  restore(id: number): Observable<ProductResponse> {
+    this.restoreCalls.push(id);
+    return this.restoreResult;
   }
 }
 
@@ -279,5 +313,115 @@ describe('ProductListComponent', () => {
     await fixture.whenStable();
 
     expect(notifications.errors).toEqual(['Product cannot be deleted.']);
+  });
+
+  /** Flips the "Show deleted" toggle, which only an admin can reach. */
+  async function toggleDeleted(): Promise<void> {
+    host().querySelector<HTMLElement>('.product-show-deleted button')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  it('render_userRole_hidesShowDeletedToggle', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+
+    // Restoring is administration; a USER must not even be offered the view.
+    expect(host().querySelector('.product-show-deleted')).toBeNull();
+  });
+
+  it('render_adminRole_showsShowDeletedToggle', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+
+    expect(host().querySelector('.product-show-deleted')).not.toBeNull();
+  });
+
+  it('toggleDeleted_switchedOn_rendersDeletedRowsWithChipAndRestore', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    // #136: pin the language before asserting on rendered text
+    TestBed.inject(LanguageService).setLanguage('en');
+
+    await toggleDeleted();
+
+    expect(stub.deletedCalls).toBe(1);
+    const rows = host().querySelectorAll('tbody tr');
+    expect(rows.length).toBe(1);
+    expect(host().textContent).toContain('Retired Bracket');
+    expect(rows[0].classList).toContain('product-row-deleted');
+    expect(rows[0].querySelector('.status-deleted')?.textContent).toContain('Deleted');
+    expect(rows[0].querySelector('.product-restore')).not.toBeNull();
+  });
+
+  it('toggleDeleted_switchedOn_hidesThePaginator', async () => {
+    await setUp(of(pageWith(['Laptop'], 100)), 'ADMIN');
+    expect(host().querySelector('mat-paginator')).not.toBeNull();
+
+    await toggleDeleted();
+
+    // The deleted set is unpaged, so a paginator here would state a page count that means nothing.
+    expect(host().querySelector('mat-paginator')).toBeNull();
+  });
+
+  it('toggleDeleted_switchedOff_returnsToTheLivePagedView', async () => {
+    await setUp(of(pageWith(['Laptop'], 100)), 'ADMIN');
+    await toggleDeleted();
+
+    await toggleDeleted();
+
+    expect(host().textContent).toContain('Laptop');
+    expect(host().textContent).not.toContain('Retired Bracket');
+    expect(host().querySelector('mat-paginator')).not.toBeNull();
+  });
+
+  it('restore_succeeds_toastsAndRefreshesBothLists', async () => {
+    await setUp(of(pageWith(['Laptop'], 100)), 'ADMIN');
+    await toggleDeleted();
+    const livesBefore = stub.calls.length;
+
+    host().querySelector<HTMLButtonElement>('.product-restore')?.click();
+    await fixture.whenStable();
+
+    expect(stub.restoreCalls).toEqual([7]);
+    expect(notifications.successes).toEqual(['products.restored']);
+    // both lists move: the product leaves the bin and rejoins the live page behind the toggle
+    expect(stub.deletedCalls).toBe(2);
+    expect(stub.calls.length).toBe(livesBefore + 1);
+  });
+
+  it('restore_rejectedWith409_showsTheConflictNotification', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    await toggleDeleted();
+    stub.restoreResult = throwError(
+      () => new ApiError("Cannot restore: a live product named 'Laptop' already exists.", 409)
+    );
+
+    host().querySelector<HTMLButtonElement>('.product-restore')?.click();
+    await fixture.whenStable();
+
+    // The conflict is actionable, so it gets the translated explanation rather than the raw
+    // backend sentence every other failure falls back to.
+    expect(notifications.errors).toEqual(['products.restoreConflict']);
+  });
+
+  it('restore_rejectedWithOtherStatus_surfacesTheBackendMessage', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    await toggleDeleted();
+    stub.restoreResult = throwError(() => new ApiError('Entity not found: gone.', 404));
+
+    host().querySelector<HTMLButtonElement>('.product-restore')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.errors).toEqual(['Entity not found: gone.']);
+  });
+
+  it('loadDeleted_serviceErrors_stopsTheLoadingBarAndShowsTheError', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    stub.deletedResult = throwError(() => new ApiError('Request failed. Please try again.', 404));
+
+    await toggleDeleted();
+
+    // The Vercel preview runs this branch against a backend without the endpoint, so the failed
+    // fetch must read as an error rather than as a list that never finished loading.
+    expect(host().textContent).toContain('Request failed. Please try again.');
+    expect(host().querySelector('mat-progress-bar')).toBeNull();
   });
 });

@@ -178,4 +178,50 @@ describe('ProductService', () => {
     expect(emitted).toEqual([]);
     controller.verify();
   });
+
+  it('getDeleted_envelopedResponse_emitsUnwrappedProducts', () => {
+    let emitted: ProductResponse[] | undefined;
+    service.getDeleted().subscribe((products) => (emitted = products));
+
+    const request = controller.expectOne(`${BASE_URL}/deleted`);
+    expect(request.request.method).toBe('GET');
+    const envelope: ApiEnvelope<ProductResponse[]> = {
+      success: true,
+      message: 'Deleted products fetched successfully',
+      data: [LAPTOP]
+    };
+    request.flush(envelope);
+
+    expect(emitted).toEqual([LAPTOP]);
+    controller.verify();
+  });
+
+  it('getDeleted_emptyBin_emitsEmptyArray', () => {
+    let emitted: ProductResponse[] | undefined;
+    service.getDeleted().subscribe((products) => (emitted = products));
+
+    controller
+      .expectOne(`${BASE_URL}/deleted`)
+      .flush({ success: true, message: 'Deleted products fetched successfully', data: [] });
+
+    expect(emitted).toEqual([]);
+    controller.verify();
+  });
+
+  it('restore_envelopedResponse_postsAndEmitsTheRestoredProduct', () => {
+    let emitted: ProductResponse | undefined;
+    service.restore(1).subscribe((product) => (emitted = product));
+
+    const request = controller.expectOne(`${BASE_URL}/1/restore`);
+    expect(request.request.method).toBe('POST');
+    const envelope: ApiEnvelope<ProductResponse> = {
+      success: true,
+      message: 'Product restored successfully',
+      data: LAPTOP
+    };
+    request.flush(envelope);
+
+    expect(emitted).toEqual(LAPTOP);
+    controller.verify();
+  });
 });

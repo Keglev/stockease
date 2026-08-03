@@ -515,6 +515,7 @@
       "purchasePrice": "Purchase Price",
       "totalValue": "Total Value",
       "createdAt": "Created",
+      "status": "Status",
       "actions": "Actions"
     },
     "loading": "Loading products…",
@@ -527,6 +528,12 @@
     "created": "Product created.",
     "renamed": "Product renamed.",
     "priceChanged": "Price updated.",
+    "showDeleted": "Show deleted",
+    "deletedChip": "Deleted",
+    "deletedEmpty": "No deleted products.",
+    "restore": "Restore",
+    "restored": "Product restored",
+    "restoreConflict": "Cannot restore: a live product already uses this name or SKU.",
     "delete": {
       "action": "Delete",
       "title": "Delete product",
