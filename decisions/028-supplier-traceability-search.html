@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+028-supplier-traceability-search · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Backend sidebar navigation, included by the doc templates as a Pandoc
+     partial. Backend pages show only backend links; the landing page is the
+     hub between the backend and frontend doc areas. The active link is
+     marked at runtime by docs.js. Do not put template syntax in this
+     comment - a partial is itself a template. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Backend</p>
+  <ul>
+    <li><a href="/stockease/backend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/backend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/backend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/backend/architecture/02-constraints.html">Constraints</a></li>
+    <li><a href="/stockease/backend/architecture/03-context.html">System Context</a></li>
+    <li><a href="/stockease/backend/architecture/04-solution-strategy.html">Solution Strategy</a></li>
+    <li><a href="/stockease/backend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/backend/architecture/05-domains/index.html">Domain Modules</a></li>
+    <li><a href="/stockease/backend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/backend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/backend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/backend/architecture/09-decisions/index.html">Decisions (section 9)</a></li>
+    <li><a href="/stockease/backend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+    <li><a href="/stockease/backend/architecture/11-risks-technical-debt.html">Risks &amp; Technical Debt</a></li>
+    <li><a href="/stockease/backend/architecture/12-glossary.html">Glossary</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/backend/api/index.html">Backend API</a></li>
+    <li><a href="/stockease/backend/coverage/index.html">Backend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-028-search-first-navigation-and-supplier-scoped-product-discovery">ADR
+        028: Search-First Navigation and Supplier-Scoped Product
+        Discovery</h1>
+        <p><strong>Scope</strong>: [Cross-cutting]
+        <strong>Status</strong>: Accepted <strong>Date</strong>: August
+        3, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>Every picker in the application was a full list. The
+        analytics tab opened by fetching the entire product catalogue
+        into a <code>mat-select</code> so a reader could choose one row
+        from it; the movement form does the same. At demo scale — a
+        couple of dozen products — this is invisible, and the code that
+        does it carries a comment saying as much: <em>“the full list at
+        demo scale; the product search endpoint is the path if a
+        catalogue ever outgrows a select.”</em></p>
+        <p>The production review closed that escape hatch. Two things
+        were wrong with the pattern independently of scale:</p>
+        <ul>
+        <li><strong>It transfers a table to filter it.</strong> A picker
+        that must ship every row to offer one is not a picker that
+        grows; it is one that has not been asked to yet.</li>
+        <li><strong>It queries what nobody asked for.</strong> Opening
+        the analytics tab issued a catalogue fetch before the reader had
+        named anything, and choosing a product immediately issued two
+        more — a stock-history query and an audit query — so a reader
+        browsing the dropdown fired a pair of reports per selection
+        while looking for the one they meant.</li>
+        </ul>
+        <p>Separately, <strong>supplier traceability</strong> had been a
+        queued design since the invoice module took shape: the ability
+        to ask what a supplier has sold us, and the ability to refuse to
+        delete a supplier still named by live purchases. Both halves
+        rest on the same linkage, and neither had been built.</p>
+        <p>The two problems meet at one question. The useful way to find
+        a product is rarely “somewhere in the catalogue” — it is “the
+        one I bought from that supplier.” Search-first navigation and
+        supplier traceability are the same feature approached from two
+        directions.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Discovery is search-first, and product discovery
+        follows the supply relationship.</strong></p>
+        <p>Three pieces:</p>
+        <p><strong>Typeahead endpoints replace full-list
+        transfers.</strong> <code>GET /api/suppliers/search?name=</code>
+        and
+        <code>GET /api/reports/suppliers/{id}/products/search?name=</code>
+        each answer a case-insensitive substring match, alphabetical,
+        capped at 20 rows (<code>SearchLimits.TYPEAHEAD_LIMIT</code>),
+        excluding soft-deleted rows. The cap is not pagination: a term
+        matching more than twenty rows is a term to narrow, which is why
+        the client requires three characters before it asks at all. Both
+        are read by one shared <code>TypeaheadComponent</code> that owns
+        the minimum term length, a 300ms debounce, and the
+        <code>switchMap</code> that drops a superseded in-flight
+        response — so the four places this control appears cannot drift
+        in any of those behaviours.</p>
+        <p><strong>A supplier’s products are drawn through the purchase
+        ledger.</strong> There is no supplier column on a product. A
+        product is a supplier’s because that supplier was invoiced for
+        it: <code>invoice_item</code> →
+        <code>invoice(supplier_id, invoice_type = 'PURCHASE', deleted_at IS NULL)</code>
+        → <code>product</code>, <code>DISTINCT</code>. Because stock
+        enters only through closed purchase invoices (ADR 021), every
+        stocked product is reachable this way, which is what makes the
+        linkage a complete index rather than a partial one.</p>
+        <p><strong>The scoped search lives in the reporting
+        module.</strong>
+        <code>/api/reports/suppliers/{id}/products/search</code> sits
+        under the reports path, not the supplier path, because the
+        aggregation is the reporting module’s: the query reads invoice
+        data, which the supplier module cannot see — Spring Modulith’s
+        <code>ApplicationModules.verify()</code> enforces that, and
+        <code>ReportingService</code> is the module that legitimately
+        reads across tables with native SQL. This is the
+        customer-summary precedent applied exactly:
+        <code>/api/reports/customers/{id}/summary</code> describes a
+        customer and lives here for the same reason. <strong>Module
+        ownership decides the path; URL tidiness does not.</strong> The
+        plain supplier name search stays in the supplier module, at
+        <code>/api/suppliers/search</code>, because it touches only that
+        module’s own table.</p>
+        <p><strong>Analytics fetches only when asked.</strong> The tab
+        now cascades — supplier, then that supplier’s products — and
+        neither field triggers a report. An explicit
+        <strong>Show</strong> button is the only control that fetches
+        the stock and price series. Switching the picked product without
+        pressing Show changes nothing on screen; that is the gate, not a
+        side effect of it. Period presets <em>do</em> refetch once a
+        product is shown, because asking for a product is a standing
+        request: the window is which slice of that product’s history the
+        reader wants, not a new subject.</p>
+        <p><strong>The supplier is a navigation aid, not a query
+        dimension.</strong> Neither tab ever sends it. On analytics the
+        two series are one product’s own history, which no supplier
+        narrows. On cash flow, the chosen product scopes the timeline
+        through a new optional <code>productId</code> parameter —
+        reusing the existing shared SQL fragments rather than forking
+        the query, so a scoped month and that product’s row in the
+        per-product sibling cannot disagree — while the supplier only
+        decides which products the second field can offer. Cash flow
+        <em>by supplier</em> would be a different report from the one
+        that tab shows.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>Client-side filtering over the full lists.</strong>
+        Rejected. It is the pattern already in place with a text box in
+        front of it: the catalogue still crosses the wire in full, and
+        the only thing that improves is the typing. It transfers a table
+        in order to filter it, which is precisely the objection.</p>
+        <p><strong>A combined free-text product search with no supplier
+        scoping.</strong> Rejected, and this is the sharper of the two,
+        because it is the cheaper build — the product search endpoint
+        already exists. The ruling is that discovery should follow the
+        supply relationship: “the widget I buy from Acme” is the
+        question operators actually have, and answering it with a
+        catalogue-wide match returns products from suppliers the reader
+        was not asking about. Scoping is also what makes the
+        traceability linkage real code rather than a design note.</p>
+        <p><strong>Extend the existing <code>/api/products/search</code>
+        with a supplier filter.</strong> Rejected. That endpoint lives
+        in the product module, which cannot read invoice data without
+        breaking the module boundary; the supplier predicate would have
+        to be smuggled in through a cross-module dependency that
+        <code>ModularityTest</code> would reject.</p>
+        <p><strong>Auto-fetch on product selection, as before, but from
+        the search.</strong> Rejected. It preserves the second half of
+        the original complaint: a reader stepping through suggestions
+        would fire two reports per candidate. The explicit action is the
+        point.</p>
+        <h2 id="consequences">Consequences</h2>
+        <ul>
+        <li><strong>The delete-veto half of supplier traceability
+        remains deferred.</strong> This slice ships the read half only.
+        Refusing to soft-delete a supplier still named by live purchase
+        invoices is the same linkage read in the other direction, and it
+        belongs with the <code>OpenInvoiceDeletionVeto</code> precedent
+        the invoice module already sets. It is named here so a future
+        reader can see that the omission is scheduled rather than
+        overlooked.</li>
+        <li><strong>A product bought from two suppliers appears under
+        both.</strong> This is correct, not a duplicate to resolve: both
+        suppliers really did sell it to us, and a reader searching under
+        either one is asking a question the answer belongs to. Any
+        future report that counts products per supplier must not treat
+        these as distinct products.</li>
+        <li><strong>The typeahead becomes the app’s standard for large
+        pickers.</strong> The movement form’s full-list product select
+        is the obvious next adopter; it was left alone here to keep this
+        slice to the tabs the ruling named.</li>
+        <li><strong>New search surface diverges from
+        <code>/api/products/search</code> on purpose.</strong> The older
+        endpoint answers <strong>204 with a body</strong> when nothing
+        matches — a shape its own spec file annotates as “unconventional
+        by HTTP spec” — and has no cap. The two new endpoints answer
+        <strong>200 with an empty array</strong> and cap at 20, so a
+        caller gets a list unconditionally and the client’s “no matches”
+        state is trivial. Correcting the older endpoint is tracked as
+        its own backlog item; this inconsistency is a deliberate refusal
+        to enshrine a known defect as a convention, in neither direction
+        an accident.</li>
+        <li><strong>The analytics tab fetches nothing on
+        activation.</strong> It is the first tab on the page that opens
+        completely idle, which is a visible behaviour change: a reader
+        who previously saw a populated dropdown now sees two empty
+        search fields and a disabled button.</li>
+        <li><strong><code>SearchLimits</code> is shared across two
+        modules.</strong> One constant, because the two endpoints are
+        presented to the user as a single cascading control and a
+        divergence between their caps would read as a bug.</li>
+        </ul>
+        <hr />
+        <p><a href="index.html">Back to the Decision Log</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-028-search-first-navigation-and-supplier-scoped-product-discovery"
+      id="toc-adr-028-search-first-navigation-and-supplier-scoped-product-discovery">ADR
+      028: Search-First Navigation and Supplier-Scoped Product
+      Discovery</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
