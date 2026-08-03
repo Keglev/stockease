@@ -9,6 +9,8 @@ parameters:
 
 get:
   summary: Get a supplier by ID
+  description: |
+    Provided for API completeness; the bundled UI reads this resource through its list endpoints.
   operationId: getSupplierById
   tags:
     - Suppliers

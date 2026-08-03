@@ -29,7 +29,7 @@ import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.security.JwtUtil;
 
-/** Slice tests for ProductController read endpoints: low-stock, search, total-stock-value. */
+/** Slice tests for ProductController read endpoints: low-stock and search. */
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(ProductController.class)
 @Import({TestConfig.class, ProductMethodSecurityTestConfig.class})
@@ -110,30 +110,6 @@ class ProductControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.data.name").value("required parameter is missing"));
-    }
-
-    @ParameterizedTest
-    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
-    void getTotalStockValue_withProducts_returnsCalculatedValue(String username, String role) throws Exception {
-        when(productService.getTotalStockValue()).thenReturn(500.0);
-
-        mockMvc.perform(get("/api/products/total-stock-value").with(userWithRole(username, role)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").value(500.0))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Total stock value fetched successfully"));
-    }
-
-    @ParameterizedTest
-    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
-    void getTotalStockValue_withNoProducts_returnsZero(String username, String role) throws Exception {
-        when(productService.getTotalStockValue()).thenReturn(0.0);
-
-        mockMvc.perform(get("/api/products/total-stock-value").with(userWithRole(username, role)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").value(0.0))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Total stock value fetched successfully"));
     }
 
     private static @NonNull RequestPostProcessor userWithRole(String username, String role) {

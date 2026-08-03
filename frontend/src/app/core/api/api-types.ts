@@ -95,6 +95,8 @@ export interface paths {
         /**
          * Retrieve a single product by ID
          * @description Returns the product if it exists, otherwise 404.
+         *
+         *     Provided for API completeness; the bundled UI reads this resource through its list endpoints.
          */
         get: operations["getProductById"];
         put?: never;
@@ -292,27 +294,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/products/total-stock-value": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Calculate total inventory value
-         * @description Sums quantity times purchase price across all products with a single database aggregate, so the
-         *     figure never depends on loading the catalogue into memory.
-         */
-        get: operations["getTotalStockValue"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/suppliers": {
         parameters: {
             query?: never;
@@ -348,7 +329,10 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Get a supplier by ID */
+        /**
+         * Get a supplier by ID
+         * @description Provided for API completeness; the bundled UI reads this resource through its list endpoints.
+         */
         get: operations["getSupplierById"];
         /**
          * Replace a supplier's name and address
@@ -436,6 +420,8 @@ export interface paths {
          * Get a customer by ID
          * @description There is deliberately no PUT counterpart: customer master-data management is out of scope for
          *     this API by design.
+         *
+         *     Provided for API completeness; the bundled UI reads this resource through its list endpoints.
          */
         get: operations["getCustomerById"];
         put?: never;
@@ -462,6 +448,8 @@ export interface paths {
          * List all invoices
          * @description Returns every invoice, newest first, as summaries. Counterparties appear as identifiers only -
          *     names and lines belong to the detail endpoint.
+         *
+         *     Provided for API completeness; the bundled UI reads this resource through its paged endpoint.
          */
         get: operations["getAllInvoices"];
         put?: never;
@@ -2816,34 +2804,6 @@ export interface operations {
                     "application/json": components["schemas"]["ApiResponseError"];
                 };
             };
-        };
-    };
-    getTotalStockValue: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Total stock value calculated (ROLE_USER or ROLE_ADMIN) */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "success": true,
-                     *       "message": "Total stock value fetched successfully",
-                     *       "data": 99999.99
-                     *     }
-                     */
-                    "application/json": components["schemas"]["ApiResponseDouble"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
         };
     };
     getAllSuppliers: {

@@ -432,11 +432,4 @@ class ProductServiceTest {
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("No soft-deleted product with ID 1 found.");
     }
-
-    @Test
-    void getTotalStockValue_withProducts_returnsRepositoryResult() {
-        when(productRepository.calculateTotalStockValue()).thenReturn(123.45);
-
-        assertThat(productService.getTotalStockValue()).isEqualTo(123.45);
-    }
 }

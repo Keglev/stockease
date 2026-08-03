@@ -266,20 +266,4 @@ public class ProductController {
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Name updated successfully", ProductResponse.from(updatedProduct)));
     }
-
-    /**
-     * Calculates the aggregate inventory value across all products.
-     *
-     * <p>Executes a database-level aggregate ({@code SUM(quantity * purchasePrice)}) via
-     * {@link ProductService#getTotalStockValue()}. Behavior defined in
-     * {@code docs/api/paths/products.yaml}.
-     *
-     * @return HTTP 200 with the total stock value as a {@link Double}
-     */
-    @GetMapping("/total-stock-value")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<Double>> getTotalStockValue() {
-        double totalStockValue = productService.getTotalStockValue();
-        return ResponseEntity.ok(new ApiResponse<>(true, "Total stock value fetched successfully", totalStockValue));
-    }
 }

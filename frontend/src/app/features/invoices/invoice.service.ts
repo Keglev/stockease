@@ -22,17 +22,13 @@ export class InvoiceService {
   private readonly baseUrl = `${environment.apiBaseUrl}/api/invoices`;
 
   // The enveloping below is mixed on purpose: it mirrors the backend contract per endpoint
-  // (the collection GET returns a bare array; the detail GET is enveloped). This is exactly
-  // why unwrapping lives in services and not in an interceptor.
-
-  /** Bare array, already ordered newest first by the backend - deliberately not unwrapped. */
-  getAll(): Observable<InvoiceSummaryResponse[]> {
-    return this.http.get<InvoiceSummaryResponse[]>(this.baseUrl);
-  }
+  // (the paged GET and the detail GET are enveloped; creation returns the bare record). This is
+  // exactly why unwrapping lives in services and not in an interceptor.
 
   /**
-   * Reads one page of the ledger, newest first - the same rows and order as {@link getAll}, sliced.
-   * Enveloped, unlike its unpaged sibling, because the page metadata travels in the envelope.
+   * Reads one page of the ledger, newest first. Enveloped, because the page metadata travels in
+   * the envelope. The backend also serves an unpaged `GET /api/invoices`, which this client does
+   * not call: the list has been paged since #119, so no consumer here wants the whole ledger.
    *
    * @param page zero-based page index
    * @param size items per page
