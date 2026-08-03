@@ -50,6 +50,21 @@ jobs:
       - name: Type-check and build (production)
         run: npx ng build --configuration production
 
-      - name: Unit tests
+      - name: Unit tests with coverage
         # Vitest via the Angular builder; --watch=false is the non-interactive mode.
-        run: npx ng test --watch=false
+        # Coverage runs in the same pass rather than a second one: the text reporters print the
+        # per-directory table and the totals straight into this log. No thresholds are configured,
+        # so coverage reports numbers and never fails the build - gating is a later decision.
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        # Uploaded on every run, pull requests included: the HTML report is the point of this step,
+        # and a reviewer needs it on the PR that changes the numbers. Deliberately not wired into
+        # the docs pipeline - publishing to the docs site lands with the frontend docs bundle.
+        # always(): a failing suite still produces a report, and that is when it is most useful.
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-coverage-html-${{ github.sha }}
+          path: frontend/coverage/stockease
+          overwrite: true
