@@ -77,7 +77,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "setupFiles": ["src/app/testing/global-test-setup.ts"]
+            "setupFiles": ["src/app/testing/global-test-setup.ts"],
+            "coverageReporters": ["text", "text-summary", "html", "lcov"]
           }
         },
         "lint": {

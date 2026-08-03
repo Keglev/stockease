@@ -7,6 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:coverage": "ng test --watch=false --coverage",
     "lint": "ng lint",
     "gen:api": "npx --yes --package openapi-typescript@7.13.0 -- openapi-typescript ../docs/backend/api/openapi.yaml -o src/app/core/api/api-types.ts"
   },
@@ -33,6 +34,7 @@
     "@angular/compiler-cli": "^22.0.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.13.3",
+    "@vitest/coverage-v8": "^4.1.10",
     "angular-eslint": "22.1.0",
     "eslint": "^10.6.0",
     "jsdom": "^28.0.0",
