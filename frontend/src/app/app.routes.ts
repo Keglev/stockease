@@ -102,8 +102,16 @@ export const routes: Routes = [
             (m) => m.CustomerListComponent
           )
       },
+      // The topic is a route parameter rather than component state, so a topic can be linked to and
+      // the back button walks the topics a reader visited. pathMatch 'full' is load-bearing: without
+      // it the redirect would also swallow /app/help/products.
       {
         path: 'help',
+        pathMatch: 'full',
+        redirectTo: 'help/overview'
+      },
+      {
+        path: 'help/:topic',
         loadComponent: () =>
           import('./features/help/help.component').then((m) => m.HelpComponent)
       }

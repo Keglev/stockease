@@ -40,5 +40,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 026 - Low Stock Applies Only to Ever-Stocked Products](026-low-stock-ever-stocked.md) - **[Cross-cutting]**
 - [ADR 027 - Deterministic Temporal Spread of Demo Data](027-demo-temporal-spread.md) - **[Cross-cutting]**
 - [ADR 028 - Search-First Navigation and Supplier-Scoped Product Discovery](028-supplier-traceability-search.md) - **[Cross-cutting]**
+- [ADR 029 - Help Content as Typed, Lazy-Loaded Modules](029-help-content-architecture.md) - **[Frontend]**
 
 [Back to Documentation Home](/stockease/)

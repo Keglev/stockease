@@ -447,7 +447,18 @@
     }
   },
   "help": {
-    "title": "Help"
+    "title": "Help",
+    "selectTopic": "Topic",
+    "topics": {
+      "overview": "Overview",
+      "products": "Products",
+      "invoices": "Invoices",
+      "movements": "Stock movements",
+      "reports": "Reports",
+      "partners": "Suppliers & customers",
+      "demo": "Demo mode & roles",
+      "languageTheme": "Language & theme"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
