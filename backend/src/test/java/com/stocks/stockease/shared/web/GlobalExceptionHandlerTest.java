@@ -20,6 +20,7 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.stocks.stockease.shared.ApiResponse;
@@ -101,6 +102,20 @@ class GlobalExceptionHandlerTest {
     }
 
     // --- 400 bad request ---
+
+    @Test
+    void handleMissingRequestParameter_returns400NamingTheParameter() {
+        // without this case the catch-all below would answer 500 and tell the caller to retry later
+        var response = handler.handleMissingRequestParameter(
+                new MissingServletRequestParameterException("name", "String"));
+        ApiResponse<Map<String, String>> body = Objects.requireNonNull(response.getBody());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo("Validation failed for request parameters.");
+        // same envelope shape as the other parameter-validation cases, so clients parse one form
+        assertThat(body.getData()).containsExactly(Map.entry("name", "required parameter is missing"));
+    }
 
     @Test
     void handleIllegalArgumentException_returns400WithOriginalMessage() {

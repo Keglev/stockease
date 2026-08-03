@@ -4,6 +4,7 @@ import java.util.List;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -46,12 +47,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     double calculateTotalStockValue();
 
     /**
-     * Returns products whose name contains {@code name} as a case-insensitive substring.
+     * Returns live products whose name contains {@code name} as a case-insensitive substring,
+     * alphabetically and capped for typeahead use. Ordering is part of the contract rather than a
+     * nicety: the cap decides which matches a caller sees at all, and an unordered LIMIT would hand
+     * the same search different rows on different runs. The entity's {@code @SQLRestriction} keeps
+     * soft-deleted rows out.
      *
      * @param name search substring (case-insensitive)
-     * @return list of products where name contains substring
+     * @param limit maximum rows to return
+     * @return matching live products, name-ascending, at most {@code limit} of them
      */
-    List<Product> findByNameContainingIgnoreCase(String name);
+    List<Product> findByNameContainingIgnoreCaseOrderByNameAsc(String name, Limit limit);
 
     /**
      * Reports whether a live product already carries {@code name}, ignoring case; the entity's

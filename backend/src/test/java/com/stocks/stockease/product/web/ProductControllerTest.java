@@ -93,12 +93,23 @@ class ProductControllerTest {
 
     @ParameterizedTest
     @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
-    void searchProducts_withNoMatches_returns204(String username, String role) throws Exception {
+    void searchProducts_withNoMatches_returns200WithEmptyArray(String username, String role) throws Exception {
+        // was 204 with a body; now the same empty array the other two search endpoints answer with
         when(productService.searchByName("nonexistent")).thenReturn(List.of());
 
         mockMvc.perform(get("/api/products/search").with(userWithRole(username, role)).param("name", "nonexistent"))
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.message").value("No products found matching the name: nonexistent"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"adminUser, ADMIN", "regularUser, USER"})
+    void searchProducts_withoutNameParam_returns400(String username, String role) throws Exception {
+        mockMvc.perform(get("/api/products/search").with(userWithRole(username, role)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data.name").value("required parameter is missing"));
     }
 
     @ParameterizedTest

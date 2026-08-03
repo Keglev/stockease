@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +30,7 @@ import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.InsufficientStockException;
+import com.stocks.stockease.shared.SearchLimits;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -233,9 +235,10 @@ class ProductServiceTest {
     }
 
     @Test
-    void searchByName_withMatch_returnsRepositoryResult() {
+    void searchByName_withMatch_returnsRepositoryResultCappedForTypeahead() {
         Product product = new Product("Widget", 10, 5.0);
-        when(productRepository.findByNameContainingIgnoreCase("wid")).thenReturn(List.of(product));
+        when(productRepository.findByNameContainingIgnoreCaseOrderByNameAsc(
+                "wid", Limit.of(SearchLimits.TYPEAHEAD_LIMIT))).thenReturn(List.of(product));
 
         assertThat(productService.searchByName("wid")).containsExactly(product);
     }

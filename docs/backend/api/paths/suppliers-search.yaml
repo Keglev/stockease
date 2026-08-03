@@ -5,10 +5,10 @@ get:
     are alphabetical and capped at 20, and soft-deleted suppliers are excluded because the list
     exists to be picked from.
 
-    Nothing matching returns **200 with an empty array**, deliberately unlike
-    `GET /api/products/search`, which answers 204 with a body. That shape is a documented defect
-    rather than a convention worth carrying onto new surface; ADR 028 records the divergence, and
-    correcting the older endpoint is tracked separately.
+    Nothing matching returns **200 with an empty array**. `GET /api/products/search` predated this
+    contract and answered 204 with a body; ADR 028 records why this endpoint diverged rather than
+    copying that shape, and 2.16.0 corrected the older endpoint to match. All three searches now
+    behave alike.
 
     The cap is not pagination. A term that matches more than twenty suppliers is a term to narrow,
     which is why the client requires three characters before it asks at all.

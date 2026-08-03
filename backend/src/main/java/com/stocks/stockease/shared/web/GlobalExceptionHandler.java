@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -205,6 +206,28 @@ public class GlobalExceptionHandler {
                                 Collectors.collectingAndThen(Collectors.toList(), messages -> messages.stream()
                                         .sorted()
                                         .collect(Collectors.joining("; "))))));
+        return ResponseEntity.badRequest()
+                .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors));
+    }
+
+    /**
+     * Handles {@link MissingServletRequestParameterException}, raised when a required query parameter
+     * is absent, and returns a 400 Bad Request response.
+     *
+     * <p>Without this case the catch-all below claims a caller's omitted parameter is a server error.
+     * The distinction matters app-wide: every endpoint declaring a required {@code @RequestParam}
+     * answered 500 to a request that simply left it out, which tells the caller to retry later rather
+     * than to fix the request. The body follows the other parameter-validation cases - the offending
+     * parameter names itself in {@code data} - so a client parses one shape whether the parameter was
+     * missing or merely invalid.
+     *
+     * @param ex the caught exception
+     * @return 400 response naming the missing parameter
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleMissingRequestParameter(
+            MissingServletRequestParameterException ex) {
+        Map<String, String> errors = Map.of(ex.getParameterName(), "required parameter is missing");
         return ResponseEntity.badRequest()
                 .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors));
     }

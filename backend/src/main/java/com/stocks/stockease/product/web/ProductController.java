@@ -211,23 +211,22 @@ public class ProductController {
     }
 
     /**
-     * Searches products by name using a case-insensitive substring match.
+     * Searches live products by name using a case-insensitive substring match, capped for typeahead use.
      *
      * <p>For example, searching {@code "apple"} matches {@code "Apple Juice"}, {@code "APPLE"},
-     * and {@code "Green Apple"}. Behavior defined in {@code docs/api/paths/products.yaml}.
+     * and {@code "Green Apple"}. Results are alphabetical and limited to
+     * {@link com.stocks.stockease.shared.SearchLimits#TYPEAHEAD_LIMIT} rows; no match is 200 with an
+     * empty array, the same contract as {@code /api/suppliers/search} and
+     * {@code /api/reports/suppliers/{id}/products/search} (ADR 028). Behavior defined in
+     * {@code docs/backend/api/paths/products-search.yaml}.
      *
      * @param name search term (substring, case-insensitive)
-     * @return HTTP 200 with matching products, or HTTP 204 if none found
+     * @return HTTP 200 with the matching products, empty if none match
      */
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<?> searchProductsByName(@RequestParam String name) {
-        List<Product> products = productService.searchByName(name);
-        if (products.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                    .body(Map.of("message", "No products found matching the name: " + name));
-        }
-        return ResponseEntity.ok(products.stream().map(ProductResponse::from).toList());
+    public List<ProductResponse> searchProductsByName(@RequestParam String name) {
+        return productService.searchByName(name).stream().map(ProductResponse::from).toList();
     }
 
     /**
