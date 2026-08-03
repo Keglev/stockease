@@ -11,7 +11,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { DEMO_MODE } from '../../core/config/demo-mode';
-import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
+import { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from '../../core/layout/layout';
 import { FooterComponent } from '../footer/footer.component';
 import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
@@ -51,9 +51,19 @@ export class ShellComponent {
   // sidenav mode instead of flipping once the observer delivers its first emission.
   protected readonly isDesktop = signal(this.breakpoints.isMatched(DESKTOP_MEDIA_QUERY));
 
+  // The toolbar is a single non-wrapping row, so at phone width it has to carry fewer things rather
+  // than smaller ones. Seeded from isMatched for the same reason isDesktop is: the first paint
+  // should already be the right toolbar instead of flashing the wide one.
+  protected readonly isPhone = signal(this.breakpoints.isMatched(PHONE_MEDIA_QUERY));
+
   protected readonly sidenavOpened = signal(this.isDesktop());
 
   constructor() {
+    this.breakpoints
+      .observe(PHONE_MEDIA_QUERY)
+      .pipe(takeUntilDestroyed())
+      .subscribe((state) => this.isPhone.set(state.matches));
+
     this.breakpoints
       .observe(DESKTOP_MEDIA_QUERY)
       .pipe(takeUntilDestroyed())

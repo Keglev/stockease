@@ -21,12 +21,31 @@
   <app-language-toggle />
   <app-theme-toggle />
 
-  @if (role(); as currentRole) {
+  <!-- Dropped from the DOM at phone width rather than hidden with CSS: the label is being removed
+       because it does not fit, and a display:none span still announces itself to a screen reader. -->
+  @if (!isPhone() && role(); as currentRole) {
     <span class="role">{{ 'shell.role.' + currentRole | translate }}</span>
   }
-  <button matButton type="button" class="logout-button" (click)="logout()">
-    {{ 'shell.logout' | translate }}
-  </button>
+
+  <!-- Same action, two widths. The phone tier cannot afford the label, so it takes the icon and
+       carries the name in aria-label and title instead - the button stays as findable by assistive
+       technology and on hover as the text one, which is what makes dropping the text acceptable. -->
+  @if (isPhone()) {
+    <button
+      matIconButton
+      type="button"
+      class="logout-icon"
+      [attr.aria-label]="'shell.logout' | translate"
+      [title]="'shell.logout' | translate"
+      (click)="logout()"
+    >
+      <mat-icon>logout</mat-icon>
+    </button>
+  } @else {
+    <button matButton type="button" class="logout-button" (click)="logout()">
+      {{ 'shell.logout' | translate }}
+    </button>
+  }
 </mat-toolbar>
 
 <mat-sidenav-container class="shell-container">
