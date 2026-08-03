@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 import {
   CashFlowReport,
@@ -293,20 +293,30 @@ class ReportServiceStub {
   /** Every productId the timeline was asked for, undefined meaning the whole business. */
   timelineProductIds: (number | undefined)[] = [];
 
+  /** Fails only the scoped call, so the unscoped activation fetch still populates the tab. */
+  timelineFailsWhenScoped = false;
+
   cashFlowTimeline(from?: string, to?: string, productId?: number): Observable<CashFlowTimelineBucket[]> {
     this.calls.push('cashFlowTimeline');
     this.timelineRanges.push([from, to]);
     this.timelineProductIds.push(productId);
-    return of(this.timelinePayload);
+    return this.timelineFailsWhenScoped && productId !== undefined
+      ? throwError(() => new Error('Report unavailable.'))
+      : of(this.timelinePayload);
   }
 
   /** Search terms the scoped product typeahead sent, so "nothing is fetched" can be asserted. */
   supplierProductTerms: string[] = [];
   supplierProductPayload: SupplierProduct[] = [];
 
+  /** Stands in for the preview environment, whose backend does not serve this endpoint yet. */
+  supplierProductsFails = false;
+
   supplierProducts(supplierId: number, name: string): Observable<SupplierProduct[]> {
     this.supplierProductTerms.push(name);
-    return of(this.supplierProductPayload);
+    return this.supplierProductsFails
+      ? throwError(() => new Error('404 Not Found'))
+      : of(this.supplierProductPayload);
   }
 
   profitProducts(from?: string, to?: string): Observable<ProductProfitReport[]> {
@@ -627,6 +637,29 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(host().querySelector('.analytics-prompt')).not.toBeNull();
   });
 
+  it('analytics_activatedWithNothingShown_clearsTheLoadingBar', async () => {
+    render();
+
+    await activateTab(6);
+
+    // loadTab raises the bar for every tab; the analytics tab is the only one that can then decide
+    // it has nothing to fetch, so it has to lower it again rather than leave it running forever
+    expect(host().querySelector('mat-progress-bar')).toBeNull();
+  });
+
+  it('analytics_searchFails_leavesTheTabUsable', async () => {
+    render();
+    await activateTab(6);
+    reports.supplierProductsFails = true;
+
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    await settle();
+
+    // A failing suggestion query is not the tab's error: nothing was asked for yet.
+    expect(host().querySelector('mat-progress-bar')).toBeNull();
+    expect(host().querySelector('.reports-error')).toBeNull();
+  });
+
   it('analytics_show_fetchesBothSeries', async () => {
     render();
     await activateTab(6);
@@ -921,6 +954,21 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     // the table is untouched: it already answers the per-product question in rows
     expect(reports.calls.filter((call) => call === 'cashFlow')).toEqual([]);
     expect(host().textContent).toContain('Product 3');
+  });
+
+  it('cashflow_scopedFetchFails_clearsTheLoadingBarAndReportsIt', async () => {
+    render();
+    await activateTab(1);
+    reports.timelineFailsWhenScoped = true;
+
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowProduct(productRow(3));
+    await settle();
+
+    // Unlike a suggestion query, this IS the report the reader asked for, so it surfaces - but the
+    // bar comes down either way. Pinned because the analytics tab lost exactly this property.
+    expect(host().querySelector('mat-progress-bar')).toBeNull();
+    expect(host().querySelector('.reports-error')?.textContent).toContain('Report unavailable.');
   });
 
   it('cashflow_clear_returnsToAllProducts', async () => {

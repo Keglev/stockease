@@ -657,6 +657,10 @@ export class ReportsPageComponent implements OnInit {
 
     const productId = this.analyticsShownProductId();
     if (productId === null) {
+      // loadTab raises the bar before dispatching, because every other tab fetches something on
+      // activation. This is the one tab that can decide it has nothing to fetch, so it has to lower
+      // the bar again - otherwise opening it leaves an indeterminate bar running over an idle page.
+      this.loading.set(false);
       return;
     }
     this.loading.set(true);

@@ -163,6 +163,36 @@ describe('TypeaheadComponent', () => {
     expect(optionLabels()).toEqual(['Beta']);
   });
 
+  it('typeahead_requestErrors_showsNoMatchesAndClearsLoading', () => {
+    const failing = new Subject<Row[]>();
+    result = failing;
+    type('acm');
+    expect(progressBar()).not.toBeNull();
+
+    failing.error(new Error('offline'));
+    fixture.detectChanges();
+
+    // A typeahead cannot tell "nothing found" from "search unavailable" without an error UI this
+    // slice does not want, so the two collapse to one state - but the spinner must still stop.
+    expect(progressBar()).toBeNull();
+    expect(noMatchesOption()).not.toBeNull();
+  });
+
+  it('typeahead_afterError_nextKeystrokeSearchesAgain', () => {
+    const failing = new Subject<Row[]>();
+    result = failing;
+    type('acm');
+    failing.error(new Error('offline'));
+    fixture.detectChanges();
+
+    result = of([{ name: 'Beta' }]);
+    type('bet');
+
+    // The pin that matters: one failed request must not end the field's working life.
+    expect(terms).toEqual(['acm', 'bet']);
+    expect(optionLabels()).toEqual(['Beta']);
+  });
+
   it('typeahead_searchFails_leavesThePanelEmpty', () => {
     const failing = new Subject<Row[]>();
     result = failing;
@@ -187,6 +217,14 @@ describe('TypeaheadComponent', () => {
     return Array.from(panel()?.querySelectorAll('mat-option') ?? [])
       .filter((option) => !option.classList.contains('typeahead-no-matches'))
       .map((option) => option.textContent?.trim() ?? '');
+  }
+
+  function progressBar(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector('.typeahead-progress');
+  }
+
+  function noMatchesOption(): HTMLElement | null {
+    return panel()?.querySelector('.typeahead-no-matches') ?? null;
   }
 
   function clearButton(): HTMLButtonElement {

@@ -5,7 +5,17 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { Observable, Subject, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  catchError,
+  debounceTime,
+  defer,
+  distinctUntilChanged,
+  finalize,
+  of,
+  switchMap
+} from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -89,21 +99,29 @@ export class TypeaheadComponent<T> {
             return of<T[]>([]);
           }
           this.searching.set(true);
-          return this.search()(term);
+          // Every guard here is INSIDE the switchMap, and that placement is the whole fix. An error
+          // is a terminal event: one that reaches the outer subscriber ends the subscription, so
+          // the first failed request would retire the field for the rest of its life - no later
+          // keystroke would search again, which is what a reader sees as a dead input.
+          //
+          // defer, so a search function that throws synchronously lands in the same catchError
+          // rather than escaping the projection and killing the stream anyway.
+          return defer(() => this.search()(term)).pipe(
+            // Collapsed to "no matches" deliberately. A typeahead cannot distinguish "nothing
+            // found" from "search unavailable" without an error UI of its own, and the page's error
+            // banner belongs to the report the reader actually asked for - not to a suggestion
+            // query they never made. If that distinction is ever wanted, it needs its own state.
+            catchError(() => of<T[]>([])),
+            // Success, failure and switch-cancellation all end the request, and all three must end
+            // the spinner with it.
+            finalize(() => this.searching.set(false))
+          );
         }),
         takeUntilDestroyed()
       )
-      .subscribe({
-        next: (rows) => {
-          this.options.set(rows);
-          this.searching.set(false);
-        },
-        // Swallowed rather than surfaced: a failed suggestion query leaves the panel empty, and the
-        // page's error banner belongs to the report the user actually asked for.
-        error: () => {
-          this.options.set([]);
-          this.searching.set(false);
-        }
+      .subscribe((rows) => {
+        this.options.set(rows);
+        this.searching.set(false);
       });
   }
 
