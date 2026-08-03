@@ -909,17 +909,30 @@ function toCashFlowOption(months: CashFlowTimelineBucket[], labels: CashFlowLabe
   }
 
   return {
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    tooltip: { trigger: 'axis' },
     // Same inset as the due chart: with containLabel the bottom has to clear the axis labels AND
     // the legend row, which a smaller value lets the two draw on top of each other.
     legend: { bottom: 0 },
     grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
     xAxis: { type: 'category', data: months.map((month) => month.month) },
     yAxis: { type: 'value' },
+    // Three plain lines, and deliberately NOT step-lines - the opposite of the analytics tab's two
+    // series. A stock level or a price is a state that holds until something changes it, so a step
+    // is the truth there. A month's cash flow is a measurement of that month alone: nothing is held
+    // between two points, so a step would draw a plateau the business never sat at.
+    //
+    // Net is the reading the tab exists for - the two gross figures are how it got there - so it
+    // carries the heavier stroke and the others stay thin enough to read behind it.
     series: [
-      { name: labels.inflow, type: 'bar', data: months.map((month) => month.inflow) },
-      { name: labels.outflow, type: 'bar', data: months.map((month) => month.outflow) },
-      { name: labels.net, type: 'line', data: months.map((month) => month.net) }
+      { name: labels.inflow, type: 'line', data: months.map((month) => month.inflow) },
+      { name: labels.outflow, type: 'line', data: months.map((month) => month.outflow) },
+      {
+        name: labels.net,
+        type: 'line',
+        lineStyle: { width: 3 },
+        symbolSize: 8,
+        data: months.map((month) => month.net)
+      }
     ]
   };
 }

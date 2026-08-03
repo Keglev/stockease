@@ -7,9 +7,16 @@
   min-width: 3rem;
 
   &.active {
-    // The active language must stay readable against the surface behind it.
-    background-color: var(--mat-sys-secondary-container);
-    color: var(--mat-sys-on-secondary-container);
+    // A light/dark pair rather than one container token, because the toolbar behind this button is
+    // not the same KIND of surface in the two schemes. In light it is primary-container, a pale
+    // blue - and secondary-container is another pale blue, so the selected pill rendered at almost
+    // exactly the toolbar's own colour and the selection was invisible. Light therefore inverts to
+    // solid primary, which is the one role guaranteed to contrast with its own container.
+    //
+    // Dark keeps the container pair unchanged: there the toolbar is deep blue and the pill already
+    // reads, so this pair resolves to exactly what it resolved to before.
+    background-color: light-dark(var(--mat-sys-primary), var(--mat-sys-secondary-container));
+    color: light-dark(var(--mat-sys-on-primary), var(--mat-sys-on-secondary-container));
     font-weight: 600;
   }
 }

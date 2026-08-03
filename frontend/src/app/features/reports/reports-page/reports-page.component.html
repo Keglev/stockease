@@ -226,38 +226,41 @@
         <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
       </mat-button-toggle-group>
 
-      <!-- Above the view toggle and outside it: the totals are the answer, and which half of the
-           breakdown is on screen does not change them. -->
-      @if (cashFlowTotals(); as report) {
-        <div class="totals-strip">
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.cashFlow.inflow' | translate }}</span>
-            <span class="total-value cash-flow-inflow">{{ report.inflow | currency: 'EUR' }}</span>
+      <!-- The view toggle shares the strip's line rather than claiming one below it: the
+           figures are the answer and the toggle only chooses how the detail is drawn, so
+           the two belong on one row. Wraps on narrow screens. -->
+      <div class="strip-line">
+        @if (cashFlowTotals(); as report) {
+          <div class="totals-strip">
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.cashFlow.inflow' | translate }}</span>
+              <span class="total-value cash-flow-inflow">{{ report.inflow | currency: 'EUR' }}</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.cashFlow.outflow' | translate }}</span>
+              <span class="total-value cash-flow-outflow">{{ report.outflow | currency: 'EUR' }}</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.cashFlow.net' | translate }}</span>
+              <span
+                class="total-value cash-flow-net"
+                [class.cash-flow-negative]="report.net < 0"
+                >{{ report.net | currency: 'EUR' }}</span
+              >
+            </div>
           </div>
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.cashFlow.outflow' | translate }}</span>
-            <span class="total-value cash-flow-outflow">{{ report.outflow | currency: 'EUR' }}</span>
-          </div>
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.cashFlow.net' | translate }}</span>
-            <span
-              class="total-value cash-flow-net"
-              [class.cash-flow-negative]="report.net < 0"
-              >{{ report.net | currency: 'EUR' }}</span
-            >
-          </div>
-        </div>
-      }
+        }
 
-      <mat-button-toggle-group
-        class="view-toggle"
-        hideSingleSelectionIndicator
-        [value]="viewOf(1)"
-        (valueChange)="setView(1, $event)"
-      >
-        <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+        <mat-button-toggle-group
+          class="view-toggle"
+          hideSingleSelectionIndicator
+          [value]="viewOf(1)"
+          (valueChange)="setView(1, $event)"
+        >
+          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
+          <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
 
       @if (viewOf(1) === 'chart') {
         <mat-card class="chart-card">
@@ -353,34 +356,37 @@
 
   <mat-tab [label]="'reports.tabs.stock' | translate">
     <div class="tab-body">
-      <!-- Above the view toggle and outside it, as on the cash-flow tab: the totals are the answer,
-           and which half of the breakdown is on screen does not change them. -->
-      @if (stockTotals(); as totals) {
-        <div class="totals-strip">
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.columns.inStockValue' | translate }}</span>
-            <span class="total-value stock-total-value">{{ totals.value | currency: 'EUR' }}</span>
+      <!-- The view toggle shares the strip's line rather than claiming one below it: the
+           figures are the answer and the toggle only chooses how the detail is drawn, so
+           the two belong on one row. Wraps on narrow screens. -->
+      <div class="strip-line">
+        @if (stockTotals(); as totals) {
+          <div class="totals-strip">
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.columns.inStockValue' | translate }}</span>
+              <span class="total-value stock-total-value">{{ totals.value | currency: 'EUR' }}</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.columns.inStockUnits' | translate }}</span>
+              <span class="total-value stock-total-units">{{ totals.units }}</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.stock.productCount' | translate }}</span>
+              <span class="total-value stock-total-products">{{ totals.products }}</span>
+            </div>
           </div>
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.columns.inStockUnits' | translate }}</span>
-            <span class="total-value stock-total-units">{{ totals.units }}</span>
-          </div>
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.stock.productCount' | translate }}</span>
-            <span class="total-value stock-total-products">{{ totals.products }}</span>
-          </div>
-        </div>
-      }
+        }
 
-      <mat-button-toggle-group
-        class="view-toggle"
-        hideSingleSelectionIndicator
-        [value]="viewOf(2)"
-        (valueChange)="setView(2, $event)"
-      >
-        <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+        <mat-button-toggle-group
+          class="view-toggle"
+          hideSingleSelectionIndicator
+          [value]="viewOf(2)"
+          (valueChange)="setView(2, $event)"
+        >
+          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
+          <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
 
       @if (viewOf(2) === 'chart') {
         <mat-card class="chart-card">
@@ -495,32 +501,37 @@
         <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
       </mat-button-toggle-group>
 
-      @if (lossTotals(); as totals) {
-        <div class="totals-strip">
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.columns.lossValue' | translate }}</span>
-            <span class="total-value loss-total-value">{{ totals.value | currency: 'EUR' }}</span>
+      <!-- The view toggle shares the strip's line rather than claiming one below it: the
+           figures are the answer and the toggle only chooses how the detail is drawn, so
+           the two belong on one row. Wraps on narrow screens. -->
+      <div class="strip-line">
+        @if (lossTotals(); as totals) {
+          <div class="totals-strip">
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.columns.lossValue' | translate }}</span>
+              <span class="total-value loss-total-value">{{ totals.value | currency: 'EUR' }}</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.columns.lostUnits' | translate }}</span>
+              <span class="total-value loss-total-lost">{{ totals.lost }}</span>
+            </div>
+            <div class="total-item">
+              <span class="total-label">{{ 'reports.columns.destroyedUnits' | translate }}</span>
+              <span class="total-value loss-total-destroyed">{{ totals.destroyed }}</span>
+            </div>
           </div>
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.columns.lostUnits' | translate }}</span>
-            <span class="total-value loss-total-lost">{{ totals.lost }}</span>
-          </div>
-          <div class="total-item">
-            <span class="total-label">{{ 'reports.columns.destroyedUnits' | translate }}</span>
-            <span class="total-value loss-total-destroyed">{{ totals.destroyed }}</span>
-          </div>
-        </div>
-      }
+        }
 
-      <mat-button-toggle-group
-        class="view-toggle"
-        hideSingleSelectionIndicator
-        [value]="viewOf(3)"
-        (valueChange)="setView(3, $event)"
-      >
-        <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+        <mat-button-toggle-group
+          class="view-toggle"
+          hideSingleSelectionIndicator
+          [value]="viewOf(3)"
+          (valueChange)="setView(3, $event)"
+        >
+          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
+          <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
 
       @if (viewOf(3) === 'chart') {
         <mat-card class="chart-card">
