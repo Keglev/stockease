@@ -1,3 +1,94 @@
+@use '../../../styles/breakpoints' as bp;
+
 :host {
   display: block;
+}
+
+// One column below desktop - select, then prose. The tier is the same one the component observes
+// in TypeScript, because which control exists is a structural decision rather than a styling one;
+// both read the desktop boundary from the single source of truth.
+.help-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@include bp.desktop {
+  .help-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+}
+
+// Fixed rather than proportional: a nav of eight short labels has a natural width, and letting it
+// grow with the viewport would only push the prose further from the nav that indexes it.
+.help-nav {
+  flex: 0 0 240px;
+  padding-top: 0;
+}
+
+// Hover and active states copied from the shell's sidebar so the two nav lists behave alike;
+// Material's nav list ships neither, and a reader who learned the sidebar expects the same here.
+.help-nav-link {
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.help-nav-link:hover {
+  background-color: var(--mat-sys-surface-container-highest);
+}
+
+// `active` is the class routerLinkActive applies in this template.
+.help-nav-link.active {
+  background-color: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+
+  // M3 exposes no standalone "emphasised label" weight token, so the literal stands in for it.
+  .mdc-list-item__primary-text {
+    font-weight: 500;
+  }
+}
+
+.help-topic-select {
+  width: 100%;
+  max-width: 20rem;
+}
+
+// Capped at a reading measure rather than the container width. Prose set across a 1440px outlet
+// is measurably harder to read - the eye loses the line it is returning to - and this is the one
+// page in the app that is nothing but prose.
+.help-content {
+  min-width: 0;
+  max-width: 72ch;
+}
+
+.help-title {
+  margin: 0;
+  font: var(--mat-sys-headline-medium);
+}
+
+.help-section {
+  margin-top: 2rem;
+}
+
+.help-heading {
+  margin: 0 0 0.5rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.help-paragraph {
+  margin: 0 0 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-large);
+}
+
+.help-bullets {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-large);
+}
+
+.help-bullets li {
+  margin-bottom: 0.5rem;
 }
