@@ -211,23 +211,22 @@ public class ProductController {
     }
 
     /**
-     * Searches products by name using a case-insensitive substring match.
+     * Searches live products by name using a case-insensitive substring match, capped for typeahead use.
      *
      * &lt;p&gt;For example, searching {@code &quot;apple&quot;} matches {@code &quot;Apple Juice&quot;}, {@code &quot;APPLE&quot;},
-     * and {@code &quot;Green Apple&quot;}. Behavior defined in {@code docs/api/paths/products.yaml}.
+     * and {@code &quot;Green Apple&quot;}. Results are alphabetical and limited to
+     * {@link com.stocks.stockease.shared.SearchLimits#TYPEAHEAD_LIMIT} rows; no match is 200 with an
+     * empty array, the same contract as {@code /api/suppliers/search} and
+     * {@code /api/reports/suppliers/{id}/products/search} (ADR 028). Behavior defined in
+     * {@code docs/backend/api/paths/products-search.yaml}.
      *
      * @param name search term (substring, case-insensitive)
-     * @return HTTP 200 with matching products, or HTTP 204 if none found
+     * @return HTTP 200 with the matching products, empty if none match
      */
     @GetMapping(&quot;/search&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
-    public ResponseEntity&lt;?&gt; searchProductsByName(@RequestParam String name) {
-<span class="fc" id="L225">        List&lt;Product&gt; products = productService.searchByName(name);</span>
-<span class="fc bfc" id="L226" title="All 2 branches covered.">        if (products.isEmpty()) {</span>
-<span class="fc" id="L227">            return ResponseEntity.status(HttpStatus.NO_CONTENT)</span>
-<span class="fc" id="L228">                    .body(Map.of(&quot;message&quot;, &quot;No products found matching the name: &quot; + name));</span>
-        }
-<span class="fc" id="L230">        return ResponseEntity.ok(products.stream().map(ProductResponse::from).toList());</span>
+    public List&lt;ProductResponse&gt; searchProductsByName(@RequestParam String name) {
+<span class="fc" id="L229">        return productService.searchByName(name).stream().map(ProductResponse::from).toList();</span>
     }
 
     /**
@@ -244,9 +243,9 @@ public class ProductController {
     @PutMapping(&quot;/{id}/price&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;ProductResponse&gt;&gt; updatePrice(@PathVariable long id, @Valid @RequestBody UpdatePriceRequest request, Principal principal) {
-<span class="fc" id="L247">        Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()), currentUser(principal));</span>
-<span class="fc" id="L248">        return ResponseEntity.ok(</span>
-<span class="fc" id="L249">                new ApiResponse&lt;&gt;(true, &quot;Price updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
+<span class="fc" id="L246">        Product updatedProduct = productService.updatePrice(id, BigDecimal.valueOf(request.getPurchasePrice()), currentUser(principal));</span>
+<span class="fc" id="L247">        return ResponseEntity.ok(</span>
+<span class="fc" id="L248">                new ApiResponse&lt;&gt;(true, &quot;Price updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
     }
 
     /**
@@ -263,9 +262,9 @@ public class ProductController {
     @PutMapping(&quot;/{id}/name&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;ProductResponse&gt;&gt; updateName(@PathVariable long id, @Valid @RequestBody UpdateNameRequest request, Principal principal) {
-<span class="fc" id="L266">        Product updatedProduct = productService.updateName(id, request.getName(), currentUser(principal));</span>
-<span class="fc" id="L267">        return ResponseEntity.ok(</span>
-<span class="fc" id="L268">                new ApiResponse&lt;&gt;(true, &quot;Name updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
+<span class="fc" id="L265">        Product updatedProduct = productService.updateName(id, request.getName(), currentUser(principal));</span>
+<span class="fc" id="L266">        return ResponseEntity.ok(</span>
+<span class="fc" id="L267">                new ApiResponse&lt;&gt;(true, &quot;Name updated successfully&quot;, ProductResponse.from(updatedProduct)));</span>
     }
 
     /**
@@ -280,8 +279,8 @@ public class ProductController {
     @GetMapping(&quot;/total-stock-value&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;Double&gt;&gt; getTotalStockValue() {
-<span class="fc" id="L283">        double totalStockValue = productService.getTotalStockValue();</span>
-<span class="fc" id="L284">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Total stock value fetched successfully&quot;, totalStockValue));</span>
+<span class="fc" id="L282">        double totalStockValue = productService.getTotalStockValue();</span>
+<span class="fc" id="L283">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Total stock value fetched successfully&quot;, totalStockValue));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
