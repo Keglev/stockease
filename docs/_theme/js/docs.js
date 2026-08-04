@@ -28,11 +28,20 @@ if (menu) {
 }
 
 // Mark the current page in the sidebar at runtime, avoiding per-page build logic.
+// The decisions sidebar groups its entries into collapsed <details> ranges, so the
+// group holding the current page is opened here too - otherwise an ADR page would
+// show three shut drawers and no sign of where the reader is. Pages outside every
+// group, the decision index among them, open nothing: collapsed is the default the
+// markup ships. <summary> is natively keyboard-operable, so no handler is bound.
 (function () {
   var here = location.pathname.replace(/index\.html$/, "");
   document.querySelectorAll(".sidebar a").forEach(function (a) {
     if (a.getAttribute("href").replace(/index\.html$/, "") === here) {
       a.setAttribute("aria-current", "page");
+      var group = a.closest && a.closest("details");
+      if (group) {
+        group.open = true;
+      }
     }
   });
 })();
