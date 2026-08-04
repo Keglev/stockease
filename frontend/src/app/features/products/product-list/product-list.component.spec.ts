@@ -1,14 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Router, provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { PaginatedProducts, ProductResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
+import { ProductCreateDialogComponent } from '../product-create-dialog/product-create-dialog.component';
 import { ProductService } from '../product.service';
 import { ProductListComponent } from './product-list.component';
 
@@ -32,6 +34,8 @@ const TRANSLATIONS = {
         status: 'Status',
         actions: 'Actions'
       },
+      empty: 'No products found.',
+      loading: 'Loading products…',
       showDeleted: 'Show deleted',
       deletedChip: 'Deleted',
       deletedEmpty: 'No deleted products.',
@@ -117,11 +121,19 @@ class NotificationServiceStub {
   }
 }
 
+/**
+ * Stands in for MatDialog. The confirm dialog answers with `confirmed`; the create and edit dialogs
+ * answer with `saved`, and every call is recorded so a spec can name which one was opened with what.
+ */
 class MatDialogStub {
   confirmed: boolean | undefined = true;
+  saved: ProductResponse | undefined = undefined;
+  openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
 
-  open() {
-    return { afterClosed: () => of(this.confirmed) };
+  open(component: unknown, config?: { data?: unknown }) {
+    this.openCalls.push({ component, config });
+    const answer = component === ConfirmDialogComponent ? this.confirmed : this.saved;
+    return { afterClosed: () => of(answer) };
   }
 }
 
@@ -301,6 +313,105 @@ describe('ProductListComponent', () => {
     expect(stub.removeCalls).toEqual([1]);
     expect(notifications.successes).toEqual(['Product deleted.']);
     expect(stub.calls.length).toBe(loadsBefore + 1);
+  });
+
+  it('create_clicked_opensCreateDialogAndAnnouncesTheNewProduct', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    dialog.saved = pageWith(['Monitor']).content[0];
+
+    host().querySelector<HTMLButtonElement>('.product-create')?.click();
+    await fixture.whenStable();
+
+    expect(dialog.openCalls.map((call) => call.component)).toEqual([ProductCreateDialogComponent]);
+    expect(notifications.successes).toEqual(['products.created']);
+  });
+
+  it('create_dismissed_announcesNothingAndDoesNotReload', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    dialog.saved = undefined;
+    const loadsBefore = stub.calls.length;
+
+    host().querySelector<HTMLButtonElement>('.product-create')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.successes).toEqual([]);
+    expect(stub.calls.length).toBe(loadsBefore);
+  });
+
+  it('rename_clicked_opensEditDialogInNameModeAndAnnouncesTheRename', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+    dialog.saved = pageWith(['Laptop Pro']).content[0];
+
+    await openRowMenu();
+    menuItem('.product-rename')?.click();
+    await fixture.whenStable();
+
+    expect(dialog.openCalls.at(-1)?.config?.data).toEqual({
+      mode: 'name',
+      product: pageWith(['Laptop']).content[0]
+    });
+    expect(notifications.successes).toEqual(['products.renamed']);
+  });
+
+  it('reprice_clicked_opensEditDialogInPriceModeAndAnnouncesThePriceChange', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+    dialog.saved = pageWith(['Laptop']).content[0];
+
+    await openRowMenu();
+    menuItem('.product-reprice')?.click();
+    await fixture.whenStable();
+
+    // the mode decides both the dialog's shape and which message the list announces
+    expect((dialog.openCalls.at(-1)?.config?.data as { mode: string }).mode).toBe('price');
+    expect(notifications.successes).toEqual(['products.priceChanged']);
+  });
+
+  it('edit_dismissed_announcesNothingAndDoesNotReload', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'USER');
+    dialog.saved = undefined;
+    const loadsBefore = stub.calls.length;
+
+    await openRowMenu();
+    menuItem('.product-rename')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.successes).toEqual([]);
+    expect(stub.calls.length).toBe(loadsBefore);
+  });
+
+  it('delete_cancelled_leavesTheProductUntouched', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    dialog.confirmed = false;
+
+    await openRowMenu();
+    menuItem('.product-delete')?.click();
+    await fixture.whenStable();
+
+    expect(stub.removeCalls).toEqual([]);
+    expect(notifications.successes).toEqual([]);
+  });
+
+  it('load_requestInFlight_showsTheProgressBar', async () => {
+    await setUp(new Subject<PaginatedProducts>(), 'ADMIN');
+
+    expect(host().querySelector('mat-progress-bar')).not.toBeNull();
+    expect(host().querySelector('.product-empty')).toBeNull();
+  });
+
+  it('load_noLiveProducts_showsTheLiveEmptyState', async () => {
+    await setUp(of(pageWith([])), 'ADMIN');
+
+    expect(host().querySelector('.product-empty')?.textContent?.trim()).toBe('No products found.');
+  });
+
+  it('load_noDeletedProducts_showsTheDeletedEmptyState', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    stub.deletedResult = of([]);
+
+    await toggleDeleted();
+
+    // a different sentence, not the same one: the deleted view being empty is good news
+    expect(host().querySelector('.product-empty')?.textContent?.trim()).toBe('No deleted products.');
   });
 
   it('delete_rejected_surfacesErrorNotification', async () => {

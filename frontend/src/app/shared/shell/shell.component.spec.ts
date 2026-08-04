@@ -182,7 +182,21 @@ describe('ShellComponent', () => {
           { path: 'logout', children: [] },
           // 'products' is declared so the active-route test can actually reach a nav target;
           // an unmatched URL would leave every routerLinkActive off and pass for the wrong reason.
-          { path: 'app', children: [{ path: 'products', children: [] }] }
+          // Every drawer target is declared: the nav-click test follows each link in turn, and an
+          // unmatched URL throws out of the router rather than exercising the handler behind it.
+          {
+            path: 'app',
+            children: [
+              { path: 'products', children: [] },
+              { path: 'invoices', children: [] },
+              { path: 'movements', children: [] },
+              { path: 'reports', children: [] },
+              { path: 'suppliers', children: [] },
+              { path: 'customers', children: [] },
+              { path: 'settings', children: [] },
+              { path: 'help', children: [] }
+            ]
+          }
         ]),
         provideTestTranslations(TRANSLATIONS)
       ]
@@ -279,6 +293,25 @@ describe('ShellComponent', () => {
     await settle();
 
     expect(sidenav().opened).toBe(false);
+  });
+
+  it('onNavClick_everyDrawerEntry_closesTheOverlay', async () => {
+    await setUp(false, false);
+    const hrefs = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('mat-nav-list a')
+    ).map((anchor) => anchor.getAttribute('href') ?? '');
+
+    for (const href of hrefs) {
+      navToggle()?.click();
+      await settle();
+      expect(sidenav().opened).toBe(true);
+
+      navLink(href)?.click();
+      await settle();
+
+      // one entry wired without the handler would leave the drawer covering the page it opened
+      expect(sidenav().opened, href).toBe(false);
+    }
   });
 
   it('onNavClick_desktopViewport_keepsSidenavOpen', async () => {

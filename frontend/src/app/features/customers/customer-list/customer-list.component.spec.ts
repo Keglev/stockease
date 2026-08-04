@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { CustomerResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
+import { CustomerCreateDialogComponent } from '../customer-create-dialog/customer-create-dialog.component';
 import { CustomerSummaryDialogComponent } from '../customer-summary-dialog/customer-summary-dialog.component';
 import { CustomerService } from '../customer.service';
 import { CustomerListComponent } from './customer-list.component';
@@ -60,9 +61,11 @@ class CustomerServiceStub {
   /** Mutable so a delete can shrink the list the component reloads. */
   roster = [...CUSTOMERS];
   removeResult: Observable<string> = of('Customer deleted.');
+  /** Overridable so a spec can hold the load open or fail it outright. */
+  getAllResult: (() => Observable<CustomerResponse[]>) | null = null;
 
   getAll(): Observable<CustomerResponse[]> {
-    return of(this.roster);
+    return this.getAllResult ? this.getAllResult() : of(this.roster);
   }
 
   remove(id: number): Observable<string> {
@@ -86,11 +89,14 @@ class NotificationServiceStub {
 
 class MatDialogStub {
   confirmed: boolean | undefined = true;
+  /** What the create dialog hands back; the confirm dialog answers with `confirmed` instead. */
+  created: CustomerResponse | undefined = undefined;
   openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
 
   open(component: unknown, config?: { data?: unknown }) {
     this.openCalls.push({ component, config });
-    return { afterClosed: () => of(this.confirmed) };
+    const answer = component === CustomerCreateDialogComponent ? this.created : this.confirmed;
+    return { afterClosed: () => of(answer) };
   }
 }
 
@@ -112,9 +118,35 @@ describe('CustomerListComponent', () => {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
 
-  async function setUp(role: 'ADMIN' | 'USER', roster: CustomerResponse[] = CUSTOMERS): Promise<void> {
+  function host(): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  function many(count: number): CustomerResponse[] {
+    return Array.from({ length: count }, (unused, index) => ({
+      id: index + 1,
+      name: 'Customer ' + index,
+      email: null,
+      phone: null,
+      address: null,
+      city: null,
+      createdAt: '2026-01-02T03:04:00'
+    }));
+  }
+
+  /** Builds the component against a load that fails, or never answers at all. */
+  async function setUpWith(source: () => Observable<CustomerResponse[]>): Promise<void> {
+    await setUp('ADMIN', CUSTOMERS, source);
+  }
+
+  async function setUp(
+    role: 'ADMIN' | 'USER',
+    roster: CustomerResponse[] = CUSTOMERS,
+    source: (() => Observable<CustomerResponse[]>) | null = null
+  ): Promise<void> {
     customers = new CustomerServiceStub();
     customers.roster = [...roster];
+    customers.getAllResult = source;
     notifications = new NotificationServiceStub();
     dialog = new MatDialogStub();
 
@@ -235,6 +267,60 @@ describe('CustomerListComponent', () => {
 
     expect(notifications.errors).toEqual(['Customer has open invoices and cannot be deleted.']);
     expect(notifications.successes).toEqual([]);
+  });
+
+  it('create_clicked_opensCreateDialogAndAnnouncesTheNewCustomer', async () => {
+    await setUp('ADMIN');
+    dialog.created = { ...CUSTOMERS[0], id: 9, name: 'Initech' };
+
+    host().querySelector<HTMLButtonElement>('.customer-create')?.click();
+    await fixture.whenStable();
+
+    expect(dialog.openCalls.map((call) => call.component)).toEqual([CustomerCreateDialogComponent]);
+    expect(notifications.successes).toEqual(['customers.created']);
+  });
+
+  it('create_dismissed_announcesNothingAndLeavesTheListAlone', async () => {
+    await setUp('ADMIN');
+    dialog.created = undefined;
+
+    host().querySelector<HTMLButtonElement>('.customer-create')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.successes).toEqual([]);
+  });
+
+  it('load_serviceErrors_rendersBackendMessageAndEmptiesTheTable', async () => {
+    await setUpWith(() => throwError(() => new Error('Customers are unavailable.')));
+
+    expect(host().querySelector('.customer-error')?.textContent?.trim()).toBe(
+      'Customers are unavailable.'
+    );
+    expect(host().querySelectorAll('tbody tr').length).toBe(0);
+  });
+
+  it('load_requestInFlight_showsTheProgressBar', async () => {
+    await setUpWith(() => new Subject<CustomerResponse[]>());
+
+    expect(host().querySelector('mat-progress-bar')).not.toBeNull();
+    expect(host().querySelector('.customer-empty')).toBeNull();
+  });
+
+  it('load_emptyRoster_showsTheEmptyState', async () => {
+    await setUp('ADMIN', []);
+
+    expect(host().querySelector('.customer-empty')?.textContent?.trim()).toBe('No customers found.');
+  });
+
+  it('paginator_nextPageClicked_showsTheRemainingRows', async () => {
+    await setUp('ADMIN', many(12));
+
+    host().querySelector<HTMLButtonElement>('.mat-mdc-paginator-navigation-next')?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // driven through the paginator itself, so the (page) binding is part of what this proves
+    expect(host().querySelectorAll('tbody tr').length).toBe(2);
   });
 
   it('pagination_secondPage_showsRemainingRows', async () => {

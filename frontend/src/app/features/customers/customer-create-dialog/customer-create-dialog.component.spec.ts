@@ -121,6 +121,28 @@ describe('CustomerCreateDialogComponent', () => {
     expect(service.calls).toEqual([]);
   });
 
+  it('cancel_clicked_closesWithNothingAndCreatesNoCustomer', async () => {
+    setField(0, 'Jane Doe');
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.form-cancel')?.click();
+    await fixture.whenStable();
+
+    // closed with no argument: the list reloads only when the dialog hands a customer back
+    expect(dialogRef.close).toHaveBeenCalledWith();
+    expect(service.calls).toEqual([]);
+  });
+
+  it('render_nameTouchedButEmpty_namesTheMissingField', async () => {
+    const name = (fixture.nativeElement as HTMLElement).querySelectorAll('input')[0];
+
+    name.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('mat-error')?.textContent?.trim()
+    ).toBe('Name is required.');
+  });
+
   it('submit_duplicateEmailRejected_showsMessageAndKeepsDialogOpen', async () => {
     service.result = throwError(() => new Error('A customer with this email already exists.'));
     setField(0, 'Jane Doe');

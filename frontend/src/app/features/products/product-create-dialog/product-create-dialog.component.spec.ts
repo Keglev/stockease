@@ -155,6 +155,32 @@ describe('ProductCreateDialogComponent', () => {
     expect(dialogRef.close).toHaveBeenCalledWith(LAPTOP);
   });
 
+  it('cancel_clicked_closesWithNothingAndCreatesNoProduct', async () => {
+    fillValid();
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.form-cancel')?.click();
+    await fixture.whenStable();
+
+    // closed with no argument: the list reloads only when the dialog hands back a product
+    expect(dialogRef.close).toHaveBeenCalledWith();
+    expect(service.calls).toEqual([]);
+  });
+
+  it('render_nameAndSkuTouchedButEmpty_namesBothMissingFields', async () => {
+    const [nameInput, skuInput] = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('input')
+    );
+    nameInput.dispatchEvent(new Event('blur'));
+    skuInput.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    const errors = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('mat-error')
+    ).map((node) => node.textContent?.trim());
+    expect(errors).toContain('Name is required.');
+    expect(errors).toContain('SKU is required.');
+  });
+
   it('submit_duplicateNameRejected_showsMessageAndKeepsDialogOpen', async () => {
     service.result = throwError(() => new Error('A product with this name already exists.'));
     fillValid();

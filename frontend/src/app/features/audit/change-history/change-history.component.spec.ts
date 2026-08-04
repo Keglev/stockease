@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ParamMap, convertToParamMap, provideRouter } from '@angular/router';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 
 import { ChangeLogResponse } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
@@ -65,9 +65,12 @@ class AuditServiceStub {
   productResult: ChangeLogResponse[] = [PRICE_CHANGE, DELETED_EVENT];
   userResult: ChangeLogResponse[] = [PRICE_CHANGE, DELETED_EVENT];
 
+  /** Overridable so a spec can hold the query open or fail it outright. */
+  productSource: (() => Observable<ChangeLogResponse[]>) | null = null;
+
   productChanges(productId: number): Observable<ChangeLogResponse[]> {
     this.productCalls.push(productId);
-    return of(this.productResult);
+    return this.productSource ? this.productSource() : of(this.productResult);
   }
 
   userChanges(userId: number): Observable<ChangeLogResponse[]> {
@@ -201,6 +204,49 @@ describe('ChangeHistoryComponent', () => {
     expect(audit.productCalls).toEqual([3, 5]);
     // Same instance: a snapshot read would have left product 3's rows on screen.
     expect(fixture.componentInstance).toBe(instance);
+  });
+
+  it('back_clickedWithHistoryBehind_popsTheBrowserHistory', async () => {
+    await setUp({ productId: '3' });
+    // pushState is what gives jsdom a history to go back through; a fresh tab has length 1
+    history.pushState({}, '', '/app/audit/products/3');
+    const back = vi.spyOn(history, 'back').mockImplementation(() => undefined);
+
+    host().querySelector<HTMLButtonElement>('.audit-back')?.click();
+    await fixture.whenStable();
+
+    expect(back).toHaveBeenCalledOnce();
+    back.mockRestore();
+  });
+
+  it('back_clickedOnColdDeepLink_navigatesToTheProductsList', async () => {
+    await setUp({ productId: '3' });
+    vi.spyOn(history, 'length', 'get').mockReturnValue(1);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+    host().querySelector<HTMLButtonElement>('.audit-back')?.click();
+    await fixture.whenStable();
+
+    // nothing behind this page, so "back" has to mean somewhere rather than nowhere
+    expect(navigate).toHaveBeenCalledWith(['/app/products']);
+  });
+
+  it('load_serviceErrors_rendersBackendMessageAndNoTimeline', async () => {
+    audit.productSource = () => throwError(() => new Error('Change history is unavailable.'));
+    await setUp({ productId: '3' });
+
+    expect(host().querySelector('.audit-error')?.textContent?.trim()).toBe(
+      'Change history is unavailable.'
+    );
+    expect(host().querySelectorAll('.audit-entry').length).toBe(0);
+  });
+
+  it('load_requestInFlight_showsTheProgressBar', async () => {
+    audit.productSource = () => new Subject<ChangeLogResponse[]>();
+    await setUp({ productId: '3' });
+
+    expect(host().querySelector('mat-progress-bar')).not.toBeNull();
+    expect(host().querySelector('.audit-empty')).toBeNull();
   });
 
   it('render_emptyPayload_showsEmptyState', async () => {
