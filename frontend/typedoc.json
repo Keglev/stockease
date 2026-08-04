@@ -1,0 +1,32 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+
+  // Configuration for the published frontend API reference. Generated in frontend CI by
+  // .github/scripts/docs/build-frontend-api.sh and shipped as an artifact the docs pipeline
+  // downloads, the same way the Vitest coverage report travels. `out` is git-ignored: it is a
+  // build product, never committed.
+
+  // "expand" walks the directory rather than treating it as one entry point, so every module
+  // under src/app is documented instead of only what an index barrel would re-export.
+  "entryPoints": ["src/app"],
+  "entryPointStrategy": "expand",
+  "tsconfig": "tsconfig.app.json",
+
+  // Specs and the test-support helpers are not API surface; tsconfig.app.json already excludes
+  // specs from the app build, and this keeps them out of the reference on the expand walk too.
+  "exclude": ["**/*.spec.ts", "**/testing/**"],
+
+  "out": "typedoc-dist",
+
+  "name": "Bestandskontrolle / StockEase - Frontend API",
+  "readme": "none",
+  "hideGenerator": true,
+
+  // The back-to-docs link every page on the docs site carries.
+  "navigationLinks": {
+    "Docs home": "/stockease/"
+  },
+
+  "excludePrivate": true,
+  "excludeExternals": true
+}

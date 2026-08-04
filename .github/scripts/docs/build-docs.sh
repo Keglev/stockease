@@ -7,8 +7,10 @@
 # scripts for each doc type. Output tree mirrors the deployed site under
 # <project-dir>/target/docs.
 #
-# TypeDoc generation returns when the Angular frontend exists; until then this
-# orchestrator builds the OpenAPI and architecture docs only.
+# The frontend's TypeDoc reference is NOT generated here: it needs the frontend's
+# node_modules, so build-frontend-api.sh produces it in frontend CI and this
+# orchestrator only copies the downloaded artifact into place, exactly as it does
+# for the two coverage reports.
 # Prerequisites: pandoc, redocly CLI, npx
 # =============================================================================
 set -euo pipefail
@@ -102,6 +104,21 @@ copy_frontend_coverage() {
   fi
 }
 
+# The TypeDoc reference the frontend workflow built and the docs pipeline downloaded. Same
+# skip-with-notice shape as the coverage copies: it is present only on builds a frontend CI run
+# triggered, and the deploy step preserves the published copy on every other build.
+copy_frontend_api() {
+  local SRC="$PROJECT_DIR/target/frontend/api-src"
+  local DEST="$OUTPUT_DIR/frontend/api"
+  if [ -d "$SRC" ] && [ "$(ls -A "$SRC")" ]; then
+    mkdir -p "$DEST"
+    cp -R "$SRC/." "$DEST/"
+    echo "✓ Frontend API reference copied"
+  else
+    echo "ℹ️  No frontend API reference found — skipping"
+  fi
+}
+
 echo "==> [build-docs] Starting (PROJECT_DIR=$PROJECT_DIR)"
 mkdir -p "$OUTPUT_DIR"
 
@@ -112,6 +129,7 @@ bash "$SCRIPTS_DIR/build-openapi-docs.sh"      "$PROJECT_DIR"
 bash "$SCRIPTS_DIR/build-architecture-docs.sh" "$PROJECT_DIR"
 copy_backend_coverage
 copy_frontend_coverage
+copy_frontend_api
 
 echo ""
 echo "✓ Docs build complete — $(find "$OUTPUT_DIR" -type f | wc -l) files, $(du -sh "$OUTPUT_DIR" | cut -f1)"

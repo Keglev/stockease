@@ -4,14 +4,20 @@
      runtime by docs.js. Do not put template syntax in this comment - a partial
      is itself a template.
 
-     Frontend and Quality groups are added as their targets land: the frontend
-     architecture bundle, TypeDoc, and coverage publication. Nothing is listed
-     ahead of the page existing - the docs pipeline link-checks the built site,
-     so a link to an unbuilt page fails the build. -->
+     Only the Frontend group is still pending, and it waits on the frontend
+     architecture tree. Nothing is listed ahead of the page existing: the two
+     Quality entries below are published from frontend CI artifacts, which is
+     what earned them a place here. -->
 <aside class="sidebar">
   <p class="nav-title">Docs</p>
   <ul>
     <li><a href="/stockease/">Docs home</a></li>
     <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/frontend/api/index.html">Frontend API</a></li>
+    <li><a href="/stockease/frontend/coverage/index.html">Frontend coverage</a></li>
   </ul>
 </aside>
