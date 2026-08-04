@@ -207,6 +207,26 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
         assertThat(recentCash.inflow()).isGreaterThan(BigDecimal.ZERO);
     }
 
+    @Test
+    void cashFlow_afterSeeding_netsThePaidSaleReturnOutOfInflow() {
+        // Queried by invoice number and SKU rather than by id: the ids are whatever the sequence
+        // hands out on this run, and naming the document is what makes a failure readable.
+        assertThat(scalar("""
+                SELECT ii.returned_qty FROM invoice_item ii
+                JOIN invoice i ON i.id = ii.invoice_id
+                JOIN product p ON p.id = ii.product_id
+                WHERE i.invoice_number = 'AR-2026-0009' AND p.sku = 'BUE-0003'
+                """)).isEqualTo(4L);
+
+        CashFlowReport allTime = reportingService.cashFlow(null, null);
+
+        // 2986.30 = 932.40 (AR-2026-0003) + 848.50 (AR-2026-0008) + 1205.40 (AR-2026-0009, whose
+        // 20-unit line bills 16 after the return): the four returned units come off the inflow.
+        assertThat(allTime.inflow()).isEqualByComparingTo(new BigDecimal("2986.30"));
+        // Unchanged: the return sits on a sale, and no paid purchase line has a returned quantity.
+        assertThat(allTime.outflow()).isEqualByComparingTo(new BigDecimal("4720.00"));
+    }
+
     private static BigDecimal totalProfit(List<ProductProfitReport> rows) {
         return rows.stream().map(ProductProfitReport::grossProfit).reduce(BigDecimal.ZERO, BigDecimal::add);
     }

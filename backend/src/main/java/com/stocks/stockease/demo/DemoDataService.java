@@ -265,14 +265,19 @@ public class DemoDataService {
     /**
      * The movements the seeder records by hand.
      *
-     * <p>Deliberately only these four reasons. PURCHASE and SOLD are booked by the invoice module's
-     * own listener when an invoice closes, and {@code StockMovementService.validateNotAlreadyRecorded}
-     * rejects a second one per line - recording them here would fail, and rightly so.
+     * <p>Deliberately only these four reasons, one of which is recorded twice: PURCHASE and SOLD are
+     * booked by the invoice module's own listener when an invoice closes, and
+     * {@code StockMovementService.validateNotAlreadyRecorded} rejects a second one per line -
+     * recording them here would fail, and rightly so.
      */
     private void seedAdjustments(List<Invoice> purchases, List<Invoice> sales, List<Product> products, User staff) {
         Product drill = products.get(0);
         // partial customer return against the first sale line: 2 of the 8 units come back
         record(staff, MovementReason.RETURN_FROM_CUSTOMER, drill, 2, itemId(sales.get(0), 0), null);
+        // Second customer return, and the only one on a PAID sale: cash flow reads inflow net of
+        // returns over paid invoices only, so the return above - on an unpaid invoice the report
+        // ignores by definition - leaves that basis with nothing to net.
+        record(staff, MovementReason.RETURN_FROM_CUSTOMER, products.get(9), 4, itemId(sales.get(7), 0), null);
         // return to supplier against the first purchase line: 5 of the 40 units go back
         record(staff, MovementReason.RETURNED_TO_SUPPLIER, drill, 5, itemId(purchases.get(0), 0), null);
         // two different remarks on purpose: the loss report is only worth grouping if the baseline
