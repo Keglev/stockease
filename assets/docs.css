@@ -287,6 +287,50 @@ button:focus-visible {
   font-weight: 500;
 }
 
+/* --- Collapsible nav groups ---------------------------------------------- */
+/* The decisions sidebar carries every ADR, which is far more entries than a
+   section list. They sit in <details> ranges so the sidebar opens short; docs.js
+   opens the range holding the current page. Native <details> only - the
+   disclosure, the keyboard handling and the state are all the element's own. */
+.nav-group > summary {
+  /* Reads as a sibling of .nav-title, so the groups look like sections rather
+     than controls bolted on, but stays visibly interactive. */
+  margin: 0.75rem 0 0.35rem;
+  padding: 0.25rem 0.6rem 0.25rem 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;             /* Firefox marker */
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: var(--radius-sm);
+}
+.nav-group > summary::-webkit-details-marker { display: none; }
+
+/* Disclosure triangle drawn as text so it inherits colour and needs no asset. */
+.nav-group > summary::before {
+  content: "\25B8";             /* ▸ */
+  font-size: 0.85em;
+  line-height: 1;
+  transition: transform 120ms ease;
+}
+.nav-group[open] > summary::before { transform: rotate(90deg); }
+
+.nav-group > summary:hover { color: var(--heading); }
+
+/* Never removed, only replaced: the groups are keyboard-operated, so the focus
+   ring is the only thing telling a keyboard reader which drawer Enter will open. */
+.nav-group > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Indented so a grouped entry reads as belonging to the range above it. */
+.nav-group > ul { padding-left: 0.85rem; }
+
 /* --- Table of contents --------------------------------------------------- */
 .toc {
   position: sticky;
@@ -312,15 +356,45 @@ button:focus-visible {
 .toc a { color: var(--muted); font-size: 0.85rem; }
 .toc a:hover { color: var(--heading); text-decoration: none; }
 
-/* Hide the inner scrollbars on the nav and TOC. They remain scrollable by
-   wheel, trackpad, and keyboard — only the visual bar is suppressed, so long
-   pages show a single page-level scrollbar instead of two or three. */
-.sidebar, .toc {
+/* The TOC keeps its scrollbar hidden: it mirrors headings the reader can also
+   reach by scrolling the page, so a second bar beside the page bar is noise.
+   It stays scrollable by wheel, trackpad and keyboard. */
+.toc {
   scrollbar-width: none;        /* Firefox */
 }
-.sidebar::-webkit-scrollbar,
 .toc::-webkit-scrollbar {
   display: none;                /* Chrome, Edge, Safari */
+}
+
+/* The sidebar does show one. Hiding it made sense while every sidebar was a
+   short section list; the decisions sidebar can outgrow the viewport once a
+   group is open, and with no bar there was nothing to say so — the content just
+   ended. Thin and theme-coloured rather than the platform default, which is
+   near-invisible on the dark surface. --muted rather than --border-strong: the
+   border token composites to roughly 2:1 against this surface, which repeats the
+   faintness this fixes, while --muted clears the 3:1 WCAG asks of a non-text
+   control. It resolves per theme from tokens.css, so the bar follows the toggle. */
+.sidebar {
+  scrollbar-width: thin;                                  /* Firefox */
+  scrollbar-color: var(--muted) transparent;              /* thumb, track */
+}
+.sidebar::-webkit-scrollbar {
+  width: 10px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 999px;
+  /* Inset with a transparent border so the thumb reads as a slim pill rather
+     than filling the gutter edge to edge. */
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--heading);
+  background-clip: content-box;
 }
 
 /* --- Footer -------------------------------------------------------------- */
