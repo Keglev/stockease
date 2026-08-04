@@ -59,12 +59,27 @@ jobs:
 
       - name: Upload coverage report
         # Uploaded on every run, pull requests included: the HTML report is the point of this step,
-        # and a reviewer needs it on the PR that changes the numbers. Deliberately not wired into
-        # the docs pipeline - publishing to the docs site lands with the frontend docs bundle.
+        # and a reviewer needs it on the PR that changes the numbers. The docs pipeline downloads
+        # this artifact on runs it triggers and publishes it at /stockease/frontend/coverage.
         # always(): a failing suite still produces a report, and that is when it is most useful.
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage-html-${{ github.sha }}
           path: frontend/coverage/stockease
+          overwrite: true
+
+      - name: Generate API reference (TypeDoc)
+        # Generated here rather than in the docs pipeline because TypeDoc needs the frontend's
+        # installed node_modules, which only this workflow has. Settings live in typedoc.json.
+        run: bash ../.github/scripts/docs/build-frontend-api.sh ..
+
+      - name: Upload API reference
+        # Success only, unlike the coverage upload above: a reference built from a tree that
+        # failed to compile or lint is not something to publish over the last good one. Coverage
+        # keeps always() because a failing suite's numbers are exactly what a reviewer wants.
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-api-html-${{ github.sha }}
+          path: frontend/typedoc-dist
           overwrite: true

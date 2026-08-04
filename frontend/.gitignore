@@ -34,6 +34,8 @@ yarn-error.log
 .sass-cache/
 /connect.lock
 /coverage
+# TypeDoc output; generated in CI by build-frontend-api.sh and shipped as an artifact
+/typedoc-dist
 /libpeerconnection.log
 testem.log
 /typings

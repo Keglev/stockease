@@ -2,7 +2,7 @@ name: Docs Pipeline
 
 on:
   workflow_run:
-    workflows: ["Backend Tests"]
+    workflows: ["Backend Tests", "Frontend Tests"]
     types: [completed]
     branches: [main]
   push:
@@ -39,15 +39,43 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      # Fresh coverage only exists when backend CI just ran; on docs-only
-      # pushes the deploy workflow preserves the previously published report.
+      # Each trigger brings a different set of reports, and never all of them:
+      #   Backend Tests   -> JaCoCo
+      #   Frontend Tests  -> Vitest coverage + the TypeDoc API reference
+      #   docs push       -> none of the three
+      # A run therefore publishes what its trigger produced and nothing else, and the deploy
+      # workflow restores the reports this build did not regenerate. continue-on-error keeps a
+      # missing artifact from failing the docs build: the copy steps skip with a notice, and the
+      # last published report survives via that same preserve step.
       - name: Download JaCoCo artifact
-        if: github.event_name == 'workflow_run'
+        if: github.event.workflow_run.name == 'Backend Tests'
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           name: jacoco-html-${{ github.event.workflow_run.head_sha }}
           path: target/site/jacoco
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Uploaded from frontend/coverage/stockease, whose index.html sits at the artifact root,
+      # so this path is already the report root that copy_frontend_coverage expects.
+      - name: Download frontend coverage artifact
+        if: github.event.workflow_run.name == 'Frontend Tests'
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-coverage-html-${{ github.event.workflow_run.head_sha }}
+          path: target/frontend/coverage
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download frontend API reference artifact
+        if: github.event.workflow_run.name == 'Frontend Tests'
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-api-html-${{ github.event.workflow_run.head_sha }}
+          path: target/frontend/api-src
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 

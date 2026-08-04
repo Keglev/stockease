@@ -46,15 +46,20 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Preserve existing coverage reports when the current build did not regenerate
-          # them. Backend coverage is absent on docs-only pushes; frontend coverage is
-          # absent on every build not triggered by frontend CI — without this backup the
-          # wipe below would delete it on each backend or docs deploy.
-          for SIDE in backend frontend; do
-            if [ ! -d "docs-site/$SIDE/coverage" ] && [ -d "$SIDE/coverage" ]; then
-              echo "$SIDE coverage not in current build — preserving existing report"
-              mkdir -p "/tmp/coverage-backup/$SIDE"
-              cp -R "$SIDE/coverage" "/tmp/coverage-backup/$SIDE/"
+          # Preserve the published reports the current build did not regenerate. Each arrives
+          # only with its own CI trigger — backend coverage with backend CI, frontend coverage
+          # and the API reference with frontend CI — so any given deploy is missing most of
+          # them, and without this backup the wipe below would delete what it did not rebuild.
+          #
+          # backend/api is deliberately absent from this list: ReDoc rebuilds it from the
+          # OpenAPI spec on every docs build, so it is never missing and never needs restoring.
+          PRESERVED="backend/coverage frontend/coverage frontend/api"
+
+          for REPORT in $PRESERVED; do
+            if [ ! -d "docs-site/$REPORT" ] && [ -d "$REPORT" ]; then
+              echo "$REPORT not in current build — preserving existing report"
+              mkdir -p "/tmp/docs-preserve/$(dirname "$REPORT")"
+              cp -R "$REPORT" "/tmp/docs-preserve/$(dirname "$REPORT")/"
             fi
           done
 
@@ -71,14 +76,14 @@ jobs:
             exit 1
           fi
 
-          for SIDE in backend frontend; do
-            if [ -d "/tmp/coverage-backup/$SIDE/coverage" ]; then
-              mkdir -p "$SIDE/coverage"
-              cp -R "/tmp/coverage-backup/$SIDE/coverage/." "$SIDE/coverage/"
-              echo "Restored existing $SIDE coverage"
+          for REPORT in $PRESERVED; do
+            if [ -d "/tmp/docs-preserve/$REPORT" ]; then
+              mkdir -p "$REPORT"
+              cp -R "/tmp/docs-preserve/$REPORT/." "$REPORT/"
+              echo "Restored existing $REPORT"
             fi
           done
-          rm -rf /tmp/coverage-backup
+          rm -rf /tmp/docs-preserve
 
       - name: Opt gh-pages out of Vercel deployments
         run: |
