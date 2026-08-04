@@ -58,6 +58,16 @@ describe('app.routes', () => {
     }
   }, 60_000);
 
+  // The same 60s, for the ordering rather than for a measurement: this test resolves the same 18
+  // loaders one at a time, so it is the slower of the pair whenever it is the one that compiles
+  // them. Usually it is not - the test above runs first and warms the module cache - but nothing
+  // declares or enforces that order, and Vitest is free to change it.
+  //
+  // Seen once, in #156: with the test above aborted at 1ms, this one ran 20004ms and failed on the
+  // global ceiling. It has not been reproducible on demand since - clearing .angular/cache and
+  // skipping the test above was not enough to push it over - so this budget is precautionary. It
+  // is here because a margin that depends on which sibling ran first is not a margin, not because
+  // the failure is expected.
   it('table_lazyRoutes_loadTheComponentNamedForTheirPath', async () => {
     const expected: Record<string, string> = {
       '(index)': 'LandingComponent',
@@ -88,7 +98,7 @@ describe('app.routes', () => {
         expect(nameOf(loaded), `route "${entry.path}"`).toBe(expected[entry.path]);
       }
     }
-  });
+  }, 60_000);
 
   it('appChildren_indexRoute_loadsTheDashboard', async () => {
     const index = (ALL.find((e) => e.path === 'app')?.route.children ?? []).find((c) => c.path === '');
