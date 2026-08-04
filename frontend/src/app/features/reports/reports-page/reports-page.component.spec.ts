@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
 import {
   CashFlowReport,
@@ -20,6 +21,7 @@ import {
   SupplierResponse
 } from '../../../core/api/api-models';
 import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
+import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { provideFakeChartEngine } from '../../../testing/chart-testing';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
@@ -249,21 +251,46 @@ class AuditServiceStub {
   changes(from?: string, to?: string): Observable<ChangeLogEntryResponse[]> {
     this.calls++;
     this.ranges.push([from, to]);
-    return of(this.changePayload);
+    return this.failing.has('changes')
+      ? throwError(() => new Error('changes is unavailable.'))
+      : of(this.changePayload);
   }
 
   /** The per-product listing the analytics tab reads its price series from. */
   productChangePayload: ChangeLogResponse[] = PRODUCT_CHANGES;
   productChangeIds: number[] = [];
 
+  /** Endpoints that must reject, so the analytics and changes error paths can be driven. */
+  readonly failing = new Set<string>();
+
   productChanges(productId: number): Observable<ChangeLogResponse[]> {
     this.productChangeIds.push(productId);
-    return of(this.productChangePayload);
+    return this.failing.has('productChanges')
+      ? throwError(() => new Error('productChanges is unavailable.'))
+      : of(this.productChangePayload);
   }
 }
 
 class ReportServiceStub {
+  /** Endpoints that must reject, so each tab's error path can be driven by name. */
+  readonly failing = new Set<string>();
+
+  /** Rejects when the endpoint is in {@link failing}, otherwise answers with the payload. */
+  private answer<T>(endpoint: string, payload: T): Observable<T> {
+    return this.failing.has(endpoint)
+      ? throwError(() => new Error(`${endpoint} is unavailable.`))
+      : of(payload);
+  }
+
   profitPayload: ProductProfitReport[] = PROFIT;
+  supplierPayload: SupplierProfitReport[] = SUPPLIERS;
+  buckets: DueDateBucket[] = BUCKETS;
+  stockHistoryPayload: StockHistoryPoint[] = STOCK_HISTORY;
+  stockPayload: StockStatusReport[] = STOCK;
+  dueSoonPayload: InvoiceDueSummary[] = DUE_SOON;
+  overduePayload: InvoiceDueSummary[] = OVERDUE;
+  /** Holds the profit query open, so the loading state can be observed mid-flight. */
+  holdProfit = false;
   lossPayload: LossReport[] = LOSSES;
   cashFlowPayload: CashFlowReport = CASH_FLOW;
   calls: string[] = [];
@@ -279,7 +306,7 @@ class ReportServiceStub {
   cashFlow(from?: string, to?: string): Observable<CashFlowReport> {
     this.calls.push('cashFlow');
     this.cashFlowRanges.push([from, to]);
-    return of(this.cashFlowPayload);
+    return this.answer('cashFlow', this.cashFlowPayload);
   }
 
   /** Every productId the timeline was asked for, undefined meaning the whole business. */
@@ -314,13 +341,15 @@ class ReportServiceStub {
   profitProducts(from?: string, to?: string): Observable<ProductProfitReport[]> {
     this.calls.push('profitProducts');
     this.profitRanges['products'].push([from, to]);
-    return of(this.profitPayload);
+    return this.holdProfit
+      ? new Subject<ProductProfitReport[]>()
+      : this.answer('profitProducts', this.profitPayload);
   }
 
   profitSuppliers(from?: string, to?: string): Observable<SupplierProfitReport[]> {
     this.calls.push('profitSuppliers');
     this.profitRanges['suppliers'].push([from, to]);
-    return of(SUPPLIERS);
+    return this.answer('profitSuppliers', this.supplierPayload);
   }
 
   /** The row is on screen but its detail fetch fails - a deleted product, or a dropped request. */
@@ -336,7 +365,7 @@ class ReportServiceStub {
 
   stockStatus(): Observable<StockStatusReport[]> {
     this.calls.push('stockStatus');
-    return of(STOCK);
+    return this.answer('stockStatus', this.stockPayload);
   }
 
   historyIds: number[] = [];
@@ -346,28 +375,28 @@ class ReportServiceStub {
     this.calls.push('stockHistory');
     this.historyIds.push(productId);
     this.historyRanges.push([from, to]);
-    return of(STOCK_HISTORY);
+    return this.answer('stockHistory', this.stockHistoryPayload);
   }
 
   losses(from?: string, to?: string): Observable<LossReport[]> {
     this.calls.push('losses');
     this.lossRanges.push([from, to]);
-    return of(this.lossPayload);
+    return this.answer('losses', this.lossPayload);
   }
 
   dueDates(): Observable<DueDateBucket[]> {
     this.calls.push('dueDates');
-    return of(BUCKETS);
+    return this.answer('dueDates', this.buckets);
   }
 
   dueSoon(): Observable<InvoiceDueSummary[]> {
     this.calls.push('dueSoon');
-    return of(DUE_SOON);
+    return this.answer('dueSoon', this.dueSoonPayload);
   }
 
   overdue(): Observable<InvoiceDueSummary[]> {
     this.calls.push('overdue');
-    return of(OVERDUE);
+    return this.answer('overdue', this.overduePayload);
   }
 }
 
@@ -377,7 +406,7 @@ describe('ReportsPageComponent', () => {
   let audit: AuditServiceStub;
   let suppliers: SupplierServiceStub;
   let dialog: { open: ReturnType<typeof vi.fn> };
-  let download: ReturnType<typeof vi.fn>;
+  let download: ReturnType<typeof vi.fn>;
 
   function render(): void {
     fixture = TestBed.createComponent(ReportsPageComponent);
@@ -424,7 +453,7 @@ describe('ReportsPageComponent', () => {
     audit = new AuditServiceStub();
     suppliers = new SupplierServiceStub();
     dialog = { open: vi.fn() };
-    download = vi.fn();
+    download = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -1170,6 +1199,531 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     const page = fixture.componentInstance as unknown as Record<string, () => SeriesProbe | null>;
     return page[name]();
   }
+
+  /** Clicks a sortable column header, which is the only way a reader reorders a report table. */
+  async function sortBy(table: string, columnIndex: number): Promise<void> {
+    const headers = host().querySelectorAll<HTMLElement>(`${table} th.mat-sort-header`);
+    headers[columnIndex].click();
+    await settle();
+  }
+
+  /** The visible text of one column, top to bottom, which is what sorting rearranges. */
+  function columnText(table: string, columnIndex: number): string[] {
+    return Array.from(host().querySelectorAll(`${table} tbody tr`)).map(
+      (row) => row.querySelectorAll('td')[columnIndex].textContent?.trim() ?? ''
+    );
+  }
+
+  it('sortProfit_nameHeaderClicked_ordersRowsAlphabeticallyThenReverses', async () => {
+    reports.profitPayload = [
+      { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 9, cost: 1, grossProfit: 8 },
+      { productId: 4, name: 'Gadget', sku: 'SKU-4', deleted: false, revenue: 100, cost: 1, grossProfit: 99 }
+    ];
+    render();
+    await showTable(0);
+
+    await sortBy('.profit-table', 0);
+    expect(columnText('.profit-table', 0)).toEqual(['Gadget', 'Widget']);
+
+    await sortBy('.profit-table', 0);
+    expect(columnText('.profit-table', 0)).toEqual(['Widget', 'Gadget']);
+  });
+
+  it('sortProfit_numericColumn_ordersByValueRatherThanByText', async () => {
+    reports.profitPayload = [
+      { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 9, cost: 1, grossProfit: 8 },
+      { productId: 4, name: 'Gadget', sku: 'SKU-4', deleted: false, revenue: 100, cost: 1, grossProfit: 99 }
+    ];
+    render();
+    await showTable(0);
+
+    // Sorted as text, 100 would come before 9 - which is the whole reason the comparator checks
+    // the operand types rather than stringifying everything.
+    await sortBy('.profit-table', 2);
+    expect(columnText('.profit-table', 0)).toEqual(['Widget', 'Gadget']);
+  });
+
+  it('sortProfit_clickedPastDescending_returnsToTheServerOrder', async () => {
+    render();
+    await showTable(0);
+    const asLoaded = columnText('.profit-table', 0);
+
+    await sortBy('.profit-table', 0);
+    await sortBy('.profit-table', 0);
+    await sortBy('.profit-table', 0);
+
+    // The third click clears the direction, and an unsorted table is the order the server sent.
+    expect(columnText('.profit-table', 0)).toEqual(asLoaded);
+  });
+
+  it('sortSuppliers_nameHeaderClicked_ordersRows', async () => {
+    render();
+    await showTable(0);
+
+    await sortBy('.supplier-table', 0);
+
+    const names = columnText('.supplier-table', 0);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('sortStock_nameHeaderClicked_ordersRows', async () => {
+    render();
+    await activateTab(2);
+    await showTable(2);
+
+    await sortBy('.stock-table', 0);
+
+    const names = columnText('.stock-table', 0);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('sortLosses_nameHeaderClicked_ordersRows', async () => {
+    render();
+    await activateTab(3);
+    await showTable(3);
+
+    await sortBy('.loss-table', 0);
+
+    const names = columnText('.loss-table', 0);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  /**
+   * The typeahead the page put at this selector, reached as a component so the spec can call the
+   * `[search]` function the template bound and emit the `(selected)` output the template listens to.
+   *
+   * <p>Typing into the field instead would wait out the typeahead's debounce on a real timer, and
+   * this spec fakes only `Date`. What is under test here is the binding, not the debounce, which
+   * the typeahead's own spec already owns.
+   */
+  function typeaheadAt(selector: string): TypeaheadComponent<SupplierProduct> {
+    return fixture.debugElement
+      .query(By.css(selector))
+      .componentInstance as TypeaheadComponent<SupplierProduct>;
+  }
+
+  it('analyticsProductSearch_supplierChosen_queriesThatSuppliersCatalogueOnly', async () => {
+    render();
+    await activateTab(6);
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    await settle();
+
+    typeaheadAt('.analytics-product-search').search()('wid').subscribe();
+
+    expect(reports.supplierProductTerms).toEqual(['wid']);
+  });
+
+  it('analyticsProductSearch_noSupplierChosen_asksTheServerNothing', async () => {
+    render();
+    await activateTab(6);
+
+    let emitted: SupplierProduct[] | undefined;
+    typeaheadAt('.analytics-product-search').search()('wid').subscribe((rows) => (emitted = rows));
+
+    // No supplier means no scope to search within, so the field answers empty without a request.
+    expect(emitted).toEqual([]);
+    expect(reports.supplierProductTerms).toEqual([]);
+  });
+
+  it('analyticsProductField_selectionEmitted_enablesTheShowButton', async () => {
+    render();
+    await activateTab(6);
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    await settle();
+
+    typeaheadAt('.analytics-product-search').selected.emit(productRow(3));
+    await settle();
+
+    expect(host().querySelector<HTMLButtonElement>('.analytics-show')?.disabled).toBe(false);
+  });
+
+  it('analyticsShowButton_clicked_fetchesBothSeries', async () => {
+    render();
+    await activateTab(6);
+    await chooseAnalyticsProduct(3);
+
+    host().querySelector<HTMLButtonElement>('.analytics-show')?.click();
+    await settle();
+
+    expect(reports.historyIds).toEqual([3]);
+    expect(audit.productChangeIds).toEqual([3]);
+  });
+
+  it('cashFlowProductField_selectionEmitted_refetchesTheTimelineScopedToIt', async () => {
+    render();
+    await activateTab(1);
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    await settle();
+
+    typeaheadAt('.cash-flow-product-search').selected.emit(productRow(3));
+    await settle();
+
+    expect(reports.timelineProductIds.at(-1)).toBe(3);
+  });
+
+  /** The banner every tab reports a failed load through, and the bar that must stop with it. */
+  function expectFailureBanner(message: string): void {
+    expect(host().querySelector('.reports-error')?.textContent?.trim()).toBe(message);
+    expect(host().querySelector('mat-progress-bar')).toBeNull();
+  }
+
+  // Each tab fires its queries in order and every failure overwrites the banner, so the message
+  // asserted is the last one to land - which is also what a reader would see.
+  it('profitTab_bothQueriesFail_reportsItAndStopsTheLoadingBar', async () => {
+    reports.failing.add('profitProducts').add('profitSuppliers');
+
+    render();
+    await settle();
+
+    expectFailureBanner('profitSuppliers is unavailable.');
+  });
+
+  it('stockTab_queryFails_reportsItAndStopsTheLoadingBar', async () => {
+    reports.failing.add('stockStatus');
+    render();
+
+    await activateTab(2);
+
+    expectFailureBanner('stockStatus is unavailable.');
+  });
+
+  it('lossesTab_queryFails_reportsItAndStopsTheLoadingBar', async () => {
+    reports.failing.add('losses');
+    render();
+
+    await activateTab(3);
+
+    expectFailureBanner('losses is unavailable.');
+  });
+
+  it('dueTab_allThreeQueriesFail_reportsItAndStopsTheLoadingBar', async () => {
+    reports.failing.add('dueDates').add('dueSoon').add('overdue');
+    render();
+
+    await activateTab(4);
+
+    expectFailureBanner('overdue is unavailable.');
+  });
+
+  it('changesTab_queryFails_reportsItAndStopsTheLoadingBar', async () => {
+    audit.failing.add('changes');
+    render();
+
+    await activateTab(5);
+
+    expectFailureBanner('changes is unavailable.');
+  });
+
+  it('analyticsTab_bothSeriesFail_reportsItAndStopsTheLoadingBar', async () => {
+    reports.failing.add('stockHistory');
+    audit.failing.add('productChanges');
+    render();
+    await activateTab(6);
+
+    await chooseAnalyticsProduct(3);
+    await showAnalytics();
+
+    expectFailureBanner('productChanges is unavailable.');
+  });
+
+  /** Types into a rendered filter box, which is how a reader narrows any of the report tables. */
+  async function typeFilter(value: string): Promise<void> {
+    const input = host().querySelector<HTMLInputElement>('.report-filter input');
+    input!.value = value;
+    input!.dispatchEvent(new Event('input'));
+    await settle();
+  }
+
+  it('load_requestInFlight_showsTheLoadingBar', async () => {
+    reports.profitPayload = [];
+    reports.holdProfit = true;
+    render();
+    await settle();
+
+    // The bar is the only thing telling a reader the page is working rather than empty.
+    expect(host().querySelector('mat-progress-bar')).not.toBeNull();
+  });
+
+  it('profitTab_noSupplierRows_showsEmptyStateAndOffersNoExport', async () => {
+    reports.supplierPayload = [];
+    render();
+    await showTable(0);
+
+    expect(host().querySelector('.export-suppliers')).toBeNull();
+    expect(host().textContent).toContain('No supplier has supplied a product yet.');
+  });
+
+  it('cashFlowFilter_typedIntoTheField_narrowsTheTableAndItsExport', async () => {
+    render();
+    await activateTab(1);
+    await showTable(1);
+
+    await typeFilter('Gadget');
+
+    expect(host().querySelectorAll('.cash-flow-table tbody tr').length).toBe(1);
+  });
+
+  it('cashFlowTab_noProductRows_showsEmptyStateWithNoFilterRow', async () => {
+    reports.cashFlowPayload = { inflow: 0, outflow: 0, net: 0, products: [] };
+    render();
+    await activateTab(1);
+    await showTable(1);
+
+    expect(host().querySelector('.report-filter')).toBeNull();
+    expect(host().textContent).toContain('No paid invoices in this period.');
+  });
+
+  it('cashFlowTable_deletedProduct_marksTheRow', async () => {
+    reports.cashFlowPayload = {
+      inflow: 1,
+      outflow: 0,
+      net: 1,
+      products: [
+        { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: true, inflow: 1, outflow: 0, net: 1 }
+      ]
+    };
+    render();
+    await activateTab(1);
+    await showTable(1);
+
+    // A row for a product that no longer exists has to say so, or the number looks unexplained.
+    expect(host().querySelector('.cash-flow-table .deleted-hint')?.textContent?.trim()).toBe('deleted');
+  });
+
+  it('stockFilter_typedIntoTheField_narrowsTheTable', async () => {
+    render();
+    await activateTab(2);
+    await showTable(2);
+
+    await typeFilter('Gadget');
+
+    expect(host().querySelectorAll('.stock-table tbody tr').length).toBe(1);
+  });
+
+  it('stockTab_noRows_showsEmptyStateWithNoFilterRow', async () => {
+    reports.stockPayload = [];
+    render();
+    await activateTab(2);
+    await showTable(2);
+
+    expect(host().querySelector('.report-filter')).toBeNull();
+    expect(host().textContent).toContain('No products are currently in stock.');
+  });
+
+  it('lossFilter_typedIntoTheField_narrowsTheTable', async () => {
+    render();
+    await activateTab(3);
+    await showTable(3);
+
+    await typeFilter('Gadget');
+
+    expect(host().querySelectorAll('.loss-table tbody tr').length).toBe(1);
+  });
+
+  it('lossesTab_noRows_showsEmptyStateWithNoFilterRow', async () => {
+    reports.lossPayload = [];
+    render();
+    await activateTab(3);
+    await showTable(3);
+
+    expect(host().querySelector('.report-filter')).toBeNull();
+    expect(host().textContent).toContain('No losses have been recorded.');
+  });
+
+  it('lossTable_deletedProduct_marksTheRow', async () => {
+    reports.lossPayload = [
+      { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: true, lostUnits: 1, destroyedUnits: 0, lossValue: 5 }
+    ];
+    render();
+    await activateTab(3);
+    await showTable(3);
+
+    expect(host().querySelector('.loss-table .deleted-hint')?.textContent?.trim()).toBe('deleted');
+  });
+
+  it('changesFilter_typedIntoTheField_narrowsTheRows', async () => {
+    render();
+    await activateTab(5);
+
+    await typeFilter('Gadget');
+
+    expect(host().querySelectorAll('.change-row').length).toBe(1);
+  });
+
+  it('changesUserSelect_optionChosen_narrowsToThatUser', async () => {
+    render();
+    await activateTab(5);
+
+    host().querySelector<HTMLElement>('.change-user-select .mat-mdc-select-trigger')?.click();
+    await settle();
+    document.querySelectorAll<HTMLElement>('mat-option')[1]?.click();
+    await settle();
+
+    expect(host().querySelectorAll('.change-row').length).toBe(1);
+  });
+
+  it('changesTab_noRows_showsEmptyStateWithNoFilterRow', async () => {
+    audit.changePayload = [];
+    render();
+    await activateTab(5);
+
+    expect(host().querySelector('.report-filter')).toBeNull();
+    expect(host().textContent).toContain('No changes in this period.');
+  });
+
+  it('dueTab_bothListsEmpty_showsTheirOwnEmptyStates', async () => {
+    reports.dueSoonPayload = [];
+    reports.overduePayload = [];
+    render();
+    await activateTab(4);
+    await showTable(4);
+
+    // Two separate lists with two separate sentences: "nothing due soon" and "nothing overdue"
+    // are different pieces of news.
+    expect(host().textContent).toContain('No invoices fall due in the coming week.');
+    expect(host().textContent).toContain('No invoice is overdue.');
+  });
+
+  it('profitRow_enterKey_opensTheDetailDialogToo', async () => {
+    render();
+    await showTable(0);
+
+    // The rows are focusable, so the keyboard has to reach the same detail a click does.
+    host()
+      .querySelector('.profit-row')
+      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await settle();
+
+    expect(dialog.open).toHaveBeenCalledTimes(1);
+  });
+
+  it('cashFlowSupplierField_selectionEmitted_narrowsTheProductSearchScope', async () => {
+    render();
+    await activateTab(1);
+
+    typeaheadAt('.cash-flow-supplier-search').selected.emit({
+      id: 5,
+      name: 'Acme',
+      address: '1 Main St',
+      createdAt: ''
+    } as never);
+    await settle();
+
+    typeaheadAt('.cash-flow-product-search').search()('wid').subscribe();
+    expect(reports.supplierProductTerms).toEqual(['wid']);
+  });
+
+  it('analyticsSupplierField_selectionEmitted_enablesTheProductField', async () => {
+    render();
+    await activateTab(6);
+    expect(host().querySelector<HTMLInputElement>('.analytics-product-search input')?.disabled).toBe(true);
+
+    typeaheadAt('.analytics-supplier-search').selected.emit({
+      id: 5,
+      name: 'Acme',
+      address: '1 Main St',
+      createdAt: ''
+    } as never);
+    await settle();
+
+    expect(host().querySelector<HTMLInputElement>('.analytics-product-search input')?.disabled).toBe(false);
+  });
+
+  it('supplierSearch_typed_queriesTheSupplierServiceAndLabelsTheRows', async () => {
+    render();
+    await activateTab(6);
+    const field = typeaheadAt('.analytics-supplier-search') as unknown as TypeaheadComponent<SupplierResponse>;
+
+    field.search()('acm').subscribe();
+
+    expect(suppliers.terms).toEqual(['acm']);
+    // The panel shows names, not ids: the label function is what makes the list readable.
+    expect(field.displayWith()({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' })).toBe('Acme');
+  });
+
+  it('productSearch_panelRows_areLabelledByProductName', async () => {
+    render();
+    await activateTab(6);
+
+    expect(typeaheadAt('.analytics-product-search').displayWith()(productRow(3))).toBe('Product 3');
+  });
+
+  it('period_year_computesTheCalendarYearToDateRange', async () => {
+    vi.setSystemTime(new Date(2026, 5, 15, 12));
+    render();
+
+    await selectProfitPeriod('year');
+
+    // From 1 January of the current year, not 365 days back: "this year" is a calendar claim.
+    expect(reports.profitRanges['products'].at(-1)).toEqual(['2026-01-01', '2026-06-15']);
+  });
+
+  it('dueChart_noBuckets_rendersEmptyStateInsteadOfAnEmptyChart', async () => {
+    reports.buckets = [];
+    render();
+
+    await activateTab(4);
+
+    expect(optionOf('dueOption')).toBeNull();
+    expect(host().textContent).toContain('No invoices are currently outstanding.');
+  });
+
+  it('analyticsChart_noStockHistory_rendersEmptyStateInsteadOfAnEmptyChart', async () => {
+    reports.stockHistoryPayload = [];
+    render();
+    await activateTab(6);
+
+    await chooseAnalyticsProduct(3);
+    await showAnalytics();
+
+    expect(optionOf('analyticsStockOption')).toBeNull();
+  });
+
+  it('overdueRow_withoutADayCount_omitsTheLateChip', async () => {
+    reports.overduePayload = [{ ...OVERDUE[0], daysOverdue: null }];
+    render();
+    await activateTab(4);
+    await showTable(4);
+
+    // The chip is the count; with no count there is nothing to show rather than "null days late".
+    expect(host().querySelector('.overdue-row .days-overdue')).toBeNull();
+  });
+
+  it('cashFlowTab_queryFails_reportsItAndLeavesNoTable', async () => {
+    reports.failing.add('cashFlow');
+    render();
+
+    await activateTab(1);
+    await showTable(1);
+
+    // The report signal stays null, so the table falls back to no rows rather than throwing.
+    expect(host().querySelector('.reports-error')?.textContent?.trim()).toBe('cashFlow is unavailable.');
+    expect(host().querySelector('.cash-flow-table')).toBeNull();
+  });
+
+  it('changesTab_periodChangedWithTheSelectedUserStillPresent_keepsTheSelection', async () => {
+    render();
+    await activateTab(5);
+    host().querySelector<HTMLElement>('.change-user-select .mat-mdc-select-trigger')?.click();
+    await settle();
+    document.querySelectorAll<HTMLElement>('mat-option')[1]?.click();
+    await settle();
+
+    await selectChangePeriod('d30');
+
+    // The account is still in the narrower window, so the filter must survive the refetch.
+    expect(host().querySelectorAll('.change-row').length).toBe(1);
+  });
+
+  it('exportSuppliers_clicked_downloadsTheSupplierTable', async () => {
+    render();
+    await showTable(0);
+
+    host().querySelector<HTMLButtonElement>('.export-suppliers')?.click();
+
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(download.mock.calls[0][0]).toBe('profit-suppliers.csv');
+  });
 });
 
 interface SeriesProbe {

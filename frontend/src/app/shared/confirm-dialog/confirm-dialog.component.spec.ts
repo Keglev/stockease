@@ -9,7 +9,11 @@ const TRANSLATIONS = {
   en: {
     common: { confirm: 'Confirm', cancel: 'Cancel' },
     suppliers: {
-      delete: { title: 'Delete supplier', message: 'Do you really want to delete "{{name}}"?' }
+      delete: {
+        title: 'Delete supplier',
+        message: 'Do you really want to delete "{{name}}"?',
+        detail: 'Suppliers with open invoices cannot be deleted.'
+      }
     }
   }
 };
@@ -30,7 +34,7 @@ describe('ConfirmDialogComponent', () => {
       ?.click();
   }
 
-  beforeEach(async () => {
+  async function setUp(data: ConfirmDialogData): Promise<void> {
     localStorage.clear();
     TestBed.resetTestingModule();
     dialogRef = { close: vi.fn() };
@@ -40,7 +44,7 @@ describe('ConfirmDialogComponent', () => {
       providers: [
         provideTestTranslations(TRANSLATIONS),
         { provide: MatDialogRef, useValue: dialogRef },
-        { provide: MAT_DIALOG_DATA, useValue: DATA }
+        { provide: MAT_DIALOG_DATA, useValue: data }
       ]
     }).compileComponents();
 
@@ -49,6 +53,10 @@ describe('ConfirmDialogComponent', () => {
     fixture = TestBed.createComponent(ConfirmDialogComponent);
     fixture.detectChanges();
     await fixture.whenStable();
+  }
+
+  beforeEach(async () => {
+    await setUp(DATA);
   });
 
   it('render_providedKeys_showsTranslatedTitleAndMessage', () => {
@@ -56,6 +64,19 @@ describe('ConfirmDialogComponent', () => {
 
     expect(text).toContain('Delete supplier');
     expect(text).toContain('Do you really want to delete "Acme"?');
+  });
+
+  it('render_detailKeyProvided_showsTheExtraLine', async () => {
+    await setUp({ ...DATA, detailKey: 'suppliers.delete.detail' });
+
+    // The optional line callers use to explain why a deletion may be refused.
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.confirm-detail')?.textContent?.trim()
+    ).toBe('Suppliers with open invoices cannot be deleted.');
+  });
+
+  it('render_detailKeyAbsent_omitsTheExtraLine', () => {
+    expect((fixture.nativeElement as HTMLElement).querySelector('.confirm-detail')).toBeNull();
   });
 
   it('confirm_clicked_closesWithTrue', () => {

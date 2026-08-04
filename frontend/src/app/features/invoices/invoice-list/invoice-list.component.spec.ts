@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Router, provideRouter } from '@angular/router';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
 import {
   CustomerResponse,
@@ -35,6 +35,13 @@ const TRANSLATIONS = {
       },
       type: { PURCHASE: 'Purchase', SALE: 'Sale' },
       status: { OPEN: 'Open', CLOSED: 'Closed', FULLY_RETURNED: 'Fully returned' }
+    }
+  },
+  // Only what the type chip needs: it is the one cell whose entire meaning is its text, so it is
+  // the one this spec reads in both languages.
+  de: {
+    invoices: {
+      type: { PURCHASE: 'Einkauf', SALE: 'Verkauf' }
     }
   }
 };
@@ -74,11 +81,16 @@ const CUSTOMERS: CustomerResponse[] = [
 /** Serves one page out of the given rows, recording what the component asked for. */
 class InvoiceServiceStub {
   readonly requests: { page: number; size: number }[] = [];
+  /** Overridable so a spec can hold the ledger fetch open or fail it outright. */
+  result: (() => Observable<PaginatedInvoices>) | null = null;
 
   constructor(private readonly all: InvoiceSummaryResponse[]) {}
 
   getPagedInvoices(page: number, size: number): Observable<PaginatedInvoices> {
     this.requests.push({ page, size });
+    if (this.result) {
+      return this.result();
+    }
     const start = page * size;
     return of({
       content: this.all.slice(start, start + size),
@@ -102,8 +114,12 @@ describe('InvoiceListComponent', () => {
     return host().querySelectorAll('tbody tr')[index].textContent ?? '';
   }
 
-  async function setUp(invoices: InvoiceSummaryResponse[]): Promise<void> {
+  async function setUp(
+    invoices: InvoiceSummaryResponse[],
+    result: (() => Observable<PaginatedInvoices>) | null = null
+  ): Promise<void> {
     invoiceService = new InvoiceServiceStub(invoices);
+    invoiceService.result = result;
     await TestBed.configureTestingModule({
       imports: [InvoiceListComponent],
       providers: [
@@ -221,6 +237,74 @@ describe('InvoiceListComponent', () => {
     expect(host().querySelectorAll('.status-fully-returned').length).toBe(1);
   });
 
+  it('typeChip_purchaseInvoice_readsPurchase', async () => {
+    await setUp([invoice({ id: 1, type: 'PURCHASE' })]);
+
+    // The whole chip text, not a substring: "Purchase" and "Purchase order" are different claims
+    // about what the row is, and only the exact string tells them apart.
+    expect(host().querySelector('.type-chip')?.textContent?.trim()).toBe('Purchase');
+  });
+
+  it('typeChip_saleInvoice_readsSale', async () => {
+    await setUp([invoice({ id: 2, type: 'SALE', supplierId: null, customerId: 9 })]);
+
+    expect(host().querySelector('.type-chip')?.textContent?.trim()).toBe('Sale');
+  });
+
+  it('typeChip_germanLanguage_readsTheGermanWords', async () => {
+    await setUp([invoice({ id: 1, type: 'PURCHASE' }), invoice({ id: 2, type: 'SALE' })]);
+
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+
+    const chips = Array.from(host().querySelectorAll('.type-chip')).map((chip) =>
+      chip.textContent?.trim()
+    );
+    // The chip is the only thing on the row that says which direction the money runs, so it has
+    // to be translated rather than left as the raw enum.
+    expect(chips).toEqual(['Einkauf', 'Verkauf']);
+  });
+
+  it('rowClick_anyInvoice_navigatesToThatInvoiceDetail', async () => {
+    await setUp([invoice({ id: 1 }), invoice({ id: 7 })]);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+    host().querySelectorAll<HTMLElement>('tbody tr')[1].click();
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(['/app/invoices', 7]);
+  });
+
+  it('load_serviceErrors_rendersBackendMessageAndEmptiesTheTable', async () => {
+    await setUp([invoice({ id: 1 })], () => throwError(() => new Error('Ledger is unavailable.')));
+
+    expect(host().querySelector('.invoice-error')?.textContent?.trim()).toBe(
+      'Ledger is unavailable.'
+    );
+    expect(host().querySelectorAll('tbody tr').length).toBe(0);
+  });
+
+  it('load_requestInFlight_showsTheProgressBar', async () => {
+    await setUp([invoice({ id: 1 })], () => new Subject<PaginatedInvoices>());
+
+    expect(host().querySelector('mat-progress-bar')).not.toBeNull();
+    expect(host().querySelector('.invoice-empty')).toBeNull();
+  });
+
+  it('load_noInvoices_showsTheEmptyState', async () => {
+    await setUp([]);
+
+    expect(host().querySelector('.invoice-empty')?.textContent?.trim()).toBe('No invoices found.');
+  });
+
+  it('counterparty_unknownCustomerId_rendersHashedIdFallback', async () => {
+    await setUp([invoice({ id: 1, supplierId: null, customerId: 404 })]);
+
+    // The sale-side twin of the supplier fallback: a row must still name its counterparty when
+    // the customer list does not carry that id.
+    expect(rowText(0)).toContain('#404');
+  });
+
   it('render_anyRole_showsCreateButtonRoutedToNewPage', async () => {
     await setUp([invoice({ id: 1 })]);
 
@@ -234,6 +318,19 @@ describe('InvoiceListComponent', () => {
     await setUp([invoice({ id: 1 })]);
 
     expect(invoiceService.requests).toEqual([{ page: 0, size: 10 }]);
+  });
+
+  it('paginator_nextPageClicked_requestsTheNextPage', async () => {
+    await setUp(Array.from({ length: 25 }, (unused, index) => invoice({ id: index + 1 })));
+
+    host().querySelector<HTMLButtonElement>('.mat-mdc-paginator-navigation-next')?.click();
+    await fixture.whenStable();
+
+    // driven through the paginator itself, so the (page) binding is part of what this proves
+    expect(invoiceService.requests).toEqual([
+      { page: 0, size: 10 },
+      { page: 1, size: 10 }
+    ]);
   });
 
   it('pageChange_event_requestsThatPage', async () => {

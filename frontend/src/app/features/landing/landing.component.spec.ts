@@ -301,6 +301,31 @@ describe('LandingComponent', () => {
     expect(navigate).toHaveBeenCalledWith(['/app']);
   });
 
+  it('closingBandDemoAdmin_clicked_signsInToo', async () => {
+    // The page offers the demo twice; the second offer is the one a visitor who read to the end
+    // reaches, and it has its own handler binding rather than sharing the hero button's.
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+      'button.demo-admin'
+    );
+    expect(buttons.length).toBe(2);
+
+    buttons[1].click();
+    await fixture.whenStable();
+
+    expect(auth.calls).toEqual(['ADMIN']);
+  });
+
+  it('demoAdmin_clickedTwiceBeforeRerender_signsInOnce', async () => {
+    // The disabled binding cannot have been applied yet between two clicks in the same task, so
+    // the pending guard is the only thing standing between a double click and two races logins.
+    auth.result = new Subject<ApiEnvelope<string>>();
+
+    demoButton('admin')?.click();
+    demoButton('admin')?.click();
+
+    expect(auth.calls).toEqual(['ADMIN']);
+  });
+
   it('demoUser_clicked_signsInAsUser', async () => {
     demoButton('user')?.click();
     await fixture.whenStable();

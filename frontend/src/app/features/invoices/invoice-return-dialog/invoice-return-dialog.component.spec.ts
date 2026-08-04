@@ -137,6 +137,50 @@ describe('InvoiceReturnDialogComponent', () => {
     expect(dialogRef.close).toHaveBeenCalledWith({ quantity: 2 });
   });
 
+  it('confirm_quantityAboveRemaining_closesNothing', async () => {
+    await setUp({ item: ITEM, invoiceType: 'SALE' });
+    quantity().setValue(4);
+    fixture.detectChanges();
+
+    // The submit button is disabled, but the form can still be submitted by keyboard, so the
+    // handler's own guard is what actually refuses an over-return.
+    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
+  it('quantity_fractional_invalidatesForm', async () => {
+    await setUp({ item: ITEM, invoiceType: 'SALE' });
+
+    quantity().setValue(1.5);
+
+    // Stock moves in whole units; half a widget cannot come back.
+    expect(quantity().hasError('integerOnly')).toBe(true);
+  });
+
+  it('quantity_cleared_isRejectedAsMissingRatherThanAsNonInteger', async () => {
+    await setUp({ item: ITEM, invoiceType: 'SALE' });
+
+    quantity().setValue('');
+
+    // A blank field is a missing quantity; claiming "not a whole number" would misname it.
+    expect(quantity().hasError('required')).toBe(true);
+    expect(quantity().hasError('integerOnly')).toBe(false);
+  });
+
+  it('render_lineWithNoQuantitiesRecorded_showsNothingReturnable', async () => {
+    await setUp({
+      item: { ...ITEM, quantity: null, returnedQty: null } as unknown as InvoiceItemResponse,
+      invoiceType: 'SALE'
+    });
+
+    // Absent numbers read as zero rather than NaN, which would render as "NaN" on the line.
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.return-remaining .return-value')
+        ?.textContent
+    ).toBe('0');
+  });
+
   it('cancel_clicked_closesWithoutResult', async () => {
     await setUp({ item: ITEM, invoiceType: 'SALE' });
 

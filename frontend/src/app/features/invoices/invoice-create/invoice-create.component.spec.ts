@@ -24,6 +24,10 @@ const TRANSLATIONS = {
     invoices: {
       walkIn: 'Walk-in sale',
       type: { PURCHASE: 'Purchase', SALE: 'Sale' },
+      form: {
+        invoiceNumber: 'Invoice number',
+        invoiceNumberRequired: 'An invoice number is required.'
+      },
       createPage: {
         title: 'New invoice',
         typeLabel: 'Invoice type',
@@ -315,6 +319,133 @@ describe('InvoiceCreateComponent', () => {
     await settle();
 
     expect(invoices.requests).toEqual([]);
+  });
+
+  it('cancel_clicked_returnsToTheLedgerWithoutPosting', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+    fillValidSale();
+    await settle();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('.create-cancel')
+      ?.click();
+    await settle();
+
+    expect(navigate).toHaveBeenCalledWith(['/app/invoices']);
+    expect(invoices.requests).toEqual([]);
+  });
+
+  it('addItemButton_clicked_appendsRow', async () => {
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.add-item')?.click();
+    await settle();
+
+    expect(itemsArray().length).toBe(2);
+  });
+
+  it('removeItemButton_clicked_removesThatRow', async () => {
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.add-item')?.click();
+    await settle();
+    fillItem(0, 3, 2, 15);
+    fillItem(1, 4, 1, 5);
+    await settle();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelectorAll<HTMLButtonElement>('.remove-item')[1]
+      .click();
+    await settle();
+
+    expect(itemsArray().length).toBe(1);
+    expect(itemsArray().at(0).getRawValue().productId).toBe(3);
+  });
+
+  it('submit_validPurchase_sendsSupplierIdAndNoCustomerId', async () => {
+    control('type').setValue('PURCHASE');
+    control('invoiceNumber').setValue('RE-2026-0117');
+    control('counterpartyId').setValue(7);
+    control('dueDate').setValue(new Date(2026, 2, 1));
+    fillItem(0, 3, 2, 15);
+    await settle();
+
+    submitButton()?.click();
+    await settle();
+
+    expect(invoices.requests[0].supplierId).toBe(7);
+    expect(invoices.requests[0]).not.toHaveProperty('customerId');
+  });
+
+  it('submit_saleWithCustomer_sendsCustomerIdAndNoSupplierId', async () => {
+    fillValidSale();
+    control('counterpartyId').setValue(9);
+    await settle();
+
+    submitButton()?.click();
+    await settle();
+
+    expect(invoices.requests[0].customerId).toBe(9);
+    expect(invoices.requests[0]).not.toHaveProperty('supplierId');
+  });
+
+  it('submit_invalidFormSubmittedByKeyboard_isRefusedByTheHandler', async () => {
+    control('type').setValue('SALE');
+    fillItem(0, 3, 2, 15);
+    await settle();
+
+    // The button is disabled, but a form can still be submitted from the keyboard, so the
+    // handler's own guard is what actually refuses an incomplete invoice.
+    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+    await settle();
+
+    expect(invoices.requests).toEqual([]);
+  });
+
+  it('typeSwitch_backToPurchase_requiresACounterpartyAgain', async () => {
+    control('type').setValue('SALE');
+    await settle();
+    expect(control('counterpartyId').valid).toBe(true);
+
+    control('type').setValue('PURCHASE');
+    await settle();
+
+    // A purchase always has a supplier; only a sale may be a walk-in.
+    expect(control('counterpartyId').hasError('required')).toBe(true);
+  });
+
+  it('quantity_fractional_isRejectedAsNonInteger', async () => {
+    itemsArray().at(0).get('quantity')?.setValue(1.5);
+    await settle();
+
+    // Stock moves in whole units, so half a widget cannot be ordered.
+    expect(itemsArray().at(0).get('quantity')?.hasError('integerOnly')).toBe(true);
+  });
+
+  it('quantity_cleared_isRejectedAsMissingRatherThanAsNonInteger', async () => {
+    itemsArray().at(0).get('quantity')?.setValue('');
+    await settle();
+
+    const quantity = itemsArray().at(0).get('quantity');
+    expect(quantity?.hasError('required')).toBe(true);
+    expect(quantity?.hasError('integerOnly')).toBe(false);
+  });
+
+  it('runningTotal_rowWithClearedNumbers_countsItAsZeroRatherThanNaN', async () => {
+    itemsArray().at(0).setValue({ productId: 3, quantity: null, unitPrice: null });
+    await settle();
+
+    // A half-filled row must not turn the total into NaN while the user is still typing.
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.running-total-value')?.textContent?.trim()
+    ).toBe('0');
+  });
+
+  it('render_invoiceNumberTouchedButEmpty_namesTheMissingField', async () => {
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLInputElement>('.invoice-number-input')
+      ?.dispatchEvent(new Event('blur'));
+    await settle();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('mat-error')?.textContent?.trim()
+    ).toBe('An invoice number is required.');
   });
 
   it('submit_backendRejects_notifiesAndStaysOnPage', async () => {
