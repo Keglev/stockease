@@ -1,5 +1,9 @@
 
 target/
+# Written at build time by .github/scripts/docs/build-docs.sh, which owns the filter's text
+# so its sibling scripts cannot drift from it. It is a build product like anything under
+# target/, and only lands outside it because the scripts pass pandoc this path.
+scripts/md-to-html-links.lua
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
