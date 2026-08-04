@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -47,6 +48,9 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private ReportingService reportingService;
+
+    @Autowired
+    private DemoTemporalSpread temporalSpread;
 
     @BeforeEach
     void seedBaseline() {
@@ -225,6 +229,30 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
         assertThat(allTime.inflow()).isEqualByComparingTo(new BigDecimal("2986.30"));
         // Unchanged: the return sits on a sale, and no paid purchase line has a returned quantity.
         assertThat(allTime.outflow()).isEqualByComparingTo(new BigDecimal("4720.00"));
+    }
+
+    @Test
+    void spread_withAPaymentBeforeItsInvoice_refusesTheHistory() {
+        // AR-2026-0001 is placed by the age table but settled by nothing, so its payment date is the
+        // one the spread will not move out from under this corruption
+        jdbcTemplate.update("UPDATE invoice SET paid_at = created_at - INTERVAL '400 days'"
+                + " WHERE invoice_number = 'AR-2026-0001'");
+
+        assertThatThrownBy(temporalSpread::apply)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("1 payment(s) predate their invoice");
+    }
+
+    @Test
+    void spread_withAMovementDatedAhead_refusesTheHistory() {
+        // 100 days ahead outruns the 55 the LOST write-off is pulled back by, so the row is still in
+        // the future once the spread has moved everything it moves
+        jdbcTemplate.update("UPDATE stock_movement SET created_at = now() + INTERVAL '100 days'"
+                + " WHERE reason = 'LOST' AND invoice_item_id IS NULL");
+
+        assertThatThrownBy(temporalSpread::apply)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("1 movement(s) are dated in the future");
     }
 
     private static BigDecimal totalProfit(List<ProductProfitReport> rows) {

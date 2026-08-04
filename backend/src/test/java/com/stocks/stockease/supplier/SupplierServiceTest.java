@@ -87,6 +87,23 @@ class SupplierServiceTest {
     }
 
     @Test
+    void create_withNullName_throwsIllegalArgumentException() {
+        // a missing name and a blank one are the same rejection; only the null check reaches this one
+        assertThatThrownBy(() -> supplierService.create(null, "1 Main St"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Supplier name and address are required.");
+        verify(supplierRepository, never()).save(any(Supplier.class));
+    }
+
+    @Test
+    void create_withWhitespaceAddress_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> supplierService.create("Acme", "   "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Supplier name and address are required.");
+        verify(supplierRepository, never()).save(any(Supplier.class));
+    }
+
+    @Test
     void update_withExistingId_updatesBothFields() {
         Supplier supplier = supplier(1L, "Acme");
         when(supplierRepository.findById(1L)).thenReturn(Optional.of(supplier));

@@ -50,4 +50,14 @@ class ProductResponseTest {
 
         assertThat(ProductResponse.from(product).totalValue()).isNull();
     }
+
+    @Test
+    void from_withUnsetQuantity_leavesTotalValueNull() {
+        // the second operand of the same guard: a price without a quantity is as unmultipliable as
+        // a quantity without a price
+        Product product = new Product();
+        product.setPurchasePrice(BigDecimal.valueOf(5.0));
+
+        assertThat(ProductResponse.from(product).totalValue()).isNull();
+    }
 }

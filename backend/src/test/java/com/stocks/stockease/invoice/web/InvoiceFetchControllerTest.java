@@ -112,6 +112,22 @@ class InvoiceFetchControllerTest {
 
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
+    void getInvoiceById_withSaleInvoice_returnsTheCustomerAndNoSupplier() throws Exception {
+        // the mirror of the purchase case: a sale carries no supplier, and the detail must render the
+        // counterparty it does have rather than failing on the one it does not
+        Mockito.when(invoiceService.findDetailById(2L))
+                .thenReturn(Optional.of(InvoiceTestFixtures.saleInvoice(InvoiceStatus.OPEN)));
+
+        mockMvc.perform(get("/api/invoices/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.customerId").value(9))
+                .andExpect(jsonPath("$.data.customerName").value("Jane Doe"))
+                .andExpect(jsonPath("$.data.supplierId").doesNotExist())
+                .andExpect(jsonPath("$.data.supplierName").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     void getInvoiceById_withUnknownId_returns404() throws Exception {
         Mockito.when(invoiceService.findDetailById(9L)).thenReturn(Optional.empty());
 
