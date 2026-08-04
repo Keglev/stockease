@@ -1,0 +1,53 @@
+<!-- Decision-log sidebar, included by the doc templates as a Pandoc partial.
+     The log records backend, frontend and cross-cutting decisions in one
+     sequence (ADR 017), so these pages carry neither tier's navigation: this
+     sidebar IS the index. The active link is marked at runtime by docs.js. Do
+     not put template syntax in this comment - a partial is itself a template.
+
+     MAINTENANCE DUTY: a new ADR is added to docs/decisions/index.md AND to the
+     Decisions group below, in the same pull request that adds the ADR file.
+     The two-entry pointer design in nav-backend.html is deliberate and stays as
+     it is - the central log is reached from the Docs group there. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decision index</a></li>
+  </ul>
+
+  <p class="nav-title">Decisions</p>
+  <ul>
+    <li><a href="/stockease/decisions/001-database-choice.html">001 Database choice</a></li>
+    <li><a href="/stockease/decisions/002-validation-strategy.html">002 Validation strategy</a></li>
+    <li><a href="/stockease/decisions/003-authentication-mechanism.html">003 Authentication mechanism</a></li>
+    <li><a href="/stockease/decisions/004-inventory-domain-model.html">004 Inventory domain model</a></li>
+    <li><a href="/stockease/decisions/005-demo-access.html">005 Demo access without credentials</a></li>
+    <li><a href="/stockease/decisions/006-audit-and-profit-model.html">006 Audit and profit model</a></li>
+    <li><a href="/stockease/decisions/007-modular-monolith.html">007 Modular monolith</a></li>
+    <li><a href="/stockease/decisions/008-documentation-structure.html">008 Documentation structure</a></li>
+    <li><a href="/stockease/decisions/009-sales-invoices-and-customers.html">009 Sales invoices and customers</a></li>
+    <li><a href="/stockease/decisions/010-no-lot-tracking.html">010 Pooled inventory, no lot tracking</a></li>
+    <li><a href="/stockease/decisions/011-merchandise-scope-and-payment.html">011 Merchandise scope and payment</a></li>
+    <li><a href="/stockease/decisions/012-frontend-hosting.html">012 Frontend hosting on a CDN</a></li>
+    <li><a href="/stockease/decisions/013-token-storage.html">013 JWT in localStorage, no refresh</a></li>
+    <li><a href="/stockease/decisions/014-openapi-types-only.html">014 Types-only generation from OpenAPI</a></li>
+    <li><a href="/stockease/decisions/015-runtime-i18n.html">015 Runtime over compile-time i18n</a></li>
+    <li><a href="/stockease/decisions/016-charting-library.html">016 Direct ECharts, not a wrapper</a></li>
+    <li><a href="/stockease/decisions/017-central-decision-log.html">017 Central decision log</a></li>
+    <li><a href="/stockease/decisions/018-product-master-data.html">018 Product creation is master data</a></li>
+    <li><a href="/stockease/decisions/019-last-purchase-price.html">019 Purchase price follows last close</a></li>
+    <li><a href="/stockease/decisions/020-loss-remark.html">020 Losses carry a remark</a></li>
+    <li><a href="/stockease/decisions/021-stock-only-via-invoices.html">021 Stock enters only via invoices</a></li>
+    <li><a href="/stockease/decisions/022-invoice-numbers.html">022 Invoice numbers are operator-set</a></li>
+    <li><a href="/stockease/decisions/023-chart-aggregation-and-csv.html">023 Chart aggregation and CSV export</a></li>
+    <li><a href="/stockease/decisions/024-profit-cogs.html">024 Gross profit as COGS at sale</a></li>
+    <li><a href="/stockease/decisions/025-cash-flow-payment-basis.html">025 Cash flow on a payment basis</a></li>
+    <li><a href="/stockease/decisions/026-low-stock-ever-stocked.html">026 Low stock: ever-stocked only</a></li>
+    <li><a href="/stockease/decisions/027-demo-temporal-spread.html">027 Deterministic demo spread</a></li>
+    <li><a href="/stockease/decisions/028-supplier-traceability-search.html">028 Search-first navigation</a></li>
+    <li><a href="/stockease/decisions/029-help-content-architecture.html">029 Help content as lazy modules</a></li>
+    <li><a href="/stockease/decisions/030-settings-in-local-storage.html">030 Preferences in localStorage</a></li>
+    <li><a href="/stockease/decisions/031-runtime-formatting-via-intl.html">031 Runtime formatting through Intl</a></li>
+    <li><a href="/stockease/decisions/032-client-side-idle-logout.html">032 Idle sign-out is a client concern</a></li>
+  </ul>
+</aside>
