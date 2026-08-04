@@ -56,7 +56,7 @@
   </header>
 
   <div class="layout">
-    $if(backendnav)$$nav-backend()$$else$$nav-frontend()$$endif$
+    $if(backendnav)$$nav-backend()$$else$$if(decisionsnav)$$nav-decisions()$$else$$nav-frontend()$$endif$$endif$
 
     <main class="content" id="main">
       <article class="doc-body">

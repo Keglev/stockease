@@ -1,4 +1,17 @@
-<!-- Frontend navigation - populated when the Angular frontend documentation lands. -->
-<nav class="sidebar-nav" aria-label="Frontend documentation">
-  <a href="/stockease/">Docs home</a>
-</nav>
+<!-- Frontend sidebar navigation, included by the doc templates as a Pandoc
+     partial. It carries the same Docs group as nav-backend.html so a frontend
+     page never inherits backend navigation. The active link is marked at
+     runtime by docs.js. Do not put template syntax in this comment - a partial
+     is itself a template.
+
+     Frontend and Quality groups are added as their targets land: the frontend
+     architecture bundle, TypeDoc, and coverage publication. Nothing is listed
+     ahead of the page existing - the docs pipeline link-checks the built site,
+     so a link to an unbuilt page fails the build. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+</aside>

@@ -30,7 +30,8 @@ mkdir -p "$OUTPUT_DIR/backend/architecture" "$OUTPUT_DIR/frontend/architecture"
 convert_arch() {
   local CONTEXT="$1"
   local SRC_DIR="$DOCS_DIR/$CONTEXT/architecture"
-  # Backend pages get the backend sidebar; everything else gets the frontend one.
+  # Architecture pages only: backend gets the backend sidebar, frontend the frontend one. The
+  # decision log is a third case and sets its own nav in convert_decisions below.
   local NAV_META=()
   [ "$CONTEXT" = "backend" ] && NAV_META=(--metadata=backendnav:true)
   local DST_DIR="$OUTPUT_DIR/$CONTEXT/architecture"
@@ -77,8 +78,10 @@ convert_arch() {
 # target/docs/decisions/, so the deployed address is /stockease/decisions/index.html and each
 # architecture tree's section 9 pointer reaches it with ../../../decisions/index.html.
 #
-# The pages carry the backend sidebar for now: it is the only populated nav, and its "Docs"
-# group links the log. Revisit when the frontend tree gives nav-frontend real content.
+# The pages carry their own sidebar, nav-decisions, which is the ADR index itself. Neither tier's
+# nav fits a log that records backend, frontend and cross-cutting decisions in one sequence, and
+# showing the backend one said the opposite. Adding an ADR therefore touches nav-decisions.html
+# as well as decisions/index.md, in the pull request that adds it.
 convert_decisions() {
   local SRC_DIR="$DOCS_DIR/decisions"
   local DST_DIR="$OUTPUT_DIR/decisions"
@@ -107,7 +110,7 @@ convert_decisions() {
       --lua-filter "$LUA_FILTER" \
       --metadata=title:"Decisions · ${rel%.md}" \
       --metadata=lang:"en" \
-      --metadata=backendnav:true \
+      --metadata=decisionsnav:true \
       --toc --toc-depth=3 --standalone \
       -o "$out"
     echo "  ✓ $rel (en)"
