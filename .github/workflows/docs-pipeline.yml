@@ -93,6 +93,34 @@ jobs:
       - name: Build docs site
         run: bash .github/scripts/docs/build-docs.sh .
 
+      # Every page addresses the site as /stockease/..., because that is the prefix it is
+      # served under once deployed to the project page. lychee resolves an absolute link by
+      # prefixing --root-dir to it, so the site is staged under a directory of exactly that
+      # name and --root-dir points at its parent; /stockease/x.html then resolves to
+      # target/link-check/stockease/x.html. Staged beside target/docs rather than inside it,
+      # so the artifact uploaded below contains no copy of itself.
+      - name: Stage the site for link checking
+        run: |
+          mkdir -p target/link-check
+          cp -r target/docs target/link-check/stockease
+
+      # Fails the build on a broken internal link. Runs before the upload, so a site with a
+      # dead link is never published. Settings, and the three report trees that are
+      # legitimately absent from a docs build, live in lychee.toml with their reasons.
+      # External URLs are never requested (offline = true there): a third-party outage must
+      # not turn this build red, and nothing here could fix a link on someone else's server.
+      - name: Check internal links
+        uses: lycheeverse/lychee-action@v2.9.0
+        with:
+          # Pinned to the version this step was proven against, rather than tracking the
+          # action's default: a link checker that silently changes behaviour is a flaky gate.
+          lycheeVersion: v0.24.2
+          fail: true
+          args: >-
+            --config lychee.toml
+            --root-dir "${{ github.workspace }}/target/link-check"
+            "target/link-check/stockease/**/*.html"
+
       - name: Upload docs-site artifact
         uses: actions/upload-artifact@v7
         with:
