@@ -86,6 +86,23 @@ describe('InvoiceService', () => {
     controller.verify();
   });
 
+  it('getPagedInvoices_envelopedPage_emitsUnwrappedPageAndSendsPageParams', () => {
+    const pagePayload = { content: [SUMMARY], pageNumber: 2, pageSize: 25, totalElements: 51, totalPages: 3 };
+    let emitted: unknown;
+    service.getPagedInvoices(2, 25).subscribe((page) => (emitted = page));
+
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/paged`);
+    expect(request.request.method).toBe('GET');
+    // The page the caller asked for, not a default: a dropped param silently serves page 0.
+    expect(request.request.params.get('page')).toBe('2');
+    expect(request.request.params.get('size')).toBe('25');
+    request.flush({ success: true, message: 'Invoices fetched', data: pagePayload });
+
+    expect(emitted).toEqual(pagePayload);
+    expect(emitted).not.toHaveProperty('success');
+    controller.verify();
+  });
+
   it('create_bareResponse_emitsPayloadUnchanged', () => {
     let emitted: InvoiceSummaryResponse | undefined;
     service.create(purchaseDraft()).subscribe((created) => (emitted = created));

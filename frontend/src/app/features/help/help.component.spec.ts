@@ -156,6 +156,20 @@ describe('HelpComponent', () => {
     expect(navigate).toHaveBeenCalledWith(['/app/help', 'products']);
   });
 
+  it('topicSelect_optionChosen_navigatesToThatTopic', async () => {
+    await renderRoute('/app/help/overview', false);
+    const navigate = vi.spyOn(router, 'navigate');
+
+    // Driven through the rendered select rather than the handler, so the (valueChange) binding
+    // is part of what this proves: below desktop the select is the only way to change topic.
+    host.querySelector<HTMLElement>('.help-topic-select .mat-mdc-select-trigger')?.click();
+    await settle();
+    document.querySelectorAll<HTMLElement>('mat-option')[1]?.click();
+    await settle();
+
+    expect(navigate).toHaveBeenCalledWith(['/app/help', 'products']);
+  });
+
   it('navLinks_desktop_pointAtEveryTopicRoute', async () => {
     await renderRoute('/app/help/overview');
     const hrefs = Array.from(host.querySelectorAll<HTMLAnchorElement>('.help-nav-link')).map(
