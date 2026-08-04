@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 import { SupplierResponse } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
@@ -35,9 +35,12 @@ class SupplierServiceStub {
   createCalls: { name: string; address: string }[] = [];
   updateCalls: { id: number; name: string; address: string }[] = [];
 
+  /** Overridable so a spec can make the save fail without touching the update path. */
+  createResult: Observable<SupplierResponse> | null = null;
+
   create(name: string, address: string): Observable<SupplierResponse> {
     this.createCalls.push({ name, address });
-    return of({ ...ACME, name, address });
+    return this.createResult ?? of({ ...ACME, name, address });
   }
 
   update(id: number, name: string, address: string): Observable<SupplierResponse> {
@@ -125,6 +128,47 @@ describe('SupplierFormDialogComponent', () => {
     const [nameInput, addressInput] = Array.from(inputs());
     expect(nameInput.value).toBe('Acme');
     expect(addressInput.value).toBe('1 Main St');
+  });
+
+  it('cancel_clicked_closesWithNothingAndSavesNothing', async () => {
+    await setUp({});
+    fill('Globex', '5 Side St');
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.form-cancel')?.click();
+    await fixture.whenStable();
+
+    // closed with no argument: the list reloads only when the dialog hands a supplier back
+    expect(dialogRef.close).toHaveBeenCalledWith();
+    expect(service.createCalls).toEqual([]);
+  });
+
+  it('render_bothFieldsTouchedButEmpty_namesBothMissingFields', async () => {
+    await setUp({});
+
+    for (const field of Array.from(inputs())) {
+      field.dispatchEvent(new Event('blur'));
+    }
+    fixture.detectChanges();
+
+    const errors = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('mat-error')
+    ).map((node) => node.textContent?.trim());
+    expect(errors).toEqual(['Name is required.', 'Address is required.']);
+  });
+
+  it('submit_serviceRejects_showsMessageAndKeepsDialogOpen', async () => {
+    await setUp({});
+    service.createResult = throwError(() => new Error('A supplier with this name already exists.'));
+    fill('Globex', '5 Side St');
+
+    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.form-error')?.textContent?.trim()
+    ).toBe('A supplier with this name already exists.');
+    expect(dialogRef.close).not.toHaveBeenCalled();
   });
 
   it('submit_editMode_callsUpdateWithSupplierId', async () => {

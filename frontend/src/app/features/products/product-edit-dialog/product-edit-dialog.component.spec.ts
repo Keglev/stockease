@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 import { ProductResponse } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
@@ -38,9 +38,12 @@ class ProductServiceStub {
   renameCalls: { id: number; name: string }[] = [];
   priceCalls: { id: number; purchasePrice: number }[] = [];
 
+  /** Overridable so a spec can make the save fail without touching the price path. */
+  renameResult: Observable<ProductResponse> | null = null;
+
   rename(id: number, name: string): Observable<ProductResponse> {
     this.renameCalls.push({ id, name });
-    return of({ ...LAPTOP, name });
+    return this.renameResult ?? of({ ...LAPTOP, name });
   }
 
   changePrice(id: number, purchasePrice: number): Observable<ProductResponse> {
@@ -133,6 +136,31 @@ describe('ProductEditDialogComponent', () => {
 
     expect(service.priceCalls).toEqual([{ id: 1, purchasePrice: 1099.5 }]);
     expect(service.renameCalls).toEqual([]);
+  });
+
+  it('cancel_clicked_closesWithNothingAndSavesNothing', async () => {
+    await setUp({ mode: 'name', product: LAPTOP });
+    setValue('Laptop Pro');
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.form-cancel')?.click();
+    await fixture.whenStable();
+
+    // closed with no argument: the list reloads only when the dialog hands a product back
+    expect(dialogRef.close).toHaveBeenCalledWith();
+    expect(service.renameCalls).toEqual([]);
+  });
+
+  it('submit_serviceRejects_showsMessageAndKeepsDialogOpen', async () => {
+    await setUp({ mode: 'name', product: LAPTOP });
+    service.renameResult = throwError(() => new Error('A product with this name already exists.'));
+    setValue('Laptop Pro');
+
+    await submitForm();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.form-error')?.textContent?.trim()
+    ).toBe('A product with this name already exists.');
+    expect(dialogRef.close).not.toHaveBeenCalled();
   });
 
   it('submit_priceModeWithZero_isBlocked', async () => {

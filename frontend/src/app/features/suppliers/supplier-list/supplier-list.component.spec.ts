@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { SupplierResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
+import { SupplierFormDialogComponent } from '../supplier-form-dialog/supplier-form-dialog.component';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
@@ -34,9 +36,11 @@ class SupplierServiceStub {
   /** Mutable so a delete can shrink the list the component reloads. */
   roster = [...SUPPLIERS];
   removeResult: Observable<string> = of('Supplier deleted.');
+  /** Overridable so a spec can hold the load open or fail it outright. */
+  getAllResult: (() => Observable<SupplierResponse[]>) | null = null;
 
   getAll(): Observable<SupplierResponse[]> {
-    return of(this.roster);
+    return this.getAllResult ? this.getAllResult() : of(this.roster);
   }
 
   remove(id: number): Observable<string> {
@@ -58,14 +62,23 @@ class NotificationServiceStub {
   }
 }
 
-/** Stands in for MatDialog; `confirmed` drives what afterClosed() emits. */
+/**
+ * Stands in for MatDialog. `confirmed` drives what the confirm dialog answers; `result` drives what
+ * the form dialog hands back, and both are recorded so a spec can name which dialog was opened.
+ */
 class MatDialogStub {
   confirmed: boolean | undefined = true;
+  result: SupplierResponse | undefined = undefined;
   opened = 0;
+  openedWith: unknown[] = [];
+  lastData: unknown = undefined;
 
-  open() {
+  open(component: unknown, config?: { data?: unknown }) {
     this.opened += 1;
-    return { afterClosed: () => of(this.confirmed) };
+    this.openedWith.push(component);
+    this.lastData = config?.data;
+    const answer = component === ConfirmDialogComponent ? this.confirmed : this.result;
+    return { afterClosed: () => of(answer) };
   }
 }
 
@@ -79,9 +92,32 @@ describe('SupplierListComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelectorAll('.supplier-delete');
   }
 
-  async function setUp(role: 'ADMIN' | 'USER', roster: SupplierResponse[] = SUPPLIERS): Promise<void> {
+  function host(): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  function many(count: number): SupplierResponse[] {
+    return Array.from({ length: count }, (unused, index) => ({
+      id: index + 1,
+      name: 'Supplier ' + index,
+      address: '1 Main St',
+      createdAt: '2026-01-02T03:04:00'
+    }));
+  }
+
+  /** Builds the component against a load that fails, or never answers at all. */
+  async function setUpWith(source: () => Observable<SupplierResponse[]>): Promise<void> {
+    await setUp('ADMIN', SUPPLIERS, source);
+  }
+
+  async function setUp(
+    role: 'ADMIN' | 'USER',
+    roster: SupplierResponse[] = SUPPLIERS,
+    source: (() => Observable<SupplierResponse[]>) | null = null
+  ): Promise<void> {
     suppliers = new SupplierServiceStub();
     suppliers.roster = [...roster];
+    suppliers.getAllResult = source;
     notifications = new NotificationServiceStub();
     dialog = new MatDialogStub();
 
@@ -162,6 +198,72 @@ describe('SupplierListComponent', () => {
 
     expect(notifications.errors).toEqual(['Supplier has open invoices and cannot be deleted.']);
     expect(notifications.successes).toEqual([]);
+  });
+
+  it('create_clicked_opensFormDialogAndAnnouncesTheNewSupplier', async () => {
+    await setUp('ADMIN');
+    dialog.result = { ...SUPPLIERS[0], id: 9, name: 'Initech' };
+
+    host().querySelector<HTMLButtonElement>('.supplier-create')?.click();
+    await fixture.whenStable();
+
+    expect(dialog.openedWith).toEqual([SupplierFormDialogComponent]);
+    expect(notifications.successes).toEqual(['suppliers.created']);
+  });
+
+  it('edit_clicked_opensFormDialogPrefilledAndAnnouncesTheUpdate', async () => {
+    await setUp('ADMIN');
+    dialog.result = { ...SUPPLIERS[0], name: 'Acme GmbH' };
+
+    host().querySelector<HTMLButtonElement>('.supplier-edit')?.click();
+    await fixture.whenStable();
+
+    // the row travels into the dialog, which is what makes it an edit rather than a second create
+    expect(dialog.lastData).toEqual({ supplier: SUPPLIERS[0] });
+    expect(notifications.successes).toEqual(['suppliers.updated']);
+  });
+
+  it('form_dismissed_announcesNothingAndLeavesTheListAlone', async () => {
+    await setUp('ADMIN');
+    dialog.result = undefined;
+
+    host().querySelector<HTMLButtonElement>('.supplier-create')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.successes).toEqual([]);
+  });
+
+  it('load_serviceErrors_rendersBackendMessageAndEmptiesTheTable', async () => {
+    await setUpWith(() => throwError(() => new Error('Suppliers are unavailable.')));
+
+    expect(host().querySelector('.supplier-error')?.textContent?.trim()).toBe(
+      'Suppliers are unavailable.'
+    );
+    expect(host().querySelectorAll('tbody tr').length).toBe(0);
+  });
+
+  it('load_requestInFlight_showsTheProgressBar', async () => {
+    await setUpWith(() => new Subject<SupplierResponse[]>());
+
+    expect(host().querySelector('mat-progress-bar')).not.toBeNull();
+    expect(host().querySelector('.supplier-empty')).toBeNull();
+  });
+
+  it('load_emptyRoster_showsTheEmptyState', async () => {
+    await setUp('ADMIN', []);
+
+    expect(host().querySelector('.supplier-empty')?.textContent?.trim()).toBe('No suppliers found.');
+  });
+
+  it('paginator_nextPageClicked_showsTheRemainingRows', async () => {
+    await setUp('ADMIN', many(12));
+
+    host().querySelector<HTMLButtonElement>('.mat-mdc-paginator-navigation-next')?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // driven through the paginator itself, so the (page) binding is part of what this proves
+    expect(host().querySelectorAll('tbody tr').length).toBe(2);
   });
 
   it('pagination_secondPage_showsRemainingRows', async () => {
