@@ -78,7 +78,25 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "setupFiles": ["src/app/testing/global-test-setup.ts"],
-            "coverageReporters": ["text", "text-summary", "html", "lcov"]
+            "coverageReporters": ["text", "text-summary", "html", "lcov"],
+            // Regression floors, deliberately set BELOW what the suite achieves rather than at it:
+            // the achieved numbers are 99.2 statements / 97.1 branches / 99.1 functions / 99.2
+            // lines (see the published report at /stockease/frontend/coverage, which the CI step
+            // uploads on every run). Gating at the achieved number would fail any honest refactor
+            // that moves a few lines; these only trip when coverage has genuinely fallen away.
+            //
+            // Global, not per-file: "perFile" defaults to false and stays false. A per-file gate
+            // fails on the first small file with one uncovered guard, which is a different
+            // question from "did the suite regress".
+            //
+            // Only `npm run test:coverage` passes --coverage, so watch-mode `npm test` stays
+            // uninstrumented and these thresholds stay inert there.
+            "coverageThresholds": {
+              "statements": 90,
+              "branches": 85,
+              "functions": 85,
+              "lines": 90
+            }
           }
         },
         "lint": {
