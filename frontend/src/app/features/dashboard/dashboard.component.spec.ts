@@ -1,5 +1,4 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -16,8 +15,9 @@ import {
 } from '../../core/api/api-models';
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { LANGUAGE_STORAGE_KEY } from '../../core/i18n/language.service';
-import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
+import { ChartComponent } from '../../shared/chart/chart.component';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
+import { provideFakeChartEngine } from '../../testing/chart-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { ProductService } from '../products/product.service';
 import { ReportService } from '../reports/report.service';
@@ -144,13 +144,6 @@ const BUCKETS: DueDateBucket[] = [
   { dueDate: '2026-03-01', invoiceType: 'SALE', invoiceCount: 2, totalValue: 60 }
 ];
 
-/** Stands in for the ECharts wrapper: jsdom has no canvas and the wrapper has its own spec. */
-@Component({ selector: 'app-chart', template: '' })
-class ChartStubComponent {
-  readonly option = input.required<ChartOption>();
-  readonly height = input('20rem');
-}
-
 class ReportServiceStub {
   calls = 0;
   profitPayload: ProductProfitReport[] = PROFIT;
@@ -232,7 +225,7 @@ describe('DashboardComponent', () => {
   let products: ProductServiceStub;
   let health: HealthServiceStub;
   let dialog: MatDialogStub;
-  let breakpoints: BreakpointObserverStub;
+  let breakpoints: BreakpointObserverStub;
 
   /**
    * The app is zoneless, so fakeAsync is unavailable and vitest's timers stand in for any rxjs
@@ -287,7 +280,7 @@ describe('DashboardComponent', () => {
     dialog = new MatDialogStub();
     // Pinned to desktop so every assertion below sees one fixed tier; jsdom applies no media
     // queries, so the real observer would answer whatever matchMedia stubs out to.
-    breakpoints = new BreakpointObserverStub(true);
+    breakpoints = new BreakpointObserverStub(true);
 
     TestBed.configureTestingModule({
       providers: [
@@ -297,12 +290,13 @@ describe('DashboardComponent', () => {
         { provide: ReportService, useValue: reports },
         { provide: ProductService, useValue: products },
         { provide: HealthService, useValue: health },
-        { provide: MatDialog, useValue: dialog }
+        { provide: MatDialog, useValue: dialog },
+        // The real ChartComponent renders, drawing through a fake engine. Swapping the component
+        // out with overrideComponent instead forces a runtime recompile whose template is no
+        // longer attributed to dashboard.component.html, which reported it at 0% coverage while
+        // these specs were rendering and asserting on it (#142).
+        provideFakeChartEngine()
       ]
-    });
-    TestBed.overrideComponent(DashboardComponent, {
-      remove: { imports: [ChartComponent] },
-      add: { imports: [ChartStubComponent] }
     });
   });
 
@@ -519,8 +513,8 @@ describe('DashboardComponent', () => {
   /** The height each rendered chart was handed, in template order. */
   function chartHeights(): string[] {
     return fixture.debugElement
-      .queryAll(By.directive(ChartStubComponent))
-      .map((chart) => (chart.componentInstance as ChartStubComponent).height());
+      .queryAll(By.directive(ChartComponent))
+      .map((chart) => (chart.componentInstance as ChartComponent).height());
   }
 
   /** The four KPI values in template order: products, low stock, overdue, loss value. */

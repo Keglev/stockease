@@ -103,3 +103,73 @@ describe('ChartComponent', () => {
     expect(instance.dispose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('ChartComponent resize handling', () => {
+  /** The callback the component handed to ResizeObserver, so a resize can be simulated. */
+  let observed: (() => void) | null;
+  let disconnect: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    observed = null;
+    disconnect = vi.fn();
+    // jsdom ships no ResizeObserver, so the component's own guard skips the wiring entirely and
+    // the callback below is never created. Supplying one is what makes this path reachable.
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          observed = callback;
+        }
+        observe = vi.fn();
+        disconnect = disconnect;
+      }
+    );
+
+    TestBed.resetTestingModule();
+    engine.mockClear();
+    instance.resize.mockClear();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ThemeService, useClass: ThemeServiceStub },
+        { provide: CHART_ENGINE, useValue: engine }
+      ]
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('hostResized_afterInit_resizesTheChartInstance', () => {
+    const fixture = TestBed.createComponent(HostComponent);
+    fixture.detectChanges();
+
+    observed?.();
+
+    // Charts sit in a responsive grid, so the instance follows its host box. Without this the
+    // chart would keep the width it was born with and clip inside a resized card.
+    expect(instance.resize).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroy_afterObserving_disconnectsTheObserver', () => {
+    const fixture = TestBed.createComponent(HostComponent);
+    fixture.detectChanges();
+
+    fixture.destroy();
+
+    // A live observer holding the host element keeps the destroyed component reachable.
+    expect(disconnect).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CHART_ENGINE token', () => {
+  it('inject_withoutAnOverride_resolvesToEchartsInit', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+
+    // Every other spec overrides this token, so nothing otherwise executes the default factory -
+    // and a broken default is exactly the failure that would reach production unnoticed. The
+    // function is resolved, never called: calling it would drive real echarts into jsdom.
+    expect(TestBed.inject(CHART_ENGINE)).toBeTypeOf('function');
+  });
+});

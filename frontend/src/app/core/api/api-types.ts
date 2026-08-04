@@ -1116,10 +1116,6 @@ export interface components {
         ApiResponseString: components["schemas"]["ApiResponse"] & {
             data: string | null;
         };
-        ApiResponseDouble: components["schemas"]["ApiResponse"] & {
-            /** Format: double */
-            data: number;
-        };
         /** @description Credentials for user authentication */
         LoginRequest: {
             /**

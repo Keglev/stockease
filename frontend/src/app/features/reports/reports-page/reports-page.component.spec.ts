@@ -1,4 +1,3 @@
-import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
@@ -20,8 +19,8 @@ import {
   SupplierProfitReport,
   SupplierResponse
 } from '../../../core/api/api-models';
-import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
 import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
+import { provideFakeChartEngine } from '../../../testing/chart-testing';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
@@ -169,13 +168,6 @@ const OVERDUE: InvoiceDueSummary[] = [
     daysOverdue: 5
   }
 ];
-
-/** Stands in for the ECharts wrapper: jsdom has no canvas and the wrapper has its own spec. */
-@Component({ selector: 'app-chart', template: '' })
-class ChartStubComponent {
-  readonly option = input.required<ChartOption>();
-  readonly height = input('20rem');
-}
 
 const CASH_FLOW: CashFlowReport = {
   inflow: 500,
@@ -385,7 +377,7 @@ describe('ReportsPageComponent', () => {
   let audit: AuditServiceStub;
   let suppliers: SupplierServiceStub;
   let dialog: { open: ReturnType<typeof vi.fn> };
-  let download: ReturnType<typeof vi.fn>;
+  let download: ReturnType<typeof vi.fn>;
 
   function render(): void {
     fixture = TestBed.createComponent(ReportsPageComponent);
@@ -432,7 +424,7 @@ describe('ReportsPageComponent', () => {
     audit = new AuditServiceStub();
     suppliers = new SupplierServiceStub();
     dialog = { open: vi.fn() };
-    download = vi.fn();
+    download = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -448,12 +440,12 @@ describe('ReportsPageComponent', () => {
         { provide: MatDialog, useValue: dialog },
         // A provider stub rather than a module mock, for the reason ADR 016 records: the module
         // registry is shared across the specs in a Vitest worker, a TestBed is not.
-        { provide: CSV_DOWNLOADER, useValue: download }
+        { provide: CSV_DOWNLOADER, useValue: download },
+        // The real ChartComponent renders, drawing through a fake engine. overrideComponent would
+        // force a runtime recompile whose template is no longer attributed to
+        // reports-page.component.html - the 0% this spec used to report while rendering it (#142).
+        provideFakeChartEngine()
       ]
-    });
-    TestBed.overrideComponent(ReportsPageComponent, {
-      remove: { imports: [ChartComponent] },
-      add: { imports: [ChartStubComponent] }
     });
   });
 

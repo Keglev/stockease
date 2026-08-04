@@ -19,3 +19,17 @@
 beforeEach(() => {
   localStorage.clear();
 });
+
+/**
+ * Vitest's 5s default is a poor fit for this suite's slowest specs, which resolve real lazy route
+ * chunks rather than stubbing the router. That work is fast in isolation and several times slower
+ * under a loaded worker with coverage instrumentation on, so the same spec passes alone and times
+ * out in the full run - a flake that says nothing about the code under test.
+ *
+ * <p>Raised globally rather than per file: the specs that pay this cost are not a fixed set. The
+ * route table spec loads every feature chunk, so any spec sharing its worker can be the one pushed
+ * over the edge, and pinning them individually would mean chasing the list on every change.
+ *
+ * <p>This is a ceiling, not a delay. A genuinely hung test still fails, just twenty seconds later.
+ */
+vi.setConfig({ testTimeout: 20_000 });
