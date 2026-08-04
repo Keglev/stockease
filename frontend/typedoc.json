@@ -28,5 +28,41 @@
   },
 
   "excludePrivate": true,
-  "excludeExternals": true
+  "excludeExternals": true,
+
+  // src/app/core/api/api-types.ts is generated from the OpenAPI spec by openapi-typescript, which
+  // emits the schema descriptions as `@description` - the OpenAPI generator's tag dialect, not one
+  // TypeDoc knows. That single unknown tag was 319 of the 337 warnings this build used to print.
+  // The file must not be hand-edited (its header says so), so the tag is declared here instead.
+  //
+  // Setting blockTags REPLACES TypeDoc's default list rather than extending it, so all 42 defaults
+  // for the pinned 0.28.20 are repeated below - taken from the schema the package itself ships,
+  // node_modules/typedoc/typedoc-config.schema.json. Dropping one would silently stop @param or
+  // @returns from being parsed. Re-copy this list when TypeDoc is upgraded.
+  "blockTags": [
+    "@defaultValue", "@deprecated", "@example", "@jsx", "@param", "@privateRemarks",
+    "@remarks", "@returns", "@see", "@throws", "@typeParam", "@author",
+    "@callback", "@category", "@categoryDescription", "@default", "@document", "@extends",
+    "@augments", "@yields", "@group", "@groupDescription", "@import", "@inheritDoc",
+    "@license", "@module", "@mergeModuleWith", "@prop", "@property", "@return",
+    "@satisfies", "@since", "@sortStrategy", "@template", "@this", "@type",
+    "@typedef", "@summary", "@preventInline", "@inlineType", "@preventExpand", "@expandType",
+    "@description"
+  ],
+
+  // Two comments link to symbols that are real but live outside this project's documentation.
+  // Mapped to their own official pages rather than suppressed: the link then resolves to
+  // somewhere useful, which is what the comment meant in the first place.
+  "externalSymbolLinkMappings": {
+    "typescript": {
+      "Error.message": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/message"
+    },
+    "rxjs": {
+      "switchMap": "https://rxjs.dev/api/operators/switchMap"
+    }
+  },
+
+  // Form shapes that are deliberately internal to their components: naming them here states that
+  // "referenced but not documented" is the intent, rather than exporting them to quiet a warning.
+  "intentionallyNotExported": ["MovementForm", "PricePoint"]
 }
