@@ -147,6 +147,17 @@ class DemoLoginIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void login_missingRole_returns400() throws Exception {
+        // an absent role must be refused by the same path an unknown one is, not uppercased into an NPE
+        mockMvc.perform(post("/api/demo/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":null}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Demo role must be ADMIN or USER."));
+    }
+
+    @Test
     void login_unknownRole_returns400() throws Exception {
         mockMvc.perform(post("/api/demo/login")
                         .contentType(MediaType.APPLICATION_JSON)

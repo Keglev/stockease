@@ -91,6 +91,16 @@ class JwtUtilTest {
     }
 
     @Test
+    void extractRole_withNullRole_returnsNullRatherThanFailing() {
+        // the prefix strip must not dereference a role it was never given; a roleless token is
+        // readable, and it is authorization that decides what it may do
+        String token = jwtUtil.generateToken("alice", null);
+
+        assertThat(jwtUtil.validateToken(token)).isTrue();
+        assertThat(jwtUtil.extractRole(token)).isNull();
+    }
+
+    @Test
     void extractClaim_withCustomResolver_returnsExpectedValue() {
         String token = jwtUtil.generateToken("bob", "ROLE_USER");
 

@@ -184,6 +184,20 @@ class AuditControllerTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void getChanges_withOnlyTheStartBound_passesAnOpenEndedPeriodThrough() throws Exception {
+        // one bound alone is always a valid period: the ordering check only applies once both exist
+        LocalDate from = LocalDate.of(2026, 1, 1);
+        Mockito.when(auditService.findChanges(from, null)).thenReturn(List.of(entry()));
+
+        mockMvc.perform(get("/api/audit/changes").param("from", "2026-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(2));
+
+        Mockito.verify(auditService).findChanges(from, null);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void getChanges_withStartAfterEnd_returns400() throws Exception {
         mockMvc.perform(get("/api/audit/changes").param("from", "2026-03-31").param("to", "2026-01-01"))
                 .andExpect(status().isBadRequest())
