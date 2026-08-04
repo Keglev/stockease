@@ -36,6 +36,10 @@ function childPaths(parentPath: string): (string | undefined)[] {
 }
 
 describe('app.routes', () => {
+  // 60s for this one test, against the suite's 20s ceiling: resolving 18 lazy chunks compiles all
+  // of them, which legitimately exceeds the ceiling on a cold .angular/cache or a loaded worker.
+  // The global value stays a ceiling for everything else - it is raised here, not there, because
+  // this is the only test whose work is known to justify it (three timeouts on this one so far).
   it('table_everyLazyRoute_resolvesToAComponent', async () => {
     // Resolving the loader is the point: it executes the dynamic import and the export lookup,
     // which is exactly where a moved file or renamed class fails.
@@ -52,7 +56,7 @@ describe('app.routes', () => {
       // that would actually catch it.
       expect(loaded, `route "${path}" resolved to nothing`).toBeTypeOf('function');
     }
-  });
+  }, 60_000);
 
   it('table_lazyRoutes_loadTheComponentNamedForTheirPath', async () => {
     const expected: Record<string, string> = {
