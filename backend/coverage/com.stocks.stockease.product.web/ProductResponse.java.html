@@ -36,7 +36,7 @@ import com.stocks.stockease.product.Product;
 
     /** Both operands are non-null on persisted rows, but a half-built product must not blow up mapping. */
     private static BigDecimal totalValueOf(Product product) {
-<span class="pc bpc" id="L39" title="1 of 4 branches missed.">        if (product.getPurchasePrice() == null || product.getQuantity() == null) {</span>
+<span class="fc bfc" id="L39" title="All 4 branches covered.">        if (product.getPurchasePrice() == null || product.getQuantity() == null) {</span>
 <span class="fc" id="L40">            return null;</span>
         }
 <span class="fc" id="L42">        return product.getPurchasePrice().multiply(BigDecimal.valueOf(product.getQuantity()));</span>

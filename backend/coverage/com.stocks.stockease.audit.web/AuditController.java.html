@@ -80,7 +80,7 @@ public class AuditController {
      * shared exception handler already gives both the same 400 and the same message.
      */
     private static void validatePeriod(LocalDate from, LocalDate to) {
-<span class="pc bpc" id="L83" title="1 of 6 branches missed.">        if (from != null &amp;&amp; to != null &amp;&amp; from.isAfter(to)) {</span>
+<span class="fc bfc" id="L83" title="All 6 branches covered.">        if (from != null &amp;&amp; to != null &amp;&amp; from.isAfter(to)) {</span>
 <span class="fc" id="L84">            throw new IllegalArgumentException(&quot;The start of the period must not be after its end.&quot;);</span>
         }
 <span class="fc" id="L86">    }</span>

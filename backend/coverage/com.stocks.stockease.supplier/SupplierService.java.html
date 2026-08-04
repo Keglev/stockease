@@ -113,7 +113,7 @@ public class SupplierService {
 
     /** Rejects a missing or blank name or address with the shared message. */
     private static void requireNameAndAddress(String name, String address) {
-<span class="pc bpc" id="L116" title="2 of 8 branches missed.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
+<span class="fc bfc" id="L116" title="All 8 branches covered.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
 <span class="fc" id="L117">            throw new IllegalArgumentException(&quot;Supplier name and address are required.&quot;);</span>
         }
 <span class="fc" id="L119">    }</span>

@@ -42,7 +42,7 @@ public class JwtUtil {
      * @return compact signed JWT string
      */
     public String generateToken(String username, String role) {
-<span class="pc bpc" id="L45" title="1 of 4 branches missed.">        String bareRole = role != null &amp;&amp; role.startsWith(ROLE_PREFIX) ? role.substring(ROLE_PREFIX.length()) : role;</span>
+<span class="fc bfc" id="L45" title="All 4 branches covered.">        String bareRole = role != null &amp;&amp; role.startsWith(ROLE_PREFIX) ? role.substring(ROLE_PREFIX.length()) : role;</span>
 <span class="fc" id="L46">        return Jwts.builder()</span>
 <span class="fc" id="L47">                .subject(username)</span>
 <span class="fc" id="L48">                .claim(&quot;role&quot;, bareRole)</span>

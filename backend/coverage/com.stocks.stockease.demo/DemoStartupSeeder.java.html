@@ -38,7 +38,7 @@ public class DemoStartupSeeder {
         // counted in SQL, not through the product service: soft-deleted rows still make the demo
         // non-empty, and the service's queries hide them
 <span class="fc" id="L40">        Long products = jdbcTemplate.queryForObject(&quot;SELECT COUNT(*) FROM product&quot;, Long.class);</span>
-<span class="pc bpc" id="L41" title="1 of 4 branches missed.">        if (products != null &amp;&amp; products &gt; 0) {</span>
+<span class="fc bfc" id="L41" title="All 4 branches covered.">        if (products != null &amp;&amp; products &gt; 0) {</span>
 <span class="fc" id="L42">            log.info(&quot;Demo mode is on and the catalogue already holds {} products; skipping seeding.&quot;, products);</span>
 <span class="fc" id="L43">            return;</span>
         }

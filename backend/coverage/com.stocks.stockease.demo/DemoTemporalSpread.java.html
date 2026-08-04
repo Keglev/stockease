@@ -235,8 +235,8 @@ public class DemoTemporalSpread {
                 SELECT COUNT(*) FROM stock_movement WHERE created_at &gt; now()
                 &quot;&quot;&quot;);
 
-<span class="pc bpc" id="L238" title="3 of 6 branches missed.">        if (movementsBeforeTheirProduct &gt; 0 || paymentsBeforeTheirInvoice &gt; 0 || futureHistory &gt; 0) {</span>
-<span class="nc" id="L239">            throw new IllegalStateException(&quot;Demo temporal spread produced incoherent history: &quot;</span>
+<span class="fc bfc" id="L238" title="All 6 branches covered.">        if (movementsBeforeTheirProduct &gt; 0 || paymentsBeforeTheirInvoice &gt; 0 || futureHistory &gt; 0) {</span>
+<span class="fc" id="L239">            throw new IllegalStateException(&quot;Demo temporal spread produced incoherent history: &quot;</span>
                     + movementsBeforeTheirProduct + &quot; movement(s) predate their product, &quot;
                     + paymentsBeforeTheirInvoice + &quot; payment(s) predate their invoice, &quot;
                     + futureHistory + &quot; movement(s) are dated in the future.&quot;);
@@ -245,7 +245,7 @@ public class DemoTemporalSpread {
 
     private long count(String sql) {
 <span class="fc" id="L247">        Long rows = jdbcTemplate.queryForObject(sql, Long.class);</span>
-<span class="pc bpc" id="L248" title="1 of 2 branches missed.">        return rows == null ? 0L : rows;</span>
+<span class="fc bfc" id="L248" title="All 2 branches covered.">        return rows == null ? 0L : rows;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

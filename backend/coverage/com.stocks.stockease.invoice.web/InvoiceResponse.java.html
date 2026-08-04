@@ -41,10 +41,10 @@ import com.stocks.stockease.invoice.InvoiceType;
     public static InvoiceResponse from(Invoice invoice) {
 <span class="fc" id="L42">        return new InvoiceResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),</span>
 <span class="fc" id="L43">                invoice.getStatus(), invoice.getDueDate(),</span>
-<span class="pc bpc" id="L44" title="1 of 2 branches missed.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
-<span class="pc bpc" id="L45" title="1 of 2 branches missed.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getName(),</span>
-<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
-<span class="pc bpc" id="L47" title="1 of 2 branches missed.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getName(),</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getName(),</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getName(),</span>
 <span class="fc" id="L48">                invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt(),</span>
 <span class="fc" id="L49">                invoice.getItems().stream().map(InvoiceItemResponse::from).toList());</span>
     }

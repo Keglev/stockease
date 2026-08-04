@@ -60,7 +60,7 @@ public class DemoResetController {
      */
     private boolean tokenMatches(String token) {
 <span class="fc" id="L62">        String expected = demoProperties.resetToken();</span>
-<span class="pc bpc" id="L63" title="2 of 6 branches missed.">        if (token == null || expected == null || expected.isBlank()) {</span>
+<span class="fc bfc" id="L63" title="All 6 branches covered.">        if (token == null || expected == null || expected.isBlank()) {</span>
 <span class="fc" id="L64">            return false;</span>
         }
 <span class="fc" id="L66">        return MessageDigest.isEqual(token.getBytes(StandardCharsets.UTF_8),</span>
