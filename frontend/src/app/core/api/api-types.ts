@@ -224,16 +224,31 @@ export interface paths {
         };
         /**
          * Search products by name
-         * @description Case-insensitive substring search over live products, built for the typeahead pickers: results
-         *     are alphabetical and capped at 20, and soft-deleted products are excluded because the list
-         *     exists to be picked from. For example, searching "apple" returns products like "Apple Juice",
-         *     "APPLE" and "Green Apple".
+         * @description Token search over live products, built for the typeahead pickers: results are alphabetical and
+         *     capped at 20, and soft-deleted products are excluded because the list exists to be picked from.
+         *
+         *     `name` is split on whitespace and **every** token must match, case-insensitively, as a substring
+         *     of the product's name **or** its SKU. Tokens may come in any order. So "dru pap" finds
+         *     "Druckerpapier A4", "BUE" finds it by SKU, and "pap BUE" finds it by one of each. A term whose
+         *     tokens do not all match returns nothing - the words are read as a conjunction, because they are
+         *     all things the caller meant.
+         *
+         *     A **blank or whitespace-only `name` matches everything** and returns the first 20 products
+         *     alphabetically. This is what the client's pickers browse when focused and empty, and it is what
+         *     this endpoint already did before it was stated.
          *
          *     Nothing matching returns **200 with an empty array**.
          *
          *     The cap is not pagination. A term that matches more than twenty products is a term to narrow.
          *
-         *     Omitting `name` is a 400 naming the missing parameter, not a 500.
+         *     Omitting `name` altogether is a 400 naming the missing parameter, not a 500; sending it empty is
+         *     the browse case above.
+         *
+         *     **Changed in 2.22.0.** Matching was previously one case-insensitive substring test against the
+         *     name alone, so a caller had to type a product's words in the order the catalogue recorded them
+         *     and could not search by SKU. Every term that matched before still matches - a single token
+         *     against the name is the same query it was - so this widens the result set rather than narrowing
+         *     it. ADR 035 records the change and partially supersedes ADR 028's matching rule.
          *
          *     **Changed in 2.16.0.** This endpoint previously answered 204 with a body on no matches and
          *     applied no cap or ordering, and omitting `name` produced a 500. It now carries the same contract
@@ -362,9 +377,17 @@ export interface paths {
         };
         /**
          * Search suppliers by name
-         * @description Case-insensitive substring search over live suppliers, built for the typeahead pickers: results
-         *     are alphabetical and capped at 20, and soft-deleted suppliers are excluded because the list
-         *     exists to be picked from.
+         * @description Token search over live suppliers, built for the typeahead pickers: results are alphabetical and
+         *     capped at 20, and soft-deleted suppliers are excluded because the list exists to be picked from.
+         *
+         *     `name` is split on whitespace and **every** token must match, case-insensitively, as a substring
+         *     of the supplier's name, in any order - so "nor tra" finds "North Trading". Matching is against
+         *     the **name only**, unlike `GET /api/products/search`, which also matches a SKU: a supplier has
+         *     no second identifier worth searching, and its address is not one.
+         *
+         *     A **blank or whitespace-only `name` matches everything** and returns the first 20 suppliers
+         *     alphabetically. This is what the client's pickers browse when focused and empty, and it is what
+         *     this endpoint already did before it was stated.
          *
          *     Nothing matching returns **200 with an empty array**. `GET /api/products/search` predated this
          *     contract and answered 204 with a body; ADR 028 records why this endpoint diverged rather than
@@ -372,7 +395,11 @@ export interface paths {
          *     behave alike.
          *
          *     The cap is not pagination. A term that matches more than twenty suppliers is a term to narrow,
-         *     which is why the client requires three characters before it asks at all.
+         *     which is why the client requires three characters before it asks about a typed term at all - the
+         *     blank browse above is the one case it sends without them.
+         *
+         *     **Changed in 2.22.0.** Matching was previously one case-insensitive substring test against the
+         *     whole term. Every term that matched before still matches. ADR 035 records the change.
          */
         get: operations["searchSuppliersByName"];
         put?: never;
@@ -801,10 +828,21 @@ export interface paths {
         };
         /**
          * Search the products one supplier has sold this business
-         * @description Case-insensitive substring search over the distinct products reachable from that supplier's
-         *     non-deleted, closed purchase invoices. There is no supplier column on a product: a product is a
-         *     supplier's because that supplier was invoiced for it, and since stock enters only through closed
-         *     purchase invoices (ADR 021), every stocked product is reachable this way.
+         * @description Token search over the distinct products reachable from that supplier's non-deleted, closed
+         *     purchase invoices. There is no supplier column on a product: a product is a supplier's because
+         *     that supplier was invoiced for it, and since stock enters only through closed purchase invoices
+         *     (ADR 021), every stocked product is reachable this way.
+         *
+         *     `name` is split on whitespace and **every** token must match, case-insensitively, as a substring
+         *     of the product's name **or** its SKU, in any order - the same rule
+         *     `GET /api/products/search` applies, because a reader has no way to tell which of the two pickers
+         *     on a screen is the scoped one and both must answer alike.
+         *
+         *     A **blank or whitespace-only `name` matches everything this supplier has sold** and returns the
+         *     first 20 of them alphabetically. Browsing stays scoped: it is this supplier's catalogue, never
+         *     the whole one. This is what the client's picker shows when focused and empty, and it is the case
+         *     ADR 035 was written for - a picker with a supplier already chosen that rendered nothing until
+         *     typed into read as broken.
          *
          *     A product bought from two suppliers answers under both. That is correct rather than a duplicate
          *     to resolve - both suppliers really did sell it to us - and repeat purchases of one product from
@@ -820,6 +858,9 @@ export interface paths {
          *     the reporting module's - the linkage is drawn through the purchase ledger, which the supplier
          *     module cannot read - even though what it describes is a supplier's catalogue. The same reasoning
          *     placed the customer summary here.
+         *
+         *     **Changed in 2.22.0.** Matching was previously one case-insensitive substring test against the
+         *     product name alone. Every term that matched before still matches. ADR 035 records the change.
          */
         get: operations["supplierProducts"];
         put?: never;
@@ -2719,7 +2760,7 @@ export interface operations {
     searchProductsByName: {
         parameters: {
             query: {
-                /** @description Search term (substring, case-insensitive) */
+                /** @description Search term. Split on whitespace; every token must match the name or the SKU, case-insensitively, in any order. Blank browses the first capped page. */
                 name: string;
             };
             header?: never;
@@ -3181,7 +3222,7 @@ export interface operations {
     searchSuppliersByName: {
         parameters: {
             query: {
-                /** @description Search term (substring, case-insensitive) */
+                /** @description Search term. Split on whitespace; every token must match the supplier's name, case-insensitively, in any order. Blank browses the first capped page. */
                 name: string;
             };
             header?: never;
@@ -4488,7 +4529,7 @@ export interface operations {
     supplierProducts: {
         parameters: {
             query: {
-                /** @description Search term (substring, case-insensitive) */
+                /** @description Search term. Split on whitespace; every token must match the name or the SKU, case-insensitively, in any order. Blank browses this supplier's first capped page. */
                 name: string;
             };
             header?: never;

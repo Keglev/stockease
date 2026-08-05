@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.shared.SearchLimits;
+import com.stocks.stockease.shared.SearchTerms;
+import com.stocks.stockease.shared.TokenSearchSpec;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -46,14 +48,24 @@ public class SupplierService {
     }
 
     /**
-     * Searches live suppliers by a case-insensitive substring match on name, capped for typeahead use.
+     * Searches live suppliers for the typeahead, matching every token of {@code term} against the
+     * name (ADR 035).
      *
-     * @param name search substring
+     * <p>Name only, unlike the product search: a supplier has no SKU or any other second identifier
+     * worth matching, so there is nothing for a token to fall back to. Multi-token matching still
+     * applies - "nor tra" finds "North Trading" - because a reader typing into two pickers on one
+     * screen should not have to remember which of them tolerates word order.
+     *
+     * <p>A blank term matches everything and answers the first capped page alphabetically, which is
+     * what a focused, empty picker browses.
+     *
+     * @param term search term, whitespace-separated; may be blank
      * @return matching suppliers, alphabetical, at most {@link SearchLimits#TYPEAHEAD_LIMIT} of them
      */
-    public List<Supplier> searchByName(String name) {
-        return supplierRepository.findByNameContainingIgnoreCaseOrderByNameAsc(
-                name, Limit.of(SearchLimits.TYPEAHEAD_LIMIT));
+    public List<Supplier> searchByName(String term) {
+        return supplierRepository.findAll(
+                TokenSearchSpec.<Supplier>matchingAllTokens(SearchTerms.tokenize(term), "name"),
+                TokenSearchSpec.capped("name")).getContent();
     }
 
     /**

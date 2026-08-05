@@ -165,4 +165,81 @@ class SupplierProductsIntegrationTest extends AbstractIntegrationTest {
     void supplierProducts_unknownSupplier_returnsEmptyOptional() {
         assertThat(reportingService.supplierProducts(999_999L, "anything")).isEmpty();
     }
+
+    @Test
+    void supplierProducts_tokensInEitherOrder_matchTheSameProduct() {
+        String token = "SPTokens" + SEQ.incrementAndGet();
+        Supplier supplier = newSupplier(token + " Supplier");
+        Product paper = newProduct(token + " Druckerpapier A4");
+        bought(supplier, paper, 5);
+        bought(supplier, newProduct(token + " Gadget"), 5);
+
+        // The scoped picker answers exactly as the catalogue-wide one does (ADR 035): a reader has
+        // no way to tell which of the two they are typing into.
+        assertThat(namesFor(supplier.getId(), token + " dru pap")).containsExactly(paper.getName());
+        assertThat(namesFor(supplier.getId(), "pap " + token + " dru")).containsExactly(paper.getName());
+    }
+
+    @Test
+    void supplierProducts_tokenMatchingOnlyTheSku_findsTheProduct() {
+        String token = "SPSku" + SEQ.incrementAndGet();
+        Supplier supplier = newSupplier(token + " Supplier");
+        Product product = productService.create(token + " Druckerpapier A4", token + "-BUE-1", 5.0);
+        bought(supplier, product, 5);
+        bought(supplier, newProduct(token + " Gadget"), 5);
+
+        assertThat(namesFor(supplier.getId(), (token + "-BUE-1").toLowerCase()))
+                .containsExactly(product.getName());
+    }
+
+    @Test
+    void supplierProducts_oneTokenMatchingNothing_returnsEmpty() {
+        String token = "SPMiss" + SEQ.incrementAndGet();
+        Supplier supplier = newSupplier(token + " Supplier");
+        bought(supplier, newProduct(token + " Druckerpapier A4"), 5);
+
+        // AND across tokens, as everywhere else.
+        assertThat(namesFor(supplier.getId(), token + " dru zzznope")).isEmpty();
+    }
+
+    @Test
+    void supplierProducts_blankTerm_returnsThisSuppliersProductsAlphabetically() {
+        String token = "SPBrowse" + SEQ.incrementAndGet();
+        Supplier supplier = newSupplier(token + " Supplier");
+        // Created out of order, so the ordering asserted is the query's rather than the fixture's.
+        bought(supplier, newProduct(token + " Widget"), 5);
+        bought(supplier, newProduct(token + " Gadget"), 5);
+
+        // The ergonomic finding that motivated ADR 035: before browse-on-focus, this picker had a
+        // supplier chosen and still rendered nothing until typed into, which reads as broken.
+        List<String> browsed = namesFor(supplier.getId(), "");
+
+        assertThat(browsed).containsExactly(token + " Gadget", token + " Widget");
+    }
+
+    @Test
+    void supplierProducts_blankTerm_staysScopedToTheSupplier() {
+        String token = "SPBrowseScope" + SEQ.incrementAndGet();
+        Supplier mine = newSupplier(token + " Mine");
+        Supplier other = newSupplier(token + " Other");
+        Product ours = newProduct(token + " Ours");
+        bought(mine, ours, 5);
+        bought(other, newProduct(token + " Theirs"), 5);
+
+        // Browsing is not a catalogue dump: an empty term still answers within the supplier.
+        assertThat(namesFor(mine.getId(), "")).containsExactly(ours.getName());
+    }
+
+    @Test
+    void supplierProducts_softDeletedProduct_isStillExcludedUnderTokenMatching() {
+        String token = "SPRetired" + SEQ.incrementAndGet();
+        Supplier supplier = newSupplier(token + " Supplier");
+        Product live = newProduct(token + " Live Widget");
+        Product retired = newProduct(token + " Retired Widget");
+        bought(supplier, live, 5);
+        bought(supplier, retired, 5);
+        jdbcTemplate.update("UPDATE product SET deleted_at = now() WHERE id = ?", retired.getId());
+
+        assertThat(namesFor(supplier.getId(), token + " widget")).containsExactly(live.getName());
+    }
 }

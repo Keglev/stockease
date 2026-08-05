@@ -3,9 +3,8 @@ package com.stocks.stockease.product.internal;
 import java.util.List;
 
 import java.util.Optional;
-
-import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +16,7 @@ import jakarta.persistence.LockModeType;
 /**
  * Spring Data JPA repository for {@link Product} entities, providing inventory queries and aggregate calculations.
  */
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
     /**
      * Returns products that have ever held stock and whose quantity has since fallen below
@@ -38,18 +37,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p ORDER BY p.id ASC")
     List<Product> findAllOrderById();
 
-    /**
-     * Returns live products whose name contains {@code name} as a case-insensitive substring,
-     * alphabetically and capped for typeahead use. Ordering is part of the contract rather than a
-     * nicety: the cap decides which matches a caller sees at all, and an unordered LIMIT would hand
-     * the same search different rows on different runs. The entity's {@code @SQLRestriction} keeps
-     * soft-deleted rows out.
-     *
-     * @param name search substring (case-insensitive)
-     * @param limit maximum rows to return
-     * @return matching live products, name-ascending, at most {@code limit} of them
-     */
-    List<Product> findByNameContainingIgnoreCaseOrderByNameAsc(String name, Limit limit);
+    // The typeahead search is no longer a derived query. It matches a VARIABLE number of tokens,
+    // every one of which must hit the name or the SKU (ADR 035), and no method name can express
+    // that - so it is built as a Specification in ProductService and executed through
+    // JpaSpecificationExecutor below. Native SQL would have expressed it too, and was rejected:
+    // @SQLRestriction is a mapping-level filter that native queries bypass, which would have
+    // silently dropped the soft-delete exclusion this search's whole contract rests on.
 
     /**
      * Reports whether a live product already carries {@code name}, ignoring case; the entity's

@@ -19,7 +19,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 
-/** Characters required before anything is sent. Below this a search matches most of the table. */
+/**
+ * Characters required before a TYPED term is sent. Below this a search matches most of the table.
+ *
+ * <p>It does not apply to the empty field, which is not a short search but a different question
+ * (ADR 035): "what is there?" rather than "which of these did I mean?". Focusing an empty field
+ * browses the first capped page, and that is the one term sent without reaching this minimum.
+ */
 export const TYPEAHEAD_MIN_CHARS = 3;
 
 /** Quiet period a typist must leave before the request goes out. */
@@ -94,7 +100,9 @@ export class TypeaheadComponent<T> {
         // answer to it is already on screen.
         distinctUntilChanged(),
         switchMap((term) => {
-          if (term.length < TYPEAHEAD_MIN_CHARS) {
+          // The empty term goes through: it is the browse ADR 035 added, and the minimum is a rule
+          // about typed terms. Everything between one character and the minimum is still refused.
+          if (term.length > 0 && term.length < TYPEAHEAD_MIN_CHARS) {
             this.searching.set(false);
             return of<T[]>([]);
           }
@@ -123,6 +131,28 @@ export class TypeaheadComponent<T> {
         this.options.set(rows);
         this.searching.set(false);
       });
+  }
+
+  /**
+   * Browses on focus: an empty, unchosen field asks what there is (ADR 035).
+   *
+   * <p>The ergonomic finding this closes: the supplier-scoped product picker had a supplier chosen
+   * and still rendered nothing until typed into, which reads as broken rather than as waiting.
+   *
+   * <p>Nothing is sent once a row is chosen - the field then names the caller's selection, and
+   * re-opening it to browse would suggest that selection is in doubt. A field with a term in it is
+   * left alone too: the answer to that term is already on screen.
+   *
+   * <p>Bound to `focusin` rather than `focus`, which is what MatAutocomplete's own trigger listens
+   * for and what a spec can dispatch on a rendered input.
+   *
+   * <p>The emission goes through the same debounced pipeline as a keystroke, so focusing and
+   * immediately typing produces one request carrying the typed term rather than two.
+   */
+  protected onFocus(): void {
+    if (this.chosen() === null && this.term().length === 0) {
+      this.terms.next('');
+    }
   }
 
   protected onInput(value: string): void {

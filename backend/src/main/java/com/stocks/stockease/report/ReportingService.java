@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.shared.SearchLimits;
+import com.stocks.stockease.shared.SearchTerms;
 
 import lombok.RequiredArgsConstructor;
 
@@ -133,7 +134,23 @@ public class ReportingService {
               AND i.invoice_type = 'PURCHASE'
               AND i.deleted_at IS NULL
               AND p.deleted_at IS NULL
-              AND p.name ILIKE '%' || :name || '%'
+            """;
+
+    /**
+     * One token's predicate, appended once per word the reader typed (ADR 035).
+     *
+     * <p>Built by concatenation because the SHAPE of the predicate depends on the term, which no
+     * static query can express - but only the placeholder NAME is concatenated. Every value is still
+     * bound, so a term is data here exactly as it was when it was one parameter.
+     *
+     * <p>Name OR SKU, matching the catalogue-wide product search. The two pickers sit on the same
+     * screens and a reader has no way to tell which one is scoped, so they must answer the same way.
+     */
+    private static final String SUPPLIER_PRODUCT_TOKEN = """
+              AND (p.name ILIKE '%%' || :%1$s || '%%' OR p.sku ILIKE '%%' || :%1$s || '%%')
+            """;
+
+    private static final String SUPPLIER_PRODUCT_ORDER = """
             ORDER BY p.name
             LIMIT :limit
             """;
@@ -663,12 +680,17 @@ public class ReportingService {
      * See {@link #SUPPLIER_PRODUCT_SEARCH} for how the linkage is drawn and why a product bought from
      * two suppliers answers under both.
      *
+     * <p>Every token of {@code term} must match the product's name or SKU, in any order (ADR 035),
+     * exactly as the catalogue-wide search matches. A blank term matches everything the supplier has
+     * sold, so it answers the first capped page alphabetically - which is what a focused, empty
+     * picker browses, and the reason this endpoint no longer looks broken before it is typed into.
+     *
      * @param supplierId supplier identifier
-     * @param name search substring (case-insensitive)
+     * @param term search term, whitespace-separated; may be blank
      * @return the supplier's matching products, alphabetical, capped for typeahead use; empty if the
      *         supplier has bought nothing matching, or empty optional if no such live supplier exists
      */
-    public Optional<List<SupplierProduct>> supplierProducts(long supplierId, String name) {
+    public Optional<List<SupplierProduct>> supplierProducts(long supplierId, String term) {
         // Mapped-query semantics on purpose, unlike the product check above: this list is a picker,
         // and a soft-deleted supplier is not one to start a new enquiry against.
         Integer found = jdbcClient.sql("SELECT 1 FROM supplier WHERE id = :id AND deleted_at IS NULL")
@@ -679,11 +701,20 @@ public class ReportingService {
         if (found == null) {
             return Optional.empty();
         }
-        return Optional.of(jdbcClient.sql(SUPPLIER_PRODUCT_SEARCH)
+
+        List<String> tokens = SearchTerms.tokenize(term);
+        StringBuilder sql = new StringBuilder(SUPPLIER_PRODUCT_SEARCH);
+        for (int i = 0; i < tokens.size(); i++) {
+            sql.append(SUPPLIER_PRODUCT_TOKEN.formatted("token" + i));
+        }
+        sql.append(SUPPLIER_PRODUCT_ORDER);
+
+        var statement = jdbcClient.sql(sql.toString())
                 .param("supplierId", supplierId)
-                .param("name", name)
-                .param("limit", SearchLimits.TYPEAHEAD_LIMIT)
-                .query(SUPPLIER_PRODUCT_MAPPER)
-                .list());
+                .param("limit", SearchLimits.TYPEAHEAD_LIMIT);
+        for (int i = 0; i < tokens.size(); i++) {
+            statement = statement.param("token" + i, tokens.get(i));
+        }
+        return Optional.of(statement.query(SUPPLIER_PRODUCT_MAPPER).list());
     }
 }

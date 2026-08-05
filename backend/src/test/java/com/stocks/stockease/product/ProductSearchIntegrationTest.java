@@ -85,6 +85,86 @@ class ProductSearchIntegrationTest extends AbstractIntegrationTest {
         assertThat(productService.searchByName(token() + " nothing matches this")).isEmpty();
     }
 
+    @Test
+    void searchByName_tokensInEitherOrder_matchTheSameProduct() {
+        String token = token();
+        String name = token + " Druckerpapier A4";
+        productService.create(name, token + "-SKU-1", 5.0);
+
+        // The finding this slice is about: a reader typing two fragments should not have to guess
+        // the order the catalogue happens to record them in.
+        assertThat(names(token + " dru pap")).containsExactly(name);
+        assertThat(names("pap dru " + token)).containsExactly(name);
+    }
+
+    @Test
+    void searchByName_tokenMatchingOnlyTheSku_findsTheProduct() {
+        String token = token();
+        String sku = token + "-BUE-1";
+        String name = token + " Druckerpapier A4";
+        productService.create(name, sku, 5.0);
+
+        // Name OR SKU per token, which is what lets a reader search by the code on a shelf label.
+        assertThat(names(sku.toLowerCase())).containsExactly(name);
+        // And the two fields mix freely within one term: one token off the name, one off the SKU.
+        assertThat(names("pap " + sku)).containsExactly(name);
+    }
+
+    @Test
+    void searchByName_oneTokenMatchingNothing_returnsEmpty() {
+        String token = token();
+        productService.create(token + " Druckerpapier A4", token + "-SKU-1", 5.0);
+
+        // AND, not OR: a term is every word the reader meant, so one miss is a miss.
+        assertThat(productService.searchByName(token + " dru zzznope")).isEmpty();
+    }
+
+    @Test
+    void searchByName_tokenSpanningNameAndSku_doesNotMatch() {
+        String token = token();
+        productService.create(token + " Widget", token + "-SKU-1", 5.0);
+
+        // A token is matched against each field on its own, never against the pair concatenated -
+        // so a fragment that only exists across the boundary is not a match.
+        assertThat(productService.searchByName("Widget" + token + "-SKU")).isEmpty();
+    }
+
+    @Test
+    void searchByName_blankTerm_returnsTheFirstCapAlphabetically() {
+        String token = token();
+        productService.create(token + " Browsable", token + "-SKU-1", 5.0);
+
+        // Browse-on-focus rides on this. Measured on main before the change: the endpoint already
+        // did it, because LIKE '%%' matches every row - so ADR 035 states an existing behaviour
+        // rather than changing one, and this is the spec that stops it regressing.
+        List<Product> found = productService.searchByName("");
+
+        assertThat(found).isNotEmpty().hasSizeLessThanOrEqualTo(SearchLimits.TYPEAHEAD_LIMIT);
+        assertThat(found).extracting(Product::getName).isSortedAccordingTo(String::compareTo);
+    }
+
+    @Test
+    void searchByName_whitespaceOnlyTerm_behavesLikeBlank() {
+        assertThat(names("   ")).isEqualTo(names(""));
+    }
+
+    @Test
+    void searchByName_softDeletedProduct_isStillExcludedUnderTokenMatching() {
+        String token = token();
+        Product live = productService.create(token + " Live Widget", token + "-SKU-L", 5.0);
+        Product retired = productService.create(token + " Retired Widget", token + "-SKU-R", 5.0);
+        productService.deleteById(retired.getId(), searcher());
+
+        // The reason the matching is a Specification and not native SQL: @SQLRestriction is a
+        // mapping-level filter, and a native query would bypass it and offer a retired product.
+        assertThat(productService.searchByName(token + " widget"))
+                .extracting(Product::getId).containsExactly(live.getId());
+    }
+
+    private List<String> names(String term) {
+        return productService.searchByName(term).stream().map(Product::getName).toList();
+    }
+
     /** The delete path records a user, so the soft-delete case needs one to exist. */
     private User searcher() {
         return userRepository.findByUsername("product-search-tester")

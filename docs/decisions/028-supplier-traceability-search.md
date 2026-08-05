@@ -1,7 +1,7 @@
 # ADR 028: Search-First Navigation and Supplier-Scoped Product Discovery
 
 **Scope**: [Cross-cutting]
-**Status**: Accepted
+**Status**: Accepted; partially superseded by ADR 035 (token matching, blank-term browse)
 **Date**: August 3, 2026
 
 ---

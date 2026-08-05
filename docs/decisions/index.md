@@ -46,5 +46,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 032 - Idle Sign-Out Is a Client Concern, With a Warning](032-client-side-idle-logout.md) - **[Cross-cutting]**
 - [ADR 033 - Invoice Documents Snapshot Their Party Names](033-invoice-party-name-snapshots.md) - **[Cross-cutting]**
 - [ADR 034 - No Forced Password Expiry](034-no-password-expiry.md) - **[Cross-cutting]**
+- [ADR 035 - Search Matches Tokens, and an Empty Picker Browses](035-search-token-matching-and-browse.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

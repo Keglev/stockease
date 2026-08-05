@@ -1,9 +1,17 @@
 get:
   summary: Search suppliers by name
   description: |
-    Case-insensitive substring search over live suppliers, built for the typeahead pickers: results
-    are alphabetical and capped at 20, and soft-deleted suppliers are excluded because the list
-    exists to be picked from.
+    Token search over live suppliers, built for the typeahead pickers: results are alphabetical and
+    capped at 20, and soft-deleted suppliers are excluded because the list exists to be picked from.
+
+    `name` is split on whitespace and **every** token must match, case-insensitively, as a substring
+    of the supplier's name, in any order - so "nor tra" finds "North Trading". Matching is against
+    the **name only**, unlike `GET /api/products/search`, which also matches a SKU: a supplier has
+    no second identifier worth searching, and its address is not one.
+
+    A **blank or whitespace-only `name` matches everything** and returns the first 20 suppliers
+    alphabetically. This is what the client's pickers browse when focused and empty, and it is what
+    this endpoint already did before it was stated.
 
     Nothing matching returns **200 with an empty array**. `GET /api/products/search` predated this
     contract and answered 204 with a body; ADR 028 records why this endpoint diverged rather than
@@ -11,7 +19,11 @@ get:
     behave alike.
 
     The cap is not pagination. A term that matches more than twenty suppliers is a term to narrow,
-    which is why the client requires three characters before it asks at all.
+    which is why the client requires three characters before it asks about a typed term at all - the
+    blank browse above is the one case it sends without them.
+
+    **Changed in 2.22.0.** Matching was previously one case-insensitive substring test against the
+    whole term. Every term that matched before still matches. ADR 035 records the change.
   operationId: searchSuppliersByName
   tags:
     - Suppliers
@@ -21,10 +33,12 @@ get:
     - name: name
       in: query
       required: true
-      description: Search term (substring, case-insensitive)
+      description: >
+        Search term. Split on whitespace; every token must match the supplier's name,
+        case-insensitively, in any order. Blank browses the first capped page.
       schema:
         type: string
-        example: acme
+        example: nor tra
   responses:
     '200':
       description: Matching suppliers, empty if none match (ROLE_USER or ROLE_ADMIN)

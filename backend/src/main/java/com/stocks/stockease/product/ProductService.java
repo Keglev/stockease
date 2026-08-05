@@ -18,6 +18,8 @@ import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.SearchLimits;
+import com.stocks.stockease.shared.SearchTerms;
+import com.stocks.stockease.shared.TokenSearchSpec;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -197,16 +199,24 @@ public class ProductService {
     }
 
     /**
-     * Searches live products by a case-insensitive substring match on name, capped for typeahead use.
-     * Same contract as the supplier and supplier-product searches (ADR 028): alphabetical, soft-deleted
-     * rows excluded, at most {@link SearchLimits#TYPEAHEAD_LIMIT} rows.
+     * Searches live products for the typeahead, matching every token of {@code term} against the
+     * name or the SKU (ADR 035).
      *
-     * @param name search substring
+     * <p>The term is split on whitespace and every word must hit one of the two fields, in any
+     * order: "dru pap" finds "Druckerpapier A4" and "BUE" finds it by SKU. A blank term matches
+     * everything, so it answers the first capped page alphabetically - which is what a focused,
+     * empty picker browses.
+     *
+     * <p>The rest of the ADR 028 contract is unchanged: alphabetical, soft-deleted rows excluded,
+     * at most {@link SearchLimits#TYPEAHEAD_LIMIT} rows, no match is an empty list.
+     *
+     * @param term search term, whitespace-separated; may be blank
      * @return matching products, alphabetical, at most {@link SearchLimits#TYPEAHEAD_LIMIT} of them
      */
-    public List<Product> searchByName(String name) {
-        return productRepository.findByNameContainingIgnoreCaseOrderByNameAsc(
-                name, Limit.of(SearchLimits.TYPEAHEAD_LIMIT));
+    public List<Product> searchByName(String term) {
+        return productRepository.findAll(
+                TokenSearchSpec.<Product>matchingAllTokens(SearchTerms.tokenize(term), "name", "sku"),
+                TokenSearchSpec.capped("name")).getContent();
     }
 
     /**

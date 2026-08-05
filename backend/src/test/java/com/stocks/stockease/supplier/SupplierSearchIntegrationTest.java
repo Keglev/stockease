@@ -76,4 +76,55 @@ class SupplierSearchIntegrationTest extends AbstractIntegrationTest {
     void searchByName_nothingMatching_returnsEmpty() {
         assertThat(supplierService.searchByName(token() + " nothing matches this")).isEmpty();
     }
+
+    @Test
+    void searchByName_tokensInEitherOrder_matchTheSameSupplier() {
+        String token = token();
+        String name = "North " + token + " Trading";
+        supplierService.create(name, null, null, "1 Main St", null);
+
+        // Multi-token applies here too, for consistency: a reader typing into two pickers on one
+        // screen should not have to remember which of them tolerates word order (ADR 035).
+        assertThat(names("nor " + token)).containsExactly(name);
+        assertThat(names(token + " tra nor")).containsExactly(name);
+    }
+
+    @Test
+    void searchByName_oneTokenMatchingNothing_returnsEmpty() {
+        String token = token();
+        supplierService.create("North " + token + " Trading", null, null, "1 Main St", null);
+
+        assertThat(supplierService.searchByName(token + " zzznope")).isEmpty();
+    }
+
+    @Test
+    void searchByName_tokenMatchingOnlyTheAddress_doesNotMatch() {
+        String token = token();
+        supplierService.create(token + " Trading", null, null, "1 Zzmainstreet", null);
+
+        // Name only, unlike the product search: a supplier has no second identifier worth matching,
+        // and its address is not one - a picker that answered on address would surprise.
+        assertThat(supplierService.searchByName("Zzmainstreet")).isEmpty();
+    }
+
+    @Test
+    void searchByName_blankTerm_returnsTheFirstCapAlphabetically() {
+        String token = token();
+        supplierService.create(token + " Browsable", null, null, "1 Main St", null);
+
+        // Browse-on-focus rides on this; measured on main as already true, now stated and pinned.
+        List<Supplier> found = supplierService.searchByName("");
+
+        assertThat(found).isNotEmpty().hasSizeLessThanOrEqualTo(SearchLimits.TYPEAHEAD_LIMIT);
+        assertThat(found).extracting(Supplier::getName).isSortedAccordingTo(String::compareTo);
+    }
+
+    @Test
+    void searchByName_whitespaceOnlyTerm_behavesLikeBlank() {
+        assertThat(names("   ")).isEqualTo(names(""));
+    }
+
+    private List<String> names(String term) {
+        return supplierService.searchByName(term).stream().map(Supplier::getName).toList();
+    }
 }

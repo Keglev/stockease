@@ -69,6 +69,94 @@ describe('TypeaheadComponent', () => {
     fixture.detectChanges();
   }
 
+  /**
+   * Focuses the rendered input and lets the debounce elapse, with no keystroke after it.
+   *
+   * <p>`focusin` rather than `focus`: it is what MatAutocomplete's own trigger listens for, and the
+   * one an Event dispatched on a rendered input actually delivers.
+   */
+  function focus(waitMs = 300): void {
+    input().dispatchEvent(new Event('focusin'));
+    vi.advanceTimersByTime(waitMs);
+    fixture.detectChanges();
+  }
+
+  it('focus_emptyField_browsesWithTheEmptyTerm', () => {
+    focus();
+
+    // ADR 035's browse: an empty field asks what there is, which is a different question from a
+    // short typed term - so the minimum does not apply and the endpoint answers its capped page.
+    expect(terms).toEqual(['']);
+    expect(optionLabels()).toEqual(['Acme']);
+  });
+
+  it('focus_thenTypingBelowTheMinimum_stopsSearchingAgain', () => {
+    focus();
+    expect(terms).toEqual(['']);
+
+    type('ac');
+
+    // The minimum still governs typed terms: browsing does not switch it off for the session.
+    expect(terms).toEqual(['']);
+  });
+
+  it('focus_fieldAlreadyCarryingATerm_sendsNothingFurther', () => {
+    type('acm');
+
+    input().dispatchEvent(new Event('focusin'));
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+
+    // The answer to that term is already on screen; re-asking on every focus would be noise.
+    expect(terms).toEqual(['acm']);
+  });
+
+  it('focus_afterARowIsChosen_doesNotBrowse', () => {
+    type('acm');
+    optionAt(0).click();
+    fixture.detectChanges();
+
+    input().dispatchEvent(new Event('focusin'));
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+
+    // The field names the caller's selection; browsing over it would suggest it is in doubt.
+    expect(terms).toEqual(['acm']);
+  });
+
+  it('focus_afterClearing_browsesAgain', () => {
+    type('acm');
+    clearButton().click();
+    fixture.detectChanges();
+
+    focus();
+
+    // Clearing puts the field back to empty and unchosen, which is the browsable state.
+    expect(terms).toEqual(['acm', '']);
+  });
+
+  it('focus_thenImmediateTyping_sendsOneRequestCarryingTheTypedTerm', () => {
+    // The browse rides the same debounced pipeline as a keystroke, so a user who focuses and types
+    // straight away asks once - for what they typed, not for the empty page they passed through.
+    type('acm');
+
+    expect(terms).toEqual(['acm']);
+  });
+
+  it('panel_moreRowsThanFit_scrollsInsideItself', () => {
+    result = of(Array.from({ length: 20 }, (unused, index) => ({ name: `Row ${index}` })));
+
+    focus();
+
+    // Measured rather than added: Material ships max-height 256px with overflow:auto on
+    // div.mat-mdc-autocomplete-panel, so a full capped page already scrolls in the panel and this
+    // component adds no CSS of its own. Read from the live panel element's computed style.
+    const panel = document.querySelector<HTMLElement>('div.mat-mdc-autocomplete-panel')!;
+    const style = getComputedStyle(panel);
+    expect(style.maxHeight).toBe('256px');
+    expect(style.overflow).toBe('auto');
+  });
+
   it('typeahead_underThreeChars_sendsNothing', () => {
     type('ac');
 
