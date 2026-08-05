@@ -1,4 +1,5 @@
 @use '../../../../styles/status-chips' as chips;
+@use '../../../../styles/table-scroll' as scroll;
 
 @include chips.invoice-status-chips;
 
@@ -71,4 +72,10 @@
   justify-content: flex-end;
   margin: 1rem 0;
   font: var(--mat-sys-title-medium);
+}
+
+
+// Every table on this page scrolls inside its own wrapper rather than widening the page.
+.table-scroll {
+  @include scroll.table-scroll;
 }

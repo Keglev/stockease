@@ -500,6 +500,19 @@ describe('InvoiceDetailComponent', () => {
     expect(movements.returns).toEqual([]);
   });
 
+  it('typeChip_purchaseInvoice_carriesThePurchaseClass', async () => {
+    await setUp(of(detail({ type: 'PURCHASE' })));
+
+    // The same class the list picks for the same type: one invoice reads the same on both pages.
+    expect(host().querySelector('.type-chip')?.classList.contains('type-purchase')).toBe(true);
+  });
+
+  it('typeChip_saleInvoice_carriesTheSaleClass', async () => {
+    await setUp(of(detail({ type: 'SALE', supplierId: null, supplierName: null, customerId: 9 })));
+
+    expect(host().querySelector('.type-chip')?.classList.contains('type-sale')).toBe(true);
+  });
+
   it('return_rejected_surfacesMessageVerbatim', async () => {
     await setUp(of(detail({ status: 'CLOSED' })));
     movements.result = throwError(() => new Error('Only 1 unit remains returnable.'));

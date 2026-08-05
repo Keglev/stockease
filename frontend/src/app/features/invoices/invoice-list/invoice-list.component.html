@@ -15,62 +15,66 @@
   <p class="invoice-error" role="alert">{{ message }}</p>
 }
 
-<table mat-table [dataSource]="rows()" class="invoice-table">
-  <ng-container matColumnDef="id">
-    <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.id' | translate }}</th>
-    <td mat-cell *matCellDef="let invoice">{{ invoice.id }}</td>
-  </ng-container>
+<div class="table-scroll">
+  <table mat-table [dataSource]="rows()" class="invoice-table">
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.id' | translate }}</th>
+      <td mat-cell *matCellDef="let invoice">{{ invoice.id }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="invoiceNumber">
-    <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.invoiceNumber' | translate }}</th>
-    <td mat-cell *matCellDef="let invoice" class="invoice-number-cell">{{ invoice.invoiceNumber }}</td>
-  </ng-container>
+    <ng-container matColumnDef="invoiceNumber">
+      <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.invoiceNumber' | translate }}</th>
+      <td mat-cell *matCellDef="let invoice" class="invoice-number-cell">{{ invoice.invoiceNumber }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="type">
-    <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.type' | translate }}</th>
-    <td mat-cell *matCellDef="let invoice">
-      <mat-chip class="type-chip">{{ 'invoices.type.' + invoice.type | translate }}</mat-chip>
-    </td>
-  </ng-container>
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.type' | translate }}</th>
+      <td mat-cell *matCellDef="let invoice">
+        <mat-chip class="type-chip" [class]="typeClass(invoice.type)">
+          {{ 'invoices.type.' + invoice.type | translate }}
+        </mat-chip>
+      </td>
+    </ng-container>
 
-  <ng-container matColumnDef="status">
-    <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.status' | translate }}</th>
-    <td mat-cell *matCellDef="let invoice">
-      <mat-chip class="status-chip" [class]="statusClass(invoice.status)">
-        {{ 'invoices.status.' + invoice.status | translate }}
-      </mat-chip>
-      @if (invoice.paidAt) {
-        <mat-chip class="paid-chip">{{ 'invoices.paid' | translate }}</mat-chip>
-      }
-      @if (isOverdue(invoice)) {
-        <mat-chip class="overdue-chip">{{ 'invoices.overdue' | translate }}</mat-chip>
-      }
-    </td>
-  </ng-container>
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.status' | translate }}</th>
+      <td mat-cell *matCellDef="let invoice">
+        <mat-chip class="status-chip" [class]="statusClass(invoice.status)">
+          {{ 'invoices.status.' + invoice.status | translate }}
+        </mat-chip>
+        @if (invoice.paidAt) {
+          <mat-chip class="paid-chip">{{ 'invoices.paid' | translate }}</mat-chip>
+        }
+        @if (isOverdue(invoice)) {
+          <mat-chip class="overdue-chip">{{ 'invoices.overdue' | translate }}</mat-chip>
+        }
+      </td>
+    </ng-container>
 
-  <ng-container matColumnDef="counterparty">
-    <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.counterparty' | translate }}</th>
-    <td mat-cell *matCellDef="let invoice" class="counterparty-cell">{{ counterparty(invoice) }}</td>
-  </ng-container>
+    <ng-container matColumnDef="counterparty">
+      <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.counterparty' | translate }}</th>
+      <td mat-cell *matCellDef="let invoice" class="counterparty-cell">{{ counterparty(invoice) }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="dueDate">
-    <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.dueDate' | translate }}</th>
-    <td mat-cell *matCellDef="let invoice">{{ invoice.dueDate | appDate }}</td>
-  </ng-container>
+    <ng-container matColumnDef="dueDate">
+      <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.dueDate' | translate }}</th>
+      <td mat-cell *matCellDef="let invoice">{{ invoice.dueDate | appDate }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="createdAt">
-    <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.createdAt' | translate }}</th>
-    <td mat-cell *matCellDef="let invoice">{{ invoice.createdAt | appDateTime }}</td>
-  </ng-container>
+    <ng-container matColumnDef="createdAt">
+      <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.createdAt' | translate }}</th>
+      <td mat-cell *matCellDef="let invoice">{{ invoice.createdAt | appDateTime }}</td>
+    </ng-container>
 
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr
-    mat-row
-    *matRowDef="let row; columns: displayedColumns"
-    class="invoice-row"
-    (click)="openDetail(row)"
-  ></tr>
-</table>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns"
+      class="invoice-row"
+      (click)="openDetail(row)"
+    ></tr>
+  </table>
+</div>
 
 @if (!loading() && !error() && rows().length === 0) {
   <p class="invoice-empty">{{ 'invoices.empty' | translate }}</p>

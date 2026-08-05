@@ -1,0 +1,47 @@
+// The app's one answer to "this table is wider than the phone".
+//
+// Every list surface here has more columns than a 390px viewport can hold, and until now each one
+// dealt with that by not dealing with it: the table shrank to the viewport, the columns squeezed
+// until the text wrapped to three lines a cell, and where that was not enough the page itself
+// scrolled sideways. A horizontally scrolling PAGE is the failure mode worth naming - it moves the
+// toolbar, the headings and the paginator off screen along with the columns, so the reader loses
+// their place in the app to read one more column of a table.
+//
+// The alternatives were considered and rejected as a group, because each one buys a narrow table by
+// deciding for the reader which columns matter:
+//   - hiding columns below a breakpoint: the hidden one is always the one somebody needed, and it
+//     leaves the phone showing a different report from the desktop.
+//   - sticky first column: real machinery (a second stacking context, per-table offsets) and it
+//     still needs the scroll container underneath it.
+//   - per-table media queries: seven copies of a decision, drifting apart by the third.
+// A scroll container is the only option that shows every column on every device and asks the reader
+// for nothing but a swipe. Existing column omissions stay as they are - the customer list drops
+// address because a long, usually-empty field earns no column, which is an editorial decision about
+// that table rather than a workaround for width.
+//
+// Applied by wrapping a table in an element carrying `.table-scroll` and including this mixin.
+
+@mixin table-scroll {
+  overflow-x: auto;
+
+  // The table keeps its natural width instead of compressing into the wrapper - without this the
+  // columns would squeeze exactly as before and the wrapper would have nothing to scroll. The
+  // min-width is what keeps a narrow table filling a wide page, so the wrapper is inert on desktop:
+  // content that fits produces scrollWidth == clientWidth and no scrollbar.
+  > table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  // A swipe that runs past the last column stops there rather than continuing into the browser's
+  // back-navigation gesture. Losing the page you were reading because you scrolled a table one
+  // column too far is a worse failure than the overflow this fixes.
+  overscroll-behavior-x: contain;
+
+  // The only styling here, and it is two declarations of standard CSS reading a token the theme
+  // already defines. An edge-fade affordance was considered and skipped: it needs a gradient
+  // overlay per scroll position and a scroll listener to know which edge to draw, which is a
+  // component, not a mixin. The thin bar is the affordance a scroll container conventionally has.
+  scrollbar-width: thin;
+  scrollbar-color: var(--mat-sys-outline-variant) transparent;
+}

@@ -217,6 +217,11 @@ export class InvoiceDetailComponent implements OnInit {
     return status === 'FULLY_RETURNED' ? 'status-fully-returned' : 'status-open';
   }
 
+  /** Returns the chip class matching the invoice type; the list picks its own the same way. */
+  protected typeClass(type: string): string {
+    return type === 'SALE' ? 'type-sale' : 'type-purchase';
+  }
+
   protected confirmClose(): void {
     this.confirm(
       {

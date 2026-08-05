@@ -101,6 +101,16 @@ export class InvoiceListComponent implements OnInit {
     return status === 'FULLY_RETURNED' ? 'status-fully-returned' : 'status-open';
   }
 
+  /**
+   * Returns the chip class matching the invoice type, the way {@link statusClass} does for status.
+   *
+   * <p>The two types shared one neutral chip until now, so the column stated which direction the
+   * money runs in words alone - and the word is the first thing a scanning eye skips.
+   */
+  protected typeClass(type: string): string {
+    return type === 'SALE' ? 'type-sale' : 'type-purchase';
+  }
+
   /** Mirrors the backend's overdue predicate: booked, unpaid, past due. */
   protected isOverdue(invoice: InvoiceSummaryResponse): boolean {
     // Derived for display only - the backend computes the same three conditions on demand in the
