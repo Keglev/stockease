@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">99.52% </span>
+                <span class="strong">99.51% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>415/417</span>
+                <span class='fraction'>413/415</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>182/182</span>
+                <span class='fraction'>181/181</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">99.49% </span>
+                <span class="strong">99.48% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>392/394</span>
+                <span class='fraction'>390/392</span>
             </div>
         
             
@@ -1342,7 +1342,10 @@
 <a name='L1277'></a><a href='#L1277'>1277</a>
 <a name='L1278'></a><a href='#L1278'>1278</a>
 <a name='L1279'></a><a href='#L1279'>1279</a>
-<a name='L1280'></a><a href='#L1280'>1280</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1280'></a><a href='#L1280'>1280</a>
+<a name='L1281'></a><a href='#L1281'>1281</a>
+<a name='L1282'></a><a href='#L1282'>1282</a>
+<a name='L1283'></a><a href='#L1283'>1283</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1390,24 +1393,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1419,9 +1422,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2236,8 +2239,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">36x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2659,7 +2665,7 @@ import { LanguageService } from '../../../core/i18n/language.service';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartFormat, chartFormat } from '../../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
-import { CSV_DOWNLOADER, buildCsv } from '../../../shared/csv/csv-export';
+import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
@@ -2744,7 +2750,7 @@ export class ReportsPageComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
   private readonly format = inject(FormatService);
-  private readonly downloadCsvFile = inject(CSV_DOWNLOADER);
+  private readonly csv = inject(CsvExportService);
 &nbsp;
   protected readonly profitColumns = ['name', 'sku', 'revenue', 'cost', 'grossProfit'];
   protected readonly supplierColumns = ['name', 'revenue', 'cost', 'grossProfit'];
@@ -3508,17 +3514,20 @@ export class ReportsPageComponent implements OnInit {
   }
 &nbsp;
 &nbsp;
-  /** Headers and separators are resolved at click time, so the file matches the UI language. */
+  /**
+   * Headers and separators are resolved at click time, so the file matches the UI language.
+   *
+   * &lt;p&gt;The three list pages export the same way, so the body of this moved to
+   * {@link CsvExportService} rather than being copied a fourth time. This stays as the page's own
+   * default for {@code keyPrefix}, which is the only part that was ever page-specific.
+   */
   private exportCsv(
     filename: string,
     columns: string[],
     rows: (string | number | null)[][],
     keyPrefix = 'reports.columns.'
   ): void {
-    const headers = columns.map((column) =&gt;
-      this.translate.instant(`${keyPrefix}${column}`)
-    ) as string[];
-    this.downloadCsvFile(filename, buildCsv(headers, rows, this.format.numberLocale()));
+    this.csv.export(filename, columns, rows, keyPrefix);
   }
 &nbsp;
   /** Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app. */
@@ -3907,7 +3916,7 @@ function sortRows&lt;T&gt;(rows: T[], sort: Sort): T[] {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-05T18:36:11.311Z
+                at 2026-08-05T20:10:40.715Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
