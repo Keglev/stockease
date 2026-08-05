@@ -420,13 +420,23 @@ export interface paths {
         };
         /**
          * Get a customer by ID
-         * @description There is deliberately no PUT counterpart: customer master-data management is out of scope for
-         *     this API by design.
-         *
-         *     Provided for API completeness; the bundled UI reads this resource through its list endpoints.
+         * @description Provided for API completeness; the bundled UI reads this resource through its list endpoints.
          */
         get: operations["getCustomerById"];
-        put?: never;
+        /**
+         * Replace a customer's details
+         * @description Every field is replaced wholesale. Only the name is mandatory - the same rule creation applies,
+         *     not the supplier's mandatory address - and omitting an optional contact field clears the stored
+         *     value rather than leaving it untouched.
+         *
+         *     Renaming a customer does not rewrite invoices already issued to them: an invoice states the
+         *     party it was issued under (ADR 033). Walk-in sales carry no customer record at all, so they are
+         *     unaffected either way.
+         *
+         *     The request shape is `CreateCustomerRequest`, reused rather than duplicated: creation and
+         *     replacement take the same five fields under the same rules.
+         */
+        put: operations["updateCustomer"];
         post?: never;
         /**
          * Soft-delete a customer (ADMIN only)
@@ -3329,6 +3339,66 @@ export interface operations {
                     "application/json": components["schemas"]["ApiResponseCustomer"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            /** @description No customer with that ID */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "Entity not found: Customer with ID 9 not found.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
+        };
+    };
+    updateCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Customer identifier */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCustomerRequest"];
+            };
+        };
+        responses: {
+            /** @description Customer updated (ROLE_USER or ROLE_ADMIN) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": true,
+                     *       "message": "Customer updated successfully",
+                     *       "data": {
+                     *         "id": 9,
+                     *         "name": "Jane Roe",
+                     *         "email": "roe@example.com",
+                     *         "phone": "555-9999",
+                     *         "address": "2 Side St",
+                     *         "city": "Shelbyville",
+                     *         "createdAt": "2026-01-02T03:04:00"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseCustomer"];
+                };
+            };
+            400: components["responses"]["ValidationError"];
             401: components["responses"]["Unauthorized"];
             /** @description No customer with that ID */
             404: {

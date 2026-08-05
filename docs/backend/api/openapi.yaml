@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.20.0
+  version: 2.21.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -43,8 +43,10 @@ info:
       service is reached.
     - **Returns are a first-class operation** with their own endpoint, `POST /api/returns`. It records
       the movement and raises the invoice line's returned quantity in one transaction.
-    - **Customer master data has no update endpoint by design.** Customers can be listed, fetched,
-      created and soft-deleted; correcting customer details is out of scope for this API.
+    - **Party master data is replaced wholesale, never merged.** `PUT /api/customers/{id}` and
+      `PUT /api/suppliers/{id}` take every field: omitting an optional one clears it. Editing a
+      party never rewrites invoices already issued to them - a document states the party it was
+      issued under, whatever the register says later.
     - **Product quantity cannot be assigned directly.** It changes only as a consequence of movements.
   contact:
     name: Carlos Felipe Keglevich

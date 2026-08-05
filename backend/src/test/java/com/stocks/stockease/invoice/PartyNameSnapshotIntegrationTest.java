@@ -187,6 +187,59 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void detail_customerRenamedAfterIssuance_keepsTheNameOnTheDocument() {
+        // The twin of the supplier rename above, and newly reachable: until customers became
+        // editable there was no way to rename one, so ADR 033's guarantee was only half testable on
+        // this side. A sale invoice is a document about who bought, at the time they bought.
+        Supplier supplier = suppliers.create("Snapshot Seller " + tag(), null, null, "11 Main St", null);
+        Product item = product("Snapshot Sold");
+        settle(purchaseOf(supplier, item, 10));
+
+        Customer customer = customers.create("Snapshot Buyer " + tag(), null, null, "12 Main St", "Springfield");
+        String issuedUnder = customer.getName();
+        Invoice sale = invoices.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, tag(), null,
+                customer.getId(), LocalDate.now().plusDays(30), BigDecimal.ZERO, BigDecimal.ZERO,
+                List.of(new CreateInvoiceCommand.ItemLine(item.getId(), 4, new BigDecimal("15.00")))));
+        settle(sale);
+
+        String renamedTo = "Snapshot Buyer Renamed " + tag();
+        customers.update(customer.getId(), renamedTo, null, null, "12 Main St", "Springfield");
+
+        // The register moved - asserted first, because without it a no-op update would satisfy the
+        // snapshot assertion below by doing nothing at all.
+        assertThat(customers.findById(customer.getId()).orElseThrow().getName()).isEqualTo(renamedTo);
+
+        assertThat(detail(sale.getId()).customerName()).isEqualTo(issuedUnder);
+        assertThat(detail(sale.getId()).customerId()).isEqualTo(customer.getId());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void summaryList_customerRenamedAfterIssuance_carriesTheIssuanceName() {
+        Supplier supplier = suppliers.create("Snapshot Lister " + tag(), null, null, "13 Main St", null);
+        Product item = product("Snapshot Listed Sold");
+        settle(purchaseOf(supplier, item, 6));
+
+        Customer customer = customers.create("Snapshot Listed Buyer " + tag(), null, null, "14 Main St", null);
+        String issuedUnder = customer.getName();
+        Invoice sale = invoices.createInvoice(new CreateInvoiceCommand(InvoiceType.SALE, tag(), null,
+                customer.getId(), LocalDate.now().plusDays(30), BigDecimal.ZERO, BigDecimal.ZERO,
+                List.of(new CreateInvoiceCommand.ItemLine(item.getId(), 2, new BigDecimal("15.00")))));
+        settle(sale);
+
+        String renamedTo = "Snapshot Listed Renamed " + tag();
+        customers.update(customer.getId(), renamedTo, null, null, null, null);
+        assertThat(customers.findById(customer.getId()).orElseThrow().getName()).isEqualTo(renamedTo);
+
+        // The ledger row reads from the same snapshot the detail does; both are the document.
+        InvoiceSummaryResponse row = invoices.findAll().stream()
+                .filter(i -> i.getId().equals(sale.getId())).findFirst()
+                .map(InvoiceSummaryResponse::from).orElseThrow();
+        assertThat(row.customerName()).isEqualTo(issuedUnder);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void listThenDetail_inOneContext_forADeletedSupplier_doesNotThrow() {
         // The measured session-shape crash: loading the list first left an uninitializable proxy,
         // and the detail read then raised EntityNotFoundException. The de-joined query makes the

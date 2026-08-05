@@ -1,4 +1,6 @@
-<h2 mat-dialog-title>{{ 'customers.form.createTitle' | translate }}</h2>
+<h2 mat-dialog-title>
+  {{ (isEdit ? 'customers.form.editTitle' : 'customers.form.createTitle') | translate }}
+</h2>
 
 <form [formGroup]="form" (ngSubmit)="submit()">
   <mat-dialog-content>

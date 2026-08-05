@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,9 +24,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * REST controller for customer master data.
  *
- * <p>Covers listing, lookup, creation and soft deletion, delegating every operation to
- * {@link CustomerService}. There is deliberately no update endpoint: customer master-data management
- * is out of scope by design. All endpoints require at minimum ROLE_USER; deletion requires ROLE_ADMIN.
+ * <p>Covers listing, lookup, creation, update and soft deletion, delegating every operation to
+ * {@link CustomerService}. All endpoints require at minimum ROLE_USER; deletion requires ROLE_ADMIN.
  */
 @RestController
 @RequestMapping("/api/customers")
@@ -73,6 +73,24 @@ public class CustomerController {
         Customer saved = customerService.create(request.name(), request.email(), request.phone(), request.address(),
                 request.city());
         return ResponseEntity.ok(CustomerResponse.from(saved));
+    }
+
+    /**
+     * Replaces a customer's fields, including the optional contact ones.
+     *
+     * @param id customer identifier
+     * @param request new customer fields (name, email, phone, address, city)
+     * @return HTTP 200 with the updated customer
+     * @throws EntityNotFoundException if no customer exists with the given ID
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<ApiResponse<CustomerResponse>> updateCustomer(@PathVariable long id,
+            @Valid @RequestBody UpdateCustomerRequest request) {
+        Customer updated = customerService.update(id, request.name(), request.email(), request.phone(),
+                request.address(), request.city());
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Customer updated successfully", CustomerResponse.from(updated)));
     }
 
     /**

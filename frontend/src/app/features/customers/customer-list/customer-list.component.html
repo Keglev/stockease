@@ -41,11 +41,19 @@
       <td mat-cell *matCellDef="let customer">{{ customer.createdAt | appDateTime }}</td>
     </ng-container>
 
-    <!-- Summary and delete only: the API has no customer update endpoint, so no edit action
-         exists. The summary is read-only and open to both roles. -->
+    <!-- Edit, summary and delete. The summary is read-only and open to both roles; only delete
+         is gated, matching the supplier row. -->
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.actions' | translate }}</th>
       <td mat-cell *matCellDef="let customer">
+        <button
+          matButton
+          type="button"
+          class="customer-edit"
+          (click)="openEdit(customer)"
+        >
+          {{ 'customers.edit' | translate }}
+        </button>
         <button
           matIconButton
           type="button"

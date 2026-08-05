@@ -375,9 +375,11 @@
   "customers": {
     "title": "Kunden",
     "create": "Neuer Kunde",
+    "edit": "Bearbeiten",
     "loading": "Kunden werden geladen…",
     "empty": "Keine Kunden gefunden.",
     "created": "Kunde wurde angelegt.",
+    "updated": "Kunde wurde aktualisiert.",
     "deleteHint": "Kunden mit offenen Rechnungen können nicht gelöscht werden.",
     "columns": {
       "name": "Name",
@@ -404,6 +406,7 @@
     },
     "form": {
       "createTitle": "Neuer Kunde",
+      "editTitle": "Kunde bearbeiten",
       "name": "Name",
       "email": "E-Mail",
       "phone": "Telefon",

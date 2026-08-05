@@ -10,9 +10,6 @@ parameters:
 get:
   summary: Get a customer by ID
   description: |
-    There is deliberately no PUT counterpart: customer master-data management is out of scope for
-    this API by design.
-
     Provided for API completeness; the bundled UI reads this resource through its list endpoints.
   operationId: getCustomerById
   tags:
@@ -37,6 +34,63 @@ get:
               address: 1 Main St
               city: Springfield
               createdAt: '2026-01-02T03:04:00'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '404':
+      description: No customer with that ID
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: 'Entity not found: Customer with ID 9 not found.'
+            data: null
+
+put:
+  summary: Replace a customer's details
+  description: |
+    Every field is replaced wholesale. Only the name is mandatory - the same rule creation applies,
+    not the supplier's mandatory address - and omitting an optional contact field clears the stored
+    value rather than leaving it untouched.
+
+    Renaming a customer does not rewrite invoices already issued to them: an invoice states the
+    party it was issued under (ADR 033). Walk-in sales carry no customer record at all, so they are
+    unaffected either way.
+
+    The request shape is `CreateCustomerRequest`, reused rather than duplicated: creation and
+    replacement take the same five fields under the same rules.
+  operationId: updateCustomer
+  tags:
+    - Customers
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/CreateCustomerRequest'
+  responses:
+    '200':
+      description: Customer updated (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseCustomer'
+          example:
+            success: true
+            message: Customer updated successfully
+            data:
+              id: 9
+              name: Jane Roe
+              email: roe@example.com
+              phone: 555-9999
+              address: 2 Side St
+              city: Shelbyville
+              createdAt: '2026-01-02T03:04:00'
+    '400':
+      $ref: '../openapi.yaml#/components/responses/ValidationError'
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'
     '404':
