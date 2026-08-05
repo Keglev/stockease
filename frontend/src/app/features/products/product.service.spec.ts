@@ -80,17 +80,30 @@ describe('ProductService', () => {
     controller.verify();
   });
 
-  it('getAll_bareArrayResponse_emitsPayloadUnchanged', () => {
+  it('search_termGiven_requestsTheSearchUrlWithTheNameParam', () => {
     let emitted: ProductResponse[] | undefined;
-    service.getAll().subscribe((products) => (emitted = products));
+    service.search('lap').subscribe((products) => (emitted = products));
 
-    const request = controller.expectOne(BASE_URL);
+    const request = controller.expectOne((candidate) => candidate.url === `${BASE_URL}/search`);
     expect(request.request.method).toBe('GET');
+    expect(request.request.params.get('name')).toBe('lap');
     request.flush([LAPTOP]);
 
-    // The unpaged collection endpoint is not enveloped: the array must arrive untouched.
+    // Bare array, not enveloped: it must arrive untouched, as the supplier search does.
     expect(emitted).toEqual([LAPTOP]);
     expect(emitted?.[0]).not.toHaveProperty('data');
+    controller.verify();
+  });
+
+  it('search_nothingMatches_emitsAnEmptyArray', () => {
+    let emitted: ProductResponse[] | undefined;
+    service.search('zzz').subscribe((products) => (emitted = products));
+
+    // 200 with [] since 2.16.0, not the 204 this endpoint once answered with, so no branch on
+    // status is needed and the caller treats the result as a list unconditionally.
+    controller.expectOne((candidate) => candidate.url === `${BASE_URL}/search`).flush([]);
+
+    expect(emitted).toEqual([]);
     controller.verify();
   });
 

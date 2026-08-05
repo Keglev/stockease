@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AbstractControl, FormGroup } from '@angular/forms';
+import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { Observable, of, throwError } from 'rxjs';
 
 import { MovementResponse, ProductResponse, RecordMovementRequest } from '../../../core/api/api-models';
@@ -7,6 +8,7 @@ import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProductService } from '../../products/product.service';
+import { TYPEAHEAD_DEBOUNCE_MS } from '../../../shared/typeahead/typeahead.component';
 import { MovementService } from '../movement.service';
 import { MovementRecordComponent } from './movement-record.component';
 
@@ -50,6 +52,20 @@ const PRODUCTS: ProductResponse[] = [
     createdAt: '2026-01-02T03:04:00'
   }
 ];
+
+/**
+ * Records every search the field asks for, so what the component sent can be asserted from the
+ * rendered input rather than by calling the method under test.
+ */
+class ProductServiceStub {
+  readonly terms: string[] = [];
+  results: ProductResponse[] = PRODUCTS;
+
+  search(name: string): Observable<ProductResponse[]> {
+    this.terms.push(name);
+    return of(this.results);
+  }
+}
 
 const RECORDED: MovementResponse = {
   id: 5,
@@ -99,6 +115,7 @@ describe('MovementRecordComponent', () => {
   let fixture: ComponentFixture<MovementRecordComponent>;
   let movements: MovementServiceStub;
   let notifications: NotificationServiceStub;
+  let products: ProductServiceStub;
 
   function api(): ComponentApi {
     return fixture.componentInstance as unknown as ComponentApi;
@@ -122,19 +139,47 @@ describe('MovementRecordComponent', () => {
     await settle();
   }
 
+  /**
+   * Types into the rendered typeahead input and lets its debounce elapse.
+   *
+   * <p>The focus event is not decoration: MatAutocomplete attaches its panel only while the trigger
+   * is focused, so without it every option assertion would read an unattached overlay.
+   */
+  async function typeProduct(term: string): Promise<void> {
+    const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '.product-search .typeahead-input'
+    ) as HTMLInputElement;
+    input.dispatchEvent(new Event('focusin'));
+    input.value = term;
+    input.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_MS);
+    await settle();
+  }
+
+  /** Picks the first suggestion the panel is offering. */
+  async function pickFirstOption(): Promise<void> {
+    const option = document.querySelector<HTMLElement>('mat-option');
+    option?.click();
+    await settle();
+  }
+
   beforeEach(async () => {
     localStorage.clear();
     TestBed.resetTestingModule();
+    vi.useFakeTimers();
     movements = new MovementServiceStub();
     notifications = new NotificationServiceStub();
+    products = new ProductServiceStub();
 
     await TestBed.configureTestingModule({
       imports: [MovementRecordComponent],
       providers: [
+        // The autocomplete panel is read directly; animations would leave it mid-transition.
+        { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
         provideTestTranslations(TRANSLATIONS),
         { provide: MovementService, useValue: movements },
         { provide: NotificationService, useValue: notifications },
-        { provide: ProductService, useValue: { getAll: () => of(PRODUCTS) } }
+        { provide: ProductService, useValue: products }
       ]
     }).compileComponents();
 
@@ -142,6 +187,63 @@ describe('MovementRecordComponent', () => {
 
     fixture = TestBed.createComponent(MovementRecordComponent);
     await settle();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('productField_belowMinChars_searchesNothing', async () => {
+    await typeProduct('Wi');
+
+    // Two characters match most of a catalogue; the field waits rather than asking.
+    expect(products.terms).toEqual([]);
+  });
+
+  it('productField_atMinChars_searchesWithTheTypedTerm', async () => {
+    await typeProduct('Wid');
+
+    expect(products.terms).toEqual(['Wid']);
+  });
+
+  it('productField_optionChosen_setsTheFormControlToThatProductId', async () => {
+    await typeProduct('Wid');
+    await pickFirstOption();
+
+    expect(control('productId').value).toBe(3);
+  });
+
+  it('productField_optionChosen_labelsItWithNameAndSku', async () => {
+    await typeProduct('Wid');
+
+    // Whole string: the SKU is what tells two similarly named products apart, so a label that
+    // dropped it would be a different claim about which row this is.
+    expect(document.querySelector('mat-option')?.textContent?.trim()).toBe('Widget (SKU-3)');
+  });
+
+  it('productField_searchReturnsRows_rendersExactlyThoseRows', async () => {
+    // The endpoint excludes soft-deleted products by contract (ADR 028). Nothing here re-filters
+    // what comes back, so this pins that the panel is the server's answer and not a subset of it.
+    products.results = [
+      PRODUCTS[0],
+      { ...PRODUCTS[0], id: 4, name: 'Widget Mini', sku: 'SKU-4' }
+    ];
+
+    await typeProduct('Wid');
+
+    expect(Array.from(document.querySelectorAll('mat-option')).map((o) => o.textContent?.trim()))
+      .toEqual(['Widget (SKU-3)', 'Widget Mini (SKU-4)']);
+  });
+
+  it('load_pageOpened_fetchesNoProductCatalogue', () => {
+    // The regression guard for the deleted full-list fetch: the page asks for nothing until the
+    // user types. The stub offers only search(), so a component that reached for a catalogue
+    // method would fail here rather than quietly loading one.
+    expect(products.terms).toEqual([]);
+    expect(Object.getOwnPropertyNames(ProductServiceStub.prototype)).toEqual([
+      'constructor',
+      'search'
+    ]);
   });
 
   it('reasonOptions_default_offersOnlyTheTwoLossReasons', () => {

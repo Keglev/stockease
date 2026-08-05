@@ -30,9 +30,17 @@ export class ProductService {
       .pipe(map((envelope) => envelope.data as PaginatedProducts));
   }
 
-  /** Bare array - deliberately not unwrapped. */
-  getAll(): Observable<ProductResponse[]> {
-    return this.http.get<ProductResponse[]>(this.baseUrl);
+  /**
+   * Products whose name contains {@code name}, for the typeahead pickers.
+   *
+   * <p>Bare array, and empty when nothing matches. Signature-for-signature with
+   * {@code SupplierService.search}: the three search endpoints carry one contract (ADR 028), and
+   * the clients that read them should be recognizable from each other.
+   */
+  search(name: string): Observable<ProductResponse[]> {
+    return this.http.get<ProductResponse[]>(`${this.baseUrl}/search`, {
+      params: new HttpParams().set('name', name)
+    });
   }
 
   /**

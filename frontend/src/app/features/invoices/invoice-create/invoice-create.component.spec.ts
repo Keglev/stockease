@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
+import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { Router, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
@@ -16,6 +17,7 @@ import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { CustomerService } from '../../customers/customer.service';
 import { ProductService } from '../../products/product.service';
 import { SupplierService } from '../../suppliers/supplier.service';
+import { TYPEAHEAD_DEBOUNCE_MS } from '../../../shared/typeahead/typeahead.component';
 import { InvoiceService } from '../invoice.service';
 import { InvoiceCreateComponent } from './invoice-create.component';
 
@@ -73,8 +75,31 @@ const PRODUCTS: ProductResponse[] = [
     purchasePrice: 15,
     totalValue: 150,
     createdAt: '2026-01-02T03:04:00'
+  },
+  {
+    id: 4,
+    name: 'Widget Mini',
+    sku: 'SKU-4',
+    quantity: 5,
+    purchasePrice: 8,
+    totalValue: 40,
+    createdAt: '2026-01-02T03:04:00'
   }
 ];
+
+/**
+ * Records every search each line's field asks for, so what the page sent can be asserted from the
+ * rendered inputs rather than by calling the method under test.
+ */
+class ProductServiceStub {
+  readonly terms: string[] = [];
+  results: ProductResponse[] = PRODUCTS;
+
+  search(name: string): Observable<ProductResponse[]> {
+    this.terms.push(name);
+    return of(this.results);
+  }
+}
 
 const CREATED: InvoiceSummaryResponse = {
   id: 42,
@@ -127,6 +152,7 @@ describe('InvoiceCreateComponent', () => {
   let fixture: ComponentFixture<InvoiceCreateComponent>;
   let invoices: InvoiceServiceStub;
   let notifications: NotificationServiceStub;
+  let products: ProductServiceStub;
 
   /** The members under test are protected, so the instance is read through this narrow view. */
   function api(): ComponentApi {
@@ -150,9 +176,42 @@ describe('InvoiceCreateComponent', () => {
     await fixture.whenStable();
   }
 
-  /** Fills one item row directly; the selects render in an overlay that DOM tests need not open. */
+  /** Fills one item row directly; the fields render in an overlay that most tests need not open. */
   function fillItem(index: number, productId: number, quantity: number, unitPrice: number): void {
     itemsArray().at(index).setValue({ productId, quantity, unitPrice });
+  }
+
+  function productInputs(): HTMLInputElement[] {
+    return Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>(
+        '.product-search .typeahead-input'
+      )
+    );
+  }
+
+  /**
+   * Types into one line's product field and lets its debounce elapse.
+   *
+   * <p>The focus event is not decoration: MatAutocomplete attaches its panel only while the trigger
+   * is focused, so without it every option assertion would read an unattached overlay.
+   */
+  async function typeInRow(index: number, term: string): Promise<void> {
+    const input = productInputs()[index];
+    input.dispatchEvent(new Event('focusin'));
+    input.value = term;
+    input.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_MS);
+    await settle();
+  }
+
+  /** Picks the nth suggestion the open panel is offering. */
+  async function pickOption(position: number): Promise<void> {
+    Array.from(document.querySelectorAll<HTMLElement>('mat-option'))[position]?.click();
+    await settle();
+  }
+
+  function productIdAt(index: number): unknown {
+    return itemsArray().at(index).getRawValue().productId;
   }
 
   function fillValidSale(): void {
@@ -165,7 +224,9 @@ describe('InvoiceCreateComponent', () => {
   beforeEach(async () => {
     localStorage.clear();
     TestBed.resetTestingModule();
+    vi.useFakeTimers();
     invoices = new InvoiceServiceStub();
+    products = new ProductServiceStub();
     notifications = new NotificationServiceStub();
 
     await TestBed.configureTestingModule({
@@ -175,12 +236,14 @@ describe('InvoiceCreateComponent', () => {
           { path: 'app/invoices', children: [] },
           { path: 'app/invoices/:id', children: [] }
         ]),
+        // The autocomplete panel is read directly; animations would leave it mid-transition.
+        { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
         provideTestTranslations(TRANSLATIONS),
         { provide: InvoiceService, useValue: invoices },
         { provide: NotificationService, useValue: notifications },
         { provide: SupplierService, useValue: { getAll: () => of(SUPPLIERS) } },
         { provide: CustomerService, useValue: { getAll: () => of(CUSTOMERS) } },
-        { provide: ProductService, useValue: { getAll: () => of(PRODUCTS) } }
+        { provide: ProductService, useValue: products }
       ]
     }).compileComponents();
 
@@ -188,6 +251,96 @@ describe('InvoiceCreateComponent', () => {
 
     fixture = TestBed.createComponent(InvoiceCreateComponent);
     await settle();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('productField_belowMinChars_searchesNothing', async () => {
+    await typeInRow(0, 'Wi');
+
+    expect(products.terms).toEqual([]);
+  });
+
+  it('productField_atMinChars_searchesWithTheTypedTerm', async () => {
+    await typeInRow(0, 'Wid');
+
+    expect(products.terms).toEqual(['Wid']);
+  });
+
+  it('productField_optionChosen_setsThatLinesProductId', async () => {
+    await typeInRow(0, 'Wid');
+    await pickOption(0);
+
+    expect(productIdAt(0)).toBe(3);
+  });
+
+  it('productField_optionChosen_labelsItWithNameAndSku', async () => {
+    await typeInRow(0, 'Wid');
+
+    expect(Array.from(document.querySelectorAll('mat-option')).map((o) => o.textContent?.trim()))
+      .toEqual(['Widget (SKU-3)', 'Widget Mini (SKU-4)']);
+  });
+
+  it('productField_searchReturnsRows_rendersExactlyThoseRows', async () => {
+    // The endpoint excludes soft-deleted products by contract (ADR 028), and nothing here
+    // re-filters the answer - the panel is the server's list, not a subset of it.
+    products.results = [PRODUCTS[1]];
+
+    await typeInRow(0, 'Wid');
+
+    expect(Array.from(document.querySelectorAll('mat-option')).map((o) => o.textContent?.trim()))
+      .toEqual(['Widget Mini (SKU-4)']);
+  });
+
+  it('productFields_chosenInSecondRow_leaveTheFirstRowUntouched', async () => {
+    api().addItem();
+    await settle();
+    await typeInRow(0, 'Wid');
+    await pickOption(0);
+
+    await typeInRow(1, 'Wid');
+    await pickOption(1);
+
+    // Each line owns its own typeahead instance, so the second choice reaches the second control
+    // and nothing else. A shared field would have overwritten row 0 here.
+    expect(productIdAt(0)).toBe(3);
+    expect(productIdAt(1)).toBe(4);
+    expect(productInputs()[0].value).toBe('Widget (SKU-3)');
+    expect(productInputs()[1].value).toBe('Widget Mini (SKU-4)');
+  });
+
+  it('productFields_middleRowRemoved_leaveEachRemainingFieldOnItsOwnLine', async () => {
+    api().addItem();
+    api().addItem();
+    await settle();
+    fillItem(0, 3, 1, 5);
+    fillItem(1, 4, 1, 5);
+    fillItem(2, 3, 1, 5);
+    await typeInRow(2, 'Wid');
+    await pickOption(1);
+    await settle();
+
+    api().removeItem(1);
+    await settle();
+
+    // The rows are tracked by their own control rather than by index, so removing the middle one
+    // destroys that field instead of shifting every later field onto a different line - which
+    // would leave a field naming one product while its control held another.
+    expect(productInputs()).toHaveLength(2);
+    expect(productInputs()[1].value).toBe('Widget Mini (SKU-4)');
+    expect(productIdAt(1)).toBe(4);
+  });
+
+  it('load_pageOpened_fetchesNoProductCatalogue', () => {
+    // The regression guard for the deleted full-list fetch: the page asks for products only once
+    // a line's field has a real term in it.
+    expect(products.terms).toEqual([]);
+    expect(Object.getOwnPropertyNames(ProductServiceStub.prototype)).toEqual([
+      'constructor',
+      'search'
+    ]);
   });
 
   it('typeSwitch_saleSelected_swapsOptionSourceAndClearsSelection', async () => {

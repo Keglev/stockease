@@ -33,8 +33,9 @@ export class SupplierService {
   /**
    * Suppliers whose name contains {@code name}, for the typeahead pickers.
    *
-   * <p>Bare array, and empty when nothing matches rather than the 204 the older product search
-   * answers with - the caller can treat the result as a list unconditionally.
+   * <p>Bare array, and empty when nothing matches - the caller can treat the result as a list
+   * unconditionally. The product search carries the same contract since 2.16.0, so
+   * {@code ProductService.search} is its twin rather than the exception it once was.
    */
   search(name: string): Observable<SupplierResponse[]> {
     return this.http.get<SupplierResponse[]>(`${this.baseUrl}/search`, {
