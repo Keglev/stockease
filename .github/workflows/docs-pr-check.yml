@@ -1,0 +1,99 @@
+name: Docs PR Check
+
+# Gives documentation pull requests a check of their own.
+#
+# The required branch-protection check is a *name*, `build-and-test`, not a workflow: a PR with no
+# job reporting under that name can never merge. Before this workflow existed, the only way to give
+# a docs PR that name was to let the backend test suite run on it - so changing a Markdown file
+# built and tested a Spring Boot application, which proves nothing about the change and fails for
+# reasons that have nothing to do with it. This runs the docs build and the link checker instead,
+# under the same required name, so a docs PR is gated by something that can actually be wrong
+# about it.
+#
+# The paths below and backend-test.yml's pull_request paths-ignore are maintained as a pair. Every
+# path in this list is ignored there, and everything else falls through to the backend job. A path
+# that ended up in neither would produce a PR with no `build-and-test` check at all, which is
+# unmergeable - see the comment on that trigger.
+#
+# This workflow's own file is deliberately NOT ignored by backend-test.yml. Editing the docs gate
+# should run both checks, because getting it wrong is how the repository loses its ability to merge.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/scripts/docs/**'
+      - '.github/workflows/docs-pipeline.yml'
+      - 'lychee.toml'
+      - '.github/workflows/docs-pr-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    # Same job name as the backend and frontend test workflows on purpose: the required
+    # branch-protection check matches this name, so whichever side a PR touches, a job with the
+    # required name reports on it. A PR touching both docs and backend gets two checks under this
+    # name, and both must pass.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # The four setup and build steps below mirror docs-pipeline.yml, which remains the source of
+      # truth for how the site is built - it is what publishes it. They are duplicated rather than
+      # extracted because this repository has no composite-action pattern to extract into: shared
+      # logic lives in .github/scripts/, and it already does here - both workflows call the same
+      # build-docs.sh and the same lychee.toml, which is where the behaviour that could drift
+      # actually lives. What is repeated is toolchain installation, four lines with no decisions in
+      # them. Keep the Node version, the ReDoc install and the lychee pin in step with that file.
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install ReDoc CLI
+        run: npm install -g @redocly/cli
+
+      - name: Install Pandoc
+        run: sudo apt-get update -qq && sudo apt-get install -y pandoc
+
+      # No artifact downloads: JaCoCo, the Vitest coverage report and the TypeDoc reference are
+      # produced by the test workflows and copied in only on the runs those workflows trigger. A PR
+      # check has none of them and needs none - lychee.toml already excludes all three, with the
+      # reasoning recorded there.
+      - name: Build docs site
+        run: bash .github/scripts/docs/build-docs.sh .
+
+      # Every page addresses the site as /stockease/..., because that is the prefix it is served
+      # under once deployed to the project page. lychee resolves an absolute link by prefixing
+      # --root-dir to it, so the site is staged under a directory of exactly that name and
+      # --root-dir points at its parent; /stockease/x.html then resolves to
+      # target/link-check/stockease/x.html.
+      - name: Stage the site for link checking
+        run: |
+          mkdir -p target/link-check
+          cp -r target/docs target/link-check/stockease
+
+      # The gate. Nothing is uploaded or deployed from a PR run - the question this job answers is
+      # only whether the site still builds and its internal links still resolve.
+      - name: Check internal links
+        uses: lycheeverse/lychee-action@v2.9.0
+        with:
+          # Pinned to the same version docs-pipeline.yml is proven against: a link checker that
+          # silently changes behaviour is a flaky gate, and a PR check disagreeing with the
+          # publishing build about what counts as a broken link is worse than either alone.
+          lycheeVersion: v0.24.2
+          fail: true
+          args: >-
+            --config lychee.toml
+            --root-dir "${{ github.workspace }}/target/link-check"
+            "target/link-check/stockease/**/*.html"
