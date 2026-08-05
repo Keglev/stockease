@@ -14,13 +14,9 @@
 <section class="tsd-panel tsd-comment">
 <div class="tsd-comment tsd-typography"><p>Routed form for recording a loss. It offers only LOST and DESTROYED, each of which needs a remark
 and none of which carries a price; stock is added by closing a purchase invoice, not here.</p>
-</div></section>
-<section class="tsd-panel">
-<h4>Implements</h4>
-<ul class="tsd-hierarchy">
-<li><span class="tsd-signature-type">OnInit</span></li></ul></section><aside class="tsd-sources">
+</div></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/c1989cd884ec7fc5679fd2f766ce27ce3d3d929f/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L40">features/movements/movement-record/movement-record.component.ts:40</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L44">features/movements/movement-record/movement-record.component.ts:44</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -34,13 +30,14 @@ and none of which carries a price; stock is added by closing a purchase invoice,
 <h3 class="tsd-index-heading tsd-anchor-link" id="properties">Properties<a href="#properties" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-index-list"><a href="#form" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>form</span></a>
 <a href="#pending" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>pending</span></a>
-<a href="#productoptions" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>product<wbr/>Options</span></a>
+<a href="#productlabel" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>product<wbr/>Label</span></a>
 <a href="#reasons" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>reasons</span></a>
 <a href="#remarks" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>remarks</span></a>
 </div></section>
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading tsd-anchor-link" id="methods">Methods<a href="#methods" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-index-list"><a href="#ngoninit" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>ng<wbr/>On<wbr/>Init</span></a>
+<div class="tsd-index-list"><a href="#onproductselected" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>on<wbr/>Product<wbr/>Selected</span></a>
+<a href="#searchproducts" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>search<wbr/>Products</span></a>
 <a href="#submit" class="tsd-index-link tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>submit</span></a>
 </div></section></div></details></section></section>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Constructors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -60,46 +57,233 @@ and none of which carries a price; stock is added by closing a purchase invoice,
 <h3 class="tsd-anchor-link" id="form"><code class="tsd-tag">Protected</code> <code class="tsd-tag">Readonly</code><span>form</span><a href="#form" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">form</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">FormGroup</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">MovementForm</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/c1989cd884ec7fc5679fd2f766ce27ce3d3d929f/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L56">features/movements/movement-record/movement-record.component.ts:56</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L68">features/movements/movement-record/movement-record.component.ts:68</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-protected">
 <h3 class="tsd-anchor-link" id="pending"><code class="tsd-tag">Protected</code> <code class="tsd-tag">Readonly</code><span>pending</span><a href="#pending" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">pending</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WritableSignal</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/c1989cd884ec7fc5679fd2f766ce27ce3d3d929f/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L52">features/movements/movement-record/movement-record.component.ts:52</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L58">features/movements/movement-record/movement-record.component.ts:58</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-protected">
-<h3 class="tsd-anchor-link" id="productoptions"><code class="tsd-tag">Protected</code> <code class="tsd-tag">Readonly</code><span>product<wbr/>Options</span><a href="#productoptions" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">productOptions</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WritableSignal</span><span class="tsd-signature-symbol">&lt;</span><br/>    <span class="tsd-signature-symbol">{</span><br/>        <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
+<h3 class="tsd-anchor-link" id="productlabel"><code class="tsd-tag">Protected</code> <code class="tsd-tag">Readonly</code><span>product<wbr/>Label</span><a href="#productlabel" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">productLabel</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><br/>    <span class="tsd-kind-parameter">product</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{</span><br/>        <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">)</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = productLabel</span></div>
+<div class="tsd-type-declaration">
+<h4>Type Declaration</h4>
+<ul class="tsd-parameters">
+<li class="tsd-parameter-signature">
+<ul class="tsd-signatures">
+<li class="tsd-signature"><span class="tsd-signature-symbol">(</span><br/>    <span class="tsd-kind-parameter">product</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{</span><br/>        <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>How a product reads in a typeahead panel and in the field once chosen.</p>
+<p>Name and SKU together, because the name alone is not reliably unique - two products may sit
+one letter apart, and the SKU is what an operator reads off the shelf to tell them apart. The
+reports page's own product picker shows the name only; it searches within one supplier's
+catalogue, where the ambiguity this resolves does not arise.
+<p>Shared rather than written twice: the movement form and the invoice lines pick from the same
+catalogue, and a row that read differently on the two pages would be a difference with no
+meaning behind it.</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li><span><span class="tsd-kind-parameter">product</span>: <span class="tsd-signature-symbol">{</span><br/>    <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></span>
+<ul class="tsd-parameters">
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-description">
+<h4 class="tsd-anchor-link" id="description">Description<a href="#description" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>ISO-8601 local date-time, serialized without a zone offset</p>
+</div>
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example">Example<a href="#example" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">2026</span><span class="hl-0">-</span><span class="hl-4">01</span><span class="hl-0">-02</span><span class="hl-6">T03</span><span class="hl-0">:</span><span class="hl-4">04</span><span class="hl-0">:</span><span class="hl-4">00</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>Format: int64</p>
+</div>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-1">Example<a href="#example-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">1</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-2">Example<a href="#example-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-3">Laptop</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>Format: double</p>
+</div>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-3">Example<a href="#example-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">999.99</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-description">
+<h4 class="tsd-anchor-link" id="description-1">Description<a href="#description-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Units in stock; changes only through stock movements</p>
+</div>
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-4">Example<a href="#example-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">50</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-description">
+<h4 class="tsd-anchor-link" id="description-2">Description<a href="#description-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Stock keeping unit; assigned by the operator at creation</p>
+</div>
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-5">Example<a href="#example-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-5">SKU</span><span class="hl-0">-</span><span class="hl-5">A1B2C3D4</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag">Readonly</code><span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>Format: double</p>
+</div>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-description">
+<h4 class="tsd-anchor-link" id="description-3">Description<a href="#description-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>purchasePrice times quantity, derived when the response is built</p>
+</div>
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-6">Example<a href="#example-6" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">49999.5</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li></ul></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4></li></ul></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/c1989cd884ec7fc5679fd2f766ce27ce3d3d929f/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L51">features/movements/movement-record/movement-record.component.ts:51</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L64">features/movements/movement-record/movement-record.component.ts:64</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-protected">
 <h3 class="tsd-anchor-link" id="reasons"><code class="tsd-tag">Protected</code> <code class="tsd-tag">Readonly</code><span>reasons</span><a href="#reasons" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">reasons</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-keyword">readonly</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">&quot;LOST&quot;</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">&quot;DESTROYED&quot;</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> = STANDALONE_REASONS</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/c1989cd884ec7fc5679fd2f766ce27ce3d3d929f/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L48">features/movements/movement-record/movement-record.component.ts:48</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L55">features/movements/movement-record/movement-record.component.ts:55</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-protected">
 <h3 class="tsd-anchor-link" id="remarks"><code class="tsd-tag">Protected</code> <code class="tsd-tag">Readonly</code><span>remarks</span><a href="#remarks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">remarks</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-keyword">readonly</span> <span class="tsd-signature-symbol">[</span><br/>    <span class="tsd-signature-type">&quot;EXPIRED&quot;</span><span class="tsd-signature-symbol">,</span><br/>    <span class="tsd-signature-type">&quot;IN_TRANSIT_TO_CUSTOMER&quot;</span><span class="tsd-signature-symbol">,</span><br/>    <span class="tsd-signature-type">&quot;INTERNAL&quot;</span><span class="tsd-signature-symbol">,</span><br/>    <span class="tsd-signature-type">&quot;FROM_SUPPLIER&quot;</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> = MOVEMENT_REMARKS</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/c1989cd884ec7fc5679fd2f766ce27ce3d3d929f/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L49">features/movements/movement-record/movement-record.component.ts:49</a></li></ul></aside></section></section></details>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L56">features/movements/movement-record/movement-record.component.ts:56</a></li></ul></aside></section></section></details>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
 <h2 class="tsd-anchor-link" id="methods-1">Methods<a href="#methods-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
-<section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="ngoninit"><span>ng<wbr/>On<wbr/>Init</span><a href="#ngoninit" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<ul class="tsd-signatures">
+<section class="tsd-panel tsd-member tsd-is-protected">
+<h3 class="tsd-anchor-link" id="onproductselected"><code class="tsd-tag">Protected</code><span>on<wbr/>Product<wbr/>Selected</span><a href="#onproductselected" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-is-protected">
 <li class="">
-<div class="tsd-signature tsd-anchor-link" id="ngoninit-1"><span class="tsd-kind-call-signature">ngOnInit</span><span class="tsd-signature-symbol">()</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#ngoninit-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
+<div class="tsd-signature tsd-anchor-link" id="onproductselected-1"><span class="tsd-kind-call-signature">onProductSelected</span><span class="tsd-signature-symbol">(</span><br/>    <span class="tsd-kind-parameter">product</span><span class="tsd-signature-symbol">:</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-symbol">{</span><br/>            <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>            <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>            <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>            <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>            <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>            <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>            <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-signature-symbol">}</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#onproductselected-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>A callback method that is invoked immediately after the
-default change detector has checked the directive's
-data-bound properties for the first time,
-and before any of the view or content children have been checked.
-It is invoked only once when the directive is instantiated.</p>
+<div class="tsd-comment tsd-typography"><p>The typeahead owns the search; the form control only ever holds the chosen id.</p>
 </div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
-<p>Implementation of OnInit.ngOnInit</p>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li><span><span class="tsd-kind-parameter">product</span>: <br/>    <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-symbol">{</span><br/>        <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-symbol">}</span><br/>    <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span></span>
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/c1989cd884ec7fc5679fd2f766ce27ce3d3d929f/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L69">features/movements/movement-record/movement-record.component.ts:69</a></li></ul></aside></div></li></ul></section>
+<li><span class="tsd-signature-symbol">{</span><br/>    <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span>
+<ul class="tsd-parameters">
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-description">
+<h4 class="tsd-anchor-link" id="description-4">Description<a href="#description-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>ISO-8601 local date-time, serialized without a zone offset</p>
+</div>
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-7">Example<a href="#example-7" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">2026</span><span class="hl-0">-</span><span class="hl-4">01</span><span class="hl-0">-02</span><span class="hl-6">T03</span><span class="hl-0">:</span><span class="hl-4">04</span><span class="hl-0">:</span><span class="hl-4">00</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>Format: int64</p>
+</div>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-8">Example<a href="#example-8" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">1</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-9">Example<a href="#example-9" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-3">Laptop</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>Format: double</p>
+</div>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-10">Example<a href="#example-10" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">999.99</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-description">
+<h4 class="tsd-anchor-link" id="description-5">Description<a href="#description-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Units in stock; changes only through stock movements</p>
+</div>
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-11">Example<a href="#example-11" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">50</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-description">
+<h4 class="tsd-anchor-link" id="description-6">Description<a href="#description-6" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Stock keeping unit; assigned by the operator at creation</p>
+</div>
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-12">Example<a href="#example-12" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-5">SKU</span><span class="hl-0">-</span><span class="hl-5">A1B2C3D4</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag">Readonly</code><span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+<div class="tsd-comment tsd-typography"><p>Format: double</p>
+</div>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-description">
+<h4 class="tsd-anchor-link" id="description-7">Description<a href="#description-7" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>purchasePrice times quantity, derived when the response is built</p>
+</div>
+<div class="tsd-tag-example">
+<h4 class="tsd-anchor-link" id="example-13">Example<a href="#example-13" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="ts"><span class="hl-4">49999.5</span>
+</code><button type="button">Copy</button></pre>
+
+</div></div></li></ul></li>
+<li><span class="tsd-signature-type">null</span></li></ul></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L82">features/movements/movement-record/movement-record.component.ts:82</a></li></ul></aside></div></li></ul></section>
+<section class="tsd-panel tsd-member tsd-is-protected">
+<h3 class="tsd-anchor-link" id="searchproducts"><code class="tsd-tag">Protected</code> <code class="tsd-tag">Readonly</code><span>search<wbr/>Products</span><a href="#searchproducts" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-is-protected">
+<li class="">
+<div class="tsd-signature tsd-anchor-link" id="searchproducts-1"><span class="tsd-kind-call-signature">searchProducts</span><span class="tsd-signature-symbol">(</span><br/>    <span class="tsd-kind-parameter">term</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Observable</span><span class="tsd-signature-symbol">&lt;</span><br/>    <span class="tsd-signature-symbol">{</span><br/>        <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">&gt;</span><a href="#searchproducts-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
+<div class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Bound into the typeahead; arrow properties so <code>this</code> survives the input binding.</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li><span><span class="tsd-kind-parameter">term</span>: <span class="tsd-signature-type">string</span></span></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Observable</span><span class="tsd-signature-symbol">&lt;</span><br/>    <span class="tsd-signature-symbol">{</span><br/>        <span class="tsd-kind-property">createdAt</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">id</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">purchasePrice</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">quantity</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">sku</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>        <span class="tsd-kind-property">totalValue</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L61">features/movements/movement-record/movement-record.component.ts:61</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-protected">
 <h3 class="tsd-anchor-link" id="submit"><code class="tsd-tag">Protected</code><span>submit</span><a href="#submit" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-protected">
@@ -108,7 +292,7 @@ It is invoked only once when the directive is instantiated.</p>
 <div class="tsd-description">
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/c1989cd884ec7fc5679fd2f766ce27ce3d3d929f/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L73">features/movements/movement-record/movement-record.component.ts:73</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0d74b515d452bb3a13c9abd78912223a505c54da/frontend/src/app/features/movements/movement-record/movement-record.component.ts#L87">features/movements/movement-record/movement-record.component.ts:87</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -126,9 +310,9 @@ It is invoked only once when the directive is instantiated.</p>
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Constructors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Constructors</summary>
 <div><a href="#constructor"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Constructor"><use href="../assets/icons.svg#icon-512"></use></svg><span>constructor</span></a></div></details>
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Properties</summary>
-<div><a href="#form" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>form</span></a><a href="#pending" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>pending</span></a><a href="#productoptions" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>product<wbr/>Options</span></a><a href="#reasons" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>reasons</span></a><a href="#remarks" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>remarks</span></a></div></details>
+<div><a href="#form" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>form</span></a><a href="#pending" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>pending</span></a><a href="#productlabel" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>product<wbr/>Label</span></a><a href="#reasons" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>reasons</span></a><a href="#remarks" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>remarks</span></a></div></details>
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Methods</summary>
-<div><a href="#ngoninit"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>ng<wbr/>On<wbr/>Init</span></a><a href="#submit" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>submit</span></a></div></details></div></details></div>
+<div><a href="#onproductselected" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>on<wbr/>Product<wbr/>Selected</span></a><a href="#searchproducts" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>search<wbr/>Products</span></a><a href="#submit" class="tsd-is-protected"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>submit</span></a></div></details></div></details></div>
 <div class="site-menu">
 <nav id="tsd-sidebar-links" class="tsd-navigation"><a href="/stockease/" class="tsd-nav-link">Docs home</a></nav>
 <nav class="tsd-navigation"><a href="../index.html">Bestandskontrolle / StockEase - Frontend API</a>
