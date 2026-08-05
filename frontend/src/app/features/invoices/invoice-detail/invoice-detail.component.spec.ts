@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
@@ -9,6 +12,7 @@ import {
   RegisterReturnRequest
 } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { MovementService } from '../../movements/movement.service';
 import { InvoiceReturnDialogComponent } from '../invoice-return-dialog/invoice-return-dialog.component';
@@ -81,6 +85,29 @@ const SUMMARY: InvoiceSummaryResponse = {
   paidAt: null,
   createdAt: '2026-01-02T03:04:00'
 };
+
+/**
+ * Reads invoices.returnDialog.deletedProduct out of a shipped locale file. Walks up from the
+ * working directory so it resolves whether the runner starts in frontend/ or at the repository
+ * root, and reads from disk rather than importing, because public/ sits outside the spec
+ * tsconfig's rootDir - both for the reasons translation-parity.spec sets out.
+ */
+function localeMessage(file: string): string {
+  let dir = process.cwd();
+  for (;;) {
+    try {
+      const parsed: unknown = JSON.parse(readFileSync(join(dir, 'public', 'i18n', file), 'utf8'));
+      return (parsed as { invoices: { returnDialog: { deletedProduct: string } } }).invoices
+        .returnDialog.deletedProduct;
+    } catch {
+      const parent = dirname(dir);
+      if (parent === dir) {
+        throw new Error(`public/i18n/${file} not found above ${process.cwd()}`);
+      }
+      dir = parent;
+    }
+  }
+}
 
 class NotificationServiceStub {
   successes: string[] = [];
@@ -481,6 +508,51 @@ describe('InvoiceDetailComponent', () => {
     await settle();
 
     expect(notifications.errors).toEqual(['Only 1 unit remains returnable.']);
+  });
+
+  it('return_rejectedWith409_showsTheDeletedProductNotification', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })));
+    // The failure is injected at the service seam, in the shape the interceptor produces: an
+    // ApiError carrying the backend's own sentence and the 409 the deleted-product veto answers
+    // with. The sentence is what must NOT reach the screen.
+    movements.result = throwError(
+      () =>
+        new ApiError(
+          "Cannot register a return for 'Widget': the product is deleted. "
+            + 'Restore it first, then record the return.',
+          409
+        )
+    );
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(notifications.errors).toEqual(['invoices.returnDialog.deletedProduct']);
+  });
+
+  it('return_registeredSuccessfully_isUnaffectedByTheConflictMapping', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })));
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(notifications.successes).toEqual(['invoices.returnDialog.registered']);
+    expect(notifications.errors).toEqual([]);
+  });
+
+  it('deletedProductMessage_bothLocales_readAsTheShippedSentences', () => {
+    // The component emits a key; what the operator reads is the value in the file the app fetches
+    // at runtime. Asserting the shipped files - the technique translation-parity.spec uses, and
+    // for the same reason - is what makes the two specs above non-vacuous about the actual words.
+    // Whole strings, both languages: a substring match would accept a message that dropped the
+    // restore instruction, which is the only actionable half of it.
+    expect(localeMessage('en.json')).toBe(
+      'This product is deleted and cannot take returns. Restore it first, then register the return.'
+    );
+    expect(localeMessage('de.json')).toBe(
+      'Dieses Produkt ist gelöscht und kann keine Retouren annehmen. '
+        + 'Stellen Sie es zuerst wieder her, dann erfassen Sie die Retoure.'
+    );
   });
 
   it('delete_rejected_surfacesMessageAndStaysOnPage', async () => {
