@@ -12,10 +12,12 @@
 <li><a href="" aria-current="page">TYPEAHEAD_MIN_CHARS</a></li></ul>
 <h1>Variable TYPEAHEAD_MIN_CHARS<code class="tsd-tag">Const</code></h1></div>
 <div class="tsd-signature"><span class="tsd-kind-variable">TYPEAHEAD_MIN_CHARS</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">3</span></div>
-<div class="tsd-comment tsd-typography"><p>Characters required before anything is sent. Below this a search matches most of the table.</p>
-</div><aside class="tsd-sources">
+<div class="tsd-comment tsd-typography"><p>Characters required before a TYPED term is sent. Below this a search matches most of the table.</p>
+<p>It does not apply to the empty field, which is not a short search but a different question
+(ADR 035): "what is there?" rather than "which of these did I mean?". Focusing an empty field
+browses the first capped page, and that is the one term sent without reaching this minimum.</div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/8838d5f66a15b2783cd53fac0b42b41aea7ad76b/frontend/src/app/shared/typeahead/typeahead.component.ts#L23">shared/typeahead/typeahead.component.ts:23</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/315bbe6a519bf5cdb69fba1fe15927932e0ec1f4/frontend/src/app/shared/typeahead/typeahead.component.ts#L29">shared/typeahead/typeahead.component.ts:29</a></li></ul></aside></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
