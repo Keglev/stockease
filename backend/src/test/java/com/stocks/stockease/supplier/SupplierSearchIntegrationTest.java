@@ -35,7 +35,7 @@ class SupplierSearchIntegrationTest extends AbstractIntegrationTest {
     @Test
     void searchByName_partialNameInAnyCase_matchesSubstring() {
         String token = token();
-        supplierService.create("North " + token + " Trading", "1 Main St");
+        supplierService.create("North " + token + " Trading", null, null, "1 Main St", null);
 
         // lower-cased and mid-name: the match is a case-insensitive substring, not a prefix
         List<Supplier> found = supplierService.searchByName(token.toLowerCase());
@@ -48,7 +48,7 @@ class SupplierSearchIntegrationTest extends AbstractIntegrationTest {
         String token = token();
         // one more than the cap, created out of order so the ordering asserted is the query's
         for (int i = SearchLimits.TYPEAHEAD_LIMIT; i >= 0; i--) {
-            supplierService.create(token + " %02d".formatted(i), "1 Main St");
+            supplierService.create(token + " %02d".formatted(i), null, null, "1 Main St", null);
         }
 
         List<Supplier> found = supplierService.searchByName(token);
@@ -62,8 +62,8 @@ class SupplierSearchIntegrationTest extends AbstractIntegrationTest {
     @Test
     void searchByName_softDeletedSupplier_isExcluded() {
         String token = token();
-        Supplier live = supplierService.create(token + " Live", "1 Main St");
-        Supplier retired = supplierService.create(token + " Retired", "1 Main St");
+        Supplier live = supplierService.create(token + " Live", null, null, "1 Main St", null);
+        Supplier retired = supplierService.create(token + " Retired", null, null, "1 Main St", null);
         supplierService.deleteById(retired.getId());
 
         List<Supplier> found = supplierService.searchByName(token);

@@ -20,9 +20,28 @@
     <td mat-cell *matCellDef="let supplier">{{ supplier.name }}</td>
   </ng-container>
 
+  <!-- The contact columns mirror the customer list: an em dash where the value is absent, so an
+       empty cell reads as "nothing recorded" rather than as a rendering failure. -->
+  <ng-container matColumnDef="email">
+    <th mat-header-cell *matHeaderCellDef>{{ 'suppliers.columns.email' | translate }}</th>
+    <td mat-cell *matCellDef="let supplier">{{ supplier.email || '—' }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="phone">
+    <th mat-header-cell *matHeaderCellDef>{{ 'suppliers.columns.phone' | translate }}</th>
+    <td mat-cell *matCellDef="let supplier">{{ supplier.phone || '—' }}</td>
+  </ng-container>
+
+  <!-- Kept, unlike the customer list, which omits address entirely: a supplier's address is
+       mandatory and always has a value, so there is no blank column to save room by dropping. -->
   <ng-container matColumnDef="address">
     <th mat-header-cell *matHeaderCellDef>{{ 'suppliers.columns.address' | translate }}</th>
     <td mat-cell *matCellDef="let supplier">{{ supplier.address }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="city">
+    <th mat-header-cell *matHeaderCellDef>{{ 'suppliers.columns.city' | translate }}</th>
+    <td mat-cell *matCellDef="let supplier">{{ supplier.city || '—' }}</td>
   </ng-container>
 
   <ng-container matColumnDef="createdAt">

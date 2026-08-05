@@ -39,7 +39,7 @@ final class InvoiceTestFixtures {
         invoice.setInterestRate(BigDecimal.ZERO);
         invoice.setFineValue(BigDecimal.ZERO);
         invoice.setCreatedAt(CREATED_AT);
-        invoice.setSupplier(new Supplier(7L, "Acme", "1 Main St", CREATED_AT, null));
+        invoice.setSupplier(new Supplier(7L, "Acme", null, null, "1 Main St", null, CREATED_AT, null));
         // The scalars the database fills on insert; the DTOs read these rather than the
         // association, so a fixture that omits them renders a party-less invoice (ADR 033).
         invoice.setSupplierId(7L);

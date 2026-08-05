@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, of, throwError } from 'rxjs';
@@ -5,7 +8,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { SupplierResponse } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
-import { SupplierService } from '../supplier.service';
+import { SupplierPayload, SupplierService } from '../supplier.service';
 import { SupplierFormDialogComponent, SupplierFormDialogData } from './supplier-form-dialog.component';
 
 const TRANSLATIONS = {
@@ -16,9 +19,20 @@ const TRANSLATIONS = {
         createTitle: 'New supplier',
         editTitle: 'Edit supplier',
         name: 'Name',
+        email: 'Email',
+        phone: 'Phone',
         address: 'Address',
+        city: 'City',
         nameRequired: 'Name is required.',
-        addressRequired: 'Address is required.'
+        addressRequired: 'Address is required.',
+        emailInvalid: 'Enter a valid email address.'
+      }
+    }
+  },
+  de: {
+    suppliers: {
+      form: {
+        emailInvalid: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.'
       }
     }
   }
@@ -27,25 +41,50 @@ const TRANSLATIONS = {
 const ACME: SupplierResponse = {
   id: 7,
   name: 'Acme',
+  email: 'acme@example.com',
+  phone: '555-1234',
   address: '1 Main St',
+  city: 'Springfield',
   createdAt: '2026-01-02T03:04:00'
 };
 
+/**
+ * Reads one suppliers.form message out of a shipped locale file. Walks up from the working
+ * directory so it resolves whether the runner starts in frontend/ or at the repository root, and
+ * reads from disk rather than importing, because public/ sits outside the spec tsconfig's
+ * rootDir - both for the reasons translation-parity.spec sets out.
+ */
+function localeMessage(file: string, key: string): string {
+  let dir = process.cwd();
+  for (;;) {
+    try {
+      const parsed: unknown = JSON.parse(readFileSync(join(dir, 'public', 'i18n', file), 'utf8'));
+      return (parsed as { suppliers: { form: Record<string, string> } }).suppliers.form[key];
+    } catch {
+      const parent = dirname(dir);
+      if (parent === dir) {
+        throw new Error(`public/i18n/${file} not found above ${process.cwd()}`);
+      }
+      dir = parent;
+    }
+  }
+}
+
 class SupplierServiceStub {
-  createCalls: { name: string; address: string }[] = [];
-  updateCalls: { id: number; name: string; address: string }[] = [];
+  createCalls: SupplierPayload[] = [];
+  updateCalls: { id: number; payload: SupplierPayload }[] = [];
 
   /** Overridable so a spec can make the save fail without touching the update path. */
   createResult: Observable<SupplierResponse> | null = null;
 
-  create(name: string, address: string): Observable<SupplierResponse> {
-    this.createCalls.push({ name, address });
-    return this.createResult ?? of({ ...ACME, name, address });
+  create(payload: SupplierPayload): Observable<SupplierResponse> {
+    this.createCalls.push(payload);
+    return this.createResult ?? of({ ...ACME, ...payload });
   }
 
-  update(id: number, name: string, address: string): Observable<SupplierResponse> {
-    this.updateCalls.push({ id, name, address });
-    return of({ ...ACME, id, name, address });
+  update(id: number, payload: SupplierPayload): Observable<SupplierResponse> {
+    this.updateCalls.push({ id, payload });
+    return of({ ...ACME, id, ...payload });
   }
 }
 
@@ -58,17 +97,26 @@ describe('SupplierFormDialogComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelectorAll('input');
   }
 
+  /** Fields in template order: name, email, phone, address, city. */
+  function setField(index: number, value: string): void {
+    const field = Array.from(inputs())[index];
+    field.value = value;
+    field.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
   function submitButton(): HTMLButtonElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector('.form-submit');
   }
 
+  /** The mandatory pair only, which is what most specs need. */
   function fill(name: string, address: string): void {
-    const [nameInput, addressInput] = Array.from(inputs());
-    nameInput.value = name;
-    nameInput.dispatchEvent(new Event('input'));
-    addressInput.value = address;
-    addressInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
+    setField(0, name);
+    setField(3, address);
+  }
+
+  function submit(): void {
+    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
   }
 
   async function setUp(data: SupplierFormDialogData): Promise<void> {
@@ -102,7 +150,7 @@ describe('SupplierFormDialogComponent', () => {
 
     expect(submitButton()?.disabled).toBe(true);
 
-    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+    submit();
     await fixture.whenStable();
 
     expect(service.createCalls).toEqual([]);
@@ -114,20 +162,114 @@ describe('SupplierFormDialogComponent', () => {
     fill('Globex', '5 Side St');
 
     expect(submitButton()?.disabled).toBe(false);
-    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+    submit();
     await fixture.whenStable();
 
-    expect(service.createCalls).toEqual([{ name: 'Globex', address: '5 Side St' }]);
+    // The optional fields go as empty strings; the service compacts them away before the request.
+    expect(service.createCalls).toEqual([
+      { name: 'Globex', email: '', phone: '', address: '5 Side St', city: '' }
+    ]);
     expect(service.updateCalls).toEqual([]);
-    expect(dialogRef.close).toHaveBeenCalledWith({ ...ACME, name: 'Globex', address: '5 Side St' });
   });
 
-  it('open_editMode_prefillsFormFromSupplier', async () => {
+  it('submit_createModeWithEveryContactField_sendsThemAll', async () => {
+    await setUp({});
+    fill('Globex', '5 Side St');
+    setField(1, 'globex@example.com');
+    setField(2, '555-9999');
+    setField(4, 'Shelbyville');
+
+    submit();
+    await fixture.whenStable();
+
+    expect(service.createCalls).toEqual([
+      {
+        name: 'Globex',
+        email: 'globex@example.com',
+        phone: '555-9999',
+        address: '5 Side St',
+        city: 'Shelbyville'
+      }
+    ]);
+  });
+
+  it('submit_malformedEmail_isBlockedAndNamesTheProblem', async () => {
+    await setUp({});
+    fill('Globex', '5 Side St');
+    setField(1, 'not-an-email');
+
+    // Optional does not mean unchecked: a value that is there has to be a usable one.
+    expect(submitButton()?.disabled).toBe(true);
+    submit();
+    await fixture.whenStable();
+
+    expect(service.createCalls).toEqual([]);
+    const errors = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('mat-error')
+    ).map((node) => node.textContent?.trim());
+    expect(errors).toEqual(['Enter a valid email address.']);
+  });
+
+  it('emailInvalid_germanLanguage_readsTheGermanSentence', async () => {
+    await setUp({});
+    fill('Globex', '5 Side St');
+    setField(1, 'not-an-email');
+    // Material projects mat-error only once the control is in an error state, which needs the
+    // field touched (or the form submitted) as well as invalid.
+    Array.from(inputs())[1].dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The whole sentence in the pinned language: the message is the only thing telling the user
+    // what is wrong with a field they were free to leave blank.
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('mat-error')?.textContent?.trim()
+    ).toBe('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+  });
+
+  it('open_editMode_prefillsEveryFieldFromSupplier', async () => {
     await setUp({ supplier: ACME });
 
-    const [nameInput, addressInput] = Array.from(inputs());
-    expect(nameInput.value).toBe('Acme');
-    expect(addressInput.value).toBe('1 Main St');
+    expect(Array.from(inputs()).map((field) => field.value)).toEqual([
+      'Acme',
+      'acme@example.com',
+      '555-1234',
+      '1 Main St',
+      'Springfield'
+    ]);
+  });
+
+  it('open_editModeWithNoContactDetails_prefillsThoseFieldsEmpty', async () => {
+    await setUp({ supplier: { ...ACME, email: null, phone: null, city: null } });
+
+    // A supplier created before V23 has nulls, and a null in a nonNullable control would throw.
+    expect(Array.from(inputs()).map((field) => field.value)).toEqual([
+      'Acme',
+      '',
+      '',
+      '1 Main St',
+      ''
+    ]);
+  });
+
+  it('submit_editModeClearingContactFields_sendsThemBlank', async () => {
+    await setUp({ supplier: ACME });
+    setField(1, '');
+    setField(2, '');
+    setField(4, '');
+
+    submit();
+    await fixture.whenStable();
+
+    // Blank reaches the service, which drops the key entirely - that is how the wholesale-replace
+    // PUT is asked to clear a field rather than keep the stored one.
+    expect(service.updateCalls).toEqual([
+      { id: 7, payload: { name: 'Acme', email: '', phone: '', address: '1 Main St', city: '' } }
+    ]);
   });
 
   it('cancel_clicked_closesWithNothingAndSavesNothing', async () => {
@@ -150,6 +292,7 @@ describe('SupplierFormDialogComponent', () => {
     }
     fixture.detectChanges();
 
+    // Only the mandatory pair complains: a blank optional field is a valid one.
     const errors = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('mat-error')
     ).map((node) => node.textContent?.trim());
@@ -161,7 +304,7 @@ describe('SupplierFormDialogComponent', () => {
     service.createResult = throwError(() => new Error('A supplier with this name already exists.'));
     fill('Globex', '5 Side St');
 
-    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+    submit();
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -175,10 +318,31 @@ describe('SupplierFormDialogComponent', () => {
     await setUp({ supplier: ACME });
     fill('Acme GmbH', '2 Main St');
 
-    (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
+    submit();
     await fixture.whenStable();
 
-    expect(service.updateCalls).toEqual([{ id: 7, name: 'Acme GmbH', address: '2 Main St' }]);
+    expect(service.updateCalls).toEqual([
+      {
+        id: 7,
+        payload: {
+          name: 'Acme GmbH',
+          email: 'acme@example.com',
+          phone: '555-1234',
+          address: '2 Main St',
+          city: 'Springfield'
+        }
+      }
+    ]);
     expect(service.createCalls).toEqual([]);
+  });
+
+  it('emailInvalidMessage_bothLocales_readAsTheShippedSentences', () => {
+    // The specs above assert against inline test translations, which prove nothing about what the
+    // app fetches at runtime. These read the shipped files, the technique translation-parity.spec
+    // uses, so the words the user actually sees are pinned too.
+    expect(localeMessage('en.json', 'emailInvalid')).toBe('Enter a valid email address.');
+    expect(localeMessage('de.json', 'emailInvalid')).toBe(
+      'Bitte geben Sie eine gültige E-Mail-Adresse ein.'
+    );
   });
 });

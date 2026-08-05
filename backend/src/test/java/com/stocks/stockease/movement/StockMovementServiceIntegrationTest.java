@@ -104,7 +104,7 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
 
     /** Persists a supplier-backed purchase invoice line of {@code itemQty} units at 15.00 each. */
     private InvoiceItem purchaseItemFor(Product product, int itemQty) {
-        Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", "1 Main St", null, null));
+        Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", null, null, "1 Main St", null, null, null));
         Invoice invoice = new Invoice();
         invoice.setInvoiceNumber(nextNumber());
         invoice.setType(InvoiceType.PURCHASE);

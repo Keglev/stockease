@@ -11,10 +11,14 @@ import com.stocks.stockease.supplier.Supplier;
  *
  * @param id unique supplier identifier
  * @param name supplier display name
+ * @param email supplier email address
+ * @param phone supplier phone number
  * @param address supplier postal address
+ * @param city supplier city
  * @param createdAt moment the supplier was first persisted
  */
-public record SupplierResponse(Long id, String name, String address, LocalDateTime createdAt) {
+public record SupplierResponse(Long id, String name, String email, String phone, String address, String city,
+        LocalDateTime createdAt) {
 
     /**
      * Maps a persisted supplier to its API representation.
@@ -23,7 +27,7 @@ public record SupplierResponse(Long id, String name, String address, LocalDateTi
      * @return the response record carrying the entity's public fields
      */
     public static SupplierResponse from(Supplier supplier) {
-        return new SupplierResponse(supplier.getId(), supplier.getName(), supplier.getAddress(),
-                supplier.getCreatedAt());
+        return new SupplierResponse(supplier.getId(), supplier.getName(), supplier.getEmail(), supplier.getPhone(),
+                supplier.getAddress(), supplier.getCity(), supplier.getCreatedAt());
     }
 }

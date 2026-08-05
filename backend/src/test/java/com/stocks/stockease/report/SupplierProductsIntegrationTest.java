@@ -70,7 +70,7 @@ class SupplierProductsIntegrationTest extends AbstractIntegrationTest {
     }
 
     private Supplier newSupplier(String name) {
-        return supplierService.create(name, "1 Main St");
+        return supplierService.create(name, null, null, "1 Main St", null);
     }
 
     /** Books a closed purchase, which is the only thing that makes a product this supplier's. */

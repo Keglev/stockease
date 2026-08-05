@@ -73,7 +73,7 @@ class InvoiceLifecycleIntegrationTest extends AbstractIntegrationTest {
     }
 
     private Supplier newSupplier() {
-        return supplierRepository.saveAndFlush(new Supplier(null, "Acme", "1 Main St", null, null));
+        return supplierRepository.saveAndFlush(new Supplier(null, "Acme", null, null, "1 Main St", null, null, null));
     }
 
     private static CreateInvoiceCommand.ItemLine line(Product product, int quantity) {

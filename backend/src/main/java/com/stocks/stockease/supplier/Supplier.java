@@ -38,9 +38,21 @@ public class Supplier {
     @Column(nullable = false)
     private String name;
 
+    /** Supplier email address. */
+    @Column(length = 255)
+    private String email;
+
+    /** Supplier phone number. */
+    @Column(length = 50)
+    private String phone;
+
     /** Supplier postal address. */
     @Column(nullable = false)
     private String address;
+
+    /** Supplier city. */
+    @Column(length = 255)
+    private String city;
 
     /** Timestamp the row was first persisted, populated by JPA auditing. */
     @CreatedDate

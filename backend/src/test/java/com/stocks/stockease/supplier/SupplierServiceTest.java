@@ -65,7 +65,7 @@ class SupplierServiceTest {
     void create_withValidFields_savesAndReturnsSupplier() {
         when(supplierRepository.save(any(Supplier.class))).thenAnswer(call -> call.getArgument(0));
 
-        Supplier result = supplierService.create("Acme", "1 Main St");
+        Supplier result = supplierService.create("Acme", null, null, "1 Main St", null);
 
         assertThat(result.getName()).isEqualTo("Acme");
         assertThat(result.getAddress()).isEqualTo("1 Main St");
@@ -73,7 +73,7 @@ class SupplierServiceTest {
 
     @Test
     void create_withBlankName_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> supplierService.create("  ", "1 Main St"))
+        assertThatThrownBy(() -> supplierService.create("  ", null, null, "1 Main St", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Supplier name and address are required.");
         verify(supplierRepository, never()).save(any(Supplier.class));
@@ -81,7 +81,7 @@ class SupplierServiceTest {
 
     @Test
     void create_withBlankAddress_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> supplierService.create("Acme", null))
+        assertThatThrownBy(() -> supplierService.create("Acme", null, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Supplier name and address are required.");
     }
@@ -89,7 +89,7 @@ class SupplierServiceTest {
     @Test
     void create_withNullName_throwsIllegalArgumentException() {
         // a missing name and a blank one are the same rejection; only the null check reaches this one
-        assertThatThrownBy(() -> supplierService.create(null, "1 Main St"))
+        assertThatThrownBy(() -> supplierService.create(null, null, null, "1 Main St", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Supplier name and address are required.");
         verify(supplierRepository, never()).save(any(Supplier.class));
@@ -97,7 +97,7 @@ class SupplierServiceTest {
 
     @Test
     void create_withWhitespaceAddress_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> supplierService.create("Acme", "   "))
+        assertThatThrownBy(() -> supplierService.create("Acme", null, null, "   ", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Supplier name and address are required.");
         verify(supplierRepository, never()).save(any(Supplier.class));
@@ -109,7 +109,7 @@ class SupplierServiceTest {
         when(supplierRepository.findById(1L)).thenReturn(Optional.of(supplier));
         when(supplierRepository.save(supplier)).thenReturn(supplier);
 
-        Supplier result = supplierService.update(1L, "Acme Two", "2 Side St");
+        Supplier result = supplierService.update(1L, "Acme Two", null, null, "2 Side St", null);
 
         assertThat(result.getName()).isEqualTo("Acme Two");
         assertThat(result.getAddress()).isEqualTo("2 Side St");
@@ -119,7 +119,7 @@ class SupplierServiceTest {
     void update_withMissingId_throwsEntityNotFoundException() {
         when(supplierRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> supplierService.update(1L, "Acme", "1 Main St"))
+        assertThatThrownBy(() -> supplierService.update(1L, "Acme", null, null, "1 Main St", null))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Supplier with ID 1 not found.");
     }
@@ -129,7 +129,7 @@ class SupplierServiceTest {
         Supplier supplier = supplier(1L, "Acme");
         when(supplierRepository.findById(1L)).thenReturn(Optional.of(supplier));
 
-        assertThatThrownBy(() -> supplierService.update(1L, "", "1 Main St"))
+        assertThatThrownBy(() -> supplierService.update(1L, "", null, null, "1 Main St", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Supplier name and address are required.");
     }

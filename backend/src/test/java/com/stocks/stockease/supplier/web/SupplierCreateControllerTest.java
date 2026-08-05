@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,7 +45,7 @@ class SupplierCreateControllerTest {
     @SuppressWarnings("unused")
     @BeforeEach
     void setUpMocks() {
-        supplier = new Supplier(1L, "Acme", "1 Main St", LocalDateTime.of(2026, 1, 2, 3, 4), null);
+        supplier = new Supplier(1L, "Acme", null, null, "1 Main St", null, LocalDateTime.of(2026, 1, 2, 3, 4), null);
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
         Mockito.reset(supplierService);
     }
@@ -52,7 +53,7 @@ class SupplierCreateControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void createSupplier_withValidData_returns200() throws Exception {
-        Mockito.when(supplierService.create(anyString(), anyString())).thenReturn(supplier);
+        Mockito.when(supplierService.create(anyString(), Mockito.isNull(), Mockito.isNull(), anyString(), Mockito.isNull())).thenReturn(supplier);
 
         mockMvc.perform(post("/api/suppliers")
                         .contentType(applicationJson())
@@ -67,7 +68,7 @@ class SupplierCreateControllerTest {
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void createSupplier_asUserRole_returns200() throws Exception {
-        Mockito.when(supplierService.create(anyString(), anyString())).thenReturn(supplier);
+        Mockito.when(supplierService.create(anyString(), Mockito.isNull(), Mockito.isNull(), anyString(), Mockito.isNull())).thenReturn(supplier);
 
         mockMvc.perform(post("/api/suppliers")
                         .contentType(applicationJson())
@@ -88,7 +89,7 @@ class SupplierCreateControllerTest {
                 .andExpect(jsonPath("$.message").value("Validation failed for request parameters."))
                 .andExpect(jsonPath("$.data.name").value("Supplier name is required."));
 
-        Mockito.verify(supplierService, Mockito.never()).create(anyString(), anyString());
+        Mockito.verify(supplierService, Mockito.never()).create(anyString(), any(), any(), anyString(), any());
     }
 
     @Test
@@ -100,6 +101,51 @@ class SupplierCreateControllerTest {
                         .with(csrfToken()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.data.address").value("Supplier address is required."));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void createSupplier_withAllContactFields_returnsThemOnTheResponse() throws Exception {
+        Mockito.when(supplierService.create("Acme", "acme@example.com", "555-1234", "1 Main St", "Springfield"))
+                .thenReturn(new Supplier(1L, "Acme", "acme@example.com", "555-1234", "1 Main St", "Springfield",
+                        LocalDateTime.of(2026, 1, 2, 3, 4), null));
+
+        mockMvc.perform(post("/api/suppliers")
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Acme\", \"email\": \"acme@example.com\", \"phone\": \"555-1234\","
+                                + " \"address\": \"1 Main St\", \"city\": \"Springfield\"}")
+                        .with(csrfToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("acme@example.com"))
+                .andExpect(jsonPath("$.phone").value("555-1234"))
+                .andExpect(jsonPath("$.city").value("Springfield"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void createSupplier_withoutOptionalFields_returns200() throws Exception {
+        // The mandatory pair alone. The three optional fields reach the service as null rather than
+        // as empty strings, which is what lets their columns stay null instead of holding "".
+        Mockito.when(supplierService.create(anyString(), Mockito.isNull(), Mockito.isNull(), anyString(),
+                Mockito.isNull())).thenReturn(supplier);
+
+        mockMvc.perform(post("/api/suppliers")
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Acme\", \"address\": \"1 Main St\"}")
+                        .with(csrfToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Acme"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void createSupplier_withMalformedEmail_returns400() throws Exception {
+        mockMvc.perform(post("/api/suppliers")
+                        .contentType(applicationJson())
+                        .content("{\"name\": \"Acme\", \"address\": \"1 Main St\", \"email\": \"not-an-email\"}")
+                        .with(csrfToken()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.data.email").value("Supplier email must be a valid email address."));
     }
 
     @Test

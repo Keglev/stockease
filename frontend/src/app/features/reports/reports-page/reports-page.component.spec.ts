@@ -234,7 +234,7 @@ const STOCK_HISTORY: StockHistoryPoint[] = [
 class SupplierServiceStub {
   terms: string[] = [];
   payload: SupplierResponse[] = [
-    { id: 5, name: 'Acme', address: '1 Main St', createdAt: '2026-01-02T03:04:00' }
+    { id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '2026-01-02T03:04:00' }
   ];
 
   search(name: string): Observable<SupplierResponse[]> {
@@ -694,7 +694,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     await activateTab(6);
     reports.supplierProductsFails = true;
 
-    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     await settle();
 
     // A failing suggestion query is not the tab's error: nothing was asked for yet.
@@ -805,7 +805,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
    * supplier first, and only the Show button fetches.
    */
   async function chooseAnalyticsProduct(productId: number): Promise<void> {
-    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     page().setAnalyticsProduct(productRow(productId));
     await settle();
   }
@@ -987,7 +987,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     render();
     await activateTab(1);
 
-    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     page().setCashFlowProduct(productRow(3));
     await settle();
 
@@ -1003,7 +1003,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     await activateTab(1);
     reports.timelineFailsWhenScoped = true;
 
-    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     page().setCashFlowProduct(productRow(3));
     await settle();
 
@@ -1016,7 +1016,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
   it('cashflow_clear_returnsToAllProducts', async () => {
     render();
     await activateTab(1);
-    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     page().setCashFlowProduct(productRow(3));
     await settle();
 
@@ -1032,7 +1032,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     render();
     await activateTab(1);
 
-    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     await settle();
 
     // the supplier is a navigation aid, never a query dimension: it narrows the product search and
@@ -1305,7 +1305,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
   it('analyticsProductSearch_supplierChosen_queriesThatSuppliersCatalogueOnly', async () => {
     render();
     await activateTab(6);
-    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     await settle();
 
     typeaheadAt('.analytics-product-search').search()('wid').subscribe();
@@ -1328,7 +1328,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
   it('analyticsProductField_selectionEmitted_enablesTheShowButton', async () => {
     render();
     await activateTab(6);
-    page().setAnalyticsSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setAnalyticsSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     await settle();
 
     typeaheadAt('.analytics-product-search').selected.emit(productRow(3));
@@ -1352,7 +1352,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
   it('cashFlowProductField_selectionEmitted_refetchesTheTimelineScopedToIt', async () => {
     render();
     await activateTab(1);
-    page().setCashFlowSupplier({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' });
+    page().setCashFlowSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     await settle();
 
     typeaheadAt('.cash-flow-product-search').selected.emit(productRow(3));
@@ -1638,7 +1638,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
 
     expect(suppliers.terms).toEqual(['acm']);
     // The panel shows names, not ids: the label function is what makes the list readable.
-    expect(field.displayWith()({ id: 5, name: 'Acme', address: '1 Main St', createdAt: '' })).toBe('Acme');
+    expect(field.displayWith()({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' })).toBe('Acme');
   });
 
   it('productSearch_panelRows_areLabelledByProductName', async () => {

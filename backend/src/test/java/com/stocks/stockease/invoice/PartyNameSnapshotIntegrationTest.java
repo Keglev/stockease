@@ -102,7 +102,7 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void detail_supplierDeletedAfterSettlement_stillNamesTheSupplier() {
-        Supplier supplier = suppliers.create("Snapshot Supplier " + tag(), "1 Main St");
+        Supplier supplier = suppliers.create("Snapshot Supplier " + tag(), null, null, "1 Main St", null);
         Product item = product("Snapshot Widget");
         Invoice invoice = purchaseOf(supplier, item, 4);
         settle(invoice);
@@ -117,7 +117,7 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void detail_customerDeletedAfterSettlement_stillNamesTheCustomer() {
-        Supplier supplier = suppliers.create("Snapshot Stocker " + tag(), "2 Main St");
+        Supplier supplier = suppliers.create("Snapshot Stocker " + tag(), null, null, "2 Main St", null);
         Product item = product("Snapshot Gadget");
         settle(purchaseOf(supplier, item, 20));
 
@@ -139,7 +139,7 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
     void detail_productDeletedAfterSettlement_readsInsteadOfFailing() {
         // The headline regression: this read used to raise FetchNotFoundException and answer 500,
         // because the line's product association is non-optional and the restriction hid the row.
-        Supplier supplier = suppliers.create("Snapshot Supplier " + tag(), "4 Main St");
+        Supplier supplier = suppliers.create("Snapshot Supplier " + tag(), null, null, "4 Main St", null);
         Product item = product("Snapshot Retired");
         Invoice invoice = purchaseOf(supplier, item, 6);
         settle(invoice);
@@ -156,7 +156,7 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void summaryList_supplierDeletedAfterSettlement_carriesNameAndId() {
-        Supplier supplier = suppliers.create("Snapshot Listed " + tag(), "5 Main St");
+        Supplier supplier = suppliers.create("Snapshot Listed " + tag(), null, null, "5 Main St", null);
         Product item = product("Snapshot Listed Widget");
         Invoice invoice = purchaseOf(supplier, item, 2);
         settle(invoice);
@@ -173,13 +173,13 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void detail_supplierRenamedAfterIssuance_keepsTheNameOnTheDocument() {
-        Supplier supplier = suppliers.create("Snapshot Original " + tag(), "6 Main St");
+        Supplier supplier = suppliers.create("Snapshot Original " + tag(), null, null, "6 Main St", null);
         String issuedUnder = supplier.getName();
         Product item = product("Snapshot Renamed");
         Invoice invoice = purchaseOf(supplier, item, 3);
         settle(invoice);
 
-        suppliers.update(supplier.getId(), "Snapshot Renamed Ltd " + tag(), "6 Main St");
+        suppliers.update(supplier.getId(), "Snapshot Renamed Ltd " + tag(), null, null, "6 Main St", null);
 
         // Immutability, now testable: renaming master data must not rewrite issued documents.
         assertThat(detail(invoice.getId()).supplierName()).isEqualTo(issuedUnder);
@@ -191,7 +191,7 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
         // The measured session-shape crash: loading the list first left an uninitializable proxy,
         // and the detail read then raised EntityNotFoundException. The de-joined query makes the
         // shape structurally impossible; this proves it rather than assuming it.
-        Supplier supplier = suppliers.create("Snapshot Session " + tag(), "7 Main St");
+        Supplier supplier = suppliers.create("Snapshot Session " + tag(), null, null, "7 Main St", null);
         Product item = product("Snapshot Session Widget");
         Invoice invoice = purchaseOf(supplier, item, 2);
         settle(invoice);
@@ -209,7 +209,7 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
         // A customer return is the case the guard exists for: it brings stock back, and stock on a
         // deleted product would be invisible everywhere. A supplier return cannot reach the guard at
         // all - it sends stock out, and a product can only be deleted once its stock is zero.
-        Supplier supplier = suppliers.create("Snapshot Returner " + tag(), "8 Main St");
+        Supplier supplier = suppliers.create("Snapshot Returner " + tag(), null, null, "8 Main St", null);
         Product item = product("Snapshot Returnable");
         settle(purchaseOf(supplier, item, 5));
         Customer customer = customers.create("Snapshot Buyer " + tag(), null, null, "10 Main St", "Springfield");
@@ -240,7 +240,7 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void delete_productHoldingStock_isRefusedUntilTheStockIsZero() {
-        Supplier supplier = suppliers.create("Snapshot Stocked " + tag(), "9 Main St");
+        Supplier supplier = suppliers.create("Snapshot Stocked " + tag(), null, null, "9 Main St", null);
         Product item = product("Snapshot Stocked Widget");
         settle(purchaseOf(supplier, item, 7));
 

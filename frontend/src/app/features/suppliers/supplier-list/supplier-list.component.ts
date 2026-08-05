@@ -61,7 +61,15 @@ export class SupplierListComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   // The actions column always renders: Edit is available to every user, only Delete is gated.
-  protected readonly displayedColumns = ['name', 'address', 'createdAt', 'actions'];
+  protected readonly displayedColumns = [
+    'name',
+    'email',
+    'phone',
+    'address',
+    'city',
+    'createdAt',
+    'actions'
+  ];
 
   ngOnInit(): void {
     this.load();

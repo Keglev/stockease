@@ -72,7 +72,7 @@ class CustomerSummaryIntegrationTest extends AbstractIntegrationTest {
      */
     private Product newProduct(String name, int quantity) {
         Product product = productService.create(name, "SUM-" + name.hashCode(), 5.0);
-        Supplier supplier = supplierService.create(name + " Supplier", "1 Main St");
+        Supplier supplier = supplierService.create(name + " Supplier", null, null, "1 Main St", null);
         Invoice purchase = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE,
                 nextNumber(), supplier.getId(), null, LocalDate.now(), null, null,
                 List.of(line(product, quantity, "5.00"))));

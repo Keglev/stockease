@@ -89,12 +89,13 @@ public class SupplierController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<SupplierResponse> createSupplier(@Valid @RequestBody CreateSupplierRequest request) {
-        Supplier saved = supplierService.create(request.name(), request.address());
+        Supplier saved = supplierService.create(request.name(), request.email(), request.phone(),
+                request.address(), request.city());
         return ResponseEntity.ok(SupplierResponse.from(saved));
     }
 
     /**
-     * Replaces a supplier's name and address.
+     * Replaces a supplier's fields, including the optional contact ones.
      *
      * @param id supplier identifier
      * @param request new supplier fields (name, address)
@@ -105,7 +106,8 @@ public class SupplierController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<SupplierResponse>> updateSupplier(@PathVariable long id,
             @Valid @RequestBody UpdateSupplierRequest request) {
-        Supplier updated = supplierService.update(id, request.name(), request.address());
+        Supplier updated = supplierService.update(id, request.name(), request.email(), request.phone(),
+                request.address(), request.city());
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Supplier updated successfully", SupplierResponse.from(updated)));
     }

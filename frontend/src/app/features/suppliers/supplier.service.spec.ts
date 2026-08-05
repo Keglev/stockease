@@ -11,7 +11,10 @@ const BASE_URL = `${environment.apiBaseUrl}/api/suppliers`;
 const ACME: SupplierResponse = {
   id: 7,
   name: 'Acme',
+  email: 'acme@example.com',
+  phone: '555-1234',
   address: '1 Main St',
+  city: 'Springfield',
   createdAt: '2026-01-02T03:04:00'
 };
 
@@ -66,7 +69,9 @@ describe('SupplierService', () => {
 
   it('create_bareObjectResponse_emitsPayloadUnchanged', () => {
     let emitted: SupplierResponse | undefined;
-    service.create('Acme', '1 Main St').subscribe((supplier) => (emitted = supplier));
+    service
+      .create({ name: 'Acme', address: '1 Main St' })
+      .subscribe((supplier) => (emitted = supplier));
 
     const request = controller.expectOne(BASE_URL);
     expect(request.request.method).toBe('POST');
@@ -78,9 +83,47 @@ describe('SupplierService', () => {
     controller.verify();
   });
 
+  it('create_blankOptionalFields_omitsThemFromTheBody', () => {
+    // The backend validates email shape when the key is present, so an empty string would be
+    // rejected as malformed. Dropping the key is what makes "left blank" mean "no email".
+    service
+      .create({ name: 'Acme', email: '', phone: '  ', address: '1 Main St', city: '' })
+      .subscribe();
+
+    const request = controller.expectOne(BASE_URL);
+    expect(request.request.body).toEqual({ name: 'Acme', address: '1 Main St' });
+    request.flush(ACME);
+    controller.verify();
+  });
+
+  it('create_withContactFields_sendsThemAll', () => {
+    service
+      .create({
+        name: 'Acme',
+        email: 'acme@example.com',
+        phone: '555-1234',
+        address: '1 Main St',
+        city: 'Springfield'
+      })
+      .subscribe();
+
+    const request = controller.expectOne(BASE_URL);
+    expect(request.request.body).toEqual({
+      name: 'Acme',
+      email: 'acme@example.com',
+      phone: '555-1234',
+      address: '1 Main St',
+      city: 'Springfield'
+    });
+    request.flush(ACME);
+    controller.verify();
+  });
+
   it('update_envelopedResponse_emitsUnwrappedData', () => {
     let emitted: SupplierResponse | undefined;
-    service.update(7, 'Acme GmbH', '2 Main St').subscribe((supplier) => (emitted = supplier));
+    service
+      .update(7, { name: 'Acme GmbH', address: '2 Main St' })
+      .subscribe((supplier) => (emitted = supplier));
 
     const request = controller.expectOne(`${BASE_URL}/7`);
     expect(request.request.method).toBe('PUT');
@@ -89,6 +132,18 @@ describe('SupplierService', () => {
 
     expect(emitted).toEqual({ ...ACME, name: 'Acme GmbH' });
     expect(emitted).not.toHaveProperty('success');
+    controller.verify();
+  });
+
+  it('update_blankOptionalFields_sendsABodyWithoutThem', () => {
+    // Wholesale replace: the absent keys are how the PUT is told to clear the stored values.
+    service
+      .update(7, { name: 'Acme', email: '', phone: '', address: '1 Main St', city: '' })
+      .subscribe();
+
+    const request = controller.expectOne(`${BASE_URL}/7`);
+    expect(request.request.body).toEqual({ name: 'Acme', address: '1 Main St' });
+    request.flush({ success: true, message: 'ok', data: ACME });
     controller.verify();
   });
 
