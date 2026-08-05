@@ -10,6 +10,7 @@ import {
   CustomerSummary,
   DueDateBucket,
   InvoiceDueSummary,
+  LossByRemark,
   LossReport,
   ProductProfitReport,
   StockHistoryPoint,
@@ -104,6 +105,16 @@ export class ReportService {
    */
   losses(from?: string, to?: string): Observable<LossReport[]> {
     return this.http.get<LossReport[]>(`${this.baseUrl}/losses`, {
+      params: this.periodParams(from, to)
+    });
+  }
+
+  /**
+   * The same write-offs grouped by cause instead of by product. Bare array, same window semantics
+   * as {@link losses}: a remark with nothing written off in range is absent, not zeroed.
+   */
+  lossesByRemark(from?: string, to?: string): Observable<LossByRemark[]> {
+    return this.http.get<LossByRemark[]>(`${this.baseUrl}/losses/by-remark`, {
       params: this.periodParams(from, to)
     });
   }

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.19.0
+  version: 2.20.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -1336,6 +1336,33 @@ components:
           type: number
           example: 15.00
 
+    LossByRemark:
+      type: object
+      required:
+        - remark
+        - lostUnits
+        - destroyedUnits
+        - lossValue
+      properties:
+        remark:
+          type: string
+          enum: [EXPIRED, IN_TRANSIT_TO_CUSTOMER, INTERNAL, FROM_SUPPLIER]
+          description: The recorded cause; the same taxonomy a write-off movement carries
+          example: EXPIRED
+        lostUnits:
+          type: integer
+          description: Units written off as LOST under this remark
+          example: 1
+        destroyedUnits:
+          type: integer
+          description: Units written off as DESTROYED under this remark
+          example: 2
+        lossValue:
+          type: number
+          description: The combined units valued at their products' current purchase prices
+          example: 12.00
+      description: One remark's share of the write-offs in the window
+
     DueDateBucket:
       type: object
       required:
@@ -1635,6 +1662,8 @@ paths:
     $ref: './paths/reports-stock-status.yaml'
   /api/reports/losses:
     $ref: './paths/reports-losses.yaml'
+  /api/reports/losses/by-remark:
+    $ref: './paths/reports-losses-by-remark.yaml'
   /api/reports/due-dates:
     $ref: './paths/reports-due-dates.yaml'
   /api/reports/due-soon:

@@ -22,6 +22,7 @@ import {
   ChangeLogResponse,
   DueDateBucket,
   InvoiceDueSummary,
+  LossByRemark,
   LossReport,
   ProductProfitReport,
   StockHistoryPoint,
@@ -125,6 +126,8 @@ export class ReportsPageComponent implements OnInit {
   protected readonly supplierColumns = ['name', 'revenue', 'cost', 'grossProfit'];
   protected readonly stockColumns = ['name', 'sku', 'soldUnits', 'soldRevenue', 'inStockUnits', 'inStockValue'];
   protected readonly lossColumns = ['name', 'sku', 'lostUnits', 'destroyedUnits', 'lossValue'];
+
+  protected readonly lossRemarkColumns = ['remark', 'lostUnits', 'destroyedUnits', 'lossValue'];
   protected readonly cashFlowColumns = ['name', 'sku', 'inflow', 'outflow', 'net'];
   protected readonly changeColumns = ['time', 'user', 'product', 'field', 'oldValue', 'newValue'];
 
@@ -141,6 +144,7 @@ export class ReportsPageComponent implements OnInit {
   protected readonly supplierRows = signal<SupplierProfitReport[]>([]);
   protected readonly stockRows = signal<StockStatusReport[]>([]);
   protected readonly lossRows = signal<LossReport[]>([]);
+  protected readonly lossRemarkRows = signal<LossByRemark[]>([]);
   protected readonly buckets = signal<DueDateBucket[]>([]);
   protected readonly dueSoonRows = signal<InvoiceDueSummary[]>([]);
   protected readonly overdueRows = signal<InvoiceDueSummary[]>([]);
@@ -728,6 +732,19 @@ export class ReportsPageComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
+    });
+
+    // The breakdown is a second read of the same window, not a slice of the rows above: the
+    // per-product response carries no remark, so the grouping cannot be derived client-side.
+    // Fired alongside rather than chained, because neither answer needs the other.
+    this.reports.lossesByRemark(range.from, range.to).subscribe({
+      next: (rows) => this.lossRemarkRows.set(rows),
+      // The tab shows one error line, and it is already the one loadLosses sets on the same
+      // failure. Sharing it keeps a doubled message off the screen when the API is simply down.
+      error: (err: Error) => {
+        this.lossRemarkRows.set([]);
+        this.fail(err);
+      }
     });
   }
 

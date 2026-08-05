@@ -12,6 +12,7 @@ import {
   ChangeLogResponse,
   DueDateBucket,
   InvoiceDueSummary,
+  LossByRemark,
   LossReport,
   ProductProfitReport,
   StockHistoryPoint,
@@ -21,6 +22,7 @@ import {
   SupplierResponse
 } from '../../../core/api/api-models';
 import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { provideFakeChartEngine } from '../../../testing/chart-testing';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
@@ -87,7 +89,8 @@ const TRANSLATIONS = {
         inStockValue: 'Stock value',
         lostUnits: 'Lost',
         destroyedUnits: 'Destroyed',
-        lossValue: 'Loss value'
+        lossValue: 'Loss value',
+        remark: 'Cause'
       },
       profit: {
         margin: 'Overall profit margin',
@@ -108,7 +111,11 @@ const TRANSLATIONS = {
         noPriceChanges: 'No price changes recorded.'
       },
       stock: { byValue: 'Products by stock value', empty: 'No products are currently in stock.' },
-      losses: { byProduct: 'Loss share by product', empty: 'No losses have been recorded.' },
+      losses: {
+        byProduct: 'Loss share by product',
+        byRemark: 'Losses by cause',
+        empty: 'No losses have been recorded.'
+      },
       due: {
         chart: 'Outstanding value by due date',
         dueSoon: 'Due soon',
@@ -118,7 +125,24 @@ const TRANSLATIONS = {
         dueSoonEmpty: 'No invoices fall due in the coming week.',
         overdueEmpty: 'No invoice is overdue.'
       }
+    },
+    // The breakdown labels its causes with the movement form's own option keys rather than a
+    // reports-local copy: one taxonomy, one set of translations.
+    movements: {
+      form: {
+        remarkOption: {
+          EXPIRED: 'Expired',
+          IN_TRANSIT_TO_CUSTOMER: 'In transit to customer',
+          INTERNAL: 'Internal',
+          FROM_SUPPLIER: 'From supplier'
+        }
+      }
     }
+  },
+  // Only what the breakdown needs, in the one language pair the section is read in twice.
+  de: {
+    reports: { losses: { byRemark: 'Verluste nach Ursache' }, columns: { remark: 'Ursache' } },
+    movements: { form: { remarkOption: { EXPIRED: 'Abgelaufen' } } }
   }
 };
 
@@ -141,6 +165,12 @@ const STOCK: StockStatusReport[] = [
 const LOSSES: LossReport[] = [
   { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, lostUnits: 2, destroyedUnits: 1, lossValue: 15 },
   { productId: 4, name: 'Gadget', sku: 'ABC-4', deleted: false, lostUnits: 3, destroyedUnits: 4, lossValue: 25 }
+];
+
+/** The same write-offs LOSSES holds, grouped by cause instead of by product. */
+const LOSSES_BY_REMARK: LossByRemark[] = [
+  { remark: 'EXPIRED', lostUnits: 1, destroyedUnits: 2, lossValue: 12 },
+  { remark: 'IN_TRANSIT_TO_CUSTOMER', lostUnits: 3, destroyedUnits: 0, lossValue: 30 }
 ];
 
 const BUCKETS: DueDateBucket[] = [
@@ -292,6 +322,7 @@ class ReportServiceStub {
   /** Holds the profit query open, so the loading state can be observed mid-flight. */
   holdProfit = false;
   lossPayload: LossReport[] = LOSSES;
+  lossRemarkPayload: LossByRemark[] = LOSSES_BY_REMARK;
   cashFlowPayload: CashFlowReport = CASH_FLOW;
   calls: string[] = [];
   timelinePayload: CashFlowTimelineBucket[] = TIMELINE;
@@ -299,6 +330,7 @@ class ReportServiceStub {
   cashFlowRanges: (string | undefined)[][] = [];
   timelineRanges: (string | undefined)[][] = [];
   lossRanges: (string | undefined)[][] = [];
+  lossRemarkRanges: (string | undefined)[][] = [];
   /** The same record for each profit endpoint, keyed by method so one period covers all three. */
   profitRanges: Record<string, (string | undefined)[][]> = { products: [], suppliers: [], detail: [] };
   detail: ProductProfitReport = PROFIT[0];
@@ -382,6 +414,12 @@ class ReportServiceStub {
     this.calls.push('losses');
     this.lossRanges.push([from, to]);
     return this.answer('losses', this.lossPayload);
+  }
+
+  lossesByRemark(from?: string, to?: string): Observable<LossByRemark[]> {
+    this.calls.push('lossesByRemark');
+    this.lossRemarkRanges.push([from, to]);
+    return this.answer('lossesByRemark', this.lossRemarkPayload);
   }
 
   dueDates(): Observable<DueDateBucket[]> {
@@ -1396,6 +1434,21 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expectFailureBanner('losses is unavailable.');
   });
 
+  it('lossRemarkSection_queryFails_reportsItAndLeavesTheProductTableIntact', async () => {
+    // Only the breakdown rejects. It reports through the tab's single banner rather than adding a
+    // second error line, and the per-product half - which answered fine - stays on screen.
+    reports.failing.add('lossesByRemark');
+    render();
+
+    await activateTab(3);
+
+    expectFailureBanner('lossesByRemark is unavailable.');
+    expect(host().querySelector('.loss-remark-table')).toBeNull();
+    expect(host().querySelector('.losses-remark-empty')).not.toBeNull();
+    expect((fixture.componentInstance as unknown as { lossRows: () => unknown[] }).lossRows())
+      .toHaveLength(2);
+  });
+
   it('dueTab_allThreeQueriesFail_reportsItAndStopsTheLoadingBar', async () => {
     reports.failing.add('dueDates').add('dueSoon').add('overdue');
     render();
@@ -1528,6 +1581,79 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
 
     expect(host().querySelector('.report-filter')).toBeNull();
     expect(host().textContent).toContain('No losses have been recorded.');
+  });
+
+  /** Cells of the by-cause table, row by row, in column order. */
+  function remarkRows(): string[][] {
+    return Array.from(host().querySelectorAll('.loss-remark-table tbody tr')).map((row) =>
+      Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent?.trim() ?? '')
+    );
+  }
+
+  it('lossRemarkSection_rowsReturned_rendersTranslatedCausesAndFormattedValues', async () => {
+    render();
+    await activateTab(3);
+
+    // Whole cells, not substrings: a cause is the entire claim the row makes about why the units
+    // went, and the value is money the reader will compare against the strip above.
+    expect(remarkRows()).toEqual([
+      ['Expired', '1', '2', '€12.00'],
+      ['In transit to customer', '3', '0', '€30.00']
+    ]);
+    expect(textOf('.section-title')).toBeTruthy();
+    expect(host().textContent).toContain('Losses by cause');
+  });
+
+  it('lossRemarkSection_germanLanguage_readsTheGermanCause', async () => {
+    render();
+    await activateTab(3);
+
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The label comes from the movement form's key, so switching language has to move it too -
+    // proof the section reuses that subtree rather than carrying its own copy.
+    expect(remarkRows()[0][0]).toBe('Abgelaufen');
+    expect(host().textContent).toContain('Verluste nach Ursache');
+  });
+
+  it('lossRemarkSection_showsInBothChartAndTableViews', async () => {
+    render();
+    await activateTab(3);
+
+    // The tab's toggle is per tab, not per dataset, so the breakdown sits outside it and stays
+    // readable whichever way the per-product half is drawn.
+    expect(host().querySelector('.loss-remark-table')).not.toBeNull();
+
+    await showTable(3);
+
+    expect(host().querySelector('.loss-remark-table')).not.toBeNull();
+  });
+
+  it('lossRemarkSection_noRows_showsTheEmptyState', async () => {
+    reports.lossRemarkPayload = [];
+    render();
+    await activateTab(3);
+
+    expect(host().querySelector('.loss-remark-table')).toBeNull();
+    expect(host().querySelector('.losses-remark-empty')?.textContent?.trim()).toBe(
+      'No losses have been recorded.'
+    );
+  });
+
+  it('lossRemarkSection_periodChange_refetchesTheBreakdownForTheSameWindow', async () => {
+    render();
+    await activateTab(3);
+    reports.lossRemarkRanges.length = 0;
+    reports.lossRanges.length = 0;
+
+    await selectLossPeriod('d30');
+
+    // One window, two reads: the breakdown must not drift out of step with the table above it.
+    expect(reports.lossRemarkRanges).toEqual(reports.lossRanges);
+    expect(reports.lossRemarkRanges).toHaveLength(1);
   });
 
   it('lossTable_deletedProduct_marksTheRow', async () => {

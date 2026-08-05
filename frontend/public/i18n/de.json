@@ -175,7 +175,8 @@
       "inStockValue": "Bestandswert",
       "lostUnits": "Verloren",
       "destroyedUnits": "Zerstört",
-      "lossValue": "Verlustwert"
+      "lossValue": "Verlustwert",
+      "remark": "Ursache"
     },
     "profit": {
       "margin": "Gesamtgewinnmarge",
@@ -192,6 +193,7 @@
     },
     "losses": {
       "byProduct": "Verlustanteil je Produkt",
+      "byRemark": "Verluste nach Ursache",
       "empty": "Es wurden keine Verluste erfasst."
     },
     "due": {

@@ -936,6 +936,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/losses/by-remark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Write-offs grouped by the remark recorded against them
+         * @description The same losses `/api/reports/losses` lists per product, re-aggregated by cause: one row per
+         *     remark that had at least one write-off, ordered by remark. The per-product view answers which
+         *     products were written off; this one answers why.
+         *
+         *     The remark taxonomy is shared by both write-off reasons (`LOST` and `DESTROYED`) precisely so
+         *     this grouping is meaningful - ADR 020. A row therefore sums both reasons under one cause, and
+         *     reports them separately as `lostUnits` and `destroyedUnits`.
+         *
+         *     Valuation matches the per-product report exactly, including its documented approximation: units
+         *     are valued at their product's current purchase price, because pooled stock carries no per-unit
+         *     cost. Here that price is applied per movement rather than once per group, since a single remark
+         *     can span products at different prices.
+         *
+         *     `from` and `to` optionally restrict the report to write-offs booked in that closed date range,
+         *     with the same narrowing semantics: a remark with no losses in the range is **absent** rather
+         *     than listed with zeros.
+         */
+        get: operations["lossesByRemark"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/due-dates": {
         parameters: {
             query?: never;
@@ -1861,6 +1896,30 @@ export interface components {
             /** @example 1 */
             destroyedUnits: number;
             /** @example 15 */
+            lossValue: number;
+        };
+        /** @description One remark's share of the write-offs in the window */
+        LossByRemark: {
+            /**
+             * @description The recorded cause; the same taxonomy a write-off movement carries
+             * @example EXPIRED
+             * @enum {string}
+             */
+            remark: "EXPIRED" | "IN_TRANSIT_TO_CUSTOMER" | "INTERNAL" | "FROM_SUPPLIER";
+            /**
+             * @description Units written off as LOST under this remark
+             * @example 1
+             */
+            lostUnits: number;
+            /**
+             * @description Units written off as DESTROYED under this remark
+             * @example 2
+             */
+            destroyedUnits: number;
+            /**
+             * @description The combined units valued at their products' current purchase prices
+             * @example 12
+             */
             lossValue: number;
         };
         DueDateBucket: {
@@ -4626,6 +4685,70 @@ export interface operations {
                      *     ]
                      */
                     "application/json": components["schemas"]["LossReport"][];
+                };
+            };
+            /** @description The start of the period is after its end */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "success": false,
+                     *       "message": "The start of the period must not be after its end.",
+                     *       "data": null
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiResponseError"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    lossesByRemark: {
+        parameters: {
+            query?: {
+                /**
+                 * @description First booking date to count; omit for no lower bound
+                 * @example 2026-01-01
+                 */
+                from?: string;
+                /**
+                 * @description Last booking date to count, inclusive; omit for no upper bound
+                 * @example 2026-03-31
+                 */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Report retrieved (ROLE_USER or ROLE_ADMIN) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "remark": "EXPIRED",
+                     *         "lostUnits": 1,
+                     *         "destroyedUnits": 2,
+                     *         "lossValue": 12
+                     *       },
+                     *       {
+                     *         "remark": "IN_TRANSIT_TO_CUSTOMER",
+                     *         "lostUnits": 3,
+                     *         "destroyedUnits": 0,
+                     *         "lossValue": 30
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["LossByRemark"][];
                 };
             };
             /** @description The start of the period is after its end */

@@ -1,0 +1,71 @@
+get:
+  summary: Write-offs grouped by the remark recorded against them
+  description: |
+    The same losses `/api/reports/losses` lists per product, re-aggregated by cause: one row per
+    remark that had at least one write-off, ordered by remark. The per-product view answers which
+    products were written off; this one answers why.
+
+    The remark taxonomy is shared by both write-off reasons (`LOST` and `DESTROYED`) precisely so
+    this grouping is meaningful - ADR 020. A row therefore sums both reasons under one cause, and
+    reports them separately as `lostUnits` and `destroyedUnits`.
+
+    Valuation matches the per-product report exactly, including its documented approximation: units
+    are valued at their product's current purchase price, because pooled stock carries no per-unit
+    cost. Here that price is applied per movement rather than once per group, since a single remark
+    can span products at different prices.
+
+    `from` and `to` optionally restrict the report to write-offs booked in that closed date range,
+    with the same narrowing semantics: a remark with no losses in the range is **absent** rather
+    than listed with zeros.
+  operationId: lossesByRemark
+  tags:
+    - Reports
+  security:
+    - BearerAuth: []
+  parameters:
+    - name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: First booking date to count; omit for no lower bound
+      example: '2026-01-01'
+    - name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: Last booking date to count, inclusive; omit for no upper bound
+      example: '2026-03-31'
+  responses:
+    '200':
+      description: Report retrieved (ROLE_USER or ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../openapi.yaml#/components/schemas/LossByRemark'
+          example:
+            - remark: EXPIRED
+              lostUnits: 1
+              destroyedUnits: 2
+              lossValue: 12.00
+            - remark: IN_TRANSIT_TO_CUSTOMER
+              lostUnits: 3
+              destroyedUnits: 0
+              lossValue: 30.00
+    '400':
+      description: The start of the period is after its end
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
+          example:
+            success: false
+            message: The start of the period must not be after its end.
+            data: null
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'

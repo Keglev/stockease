@@ -429,6 +429,49 @@ public class ReportingService {
     }
 
     /**
+     * Returns write-offs grouped by the remark recorded against them.
+     *
+     * <p>The same losses {@link #lossReport} lists per product, re-aggregated by cause. The remark
+     * taxonomy is shared by both write-off reasons precisely so this grouping is meaningful
+     * (ADR 020); this method reads that decision rather than making one.
+     *
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
+     * @return one row per remark with at least one loss movement in the window, ordered by remark
+     */
+    public List<LossByRemark> lossesByRemark(LocalDate from, LocalDate to) {
+        // Same valuation rule as lossReport - units at the product's CURRENT purchase price - but
+        // multiplied per row rather than once per group: that query groups by product, so one price
+        // applies to the whole sum, while this one spans products and each row carries its own.
+        //
+        // Same date-window handling too, and the same absent-not-zeroed contract: the reason filter
+        // sits in the WHERE clause and a remark nobody used in the window simply has no row. A
+        // losses report lists losses, and the caller learns nothing from a row of zeroes.
+        String sql = """
+                SELECT m.movement_remark AS remark,
+                  COALESCE(SUM(CASE WHEN m.reason = 'LOST' THEN m.quantity ELSE 0 END), 0) AS lost_units,
+                  COALESCE(SUM(CASE WHEN m.reason = 'DESTROYED' THEN m.quantity ELSE 0 END), 0) AS destroyed_units,
+                  SUM(m.quantity * p.purchase_price) AS loss_value
+                FROM stock_movement m
+                JOIN product p ON p.id = m.product_id
+                WHERE m.reason IN ('LOST','DESTROYED')
+                  AND (CAST(:from AS date) IS NULL OR m.created_at >= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR m.created_at < CAST(:to AS date) + INTERVAL '1 day')
+                GROUP BY m.movement_remark
+                ORDER BY m.movement_remark
+                """;
+        // The product join carries no deleted_at filter, as in lossReport: a write-off happened
+        // whether or not the product was retired afterwards, and dropping it would quietly shrink
+        // a historical total.
+        return jdbcClient.sql(sql)
+                .param("from", from)
+                .param("to", to)
+                .query((rs, rowNum) -> new LossByRemark(rs.getString("remark"), rs.getInt("lost_units"),
+                        rs.getInt("destroyed_units"), rs.getBigDecimal("loss_value")))
+                .list();
+    }
+
+    /**
      * Returns what one customer has bought and returned across its booked sale invoices.
      *
      * <p>Anonymous cash sales name no customer by construction, so they belong to no summary and are
