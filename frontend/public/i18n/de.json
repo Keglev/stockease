@@ -299,7 +299,8 @@
       "confirm": "Retoure erfassen",
       "cancel": "Abbrechen",
       "registered": "Retoure wurde erfasst.",
-      "deletedProduct": "Dieses Produkt ist gelöscht und kann keine Retouren annehmen. Stellen Sie es zuerst wieder her, dann erfassen Sie die Retoure."
+      "deletedProduct": "Dieses Produkt ist gelöscht und kann keine Retouren annehmen. Stellen Sie es zuerst wieder her, dann erfassen Sie die Retoure.",
+      "insufficientStock": "Es wurden mehr Einheiten retourniert, als auf Lager sind. Prüfen Sie den aktuellen Lagerbestand, bevor Sie diese Einheiten retournieren."
     },
     "columns": {
       "id": "Nr.",

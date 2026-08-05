@@ -163,16 +163,36 @@ export class InvoiceDetailComponent implements OnInit {
         },
         error: (err: Error) => {
           this.working.set(false);
-          // A 409 here is the deleted-product veto: the backend refuses a return whose product has
-          // been soft-deleted and names the restore path in its own untranslated sentence. That is
-          // a case the operator can act on, so it gets the translated explanation rather than the
-          // raw text - the same treatment products.restoreConflict gives its own conflict.
-          const isConflict = err instanceof ApiError && err.status === 409;
-          this.notifications.error(
-            isConflict ? 'invoices.returnDialog.deletedProduct' : err.message
-          );
+          this.notifications.error(this.returnFailureMessage(err));
         }
       });
+  }
+
+  /**
+   * Picks what a failed return says to the operator.
+   *
+   * The endpoint answers 409 for several unrelated causes, and until the API carried error codes
+   * they were indistinguishable here - which is why every conflict on this operation showed the
+   * deleted-product message, including the stock shortfall it gives exactly the wrong advice for.
+   * The code discriminates them; a return whose product is deleted is fixed by restoring it, a
+   * return the stock cannot cover is not.
+   *
+   * Anything else - no code, an unrecognized one, or a failure that is not an ApiError at all -
+   * falls through to the backend message, which is what every other action on this page does with
+   * a failure it has nothing specific to say about.
+   */
+  private returnFailureMessage(err: Error): string {
+    if (!(err instanceof ApiError)) {
+      return err.message;
+    }
+    switch (err.code) {
+      case 'PRODUCT_DELETED':
+        return 'invoices.returnDialog.deletedProduct';
+      case 'INSUFFICIENT_STOCK':
+        return 'invoices.returnDialog.insufficientStock';
+      default:
+        return err.message;
+    }
   }
 
   /** Line total for one item; display only, never sent back to the API. */

@@ -14,11 +14,17 @@ const GENERIC_MESSAGE = 'Request failed. Please try again.';
  * An error raised by a failed HTTP call, carrying the status alongside the backend message.
  * It is an Error, so every consumer that only reads {@link Error.message} needs to know nothing
  * about it.
+ *
+ * {@link code} is the envelope's optional machine-readable identifier. Most failures carry none,
+ * so it is undefined far more often than not, and a consumer that branches on it must treat both
+ * "absent" and "a value I do not know" as the same fall-through case: the API adds codes to
+ * responses that previously had none.
  */
 export class ApiError extends Error {
   constructor(
     message: string,
-    readonly status: number
+    readonly status: number,
+    readonly code?: string
   ) {
     super(message);
     this.name = 'ApiError';
@@ -54,10 +60,29 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       // Status 0 stands for "never reached the server": a network or CORS failure carries no
       // HTTP status, so no consumer can mistake it for one the backend chose.
       const status = error instanceof HttpErrorResponse ? error.status : 0;
-      return throwError(() => new ApiError(extractMessage(error), status));
+      return throwError(() => new ApiError(extractMessage(error), status, extractCode(error)));
     })
   );
 };
+
+/**
+ * Reads the envelope's optional error code. Absent is the normal case and yields undefined, which
+ * is also what a malformed or non-string value yields - a consumer branching on the code must not
+ * be handed something that is not one.
+ */
+function extractCode(error: unknown): string | undefined {
+  if (!(error instanceof HttpErrorResponse)) {
+    return undefined;
+  }
+  const body: unknown = error.error;
+  if (body !== null && typeof body === 'object' && 'code' in body) {
+    const code = (body as { code: unknown }).code;
+    if (typeof code === 'string' && code.length > 0) {
+      return code;
+    }
+  }
+  return undefined;
+}
 
 function extractMessage(error: unknown): string {
   if (!(error instanceof HttpErrorResponse)) {

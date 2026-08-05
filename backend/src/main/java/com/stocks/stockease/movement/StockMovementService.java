@@ -14,9 +14,9 @@ import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
-import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
+import com.stocks.stockease.shared.ProductDeletedException;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -105,7 +105,7 @@ public class StockMovementService {
      */
     private void rejectReturnAgainstDeletedProduct(InvoiceItem item) {
         if (productService.findById(item.getProductId()).isEmpty()) {
-            throw new EntityInUseException("Cannot register a return for '" + item.getProductName()
+            throw new ProductDeletedException("Cannot register a return for '" + item.getProductName()
                     + "': the product is deleted. Restore it first, then record the return.");
         }
     }

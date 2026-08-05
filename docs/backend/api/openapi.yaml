@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.17.0
+  version: 2.18.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -13,6 +13,18 @@ info:
     `data`). List endpoints return the bare array, and creation endpoints return the bare created
     record. Every error produced by the shared exception handler uses the envelope with
     `success: false`.
+
+    An error envelope may additionally carry `code`, a stable SCREAMING_SNAKE identifier for the
+    failure. It is **optional and absent by default**: most failures have none, because a client has
+    nothing to do with them beyond showing `message`. A code is assigned where the status alone
+    leaves a client unable to tell apart two situations that need different handling - `POST
+    /api/returns` answers 409 for several unrelated causes, and two of them call for opposite advice.
+    Clients must branch on `code` when it is present and fall back to their own generic handling when
+    it is absent or unrecognized; a code is never added to a response that had a different one, but
+    new codes may appear on responses that previously had none.
+
+    Success envelopes never carry `code`, and the field is omitted from the JSON rather than sent as
+    `null`, so the success shape is byte-identical to what it was before codes existed.
 
     ## Authentication and roles
     All endpoints except `POST /api/auth/login` and `GET /health` require a JWT bearer token.
@@ -159,6 +171,14 @@ components:
             data:
               nullable: true
               example: null
+            code:
+              type: string
+              description: |
+                Stable machine-readable identifier for the failure. Optional and absent on most
+                errors - see the response-envelope section for when one is assigned and how a client
+                is expected to treat an absent or unrecognized value. Never present on a success
+                envelope, and omitted from the JSON rather than sent as null.
+              example: PRODUCT_DELETED
       description: The envelope as produced by the shared exception handler
 
     ValidationErrorResponse:

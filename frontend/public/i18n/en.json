@@ -299,7 +299,8 @@
       "confirm": "Register return",
       "cancel": "Cancel",
       "registered": "Return registered.",
-      "deletedProduct": "This product is deleted and cannot take returns. Restore it first, then register the return."
+      "deletedProduct": "This product is deleted and cannot take returns. Restore it first, then register the return.",
+      "insufficientStock": "More units were returned than are in stock. Check the current stock level before returning these units."
     },
     "columns": {
       "id": "No.",

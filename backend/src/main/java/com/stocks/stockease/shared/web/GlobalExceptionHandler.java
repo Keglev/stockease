@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.ApiResponse;
 import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
 import com.stocks.stockease.shared.InvoiceStateException;
+import com.stocks.stockease.shared.ProductDeletedException;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -116,6 +118,9 @@ public class GlobalExceptionHandler {
     /**
      * Handles {@link EntityInUseException} from deletions vetoed by referencing records and returns a 409 Conflict response.
      *
+     * <p>No code: the vetoes reaching here say "something still references this", and a client has
+     * nothing to do with that beyond showing the message, which names the blocking reference.
+     *
      * @param ex the caught exception
      * @return 409 response with the veto message
      */
@@ -123,6 +128,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<String>> handleEntityInUseException(EntityInUseException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ApiResponse<>(false, ex.getMessage(), null));
+    }
+
+    /**
+     * Handles {@link ProductDeletedException}, raised when an operation needs a product that has been
+     * soft-deleted, and returns a 409 Conflict carrying {@link ApiErrorCodes#PRODUCT_DELETED}.
+     *
+     * <p>Declared separately from its parent above because Spring dispatches to the most specific
+     * handler: the status and message are what {@code EntityInUseException} would have produced, and
+     * the code is the whole reason the subtype exists. Without it the return endpoint's two 409s -
+     * this one and {@link InsufficientStockException} - are indistinguishable to a client that must
+     * give opposite advice for each.
+     *
+     * @param ex the caught exception
+     * @return 409 response with the refusal message and the deleted-product code
+     */
+    @ExceptionHandler(ProductDeletedException.class)
+    public ResponseEntity<ApiResponse<String>> handleProductDeletedException(ProductDeletedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponse<>(false, ex.getMessage(), null, ApiErrorCodes.PRODUCT_DELETED));
     }
 
     /**
@@ -138,15 +162,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles {@link InsufficientStockException} from quantity changes that would drive stock negative and returns a 409 Conflict response.
+     * Handles {@link InsufficientStockException} from quantity changes that would drive stock negative
+     * and returns a 409 Conflict carrying {@link ApiErrorCodes#INSUFFICIENT_STOCK}.
      *
      * @param ex the caught exception
-     * @return 409 response with the shortfall message
+     * @return 409 response with the shortfall message and the insufficient-stock code
      */
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<ApiResponse<String>> handleInsufficientStockException(InsufficientStockException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
+                .body(new ApiResponse<>(false, ex.getMessage(), null, ApiErrorCodes.INSUFFICIENT_STOCK));
     }
 
     /**
