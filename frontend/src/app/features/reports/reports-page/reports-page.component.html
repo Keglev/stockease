@@ -654,6 +654,56 @@
           </mat-card-content>
         </mat-card>
       }
+
+      <!-- The breakdown by cause, beneath the per-product view and shown in both of its modes.
+           A plain table rather than a chart/table pair: the view toggle above is per TAB, not per
+           dataset - viewOf(3) switches the whole body - so giving this section its own toggle would
+           mean restructuring that architecture, which is not what this change is for. -->
+      <mat-card class="table-card">
+        <mat-card-content>
+          <h2 class="section-title">{{ 'reports.losses.byRemark' | translate }}</h2>
+          @if (lossRemarkRows().length === 0) {
+            <p class="empty-state losses-remark-empty">{{ 'reports.losses.empty' | translate }}</p>
+          } @else {
+            <table mat-table [dataSource]="lossRemarkRows()" class="loss-remark-table">
+              <ng-container matColumnDef="remark">
+                <th mat-header-cell *matHeaderCellDef>
+                  {{ 'reports.columns.remark' | translate }}
+                </th>
+                <!-- The movement form's own option labels, reached by the same dynamic key it
+                     builds. One taxonomy, one set of translations. -->
+                <td mat-cell *matCellDef="let row">
+                  {{ 'movements.form.remarkOption.' + row.remark | translate }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="lostUnits">
+                <th mat-header-cell *matHeaderCellDef>
+                  {{ 'reports.columns.lostUnits' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.lostUnits }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="destroyedUnits">
+                <th mat-header-cell *matHeaderCellDef>
+                  {{ 'reports.columns.destroyedUnits' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.destroyedUnits }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="lossValue">
+                <th mat-header-cell *matHeaderCellDef>
+                  {{ 'reports.columns.lossValue' | translate }}
+                </th>
+                <td mat-cell *matCellDef="let row">{{ row.lossValue | appCurrency }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="lossRemarkColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: lossRemarkColumns"></tr>
+            </table>
+          }
+        </mat-card-content>
+      </mat-card>
     </div>
   </mat-tab>
 

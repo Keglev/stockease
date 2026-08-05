@@ -18,6 +18,7 @@ import com.stocks.stockease.report.CashFlowTimelineBucket;
 import com.stocks.stockease.report.CustomerSummary;
 import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
+import com.stocks.stockease.report.LossByRemark;
 import com.stocks.stockease.report.LossReport;
 import com.stocks.stockease.report.ProductProfitReport;
 import com.stocks.stockease.report.ReportingService;
@@ -249,6 +250,26 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
         return reportingService.lossReport(from, to);
+    }
+
+    /**
+     * Returns the same write-offs grouped by the remark recorded against them.
+     *
+     * <p>A sub-view of {@code /losses}, in the shape {@code /cash-flow/timeline} uses for its own:
+     * the same window, the same losses, re-aggregated by cause rather than by product.
+     *
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
+     * @return one row per remark with at least one loss movement in the window
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     */
+    @GetMapping("/losses/by-remark")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<LossByRemark> lossesByRemark(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+        validatePeriod(from, to);
+        return reportingService.lossesByRemark(from, to);
     }
 
     /**

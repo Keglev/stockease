@@ -175,7 +175,8 @@
       "inStockValue": "Stock value",
       "lostUnits": "Lost",
       "destroyedUnits": "Destroyed",
-      "lossValue": "Loss value"
+      "lossValue": "Loss value",
+      "remark": "Cause"
     },
     "profit": {
       "margin": "Overall profit margin",
@@ -192,6 +193,7 @@
     },
     "losses": {
       "byProduct": "Loss share by product",
+      "byRemark": "Losses by cause",
       "empty": "No losses have been recorded."
     },
     "due": {

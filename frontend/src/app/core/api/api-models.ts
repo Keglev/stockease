@@ -46,6 +46,8 @@ export type PaginatedInvoices = components['schemas']['PaginatedInvoices'];
 
 export type LossReport = components['schemas']['LossReport'];
 
+export type LossByRemark = components['schemas']['LossByRemark'];
+
 export type DueDateBucket = components['schemas']['DueDateBucket'];
 
 export type InvoiceDueSummary = components['schemas']['InvoiceDueSummary'];

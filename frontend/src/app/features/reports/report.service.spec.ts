@@ -136,6 +136,22 @@ describe('ReportService', () => {
     controller.verify();
   });
 
+  it('lossesByRemark_withWindow_requestsTheSubPathWithBothBounds', () => {
+    const payload = [{ remark: 'EXPIRED', lostUnits: 1, destroyedUnits: 2, lossValue: 12 }];
+    let emitted: unknown;
+    service.lossesByRemark('2026-01-01', '2026-03-31').subscribe((rows) => (emitted = rows));
+
+    const request = controller.expectOne(
+      (candidate) => candidate.url === `${BASE_URL}/losses/by-remark`
+    );
+    expect(request.request.params.get('from')).toBe('2026-01-01');
+    expect(request.request.params.get('to')).toBe('2026-03-31');
+    request.flush(payload);
+
+    expect(emitted).toEqual(payload);
+    controller.verify();
+  });
+
   it('overdue_bareArray_requestsOverdueUrl', () => {
     let emitted: InvoiceDueSummary[] | undefined;
     service.overdue().subscribe((rows) => (emitted = rows));
