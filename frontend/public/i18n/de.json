@@ -7,7 +7,8 @@
     "confirm": "Bestätigen",
     "cancel": "Abbrechen",
     "close": "Schließen",
-    "save": "Speichern"
+    "save": "Speichern",
+    "exportCsv": "CSV exportieren"
   },
   "landing": {
     "description": "{{app}} ist eine Bestandsverwaltung für kleine Unternehmen: Produkte und Lagerbestände verfolgen, Lieferanten und Kunden verwalten sowie Ein- und Verkäufe über den Rechnungslauf abwickeln. Diese Demo arbeitet mit der aktiven Spring-Boot-API.",
@@ -385,6 +386,7 @@
       "name": "Name",
       "email": "E-Mail",
       "phone": "Telefon",
+      "address": "Adresse",
       "city": "Stadt",
       "createdAt": "Erstellt am",
       "actions": "Aktionen"

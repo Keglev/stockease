@@ -1,8 +1,23 @@
 <div class="customer-toolbar">
   <h1>{{ 'customers.title' | translate }}</h1>
-  <button matButton="filled" type="button" class="customer-create" (click)="openCreate()">
-    {{ 'customers.create' | translate }}
-  </button>
+  <div class="toolbar-actions">
+    <!-- Same affordance as each reports tab's: outlined, download icon, hidden while there is
+         nothing to export. -->
+    @if (rows().length > 0) {
+      <button
+        matButton="outlined"
+        type="button"
+        class="export-button export-customers"
+        (click)="exportCsv()"
+      >
+        <mat-icon>download</mat-icon>
+        {{ 'common.exportCsv' | translate }}
+      </button>
+    }
+    <button matButton="filled" type="button" class="customer-create" (click)="openCreate()">
+      {{ 'customers.create' | translate }}
+    </button>
+  </div>
 </div>
 
 @if (loading()) {

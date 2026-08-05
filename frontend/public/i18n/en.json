@@ -7,7 +7,8 @@
     "confirm": "Confirm",
     "cancel": "Cancel",
     "close": "Close",
-    "save": "Save"
+    "save": "Save",
+    "exportCsv": "Export CSV"
   },
   "landing": {
     "description": "{{app}} is an inventory management application for small businesses: track products and stock levels, manage suppliers and customers, and settle purchases and sales through the invoice lifecycle. This demo runs against the live Spring Boot API.",
@@ -385,6 +386,7 @@
       "name": "Name",
       "email": "Email",
       "phone": "Phone",
+      "address": "Address",
       "city": "City",
       "createdAt": "Created",
       "actions": "Actions"

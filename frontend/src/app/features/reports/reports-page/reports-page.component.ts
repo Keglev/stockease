@@ -36,7 +36,7 @@ import { LanguageService } from '../../../core/i18n/language.service';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartFormat, chartFormat } from '../../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
-import { CSV_DOWNLOADER, buildCsv } from '../../../shared/csv/csv-export';
+import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
@@ -121,7 +121,7 @@ export class ReportsPageComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
   private readonly format = inject(FormatService);
-  private readonly downloadCsvFile = inject(CSV_DOWNLOADER);
+  private readonly csv = inject(CsvExportService);
 
   protected readonly profitColumns = ['name', 'sku', 'revenue', 'cost', 'grossProfit'];
   protected readonly supplierColumns = ['name', 'revenue', 'cost', 'grossProfit'];
@@ -885,17 +885,20 @@ export class ReportsPageComponent implements OnInit {
   }
 
 
-  /** Headers and separators are resolved at click time, so the file matches the UI language. */
+  /**
+   * Headers and separators are resolved at click time, so the file matches the UI language.
+   *
+   * <p>The three list pages export the same way, so the body of this moved to
+   * {@link CsvExportService} rather than being copied a fourth time. This stays as the page's own
+   * default for {@code keyPrefix}, which is the only part that was ever page-specific.
+   */
   private exportCsv(
     filename: string,
     columns: string[],
     rows: (string | number | null)[][],
     keyPrefix = 'reports.columns.'
   ): void {
-    const headers = columns.map((column) =>
-      this.translate.instant(`${keyPrefix}${column}`)
-    ) as string[];
-    this.downloadCsvFile(filename, buildCsv(headers, rows, this.format.numberLocale()));
+    this.csv.export(filename, columns, rows, keyPrefix);
   }
 
   /** Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app. */
