@@ -45,5 +45,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 031 - Runtime Date and Currency Formatting Through Intl, Not LOCALE_ID](031-runtime-formatting-via-intl.md) - **[Frontend]**
 - [ADR 032 - Idle Sign-Out Is a Client Concern, With a Warning](032-client-side-idle-logout.md) - **[Cross-cutting]**
 - [ADR 033 - Invoice Documents Snapshot Their Party Names](033-invoice-party-name-snapshots.md) - **[Cross-cutting]**
+- [ADR 034 - No Forced Password Expiry](034-no-password-expiry.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)
