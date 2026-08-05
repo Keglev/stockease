@@ -17,6 +17,7 @@ import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { LANGUAGE_STORAGE_KEY } from '../../core/i18n/language.service';
 import { ChartComponent } from '../../shared/chart/chart.component';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
+import { FormatService } from '../../core/format/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { provideFakeChartEngine } from '../../testing/chart-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
@@ -447,6 +448,91 @@ describe('DashboardComponent', () => {
     expect(host().querySelector('.slice-table')?.textContent).not.toContain('Other');
   });
 
+  /**
+   * The figures inside the two cards' charts, asserted by invoking the callbacks the options hand
+   * ECharts. The fake engine paints nothing, and a formatter is a function rather than a rendered
+   * string, so calling it is the only reading available - and the honest one, since it is exactly
+   * what echarts does with it.
+   */
+  describe('chart values', () => {
+    // Both preferences persist to storage, and the specs in a Vitest worker share their origin.
+    afterEach(() => localStorage.clear());
+
+    const SPACES = new Set([0x20, 0xa0, 0x202f]);
+
+    function plain(value: string): string {
+      return [...value].map((ch) => (SPACES.has(ch.codePointAt(0) ?? 0) ? ' ' : ch)).join('');
+    }
+
+    function setFormats(lang: 'en' | 'de', numbers: 'auto' | 'en' | 'de'): void {
+      TestBed.inject(LanguageService).setLanguage(lang);
+      TestBed.inject(FormatService).setNumberFormat(numbers);
+      fixture.detectChanges();
+    }
+
+    function optionOf(name: string): FormatProbe {
+      const page = fixture.componentInstance as unknown as Record<string, () => FormatProbe>;
+      return page[name]();
+    }
+
+    it('dueCard_germanInterfaceOnAuto_readsMoneyAndDatesTheGermanWay', () => {
+      render();
+
+      setFormats('de', 'auto');
+
+      expect(plain(optionOf('dueDateOption').tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('1.234,56 €');
+      expect(optionOf('dueDateOption').xAxis?.axisLabel?.formatter?.('2026-03-01')).toBe('01.03.2026');
+      expect(plain(optionOf('profitOption').tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('1.234,56 €');
+
+      // The value axis on each card. The profit bars lie on their side, so theirs is x.
+      expect(plain(optionOf('profitOption').xAxis?.axisLabel?.formatter?.(1234.56) ?? '')).toBe('1.234,56 €');
+      expect(plain(optionOf('dueDateOption').yAxis?.axisLabel?.formatter?.(1234.56) ?? '')).toBe('1.234,56 €');
+    });
+
+    it('dueCard_englishInterfaceOnAuto_readsMoneyAndDatesTheEnglishWay', () => {
+      render();
+
+      setFormats('en', 'auto');
+
+      expect(plain(optionOf('dueDateOption').tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('€1,234.56');
+      expect(optionOf('dueDateOption').xAxis?.axisLabel?.formatter?.('2026-03-01')).toBe('03/01/2026');
+    });
+
+    it('dueCard_germanInterfaceWithEnglishNumbers_followsTheOverride', () => {
+      render();
+
+      setFormats('de', 'en');
+
+      // The interface stays German; every figure in it is English, because the reader said so.
+      expect(plain(optionOf('dueDateOption').tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('€1,234.56');
+    });
+
+    it('dueCard_axisData_staysTheRawIsoKeys', () => {
+      render();
+
+      // The series are indexed by these keys and sorted on them; only the labels are formatted.
+      expect(optionOf('dueDateOption').xAxis?.data).toEqual(['2026-03-01']);
+    });
+
+    it('dueCard_numberFormatSwitchedMidSpec_rebuildsInTheOtherLocale', () => {
+      render();
+      setFormats('de', 'auto');
+      const before = optionOf('dueDateOption');
+      expect(plain(before.tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('1.234,56 €');
+
+      TestBed.inject(FormatService).setNumberFormat('en');
+      fixture.detectChanges();
+
+      // Nothing refetched; only the preference changed. The identity is the load-bearing half:
+      // a formatter closes over the SERVICE, so the old option's callback would already answer in
+      // English if anything called it - and nothing does, because echarts is only handed an option
+      // when this derivation re-runs. See the reports page's own spec for the measurement.
+      const after = optionOf('dueDateOption');
+      expect(after).not.toBe(before);
+      expect(plain(after.tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('€1,234.56');
+    });
+  });
+
   it('profitCard_dataRefreshed_stillRebuildsTheSlices', () => {
     render();
     showProfitTable();
@@ -562,3 +648,14 @@ describe('DashboardComponent', () => {
     ).map((element) => (element.textContent ?? '').trim());
   }
 });
+
+/**
+ * The formatting callbacks an option carries. Typed loosely on purpose: it mirrors the parts of
+ * echarts' own option shape these specs invoke, and importing its types would tie the spec to a
+ * structure only ChartComponent is supposed to know.
+ */
+interface FormatProbe {
+  tooltip?: { valueFormatter?: (value: unknown) => string };
+  xAxis?: { data?: string[]; axisLabel?: { formatter?: (value: string | number) => string } };
+  yAxis?: { axisLabel?: { formatter?: (value: number) => string } };
+}

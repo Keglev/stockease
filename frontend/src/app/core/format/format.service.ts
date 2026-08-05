@@ -112,6 +112,57 @@ export class FormatService {
   }
 
   /**
+   * A plain count or quantity - grouped, but with no currency attached.
+   *
+   * <p>`formatCurrency` was the only number this service rendered, so anything that is a count
+   * rather than money had nowhere to go and reached the reader ungrouped and en-US-grouped by
+   * turns. Units sold and stock levels are the callers: `1.234` in German is not `1,234`, and a
+   * chart tick reading the wrong one misstates the figure by three orders of magnitude.
+   */
+  formatNumber(value: number | string | null | undefined): string {
+    const amount = typeof value === 'string' ? Number(value) : value;
+    if (amount === null || amount === undefined || Number.isNaN(amount)) {
+      return '';
+    }
+    return numberFormatter(this.numberLocale()).format(amount);
+  }
+
+  /**
+   * A month key (`2026-01`) as the month and the year, which is what a timeline axis labels with.
+   *
+   * <p>It follows the number locale alone, as the time of day and the currency do. The date
+   * overrides pin the ORDER of a day, a month and a year; a month and a year that reads as a word
+   * has no order to pin, so there is nothing for them to say here.
+   *
+   * <p>Anything that is not a month key renders as itself rather than as nothing: this labels an
+   * axis, and a tick that vanishes is worse than one showing the raw key it was built from.
+   */
+  formatMonth(value: string | null | undefined): string {
+    const match = /^(\d{4})-(\d{2})$/.exec(value ?? '');
+    if (!match) {
+      return value ?? '';
+    }
+    // Assembled from the parts rather than parsed: `new Date('2026-01')` is UTC midnight, which
+    // is the previous December for every reader west of Greenwich.
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, 1);
+    return formatter(this.numberLocale(), 'month').format(date);
+  }
+
+  /**
+   * A percentage stated the way a reader states it - `42.5` renders as `42,5 %` or `42.5%`.
+   *
+   * <p>Intl's percent style takes a fraction, so the division lives here. The alternative was every
+   * caller dividing before the call, which would mean the gauge's dial ran 0-1 while its scale
+   * still read 0-100.
+   */
+  formatPercent(value: number | null | undefined): string {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return '';
+    }
+    return percentFormatter(this.numberLocale()).format(value / 100);
+  }
+
+  /**
    * Renders a date as one specific option would, whatever is currently selected.
    *
    * <p>Only the settings page calls these two: its option labels are live examples rather than
@@ -146,16 +197,17 @@ export class FormatService {
  */
 const FORMATTERS = new Map<string, Intl.DateTimeFormat>();
 
-function formatter(locale: string, style: 'date' | 'time'): Intl.DateTimeFormat {
+const DATE_STYLES: Record<'date' | 'time' | 'month', Intl.DateTimeFormatOptions> = {
+  date: { year: 'numeric', month: '2-digit', day: '2-digit' },
+  time: { hour: '2-digit', minute: '2-digit' },
+  month: { year: 'numeric', month: 'short' }
+};
+
+function formatter(locale: string, style: 'date' | 'time' | 'month'): Intl.DateTimeFormat {
   const key = `${locale}:${style}`;
   let cached = FORMATTERS.get(key);
   if (!cached) {
-    cached = new Intl.DateTimeFormat(
-      locale,
-      style === 'date'
-        ? { year: 'numeric', month: '2-digit', day: '2-digit' }
-        : { hour: '2-digit', minute: '2-digit' }
-    );
+    cached = new Intl.DateTimeFormat(locale, DATE_STYLES[style]);
     FORMATTERS.set(key, cached);
   }
   return cached;
@@ -168,6 +220,29 @@ function currencyFormatter(locale: string): Intl.NumberFormat {
   if (!cached) {
     cached = new Intl.NumberFormat(locale, { style: 'currency', currency: CURRENCY });
     CURRENCY_FORMATTERS.set(locale, cached);
+  }
+  return cached;
+}
+
+const NUMBER_FORMATTERS = new Map<string, Intl.NumberFormat>();
+
+function numberFormatter(locale: string): Intl.NumberFormat {
+  let cached = NUMBER_FORMATTERS.get(locale);
+  if (!cached) {
+    cached = new Intl.NumberFormat(locale);
+    NUMBER_FORMATTERS.set(locale, cached);
+  }
+  return cached;
+}
+
+const PERCENT_FORMATTERS = new Map<string, Intl.NumberFormat>();
+
+// One decimal, because the one caller rounds to one: a gauge reading 42.5% must not draw 43%.
+function percentFormatter(locale: string): Intl.NumberFormat {
+  let cached = PERCENT_FORMATTERS.get(locale);
+  if (!cached) {
+    cached = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 });
+    PERCENT_FORMATTERS.set(locale, cached);
   }
   return cached;
 }

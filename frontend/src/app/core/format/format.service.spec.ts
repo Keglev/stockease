@@ -58,6 +58,94 @@ describe('FormatService', () => {
     expect(plain(format.formatCurrency(1234.56))).toBe('€1,234.56');
   });
 
+  it('formatNumber_autoAndGerman_groupsWithDotsAndDecimalsWithAComma', () => {
+    language.setLanguage('de');
+
+    // The confusion this method exists to prevent: 1,234 in German is one and a bit, not a thousand.
+    expect(format.formatNumber(1234.5)).toBe('1.234,5');
+  });
+
+  it('formatNumber_autoAndEnglish_groupsWithCommas', () => {
+    language.setLanguage('en');
+
+    expect(format.formatNumber(1234.5)).toBe('1,234.5');
+  });
+
+  it('formatNumber_anyLocale_carriesNoCurrencySymbol', () => {
+    language.setLanguage('de');
+
+    // A count is not money; the whole reason this sits beside formatCurrency rather than in it.
+    expect(format.formatNumber(1234.5)).not.toContain('€');
+  });
+
+  it('formatNumber_numberOverride_beatsTheLanguage', () => {
+    language.setLanguage('en');
+
+    format.setNumberFormat('de');
+
+    expect(format.formatNumber(1234.5)).toBe('1.234,5');
+  });
+
+  it('formatNumber_repeatedCalls_renderIdenticallyThroughTheCachedFormatter', () => {
+    language.setLanguage('de');
+    const first = format.formatNumber(1234.5);
+
+    language.setLanguage('en');
+    format.formatNumber(1234.5);
+    language.setLanguage('de');
+
+    // The formatter is cached per locale and reused; a cache keyed wrongly would hand the second
+    // German call the English one it built in between.
+    expect(format.formatNumber(1234.5)).toBe(first);
+  });
+
+  it.each([null, undefined, 'not a number'])('formatNumber_%s_rendersNothing', (value) => {
+    expect(format.formatNumber(value as string | null)).toBe('');
+  });
+
+  it('formatMonth_germanAndEnglish_readTheMonthInEachLanguagesOwnWords', () => {
+    language.setLanguage('de');
+    expect(format.formatMonth('2026-01')).toBe('Jan. 2026');
+
+    language.setLanguage('en');
+    expect(format.formatMonth('2026-01')).toBe('Jan 2026');
+  });
+
+  // No spec pins the month against the UTC-parse trap the implementation avoids: the suite runs in
+  // Europe/Berlin, where `new Date('2026-01')` lands at 01:00 on the 1st and is still January. A
+  // test asserting it would pass either way here and fail only on a machine west of Greenwich,
+  // which is a worse outcome than the comment in formatMonth explaining the regex.
+
+  it.each(['', 'nonsense', '2026-1'])('formatMonth_%s_rendersTheKeyItself', (value) => {
+    // An axis tick that vanishes is worse than one showing the raw key it was built from.
+    expect(format.formatMonth(value)).toBe(value);
+  });
+
+  it.each([null, undefined])('formatMonth_%s_rendersNothing', (value) => {
+    // There is no key to fall back on here, so this is the one case that renders as nothing.
+    expect(format.formatMonth(value)).toBe('');
+  });
+
+  it('formatPercent_germanAndEnglish_useEachLocalesDecimalMarkAndSpacing', () => {
+    language.setLanguage('de');
+    expect(plain(format.formatPercent(42.5))).toBe('42,5 %');
+
+    language.setLanguage('en');
+    expect(plain(format.formatPercent(42.5))).toBe('42.5%');
+  });
+
+  it('formatPercent_valueOutOfOneHundred_isNotMultipliedAgain', () => {
+    language.setLanguage('en');
+
+    // Intl's percent style takes a fraction; the gauge hands over the number on its own 0-100 dial.
+    expect(plain(format.formatPercent(42.5))).toBe('42.5%');
+    expect(plain(format.formatPercent(100))).toBe('100%');
+  });
+
+  it.each([null, undefined])('formatPercent_%s_rendersNothing', (value) => {
+    expect(format.formatPercent(value)).toBe('');
+  });
+
   it('formatDate_explicitOverride_beatsTheLanguage', () => {
     language.setLanguage('de');
 

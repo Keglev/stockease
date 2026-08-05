@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+﻿import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -34,6 +34,7 @@ import {
 import { FormatService } from '../../../core/format/format.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
+import { ChartFormat, chartFormat } from '../../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
 import { CSV_DOWNLOADER, buildCsv } from '../../../shared/csv/csv-export';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
@@ -299,16 +300,16 @@ export class ReportsPageComponent implements OnInit {
   protected readonly priceHistory = signal<PricePoint[]>([]);
 
   protected readonly analyticsStockOption = computed(() =>
-    toStockHistoryOption(this.stockHistory(), {
-      stock: this.chartContext().stockLevel,
-      sold: this.chartContext().soldUnits
-    })
+    toStockHistoryOption(
+      this.stockHistory(),
+      { stock: this.chartContext().stockLevel, sold: this.chartContext().soldUnits },
+      this.chartContext().format
+    )
   );
 
-  protected readonly analyticsPriceOption = computed(() => {
-    this.chartContext();
-    return toPriceHistoryOption(this.priceHistory());
-  });
+  protected readonly analyticsPriceOption = computed(() =>
+    toPriceHistoryOption(this.priceHistory(), this.chartContext().format)
+  );
 
   protected readonly changeRows = signal<ChangeLogEntryResponse[]>([]);
 
@@ -356,17 +357,21 @@ export class ReportsPageComponent implements OnInit {
    * signal would silently restore the staleness this slice fixes, and the spec would be the only
    * thing that noticed.
    *
-   * <p>This is the seam the formatting slice extends. Charts still hand raw numbers to ECharts;
-   * once they carry formatters, those formatters come from FormatService and depend on
-   * `numberLocale()` and the two override signals. Adding those reads HERE gives every option
-   * format reactivity with no further replumbing, because each one already re-runs when this
-   * context changes. That is also why the options with nothing translated in them - the margin
-   * gauge, the price history - read it too: they render values, so they are the next callers.
+   * <p>{@link chartFormat} is the seam doing what it was built for. It registers the reads of
+   * `numberLocale()` and the two override signals here, and every option below inherits format
+   * reactivity with no further replumbing, because each one already re-runs when this context
+   * changes. That is also why the options with nothing translated in them - the margin gauge, the
+   * price history - read it: they render values, which is the second thing a reader configures.
+   *
+   * <p>Unlike the language read above, these ones are load-bearing. ECharts calls the formatters
+   * while it paints, outside any reactive context, so the service reads inside them are tracked by
+   * nothing - reading the signals at BUILD time is the whole of the dependency.
    */
   private readonly chartContext = computed(() => {
     this.language.currentLang();
     return {
       other: this.translate.instant('charts.other') as string,
+      format: chartFormat(this.format),
       stockLevel: this.translate.instant('reports.analytics.stockLevel') as string,
       soldUnits: this.translate.instant('reports.analytics.soldUnits') as string,
       cashFlow: {
@@ -380,30 +385,28 @@ export class ReportsPageComponent implements OnInit {
   // Derived, not stored. Each one re-runs when its rows change - which is what the load methods
   // used to trigger by hand - and when the rendering context above changes, which nothing used to
   // trigger at all: a language switch left every chart showing the words it was built with.
-  protected readonly marginOption = computed(() => {
-    this.chartContext();
-    return toMarginOption(this.profitRows());
-  });
+  protected readonly marginOption = computed(() =>
+    toMarginOption(this.profitRows(), this.chartContext().format)
+  );
 
   protected readonly profitOption = computed(() =>
-    toProfitOption(this.profitRows(), this.chartContext().other)
+    toProfitOption(this.profitRows(), this.chartContext().other, this.chartContext().format)
   );
 
   protected readonly stockOption = computed(() =>
-    toStockOption(this.stockRows(), this.chartContext().other)
+    toStockOption(this.stockRows(), this.chartContext().other, this.chartContext().format)
   );
 
   protected readonly lossOption = computed(() =>
-    toLossOption(this.lossRows(), this.chartContext().other)
+    toLossOption(this.lossRows(), this.chartContext().other, this.chartContext().format)
   );
 
-  protected readonly dueOption = computed(() => {
-    this.chartContext();
-    return toDueOption(this.buckets());
-  });
+  protected readonly dueOption = computed(() =>
+    toDueOption(this.buckets(), this.chartContext().format)
+  );
 
   protected readonly cashFlowOption = computed(() =>
-    toCashFlowOption(this.cashFlowMonths(), this.chartContext().cashFlow)
+    toCashFlowOption(this.cashFlowMonths(), this.chartContext().cashFlow, this.chartContext().format)
   );
 
   // Loading every tab on open would fire eight report queries against aggregate SQL for tabs the
@@ -908,7 +911,7 @@ export class ReportsPageComponent implements OnInit {
  * state instead. Display-only arithmetic over server-authoritative figures, as with the
  * invoice totals.
  */
-function toMarginOption(rows: ProductProfitReport[]): ChartOption | null {
+function toMarginOption(rows: ProductProfitReport[], format: ChartFormat): ChartOption | null {
   const revenue = rows.reduce((sum, row) => sum + row.revenue, 0);
   if (revenue === 0) {
     return null;
@@ -924,7 +927,9 @@ function toMarginOption(rows: ProductProfitReport[]): ChartOption | null {
         max: 100,
         // Bands read low-to-high against the same thresholds a reader would apply by eye.
         axisLine: { lineStyle: { width: 14, color: [[0.2, '#d9534f'], [0.5, '#f0ad4e'], [1, '#5cb85c']] } },
-        detail: { formatter: '{value}%', fontSize: 22 },
+        // The dial still runs 0-100 and its value is still 42.5; only the reading changes, from a
+        // hardcoded '{value}%' to the decimal mark and percent spacing the reader's locale uses.
+        detail: { formatter: (value: number) => format.percent(value), fontSize: 22 },
         data: [{ value: margin }]
       }
     ]
@@ -985,16 +990,20 @@ function toPricePoints(rows: ChangeLogResponse[], range: { from?: string; to?: s
  * <p>Null below two points: one price is a fact, not a history, and a single-point line renders as
  * an empty plot area that looks broken. The template shows the no-changes state instead.
  */
-function toPriceHistoryOption(points: PricePoint[]): ChartOption | null {
+function toPriceHistoryOption(points: PricePoint[], format: ChartFormat): ChartOption | null {
   if (points.length < 2) {
     return null;
   }
 
   return {
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (value) => format.currency(value as number) },
     grid: { left: 8, right: 24, top: 16, bottom: 24, containLabel: true },
-    xAxis: { type: 'category', data: points.map((point) => point.date) },
-    yAxis: { type: 'value' },
+    xAxis: {
+      type: 'category',
+      data: points.map((point) => point.date),
+      axisLabel: { formatter: (value: string) => format.date(value) }
+    },
+    yAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
     series: [{ type: 'line', step: 'end', data: points.map((point) => point.price) }]
   };
 }
@@ -1008,20 +1017,27 @@ function toPriceHistoryOption(points: PricePoint[]): ChartOption | null {
  */
 function toStockHistoryOption(
   points: StockHistoryPoint[],
-  labels: { stock: string; sold: string }
+  labels: { stock: string; sold: string },
+  format: ChartFormat
 ): ChartOption | null {
   if (points.length === 0) {
     return null;
   }
 
   return {
-    tooltip: { trigger: 'axis' },
+    // Counts, not money - the one chart on this page whose values carry no currency. Units held
+    // and units sold with a euro sign on them would be a different, and wrong, report.
+    tooltip: { trigger: 'axis', valueFormatter: (value) => format.count(value as number) },
     // Same inset as the other legended charts: the bottom has to clear the date labels and the
     // legend row, which a smaller value lets draw over each other.
     legend: { bottom: 0 },
     grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
-    xAxis: { type: 'category', data: points.map((point) => point.date) },
-    yAxis: { type: 'value' },
+    xAxis: {
+      type: 'category',
+      data: points.map((point) => point.date),
+      axisLabel: { formatter: (value: string) => format.date(value) }
+    },
+    yAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.count(value) } },
     series: [
       { name: labels.stock, type: 'line', step: 'end', data: points.map((point) => point.stockLevel) },
       { name: labels.sold, type: 'line', data: points.map((point) => point.cumulativeSoldUnits) }
@@ -1070,19 +1086,29 @@ interface CashFlowLabels {
  * an idle month is a gap between categories rather than a zero column claiming activity was measured
  * and found to be nothing.
  */
-function toCashFlowOption(months: CashFlowTimelineBucket[], labels: CashFlowLabels): ChartOption | null {
+function toCashFlowOption(
+  months: CashFlowTimelineBucket[],
+  labels: CashFlowLabels,
+  format: ChartFormat
+): ChartOption | null {
   if (months.length === 0) {
     return null;
   }
 
   return {
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (value) => format.currency(value as number) },
     // Same inset as the due chart: with containLabel the bottom has to clear the axis labels AND
     // the legend row, which a smaller value lets the two draw on top of each other.
     legend: { bottom: 0 },
     grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
-    xAxis: { type: 'category', data: months.map((month) => month.month) },
-    yAxis: { type: 'value' },
+    // The month KEYS stay the axis data: they are what the endpoint delivered, what the series are
+    // indexed by and what puts the months in order. The reader sees them through the formatter.
+    xAxis: {
+      type: 'category',
+      data: months.map((month) => month.month),
+      axisLabel: { formatter: (value: string) => format.month(value) }
+    },
+    yAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
     // Three plain lines, and deliberately NOT step-lines - the opposite of the analytics tab's two
     // series. A stock level or a price is a state that holds until something changes it, so a step
     // is the truth there. A month's cash flow is a measurement of that month alone: nothing is held
@@ -1109,7 +1135,11 @@ function toCashFlowOption(months: CashFlowTimelineBucket[], labels: CashFlowLabe
  * dashboard is the exhaustive table behind the toggle, not an unabridged chart, which stopped
  * being readable the moment the inventory outgrew the seeded dataset.
  */
-function toProfitOption(rows: ProductProfitReport[], otherLabel: string): ChartOption | null {
+function toProfitOption(
+  rows: ProductProfitReport[],
+  otherLabel: string,
+  format: ChartFormat
+): ChartOption | null {
   if (rows.length === 0) {
     return null;
   }
@@ -1119,15 +1149,23 @@ function toProfitOption(rows: ProductProfitReport[], otherLabel: string): ChartO
   ).sort((a, b) => a.value - b.value);
 
   return {
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      valueFormatter: (value) => format.currency(value as number)
+    },
     grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
-    xAxis: { type: 'value' },
+    xAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
     yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
     series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
   };
 }
 
-function toStockOption(rows: StockStatusReport[], otherLabel: string): ChartOption | null {
+function toStockOption(
+  rows: StockStatusReport[],
+  otherLabel: string,
+  format: ChartFormat
+): ChartOption | null {
   if (rows.length === 0) {
     return null;
   }
@@ -1138,9 +1176,14 @@ function toStockOption(rows: StockStatusReport[], otherLabel: string): ChartOpti
   ).reverse();
 
   return {
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    // inStockValue, not a unit count: this bar is what the stock on hand is worth.
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      valueFormatter: (value) => format.currency(value as number)
+    },
     grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
-    xAxis: { type: 'value' },
+    xAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
     yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
     series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
   };
@@ -1150,14 +1193,18 @@ function toStockOption(rows: StockStatusReport[], otherLabel: string): ChartOpti
  * Builds the loss-share pie, or null when nothing has actually been written off. A pie of
  * zero-valued slices draws no arcs at all, so the empty state is the honest rendering.
  */
-function toLossOption(rows: LossReport[], otherLabel: string): ChartOption | null {
+function toLossOption(
+  rows: LossReport[],
+  otherLabel: string,
+  format: ChartFormat
+): ChartOption | null {
   const slices = rows.filter((row) => row.lossValue > 0);
   if (slices.length === 0) {
     return null;
   }
 
   return {
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', valueFormatter: (value) => format.currency(value as number) },
     legend: { type: 'scroll', bottom: 0 },
     series: [
       {
@@ -1176,7 +1223,7 @@ function toLossOption(rows: LossReport[], otherLabel: string): ChartOption | nul
  * Builds the due-date area chart with one series per invoice type. Due dates are the only
  * genuine time axis the reporting API offers, which is why this is the page's one line chart.
  */
-function toDueOption(buckets: DueDateBucket[]): ChartOption | null {
+function toDueOption(buckets: DueDateBucket[], format: ChartFormat): ChartOption | null {
   if (buckets.length === 0) {
     return null;
   }
@@ -1184,14 +1231,20 @@ function toDueOption(buckets: DueDateBucket[]): ChartOption | null {
   const types = [...new Set(buckets.map((bucket) => bucket.invoiceType))].sort();
 
   return {
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', valueFormatter: (value) => format.currency(value as number) },
     // The legend sits below the axis rather than floating over it: with containLabel the grid's
     // bottom inset has to cover the date labels AND the legend row, which the previous 24px did
     // not, so the two drew on top of each other at both chart heights.
     legend: { bottom: 0 },
     grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
-    xAxis: { type: 'category', boundaryGap: false, data: dates },
-    yAxis: { type: 'value' },
+    // Raw ISO keys as data, the reader's format as labels - the sort above depends on the keys.
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates,
+      axisLabel: { formatter: (value: string) => format.date(value) }
+    },
+    yAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
     series: types.map((type) => ({
       name: type,
       type: 'line' as const,
@@ -1223,3 +1276,4 @@ function sortRows<T>(rows: T[], sort: Sort): T[] {
     return String(a).localeCompare(String(b)) * factor;
   });
 }
+
