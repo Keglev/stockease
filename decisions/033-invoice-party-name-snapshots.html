@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+033-invoice-party-name-snapshots · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Decision-log sidebar, included by the doc templates as a Pandoc partial.
+     The log records backend, frontend and cross-cutting decisions in one
+     sequence (ADR 017), so these pages carry neither tier's navigation: this
+     sidebar IS the index. The active link is marked at runtime by docs.js. Do
+     not put template syntax in this comment - a partial is itself a template.
+
+     MAINTENANCE DUTY: a new ADR is added to docs/decisions/index.md AND to the
+     LAST range group below, in the same pull request that adds the ADR file.
+     When a group would pass roughly twelve entries, start a new range rather
+     than letting one grow: keep the ranges aligned to the numbering, so 033
+     opens an "ADR 033-040" group instead of stretching 021-032. The summary
+     label carries the range, so it changes with the group.
+
+     No open attribute is set here on purpose. Every group ships collapsed and
+     docs.js opens the one holding the current page, which keeps the sidebar
+     short on the index and self-locating on an ADR page.
+
+     The two-entry pointer design in nav-backend.html is deliberate and stays as
+     it is - the central log is reached from the Docs group there. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decision index</a></li>
+  </ul>
+
+  <p class="nav-title">Decisions</p>
+  <details class="nav-group">
+    <summary>ADR 001-010</summary>
+    <ul>
+      <li><a href="/stockease/decisions/001-database-choice.html">001 Database choice</a></li>
+      <li><a href="/stockease/decisions/002-validation-strategy.html">002 Validation strategy</a></li>
+      <li><a href="/stockease/decisions/003-authentication-mechanism.html">003 Authentication mechanism</a></li>
+      <li><a href="/stockease/decisions/004-inventory-domain-model.html">004 Inventory domain model</a></li>
+      <li><a href="/stockease/decisions/005-demo-access.html">005 Demo access without credentials</a></li>
+      <li><a href="/stockease/decisions/006-audit-and-profit-model.html">006 Audit and profit model</a></li>
+      <li><a href="/stockease/decisions/007-modular-monolith.html">007 Modular monolith</a></li>
+      <li><a href="/stockease/decisions/008-documentation-structure.html">008 Documentation structure</a></li>
+      <li><a href="/stockease/decisions/009-sales-invoices-and-customers.html">009 Sales invoices and customers</a></li>
+      <li><a href="/stockease/decisions/010-no-lot-tracking.html">010 Pooled inventory, no lot tracking</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 011-020</summary>
+    <ul>
+      <li><a href="/stockease/decisions/011-merchandise-scope-and-payment.html">011 Merchandise scope and payment</a></li>
+      <li><a href="/stockease/decisions/012-frontend-hosting.html">012 Frontend hosting on a CDN</a></li>
+      <li><a href="/stockease/decisions/013-token-storage.html">013 JWT in localStorage, no refresh</a></li>
+      <li><a href="/stockease/decisions/014-openapi-types-only.html">014 Types-only generation from OpenAPI</a></li>
+      <li><a href="/stockease/decisions/015-runtime-i18n.html">015 Runtime over compile-time i18n</a></li>
+      <li><a href="/stockease/decisions/016-charting-library.html">016 Direct ECharts, not a wrapper</a></li>
+      <li><a href="/stockease/decisions/017-central-decision-log.html">017 Central decision log</a></li>
+      <li><a href="/stockease/decisions/018-product-master-data.html">018 Product creation is master data</a></li>
+      <li><a href="/stockease/decisions/019-last-purchase-price.html">019 Purchase price follows last close</a></li>
+      <li><a href="/stockease/decisions/020-loss-remark.html">020 Losses carry a remark</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 021-032</summary>
+    <ul>
+      <li><a href="/stockease/decisions/021-stock-only-via-invoices.html">021 Stock enters only via invoices</a></li>
+      <li><a href="/stockease/decisions/022-invoice-numbers.html">022 Invoice numbers are operator-set</a></li>
+      <li><a href="/stockease/decisions/023-chart-aggregation-and-csv.html">023 Chart aggregation and CSV export</a></li>
+      <li><a href="/stockease/decisions/024-profit-cogs.html">024 Gross profit as COGS at sale</a></li>
+      <li><a href="/stockease/decisions/025-cash-flow-payment-basis.html">025 Cash flow on a payment basis</a></li>
+      <li><a href="/stockease/decisions/026-low-stock-ever-stocked.html">026 Low stock: ever-stocked only</a></li>
+      <li><a href="/stockease/decisions/027-demo-temporal-spread.html">027 Deterministic demo spread</a></li>
+      <li><a href="/stockease/decisions/028-supplier-traceability-search.html">028 Search-first navigation</a></li>
+      <li><a href="/stockease/decisions/029-help-content-architecture.html">029 Help content as lazy modules</a></li>
+      <li><a href="/stockease/decisions/030-settings-in-local-storage.html">030 Preferences in localStorage</a></li>
+      <li><a href="/stockease/decisions/031-runtime-formatting-via-intl.html">031 Runtime formatting through Intl</a></li>
+      <li><a href="/stockease/decisions/032-client-side-idle-logout.html">032 Idle sign-out is a client concern</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 033-040</summary>
+    <ul>
+      <li><a href="/stockease/decisions/033-invoice-party-name-snapshots.html">033 Invoices snapshot party names</a></li>
+    </ul>
+  </details>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-033-invoice-documents-snapshot-their-party-names">ADR
+        033: Invoice Documents Snapshot Their Party Names</h1>
+        <p><strong>Scope</strong>: [Cross-cutting]
+        <strong>Status</strong>: Accepted <strong>Date</strong>: August
+        5, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>An invoice is a document. It states who it was issued by or
+        to, and what was bought, as those things stood on the day it was
+        issued. Until now this application stored none of that: the
+        invoice held foreign keys, and every display read the name
+        through the JPA association at render time. The name a document
+        showed was therefore master data, not document content.</p>
+        <p><code>Supplier</code>, <code>Customer</code> and
+        <code>Product</code> all carry <code>@SQLDelete</code> with
+        <code>@SQLRestriction("deleted_at IS NULL")</code>, and deletion
+        of a party with only settled history is allowed -
+        <code>OpenInvoiceDeletionVeto</code> blocks the deletion only
+        while an <strong>OPEN</strong> invoice references it. So the two
+        facts collide by design: a supplier with nothing but paid
+        invoices can be deleted, and every one of those invoices then
+        reads its counterparty through a row the restriction hides.</p>
+        <p>A measurement pass built the three scenarios through
+        production paths - create, close, pay, delete the party - and
+        recorded what each surface then did. Four distinct failure
+        classes came out of it:</p>
+        <ul>
+        <li><strong>Wrong data.</strong>
+        <code>GET /api/invoices/{id}</code> answered 200 with
+        <code>supplierId: null, supplierName: null</code>. The frontend
+        detail page renders
+        <code>supplierName ?? customerName ?? 'invoices.walkIn'</code>,
+        so a settled <strong>purchase invoice from a named supplier
+        displayed as “Walk-in sale”</strong>. Not a blank - a different,
+        false statement about the document. The id was nulled alongside
+        the name, so nothing on the response could be used to recover
+        it.</li>
+        <li><strong>500.</strong> With a soft-deleted product on a line,
+        the same endpoint returned
+        <code>{"success":false,"message":"An unexpected error occurred..."}</code>.
+        The invoice became unreadable outright.</li>
+        <li><strong>Conditional crash.</strong> In a persistence context
+        that had already loaded the invoice through the list query, the
+        supplier proxy exists but cannot initialize:
+        <code>EntityNotFoundException: No row with the given identifier exists</code>,
+        raised from <code>InvoiceSummaryResponse.from</code>. Whether a
+        request hit the null case or this one depended on what it had
+        touched first.</li>
+        <li><strong>List fallback.</strong> The list keeps
+        <code>supplierId</code> (reading an identifier off a proxy does
+        not initialize it), but the frontend resolves names client-side
+        against <code>suppliers.getAll()</code> - a live-only list - so
+        a deleted party’s row renders <code>#7</code>.</li>
+        </ul>
+        <p>The mechanism behind the split is join-column optionality,
+        not fetch strategy. <code>@SQLRestriction</code>
+        <strong>is</strong> applied to a <code>left join fetch</code>.
+        For the optional <code>Invoice.supplier</code> and
+        <code>Invoice.customer</code>, Hibernate finds no row and
+        resolves the association to <code>null</code>, silently,
+        discarding the foreign key with it. For
+        <code>InvoiceItem.product</code>, which is
+        <code>@JoinColumn(nullable = false)</code>, the same missing row
+        is an error: <code>FetchNotFoundException</code>, translated to
+        a 500.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Invoices snapshot their party names at issuance, and
+        invoice reads never consult the party tables.</strong></p>
+        <p>Four parts, all backend:</p>
+        <ol type="1">
+        <li><p><strong>Snapshot columns</strong> (<code>V22</code>).
+        <code>invoice.supplier_name</code>,
+        <code>invoice.customer_name</code> nullable;
+        <code>invoice_item.product_name</code> NOT NULL. Backfilled by
+        plain <code>UPDATE ... FROM</code> on the foreign key. The
+        backfill is deliberately <strong>not</strong> filtered on
+        <code>deleted_at</code>: native SQL does not see
+        <code>@SQLRestriction</code>, so parties deleted before the
+        migration still hand over their names - which is precisely the
+        population this change exists for.</p></li>
+        <li><p><strong>Written once, at creation.</strong> The snapshot
+        is taken in <code>createInvoice</code>, at the moment the party
+        is resolved, and there is no update path afterwards. Renaming a
+        supplier does not rewrite the invoices already issued to it.
+        This is the same rule the line’s <code>unit_price</code> has
+        always followed.</p></li>
+        <li><p><strong>Reads are de-joined.</strong>
+        <code>findDetailById</code> fetch-joins the items collection and
+        nothing else; the supplier, customer and product joins are gone.
+        Names come from the snapshot columns and identifiers from
+        read-only foreign-key scalars
+        (<code>@Column(insertable = false, updatable = false)</code>)
+        mapped alongside the associations, which is what preserves the
+        id when the joined row is hidden. No invoice web mapping touches
+        <code>getSupplier()</code>, <code>getCustomer()</code> or
+        <code>getProduct()</code> any more.</p></li>
+        <li><p><strong>Two guards keep the invariants honest.</strong> A
+        return whose product is soft-deleted is refused with 409 and a
+        message naming the product and the remedy; a product with
+        non-zero stock cannot be deleted at all, also 409.</p></li>
+        </ol>
+        <p>The summary DTO additionally carries
+        <code>supplierName</code> and <code>customerName</code>. This is
+        additive on the wire, and the frontend list continues to resolve
+        names client-side until a following change consumes them - so
+        the list keeps its <code>#7</code> fallback for one release
+        while the detail page is correct immediately.</p>
+        <h2 id="consequences">Consequences</h2>
+        <p>An invoice now reads identically whether its parties are
+        live, renamed or deleted, and the read path cannot be broken by
+        master-data state at all: there is no join left to hide a row
+        from. Deleting a supplier with settled history stays allowed,
+        which was the point - the guarantee is about display, not about
+        restricting deletion further.</p>
+        <p>The cost is duplication. A name lives in two places, and the
+        copy on the invoice will drift from the master row the moment
+        someone corrects a typo. That is the intended behaviour for a
+        document and a bug for anything else, so the snapshot columns
+        must never be joined back to, refreshed, or offered as a search
+        index.</p>
+        <p>Returns now require a live product. The operator path for a
+        warranty return against a deleted product is <strong>Restore,
+        book the return, delete again</strong> - three steps, each of
+        which is an existing, audited operation.</p>
+        <h2 id="alternatives-rejected">Alternatives rejected</h2>
+        <p><strong>Native-SQL invoice reads.</strong> The reporting
+        module already reads party names in native SQL, which bypasses
+        <code>@SQLRestriction</code> and renders deleted parties
+        correctly today. Rewriting the invoice reads the same way would
+        have fixed the 500 and the nulls with no schema change.
+        Rejected: it keeps the displayed name hostage to master data. A
+        supplier rename would retroactively change what every historical
+        invoice says it was issued by, which is wrong for a document
+        regardless of whether the row is live. It also leaves the
+        immutability rule unexpressed anywhere in the schema.</p>
+        <p><strong><code>@NotFound(action = NotFoundAction.IGNORE)</code>
+        on the associations.</strong> Makes Hibernate resolve a missing
+        target to <code>null</code> instead of throwing, which would
+        have closed the 500. Rejected on three counts, one of them
+        measured: it forces the association to be fetched eagerly,
+        defeating the laziness the list deliberately relies on; it still
+        provides no name, so the “Walk-in sale” wrong data would have
+        survived untouched; and its semantics already vary between the
+        optional and non-optional mappings here, which is the
+        variability that produced two different failure modes from one
+        cause.</p>
+        <p><strong>A warranty window: allow returns against deleted
+        products for N days after the sale.</strong> Superficially the
+        kindest option, and rejected as unworkable. An accepted return
+        creates stock, and stock on a deleted product is displayed by no
+        surface in the application - so the design forces a second
+        decision immediately: auto-restore the product (silently undoing
+        an administrative act), or invent a third product state between
+        live and deleted. The “but the stock left again via a supplier
+        return” exception cannot be settled from movement data, since
+        nothing records that an inbound customer return and a later
+        outbound supplier return are the same units. And the window
+        length is shop policy rather than law - German practice alone
+        spans the 14-day <em>Widerruf</em> and the 24-month
+        <em>Gewährleistung</em> - so any constant would be this
+        application inventing a rule its operators did not choose.
+        Accepting a late return is a judgement call, and the manual path
+        lets the operator make it explicitly, while the live-stock
+        invariant holds absolutely.</p>
+        <p>Supplier restore symmetry - a recycle bin for suppliers and
+        customers, matching the one products already have - is a natural
+        extension and is deliberately left for later; nothing here
+        depends on it.</p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-033-invoice-documents-snapshot-their-party-names"
+      id="toc-adr-033-invoice-documents-snapshot-their-party-names">ADR
+      033: Invoice Documents Snapshot Their Party Names</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      <li><a href="#alternatives-rejected"
+      id="toc-alternatives-rejected">Alternatives rejected</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
