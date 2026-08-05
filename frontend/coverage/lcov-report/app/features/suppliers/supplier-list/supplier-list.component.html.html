@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>47/47</span>
+                <span class='fraction'>48/48</span>
             </div>
         
             
@@ -154,7 +154,9 @@
 <a name='L89'></a><a href='#L89'>89</a>
 <a name='L90'></a><a href='#L90'>90</a>
 <a name='L91'></a><a href='#L91'>91</a>
-<a name='L92'></a><a href='#L92'>92</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">17x</span>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-yes">27x</span>
@@ -170,6 +172,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-yes">27x</span>
@@ -234,6 +237,7 @@
 <span class="cline-any cline-yes">66x</span>
 <span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -261,69 +265,71 @@
   &lt;p class="supplier-error" role="alert"&gt;{{ message }}&lt;/p&gt;
 }
 &nbsp;
-&lt;table mat-table [dataSource]="visibleRows()" class="supplier-table"&gt;
-  &lt;ng-container matColumnDef="name"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.name' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.name }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+&lt;div class="table-scroll"&gt;
+  &lt;table mat-table [dataSource]="visibleRows()" class="supplier-table"&gt;
+    &lt;ng-container matColumnDef="name"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.name' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.name }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;!-- The contact columns mirror the customer list: an em dash where the value is absent, so an
-       empty cell reads as "nothing recorded" rather than as a rendering failure. --&gt;
-  &lt;ng-container matColumnDef="email"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.email' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.email || '—' }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;!-- The contact columns mirror the customer list: an em dash where the value is absent, so an
+         empty cell reads as "nothing recorded" rather than as a rendering failure. --&gt;
+    &lt;ng-container matColumnDef="email"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.email' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.email || '—' }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="phone"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.phone' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.phone || '—' }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="phone"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.phone' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.phone || '—' }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;!-- Kept, unlike the customer list, which omits address entirely: a supplier's address is
-       mandatory and always has a value, so there is no blank column to save room by dropping. --&gt;
-  &lt;ng-container matColumnDef="address"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.address' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.address }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;!-- Kept, unlike the customer list, which omits address entirely: a supplier's address is
+         mandatory and always has a value, so there is no blank column to save room by dropping. --&gt;
+    &lt;ng-container matColumnDef="address"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.address' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.address }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="city"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.city' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.city || '—' }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="city"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.city' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.city || '—' }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="createdAt"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.createdAt' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.createdAt | appDateTime }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="createdAt"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.createdAt' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let supplier"&gt;{{ supplier.createdAt | appDateTime }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="actions"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.actions' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let supplier"&gt;
-      &lt;button
-        matButton
-        type="button"
-        class="supplier-edit"
-        (click)="openEdit(supplier)"
-      &gt;
-        {{ 'suppliers.edit' | translate }}
-      &lt;/button&gt;
-      @if (canDelete()) {
+    &lt;ng-container matColumnDef="actions"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'suppliers.columns.actions' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let supplier"&gt;
         &lt;button
-          matIconButton
+          matButton
           type="button"
-          class="supplier-delete"
-          [attr.aria-label]="'suppliers.delete.action' | translate"
-          (click)="confirmDelete(supplier)"
+          class="supplier-edit"
+          (click)="openEdit(supplier)"
         &gt;
-          &lt;mat-icon&gt;delete&lt;/mat-icon&gt;
+          {{ 'suppliers.edit' | translate }}
         &lt;/button&gt;
-      }
-    &lt;/td&gt;
-  &lt;/ng-container&gt;
+        @if (canDelete()) {
+          &lt;button
+            matIconButton
+            type="button"
+            class="supplier-delete"
+            [attr.aria-label]="'suppliers.delete.action' | translate"
+            (click)="confirmDelete(supplier)"
+          &gt;
+            &lt;mat-icon&gt;delete&lt;/mat-icon&gt;
+          &lt;/button&gt;
+        }
+      &lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;tr mat-header-row *matHeaderRowDef="displayedColumns"&gt;&lt;/tr&gt;
-  &lt;tr mat-row *matRowDef="let row; columns: displayedColumns"&gt;&lt;/tr&gt;
-&lt;/table&gt;
+    &lt;tr mat-header-row *matHeaderRowDef="displayedColumns"&gt;&lt;/tr&gt;
+    &lt;tr mat-row *matRowDef="let row; columns: displayedColumns"&gt;&lt;/tr&gt;
+  &lt;/table&gt;
+&lt;/div&gt;
 &nbsp;
 @if (!loading() &amp;&amp; !error() &amp;&amp; rows().length === 0) {
   &lt;p class="supplier-empty"&gt;{{ 'suppliers.empty' | translate }}&lt;/p&gt;
@@ -343,7 +349,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-05T14:51:22.603Z
+                at 2026-08-05T16:38:31.544Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>44/44</span>
+                <span class='fraction'>45/45</span>
             </div>
         
             
@@ -148,7 +148,9 @@
 <a name='L83'></a><a href='#L83'>83</a>
 <a name='L84'></a><a href='#L84'>84</a>
 <a name='L85'></a><a href='#L85'>85</a>
-<a name='L86'></a><a href='#L86'>86</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">18x</span>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-yes">28x</span>
 <span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-yes">28x</span>
@@ -164,6 +166,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-yes">28x</span>
 <span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-yes">28x</span>
@@ -222,6 +225,7 @@
 <span class="cline-any cline-yes">70x</span>
 <span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">28x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -249,63 +253,65 @@
   &lt;p class="customer-error" role="alert"&gt;{{ message }}&lt;/p&gt;
 }
 &nbsp;
-&lt;table mat-table [dataSource]="visibleRows()" class="customer-table"&gt;
-  &lt;ng-container matColumnDef="name"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.name' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.name }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+&lt;div class="table-scroll"&gt;
+  &lt;table mat-table [dataSource]="visibleRows()" class="customer-table"&gt;
+    &lt;ng-container matColumnDef="name"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.name' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.name }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="email"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.email' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.email || '—' }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="email"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.email' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.email || '—' }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="phone"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.phone' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.phone || '—' }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="phone"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.phone' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.phone || '—' }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="city"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.city' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.city || '—' }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="city"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.city' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.city || '—' }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="createdAt"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.createdAt' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.createdAt | appDateTime }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="createdAt"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.createdAt' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let customer"&gt;{{ customer.createdAt | appDateTime }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;!-- Summary and delete only: the API has no customer update endpoint, so no edit action
-       exists. The summary is read-only and open to both roles. --&gt;
-  &lt;ng-container matColumnDef="actions"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.actions' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let customer"&gt;
-      &lt;button
-        matIconButton
-        type="button"
-        class="customer-summary"
-        [attr.aria-label]="'customers.summary.action' | translate"
-        (click)="openSummary(customer)"
-      &gt;
-        &lt;mat-icon&gt;insights&lt;/mat-icon&gt;
-      &lt;/button&gt;
-      @if (canDelete()) {
+    &lt;!-- Summary and delete only: the API has no customer update endpoint, so no edit action
+         exists. The summary is read-only and open to both roles. --&gt;
+    &lt;ng-container matColumnDef="actions"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'customers.columns.actions' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let customer"&gt;
         &lt;button
           matIconButton
           type="button"
-          class="customer-delete"
-          [attr.aria-label]="'customers.delete.action' | translate"
-          (click)="confirmDelete(customer)"
+          class="customer-summary"
+          [attr.aria-label]="'customers.summary.action' | translate"
+          (click)="openSummary(customer)"
         &gt;
-          &lt;mat-icon&gt;delete&lt;/mat-icon&gt;
+          &lt;mat-icon&gt;insights&lt;/mat-icon&gt;
         &lt;/button&gt;
-      }
-    &lt;/td&gt;
-  &lt;/ng-container&gt;
+        @if (canDelete()) {
+          &lt;button
+            matIconButton
+            type="button"
+            class="customer-delete"
+            [attr.aria-label]="'customers.delete.action' | translate"
+            (click)="confirmDelete(customer)"
+          &gt;
+            &lt;mat-icon&gt;delete&lt;/mat-icon&gt;
+          &lt;/button&gt;
+        }
+      &lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;tr mat-header-row *matHeaderRowDef="displayedColumns"&gt;&lt;/tr&gt;
-  &lt;tr mat-row *matRowDef="let row; columns: displayedColumns"&gt;&lt;/tr&gt;
-&lt;/table&gt;
+    &lt;tr mat-header-row *matHeaderRowDef="displayedColumns"&gt;&lt;/tr&gt;
+    &lt;tr mat-row *matRowDef="let row; columns: displayedColumns"&gt;&lt;/tr&gt;
+  &lt;/table&gt;
+&lt;/div&gt;
 &nbsp;
 @if (!loading() &amp;&amp; !error() &amp;&amp; rows().length === 0) {
   &lt;p class="customer-empty"&gt;{{ 'customers.empty' | translate }}&lt;/p&gt;
@@ -325,7 +331,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-05T14:51:22.603Z
+                at 2026-08-05T16:38:31.544Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

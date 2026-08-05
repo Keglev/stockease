@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>82/82</span>
+                <span class='fraction'>83/83</span>
             </div>
         
             
@@ -220,7 +220,9 @@
 <a name='L155'></a><a href='#L155'>155</a>
 <a name='L156'></a><a href='#L156'>156</a>
 <a name='L157'></a><a href='#L157'>157</a>
-<a name='L158'></a><a href='#L158'>158</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">32x</span>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-yes">79x</span>
 <span class="cline-any cline-yes">79x</span>
 <span class="cline-any cline-yes">23x</span>
@@ -249,6 +251,7 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-yes">79x</span>
 <span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-yes">79x</span>
@@ -360,6 +363,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">79x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -406,116 +410,118 @@
   &lt;p class="product-error" role="alert"&gt;{{ message }}&lt;/p&gt;
 }
 &nbsp;
-&lt;table mat-table [dataSource]="visibleRows()" class="product-table"&gt;
-  &lt;ng-container matColumnDef="name"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.name' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;{{ product.name }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+&lt;div class="table-scroll"&gt;
+  &lt;table mat-table [dataSource]="visibleRows()" class="product-table"&gt;
+    &lt;ng-container matColumnDef="name"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.name' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;{{ product.name }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="sku"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.sku' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;{{ product.sku }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="sku"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.sku' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;{{ product.sku }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="quantity"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.quantity' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;{{ product.quantity }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="quantity"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.quantity' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;{{ product.quantity }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="purchasePrice"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.purchasePrice' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;{{ product.purchasePrice | appCurrency }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="purchasePrice"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.purchasePrice' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;{{ product.purchasePrice | appCurrency }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="totalValue"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.totalValue' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;{{ product.totalValue | appCurrency }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="totalValue"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.totalValue' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;{{ product.totalValue | appCurrency }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;ng-container matColumnDef="createdAt"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.createdAt' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;{{ product.createdAt | appDateTime }}&lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;ng-container matColumnDef="createdAt"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.createdAt' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;{{ product.createdAt | appDateTime }}&lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;!-- Rename and price only: quantity has no update endpoint and stays read-only. --&gt;
-  &lt;ng-container matColumnDef="actions"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.actions' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;
-      &lt;button
-        matIconButton
-        type="button"
-        class="product-actions"
-        [attr.aria-label]="'products.actions' | translate"
-        [matMenuTriggerFor]="menu"
-      &gt;
-        &lt;mat-icon&gt;more_vert&lt;/mat-icon&gt;
-      &lt;/button&gt;
-      &lt;mat-menu #menu="matMenu"&gt;
-        &lt;button mat-menu-item type="button" class="product-rename" (click)="openEdit(product, 'name')"&gt;
-          {{ 'products.rename' | translate }}
-        &lt;/button&gt;
+    &lt;!-- Rename and price only: quantity has no update endpoint and stays read-only. --&gt;
+    &lt;ng-container matColumnDef="actions"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.actions' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;
         &lt;button
-          mat-menu-item
+          matIconButton
           type="button"
-          class="product-reprice"
-          (click)="openEdit(product, 'price')"
+          class="product-actions"
+          [attr.aria-label]="'products.actions' | translate"
+          [matMenuTriggerFor]="menu"
         &gt;
-          {{ 'products.changePrice' | translate }}
+          &lt;mat-icon&gt;more_vert&lt;/mat-icon&gt;
         &lt;/button&gt;
-        &lt;!-- Open to both roles: the backend guards the audit endpoints with hasAnyRole, because
-             the change trail is transparency rather than administration. --&gt;
-        &lt;button
-          mat-menu-item
-          type="button"
-          class="product-history"
-          (click)="openHistory(product)"
-        &gt;
-          {{ 'products.history' | translate }}
-        &lt;/button&gt;
-        @if (isAdmin()) {
+        &lt;mat-menu #menu="matMenu"&gt;
+          &lt;button mat-menu-item type="button" class="product-rename" (click)="openEdit(product, 'name')"&gt;
+            {{ 'products.rename' | translate }}
+          &lt;/button&gt;
           &lt;button
             mat-menu-item
             type="button"
-            class="product-delete"
-            (click)="confirmDelete(product)"
+            class="product-reprice"
+            (click)="openEdit(product, 'price')"
           &gt;
-            {{ 'products.delete.action' | translate }}
+            {{ 'products.changePrice' | translate }}
           &lt;/button&gt;
-        }
-      &lt;/mat-menu&gt;
-    &lt;/td&gt;
-  &lt;/ng-container&gt;
+          &lt;!-- Open to both roles: the backend guards the audit endpoints with hasAnyRole, because
+               the change trail is transparency rather than administration. --&gt;
+          &lt;button
+            mat-menu-item
+            type="button"
+            class="product-history"
+            (click)="openHistory(product)"
+          &gt;
+            {{ 'products.history' | translate }}
+          &lt;/button&gt;
+          @if (isAdmin()) {
+            &lt;button
+              mat-menu-item
+              type="button"
+              class="product-delete"
+              (click)="confirmDelete(product)"
+            &gt;
+              {{ 'products.delete.action' | translate }}
+            &lt;/button&gt;
+          }
+        &lt;/mat-menu&gt;
+      &lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;!-- Deleted view only: states why the row is muted, so the styling is never the only signal. --&gt;
-  &lt;ng-container matColumnDef="status"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.status' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;
-      &lt;!-- Not `disabled`: that renders Material's label at 38% alpha, which drops the chip below a
-           legible contrast. The chip is inert because nothing binds a click, not because it is
-           disabled. --&gt;
-      &lt;mat-chip class="status-chip status-deleted"&gt;
-        {{ 'products.deletedChip' | translate }}
-      &lt;/mat-chip&gt;
-    &lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;!-- Deleted view only: states why the row is muted, so the styling is never the only signal. --&gt;
+    &lt;ng-container matColumnDef="status"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.status' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;
+        &lt;!-- Not `disabled`: that renders Material's label at 38% alpha, which drops the chip below a
+             legible contrast. The chip is inert because nothing binds a click, not because it is
+             disabled. --&gt;
+        &lt;mat-chip class="status-chip status-deleted"&gt;
+          {{ 'products.deletedChip' | translate }}
+        &lt;/mat-chip&gt;
+      &lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;!-- Restore is not destructive, so it is a direct button with no confirmation step. --&gt;
-  &lt;ng-container matColumnDef="deletedActions"&gt;
-    &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.actions' | translate }}&lt;/th&gt;
-    &lt;td mat-cell *matCellDef="let product"&gt;
-      &lt;button matButton type="button" class="product-restore" (click)="restore(product)"&gt;
-        {{ 'products.restore' | translate }}
-      &lt;/button&gt;
-    &lt;/td&gt;
-  &lt;/ng-container&gt;
+    &lt;!-- Restore is not destructive, so it is a direct button with no confirmation step. --&gt;
+    &lt;ng-container matColumnDef="deletedActions"&gt;
+      &lt;th mat-header-cell *matHeaderCellDef&gt;{{ 'products.columns.actions' | translate }}&lt;/th&gt;
+      &lt;td mat-cell *matCellDef="let product"&gt;
+        &lt;button matButton type="button" class="product-restore" (click)="restore(product)"&gt;
+          {{ 'products.restore' | translate }}
+        &lt;/button&gt;
+      &lt;/td&gt;
+    &lt;/ng-container&gt;
 &nbsp;
-  &lt;tr mat-header-row *matHeaderRowDef="visibleColumns()"&gt;&lt;/tr&gt;
-  &lt;tr
-    mat-row
-    *matRowDef="let row; columns: visibleColumns()"
-    [class.product-row-deleted]="showDeleted()"
-  &gt;&lt;/tr&gt;
-&lt;/table&gt;
+    &lt;tr mat-header-row *matHeaderRowDef="visibleColumns()"&gt;&lt;/tr&gt;
+    &lt;tr
+      mat-row
+      *matRowDef="let row; columns: visibleColumns()"
+      [class.product-row-deleted]="showDeleted()"
+    &gt;&lt;/tr&gt;
+  &lt;/table&gt;
+&lt;/div&gt;
 &nbsp;
 @if (!loading() &amp;&amp; !error() &amp;&amp; visibleRows().length === 0) {
   &lt;p class="product-empty"&gt;
@@ -541,7 +547,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-05T14:51:22.603Z
+                at 2026-08-05T16:38:31.544Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
