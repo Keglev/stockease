@@ -26,9 +26,24 @@ export class InvoiceService {
   // exactly why unwrapping lives in services and not in an interceptor.
 
   /**
+   * Reads the whole ledger, newest first, unenveloped as the endpoint sends it.
+   *
+   * <p>#143 removed this method as dead - the list had been paged since #119 and nothing wanted the
+   * whole ledger. The CSV export is what wants it: the export is the record and the paged table is
+   * the view, so the file covers every invoice rather than the screenful behind it. The removal is
+   * reversed by ruling rather than by oversight, and `GET /api/invoices` stops being API-
+   * completeness surface and becomes a called endpoint.
+   *
+   * <p>The one caller is the export, which is why nothing here caches: a download asks for the
+   * ledger as it stands at the moment the button is pressed.
+   */
+  getAll(): Observable<InvoiceSummaryResponse[]> {
+    return this.http.get<InvoiceSummaryResponse[]>(this.baseUrl);
+  }
+
+  /**
    * Reads one page of the ledger, newest first. Enveloped, because the page metadata travels in
-   * the envelope. The backend also serves an unpaged `GET /api/invoices`, which this client does
-   * not call: the list has been paged since #119, so no consumer here wants the whole ledger.
+   * the envelope.
    *
    * @param page zero-based page index
    * @param size items per page

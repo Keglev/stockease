@@ -312,7 +312,8 @@
       "status": "Status",
       "counterparty": "Counterparty",
       "dueDate": "Due date",
-      "createdAt": "Created"
+      "createdAt": "Created",
+      "paidAt": "Paid"
     },
     "form": {
       "invoiceNumber": "Invoice number",

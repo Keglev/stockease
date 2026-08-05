@@ -65,12 +65,23 @@ export class InvoiceListComponent implements OnInit {
     'createdAt'
   ];
 
+  /**
+   * The columns the CSV carries, which is the table's plus the payment date.
+   *
+   * <p>`paidAt` is on the file and not on the table because the table renders it as a chip and a
+   * file cannot. It is the last thing on screen that was not re-derivable from the export: status
+   * and due date already carried the overdue chip's inputs, and this carries the paid chip's.
+   */
+  private readonly exportColumns = [...this.displayedColumns, 'paidAt'];
+
   protected readonly rows = signal<InvoiceSummaryResponse[]>([]);
   protected readonly totalElements = signal(0);
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** The export's own in-flight flag, separate from `loading`: the table is not reloading. */
+  protected readonly exporting = signal(false);
 
   ngOnInit(): void {
     this.load();
@@ -129,38 +140,60 @@ export class InvoiceListComponent implements OnInit {
   }
 
   /**
-   * Downloads the ledger page on screen, the way each reports tab downloads its table.
+   * Downloads EVERY invoice, not the page on screen.
    *
-   * <p>The visible page, and only it. Unlike the two master-data lists this one pages SERVER-side -
-   * the component holds exactly the rows it last fetched - so exporting more would mean issuing
-   * fresh unpaged requests behind a download button, which is a different feature from this one.
+   * <p>The export is the record; the paged table is the view. The files feed BI tools, and a
+   * spreadsheet holding whichever ten rows the operator happened to be looking at is not a record
+   * of anything - so this fetches the unpaged ledger rather than serializing `rows()`. #171 scoped
+   * it to the visible page and said so in its PR body; that note is superseded.
    *
-   * <p>The file says so nowhere, because the reports pattern has no convention for scoping
-   * metadata: none of its six exports carries a header row, a date or a filter summary, and
-   * inventing one here would make this export the odd one out rather than the consistent one.
+   * <p>It is the first export in the app that FETCHES. Every reports tab serializes signals it
+   * already holds, so there was no precedent for what a download does while a request is in flight.
+   * The answer here is deliberately the smallest one: the button disables itself, and a failure
+   * lands in the page's own error banner - the same signal a failed page load writes to - rather
+   * than introducing a notification channel this page does not have.
+   *
+   * <p>{@link exporting} is the whole of the concurrency control: the template disables the button
+   * while it is set, and that binding is the ONLY thing that can stop a second download. A guard
+   * re-checking the flag here was written first and then removed - it is unreachable behind a
+   * disabled button, so no test could kill it, and unreachable defensive code that looks like a
+   * safeguard is worse than none.
+   *
+   * <p>The file carries no metadata preamble, matching the six reports exports: facts over
+   * presentation, because a header line a tool has to skip is a header line a tool gets wrong.
    *
    * <p>The chips are not exported as chips. Type and status go through the same translation keys
    * the cells render, because those are enum VALUES that happen to be styled - the changes tab
-   * exports its field labels the same way. The paid and overdue chips are different: they are
-   * derived from `paidAt`, `status` and `dueDate` for display only, and the CSV carries the
-   * columns rather than the badge, so a reader can re-derive them and disagree if they want to.
+   * exports its field labels the same way. The paid and overdue chips are derived for display, and
+   * the file now carries every input they derive from: status, due date, and the payment date.
    */
   protected exportCsv(): void {
-    this.csv.export(
-      'invoices.csv',
-      this.displayedColumns,
-      this.rows().map((row) => [
-        row.id,
-        row.invoiceNumber,
-        this.translate.instant('invoices.type.' + row.type) as string,
-        this.translate.instant('invoices.status.' + row.status) as string,
-        // The same method the cell calls, so a walk-in sale reads as a walk-in sale here too.
-        this.counterparty(row),
-        this.format.formatDate(row.dueDate),
-        this.format.formatDateTime(row.createdAt)
-      ]),
-      'invoices.columns.'
-    );
+    this.exporting.set(true);
+    this.error.set(null);
+
+    this.invoices.getAll().subscribe({
+      next: (all) => {
+        this.exporting.set(false);
+        this.csv.export('invoices.csv', this.exportColumns, all.map((row) => [
+          row.id,
+          row.invoiceNumber,
+          this.translate.instant('invoices.type.' + row.type) as string,
+          this.translate.instant('invoices.status.' + row.status) as string,
+          // The same method the cell calls, so a walk-in sale reads as a walk-in sale here too.
+          this.counterparty(row),
+          this.format.formatDate(row.dueDate),
+          this.format.formatDateTime(row.createdAt),
+          // Empty when unpaid, which is the honest cell: the formatters answer '' for null, so an
+          // unpaid invoice reads as a blank rather than as a date nobody chose.
+          this.format.formatDateTime(row.paidAt)
+        ]), 'invoices.columns.');
+      },
+      // Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app.
+      error: (err: Error) => {
+        this.exporting.set(false);
+        this.error.set(err.message);
+      }
+    });
   }
 
   private load(): void {
