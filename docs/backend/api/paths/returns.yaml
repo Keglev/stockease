@@ -92,21 +92,42 @@ post:
             data: null
     '409':
       description: |
-        The return exceeds what the line still has outstanding, the invoice is not closed yet, or the
-        resulting stock change would go negative.
+        The return exceeds what the line still has outstanding, the invoice is not closed yet, the
+        line's product has been soft-deleted, or the resulting stock change would go negative.
+
+        Two of these carry a `code`, because they need opposite handling and the status cannot tell
+        them apart: `PRODUCT_DELETED` is fixed by restoring the product and retrying the same return,
+        while `INSUFFICIENT_STOCK` means the units are not there to give back and retrying will not
+        help. The remaining causes carry no code - `message` is all a client needs for them.
       content:
         application/json:
           schema:
             $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           examples:
+            productDeleted:
+              summary: The line's product is soft-deleted
+              value:
+                success: false
+                message: >-
+                  Cannot register a return for 'Widget': the product is deleted. Restore it first,
+                  then record the return.
+                data: null
+                code: PRODUCT_DELETED
+            insufficientStock:
+              summary: Returning to the supplier would drive stock negative
+              value:
+                success: false
+                message: Adjustment of -2 would result in negative stock for product 3.
+                data: null
+                code: INSUFFICIENT_STOCK
             exceedsRemaining:
-              summary: Return cap exceeded
+              summary: Return cap exceeded - no code
               value:
                 success: false
                 message: Return of 2 exceeds remaining returnable quantity 1 for invoice item 4.
                 data: null
             invoiceStillOpen:
-              summary: Nothing to return against yet
+              summary: Nothing to return against yet - no code
               value:
                 success: false
                 message: Returns require a closed invoice.

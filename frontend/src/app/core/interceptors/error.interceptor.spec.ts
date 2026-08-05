@@ -39,16 +39,21 @@ function setUp(): { http: HttpClient; controller: HttpTestingController } {
   };
 }
 
-/** Fails a GET against API_URL with the given envelope and status, returning what was thrown. */
-function failedRequest(status: number, message: string): Promise<unknown> {
+/**
+ * Fails a GET against API_URL with the given envelope and status, returning what was thrown.
+ * The code is left off the body entirely when not given, which is how most errors arrive.
+ */
+function failedRequest(status: number, message: string, code?: string): Promise<unknown> {
   const { http, controller } = setUp();
   const thrown = new Promise<unknown>((resolve) => {
     http.get(API_URL).subscribe({ error: (error: unknown) => resolve(error) });
   });
 
-  controller
-    .expectOne(API_URL)
-    .flush({ success: false, message, data: null }, { status, statusText: 'Error' });
+  const body = code === undefined
+    ? { success: false, message, data: null }
+    : { success: false, message, data: null, code };
+
+  controller.expectOne(API_URL).flush(body, { status, statusText: 'Error' });
 
   return thrown;
 }
@@ -72,6 +77,39 @@ describe('errorInterceptor', () => {
     // The message contract is what every consumer reads; carrying the status must not disturb it.
     expect((error as Error).message).toBe('Product is in use.');
     expect(error).toBeInstanceOf(Error);
+  });
+
+  it('intercept_envelopeWithCode_carriesItOntoTheError', async () => {
+    const error = await failedRequest(409, 'Product is deleted.', 'PRODUCT_DELETED');
+
+    // The seam the whole discrimination hangs on: a consumer can only branch on the code if the
+    // interceptor lifts it off the envelope, and nothing else in the app reads the raw response.
+    expect((error as ApiError).code).toBe('PRODUCT_DELETED');
+    expect((error as ApiError).status).toBe(409);
+  });
+
+  it('intercept_envelopeWithoutCode_leavesTheCodeUndefined', async () => {
+    const error = await failedRequest(409, 'Product is in use.');
+
+    // Absent is the normal case, and it must read as undefined rather than as some placeholder a
+    // switch could accidentally match.
+    expect((error as ApiError).code).toBeUndefined();
+  });
+
+  it('intercept_envelopeWithNonStringCode_leavesTheCodeUndefined', async () => {
+    const { http, controller } = setUp();
+    const thrown = new Promise<unknown>((resolve) => {
+      http.get(API_URL).subscribe({ error: (error: unknown) => resolve(error) });
+    });
+
+    // A consumer branching on the code must never be handed something that is not one, whatever a
+    // proxy or a future server puts in the field.
+    controller.expectOne(API_URL).flush(
+      { success: false, message: 'Odd.', data: null, code: 42 },
+      { status: 409, statusText: 'Error' }
+    );
+
+    expect((await thrown as ApiError).code).toBeUndefined();
   });
 
   it('intercept_bodyWithoutMessage_fallsBackToTheGenericMessage', async () => {

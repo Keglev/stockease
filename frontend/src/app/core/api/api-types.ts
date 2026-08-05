@@ -1103,6 +1103,14 @@ export interface components {
             success: boolean;
             /** @example null */
             data: unknown;
+            /**
+             * @description Stable machine-readable identifier for the failure. Optional and absent on most
+             *     errors - see the response-envelope section for when one is assigned and how a client
+             *     is expected to treat an absent or unrecognized value. Never present on a success
+             *     envelope, and omitted from the JSON rather than sent as null.
+             * @example PRODUCT_DELETED
+             */
+            code?: string;
         };
         /** @description 400 response carrying field-level validation messages */
         ValidationErrorResponse: components["schemas"]["ApiResponse"] & {
@@ -3940,8 +3948,13 @@ export interface operations {
                 };
             };
             /**
-             * @description The return exceeds what the line still has outstanding, the invoice is not closed yet, or the
-             *     resulting stock change would go negative.
+             * @description The return exceeds what the line still has outstanding, the invoice is not closed yet, the
+             *     line's product has been soft-deleted, or the resulting stock change would go negative.
+             *
+             *     Two of these carry a `code`, because they need opposite handling and the status cannot tell
+             *     them apart: `PRODUCT_DELETED` is fixed by restoring the product and retrying the same return,
+             *     while `INSUFFICIENT_STOCK` means the units are not there to give back and retrying will not
+             *     help. The remaining causes carry no code - `message` is all a client needs for them.
              */
             409: {
                 headers: {

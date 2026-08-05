@@ -87,18 +87,18 @@ const SUMMARY: InvoiceSummaryResponse = {
 };
 
 /**
- * Reads invoices.returnDialog.deletedProduct out of a shipped locale file. Walks up from the
- * working directory so it resolves whether the runner starts in frontend/ or at the repository
- * root, and reads from disk rather than importing, because public/ sits outside the spec
- * tsconfig's rootDir - both for the reasons translation-parity.spec sets out.
+ * Reads one invoices.returnDialog message out of a shipped locale file. Walks up from the working
+ * directory so it resolves whether the runner starts in frontend/ or at the repository root, and
+ * reads from disk rather than importing, because public/ sits outside the spec tsconfig's
+ * rootDir - both for the reasons translation-parity.spec sets out.
  */
-function localeMessage(file: string): string {
+function localeMessage(file: string, key: 'deletedProduct' | 'insufficientStock'): string {
   let dir = process.cwd();
   for (;;) {
     try {
       const parsed: unknown = JSON.parse(readFileSync(join(dir, 'public', 'i18n', file), 'utf8'));
-      return (parsed as { invoices: { returnDialog: { deletedProduct: string } } }).invoices
-        .returnDialog.deletedProduct;
+      return (parsed as { invoices: { returnDialog: Record<string, string> } }).invoices
+        .returnDialog[key];
     } catch {
       const parent = dirname(dir);
       if (parent === dir) {
@@ -510,17 +510,18 @@ describe('InvoiceDetailComponent', () => {
     expect(notifications.errors).toEqual(['Only 1 unit remains returnable.']);
   });
 
-  it('return_rejectedWith409_showsTheDeletedProductNotification', async () => {
+  it('return_rejectedWithProductDeletedCode_showsTheDeletedProductNotification', async () => {
     await setUp(of(detail({ status: 'CLOSED' })));
     // The failure is injected at the service seam, in the shape the interceptor produces: an
-    // ApiError carrying the backend's own sentence and the 409 the deleted-product veto answers
-    // with. The sentence is what must NOT reach the screen.
+    // ApiError carrying the backend's own sentence, the 409, and the code that says which 409 it
+    // is. The sentence is what must NOT reach the screen.
     movements.result = throwError(
       () =>
         new ApiError(
           "Cannot register a return for 'Widget': the product is deleted. "
             + 'Restore it first, then record the return.',
-          409
+          409,
+          'PRODUCT_DELETED'
         )
     );
 
@@ -528,6 +529,60 @@ describe('InvoiceDetailComponent', () => {
     await settle();
 
     expect(notifications.errors).toEqual(['invoices.returnDialog.deletedProduct']);
+  });
+
+  it('return_rejectedWithInsufficientStockCode_showsTheStockNotification', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })));
+    // Same endpoint, same 409, opposite advice. Before the code existed this response produced the
+    // deleted-product message, telling the operator to restore a product that was never deleted.
+    movements.result = throwError(
+      () =>
+        new ApiError(
+          'Adjustment of -2 would result in negative stock for product 3.',
+          409,
+          'INSUFFICIENT_STOCK'
+        )
+    );
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(notifications.errors).toEqual(['invoices.returnDialog.insufficientStock']);
+  });
+
+  it('return_rejectedWith409ButNoCode_fallsBackToTheBackendMessage', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })));
+    // The cap-exceeded conflict, which the API deliberately leaves uncoded. It must take the same
+    // path every other unremarkable failure on this page takes rather than borrowing a message
+    // written for a different situation.
+    movements.result = throwError(
+      () =>
+        new ApiError(
+          'Return of 2 exceeds remaining returnable quantity 1 for invoice item 4.',
+          409
+        )
+    );
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(notifications.errors).toEqual([
+      'Return of 2 exceeds remaining returnable quantity 1 for invoice item 4.'
+    ]);
+  });
+
+  it('return_rejectedWithUnknownCode_fallsBackToTheBackendMessage', async () => {
+    await setUp(of(detail({ status: 'CLOSED' })));
+    // Codes are added to responses that previously had none, so a client meets values it has never
+    // heard of. An unknown code must read as "no code", not as a reason to show nothing useful.
+    movements.result = throwError(
+      () => new ApiError('Some future conflict.', 409, 'SOME_CODE_THIS_BUILD_HAS_NEVER_SEEN')
+    );
+
+    host().querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle();
+
+    expect(notifications.errors).toEqual(['Some future conflict.']);
   });
 
   it('return_registeredSuccessfully_isUnaffectedByTheConflictMapping', async () => {
@@ -543,15 +598,29 @@ describe('InvoiceDetailComponent', () => {
   it('deletedProductMessage_bothLocales_readAsTheShippedSentences', () => {
     // The component emits a key; what the operator reads is the value in the file the app fetches
     // at runtime. Asserting the shipped files - the technique translation-parity.spec uses, and
-    // for the same reason - is what makes the two specs above non-vacuous about the actual words.
+    // for the same reason - is what makes the specs above non-vacuous about the actual words.
     // Whole strings, both languages: a substring match would accept a message that dropped the
     // restore instruction, which is the only actionable half of it.
-    expect(localeMessage('en.json')).toBe(
+    expect(localeMessage('en.json', 'deletedProduct')).toBe(
       'This product is deleted and cannot take returns. Restore it first, then register the return.'
     );
-    expect(localeMessage('de.json')).toBe(
+    expect(localeMessage('de.json', 'deletedProduct')).toBe(
       'Dieses Produkt ist gelöscht und kann keine Retouren annehmen. '
         + 'Stellen Sie es zuerst wieder her, dann erfassen Sie die Retoure.'
+    );
+  });
+
+  it('insufficientStockMessage_bothLocales_readAsTheShippedSentences', () => {
+    // The distinguishing pair: this sentence and the one above must say different things, or the
+    // code that separates them buys nothing. It names the stock level, not a restore, because the
+    // product in this case is perfectly live.
+    expect(localeMessage('en.json', 'insufficientStock')).toBe(
+      'More units were returned than are in stock. '
+        + 'Check the current stock level before returning these units.'
+    );
+    expect(localeMessage('de.json', 'insufficientStock')).toBe(
+      'Es wurden mehr Einheiten retourniert, als auf Lager sind. '
+        + 'Prüfen Sie den aktuellen Lagerbestand, bevor Sie diese Einheiten retournieren.'
     );
   });
 
