@@ -13,7 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Customer module's public API for looking up and registering customers.
+ * Customer module's public API for querying and mutating customers.
  * Other modules depend on this service rather than reaching into the module's repository.
  */
 @Service
@@ -56,6 +56,41 @@ public class CustomerService {
     @Transactional
     public Customer create(String name, String email, String phone, String address, String city) {
         Customer customer = new Customer();
+        customer.setName(name);
+        customer.setEmail(email);
+        customer.setPhone(phone);
+        customer.setAddress(address);
+        customer.setCity(city);
+        return customerRepository.save(customer);
+    }
+
+    /**
+     * Replaces a customer's fields.
+     *
+     * <p>Every field is replaced, including the optional ones: a {@code null} email clears the
+     * stored email rather than leaving it in place. Name is the only mandatory field, as on
+     * creation.
+     *
+     * <p>Unlike {@link com.stocks.stockease.supplier.SupplierService#update}, there is no
+     * service-level argument guard. The supplier's exists because two of its fields are mandatory
+     * and its create path is reached from more than the controller; a customer's rules are the ones
+     * {@link com.stocks.stockease.customer.web.CreateCustomerRequest} already states, and its create
+     * method carries no guard either. Adding one only here would make an edit stricter than the
+     * creation it edits.
+     *
+     * @param id customer identifier
+     * @param name new display name
+     * @param email new email, may be {@code null} to clear it
+     * @param phone new phone number, may be {@code null} to clear it
+     * @param address new postal address, may be {@code null} to clear it
+     * @param city new city, may be {@code null} to clear it
+     * @return the updated customer
+     * @throws EntityNotFoundException if no customer exists with the given ID
+     */
+    @Transactional
+    public Customer update(long id, String name, String email, String phone, String address, String city) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + id + " not found."));
         customer.setName(name);
         customer.setEmail(email);
         customer.setPhone(phone);

@@ -14,7 +14,10 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData
 } from '../../../shared/confirm-dialog/confirm-dialog.component';
-import { CustomerCreateDialogComponent } from '../customer-create-dialog/customer-create-dialog.component';
+import {
+  CustomerFormDialogComponent,
+  CustomerFormDialogData
+} from '../customer-form-dialog/customer-form-dialog.component';
 import {
   CustomerSummaryDialogComponent,
   CustomerSummaryDialogData
@@ -46,7 +49,8 @@ export class CustomerListComponent implements OnInit {
   // UI convenience only: the server is the authority and answers 403 regardless of this flag.
   protected readonly canDelete = computed(() => this.auth.role() === 'ADMIN');
 
-  // No edit column by design: the backend exposes no customer update endpoint.
+  // The actions column always renders: Edit and the summary are available to every user, only
+  // Delete is gated. Address stays off the table and on the dialog, matching the supplier list.
   protected readonly displayedColumns = ['name', 'email', 'phone', 'city', 'createdAt', 'actions'];
 
   protected readonly rows = signal<CustomerResponse[]>([]);
@@ -69,15 +73,11 @@ export class CustomerListComponent implements OnInit {
   }
 
   protected openCreate(): void {
-    this.dialog
-      .open(CustomerCreateDialogComponent)
-      .afterClosed()
-      .subscribe((created: CustomerResponse | undefined) => {
-        if (created) {
-          this.notifications.success('customers.created');
-          this.load();
-        }
-      });
+    this.openForm({});
+  }
+
+  protected openEdit(customer: CustomerResponse): void {
+    this.openForm({ customer });
   }
 
   /** Opens the read-only sales summary; open to both roles because it changes nothing. */
@@ -100,6 +100,18 @@ export class CustomerListComponent implements OnInit {
       .subscribe((confirmed) => {
         if (confirmed === true) {
           this.remove(customer);
+        }
+      });
+  }
+
+  private openForm(data: CustomerFormDialogData): void {
+    this.dialog
+      .open(CustomerFormDialogComponent, { data })
+      .afterClosed()
+      .subscribe((saved: CustomerResponse | undefined) => {
+        if (saved) {
+          this.notifications.success(data.customer ? 'customers.updated' : 'customers.created');
+          this.load();
         }
       });
   }

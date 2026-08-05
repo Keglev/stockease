@@ -375,9 +375,11 @@
   "customers": {
     "title": "Customers",
     "create": "New customer",
+    "edit": "Edit",
     "loading": "Loading customers…",
     "empty": "No customers found.",
     "created": "Customer created.",
+    "updated": "Customer updated.",
     "deleteHint": "Customers with open invoices cannot be deleted.",
     "columns": {
       "name": "Name",
@@ -404,6 +406,7 @@
     },
     "form": {
       "createTitle": "New customer",
+      "editTitle": "Edit customer",
       "name": "Name",
       "email": "Email",
       "phone": "Phone",

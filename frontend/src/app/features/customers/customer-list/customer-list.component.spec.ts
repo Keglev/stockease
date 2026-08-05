@@ -7,7 +7,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
-import { CustomerCreateDialogComponent } from '../customer-create-dialog/customer-create-dialog.component';
+import { CustomerFormDialogComponent } from '../customer-form-dialog/customer-form-dialog.component';
 import { CustomerSummaryDialogComponent } from '../customer-summary-dialog/customer-summary-dialog.component';
 import { CustomerService } from '../customer.service';
 import { CustomerListComponent } from './customer-list.component';
@@ -18,6 +18,7 @@ const TRANSLATIONS = {
     customers: {
       title: 'Customers',
       create: 'New customer',
+      edit: 'Edit',
       empty: 'No customers found.',
       deleteHint: 'Customers with open invoices cannot be deleted.',
       columns: {
@@ -63,8 +64,11 @@ class CustomerServiceStub {
   removeResult: Observable<string> = of('Customer deleted.');
   /** Overridable so a spec can hold the load open or fail it outright. */
   getAllResult: (() => Observable<CustomerResponse[]>) | null = null;
+  /** Counted so a spec can tell a reload apart from a dialog that closed with nothing. */
+  getAllCalls = 0;
 
   getAll(): Observable<CustomerResponse[]> {
+    this.getAllCalls += 1;
     return this.getAllResult ? this.getAllResult() : of(this.roster);
   }
 
@@ -89,13 +93,13 @@ class NotificationServiceStub {
 
 class MatDialogStub {
   confirmed: boolean | undefined = true;
-  /** What the create dialog hands back; the confirm dialog answers with `confirmed` instead. */
+  /** What the form dialog hands back; the confirm dialog answers with `confirmed` instead. */
   created: CustomerResponse | undefined = undefined;
   openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
 
   open(component: unknown, config?: { data?: unknown }) {
     this.openCalls.push({ component, config });
-    const answer = component === CustomerCreateDialogComponent ? this.created : this.confirmed;
+    const answer = component === CustomerFormDialogComponent ? this.created : this.confirmed;
     return { afterClosed: () => of(answer) };
   }
 }
@@ -112,6 +116,10 @@ describe('CustomerListComponent', () => {
 
   function summaryButtons(): NodeListOf<HTMLButtonElement> {
     return (fixture.nativeElement as HTMLElement).querySelectorAll('.customer-summary');
+  }
+
+  function editButtons(): NodeListOf<HTMLButtonElement> {
+    return (fixture.nativeElement as HTMLElement).querySelectorAll('.customer-edit');
   }
 
   function text(): string {
@@ -224,14 +232,53 @@ describe('CustomerListComponent', () => {
     expect(dialog.openCalls[0].config?.data).toEqual({ customerId: 9 });
   });
 
-  it('render_anyRole_offersNoEditAffordance', async () => {
-    await setUp('ADMIN');
+  /**
+   * The reversal, asserted from the other side. This spec used to pin the ABSENCE of an edit path -
+   * "the backend has no customer update endpoint; the UI must expose no edit path" - which the
+   * owner's ruling makes false. It is replaced rather than deleted, so the row's edit affordance is
+   * still the thing under test.
+   */
+  it('render_anyRole_offersAnEditAffordancePerRow', async () => {
+    await setUp('USER');
 
-    // The backend has no customer update endpoint; the UI must expose no edit path.
-    const host = fixture.nativeElement as HTMLElement;
-    expect(host.querySelectorAll('[class*="edit"]').length).toBe(0);
-    expect(host.querySelectorAll('[aria-label*="Edit" i]').length).toBe(0);
-    expect(text().toLowerCase()).not.toContain('edit');
+    // Ungated, exactly as on the supplier row: only delete is an admin action.
+    expect(editButtons().length).toBe(2);
+  });
+
+  it('edit_clicked_opensTheFormWithThatCustomer', async () => {
+    await setUp('USER');
+    dialog.created = { ...CUSTOMERS[0], name: 'Jane Roe' };
+
+    editButtons()[0].click();
+    await fixture.whenStable();
+
+    expect(dialog.openCalls.map((call) => call.component)).toEqual([CustomerFormDialogComponent]);
+    expect(dialog.openCalls[0].config?.data).toEqual({ customer: CUSTOMERS[0] });
+  });
+
+  it('edit_saved_announcesTheUpdateAndReloadsTheList', async () => {
+    await setUp('ADMIN');
+    dialog.created = { ...CUSTOMERS[0], name: 'Jane Roe' };
+    const loadsBefore = customers.getAllCalls;
+
+    editButtons()[0].click();
+    await fixture.whenStable();
+
+    // A different key from a create, and the reload is what puts the new name in the table.
+    expect(notifications.successes).toEqual(['customers.updated']);
+    expect(customers.getAllCalls).toBe(loadsBefore + 1);
+  });
+
+  it('edit_dismissed_announcesNothingAndLeavesTheListAlone', async () => {
+    await setUp('ADMIN');
+    dialog.created = undefined;
+    const loadsBefore = customers.getAllCalls;
+
+    editButtons()[0].click();
+    await fixture.whenStable();
+
+    expect(notifications.successes).toEqual([]);
+    expect(customers.getAllCalls).toBe(loadsBefore);
   });
 
   it('delete_confirmed_callsServiceAndNotifiesBackendMessage', async () => {
@@ -276,7 +323,9 @@ describe('CustomerListComponent', () => {
     host().querySelector<HTMLButtonElement>('.customer-create')?.click();
     await fixture.whenStable();
 
-    expect(dialog.openCalls.map((call) => call.component)).toEqual([CustomerCreateDialogComponent]);
+    expect(dialog.openCalls.map((call) => call.component)).toEqual([CustomerFormDialogComponent]);
+    // Create mode is the form dialog opened with no customer, which is what tells the two apart.
+    expect(dialog.openCalls[0].config?.data).toEqual({});
     expect(notifications.successes).toEqual(['customers.created']);
   });
 

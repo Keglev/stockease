@@ -78,6 +78,67 @@ class CustomerServiceTest {
     }
 
     @Test
+    void update_withExistingId_replacesEveryFieldAndSaves() {
+        Customer stored = customer(1L, "Jane Doe");
+        stored.setEmail("old@example.com");
+        stored.setPhone("555-0000");
+        stored.setCity("Springfield");
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(stored));
+        when(customerRepository.save(any(Customer.class))).thenAnswer(call -> call.getArgument(0));
+
+        Customer result = customerService.update(1L, "Jane Roe", "roe@example.com", "555-9999", "2 Side St",
+                "Shelbyville");
+
+        assertThat(result.getName()).isEqualTo("Jane Roe");
+        assertThat(result.getEmail()).isEqualTo("roe@example.com");
+        assertThat(result.getPhone()).isEqualTo("555-9999");
+        assertThat(result.getAddress()).isEqualTo("2 Side St");
+        assertThat(result.getCity()).isEqualTo("Shelbyville");
+    }
+
+    @Test
+    void update_withNullOptionalFields_clearsThemRatherThanKeepingThem() {
+        Customer stored = customer(1L, "Jane Doe");
+        stored.setEmail("old@example.com");
+        stored.setPhone("555-0000");
+        stored.setAddress("1 Main St");
+        stored.setCity("Springfield");
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(stored));
+        when(customerRepository.save(any(Customer.class))).thenAnswer(call -> call.getArgument(0));
+
+        // Wholesale replace, not merge: absent means remove. A merge would leave the old email in
+        // place, which is the failure this asserts against.
+        Customer result = customerService.update(1L, "Jane Doe", null, null, null, null);
+
+        assertThat(result.getEmail()).isNull();
+        assertThat(result.getPhone()).isNull();
+        assertThat(result.getAddress()).isNull();
+        assertThat(result.getCity()).isNull();
+    }
+
+    @Test
+    void update_withMissingId_throwsEntityNotFoundException() {
+        when(customerRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> customerService.update(1L, "Jane Roe", null, null, null, null))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Customer with ID 1 not found.");
+        verify(customerRepository, never()).save(any(Customer.class));
+    }
+
+    @Test
+    void update_withExistingId_publishesNoEvent() {
+        // Deliberate, and the supplier's update does the same: an edit is not an audited event in
+        // either register. Only deletion publishes, because only deletion can be vetoed.
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer(1L, "Jane Doe")));
+        when(customerRepository.save(any(Customer.class))).thenAnswer(call -> call.getArgument(0));
+
+        customerService.update(1L, "Jane Roe", null, null, null, null);
+
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
     void deleteById_withExistingId_publishesEventThenDeletes() {
         Customer customer = customer(1L, "Jane Doe");
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));

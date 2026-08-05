@@ -6,7 +6,8 @@ import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../core/api/api-envelope';
 import { CustomerResponse } from '../../core/api/api-models';
 
-export interface CreateCustomerPayload {
+/** Name is the contract; the rest are optional. One shape for create and for replace. */
+export interface CustomerPayload {
   name: string;
   email?: string;
   phone?: string;
@@ -20,10 +21,9 @@ export class CustomerService {
 
   private readonly baseUrl = `${environment.apiBaseUrl}/api/customers`;
 
-  // There is deliberately NO update method: the backend exposes no customer PUT endpoint,
-  // by design rather than by omission, so the UI offers no edit affordance either.
-  // The enveloping below mirrors the backend per endpoint: the collection GET and the
-  // create POST return bare payloads, while delete is enveloped.
+  // The enveloping below is mixed on purpose: it mirrors the backend contract per endpoint
+  // (collection GET and create POST return bare payloads; update and delete are enveloped).
+  // This is exactly why unwrapping lives in services and not in an interceptor.
 
   /** Bare array - deliberately not unwrapped. */
   getAll(): Observable<CustomerResponse[]> {
@@ -31,8 +31,19 @@ export class CustomerService {
   }
 
   /** Bare object - deliberately not unwrapped. */
-  create(payload: CreateCustomerPayload): Observable<CustomerResponse> {
+  create(payload: CustomerPayload): Observable<CustomerResponse> {
     return this.http.post<CustomerResponse>(this.baseUrl, compact(payload));
+  }
+
+  /**
+   * Replaces the customer wholesale. A blank optional field is dropped rather than sent as an
+   * empty string, which is how the backend is asked to clear it - the PUT replaces every field, so
+   * an absent one means "remove", not "leave alone".
+   */
+  update(id: number, payload: CustomerPayload): Observable<CustomerResponse> {
+    return this.http
+      .put<ApiEnvelope<CustomerResponse>>(`${this.baseUrl}/${id}`, compact(payload))
+      .pipe(map((envelope) => envelope.data as CustomerResponse));
   }
 
   /** Emits the backend's own message so the caller can surface it verbatim. */
@@ -47,9 +58,9 @@ export class CustomerService {
  * Drops blank optional fields so the request carries no empty strings; the backend
  * validates email format when the key is present, and an empty string would fail it.
  */
-function compact(payload: CreateCustomerPayload): CreateCustomerPayload {
+function compact(payload: CustomerPayload): CustomerPayload {
   const entries = Object.entries(payload).filter(
     ([, value]) => typeof value === 'string' && value.trim().length > 0
   );
-  return Object.fromEntries(entries) as unknown as CreateCustomerPayload;
+  return Object.fromEntries(entries) as unknown as CustomerPayload;
 }

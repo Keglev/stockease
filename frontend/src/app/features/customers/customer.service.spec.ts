@@ -87,6 +87,34 @@ describe('CustomerService', () => {
     controller.verify();
   });
 
+  it('update_envelopedResponse_emitsTheUnwrappedCustomer', () => {
+    const renamed = { ...JANE, name: 'Jane Roe' };
+    let emitted: CustomerResponse | undefined;
+    service.update(9, { name: 'Jane Roe' }).subscribe((customer) => (emitted = customer));
+
+    const request = controller.expectOne(`${BASE_URL}/9`);
+    expect(request.request.method).toBe('PUT');
+    // Unlike the bare create, the PUT is enveloped - the mixed shape the service exists to absorb.
+    request.flush({ success: true, message: 'Customer updated successfully', data: renamed });
+
+    expect(emitted).toEqual(renamed);
+    expect(emitted).not.toHaveProperty('data');
+    controller.verify();
+  });
+
+  it('update_blankOptionalFields_omitsThemSoTheBackendClearsThem', () => {
+    service
+      .update(9, { name: 'Jane Doe', email: '', phone: '   ', address: '', city: '' })
+      .subscribe();
+
+    const request = controller.expectOne(`${BASE_URL}/9`);
+    // The PUT replaces every field, so an absent key is how a value is cleared. Sending empty
+    // strings instead would fail the backend's email-format check on the way in.
+    expect(request.request.body).toEqual({ name: 'Jane Doe' });
+    request.flush({ success: true, message: 'Customer updated successfully', data: JANE });
+    controller.verify();
+  });
+
   it('remove_envelopedResponse_emitsBackendMessage', () => {
     let emitted: string | undefined;
     service.remove(9).subscribe((message) => (emitted = message));
