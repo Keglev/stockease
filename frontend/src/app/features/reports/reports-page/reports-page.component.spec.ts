@@ -141,6 +141,7 @@ const TRANSLATIONS = {
   },
   // Only what the breakdown needs, in the one language pair the section is read in twice.
   de: {
+    charts: { other: 'Sonstige' },
     reports: { losses: { byRemark: 'Verluste nach Ursache' }, columns: { remark: 'Ursache' } },
     movements: { form: { remarkOption: { EXPIRED: 'Abgelaufen' } } }
   }
@@ -681,6 +682,53 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
 
     expect(optionOf('lossOption')).not.toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('.losses-empty')).toBeNull();
+  });
+
+  it('chartOptions_languageSwitched_rebuildWithTheOtherLanguagesLabels', async () => {
+    // Eleven rows so topNWithRemainder produces the one chart label this page translates.
+    reports.profitPayload = Array.from({ length: 11 }, (unused, index) => ({
+      productId: index + 1,
+      name: `Product ${index + 1}`,
+      sku: `SKU-${index + 1}`,
+      deleted: false,
+      revenue: 100,
+      cost: 40,
+      grossProfit: 60 - index
+    }));
+    render();
+    await activateTab(0);
+
+    const labelsOf = () =>
+      JSON.stringify((optionOf('profitOption') as unknown as { yAxis: { data: string[] } }).yAxis.data);
+    expect(labelsOf()).toContain('Other');
+
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The regression this slice fixes. Before it, the option was built once inside loadProfit with
+    // translate.instant resolved and frozen in, and a language switch left it byte-identical -
+    // measured, not assumed. Nothing refetches here: only the language changed.
+    expect(labelsOf()).toContain('Sonstige');
+    expect(labelsOf()).not.toContain('Other');
+  });
+
+  it('chartOptions_dataRefreshed_stillRebuild', async () => {
+    render();
+    await activateTab(0);
+    expect(JSON.stringify(optionOf('profitOption'))).toContain('Widget');
+
+    // The behaviour the imperative version had, pinned: deriving the options must not cost the
+    // rebuild a refetch already triggered.
+    reports.profitPayload = [
+      { productId: 9, name: 'Sprocket', sku: 'SKU-9', deleted: false, revenue: 10, cost: 4, grossProfit: 6 }
+    ];
+    host().querySelector<HTMLButtonElement>('.reports-refresh')?.click();
+    await settle();
+
+    expect(JSON.stringify(optionOf('profitOption'))).toContain('Sprocket');
+    expect(JSON.stringify(optionOf('profitOption'))).not.toContain('Widget');
   });
 
   it('lossPie_allLossValuesZero_rendersEmptyStateInsteadOfEmptyPie', async () => {

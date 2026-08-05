@@ -298,8 +298,17 @@ export class ReportsPageComponent implements OnInit {
   protected readonly stockHistory = signal<StockHistoryPoint[]>([]);
   protected readonly priceHistory = signal<PricePoint[]>([]);
 
-  protected readonly analyticsStockOption = signal<ChartOption | null>(null);
-  protected readonly analyticsPriceOption = signal<ChartOption | null>(null);
+  protected readonly analyticsStockOption = computed(() =>
+    toStockHistoryOption(this.stockHistory(), {
+      stock: this.chartContext().stockLevel,
+      sold: this.chartContext().soldUnits
+    })
+  );
+
+  protected readonly analyticsPriceOption = computed(() => {
+    this.chartContext();
+    return toPriceHistoryOption(this.priceHistory());
+  });
 
   protected readonly changeRows = signal<ChangeLogEntryResponse[]>([]);
 
@@ -334,12 +343,68 @@ export class ReportsPageComponent implements OnInit {
     );
   });
 
-  protected readonly marginOption = signal<ChartOption | null>(null);
-  protected readonly profitOption = signal<ChartOption | null>(null);
-  protected readonly stockOption = signal<ChartOption | null>(null);
-  protected readonly lossOption = signal<ChartOption | null>(null);
-  protected readonly dueOption = signal<ChartOption | null>(null);
-  protected readonly cashFlowOption = signal<ChartOption | null>(null);
+  /**
+   * Everything a chart option needs that is not its own data.
+   *
+   * <p>It exists to be a DEPENDENCY. Reading it inside an option's {@code computed} is what makes
+   * that option rebuild when the interface language changes.
+   *
+   * <p>The explicit {@code currentLang()} read is measured redundant TODAY: removing it leaves the
+   * language-switch spec green, because ngx-translate's {@code instant} reads its own language
+   * signal and the derivation tracks it through that. It stays because that is the library's
+   * internal wiring rather than a contract - a version that resolved keys without touching a
+   * signal would silently restore the staleness this slice fixes, and the spec would be the only
+   * thing that noticed.
+   *
+   * <p>This is the seam the formatting slice extends. Charts still hand raw numbers to ECharts;
+   * once they carry formatters, those formatters come from FormatService and depend on
+   * `numberLocale()` and the two override signals. Adding those reads HERE gives every option
+   * format reactivity with no further replumbing, because each one already re-runs when this
+   * context changes. That is also why the options with nothing translated in them - the margin
+   * gauge, the price history - read it too: they render values, so they are the next callers.
+   */
+  private readonly chartContext = computed(() => {
+    this.language.currentLang();
+    return {
+      other: this.translate.instant('charts.other') as string,
+      stockLevel: this.translate.instant('reports.analytics.stockLevel') as string,
+      soldUnits: this.translate.instant('reports.analytics.soldUnits') as string,
+      cashFlow: {
+        inflow: this.translate.instant('reports.cashFlow.inflow') as string,
+        outflow: this.translate.instant('reports.cashFlow.outflow') as string,
+        net: this.translate.instant('reports.cashFlow.net') as string
+      }
+    };
+  });
+
+  // Derived, not stored. Each one re-runs when its rows change - which is what the load methods
+  // used to trigger by hand - and when the rendering context above changes, which nothing used to
+  // trigger at all: a language switch left every chart showing the words it was built with.
+  protected readonly marginOption = computed(() => {
+    this.chartContext();
+    return toMarginOption(this.profitRows());
+  });
+
+  protected readonly profitOption = computed(() =>
+    toProfitOption(this.profitRows(), this.chartContext().other)
+  );
+
+  protected readonly stockOption = computed(() =>
+    toStockOption(this.stockRows(), this.chartContext().other)
+  );
+
+  protected readonly lossOption = computed(() =>
+    toLossOption(this.lossRows(), this.chartContext().other)
+  );
+
+  protected readonly dueOption = computed(() => {
+    this.chartContext();
+    return toDueOption(this.buckets());
+  });
+
+  protected readonly cashFlowOption = computed(() =>
+    toCashFlowOption(this.cashFlowMonths(), this.chartContext().cashFlow)
+  );
 
   // Loading every tab on open would fire eight report queries against aggregate SQL for tabs the
   // user may never look at, so each tab fetches on its first activation only.
@@ -626,11 +691,6 @@ export class ReportsPageComponent implements OnInit {
     this.reports.profitProducts(range.from, range.to).subscribe({
       next: (rows) => {
         this.profitRows.set(rows);
-        // The gauge is derived from these rows rather than fetched, so the period reaches it with
-        // no work of its own - refetching the rows is what re-answers it for the new window.
-        this.marginOption.set(toMarginOption(rows));
-        // Translated at build time: chart options are snapshots, as everywhere else on this page.
-        this.profitOption.set(toProfitOption(rows, this.otherLabel()));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -646,7 +706,6 @@ export class ReportsPageComponent implements OnInit {
     this.reports.stockStatus().subscribe({
       next: (rows) => {
         this.stockRows.set(rows);
-        this.stockOption.set(toStockOption(rows, this.otherLabel()));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -677,11 +736,6 @@ export class ReportsPageComponent implements OnInit {
     this.reports.stockHistory(productId, range.from, range.to).subscribe({
       next: (points) => {
         this.stockHistory.set(points);
-        // Translated at build time: chart options are snapshots, as everywhere else on this page.
-        this.analyticsStockOption.set(toStockHistoryOption(points, {
-          stock: this.translate.instant('reports.analytics.stockLevel') as string,
-          sold: this.translate.instant('reports.analytics.soldUnits') as string
-        }));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -693,7 +747,6 @@ export class ReportsPageComponent implements OnInit {
       next: (rows) => {
         const points = toPricePoints(rows, range);
         this.priceHistory.set(points);
-        this.analyticsPriceOption.set(toPriceHistoryOption(points));
       },
       error: (err: Error) => this.fail(err)
     });
@@ -726,9 +779,6 @@ export class ReportsPageComponent implements OnInit {
     this.reports.losses(range.from, range.to).subscribe({
       next: (rows) => {
         this.lossRows.set(rows);
-        // The strip is derived from these rows, so refetching them is what re-answers it for the
-        // new window - the period reaches the totals with no work of its own.
-        this.lossOption.set(toLossOption(rows, this.otherLabel()));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -752,7 +802,6 @@ export class ReportsPageComponent implements OnInit {
     this.reports.dueDates().subscribe({
       next: (rows) => {
         this.buckets.set(rows);
-        this.dueOption.set(toDueOption(rows));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -811,7 +860,6 @@ export class ReportsPageComponent implements OnInit {
       next: (months) => {
         this.cashFlowMonths.set(months);
         // Translated at build time: chart options are snapshots, as everywhere else on this page.
-        this.cashFlowOption.set(toCashFlowOption(months, this.cashFlowLabels()));
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
@@ -833,18 +881,6 @@ export class ReportsPageComponent implements OnInit {
     });
   }
 
-  /** The three series names, resolved at build time like every other chart label on this page. */
-  private cashFlowLabels(): CashFlowLabels {
-    return {
-      inflow: this.translate.instant('reports.cashFlow.inflow') as string,
-      outflow: this.translate.instant('reports.cashFlow.outflow') as string,
-      net: this.translate.instant('reports.cashFlow.net') as string
-    };
-  }
-
-  private otherLabel(): string {
-    return this.translate.instant('charts.other') as string;
-  }
 
   /** Headers and separators are resolved at click time, so the file matches the UI language. */
   private exportCsv(

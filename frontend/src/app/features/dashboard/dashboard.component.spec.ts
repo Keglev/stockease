@@ -17,6 +17,7 @@ import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { LANGUAGE_STORAGE_KEY } from '../../core/i18n/language.service';
 import { ChartComponent } from '../../shared/chart/chart.component';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
+import { LanguageService } from '../../core/i18n/language.service';
 import { provideFakeChartEngine } from '../../testing/chart-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { ProductService } from '../products/product.service';
@@ -24,6 +25,8 @@ import { ReportService } from '../reports/report.service';
 import { DashboardComponent } from './dashboard.component';
 
 const TRANSLATIONS = {
+  // Only the remainder label in German: it is the one chart string the language spec reads.
+  de: { charts: { other: 'Sonstige' } },
   en: {
     charts: { other: 'Other' },
     reports: { view: { chart: 'Chart', table: 'Table' }, columns: { name: 'Name', grossProfit: 'Gross profit' } },
@@ -225,7 +228,7 @@ describe('DashboardComponent', () => {
   let products: ProductServiceStub;
   let health: HealthServiceStub;
   let dialog: MatDialogStub;
-  let breakpoints: BreakpointObserverStub;
+  let breakpoints: BreakpointObserverStub;
 
   /**
    * The app is zoneless, so fakeAsync is unavailable and vitest's timers stand in for any rxjs
@@ -280,7 +283,7 @@ describe('DashboardComponent', () => {
     dialog = new MatDialogStub();
     // Pinned to desktop so every assertion below sees one fixed tier; jsdom applies no media
     // queries, so the real observer would answer whatever matchMedia stubs out to.
-    breakpoints = new BreakpointObserverStub(true);
+    breakpoints = new BreakpointObserverStub(true);
 
     TestBed.configureTestingModule({
       providers: [
@@ -424,6 +427,41 @@ describe('DashboardComponent', () => {
     const rows = host().querySelectorAll('.slice-row');
     expect(rows.length).toBe(11);
     expect(host().querySelector('.slice-table')?.textContent).toContain('Other');
+  });
+
+  it('profitCard_languageSwitched_rebuildsTheRemainderLabel', async () => {
+    reports.profitPayload = MANY_PROFIT;
+    render();
+    showProfitTable();
+    expect(host().querySelector('.slice-table')?.textContent).toContain('Other');
+
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The regression this slice fixes: the remainder bucket's name was resolved when the data
+    // landed and frozen into the slices, so a reader who switched language kept the English word
+    // until something refetched. Nothing refetches here - only the language changed.
+    expect(host().querySelector('.slice-table')?.textContent).toContain('Sonstige');
+    expect(host().querySelector('.slice-table')?.textContent).not.toContain('Other');
+  });
+
+  it('profitCard_dataRefreshed_stillRebuildsTheSlices', () => {
+    render();
+    showProfitTable();
+    expect(host().querySelector('.slice-table')?.textContent).toContain('Widget');
+
+    // The behaviour the imperative version had, pinned: making the options derived must not cost
+    // the rebuild that a refresh already triggered.
+    reports.profitPayload = [
+      { productId: 9, name: 'Sprocket', sku: 'SKU-9', deleted: false, revenue: 10, cost: 4, grossProfit: 6 }
+    ];
+    host().querySelector<HTMLButtonElement>('.dashboard-refresh')?.click();
+    fixture.detectChanges();
+
+    expect(host().querySelector('.slice-table')?.textContent).toContain('Sprocket');
+    expect(host().querySelector('.slice-table')?.textContent).not.toContain('Widget');
   });
 
   it('profitCard_tableView_replacesTheChart', () => {

@@ -61,15 +61,11 @@ export class SupplierListComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   // The actions column always renders: Edit is available to every user, only Delete is gated.
-  protected readonly displayedColumns = [
-    'name',
-    'email',
-    'phone',
-    'address',
-    'city',
-    'createdAt',
-    'actions'
-  ];
+  // Address is deliberately absent, matching the customer list: it is the longest field either
+  // register holds and the one a reader scans past, and seven columns of it were still wider than
+  // a 1536px desktop after #167 gave the table a scroll container. It stays on the edit dialog,
+  // where it is entered and read on purpose rather than in passing.
+  protected readonly displayedColumns = ['name', 'email', 'phone', 'city', 'createdAt', 'actions'];
 
   ngOnInit(): void {
     this.load();
