@@ -89,12 +89,13 @@ public class SupplierController {
     @PostMapping
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;SupplierResponse&gt; createSupplier(@Valid @RequestBody CreateSupplierRequest request) {
-<span class="fc" id="L92">        Supplier saved = supplierService.create(request.name(), request.address());</span>
-<span class="fc" id="L93">        return ResponseEntity.ok(SupplierResponse.from(saved));</span>
+<span class="fc" id="L92">        Supplier saved = supplierService.create(request.name(), request.email(), request.phone(),</span>
+<span class="fc" id="L93">                request.address(), request.city());</span>
+<span class="fc" id="L94">        return ResponseEntity.ok(SupplierResponse.from(saved));</span>
     }
 
     /**
-     * Replaces a supplier's name and address.
+     * Replaces a supplier's fields, including the optional contact ones.
      *
      * @param id supplier identifier
      * @param request new supplier fields (name, address)
@@ -105,9 +106,10 @@ public class SupplierController {
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;SupplierResponse&gt;&gt; updateSupplier(@PathVariable long id,
             @Valid @RequestBody UpdateSupplierRequest request) {
-<span class="fc" id="L108">        Supplier updated = supplierService.update(id, request.name(), request.address());</span>
-<span class="fc" id="L109">        return ResponseEntity.ok(</span>
-<span class="fc" id="L110">                new ApiResponse&lt;&gt;(true, &quot;Supplier updated successfully&quot;, SupplierResponse.from(updated)));</span>
+<span class="fc" id="L109">        Supplier updated = supplierService.update(id, request.name(), request.email(), request.phone(),</span>
+<span class="fc" id="L110">                request.address(), request.city());</span>
+<span class="fc" id="L111">        return ResponseEntity.ok(</span>
+<span class="fc" id="L112">                new ApiResponse&lt;&gt;(true, &quot;Supplier updated successfully&quot;, SupplierResponse.from(updated)));</span>
     }
 
     /**
@@ -120,8 +122,8 @@ public class SupplierController {
     @DeleteMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; deleteSupplier(@PathVariable long id) {
-<span class="fc" id="L123">        supplierService.deleteById(id);</span>
-<span class="fc" id="L124">        return ResponseEntity.ok(</span>
+<span class="fc" id="L125">        supplierService.deleteById(id);</span>
+<span class="fc" id="L126">        return ResponseEntity.ok(</span>
                 new ApiResponse&lt;&gt;(true, &quot;Supplier with ID &quot; + id + &quot; has been successfully deleted.&quot;, null));
     }
 }
