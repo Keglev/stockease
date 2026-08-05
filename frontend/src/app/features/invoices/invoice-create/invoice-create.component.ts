@@ -12,13 +12,16 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Observable } from 'rxjs';
 
 import { CustomerResponse, ProductResponse, SupplierResponse } from '../../../core/api/api-models';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { CustomerService } from '../../customers/customer.service';
 // Deliberate cross-feature import: the price rule is identical here, so it is reused rather
 // than copied, keeping one definition of "a price must be greater than zero".
 import { positivePrice } from '../../products/positive-price.validator';
+import { productLabel } from '../../products/product-label';
 import { ProductService } from '../../products/product.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { InvoiceType, buildCreateInvoiceRequest } from '../invoice-payload';
@@ -41,7 +44,8 @@ import { InvoiceService } from '../invoice.service';
     MatInputModule,
     MatSelectModule,
     ReactiveFormsModule,
-    TranslatePipe
+    TranslatePipe,
+    TypeaheadComponent
   ],
   templateUrl: './invoice-create.component.html',
   styleUrl: './invoice-create.component.scss'
@@ -55,10 +59,17 @@ export class InvoiceCreateComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly formBuilder = inject(FormBuilder);
 
+  // The counterparty select still reads a whole register: both are small, and picking one is the
+  // first thing this page asks for. Only the product picker changes here.
   protected readonly supplierOptions = signal<SupplierResponse[]>([]);
   protected readonly customerOptions = signal<CustomerResponse[]>([]);
-  protected readonly productOptions = signal<ProductResponse[]>([]);
   protected readonly pending = signal(false);
+
+  /** Bound into every line's typeahead; arrow properties so `this` survives the input binding. */
+  protected readonly searchProducts = (term: string): Observable<ProductResponse[]> =>
+    this.products.search(term);
+
+  protected readonly productLabel = productLabel;
 
   protected readonly form = this.formBuilder.nonNullable.group({
     type: this.formBuilder.nonNullable.control<InvoiceType>('PURCHASE', Validators.required),
@@ -96,9 +107,20 @@ export class InvoiceCreateComponent implements OnInit {
   ngOnInit(): void {
     this.suppliers.getAll().subscribe((suppliers) => this.supplierOptions.set(suppliers));
     this.customers.getAll().subscribe((customers) => this.customerOptions.set(customers));
-    this.products.getAll().subscribe((products) => this.productOptions.set(products));
 
     this.form.controls.type.valueChanges.subscribe((type) => this.onTypeChange(type));
+  }
+
+  /**
+   * Writes one line's chosen product into that line's control.
+   *
+   * <p>Indexed rather than bound, because the typeahead reports a row and the payload wants an id.
+   * Each line has its own component instance, so a choice made in one never reaches another.
+   */
+  protected onProductSelected(index: number, product: ProductResponse | null): void {
+    const control = this.items.at(index).get('productId');
+    control?.setValue(product?.id ?? null);
+    control?.markAsTouched();
   }
 
   protected get items(): FormArray {

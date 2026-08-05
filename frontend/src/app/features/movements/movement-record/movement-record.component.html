@@ -3,14 +3,16 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
   <mat-card class="movement-card">
     <mat-card-content>
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'movements.product' | translate }}</mat-label>
-        <mat-select formControlName="productId" class="product-select">
-          @for (product of productOptions(); track product.id) {
-            <mat-option [value]="product.id">{{ product.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <!-- Search-as-you-type rather than a select over the whole catalogue: the list a select
+           would render grows with the product table, and the endpoint behind this was reserved
+           for exactly this consumer. -->
+      <app-typeahead
+        class="product-search"
+        [label]="'movements.product'"
+        [search]="searchProducts"
+        [displayWith]="productLabel"
+        (selected)="onProductSelected($event)"
+      />
 
       <mat-form-field appearance="outline">
         <mat-label>{{ 'movements.reasonLabel' | translate }}</mat-label>

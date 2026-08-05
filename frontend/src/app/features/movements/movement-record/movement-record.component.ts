@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -6,10 +6,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
 
 import { ProductResponse } from '../../../core/api/api-models';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { productLabel } from '../../products/product-label';
 import { ProductService } from '../../products/product.service';
+import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import {
   MOVEMENT_REMARKS,
   MovementRemarkValue,
@@ -32,15 +35,19 @@ import { MovementService } from '../movement.service';
     MatInputModule,
     MatSelectModule,
     ReactiveFormsModule,
-    TranslatePipe
+    TranslatePipe,
+    TypeaheadComponent
   ],
   templateUrl: './movement-record.component.html',
   styleUrl: './movement-record.component.scss'
 })
-export class MovementRecordComponent implements OnInit {
+export class MovementRecordComponent {
   private readonly movements = inject(MovementService);
   private readonly products = inject(ProductService);
   private readonly notifications = inject(NotificationService);
+
+  /** Cleared alongside the form after a successful record, so the field stops naming a done job. */
+  private readonly productField = viewChild(TypeaheadComponent);
 
   // Only the two loss reasons: the backend books PURCHASE and SOLD through invoice closing and the
   // return reasons through the return endpoint, refusing them here with a 400. Stock never enters
@@ -48,8 +55,13 @@ export class MovementRecordComponent implements OnInit {
   protected readonly reasons = STANDALONE_REASONS;
   protected readonly remarks = MOVEMENT_REMARKS;
 
-  protected readonly productOptions = signal<ProductResponse[]>([]);
   protected readonly pending = signal(false);
+
+  /** Bound into the typeahead; arrow properties so `this` survives the input binding. */
+  protected readonly searchProducts = (term: string): Observable<ProductResponse[]> =>
+    this.products.search(term);
+
+  protected readonly productLabel = productLabel;
 
   // Every control is unconditional now: both reasons this form offers are losses, so both take a
   // remark and neither takes a price. Nothing is added or removed as the reason changes.
@@ -66,8 +78,10 @@ export class MovementRecordComponent implements OnInit {
     remark: remarkControl()
   });
 
-  ngOnInit(): void {
-    this.products.getAll().subscribe((products) => this.productOptions.set(products));
+  /** The typeahead owns the search; the form control only ever holds the chosen id. */
+  protected onProductSelected(product: ProductResponse | null): void {
+    this.form.controls.productId.setValue(product?.id ?? null);
+    this.form.controls.productId.markAsTouched();
   }
 
   protected submit(): void {
@@ -103,6 +117,9 @@ export class MovementRecordComponent implements OnInit {
 
   private resetForm(): void {
     this.form.reset({ productId: null, reason: 'LOST', quantity: 1, remark: null });
+    // The typeahead holds its own text, so resetting the control alone would leave the last
+    // product's name in a field that no longer selects it.
+    this.productField()?.reset();
   }
 }
 

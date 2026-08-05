@@ -54,16 +54,20 @@
       <h2>{{ 'invoices.createPage.items' | translate }}</h2>
 
       <div formArrayName="items">
-        @for (row of items.controls; track $index) {
+        <!-- Tracked by the row's own control, not by $index. The typeahead keeps its text in its
+             own state rather than reading it back from the form, so an instance that changed which
+             line it belonged to would show one product while its control held another. Identity
+             tracking keeps each field with the line it was filled for when a middle row is
+             removed. -->
+        @for (row of items.controls; track row) {
           <div class="item-row" [formGroupName]="$index">
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'invoices.createPage.product' | translate }}</mat-label>
-              <mat-select formControlName="productId" class="product-select">
-                @for (product of productOptions(); track product.id) {
-                  <mat-option [value]="product.id">{{ product.name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <app-typeahead
+              class="product-search"
+              [label]="'invoices.createPage.product'"
+              [search]="searchProducts"
+              [displayWith]="productLabel"
+              (selected)="onProductSelected($index, $event)"
+            />
 
             <mat-form-field appearance="outline">
               <mat-label>{{ 'invoices.createPage.quantity' | translate }}</mat-label>
