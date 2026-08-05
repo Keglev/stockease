@@ -88,6 +88,23 @@ describe('InvoiceService', () => {
     controller.verify();
   });
 
+  it('getAll_bareArrayResponse_emitsPayloadUnchangedAndSendsNoPageParams', () => {
+    let emitted: InvoiceSummaryResponse[] | undefined;
+    service.getAll().subscribe((invoices) => (emitted = invoices));
+
+    const request = controller.expectOne((candidate) => candidate.url === BASE_URL);
+    expect(request.request.method).toBe('GET');
+    // Unpaged is the point: the CSV export wants the ledger, not a window onto it. A page param
+    // creeping in here would silently cap the export at the backend's default page size.
+    expect(request.request.params.keys()).toEqual([]);
+    request.flush([SUMMARY]);
+
+    // The unpaged collection is not enveloped, unlike its paged sibling below.
+    expect(emitted).toEqual([SUMMARY]);
+    expect(emitted).not.toHaveProperty('data');
+    controller.verify();
+  });
+
   it('getPagedInvoices_envelopedPage_emitsUnwrappedPageAndSendsPageParams', () => {
     const pagePayload = { content: [SUMMARY], pageNumber: 2, pageSize: 25, totalElements: 51, totalPages: 3 };
     let emitted: unknown;

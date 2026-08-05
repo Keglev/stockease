@@ -4,7 +4,14 @@ get:
     Returns every invoice, newest first, as summaries. Counterparties appear as identifiers only -
     names and lines belong to the detail endpoint.
 
-    Provided for API completeness; the bundled UI reads this resource through its paged endpoint.
+    Read by the bundled UI's **CSV export on the invoice list**, which downloads the whole ledger:
+    the export is the record and the paged table is the view, so a file covering only the screenful
+    behind the button would be a record of nothing. The list itself still reads
+    `GET /api/invoices/paged`.
+
+    **Changed in 2.22.1.** This endpoint was previously documented as provided for API completeness
+    with no caller in the bundled UI, which stopped being true when the export was widened. Wording
+    only - the response is unchanged.
   operationId: getAllInvoices
   tags:
     - Invoices

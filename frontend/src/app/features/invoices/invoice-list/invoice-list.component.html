@@ -8,6 +8,7 @@
         matButton="outlined"
         type="button"
         class="export-button export-invoices"
+        [disabled]="exporting()"
         (click)="exportCsv()"
       >
         <mat-icon>download</mat-icon>

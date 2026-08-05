@@ -312,7 +312,8 @@
       "status": "Status",
       "counterparty": "Geschäftspartner",
       "dueDate": "Fällig am",
-      "createdAt": "Erstellt am"
+      "createdAt": "Erstellt am",
+      "paidAt": "Bezahlt am"
     },
     "form": {
       "invoiceNumber": "Rechnungsnummer",

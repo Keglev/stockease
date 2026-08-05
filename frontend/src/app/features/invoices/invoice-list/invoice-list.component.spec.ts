@@ -29,7 +29,8 @@ const TRANSLATIONS = {
         status: 'Status',
         counterparty: 'Counterparty',
         dueDate: 'Due date',
-        createdAt: 'Created'
+        createdAt: 'Created',
+        paidAt: 'Paid'
       },
       type: { PURCHASE: 'Purchase', SALE: 'Sale' },
       status: { OPEN: 'Open', CLOSED: 'Closed', FULLY_RETURNED: 'Fully returned' }
@@ -48,7 +49,8 @@ const TRANSLATIONS = {
         status: 'Status',
         counterparty: 'Geschäftspartner',
         dueDate: 'Fällig am',
-        createdAt: 'Erstellt am'
+        createdAt: 'Erstellt am',
+        paidAt: 'Bezahlt am'
       },
       type: { PURCHASE: 'Einkauf', SALE: 'Verkauf' },
       status: { OPEN: 'Offen', CLOSED: 'Abgeschlossen', FULLY_RETURNED: 'Vollständig retourniert' }
@@ -94,7 +96,18 @@ class InvoiceServiceStub {
   /** Overridable so a spec can hold the ledger fetch open or fail it outright. */
   result: (() => Observable<PaginatedInvoices>) | null = null;
 
+  /** Counted separately from the paged requests: the export is the only caller of the unpaged one. */
+  unpagedCalls = 0;
+  /** Overridable so a spec can hold the export's own fetch open or fail it. */
+  unpagedResult: (() => Observable<InvoiceSummaryResponse[]>) | null = null;
+
   constructor(private readonly all: InvoiceSummaryResponse[]) {}
+
+  /** The unpaged ledger the CSV export reads; #143 removed this method, a ruling brought it back. */
+  getAll(): Observable<InvoiceSummaryResponse[]> {
+    this.unpagedCalls += 1;
+    return this.unpagedResult ? this.unpagedResult() : of(this.all);
+  }
 
   getPagedInvoices(page: number, size: number): Observable<PaginatedInvoices> {
     this.requests.push({ page, size });
@@ -174,9 +187,10 @@ describe('InvoiceListComponent', () => {
   /**
    * The CSV export, asserted as WHOLE FILES.
    *
-   * <p>Two things are specific to this list. Its cells carry TRANSLATIONS - type, status and the
-   * walk-in label - so the file has to move with the interface language as well as with the number
-   * locale. And it pages SERVER-side, so the export is the page on screen and a spec says so.
+   * <p>Three things are specific to this list. Its cells carry TRANSLATIONS - type, status and the
+   * walk-in label - so the file moves with the interface language as well as with the number
+   * locale. It exports the WHOLE ledger through the unpaged endpoint rather than the page on
+   * screen. And it is the only export that fetches, so it has states no other one has.
    */
   describe('csv export', () => {
     afterEach(() => localStorage.clear());
@@ -202,7 +216,10 @@ describe('InvoiceListComponent', () => {
 
     const BOM = String.fromCharCode(0xfeff);
 
-    /** A purchase with a supplier, and a walk-in sale that is overdue - the two shapes of row. */
+    /**
+     * An unpaid purchase and a PAID walk-in sale - the two shapes of row, and the two shapes of
+     * payment-date cell the file has to get right.
+     */
     const LEDGER = [
       invoice({ id: 1, type: 'PURCHASE', supplierId: 7, supplierName: 'Acme', status: 'OPEN' }),
       invoice({
@@ -211,7 +228,8 @@ describe('InvoiceListComponent', () => {
         type: 'SALE',
         status: 'CLOSED',
         dueDate: '2026-02-01',
-        createdAt: '2026-01-03T15:04:00'
+        createdAt: '2026-01-03T15:04:00',
+        paidAt: '2026-01-04T10:00:00'
       })
     ];
 
@@ -221,12 +239,14 @@ describe('InvoiceListComponent', () => {
 
       const { filename, content } = exported();
 
+      // The paid row carries its payment date; the unpaid one carries an empty trailing cell, which
+      // is what makes the Paid chip re-derivable from the file rather than lost with the styling.
       expect(filename).toBe('invoices.csv');
       expect(content).toBe(
         BOM +
-          'No.,Invoice number,Type,Status,Counterparty,Due date,Created\r\n' +
-          '1,RE-2026-0117,Purchase,Open,Acme,03/01/2026,01/02/2026 03:04 AM\r\n' +
-          '2,RE-2026-0118,Sale,Closed,Walk-in sale,02/01/2026,01/03/2026 03:04 PM\r\n'
+          'No.,Invoice number,Type,Status,Counterparty,Due date,Created,Paid\r\n' +
+          '1,RE-2026-0117,Purchase,Open,Acme,03/01/2026,01/02/2026 03:04 AM,\r\n' +
+          '2,RE-2026-0118,Sale,Closed,Walk-in sale,02/01/2026,01/03/2026 03:04 PM,01/04/2026 10:00 AM\r\n'
       );
     });
 
@@ -236,19 +256,20 @@ describe('InvoiceListComponent', () => {
 
       // Type, status and the walk-in label are enum VALUES the cells render through translation
       // keys, so the file carries the reader's words - the changes tab exports its field labels
-      // the same way. The whole file, so a separator that failed to follow would be caught here.
+      // the same way. The whole file, so a separator that failed to follow would be caught here,
+      // and so would a payment date that ignored the number locale the other two dates obey.
       expect(exported().content).toBe(
         BOM +
-          'Nr.;Rechnungsnummer;Art;Status;Geschäftspartner;Fällig am;Erstellt am\r\n' +
-          '1;RE-2026-0117;Einkauf;Offen;Acme;01.03.2026;02.01.2026 03:04\r\n' +
-          '2;RE-2026-0118;Verkauf;Abgeschlossen;Barverkauf;01.02.2026;03.01.2026 15:04\r\n'
+          'Nr.;Rechnungsnummer;Art;Status;Geschäftspartner;Fällig am;Erstellt am;Bezahlt am\r\n' +
+          '1;RE-2026-0117;Einkauf;Offen;Acme;01.03.2026;02.01.2026 03:04;\r\n' +
+          '2;RE-2026-0118;Verkauf;Abgeschlossen;Barverkauf;01.02.2026;03.01.2026 15:04;04.01.2026 10:00\r\n'
       );
     });
 
-    it('export_overdueInvoice_carriesDueDateAndStatusRatherThanTheChipText', async () => {
-      // The row IS overdue at the pinned clock - the chip renders - and the file still says
-      // nothing about it. The chip is derived presentation; due date and status are the data it is
-      // derived from, and they are the columns, so a reader can re-derive it.
+    it('export_overdueInvoice_carriesItsInputsRatherThanTheChipText', async () => {
+      // The row IS overdue at the pinned clock - the chip renders - and the file still says nothing
+      // about it. Both chips are derived presentation, and the file now carries every input they
+      // derive from: status, due date, and the empty payment cell that makes it unpaid.
       await setUp([invoice({ id: 3, status: 'CLOSED', dueDate: '2026-02-01', supplierName: 'Acme' })]);
       setFormats('en', 'auto');
       expect(host().querySelector('.overdue-chip')).not.toBeNull();
@@ -256,11 +277,32 @@ describe('InvoiceListComponent', () => {
       const { content } = exported();
 
       expect(content).not.toContain('Overdue');
+      expect(content).not.toContain('Paid,');
       expect(content).toContain('Closed');
       expect(content).toContain('02/01/2026');
+      // The last cell on the row is empty, which is what "unpaid" looks like in a file.
+      expect(content.split('\r\n')[1].endsWith(',')).toBe(true);
     });
 
-    it('export_secondPage_carriesThatPageOnly', async () => {
+    it('export_ledgerLongerThanAPage_carriesEveryInvoiceNotTheVisiblePage', async () => {
+      const many = Array.from({ length: 12 }, (unused, index) =>
+        invoice({ id: index + 1, invoiceNumber: `RE-${index + 1}`, supplierName: 'Acme' })
+      );
+      await setUp(many);
+      setFormats('en', 'auto');
+
+      // The regression guard, and the reversal of what #171 shipped: the table shows ten rows and
+      // the file has all twelve, because the export is the record and the table is the view.
+      const { content } = exported();
+
+      expect(host().querySelectorAll('tbody tr').length).toBe(10);
+      for (let id = 1; id <= 12; id++) {
+        expect(content).toContain(`RE-${id},`);
+      }
+      expect(invoiceService.unpagedCalls).toBe(1);
+    });
+
+    it('export_secondPageOnScreen_stillCarriesEveryInvoice', async () => {
       const many = Array.from({ length: 12 }, (unused, index) =>
         invoice({ id: index + 1, invoiceNumber: `RE-${index + 1}`, supplierName: 'Acme' })
       );
@@ -273,12 +315,51 @@ describe('InvoiceListComponent', () => {
       await fixture.whenStable();
       fixture.detectChanges();
 
-      // Server-side paging: the component holds the rows it last fetched and the export is those.
-      // Exporting more would mean firing unpaged requests behind a download button.
+      // Which page is on screen does not reach the file at all - asserted from the other side of
+      // the paginator, because "exports the visible page" would pass the previous spec too.
       const { content } = exported();
-      expect(content).toContain('RE-11');
-      expect(content).toContain('RE-12');
-      expect(content).not.toContain('RE-1,');
+      expect(content).toContain('RE-1,');
+      expect(content).toContain('RE-12,');
+    });
+
+    it('export_inFlight_disablesTheButtonAndAsksOnce', async () => {
+      const pending = new Subject<InvoiceSummaryResponse[]>();
+      await setUp(LEDGER);
+      invoiceService.unpagedResult = () => pending;
+
+      exportButton().click();
+      fixture.detectChanges();
+
+      // The app's first fetch-on-demand export, so it is the first with an in-flight state. The
+      // smallest answer: the button disables, and the disabled button is the whole of the
+      // concurrency control - a second click reaches nothing, so no second download is queued.
+      expect(exportButton().disabled).toBe(true);
+      exportButton().click();
+      expect(invoiceService.unpagedCalls).toBe(1);
+      expect(download).not.toHaveBeenCalled();
+
+      pending.next(LEDGER);
+      pending.complete();
+      fixture.detectChanges();
+
+      expect(exportButton().disabled).toBe(false);
+      expect(download).toHaveBeenCalledTimes(1);
+    });
+
+    it('export_fetchFails_showsThePagesErrorAndDownloadsNothing', async () => {
+      await setUp(LEDGER);
+      invoiceService.unpagedResult = () => throwError(() => new Error('Invoices are unavailable.'));
+
+      exportButton().click();
+      fixture.detectChanges();
+
+      // Through the page's own error banner - the same signal a failed load writes to - rather
+      // than a notification channel this page does not have.
+      expect(host().querySelector('.invoice-error')?.textContent?.trim())
+        .toBe('Invoices are unavailable.');
+      expect(download).not.toHaveBeenCalled();
+      // And the button comes back, so a transient failure does not retire the export.
+      expect(exportButton().disabled).toBe(false);
     });
 
     it('exportButton_emptyLedger_isAbsent', async () => {
@@ -286,6 +367,10 @@ describe('InvoiceListComponent', () => {
 
       expect(host().querySelector('.export-invoices')).toBeNull();
     });
+
+    function exportButton(): HTMLButtonElement {
+      return host().querySelector<HTMLButtonElement>('.export-invoices')!;
+    }
   });
 
   it('load_invoicesReturned_rendersOneRowPerInvoice', async () => {
