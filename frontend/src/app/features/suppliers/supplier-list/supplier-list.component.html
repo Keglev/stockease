@@ -33,13 +33,8 @@
       <td mat-cell *matCellDef="let supplier">{{ supplier.phone || '—' }}</td>
     </ng-container>
 
-    <!-- Kept, unlike the customer list, which omits address entirely: a supplier's address is
-         mandatory and always has a value, so there is no blank column to save room by dropping. -->
-    <ng-container matColumnDef="address">
-      <th mat-header-cell *matHeaderCellDef>{{ 'suppliers.columns.address' | translate }}</th>
-      <td mat-cell *matCellDef="let supplier">{{ supplier.address }}</td>
-    </ng-container>
-
+    <!-- No address column, matching the customer list. It is still mandatory on the record and
+         still edited in the dialog; it is simply not what this table is scanned for. -->
     <ng-container matColumnDef="city">
       <th mat-header-cell *matHeaderCellDef>{{ 'suppliers.columns.city' | translate }}</th>
       <td mat-cell *matCellDef="let supplier">{{ supplier.city || '—' }}</td>

@@ -10,6 +10,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
 import { DueDateBucket, InvoiceDueSummary, ProductResponse } from '../../core/api/api-models';
+import { LanguageService } from '../../core/i18n/language.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
 import { ChartSlice, topNWithRemainder } from '../../shared/chart/chart-data';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
@@ -61,6 +62,7 @@ export class DashboardComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly breakpoints = inject(BreakpointObserver);
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
 
   private readonly isDesktop = toSignal(
     this.breakpoints.observe(DESKTOP_MEDIA_QUERY).pipe(map((state) => state.matches)),
@@ -77,9 +79,34 @@ export class DashboardComponent implements OnInit {
   protected readonly overdueCount = signal(0);
   protected readonly grossProfit = signal(0);
 
-  // The chart and the table are two readings of one dataset, so the slices are what the component
+  /**
+   * Everything a chart needs that is not its own data - here, the one translated label.
+   *
+   * <p>It exists to be a DEPENDENCY, exactly as the reports page's own context does, and carries
+   * the same measured caveat: the explicit {@code currentLang()} read is redundant today, because
+   * ngx-translate's {@code instant} reads its own language signal and the derivation tracks it
+   * through that. It stays because that is the library's internal wiring rather than a contract.
+   *
+   * <p>The formatting slice adds FormatService's locale reads here, and every chart below inherits
+   * format reactivity from them - those reads will be load-bearing rather than belt-and-braces.
+   */
+  private readonly chartContext = computed(() => {
+    this.language.currentLang();
+    return { other: this.translate.instant('charts.other') as string };
+  });
+
+  // The chart and the table are two readings of one dataset, so the ROWS are what the component
   // holds and both views derive from them - null until the first load, so no empty chart flashes.
-  private readonly profitSlices = signal<ChartSlice[] | null>(null);
+  //
+  // Rows rather than finished slices, which is the change: the remainder bucket carries a
+  // translated name, and baking it in at load time is what left "Other" on screen after a reader
+  // switched to German.
+  private readonly profitData = signal<{ name: string; value: number }[] | null>(null);
+
+  private readonly profitSlices = computed(() => {
+    const rows = this.profitData();
+    return rows ? topNWithRemainder(rows, this.chartContext().other) : null;
+  });
 
   protected readonly profitOption = computed(() => {
     const slices = this.profitSlices();
@@ -90,7 +117,13 @@ export class DashboardComponent implements OnInit {
 
   protected readonly profitView = signal<CardView>('chart');
 
-  protected readonly dueDateOption = signal<ChartOption | null>(null);
+  protected readonly dueDateOption = computed(() => {
+    this.chartContext();
+    const buckets = this.dueBuckets();
+    return buckets ? toDueDateOption(buckets) : null;
+  });
+
+  private readonly dueBuckets = signal<DueDateBucket[] | null>(null);
 
   protected readonly dueView = signal<CardView>('chart');
 
@@ -165,13 +198,7 @@ export class DashboardComponent implements OnInit {
 
     this.reports.profitProducts().subscribe({
       next: (rows) => {
-        // Translated at build time: the slices are a snapshot, exactly as every chart option here.
-        this.profitSlices.set(
-          topNWithRemainder(
-            rows.map((row) => ({ name: row.name, value: row.grossProfit })),
-            this.translate.instant('charts.other')
-          )
-        );
+        this.profitData.set(rows.map((row) => ({ name: row.name, value: row.grossProfit })));
         // Summed over every row, not over the ten plotted slices: the headline figure is the whole
         // business, and display-only arithmetic over server-authoritative numbers is the precedent
         // the invoice totals set.
@@ -181,7 +208,7 @@ export class DashboardComponent implements OnInit {
     });
 
     this.reports.dueDates().subscribe({
-      next: (buckets) => this.dueDateOption.set(toDueDateOption(buckets)),
+      next: (buckets) => this.dueBuckets.set(buckets),
       error: (err: Error) => this.fail(err)
     });
 

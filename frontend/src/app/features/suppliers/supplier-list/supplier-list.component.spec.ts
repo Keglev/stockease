@@ -178,18 +178,14 @@ describe('SupplierListComponent', () => {
     ]);
 
     const headers = Array.from(host().querySelectorAll('th')).map((th) => th.textContent?.trim());
-    expect(headers).toEqual(['Name', 'Email', 'Phone', 'Address', 'City', 'Created', 'Actions']);
+    // Address is not among them: it lives on the edit dialog, not in the scanning surface.
+    expect(headers).toEqual(['Name', 'Email', 'Phone', 'City', 'Created', 'Actions']);
 
     const cells = Array.from(host().querySelectorAll('tbody tr td')).map((td) =>
       td.textContent?.trim()
     );
-    expect(cells.slice(0, 5)).toEqual([
-      'Acme',
-      'acme@example.com',
-      '555-1234',
-      '1 Main St',
-      'Springfield'
-    ]);
+    expect(cells.slice(0, 4)).toEqual(['Acme', 'acme@example.com', '555-1234', 'Springfield']);
+    expect(cells.join(' ')).not.toContain('1 Main St');
   });
 
   it('render_contactFieldsAbsent_showsAnEmDashPerEmptyCell', async () => {
@@ -210,7 +206,7 @@ describe('SupplierListComponent', () => {
     const cells = Array.from(host().querySelectorAll('tbody tr td')).map((td) =>
       td.textContent?.trim()
     );
-    expect(cells.slice(0, 5)).toEqual(['Acme', '—', '—', '1 Main St', '—']);
+    expect(cells.slice(0, 4)).toEqual(['Acme', '—', '—', '—']);
   });
 
   it('render_adminRole_showsDeleteButtonPerRow', async () => {
