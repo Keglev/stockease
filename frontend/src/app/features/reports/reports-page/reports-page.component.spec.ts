@@ -22,6 +22,7 @@ import {
   SupplierResponse
 } from '../../../core/api/api-models';
 import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
+import { FormatService } from '../../../core/format/format.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { provideFakeChartEngine } from '../../../testing/chart-testing';
@@ -729,6 +730,205 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
 
     expect(JSON.stringify(optionOf('profitOption'))).toContain('Sprocket');
     expect(JSON.stringify(optionOf('profitOption'))).not.toContain('Widget');
+  });
+
+  /**
+   * The values, rather than the labels the block above covers.
+   *
+   * <p>Asserted by CALLING the callbacks the option hands ECharts, with values the fixtures do not
+   * contain. Nothing else can: the formatters are functions, so the option itself carries no
+   * rendered string, and the fake engine paints nothing to read back. The values are chosen to be
+   * ambiguous between the two locales - 1234.56 reads as a thousand or as one-and-a-bit depending
+   * entirely on who is looking, which is the defect ADR 031 is about.
+   */
+  describe('chart values', () => {
+    // Both preferences are set explicitly in every test below, because both persist to storage and
+    // this file shares its origin with every other spec in the worker.
+    afterEach(() => localStorage.clear());
+
+    /**
+     * Intl separates a currency symbol and a percent sign with a no-break space, and which one it
+     * uses varies by ICU build. Normalised for the same reason FormatService's own spec does it.
+     */
+    const SPACES = new Set([0x20, 0xa0, 0x202f]);
+
+    function plain(value: string): string {
+      return [...value].map((ch) => (SPACES.has(ch.codePointAt(0) ?? 0) ? ' ' : ch)).join('');
+    }
+
+    function setFormats(lang: 'en' | 'de', numbers: 'auto' | 'en' | 'de'): void {
+      TestBed.inject(LanguageService).setLanguage(lang);
+      TestBed.inject(FormatService).setNumberFormat(numbers);
+      fixture.detectChanges();
+    }
+
+    /** The callbacks one option hands ECharts, read straight off the component. */
+    function formattersOf(name: string): FormatProbe {
+      const page = fixture.componentInstance as unknown as Record<string, () => FormatProbe>;
+      return page[name]();
+    }
+
+    function tooltipOf(name: string, value: number): string {
+      return plain(formattersOf(name).tooltip?.valueFormatter?.(value) ?? '');
+    }
+
+    function xTickOf(name: string, value: string | number): string {
+      return plain(formattersOf(name).xAxis?.axisLabel?.formatter?.(value) ?? '');
+    }
+
+    function yTickOf(name: string, value: number): string {
+      return plain(formattersOf(name).yAxis?.axisLabel?.formatter?.(value) ?? '');
+    }
+
+    /** Puts the three tabs the triangle reads - profit, due dates, analytics - on screen. */
+    async function showTheThreeShapes(): Promise<void> {
+      render();
+      await activateTab(0);
+      await activateTab(4);
+      await activateTab(6);
+      await chooseAnalyticsProduct(3);
+      await showAnalytics();
+    }
+
+    it('chartValues_germanInterfaceOnAuto_renderMoneyCountsAndDatesTheGermanWay', async () => {
+      await showTheThreeShapes();
+
+      setFormats('de', 'auto');
+
+      expect(tooltipOf('profitOption', 1234.56)).toBe('1.234,56 €');
+      expect(yTickOf('analyticsStockOption', 1234)).toBe('1.234');
+      expect(xTickOf('dueOption', '2026-03-01')).toBe('01.03.2026');
+    });
+
+    it('chartValues_englishInterfaceOnAuto_renderMoneyCountsAndDatesTheEnglishWay', async () => {
+      await showTheThreeShapes();
+
+      setFormats('en', 'auto');
+
+      expect(tooltipOf('profitOption', 1234.56)).toBe('€1,234.56');
+      expect(yTickOf('analyticsStockOption', 1234)).toBe('1,234');
+      expect(xTickOf('dueOption', '2026-03-01')).toBe('03/01/2026');
+    });
+
+    it('chartValues_germanInterfaceWithEnglishNumbers_followTheOverrideNotTheLanguage', async () => {
+      await showTheThreeShapes();
+
+      setFormats('de', 'en');
+
+      // The third corner of the triangle, and the one a language-only implementation gets wrong:
+      // the interface is German and every figure in it is English, because the reader said so.
+      // The date follows too - it is on 'auto', and 'auto' means the effective number locale.
+      expect(tooltipOf('profitOption', 1234.56)).toBe('€1,234.56');
+      expect(yTickOf('analyticsStockOption', 1234)).toBe('1,234');
+      expect(xTickOf('dueOption', '2026-03-01')).toBe('03/01/2026');
+    });
+
+    it('chartValues_stockHistory_areCountsRatherThanMoney', async () => {
+      await showTheThreeShapes();
+      setFormats('de', 'auto');
+
+      // The one chart on this page whose values are units. A currency symbol here would state that
+      // the warehouse holds 1234 euros of nothing in particular - so the assertion is the whole
+      // string, grouped the German way and carrying no symbol, rather than an absence of one.
+      expect(tooltipOf('analyticsStockOption', 1234)).toBe('1.234');
+      expect(yTickOf('analyticsStockOption', 1234)).toBe('1.234');
+    });
+
+    it('chartValues_formatOverrideSwitchedMidSpec_rebuildTheOptionInTheOtherLocale', async () => {
+      render();
+      await activateTab(0);
+      setFormats('de', 'auto');
+      const before = formattersOf('profitOption');
+      expect(tooltipOf('profitOption', 1234.56)).toBe('1.234,56 €');
+
+      TestBed.inject(FormatService).setNumberFormat('en');
+      fixture.detectChanges();
+
+      // Reactivity for free from the #168 seam: nothing refetched and no data changed, only the
+      // preference.
+      //
+      // The IDENTITY is the assertion that matters, and the reading beside it would pass without
+      // it - measured. A formatter closes over the service rather than over a locale, so calling
+      // the old option's callback after the switch already returns English. But nothing calls it:
+      // ChartComponent hands echarts an option only when this derivation re-runs, so an option
+      // that is still the object it was is a chart still showing the German labels it painted.
+      // That is what the format reads in chartContext buy, and this is what pins them.
+      const after = formattersOf('profitOption');
+      expect(after).not.toBe(before);
+      expect(tooltipOf('profitOption', 1234.56)).toBe('€1,234.56');
+    });
+
+    it('chartValues_dueDateAxis_keepsIsoKeysAsDataAndFormatsOnlyTheLabels', async () => {
+      render();
+      await activateTab(4);
+      setFormats('de', 'auto');
+
+      // Sorting and the series lookup both index by the raw key, so the DATA must stay raw - the
+      // formatting is a rendering decision and lives only in the callback.
+      const axis = formattersOf('dueOption').xAxis;
+      expect(axis?.data).toEqual(['2026-03-01']);
+      expect(plain(axis?.axisLabel?.formatter?.('2026-03-01') ?? '')).toBe('01.03.2026');
+    });
+
+    it('chartValues_cashFlowAxis_readsMonthKeysAsMonths', async () => {
+      render();
+      await activateTab(1);
+
+      setFormats('de', 'auto');
+      // The month keys are the shape FormatService did not cover; formatMonth is the addition.
+      expect(formattersOf('cashFlowOption').xAxis?.data).toEqual(['2026-02', '2026-03']);
+      expect(xTickOf('cashFlowOption', '2026-03')).toBe('März 2026');
+
+      setFormats('en', 'auto');
+      expect(xTickOf('cashFlowOption', '2026-03')).toBe('Mar 2026');
+    });
+
+    /**
+     * Every value surface on the page in one pass, which is the point: the routing decision - is
+     * this figure money or a count - is made once per axis and per tooltip, and the ones the
+     * triangle above does not reach are exactly where a wrong one would survive unnoticed.
+     */
+    it('chartValues_everySurface_routeMoneyToCurrencyAndUnitsToCounts', async () => {
+      await showTheThreeShapes();
+      await activateTab(1);
+      await activateTab(2);
+      await activateTab(3);
+      setFormats('de', 'auto');
+
+      const money = ['profitOption', 'stockOption', 'lossOption', 'dueOption', 'cashFlowOption', 'analyticsPriceOption'];
+      for (const name of money) {
+        expect(tooltipOf(name, 1234.56)).toBe('1.234,56 €');
+      }
+
+      // The value axis, whichever way each chart is oriented: the two bar charts lie on their
+      // side, so their VALUE axis is x and their category axis is y.
+      expect(xTickOf('profitOption', 1234.56)).toBe('1.234,56 €');
+      expect(xTickOf('stockOption', 1234.56)).toBe('1.234,56 €');
+      expect(yTickOf('dueOption', 1234.56)).toBe('1.234,56 €');
+      expect(yTickOf('cashFlowOption', 1234.56)).toBe('1.234,56 €');
+      expect(yTickOf('analyticsPriceOption', 1234.56)).toBe('1.234,56 €');
+
+      // The date axes, all reading the reader's own order and separators from a raw ISO key.
+      expect(xTickOf('analyticsPriceOption', '2026-03-01')).toBe('01.03.2026');
+      expect(xTickOf('analyticsStockOption', '2026-03-01')).toBe('01.03.2026');
+
+      // And the one exception, stated as a whole string rather than as an absent symbol.
+      expect(tooltipOf('analyticsStockOption', 1234)).toBe('1.234');
+    });
+
+    it('chartValues_marginGauge_readsThePercentInTheReadersOwnNumbers', async () => {
+      render();
+      await activateTab(0);
+
+      setFormats('de', 'auto');
+      const detailOf = () => formattersOf('marginOption').series?.[0]?.detail?.formatter;
+      // 42.5 is what the dial itself is set to; only the reading changes. The literal '{value}%'
+      // this replaces printed 42.5% at a German reader who writes 42,5 %.
+      expect(plain(detailOf()?.(42.5) ?? '')).toBe('42,5 %');
+
+      setFormats('en', 'auto');
+      expect(plain(detailOf()?.(42.5) ?? '')).toBe('42.5%');
+    });
   });
 
   it('lossPie_allLossValuesZero_rendersEmptyStateInsteadOfEmptyPie', async () => {
@@ -1902,4 +2102,16 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
 
 interface SeriesProbe {
   series?: { data?: { value?: number }[] }[];
+}
+
+/**
+ * The formatting callbacks an option carries. Typed loosely on purpose: these mirror the parts of
+ * echarts' own option shape the value specs invoke, and importing its types here would tie the
+ * spec to a structure only ChartComponent is supposed to know.
+ */
+interface FormatProbe {
+  tooltip?: { valueFormatter?: (value: unknown) => string };
+  xAxis?: { data?: string[]; axisLabel?: { formatter?: (value: string | number) => string } };
+  yAxis?: { axisLabel?: { formatter?: (value: number) => string } };
+  series?: { detail?: { formatter?: (value: number) => string } }[];
 }

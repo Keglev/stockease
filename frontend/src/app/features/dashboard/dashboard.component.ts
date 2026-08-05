@@ -10,9 +10,11 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
 import { DueDateBucket, InvoiceDueSummary, ProductResponse } from '../../core/api/api-models';
+import { FormatService } from '../../core/format/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
 import { ChartSlice, topNWithRemainder } from '../../shared/chart/chart-data';
+import { ChartFormat, chartFormat } from '../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
 import { ProductService } from '../products/product.service';
 // Deliberate cross-feature import: the reporting endpoints have one client, and the reports
@@ -63,6 +65,7 @@ export class DashboardComponent implements OnInit {
   private readonly breakpoints = inject(BreakpointObserver);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
+  private readonly format = inject(FormatService);
 
   private readonly isDesktop = toSignal(
     this.breakpoints.observe(DESKTOP_MEDIA_QUERY).pipe(map((state) => state.matches)),
@@ -87,13 +90,16 @@ export class DashboardComponent implements OnInit {
    * ngx-translate's {@code instant} reads its own language signal and the derivation tracks it
    * through that. It stays because that is the library's internal wiring rather than a contract.
    *
-   * <p>The formatting slice adds FormatService's locale reads here, and every chart below inherits
-   * format reactivity from them - those reads will be load-bearing rather than belt-and-braces.
+   * <p>{@link chartFormat} registers the format-preference reads, and every chart below inherits
+   * format reactivity from them. Those ones are load-bearing rather than belt-and-braces: ECharts
+   * calls the formatters while it paints, outside any reactive context, so the reads inside them
+   * are tracked by nothing.
    */
-  private readonly chartContext = computed(() => {
-    this.language.currentLang();
-    return { other: this.translate.instant('charts.other') as string };
-  });
+  private readonly chartContext = computed(() => ({
+    language: this.language.currentLang(),
+    other: this.translate.instant('charts.other') as string,
+    format: chartFormat(this.format)
+  }));
 
   // The chart and the table are two readings of one dataset, so the ROWS are what the component
   // holds and both views derive from them - null until the first load, so no empty chart flashes.
@@ -110,7 +116,7 @@ export class DashboardComponent implements OnInit {
 
   protected readonly profitOption = computed(() => {
     const slices = this.profitSlices();
-    return slices ? toProfitOption(slices) : null;
+    return slices ? toProfitOption(slices, this.chartContext().format) : null;
   });
 
   protected readonly profitRows = computed(() => this.profitSlices() ?? []);
@@ -118,9 +124,8 @@ export class DashboardComponent implements OnInit {
   protected readonly profitView = signal<CardView>('chart');
 
   protected readonly dueDateOption = computed(() => {
-    this.chartContext();
     const buckets = this.dueBuckets();
-    return buckets ? toDueDateOption(buckets) : null;
+    return buckets ? toDueDateOption(buckets, this.chartContext().format) : null;
   });
 
   private readonly dueBuckets = signal<DueDateBucket[] | null>(null);
@@ -248,33 +253,47 @@ export class DashboardComponent implements OnInit {
 
 // Takes the already-ranked slices rather than the raw rows, so the chart and the table below it
 // can never disagree about what the top ten are.
-function toProfitOption(slices: ChartSlice[]): ChartOption {
+function toProfitOption(slices: ChartSlice[], format: ChartFormat): ChartOption {
   // A category axis draws its first entry at the bottom, so the order is reversed to put the
   // most profitable product at the top of the chart.
   const ordered = [...slices].reverse();
 
   return {
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      valueFormatter: (value) => format.currency(value as number)
+    },
     grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
-    xAxis: { type: 'value' },
+    xAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
     yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
     series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
   };
 }
 
-function toDueDateOption(buckets: DueDateBucket[]): ChartOption {
+function toDueDateOption(buckets: DueDateBucket[], format: ChartFormat): ChartOption {
   const dates = [...new Set(buckets.map((bucket) => bucket.dueDate))].sort();
   const types = [...new Set(buckets.map((bucket) => bucket.invoiceType))].sort();
 
   return {
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      valueFormatter: (value) => format.currency(value as number)
+    },
     // The legend sits below the axis rather than floating over it: with containLabel the grid's
     // bottom inset has to cover the rotated date labels AND the legend row, which the previous
     // 24px did not, so the two drew on top of each other at both chart heights.
     legend: { bottom: 0 },
     grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
-    xAxis: { type: 'category', data: dates },
-    yAxis: { type: 'value' },
+    // The axis keeps the raw ISO keys - they are what the series are indexed by and what sorts
+    // correctly - and shows the reader's date format through the label formatter instead.
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLabel: { formatter: (value: string) => format.date(value) }
+    },
+    yAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
     // One stacked series per invoice type: the bar height is what falls due on that date and
     // the split shows how much of it is money in versus money out.
     series: types.map((type) => ({
