@@ -295,7 +295,9 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
     @Test
     void cashFlow_deletedProductWithPaidFlow_staysListedFlagged() {
         Customer customer = customerService.create("CF Deleted Customer", null, null, null, null);
-        Product product = newProduct("CF Deleted Product", 10);
+        // Stocked with exactly what the sale takes: a product still holding stock cannot be
+        // deleted (ADR 033), and this test is about what the report shows once it is.
+        Product product = newProduct("CF Deleted Product", 5);
         invoiceService.markAsPaid(closedSale(customer.getId(), line(product, 5, "20.00")).getId());
         productService.deleteById(product.getId(), user);
 

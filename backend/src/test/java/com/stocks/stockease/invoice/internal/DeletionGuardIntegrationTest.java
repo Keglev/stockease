@@ -107,6 +107,9 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
             InvoiceItem item = new InvoiceItem();
             item.setInvoice(invoice);
             item.setProduct(product);
+            // the line snapshots its product name at issuance (ADR 033); NOT NULL since V22
+            item.setProductName(product.getName());
+            item.setProductId(product.getId());
             item.setQuantity(2);
             item.setUnitPrice(new BigDecimal("15.00"));
             item.setReturnedQty(0);
@@ -199,7 +202,9 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void deleteProduct_onOpenInvoice_vetoedAndLeavesNoTrace() {
-        Product product = new Product("Guard Open Invoice Widget", 10, 5.0);
+        // zero stock so the open-invoice veto is what this test observes: the stock guard runs
+        // first, inside the service, and would otherwise answer with its own message (ADR 033)
+        Product product = new Product("Guard Open Invoice Widget", 0, 5.0);
         // explicit SKU: it is no longer generated on persist
         product.setSku("TST-GUARD-1");
         productRepository.saveAndFlush(product);
@@ -218,7 +223,8 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void deleteProduct_onlyOnClosedInvoice_succeeds() {
-        Product product = new Product("Guard Closed Invoice Widget", 10, 5.0);
+        // zero stock: a stocked product is not deletable (ADR 033)
+        Product product = new Product("Guard Closed Invoice Widget", 0, 5.0);
         // explicit SKU: it is no longer generated on persist
         product.setSku("TST-GUARD-2");
         productRepository.saveAndFlush(product);

@@ -82,7 +82,10 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
         invoice.setDueDate(LocalDate.now());
         invoice.setInterestRate(BigDecimal.ZERO);
         invoice.setFineValue(BigDecimal.ZERO);
-        InvoiceItem item = new InvoiceItem(null, invoice, product, 5, BigDecimal.TEN, 0);
+        // productId is a read-only mapping of the column the association writes, so it stays null
+        // here and is filled by the database on flush.
+        InvoiceItem item =
+                new InvoiceItem(null, invoice, product, product.getName(), null, 5, BigDecimal.TEN, 0);
         invoice.getItems().add(item);
 
         Invoice saved = invoiceRepository.saveAndFlush(invoice);
@@ -104,7 +107,7 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
         invoice.setDueDate(LocalDate.now());
         invoice.setInterestRate(BigDecimal.ZERO);
         invoice.setFineValue(BigDecimal.ZERO);
-        InvoiceItem item = new InvoiceItem(null, invoice, null, 1, BigDecimal.ONE, 0);
+        InvoiceItem item = new InvoiceItem(null, invoice, null, "Widget", null, 1, BigDecimal.ONE, 0);
         invoice.getItems().add(item);
 
         assertThatCode(invoice::toString).doesNotThrowAnyException();

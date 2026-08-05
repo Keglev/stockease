@@ -40,6 +40,10 @@ final class InvoiceTestFixtures {
         invoice.setFineValue(BigDecimal.ZERO);
         invoice.setCreatedAt(CREATED_AT);
         invoice.setSupplier(new Supplier(7L, "Acme", "1 Main St", CREATED_AT, null));
+        // The scalars the database fills on insert; the DTOs read these rather than the
+        // association, so a fixture that omits them renders a party-less invoice (ADR 033).
+        invoice.setSupplierId(7L);
+        invoice.setSupplierName("Acme");
         invoice.setItems(List.of(item(invoice)));
         return invoice;
     }
@@ -53,6 +57,8 @@ final class InvoiceTestFixtures {
         invoice.setDueDate(DUE_DATE);
         invoice.setCreatedAt(CREATED_AT);
         invoice.setCustomer(new Customer(9L, "Jane Doe", null, null, null, null, CREATED_AT, null));
+        invoice.setCustomerId(9L);
+        invoice.setCustomerName("Jane Doe");
         return invoice;
     }
 
@@ -63,6 +69,8 @@ final class InvoiceTestFixtures {
         item.setId(4L);
         item.setInvoice(invoice);
         item.setProduct(product);
+        item.setProductId(3L);
+        item.setProductName("Widget");
         item.setQuantity(2);
         item.setUnitPrice(new BigDecimal("15.00"));
         item.setReturnedQty(0);

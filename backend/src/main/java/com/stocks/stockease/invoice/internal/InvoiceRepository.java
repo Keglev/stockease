@@ -75,8 +75,13 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
      * @param id invoice identifier
      * @return the fully initialized invoice, or empty if none exists with that ID
      */
-    // only the items collection is fetch-joined; a second collection join would produce a cartesian product
-    @Query("select distinct i from Invoice i left join fetch i.items it left join fetch it.product "
-            + "left join fetch i.supplier left join fetch i.customer where i.id = :id")
+    // Only the items collection is fetch-joined - a second collection join would produce a cartesian
+    // product, and the party joins this query used to carry are gone on purpose (ADR 033). Joining
+    // supplier, customer or product made the read depend on master data still being live: the
+    // entities' @SQLRestriction applies to the join, so a soft-deleted supplier resolved the whole
+    // association to null and a soft-deleted product - a non-optional association - raised
+    // FetchNotFoundException and returned 500. Names and ids now come from the invoice's own
+    // snapshot columns and foreign-key scalars, which no restriction can hide.
+    @Query("select distinct i from Invoice i left join fetch i.items where i.id = :id")
     Optional<Invoice> findDetailById(@Param("id") Long id);
 }

@@ -94,6 +94,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
         InvoiceItem item = new InvoiceItem();
         item.setInvoice(invoice);
         item.setProduct(product);
+        item.setProductName(product.getName());
+        item.setProductId(product.getId());
         item.setQuantity(itemQty);
         item.setUnitPrice(new BigDecimal("15.00"));
         item.setReturnedQty(0);
@@ -117,6 +119,8 @@ class StockMovementServiceIntegrationTest extends AbstractIntegrationTest {
         InvoiceItem item = new InvoiceItem();
         item.setInvoice(invoice);
         item.setProduct(product);
+        item.setProductName(product.getName());
+        item.setProductId(product.getId());
         item.setQuantity(itemQty);
         item.setUnitPrice(new BigDecimal("15.00"));
         item.setReturnedQty(0);

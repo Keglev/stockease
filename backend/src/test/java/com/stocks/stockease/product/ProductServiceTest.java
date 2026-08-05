@@ -184,7 +184,8 @@ class ProductServiceTest {
 
     @Test
     void deleteById_withExistingId_deletesAndReturnsTrue() {
-        Product product = new Product("Widget", 10, 5.0);
+        // zero stock: a stocked product is not deletable (ADR 033)
+        Product product = new Product("Widget", 0, 5.0);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         boolean result = productService.deleteById(1L, user);
@@ -379,7 +380,7 @@ class ProductServiceTest {
 
     @Test
     void deleteById_withExistingId_publishesDeletedEventWithNullValues() {
-        Product product = new Product("Widget", 10, 5.0);
+        Product product = new Product("Widget", 0, 5.0);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         productService.deleteById(1L, user);

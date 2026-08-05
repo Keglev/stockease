@@ -70,6 +70,10 @@ class StockMovementServiceTest {
         item.setId(ITEM_ID);
         item.setInvoice(invoice);
         item.setProduct(product());
+        // The scalars the database fills on insert. Set by hand here because this fixture never
+        // reaches a database, and the service reads them rather than the association (ADR 033).
+        item.setProductId(PRODUCT_ID);
+        item.setProductName("Widget");
         item.setQuantity(quantity);
         item.setUnitPrice(new BigDecimal("15.00"));
         return item;
@@ -97,6 +101,14 @@ class StockMovementServiceTest {
         when(invoiceService.findItemById(ITEM_ID)).thenReturn(Optional.of(item));
         when(productService.adjustQuantity(anyLong(), anyInt())).thenReturn(product());
         return item;
+    }
+
+    /**
+     * Stubs the product as live. Returns are refused when their product is soft-deleted (ADR 033),
+     * and the guard asks the product service, so a return test has to say the product still exists.
+     */
+    private void stubLiveProduct() {
+        when(productService.findById(PRODUCT_ID)).thenReturn(Optional.of(product()));
     }
 
     /** Stubs the SOLD movement a customer return reads its cost from. */
@@ -157,6 +169,7 @@ class StockMovementServiceTest {
     void recordMovement_returnFromCustomer_increasesStockAndRegistersReturn() {
         InvoiceItem item = stubLinkedFlow(InvoiceType.SALE, 5);
         stubSaleMovement(new BigDecimal("5.00"));
+        stubLiveProduct();
 
         stockMovementService.recordMovement(command(MovementReason.RETURN_FROM_CUSTOMER, 2, ITEM_ID, null), user);
 
@@ -172,6 +185,7 @@ class StockMovementServiceTest {
     @Test
     void recordMovement_returnedToSupplier_decreasesStockAndRegistersReturn() {
         stubLinkedFlow(InvoiceType.PURCHASE, 5);
+        stubLiveProduct();
 
         stockMovementService.recordMovement(command(MovementReason.RETURNED_TO_SUPPLIER, 2, ITEM_ID, null), user);
 
@@ -338,7 +352,8 @@ class StockMovementServiceTest {
     @Test
     void recordMovement_withInvoiceItemOfAnotherProduct_throwsInvalidMovementException() {
         InvoiceItem item = item(InvoiceType.SALE, 5);
-        item.getProduct().setId(99L);
+        // the service compares the line's foreign-key scalar, not the association (ADR 033)
+        item.setProductId(99L);
         when(invoiceService.findItemById(ITEM_ID)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> stockMovementService

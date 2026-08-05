@@ -10,10 +10,10 @@ import com.stocks.stockease.invoice.InvoiceType;
 /**
  * API representation of an invoice for list views, safe to build from an uninitialized entity.
  *
- * <p>Counterparties appear as identifiers only, never as names: reading an identifier off a lazy
- * association touches the proxy's key rather than loading the row, which is what keeps listing many
- * invoices free of both lazy-initialization failures and N+1 queries. Use {@link InvoiceResponse}
- * when names are needed.
+ * <p>Counterparty names now travel with the row. They are read from the invoice's own snapshot
+ * columns rather than through the association, so the list stays free of both lazy-initialization
+ * failures and N+1 queries while gaining the one thing it previously had to resolve client-side -
+ * and it keeps naming parties that have since been soft-deleted (ADR 033).
  *
  * @param id unique invoice identifier
  * @param invoiceNumber operator-assigned business identifier; never {@code null}
@@ -21,14 +21,16 @@ import com.stocks.stockease.invoice.InvoiceType;
  * @param status current lifecycle state
  * @param dueDate date payment falls due
  * @param supplierId counterparty identifier for purchase invoices
+ * @param supplierName supplier name as it stood at issuance; {@code null} on sale invoices
  * @param customerId counterparty identifier for sale invoices
+ * @param customerName customer name as it stood at issuance; {@code null} on purchases and walk-in sales
  * @param closedAt moment the invoice was closed
  * @param paidAt moment the invoice was paid
  * @param createdAt moment the invoice was first persisted
  */
 public record InvoiceSummaryResponse(Long id, String invoiceNumber, InvoiceType type, InvoiceStatus status,
-        LocalDate dueDate, Long supplierId, Long customerId, LocalDateTime closedAt, LocalDateTime paidAt,
-        LocalDateTime createdAt) {
+        LocalDate dueDate, Long supplierId, String supplierName, Long customerId, String customerName,
+        LocalDateTime closedAt, LocalDateTime paidAt, LocalDateTime createdAt) {
 
     /**
      * Maps an invoice to its list representation without initializing any association.
@@ -39,8 +41,8 @@ public record InvoiceSummaryResponse(Long id, String invoiceNumber, InvoiceType 
     public static InvoiceSummaryResponse from(Invoice invoice) {
         return new InvoiceSummaryResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),
                 invoice.getStatus(), invoice.getDueDate(),
-                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),
-                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),
+                invoice.getSupplierId(), invoice.getSupplierName(),
+                invoice.getCustomerId(), invoice.getCustomerName(),
                 invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt());
     }
 }

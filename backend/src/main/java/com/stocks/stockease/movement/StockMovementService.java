@@ -14,6 +14,7 @@ import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
 
@@ -74,6 +75,7 @@ public class StockMovementService {
             validateNotAlreadyRecorded(command, reason, item);
         }
         if (reason == MovementReason.RETURN_FROM_CUSTOMER || reason == MovementReason.RETURNED_TO_SUPPLIER) {
+            rejectReturnAgainstDeletedProduct(item);
             // cap enforcement and the returnedQty increment join this transaction
             invoiceService.registerReturn(command.invoiceItemId(), command.quantity());
         }
@@ -87,6 +89,25 @@ public class StockMovementService {
         }
 
         return stockMovementRepository.save(buildMovement(command, reason, user, product, item));
+    }
+
+    /**
+     * Refuses a return whose product has been soft-deleted, and says how to proceed.
+     *
+     * <p>Returns move stock, and stock belongs to a live product: accepting one here would credit
+     * units to a row no catalogue, stock report or picker shows, leaving inventory that exists in the
+     * ledger and nowhere else. Restoring the product first makes the return an ordinary one, which is
+     * the manual path this message points at (ADR 033).
+     *
+     * <p>Checked by querying live products with the line's foreign-key scalar rather than through
+     * {@code item.getProduct()}: the association is exactly what a soft-deleted row hides, so asking
+     * it would raise Hibernate's own error instead of this explanation.
+     */
+    private void rejectReturnAgainstDeletedProduct(InvoiceItem item) {
+        if (productService.findById(item.getProductId()).isEmpty()) {
+            throw new EntityInUseException("Cannot register a return for '" + item.getProductName()
+                    + "': the product is deleted. Restore it first, then record the return.");
+        }
     }
 
     /** Rejects fields the reason forbids and demands the ones it requires. */
@@ -132,7 +153,9 @@ public class StockMovementService {
         if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {
             throw new InvalidMovementException("Movements cannot be recorded against an open invoice.");
         }
-        if (!item.getProduct().getId().equals(command.productId())) {
+        // the line's foreign-key scalar rather than the association: a soft-deleted product must
+        // reach the return guard's explanation rather than Hibernate's proxy error (ADR 033)
+        if (!item.getProductId().equals(command.productId())) {
             throw new InvalidMovementException(
                     "Invoice item " + command.invoiceItemId() + " belongs to a different product.");
         }

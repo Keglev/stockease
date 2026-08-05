@@ -16,7 +16,9 @@ const SUMMARY: InvoiceSummaryResponse = {
   status: 'OPEN',
   dueDate: '2026-03-01',
   supplierId: 7,
+  supplierName: 'Acme',
   customerId: null,
+  customerName: null,
   closedAt: null,
   paidAt: null,
   createdAt: '2026-01-02T03:04:00'

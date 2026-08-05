@@ -248,6 +248,9 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
         Supplier supplier = supplierService.create("RPT Gamma Supplier", "1 Main St");
         Product product = newProduct("RPT Gamma Deleted", "10.00");
         closedPurchase(supplier.getId(), product.getId(), 3, "10.00");
+        // A stocked product cannot be deleted (ADR 033), and the purchase above stocked it. Writing
+        // the units off leaves the profit figures this test reads untouched.
+        record(MovementReason.DESTROYED, product.getId(), 3, null);
         productService.deleteById(product.getId(), user);
 
         ProductProfitReport row = profitRow(product.getId());

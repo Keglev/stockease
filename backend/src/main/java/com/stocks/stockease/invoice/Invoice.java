@@ -78,6 +78,36 @@ public class Invoice {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
+    /**
+     * The supplier's name as it stood when this invoice was issued; {@code null} on sale invoices.
+     *
+     * <p>Written once at creation and never again: a document states the party it was issued by, and
+     * renaming a supplier afterwards must not rewrite invoices already sent. This is also what keeps
+     * the counterparty readable after the supplier is soft-deleted, which the association cannot do -
+     * {@code @SQLRestriction} hides the row and the association resolves to null (ADR 033).
+     */
+    @Column(name = "supplier_name")
+    private String supplierName;
+
+    /** The customer's name as it stood at issuance; {@code null} on purchases and on walk-in sales. */
+    @Column(name = "customer_name")
+    private String customerName;
+
+    /**
+     * The counterparty foreign keys as plain scalars, readable even when the joined row is hidden.
+     *
+     * <p>Read-only mappings of the same columns the associations own, which is what
+     * {@code insertable=false, updatable=false} declares: the association remains the single writer.
+     * They exist because a restriction-hidden association yields {@code null} for the whole
+     * reference, identifier included, so the document would lose the id as well as the name.
+     */
+    @Column(name = "supplier_id", insertable = false, updatable = false)
+    private Long supplierId;
+
+    /** The customer foreign key as a plain scalar; see {@link #supplierId}. */
+    @Column(name = "customer_id", insertable = false, updatable = false)
+    private Long customerId;
+
     /** Current lifecycle state. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
