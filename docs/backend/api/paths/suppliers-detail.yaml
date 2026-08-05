@@ -29,7 +29,10 @@ get:
             data:
               id: 7
               name: Acme
+              email: acme@example.com
+              phone: 555-1234
               address: 1 Main St
+              city: Springfield
               createdAt: '2026-01-02T03:04:00'
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'
@@ -45,8 +48,10 @@ get:
             data: null
 
 put:
-  summary: Replace a supplier's name and address
-  description: Both fields are replaced wholesale, so both are mandatory.
+  summary: Replace a supplier's details
+  description: |
+    Every field is replaced wholesale. Name and address are mandatory; omitting an optional contact
+    field clears the stored value rather than leaving it untouched.
   operationId: updateSupplier
   tags:
     - Suppliers
@@ -71,7 +76,10 @@ put:
             data:
               id: 7
               name: Acme Two
+              email: two@example.com
+              phone: 555-9999
               address: 2 Side St
+              city: Shelbyville
               createdAt: '2026-01-02T03:04:00'
     '400':
       $ref: '../openapi.yaml#/components/responses/ValidationError'

@@ -68,7 +68,7 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
 
     @Test
     void persistInvoice_withOneItem_cascadesItem() {
-        Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", "1 Main St", null, null));
+        Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", null, null, "1 Main St", null, null, null));
         // explicit SKU: it is no longer generated on persist
         Product product = new Product("Widget", 10, 5.0);
         product.setSku("TST-IMAP-1");
@@ -137,7 +137,7 @@ class InvoiceMappingTest extends AbstractIntegrationTest {
 
     @Test
     void persistSaleInvoice_withSupplier_rejected() {
-        Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", "1 Main St", null, null));
+        Supplier supplier = supplierRepository.saveAndFlush(new Supplier(null, "Acme", null, null, "1 Main St", null, null, null));
         Invoice invoice = newInvoice(InvoiceType.SALE);
         invoice.setSupplier(supplier);
 

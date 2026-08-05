@@ -20,15 +20,23 @@ const TRANSLATIONS = {
       create: 'New supplier',
       edit: 'Edit',
       empty: 'No suppliers found.',
-      columns: { name: 'Name', address: 'Address', createdAt: 'Created', actions: 'Actions' },
+      columns: {
+        name: 'Name',
+        email: 'Email',
+        phone: 'Phone',
+        address: 'Address',
+        city: 'City',
+        createdAt: 'Created',
+        actions: 'Actions'
+      },
       delete: { action: 'Delete supplier', title: 'Delete supplier', message: 'Delete "{{name}}"?' }
     }
   }
 };
 
 const SUPPLIERS: SupplierResponse[] = [
-  { id: 7, name: 'Acme', address: '1 Main St', createdAt: '2026-01-02T03:04:00' },
-  { id: 8, name: 'Globex', address: '5 Side St', createdAt: '2026-01-03T03:04:00' }
+  { id: 7, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '2026-01-02T03:04:00' },
+  { id: 8, name: 'Globex', email: null, phone: null, address: '5 Side St', city: null, createdAt: '2026-01-03T03:04:00' }
 ];
 
 class SupplierServiceStub {
@@ -100,7 +108,10 @@ describe('SupplierListComponent', () => {
     return Array.from({ length: count }, (unused, index) => ({
       id: index + 1,
       name: 'Supplier ' + index,
+      email: null,
+      phone: null,
       address: '1 Main St',
+      city: null,
       createdAt: '2026-01-02T03:04:00'
     }));
   }
@@ -151,6 +162,55 @@ describe('SupplierListComponent', () => {
     expect(rows.length).toBe(2);
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Acme');
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Globex');
+  });
+
+  it('render_contactColumns_showValuesAndHeaders', async () => {
+    await setUp('ADMIN', [
+      {
+        id: 7,
+        name: 'Acme',
+        email: 'acme@example.com',
+        phone: '555-1234',
+        address: '1 Main St',
+        city: 'Springfield',
+        createdAt: '2026-01-02T03:04:00'
+      }
+    ]);
+
+    const headers = Array.from(host().querySelectorAll('th')).map((th) => th.textContent?.trim());
+    expect(headers).toEqual(['Name', 'Email', 'Phone', 'Address', 'City', 'Created', 'Actions']);
+
+    const cells = Array.from(host().querySelectorAll('tbody tr td')).map((td) =>
+      td.textContent?.trim()
+    );
+    expect(cells.slice(0, 5)).toEqual([
+      'Acme',
+      'acme@example.com',
+      '555-1234',
+      '1 Main St',
+      'Springfield'
+    ]);
+  });
+
+  it('render_contactFieldsAbsent_showsAnEmDashPerEmptyCell', async () => {
+    // The customer list's presentation decision, copied: a blank cell would read as a rendering
+    // fault, an em dash reads as "nothing recorded". address never takes one - it is mandatory.
+    await setUp('ADMIN', [
+      {
+        id: 7,
+        name: 'Acme',
+        email: null,
+        phone: null,
+        address: '1 Main St',
+        city: null,
+        createdAt: '2026-01-02T03:04:00'
+      }
+    ]);
+
+    const cells = Array.from(host().querySelectorAll('tbody tr td')).map((td) =>
+      td.textContent?.trim()
+    );
+    expect(cells.slice(0, 5)).toEqual(['Acme', '—', '—', '1 Main St', '—']);
   });
 
   it('render_adminRole_showsDeleteButtonPerRow', async () => {
@@ -267,7 +327,15 @@ describe('SupplierListComponent', () => {
   });
 
   it('pagination_secondPage_showsRemainingRows', async () => {
-    const many = Array.from({ length: 12 }, (unused, index) => ({ id: index + 1, name: 'Supplier ' + index, address: '1 Main St', createdAt: '2026-01-02T03:04:00' }));
+    const many = Array.from({ length: 12 }, (unused, index) => ({
+      id: index + 1,
+      name: 'Supplier ' + index,
+      email: null,
+      phone: null,
+      address: '1 Main St',
+      city: null,
+      createdAt: '2026-01-02T03:04:00'
+    }));
     await setUp('ADMIN', many);
 
     const page = fixture.componentInstance as unknown as {
@@ -281,7 +349,15 @@ describe('SupplierListComponent', () => {
   });
 
   it('delete_lastRowOfLastPage_clampsPageIndex', async () => {
-    const many = Array.from({ length: 12 }, (unused, index) => ({ id: index + 1, name: 'Supplier ' + index, address: '1 Main St', createdAt: '2026-01-02T03:04:00' }));
+    const many = Array.from({ length: 12 }, (unused, index) => ({
+      id: index + 1,
+      name: 'Supplier ' + index,
+      email: null,
+      phone: null,
+      address: '1 Main St',
+      city: null,
+      createdAt: '2026-01-02T03:04:00'
+    }));
     await setUp('ADMIN', many);
     const page = fixture.componentInstance as unknown as {
       onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void;

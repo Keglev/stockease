@@ -309,8 +309,9 @@ export interface paths {
         put?: never;
         /**
          * Create a supplier
-         * @description Creates a supplier. Both fields are mandatory and rejected when blank, at the request layer and
-         *     again in the service.
+         * @description Creates a supplier. Name and address are mandatory and rejected when blank, at the request layer
+         *     and again in the service. The contact fields are optional; the email is checked for shape when
+         *     present, matching the customer register.
          */
         post: operations["createSupplier"];
         delete?: never;
@@ -335,8 +336,9 @@ export interface paths {
          */
         get: operations["getSupplierById"];
         /**
-         * Replace a supplier's name and address
-         * @description Both fields are replaced wholesale, so both are mandatory.
+         * Replace a supplier's details
+         * @description Every field is replaced wholesale. Name and address are mandatory; omitting an optional contact
+         *     field clears the stored value rather than leaving it untouched.
          */
         put: operations["updateSupplier"];
         post?: never;
@@ -1266,8 +1268,14 @@ export interface components {
             id: number;
             /** @example Acme */
             name: string;
+            /** @example acme@example.com */
+            email: string | null;
+            /** @example 555-1234 */
+            phone: string | null;
             /** @example 1 Main St */
             address: string;
+            /** @example Springfield */
+            city: string | null;
             /**
              * @description ISO-8601 local date-time, serialized without a zone offset
              * @example 2026-01-02T03:04:00
@@ -1277,7 +1285,11 @@ export interface components {
         ApiResponseSupplier: components["schemas"]["ApiResponse"] & {
             data: components["schemas"]["SupplierResponse"];
         };
-        /** @description Body for both supplier creation and update; every field is replaced on update */
+        /**
+         * @description Body for both supplier creation and update; every field is replaced on update, the optional
+         *     ones included - omitting `email`, `phone` or `city` on a PUT clears the stored value rather
+         *     than leaving it in place. `name` and `address` remain mandatory on both operations.
+         */
         SupplierRequest: {
             /**
              * @description Must not be blank; message: "Supplier name is required."
@@ -1285,10 +1297,20 @@ export interface components {
              */
             name: string;
             /**
+             * Format: email
+             * @description Optional, but must be well formed when present; message: "Supplier email must be a valid email address."
+             * @example acme@example.com
+             */
+            email?: string | null;
+            /** @example 555-1234 */
+            phone?: string | null;
+            /**
              * @description Must not be blank; message: "Supplier address is required."
              * @example 1 Main St
              */
             address: string;
+            /** @example Springfield */
+            city?: string | null;
         };
         CustomerResponse: {
             /**
@@ -2840,7 +2862,10 @@ export interface operations {
                      *       {
                      *         "id": 7,
                      *         "name": "Acme",
+                     *         "email": "acme@example.com",
+                     *         "phone": "555-1234",
                      *         "address": "1 Main St",
+                     *         "city": "Springfield",
                      *         "createdAt": "2026-01-02T03:04:00"
                      *       }
                      *     ]
@@ -2874,7 +2899,10 @@ export interface operations {
                      * @example {
                      *       "id": 7,
                      *       "name": "Acme",
+                     *       "email": "acme@example.com",
+                     *       "phone": "555-1234",
                      *       "address": "1 Main St",
+                     *       "city": "Springfield",
                      *       "createdAt": "2026-01-02T03:04:00"
                      *     }
                      */
@@ -2927,7 +2955,10 @@ export interface operations {
                      *       "data": {
                      *         "id": 7,
                      *         "name": "Acme",
+                     *         "email": "acme@example.com",
+                     *         "phone": "555-1234",
                      *         "address": "1 Main St",
+                     *         "city": "Springfield",
                      *         "createdAt": "2026-01-02T03:04:00"
                      *       }
                      *     }
@@ -2983,7 +3014,10 @@ export interface operations {
                      *       "data": {
                      *         "id": 7,
                      *         "name": "Acme Two",
+                     *         "email": "two@example.com",
+                     *         "phone": "555-9999",
                      *         "address": "2 Side St",
+                     *         "city": "Shelbyville",
                      *         "createdAt": "2026-01-02T03:04:00"
                      *       }
                      *     }
@@ -3098,7 +3132,10 @@ export interface operations {
                      *       {
                      *         "id": 1,
                      *         "name": "Acme Trading",
+                     *         "email": "acme@example.com",
+                     *         "phone": "555-1234",
                      *         "address": "1 Main St",
+                     *         "city": "Springfield",
                      *         "createdAt": "2026-01-02T03:04:00"
                      *       }
                      *     ]

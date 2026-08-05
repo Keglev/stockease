@@ -421,7 +421,10 @@
     "updated": "Lieferant wurde aktualisiert.",
     "columns": {
       "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
       "address": "Adresse",
+      "city": "Stadt",
       "createdAt": "Erstellt am",
       "actions": "Aktionen"
     },
@@ -434,9 +437,13 @@
       "createTitle": "Neuer Lieferant",
       "editTitle": "Lieferant bearbeiten",
       "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
       "address": "Adresse",
+      "city": "Stadt",
       "nameRequired": "Name ist erforderlich.",
-      "addressRequired": "Adresse ist erforderlich."
+      "addressRequired": "Adresse ist erforderlich.",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
     }
   },
   "shell": {

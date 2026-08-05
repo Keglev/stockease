@@ -421,7 +421,10 @@
     "updated": "Supplier updated.",
     "columns": {
       "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
       "address": "Address",
+      "city": "City",
       "createdAt": "Created",
       "actions": "Actions"
     },
@@ -434,9 +437,13 @@
       "createTitle": "New supplier",
       "editTitle": "Edit supplier",
       "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
       "address": "Address",
+      "city": "City",
       "nameRequired": "Name is required.",
-      "addressRequired": "Address is required."
+      "addressRequired": "Address is required.",
+      "emailInvalid": "Enter a valid email address."
     }
   },
   "shell": {

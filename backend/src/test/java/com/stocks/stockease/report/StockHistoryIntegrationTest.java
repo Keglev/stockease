@@ -90,7 +90,7 @@ class StockHistoryIntegrationTest extends AbstractIntegrationTest {
      * Levels run 40, 32, 34, 31; sold units run 0, 8, 6, 6.
      */
     private Product scenario(String name) {
-        Supplier supplier = supplierService.create(name + " Supplier", "1 Main St");
+        Supplier supplier = supplierService.create(name + " Supplier", null, null, "1 Main St", null);
         Product product = productService.create(name, "HIST-" + name.hashCode(), 10.0);
 
         Invoice purchase = closedInvoice(InvoiceType.PURCHASE, supplier.getId(), product, 40, "10.00");

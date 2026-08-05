@@ -137,11 +137,11 @@ public class DemoDataService {
 
     private List<Supplier> seedSuppliers() {
         return List.of(
-                supplierService.create("Nordwerk Handels GmbH", "Hafenstraße 12, 20457 Hamburg"),
-                supplierService.create("Bayerische Werkzeug AG", "Lindwurmstraße 88, 80337 München"),
-                supplierService.create("Rheinland Elektro KG", "Domkloster 4, 50667 Köln"),
-                supplierService.create("Sachsen Logistik und Bedarf GmbH", "Prager Straße 21, 01069 Dresden"),
-                supplierService.create("Weserbergland Papierwaren e.K.", "Osterstraße 7, 31785 Hameln"));
+                supplierService.create("Nordwerk Handels GmbH", null, null, "Hafenstraße 12, 20457 Hamburg", null),
+                supplierService.create("Bayerische Werkzeug AG", null, null, "Lindwurmstraße 88, 80337 München", null),
+                supplierService.create("Rheinland Elektro KG", null, null, "Domkloster 4, 50667 Köln", null),
+                supplierService.create("Sachsen Logistik und Bedarf GmbH", null, null, "Prager Straße 21, 01069 Dresden", null),
+                supplierService.create("Weserbergland Papierwaren e.K.", null, null, "Osterstraße 7, 31785 Hameln", null));
     }
 
     private List<Customer> seedCustomers() {

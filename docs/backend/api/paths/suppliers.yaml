@@ -19,7 +19,10 @@ get:
           example:
             - id: 7
               name: Acme
+              email: acme@example.com
+              phone: 555-1234
               address: 1 Main St
+              city: Springfield
               createdAt: '2026-01-02T03:04:00'
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'
@@ -27,8 +30,9 @@ get:
 post:
   summary: Create a supplier
   description: |
-    Creates a supplier. Both fields are mandatory and rejected when blank, at the request layer and
-    again in the service.
+    Creates a supplier. Name and address are mandatory and rejected when blank, at the request layer
+    and again in the service. The contact fields are optional; the email is checked for shape when
+    present, matching the customer register.
   operationId: createSupplier
   tags:
     - Suppliers
@@ -50,7 +54,10 @@ post:
           example:
             id: 7
             name: Acme
+            email: acme@example.com
+            phone: 555-1234
             address: 1 Main St
+            city: Springfield
             createdAt: '2026-01-02T03:04:00'
     '400':
       description: Validation failed

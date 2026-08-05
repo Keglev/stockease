@@ -99,7 +99,7 @@ class ErrorEnvelopeCodeIntegrationTest extends AbstractIntegrationTest {
      * the purchase line that no longer has the units to give back.
      */
     private Sold buyAndSellOut(int quantity) {
-        Supplier supplier = suppliers.create("Envelope Supplier " + tag(), "1 Main St");
+        Supplier supplier = suppliers.create("Envelope Supplier " + tag(), null, null, "1 Main St", null);
         Product item = products.create("Envelope Widget " + tag(), "ENV-" + N.incrementAndGet(), 10.0);
         Invoice purchase = invoices.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, tag(),
                 supplier.getId(), null, LocalDate.now().plusDays(30), BigDecimal.ZERO, BigDecimal.ZERO,

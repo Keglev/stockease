@@ -40,7 +40,7 @@ class SupplierFetchControllerTest {
     @SuppressWarnings("unused")
     @BeforeEach
     void setUpMocks() {
-        supplier = new Supplier(1L, "Acme", "1 Main St", LocalDateTime.of(2026, 1, 2, 3, 4), null);
+        supplier = new Supplier(1L, "Acme", null, null, "1 Main St", null, LocalDateTime.of(2026, 1, 2, 3, 4), null);
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
         Mockito.reset(supplierService);
     }

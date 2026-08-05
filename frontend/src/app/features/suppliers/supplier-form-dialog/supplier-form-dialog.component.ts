@@ -8,7 +8,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
 import { SupplierResponse } from '../../../core/api/api-models';
-import { SupplierService } from '../supplier.service';
+import { SupplierPayload, SupplierService } from '../supplier.service';
 
 export interface SupplierFormDialogData {
   supplier?: SupplierResponse;
@@ -40,9 +40,14 @@ export class SupplierFormDialogComponent {
   protected readonly pending = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
+  // Edit mode pre-fills from the supplier, including the optional fields; a null one becomes the
+  // empty string the control needs, and the service turns it back into an absent key on submit.
   protected readonly form = inject(FormBuilder).nonNullable.group({
     name: [this.supplier?.name ?? '', Validators.required],
-    address: [this.supplier?.address ?? '', Validators.required]
+    email: [this.supplier?.email ?? '', Validators.email],
+    phone: [this.supplier?.phone ?? ''],
+    address: [this.supplier?.address ?? '', Validators.required],
+    city: [this.supplier?.city ?? '']
   });
 
   protected submit(): void {
@@ -52,8 +57,7 @@ export class SupplierFormDialogComponent {
     this.pending.set(true);
     this.errorMessage.set(null);
 
-    const { name, address } = this.form.getRawValue();
-    this.request(name, address).subscribe({
+    this.request(this.form.getRawValue()).subscribe({
       next: (saved) => {
         this.pending.set(false);
         this.dialogRef.close(saved);
@@ -70,9 +74,9 @@ export class SupplierFormDialogComponent {
     this.dialogRef.close();
   }
 
-  private request(name: string, address: string): Observable<SupplierResponse> {
+  private request(payload: SupplierPayload): Observable<SupplierResponse> {
     return this.supplier
-      ? this.suppliers.update(this.supplier.id, name, address)
-      : this.suppliers.create(name, address);
+      ? this.suppliers.update(this.supplier.id, payload)
+      : this.suppliers.create(payload);
   }
 }

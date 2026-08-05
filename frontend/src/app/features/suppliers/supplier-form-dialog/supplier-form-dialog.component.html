@@ -13,11 +13,29 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
+      <mat-label>{{ 'suppliers.form.email' | translate }}</mat-label>
+      <input matInput type="email" formControlName="email" />
+      @if (form.controls.email.hasError('email')) {
+        <mat-error>{{ 'suppliers.form.emailInvalid' | translate }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'suppliers.form.phone' | translate }}</mat-label>
+      <input matInput formControlName="phone" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
       <mat-label>{{ 'suppliers.form.address' | translate }}</mat-label>
       <input matInput formControlName="address" />
       @if (form.controls.address.touched && form.controls.address.hasError('required')) {
         <mat-error>{{ 'suppliers.form.addressRequired' | translate }}</mat-error>
       }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'suppliers.form.city' | translate }}</mat-label>
+      <input matInput formControlName="city" />
     </mat-form-field>
 
     <!-- Rendered verbatim: this text comes from the backend, which has no i18n. -->

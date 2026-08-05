@@ -81,7 +81,7 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
      */
     private Product newProduct(String name, int quantity) {
         Product product = productService.create(name, "CF-" + name.hashCode(), 5.0);
-        Supplier supplier = supplierService.create(name + " Supplier", "1 Main St");
+        Supplier supplier = supplierService.create(name + " Supplier", null, null, "1 Main St", null);
         Invoice purchase = invoiceService.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE,
                 nextNumber(), supplier.getId(), null, LocalDate.now(), null, null,
                 List.of(line(product, quantity, "5.00"))));
@@ -132,7 +132,7 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
     @Test
     void cashFlow_paidPurchaseWithSupplierReturn_reducesOutflow() {
         Product product = newProduct("CF Purchase Product", 4);
-        Supplier supplier = supplierService.create("CF Purchase Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("CF Purchase Supplier", null, null, "1 Main St", null);
         Invoice purchase = closedPurchase(supplier.getId(), line(product, 10, "7.00"));
         invoiceService.registerReturn(purchase.getItems().get(0).getId(), 2);
         invoiceService.markAsPaid(purchase.getId());
@@ -169,7 +169,7 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
     void cashFlow_totals_equalRowSums() {
         Customer customer = customerService.create("CF Totals Customer", null, null, null, null);
         Product product = newProduct("CF Totals Product", 10);
-        Supplier supplier = supplierService.create("CF Totals Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("CF Totals Supplier", null, null, "1 Main St", null);
         invoiceService.markAsPaid(closedSale(customer.getId(), line(product, 4, "30.00")).getId());
         invoiceService.markAsPaid(closedPurchase(supplier.getId(), line(product, 6, "9.00")).getId());
 
@@ -212,7 +212,7 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
     void cashFlowTimeline_paidFlowsAcrossMonths_bucketsChronologically() {
         Customer customer = customerService.create("CF TL Spread Customer", null, null, null, null);
         Product product = newProduct("CF TL Spread Product", 40);
-        Supplier supplier = supplierService.create("CF TL Spread Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("CF TL Spread Supplier", null, null, "1 Main St", null);
         // settled out of order, so the ordering asserted below is the query's and not the insert's
         paidOn(closedSale(customer.getId(), line(product, 5, "20.00")), LocalDate.of(2019, 4, 15));
         paidOn(closedPurchase(supplier.getId(), line(product, 6, "9.00")), LocalDate.of(2019, 2, 10));
@@ -244,7 +244,7 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
     @Test
     void cashFlowTimeline_monthWithOnlyOutflow_negativeNet() {
         Product product = newProduct("CF TL Outflow Product", 40);
-        Supplier supplier = supplierService.create("CF TL Outflow Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("CF TL Outflow Supplier", null, null, "1 Main St", null);
         paidOn(closedPurchase(supplier.getId(), line(product, 7, "12.00")), LocalDate.of(2017, 6, 20));
 
         List<CashFlowTimelineBucket> months = timelineOf(2017);
@@ -277,7 +277,7 @@ class CashFlowIntegrationTest extends AbstractIntegrationTest {
     void cashFlowTimeline_scopedToProduct_agreesWithThatProductsRow() {
         Customer customer = customerService.create("CF TL Agree Customer", null, null, null, null);
         Product product = newProduct("CF TL Agree Product", 40);
-        Supplier supplier = supplierService.create("CF TL Agree Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("CF TL Agree Supplier", null, null, "1 Main St", null);
         paidOn(closedSale(customer.getId(), line(product, 5, "20.00")), LocalDate.of(2015, 7, 3));
         paidOn(closedPurchase(supplier.getId(), line(product, 6, "9.00")), LocalDate.of(2015, 7, 8));
 

@@ -49,7 +49,7 @@ const TRANSLATIONS = {
 };
 
 const SUPPLIERS: SupplierResponse[] = [
-  { id: 7, name: 'Acme', address: '1 Main St', createdAt: '2026-01-02T03:04:00' }
+  { id: 7, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '2026-01-02T03:04:00' }
 ];
 
 const CUSTOMERS: CustomerResponse[] = [

@@ -37,7 +37,10 @@ get:
           example:
             - id: 1
               name: Acme Trading
+              email: acme@example.com
+              phone: 555-1234
               address: 1 Main St
+              city: Springfield
               createdAt: '2026-01-02T03:04:00'
     '401':
       $ref: '../openapi.yaml#/components/responses/Unauthorized'

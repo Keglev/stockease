@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.18.0
+  version: 2.19.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -448,7 +448,10 @@ components:
       required:
         - id
         - name
+        - email
+        - phone
         - address
+        - city
         - createdAt
       properties:
         id:
@@ -458,9 +461,21 @@ components:
         name:
           type: string
           example: Acme
+        email:
+          type: string
+          nullable: true
+          example: acme@example.com
+        phone:
+          type: string
+          nullable: true
+          example: 555-1234
         address:
           type: string
           example: 1 Main St
+        city:
+          type: string
+          nullable: true
+          example: Springfield
         createdAt:
           type: string
           description: ISO-8601 local date-time, serialized without a zone offset
@@ -487,12 +502,29 @@ components:
           minLength: 1
           description: 'Must not be blank; message: "Supplier name is required."'
           example: Acme
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: 'Optional, but must be well formed when present; message: "Supplier email must be a valid email address."'
+          example: acme@example.com
+        phone:
+          type: string
+          nullable: true
+          example: 555-1234
         address:
           type: string
           minLength: 1
           description: 'Must not be blank; message: "Supplier address is required."'
           example: 1 Main St
-      description: Body for both supplier creation and update; every field is replaced on update
+        city:
+          type: string
+          nullable: true
+          example: Springfield
+      description: |
+        Body for both supplier creation and update; every field is replaced on update, the optional
+        ones included - omitting `email`, `phone` or `city` on a PUT clears the stored value rather
+        than leaving it in place. `name` and `address` remain mandatory on both operations.
 
     # -------------------------------------------------------------- customers
     CustomerResponse:

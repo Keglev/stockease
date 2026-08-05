@@ -82,7 +82,7 @@ class DeletionGuardIntegrationTest extends AbstractIntegrationTest {
     }
 
     private Supplier newSupplier() {
-        return supplierRepository.saveAndFlush(new Supplier(null, "Guard Supplier", "1 Main St", null, null));
+        return supplierRepository.saveAndFlush(new Supplier(null, "Guard Supplier", null, null, "1 Main St", null, null, null));
     }
 
     /** invoice_number is NOT NULL and unique among live rows, so every fixture takes a fresh one. */

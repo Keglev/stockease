@@ -60,36 +60,51 @@ public class SupplierService {
      * Creates and persists a new supplier.
      *
      * @param name supplier display name; must not be blank
+     * @param email supplier email, may be {@code null}
+     * @param phone supplier phone number, may be {@code null}
      * @param address supplier postal address; must not be blank
+     * @param city supplier city, may be {@code null}
      * @return the persisted supplier including its generated ID
      * @throws IllegalArgumentException if name or address is missing or blank
      */
     @Transactional
-    public Supplier create(String name, String address) {
+    public Supplier create(String name, String email, String phone, String address, String city) {
         requireNameAndAddress(name, address);
         Supplier supplier = new Supplier();
         supplier.setName(name);
+        supplier.setEmail(email);
+        supplier.setPhone(phone);
         supplier.setAddress(address);
+        supplier.setCity(city);
         return supplierRepository.save(supplier);
     }
 
     /**
-     * Updates a supplier's name and address.
+     * Replaces a supplier's fields.
+     *
+     * <p>Every field is replaced, including the optional ones: a {@code null} email clears the
+     * stored email rather than leaving it in place. Name and address remain mandatory.
      *
      * @param id supplier identifier
      * @param name new display name; must not be blank
+     * @param email new email, may be {@code null} to clear it
+     * @param phone new phone number, may be {@code null} to clear it
      * @param address new postal address; must not be blank
+     * @param city new city, may be {@code null} to clear it
      * @return the updated supplier
      * @throws EntityNotFoundException if no supplier exists with the given ID
      * @throws IllegalArgumentException if name or address is missing or blank
      */
     @Transactional
-    public Supplier update(long id, String name, String address) {
+    public Supplier update(long id, String name, String email, String phone, String address, String city) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Supplier with ID " + id + " not found."));
         requireNameAndAddress(name, address);
         supplier.setName(name);
+        supplier.setEmail(email);
+        supplier.setPhone(phone);
         supplier.setAddress(address);
+        supplier.setCity(city);
         return supplierRepository.save(supplier);
     }
 

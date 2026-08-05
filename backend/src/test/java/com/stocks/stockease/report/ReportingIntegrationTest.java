@@ -123,7 +123,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
      * return 2 to the supplier and lose 1.
      */
     private Scenario scenarioA(String productName) {
-        Supplier supplier = supplierService.create(productName + " Supplier", "1 Main St");
+        Supplier supplier = supplierService.create(productName + " Supplier", null, null, "1 Main St", null);
         Product product = newProduct(productName, "10.00");
         Invoice purchase = closedPurchase(supplier.getId(), product.getId(), 10, "10.00");
         Invoice sale = closedSale(product.getId(), 4, "30.00");
@@ -155,7 +155,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void profitForProduct_soldBelowCost_reportsNegativeProfit() {
-        Supplier supplier = supplierService.create("RPT Beta Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("RPT Beta Supplier", null, null, "1 Main St", null);
         Product product = newProduct("RPT Beta Loss Making", "20.00");
         closedPurchase(supplier.getId(), product.getId(), 5, "20.00");
         closedSale(product.getId(), 5, "15.00");
@@ -170,7 +170,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void profit_soldSubsetOfStock_countsOnlySoldUnitsCost() {
-        Supplier supplier = supplierService.create("RPT Subset Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("RPT Subset Supplier", null, null, "1 Main St", null);
         Product product = newProduct("RPT Subset Of Stock", "50.00");
         closedPurchase(supplier.getId(), product.getId(), 10, "50.00");
         closedSale(product.getId(), 4, "80.00");
@@ -186,7 +186,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void profit_supplierReturn_leavesProfitUntouched() {
-        Supplier supplier = supplierService.create("RPT Supplier Return Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("RPT Supplier Return Supplier", null, null, "1 Main St", null);
         Product product = newProduct("RPT Supplier Return", "50.00");
         Invoice purchase = closedPurchase(supplier.getId(), product.getId(), 10, "50.00");
         closedSale(product.getId(), 4, "80.00");
@@ -204,7 +204,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void profit_customerReturn_reversesRevenueAndCogsAtSalePrices() {
-        Supplier supplier = supplierService.create("RPT Customer Return Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("RPT Customer Return Supplier", null, null, "1 Main St", null);
         Product product = newProduct("RPT Customer Return", "50.00");
         closedPurchase(supplier.getId(), product.getId(), 10, "50.00");
         Invoice sale = closedSale(product.getId(), 4, "80.00");
@@ -221,7 +221,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void profit_fromToWindow_excludesMovementsOutsideRange() {
-        Supplier supplier = supplierService.create("RPT Window Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("RPT Window Supplier", null, null, "1 Main St", null);
         Product product = newProduct("RPT Window Product", "50.00");
         closedPurchase(supplier.getId(), product.getId(), 10, "50.00");
         closedSale(product.getId(), 4, "80.00");
@@ -245,7 +245,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void profitPerProduct_softDeletedProduct_stillListed() {
-        Supplier supplier = supplierService.create("RPT Gamma Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("RPT Gamma Supplier", null, null, "1 Main St", null);
         Product product = newProduct("RPT Gamma Deleted", "10.00");
         closedPurchase(supplier.getId(), product.getId(), 3, "10.00");
         // A stocked product cannot be deleted (ADR 033), and the purchase above stocked it. Writing
@@ -276,8 +276,8 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void profitPerSupplier_productFromTwoSuppliers_countsFullyForEach() {
-        Supplier first = supplierService.create("RPT Shared Supplier X", "1 Main St");
-        Supplier second = supplierService.create("RPT Shared Supplier Y", "2 Side St");
+        Supplier first = supplierService.create("RPT Shared Supplier X", null, null, "1 Main St", null);
+        Supplier second = supplierService.create("RPT Shared Supplier Y", null, null, "2 Side St", null);
         Product product = newProduct("RPT Shared Two Suppliers", "10.00");
         closedPurchase(first.getId(), product.getId(), 5, "10.00");
         closedPurchase(second.getId(), product.getId(), 5, "12.00");
@@ -423,7 +423,7 @@ class ReportingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void overdue_closedUnpaidPastDue_listedWithDaysOverdue() {
-        Supplier supplier = supplierService.create("RPT Overdue Supplier", "1 Main St");
+        Supplier supplier = supplierService.create("RPT Overdue Supplier", null, null, "1 Main St", null);
         Product product = newProduct("RPT Overdue Widget", "10.00");
         Invoice late = overduePurchase(supplier.getId(), product.getId());
         Invoice settled = overduePurchase(supplier.getId(), product.getId());

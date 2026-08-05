@@ -67,7 +67,7 @@ class PurchasePriceOnCloseIntegrationTest extends AbstractIntegrationTest {
     }
 
     private Supplier newSupplier() {
-        return supplierRepository.saveAndFlush(new Supplier(null, "Reprice Supplier", "1 Main St", null, null));
+        return supplierRepository.saveAndFlush(new Supplier(null, "Reprice Supplier", null, null, "1 Main St", null, null, null));
     }
 
     private static CreateInvoiceCommand.ItemLine line(Product product, String unitPrice) {

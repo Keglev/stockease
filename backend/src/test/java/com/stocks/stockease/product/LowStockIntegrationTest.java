@@ -81,7 +81,7 @@ class LowStockIntegrationTest extends AbstractIntegrationTest {
         invoice.setInvoiceNumber(nextNumber());
         invoice.setType(type);
         if (type == InvoiceType.PURCHASE) {
-            invoice.setSupplier(supplierRepository.saveAndFlush(new Supplier(null, "Acme", "1 Main St", null, null)));
+            invoice.setSupplier(supplierRepository.saveAndFlush(new Supplier(null, "Acme", null, null, "1 Main St", null, null, null)));
         }
         // movements are rejected against open invoices, so the fixture stands in for an already-booked one
         invoice.setStatus(InvoiceStatus.CLOSED);
