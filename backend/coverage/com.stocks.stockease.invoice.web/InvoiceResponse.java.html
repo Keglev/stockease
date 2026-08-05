@@ -11,8 +11,10 @@ import com.stocks.stockease.invoice.InvoiceType;
 /**
  * API representation of a single invoice in full, including its lines and counterparty names.
  *
- * &lt;p&gt;Reads associations that are lazy on the entity, so it may only be built from an invoice loaded
- * through the fetch-joined detail query; building it from a list query would fail outside a session.
+ * &lt;p&gt;Touches no association. Names come from the invoice's snapshot columns and ids from its
+ * foreign-key scalars, both of which are plain columns on the invoice row - so this builds from any
+ * loaded invoice, in or out of a session, and keeps naming its parties after they are soft-deleted
+ * (ADR 033). Only the items collection still needs initializing, which the detail query fetches.
  *
  * @param id unique invoice identifier
  * @param invoiceNumber operator-assigned business identifier; never {@code null}
@@ -28,23 +30,21 @@ import com.stocks.stockease.invoice.InvoiceType;
  * @param createdAt moment the invoice was first persisted
  * @param items the invoice's lines
  */
-<span class="fc" id="L31">public record InvoiceResponse(Long id, String invoiceNumber, InvoiceType type, InvoiceStatus status,</span>
+<span class="fc" id="L33">public record InvoiceResponse(Long id, String invoiceNumber, InvoiceType type, InvoiceStatus status,</span>
         LocalDate dueDate, Long supplierId, String supplierName, Long customerId, String customerName,
         LocalDateTime closedAt, LocalDateTime paidAt, LocalDateTime createdAt, List&lt;InvoiceItemResponse&gt; items) {
 
     /**
      * Maps a fetch-joined invoice to its detail representation.
      *
-     * @param invoice the entity to map, loaded with items, products and counterparties initialized
+     * @param invoice the entity to map, loaded with its items initialized; the parties need not be
      * @return the detail record
      */
     public static InvoiceResponse from(Invoice invoice) {
-<span class="fc" id="L42">        return new InvoiceResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),</span>
-<span class="fc" id="L43">                invoice.getStatus(), invoice.getDueDate(),</span>
-<span class="fc bfc" id="L44" title="All 2 branches covered.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),</span>
-<span class="fc bfc" id="L45" title="All 2 branches covered.">                invoice.getSupplier() == null ? null : invoice.getSupplier().getName(),</span>
-<span class="fc bfc" id="L46" title="All 2 branches covered.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),</span>
-<span class="fc bfc" id="L47" title="All 2 branches covered.">                invoice.getCustomer() == null ? null : invoice.getCustomer().getName(),</span>
+<span class="fc" id="L44">        return new InvoiceResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),</span>
+<span class="fc" id="L45">                invoice.getStatus(), invoice.getDueDate(),</span>
+<span class="fc" id="L46">                invoice.getSupplierId(), invoice.getSupplierName(),</span>
+<span class="fc" id="L47">                invoice.getCustomerId(), invoice.getCustomerName(),</span>
 <span class="fc" id="L48">                invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt(),</span>
 <span class="fc" id="L49">                invoice.getItems().stream().map(InvoiceItemResponse::from).toList());</span>
     }

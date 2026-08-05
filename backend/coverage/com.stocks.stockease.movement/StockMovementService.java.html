@@ -14,6 +14,7 @@ import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
 
@@ -40,7 +41,7 @@ public class StockMovementService {
      */
     @Transactional(readOnly = true)
     public List&lt;StockMovement&gt; findByUser(long userId) {
-<span class="fc" id="L43">        return stockMovementRepository.findByUserIdOrderByCreatedAtDesc(userId);</span>
+<span class="fc" id="L44">        return stockMovementRepository.findByUserIdOrderByCreatedAtDesc(userId);</span>
     }
 
     /**
@@ -56,130 +57,152 @@ public class StockMovementService {
      */
     @Transactional
     public StockMovement recordMovement(RecordMovementCommand command, User user) {
-<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (user == null) {</span>
-<span class="fc" id="L60">            throw new InvalidMovementException(&quot;User is required.&quot;);</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (user == null) {</span>
+<span class="fc" id="L61">            throw new InvalidMovementException(&quot;User is required.&quot;);</span>
         }
-<span class="pc bpc" id="L62" title="1 of 4 branches missed.">        if (command.productId() == null || command.reason() == null) {</span>
-<span class="fc" id="L63">            throw new InvalidMovementException(&quot;Product and reason are required.&quot;);</span>
+<span class="pc bpc" id="L63" title="1 of 4 branches missed.">        if (command.productId() == null || command.reason() == null) {</span>
+<span class="fc" id="L64">            throw new InvalidMovementException(&quot;Product and reason are required.&quot;);</span>
         }
-<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (command.quantity() &lt;= 0) {</span>
-<span class="fc" id="L66">            throw new InvalidMovementException(&quot;Quantity must be positive.&quot;);</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (command.quantity() &lt;= 0) {</span>
+<span class="fc" id="L67">            throw new InvalidMovementException(&quot;Quantity must be positive.&quot;);</span>
         }
 
-<span class="fc" id="L69">        MovementReason reason = command.reason();</span>
-<span class="fc" id="L70">        validateFields(command, reason);</span>
+<span class="fc" id="L70">        MovementReason reason = command.reason();</span>
+<span class="fc" id="L71">        validateFields(command, reason);</span>
 
-<span class="fc bfc" id="L72" title="All 2 branches covered.">        InvoiceItem item = requiresInvoiceItem(reason) ? loadAndValidateItem(command, reason) : null;</span>
-<span class="fc bfc" id="L73" title="All 4 branches covered.">        if (reason == MovementReason.PURCHASE || reason == MovementReason.SOLD) {</span>
-<span class="fc" id="L74">            validateNotAlreadyRecorded(command, reason, item);</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        InvoiceItem item = requiresInvoiceItem(reason) ? loadAndValidateItem(command, reason) : null;</span>
+<span class="fc bfc" id="L74" title="All 4 branches covered.">        if (reason == MovementReason.PURCHASE || reason == MovementReason.SOLD) {</span>
+<span class="fc" id="L75">            validateNotAlreadyRecorded(command, reason, item);</span>
         }
-<span class="fc bfc" id="L76" title="All 4 branches covered.">        if (reason == MovementReason.RETURN_FROM_CUSTOMER || reason == MovementReason.RETURNED_TO_SUPPLIER) {</span>
+<span class="fc bfc" id="L77" title="All 4 branches covered.">        if (reason == MovementReason.RETURN_FROM_CUSTOMER || reason == MovementReason.RETURNED_TO_SUPPLIER) {</span>
+<span class="fc" id="L78">            rejectReturnAgainstDeletedProduct(item);</span>
             // cap enforcement and the returnedQty increment join this transaction
-<span class="fc" id="L78">            invoiceService.registerReturn(command.invoiceItemId(), command.quantity());</span>
+<span class="fc" id="L80">            invoiceService.registerReturn(command.invoiceItemId(), command.quantity());</span>
         }
 
-<span class="fc bfc" id="L81" title="All 2 branches covered.">        int delta = reason.getType() == MovementType.INCREASE ? command.quantity() : -command.quantity();</span>
-<span class="fc" id="L82">        Product product = productService.adjustQuantity(command.productId(), delta);</span>
-<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (reason == MovementReason.PURCHASE) {</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        int delta = reason.getType() == MovementType.INCREASE ? command.quantity() : -command.quantity();</span>
+<span class="fc" id="L84">        Product product = productService.adjustQuantity(command.productId(), delta);</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (reason == MovementReason.PURCHASE) {</span>
             // a purchase is the only way stock enters (ADR 021), so it is the only reason that can make a
             // product ever-stocked; the flag rides the same transaction as the quantity it derives from
-<span class="fc" id="L86">            productService.markEverStocked(product);</span>
+<span class="fc" id="L88">            productService.markEverStocked(product);</span>
         }
 
-<span class="fc" id="L89">        return stockMovementRepository.save(buildMovement(command, reason, user, product, item));</span>
+<span class="fc" id="L91">        return stockMovementRepository.save(buildMovement(command, reason, user, product, item));</span>
     }
+
+    /**
+     * Refuses a return whose product has been soft-deleted, and says how to proceed.
+     *
+     * &lt;p&gt;Returns move stock, and stock belongs to a live product: accepting one here would credit
+     * units to a row no catalogue, stock report or picker shows, leaving inventory that exists in the
+     * ledger and nowhere else. Restoring the product first makes the return an ordinary one, which is
+     * the manual path this message points at (ADR 033).
+     *
+     * &lt;p&gt;Checked by querying live products with the line's foreign-key scalar rather than through
+     * {@code item.getProduct()}: the association is exactly what a soft-deleted row hides, so asking
+     * it would raise Hibernate's own error instead of this explanation.
+     */
+    private void rejectReturnAgainstDeletedProduct(InvoiceItem item) {
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (productService.findById(item.getProductId()).isEmpty()) {</span>
+<span class="fc" id="L108">            throw new EntityInUseException(&quot;Cannot register a return for '&quot; + item.getProductName()</span>
+                    + &quot;': the product is deleted. Restore it first, then record the return.&quot;);
+        }
+<span class="fc" id="L111">    }</span>
 
     /** Rejects fields the reason forbids and demands the ones it requires. */
     private void validateFields(RecordMovementCommand command, MovementReason reason) {
-<span class="fc bfc" id="L94" title="All 2 branches covered.">        switch (reason) {</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        switch (reason) {</span>
             case LOST, DESTROYED -&gt; {
-<span class="fc bfc" id="L96" title="All 4 branches covered.">                if (command.invoiceItemId() != null || command.unitCost() != null) {</span>
-<span class="fc" id="L97">                    throw new InvalidMovementException(</span>
+<span class="fc bfc" id="L117" title="All 4 branches covered.">                if (command.invoiceItemId() != null || command.unitCost() != null) {</span>
+<span class="fc" id="L118">                    throw new InvalidMovementException(</span>
                             &quot;LOST and DESTROYED movements carry no invoice item or prices.&quot;);
                 }
-<span class="fc bfc" id="L100" title="All 2 branches covered.">                if (command.remark() == null) {</span>
-<span class="fc" id="L101">                    throw new InvalidMovementException(&quot;LOST and DESTROYED movements require a remark.&quot;);</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">                if (command.remark() == null) {</span>
+<span class="fc" id="L122">                    throw new InvalidMovementException(&quot;LOST and DESTROYED movements require a remark.&quot;);</span>
                 }
             }
             default -&gt; {
-<span class="fc bfc" id="L105" title="All 2 branches covered.">                if (command.invoiceItemId() == null) {</span>
-<span class="fc" id="L106">                    throw new InvalidMovementException(reason + &quot; movements require an invoice item.&quot;);</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">                if (command.invoiceItemId() == null) {</span>
+<span class="fc" id="L127">                    throw new InvalidMovementException(reason + &quot; movements require an invoice item.&quot;);</span>
                 }
-<span class="fc bfc" id="L108" title="All 2 branches covered.">                if (command.unitCost() != null) {</span>
-<span class="fc" id="L109">                    throw new InvalidMovementException(</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">                if (command.unitCost() != null) {</span>
+<span class="fc" id="L130">                    throw new InvalidMovementException(</span>
                             &quot;Unit cost is derived from the invoice item and must not be supplied.&quot;);
                 }
-<span class="fc bfc" id="L112" title="All 2 branches covered.">                if (command.remark() != null) {</span>
-<span class="fc" id="L113">                    throw new InvalidMovementException(</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">                if (command.remark() != null) {</span>
+<span class="fc" id="L134">                    throw new InvalidMovementException(</span>
                             &quot;A remark explains a loss and must not be supplied for &quot; + reason + &quot; movements.&quot;);
                 }
             }
         }
-<span class="fc" id="L118">    }</span>
+<span class="fc" id="L139">    }</span>
 
     /** Loads the linked invoice item and checks it matches the movement's invoice type and product. */
     private InvoiceItem loadAndValidateItem(RecordMovementCommand command, MovementReason reason) {
-<span class="fc" id="L122">        InvoiceItem item = invoiceService.findItemById(command.invoiceItemId())</span>
-<span class="fc" id="L123">                .orElseThrow(() -&gt; new EntityNotFoundException(</span>
-<span class="fc" id="L124">                        &quot;Invoice item with ID &quot; + command.invoiceItemId() + &quot; not found.&quot;));</span>
-<span class="fc bfc" id="L125" title="All 4 branches covered.">        InvoiceType requiredType = reason == MovementReason.PURCHASE || reason == MovementReason.RETURNED_TO_SUPPLIER</span>
-<span class="fc" id="L126">                ? InvoiceType.PURCHASE</span>
-<span class="fc" id="L127">                : InvoiceType.SALE;</span>
-<span class="fc bfc" id="L128" title="All 2 branches covered.">        if (item.getInvoice().getType() != requiredType) {</span>
-<span class="fc" id="L129">            throw new InvalidMovementException(</span>
+<span class="fc" id="L143">        InvoiceItem item = invoiceService.findItemById(command.invoiceItemId())</span>
+<span class="fc" id="L144">                .orElseThrow(() -&gt; new EntityNotFoundException(</span>
+<span class="fc" id="L145">                        &quot;Invoice item with ID &quot; + command.invoiceItemId() + &quot; not found.&quot;));</span>
+<span class="fc bfc" id="L146" title="All 4 branches covered.">        InvoiceType requiredType = reason == MovementReason.PURCHASE || reason == MovementReason.RETURNED_TO_SUPPLIER</span>
+<span class="fc" id="L147">                ? InvoiceType.PURCHASE</span>
+<span class="fc" id="L148">                : InvoiceType.SALE;</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (item.getInvoice().getType() != requiredType) {</span>
+<span class="fc" id="L150">            throw new InvalidMovementException(</span>
                     reason + &quot; movements must reference a &quot; + requiredType + &quot; invoice item.&quot;);
         }
-<span class="fc bfc" id="L132" title="All 2 branches covered.">        if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {</span>
-<span class="fc" id="L133">            throw new InvalidMovementException(&quot;Movements cannot be recorded against an open invoice.&quot;);</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {</span>
+<span class="fc" id="L154">            throw new InvalidMovementException(&quot;Movements cannot be recorded against an open invoice.&quot;);</span>
         }
-<span class="fc bfc" id="L135" title="All 2 branches covered.">        if (!item.getProduct().getId().equals(command.productId())) {</span>
-<span class="fc" id="L136">            throw new InvalidMovementException(</span>
-<span class="fc" id="L137">                    &quot;Invoice item &quot; + command.invoiceItemId() + &quot; belongs to a different product.&quot;);</span>
+        // the line's foreign-key scalar rather than the association: a soft-deleted product must
+        // reach the return guard's explanation rather than Hibernate's proxy error (ADR 033)
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        if (!item.getProductId().equals(command.productId())) {</span>
+<span class="fc" id="L159">            throw new InvalidMovementException(</span>
+<span class="fc" id="L160">                    &quot;Invoice item &quot; + command.invoiceItemId() + &quot; belongs to a different product.&quot;);</span>
         }
-<span class="fc" id="L139">        return item;</span>
+<span class="fc" id="L162">        return item;</span>
     }
 
     /** Holds a purchase or sale to its invoice line's exact quantity, once per line. */
     private void validateNotAlreadyRecorded(RecordMovementCommand command, MovementReason reason, InvoiceItem item) {
-<span class="fc bfc" id="L144" title="All 2 branches covered.">        if (command.quantity() != item.getQuantity()) {</span>
-<span class="fc" id="L145">            throw new InvalidMovementException(</span>
-<span class="fc" id="L146">                    &quot;Movement quantity must equal the invoice item quantity (&quot; + item.getQuantity() + &quot;).&quot;);</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        if (command.quantity() != item.getQuantity()) {</span>
+<span class="fc" id="L168">            throw new InvalidMovementException(</span>
+<span class="fc" id="L169">                    &quot;Movement quantity must equal the invoice item quantity (&quot; + item.getQuantity() + &quot;).&quot;);</span>
         }
-<span class="fc bfc" id="L148" title="All 2 branches covered.">        if (stockMovementRepository.existsByInvoiceItemIdAndReason(command.invoiceItemId(), reason)) {</span>
-<span class="fc" id="L149">            throw new InvalidMovementException(</span>
-<span class="fc" id="L150">                    &quot;A &quot; + reason + &quot; movement already exists for invoice item &quot; + command.invoiceItemId() + &quot;.&quot;);</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">        if (stockMovementRepository.existsByInvoiceItemIdAndReason(command.invoiceItemId(), reason)) {</span>
+<span class="fc" id="L172">            throw new InvalidMovementException(</span>
+<span class="fc" id="L173">                    &quot;A &quot; + reason + &quot; movement already exists for invoice item &quot; + command.invoiceItemId() + &quot;.&quot;);</span>
         }
-<span class="fc" id="L152">    }</span>
+<span class="fc" id="L175">    }</span>
 
     /** Assembles the movement row, snapshotting prices from the invoice item rather than the caller. */
     private StockMovement buildMovement(RecordMovementCommand command, MovementReason reason, User user,
             Product product, InvoiceItem item) {
-<span class="fc" id="L157">        StockMovement movement = new StockMovement();</span>
-<span class="fc" id="L158">        movement.setProduct(product);</span>
-<span class="fc" id="L159">        movement.setUser(user);</span>
-<span class="fc" id="L160">        movement.setType(reason.getType());</span>
-<span class="fc" id="L161">        movement.setReason(reason);</span>
-<span class="fc" id="L162">        movement.setQuantity(command.quantity());</span>
-<span class="fc" id="L163">        movement.setInvoiceItem(item);</span>
+<span class="fc" id="L180">        StockMovement movement = new StockMovement();</span>
+<span class="fc" id="L181">        movement.setProduct(product);</span>
+<span class="fc" id="L182">        movement.setUser(user);</span>
+<span class="fc" id="L183">        movement.setType(reason.getType());</span>
+<span class="fc" id="L184">        movement.setReason(reason);</span>
+<span class="fc" id="L185">        movement.setQuantity(command.quantity());</span>
+<span class="fc" id="L186">        movement.setInvoiceItem(item);</span>
         // null for every reason but LOST and DESTROYED, which validation has already required it for
-<span class="fc" id="L165">        movement.setRemark(command.remark());</span>
-<span class="fc bfc" id="L166" title="All 4 branches covered.">        switch (reason) {</span>
-<span class="fc" id="L167">            case PURCHASE -&gt; movement.setUnitCost(item.getUnitPrice());</span>
+<span class="fc" id="L188">        movement.setRemark(command.remark());</span>
+<span class="fc bfc" id="L189" title="All 4 branches covered.">        switch (reason) {</span>
+<span class="fc" id="L190">            case PURCHASE -&gt; movement.setUnitCost(item.getUnitPrice());</span>
             case SOLD -&gt; {
-<span class="fc" id="L169">                movement.setSoldPrice(item.getUnitPrice());</span>
+<span class="fc" id="L192">                movement.setSoldPrice(item.getUnitPrice());</span>
                 // The COGS snapshot: what these units cost at the moment they left. The product's
                 // purchase price may change afterwards without rewriting this sale's profit (ADR 024).
-<span class="fc" id="L172">                movement.setUnitCost(product.getPurchasePrice());</span>
-<span class="fc" id="L173">            }</span>
+<span class="fc" id="L195">                movement.setUnitCost(product.getPurchasePrice());</span>
+<span class="fc" id="L196">            }</span>
             case RETURN_FROM_CUSTOMER -&gt; {
-<span class="fc" id="L175">                movement.setSoldPrice(item.getUnitPrice());</span>
-<span class="fc" id="L176">                movement.setUnitCost(saleUnitCost(item));</span>
-<span class="fc" id="L177">            }</span>
+<span class="fc" id="L198">                movement.setSoldPrice(item.getUnitPrice());</span>
+<span class="fc" id="L199">                movement.setUnitCost(saleUnitCost(item));</span>
+<span class="fc" id="L200">            }</span>
             default -&gt; {
                 // LOST, DESTROYED and RETURNED_TO_SUPPLIER carry no price snapshot
             }
         }
-<span class="fc" id="L182">        return movement;</span>
+<span class="fc" id="L205">        return movement;</span>
     }
 
     /**
@@ -189,16 +212,16 @@ public class StockMovementService {
         // Deliberately not the product's current price: a price change between sale and return would
         // make the reversal cancel a different amount than the sale added. After the V20 backfill
         // every SOLD movement carries a cost, so a legitimate return always finds one.
-<span class="fc" id="L192">        return stockMovementRepository</span>
-<span class="fc" id="L193">                .findFirstByInvoiceItemIdAndReason(item.getId(), MovementReason.SOLD)</span>
-<span class="fc" id="L194">                .map(StockMovement::getUnitCost)</span>
-<span class="pc" id="L195">                .orElseThrow(() -&gt; new InvalidMovementException(</span>
+<span class="fc" id="L215">        return stockMovementRepository</span>
+<span class="fc" id="L216">                .findFirstByInvoiceItemIdAndReason(item.getId(), MovementReason.SOLD)</span>
+<span class="fc" id="L217">                .map(StockMovement::getUnitCost)</span>
+<span class="pc" id="L218">                .orElseThrow(() -&gt; new InvalidMovementException(</span>
                         &quot;A customer return requires the stock movement of the sale it reverses.&quot;));
     }
 
     /** Reports whether the reason must be backed by an invoice line. */
     private static boolean requiresInvoiceItem(MovementReason reason) {
-<span class="fc bfc" id="L201" title="All 8 branches covered.">        return reason == MovementReason.PURCHASE || reason == MovementReason.SOLD</span>
+<span class="fc bfc" id="L224" title="All 8 branches covered.">        return reason == MovementReason.PURCHASE || reason == MovementReason.SOLD</span>
                 || reason == MovementReason.RETURN_FROM_CUSTOMER || reason == MovementReason.RETURNED_TO_SUPPLIER;
     }
 }

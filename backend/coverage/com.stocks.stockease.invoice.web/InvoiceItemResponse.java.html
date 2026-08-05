@@ -7,16 +7,17 @@ import com.stocks.stockease.invoice.InvoiceItem;
 /**
  * API representation of a single invoice line.
  *
- * &lt;p&gt;Reads the product's name, so it may only be built from an item whose product is initialized.
+ * &lt;p&gt;Touches no association: the name comes from the line's own snapshot and the id from its
+ * foreign-key scalar, so a line whose product has since been soft-deleted still renders (ADR 033).
  *
  * @param id unique invoice item identifier
  * @param productId product purchased or sold on this line
- * @param productName product display name at read time
+ * @param productName product name as it stood when the invoice was issued
  * @param quantity number of units on the line
  * @param unitPrice price snapshot per unit
  * @param returnedQty number of units returned so far
  */
-<span class="fc" id="L19">public record InvoiceItemResponse(Long id, Long productId, String productName, Integer quantity, BigDecimal unitPrice,</span>
+<span class="fc" id="L20">public record InvoiceItemResponse(Long id, Long productId, String productName, Integer quantity, BigDecimal unitPrice,</span>
         Integer returnedQty) {
 
     /**
@@ -26,8 +27,8 @@ import com.stocks.stockease.invoice.InvoiceItem;
      * @return the item record
      */
     public static InvoiceItemResponse from(InvoiceItem item) {
-<span class="fc" id="L29">        return new InvoiceItemResponse(item.getId(), item.getProduct().getId(), item.getProduct().getName(),</span>
-<span class="fc" id="L30">                item.getQuantity(), item.getUnitPrice(), item.getReturnedQty());</span>
+<span class="fc" id="L30">        return new InvoiceItemResponse(item.getId(), item.getProductId(), item.getProductName(),</span>
+<span class="fc" id="L31">                item.getQuantity(), item.getUnitPrice(), item.getReturnedQty());</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
