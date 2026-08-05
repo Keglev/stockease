@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LossByRemark.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.report</a> &gt; <span class="el_source">LossByRemark.java</span></div><h1>LossByRemark.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.report;
+
+import java.math.BigDecimal;
+
+/**
+ * Units written off under one remark, valued at each product's current purchase price.
+ *
+ * &lt;p&gt;The per-product loss report answers which products were written off; this answers why. The
+ * remark taxonomy was chosen to be groupable across both write-off reasons (ADR 020), which is what
+ * makes a single row per remark a meaningful total rather than a mixture of incomparable things.
+ *
+ * @param remark the recorded cause, one of the {@code MovementRemark} values
+ * @param lostUnits units written off as lost under this remark
+ * @param destroyedUnits units written off as destroyed under this remark
+ * @param lossValue the combined units valued at their products' current purchase prices
+ */
+<span class="fc" id="L17">public record LossByRemark(String remark, int lostUnits, int destroyedUnits, BigDecimal lossValue) {</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

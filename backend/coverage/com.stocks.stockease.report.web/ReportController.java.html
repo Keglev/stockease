@@ -18,6 +18,7 @@ import com.stocks.stockease.report.CashFlowTimelineBucket;
 import com.stocks.stockease.report.CustomerSummary;
 import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
+import com.stocks.stockease.report.LossByRemark;
 import com.stocks.stockease.report.LossReport;
 import com.stocks.stockease.report.ProductProfitReport;
 import com.stocks.stockease.report.ReportingService;
@@ -67,8 +68,8 @@ public class ReportController {
     public List&lt;ProductProfitReport&gt; profitPerProduct(
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
-<span class="fc" id="L70">        validatePeriod(from, to);</span>
-<span class="fc" id="L71">        return reportingService.profitPerProduct(from, to);</span>
+<span class="fc" id="L71">        validatePeriod(from, to);</span>
+<span class="fc" id="L72">        return reportingService.profitPerProduct(from, to);</span>
     }
 
     /**
@@ -86,10 +87,10 @@ public class ReportController {
     public ResponseEntity&lt;ApiResponse&lt;ProductProfitReport&gt;&gt; profitForProduct(@PathVariable long id,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
-<span class="fc" id="L89">        validatePeriod(from, to);</span>
-<span class="fc" id="L90">        ProductProfitReport report = reportingService.profitForProduct(id, from, to)</span>
-<span class="fc" id="L91">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;No profit report for product with ID &quot; + id + &quot;.&quot;));</span>
-<span class="fc" id="L92">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Product profit fetched successfully&quot;, report));</span>
+<span class="fc" id="L90">        validatePeriod(from, to);</span>
+<span class="fc" id="L91">        ProductProfitReport report = reportingService.profitForProduct(id, from, to)</span>
+<span class="fc" id="L92">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;No profit report for product with ID &quot; + id + &quot;.&quot;));</span>
+<span class="fc" id="L93">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Product profit fetched successfully&quot;, report));</span>
     }
 
     /**
@@ -105,8 +106,8 @@ public class ReportController {
     public CashFlowReport cashFlow(
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
-<span class="fc" id="L108">        validatePeriod(from, to);</span>
-<span class="fc" id="L109">        return reportingService.cashFlow(from, to);</span>
+<span class="fc" id="L109">        validatePeriod(from, to);</span>
+<span class="fc" id="L110">        return reportingService.cashFlow(from, to);</span>
     }
 
     /**
@@ -129,14 +130,14 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to,
             @RequestParam(required = false) Long productId) {
-<span class="fc" id="L132">        validatePeriod(from, to);</span>
+<span class="fc" id="L133">        validatePeriod(from, to);</span>
         // Checked rather than left to return an empty series, matching the stock-history endpoint: a
         // product that moved no money and a product that does not exist are different answers, and
         // only the second is the caller's mistake.
-<span class="fc bfc" id="L136" title="All 4 branches covered.">        if (productId != null &amp;&amp; !reportingService.productExists(productId)) {</span>
-<span class="fc" id="L137">            throw new EntityNotFoundException(&quot;Product with ID &quot; + productId + &quot; not found.&quot;);</span>
+<span class="fc bfc" id="L137" title="All 4 branches covered.">        if (productId != null &amp;&amp; !reportingService.productExists(productId)) {</span>
+<span class="fc" id="L138">            throw new EntityNotFoundException(&quot;Product with ID &quot; + productId + &quot; not found.&quot;);</span>
         }
-<span class="fc" id="L139">        return reportingService.cashFlowTimeline(from, to, productId);</span>
+<span class="fc" id="L140">        return reportingService.cashFlowTimeline(from, to, productId);</span>
     }
 
     /**
@@ -158,8 +159,8 @@ public class ReportController {
     @GetMapping(&quot;/suppliers/{id}/products/search&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;SupplierProduct&gt; supplierProducts(@PathVariable long id, @RequestParam String name) {
-<span class="fc" id="L161">        return reportingService.supplierProducts(id, name)</span>
-<span class="fc" id="L162">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L162">        return reportingService.supplierProducts(id, name)</span>
+<span class="fc" id="L163">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
     }
 
     /**
@@ -177,19 +178,19 @@ public class ReportController {
     public List&lt;StockHistoryPoint&gt; stockHistory(@PathVariable long id,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
-<span class="fc" id="L180">        validatePeriod(from, to);</span>
+<span class="fc" id="L181">        validatePeriod(from, to);</span>
         // An empty optional means no such product; an empty list means one that never moved. Only
         // the first is a 404 - a product nobody has traded yet has a real, empty history.
-<span class="fc" id="L183">        return reportingService.stockHistory(id, from, to)</span>
-<span class="fc" id="L184">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L184">        return reportingService.stockHistory(id, from, to)</span>
+<span class="fc" id="L185">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Product with ID &quot; + id + &quot; not found.&quot;));</span>
     }
 
     /** Rejects a period whose bounds are the wrong way round; either bound alone is always valid. */
     private static void validatePeriod(LocalDate from, LocalDate to) {
-<span class="pc bpc" id="L189" title="1 of 6 branches missed.">        if (from != null &amp;&amp; to != null &amp;&amp; from.isAfter(to)) {</span>
-<span class="fc" id="L190">            throw new IllegalArgumentException(&quot;The start of the period must not be after its end.&quot;);</span>
+<span class="pc bpc" id="L190" title="1 of 6 branches missed.">        if (from != null &amp;&amp; to != null &amp;&amp; from.isAfter(to)) {</span>
+<span class="fc" id="L191">            throw new IllegalArgumentException(&quot;The start of the period must not be after its end.&quot;);</span>
         }
-<span class="fc" id="L192">    }</span>
+<span class="fc" id="L193">    }</span>
 
     /**
      * Returns gross profit attributed to each supplier across the products it has supplied.
@@ -204,8 +205,8 @@ public class ReportController {
     public List&lt;SupplierProfitReport&gt; profitPerSupplier(
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
-<span class="fc" id="L207">        validatePeriod(from, to);</span>
-<span class="fc" id="L208">        return reportingService.profitPerSupplier(from, to);</span>
+<span class="fc" id="L208">        validatePeriod(from, to);</span>
+<span class="fc" id="L209">        return reportingService.profitPerSupplier(from, to);</span>
     }
 
     /**
@@ -218,9 +219,9 @@ public class ReportController {
     @GetMapping(&quot;/customers/{id}/summary&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;CustomerSummary&gt;&gt; customerSummary(@PathVariable long id) {
-<span class="fc" id="L221">        CustomerSummary summary = reportingService.customerSummary(id)</span>
-<span class="fc" id="L222">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L223">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Customer summary fetched successfully&quot;, summary));</span>
+<span class="fc" id="L222">        CustomerSummary summary = reportingService.customerSummary(id)</span>
+<span class="fc" id="L223">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L224">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Customer summary fetched successfully&quot;, summary));</span>
     }
 
     /**
@@ -231,7 +232,7 @@ public class ReportController {
     @GetMapping(&quot;/stock-status&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;StockStatusReport&gt; stockStatus() {
-<span class="fc" id="L234">        return reportingService.stockStatus();</span>
+<span class="fc" id="L235">        return reportingService.stockStatus();</span>
     }
 
     /**
@@ -247,8 +248,28 @@ public class ReportController {
     public List&lt;LossReport&gt; lossReport(
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
-<span class="fc" id="L250">        validatePeriod(from, to);</span>
-<span class="fc" id="L251">        return reportingService.lossReport(from, to);</span>
+<span class="fc" id="L251">        validatePeriod(from, to);</span>
+<span class="fc" id="L252">        return reportingService.lossReport(from, to);</span>
+    }
+
+    /**
+     * Returns the same write-offs grouped by the remark recorded against them.
+     *
+     * &lt;p&gt;A sub-view of {@code /losses}, in the shape {@code /cash-flow/timeline} uses for its own:
+     * the same window, the same losses, re-aggregated by cause rather than by product.
+     *
+     * @param from first booking date to count, or {@code null} for no lower bound
+     * @param to last booking date to count, or {@code null} for no upper bound
+     * @return one row per remark with at least one loss movement in the window
+     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     */
+    @GetMapping(&quot;/losses/by-remark&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public List&lt;LossByRemark&gt; lossesByRemark(
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
+<span class="nc" id="L271">        validatePeriod(from, to);</span>
+<span class="nc" id="L272">        return reportingService.lossesByRemark(from, to);</span>
     }
 
     /**
@@ -259,7 +280,7 @@ public class ReportController {
     @GetMapping(&quot;/due-dates&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;DueDateBucket&gt; dueDateBuckets() {
-<span class="fc" id="L262">        return reportingService.dueDateBuckets();</span>
+<span class="fc" id="L283">        return reportingService.dueDateBuckets();</span>
     }
 
     /**
@@ -273,10 +294,10 @@ public class ReportController {
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceDueSummary&gt; dueSoon(
             @RequestParam(defaultValue = &quot;&quot; + DEFAULT_DUE_SOON_DAYS) int days) {
-<span class="fc bfc" id="L276" title="All 2 branches covered.">        if (days &lt; 1) {</span>
-<span class="fc" id="L277">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
+<span class="fc bfc" id="L297" title="All 2 branches covered.">        if (days &lt; 1) {</span>
+<span class="fc" id="L298">            throw new IllegalArgumentException(&quot;Days must be positive.&quot;);</span>
         }
-<span class="fc" id="L279">        return reportingService.dueSoon(days);</span>
+<span class="fc" id="L300">        return reportingService.dueSoon(days);</span>
     }
 
     /**
@@ -287,7 +308,7 @@ public class ReportController {
     @GetMapping(&quot;/overdue&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;InvoiceDueSummary&gt; overdue() {
-<span class="fc" id="L290">        return reportingService.overdue();</span>
+<span class="fc" id="L311">        return reportingService.overdue();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
