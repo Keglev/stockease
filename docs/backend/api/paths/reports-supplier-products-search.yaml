@@ -10,10 +10,21 @@ parameters:
 get:
   summary: Search the products one supplier has sold this business
   description: |
-    Case-insensitive substring search over the distinct products reachable from that supplier's
-    non-deleted, closed purchase invoices. There is no supplier column on a product: a product is a
-    supplier's because that supplier was invoiced for it, and since stock enters only through closed
-    purchase invoices (ADR 021), every stocked product is reachable this way.
+    Token search over the distinct products reachable from that supplier's non-deleted, closed
+    purchase invoices. There is no supplier column on a product: a product is a supplier's because
+    that supplier was invoiced for it, and since stock enters only through closed purchase invoices
+    (ADR 021), every stocked product is reachable this way.
+
+    `name` is split on whitespace and **every** token must match, case-insensitively, as a substring
+    of the product's name **or** its SKU, in any order - the same rule
+    `GET /api/products/search` applies, because a reader has no way to tell which of the two pickers
+    on a screen is the scoped one and both must answer alike.
+
+    A **blank or whitespace-only `name` matches everything this supplier has sold** and returns the
+    first 20 of them alphabetically. Browsing stays scoped: it is this supplier's catalogue, never
+    the whole one. This is what the client's picker shows when focused and empty, and it is the case
+    ADR 035 was written for - a picker with a supplier already chosen that rendered nothing until
+    typed into read as broken.
 
     A product bought from two suppliers answers under both. That is correct rather than a duplicate
     to resolve - both suppliers really did sell it to us - and repeat purchases of one product from
@@ -29,6 +40,9 @@ get:
     the reporting module's - the linkage is drawn through the purchase ledger, which the supplier
     module cannot read - even though what it describes is a supplier's catalogue. The same reasoning
     placed the customer summary here.
+
+    **Changed in 2.22.0.** Matching was previously one case-insensitive substring test against the
+    product name alone. Every term that matched before still matches. ADR 035 records the change.
   operationId: supplierProducts
   tags:
     - Reports
@@ -38,10 +52,12 @@ get:
     - name: name
       in: query
       required: true
-      description: Search term (substring, case-insensitive)
+      description: >
+        Search term. Split on whitespace; every token must match the name or the SKU,
+        case-insensitively, in any order. Blank browses this supplier's first capped page.
       schema:
         type: string
-        example: laptop
+        example: dru pap
   responses:
     '200':
       description: The supplier's matching products, empty if none match (ROLE_USER or ROLE_ADMIN)

@@ -20,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -30,7 +29,6 @@ import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.InsufficientStockException;
-import com.stocks.stockease.shared.SearchLimits;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -235,14 +233,11 @@ class ProductServiceTest {
         verify(productRepository, never()).save(any(Product.class));
     }
 
-    @Test
-    void searchByName_withMatch_returnsRepositoryResultCappedForTypeahead() {
-        Product product = new Product("Widget", 10, 5.0);
-        when(productRepository.findByNameContainingIgnoreCaseOrderByNameAsc(
-                "wid", Limit.of(SearchLimits.TYPEAHEAD_LIMIT))).thenReturn(List.of(product));
-
-        assertThat(productService.searchByName("wid")).containsExactly(product);
-    }
+    // searchByName has no unit test any more, and that is the #140 rule rather than an omission.
+    // The search is now a Specification the repository executes, so everything worth asserting -
+    // which tokens match, against which columns, in what order, under the cap, excluding
+    // soft-deleted rows - happens inside the database. A mock here could only restate the stub it
+    // was given. ProductSearchIntegrationTest is where it moved.
 
     @Test
     void adjustQuantity_withPositiveDelta_increasesAndReturnsProduct() {
