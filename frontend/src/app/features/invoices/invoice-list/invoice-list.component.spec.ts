@@ -2,12 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 
-import {
-  CustomerResponse,
-  InvoiceSummaryResponse,
-  PaginatedInvoices,
-  SupplierResponse
-} from '../../../core/api/api-models';
+import { InvoiceSummaryResponse, PaginatedInvoices } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { CustomerService } from '../../customers/customer.service';
@@ -64,21 +59,19 @@ function invoice(overrides: Partial<InvoiceSummaryResponse>): InvoiceSummaryResp
   };
 }
 
-const SUPPLIERS: SupplierResponse[] = [
-  { id: 7, name: 'Acme', address: '1 Main St', createdAt: '2026-01-02T03:04:00' }
-];
+/**
+ * Stands in for the master-data services the page used to join against. Any call is a
+ * regression: the counterparty column is served by the summary rows alone, so a page load that
+ * reaches for a catalogue has reintroduced the client-side lookup this component dropped.
+ */
+class ForbiddenLookupStub {
+  calls = 0;
 
-const CUSTOMERS: CustomerResponse[] = [
-  {
-    id: 9,
-    name: 'Jane Doe',
-    email: null,
-    phone: null,
-    address: null,
-    city: null,
-    createdAt: '2026-01-02T03:04:00'
+  getAll(): Observable<never[]> {
+    this.calls += 1;
+    return of([]);
   }
-];
+}
 
 /** Serves one page out of the given rows, recording what the component asked for. */
 class InvoiceServiceStub {
@@ -107,6 +100,8 @@ class InvoiceServiceStub {
 describe('InvoiceListComponent', () => {
   let fixture: ComponentFixture<InvoiceListComponent>;
   let invoiceService: InvoiceServiceStub;
+  let supplierService: ForbiddenLookupStub;
+  let customerService: ForbiddenLookupStub;
 
   function host(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -122,14 +117,18 @@ describe('InvoiceListComponent', () => {
   ): Promise<void> {
     invoiceService = new InvoiceServiceStub(invoices);
     invoiceService.result = result;
+    supplierService = new ForbiddenLookupStub();
+    customerService = new ForbiddenLookupStub();
     await TestBed.configureTestingModule({
       imports: [InvoiceListComponent],
       providers: [
         provideRouter([]),
         provideTestTranslations(TRANSLATIONS),
         { provide: InvoiceService, useValue: invoiceService },
-        { provide: SupplierService, useValue: { getAll: () => of(SUPPLIERS) } },
-        { provide: CustomerService, useValue: { getAll: () => of(CUSTOMERS) } }
+        // Still provided, so a component that started calling them again would find them and the
+        // counter below would catch it rather than the injector failing for an unrelated reason.
+        { provide: SupplierService, useValue: supplierService },
+        { provide: CustomerService, useValue: customerService }
       ]
     }).compileComponents();
 
@@ -159,28 +158,46 @@ describe('InvoiceListComponent', () => {
     expect(host().querySelectorAll('tbody tr').length).toBe(3);
   });
 
-  it('counterparty_purchaseWithSupplierId_resolvesSupplierName', async () => {
-    await setUp([invoice({ type: 'PURCHASE', supplierId: 7 })]);
+  it('counterparty_purchaseWithSupplierName_rendersThatName', async () => {
+    await setUp([invoice({ type: 'PURCHASE', supplierId: 7, supplierName: 'Acme' })]);
 
+    // The whole cell, not a substring: the name is the document's own statement of who issued it,
+    // and a partial match would pass on a cell that had appended something to it.
+    expect(host().querySelector('.counterparty-cell')?.textContent?.trim()).toBe('Acme');
+  });
+
+  it('counterparty_saleWithCustomerName_rendersThatName', async () => {
+    await setUp([invoice({ type: 'SALE', customerId: 9, customerName: 'Jane Doe' })]);
+
+    expect(host().querySelector('.counterparty-cell')?.textContent?.trim()).toBe('Jane Doe');
+  });
+
+  it('counterparty_namesRendered_madeNoMasterDataCalls', async () => {
+    await setUp([
+      invoice({ id: 1, type: 'PURCHASE', supplierId: 7, supplierName: 'Acme' }),
+      invoice({ id: 2, type: 'SALE', supplierId: null, customerId: 9, customerName: 'Jane Doe' })
+    ]);
+
+    // The regression guard for the deleted lookup: both names are on screen, and neither
+    // catalogue was fetched to put them there.
     expect(rowText(0)).toContain('Acme');
+    expect(rowText(1)).toContain('Jane Doe');
+    expect(supplierService.calls).toBe(0);
+    expect(customerService.calls).toBe(0);
   });
 
-  it('counterparty_saleWithCustomerId_resolvesCustomerName', async () => {
-    await setUp([invoice({ type: 'SALE', customerId: 9 })]);
+  it('counterparty_deletedSupplierStillNamed_rendersTheSnapshot', async () => {
+    // The case ADR 033 exists for: the party row is gone, so there is nothing to look up, and
+    // the name survives only because the invoice carries its own copy.
+    await setUp([invoice({ type: 'PURCHASE', supplierId: null, supplierName: 'Acme' })]);
 
-    expect(rowText(0)).toContain('Jane Doe');
+    expect(host().querySelector('.counterparty-cell')?.textContent?.trim()).toBe('Acme');
   });
 
-  it('counterparty_bothIdsNull_rendersWalkInLabel', async () => {
+  it('counterparty_bothNamesNull_rendersWalkInLabel', async () => {
     await setUp([invoice({ type: 'SALE' })]);
 
-    expect(rowText(0)).toContain('Walk-in sale');
-  });
-
-  it('counterparty_unknownId_rendersHashedIdFallback', async () => {
-    await setUp([invoice({ type: 'PURCHASE', supplierId: 404 })]);
-
-    expect(rowText(0)).toContain('#404');
+    expect(host().querySelector('.counterparty-cell')?.textContent?.trim()).toBe('Walk-in sale');
   });
 
   it('render_paidAtSet_showsPaidChip', async () => {
@@ -297,14 +314,6 @@ describe('InvoiceListComponent', () => {
     await setUp([]);
 
     expect(host().querySelector('.invoice-empty')?.textContent?.trim()).toBe('No invoices found.');
-  });
-
-  it('counterparty_unknownCustomerId_rendersHashedIdFallback', async () => {
-    await setUp([invoice({ id: 1, supplierId: null, customerId: 404 })]);
-
-    // The sale-side twin of the supplier fallback: a row must still name its counterparty when
-    // the customer list does not carry that id.
-    expect(rowText(0)).toContain('#404');
   });
 
   it('render_anyRole_showsCreateButtonRoutedToNewPage', async () => {

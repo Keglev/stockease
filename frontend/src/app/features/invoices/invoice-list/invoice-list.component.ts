@@ -6,11 +6,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { forkJoin } from 'rxjs';
 
 import { InvoiceSummaryResponse } from '../../../core/api/api-models';
-import { CustomerService } from '../../customers/customer.service';
-import { SupplierService } from '../../suppliers/supplier.service';
 import { InvoiceService } from '../invoice.service';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { AppDatePipe } from '../../../shared/format/app-date.pipe';
@@ -30,8 +27,8 @@ function today(): string {
 }
 
 /**
- * Lists invoices newest first, as returned by the backend. Counterparty names are resolved
- * against separately loaded supplier and customer lookups.
+ * Lists invoices newest first, as returned by the backend. Counterparty names come off the
+ * summary rows themselves, snapshotted on the invoice at issuance (ADR 033).
  */
 @Component({
   selector: 'app-invoice-list',
@@ -49,8 +46,6 @@ function today(): string {
 })
 export class InvoiceListComponent implements OnInit {
   private readonly invoices = inject(InvoiceService);
-  private readonly suppliers = inject(SupplierService);
-  private readonly customers = inject(CustomerService);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
 
@@ -71,9 +66,6 @@ export class InvoiceListComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  private readonly supplierNames = signal(new Map<number, string>());
-  private readonly customerNames = signal(new Map<number, string>());
-
   ngOnInit(): void {
     this.load();
   }
@@ -85,15 +77,19 @@ export class InvoiceListComponent implements OnInit {
     this.load();
   }
 
-  /** Maps a summary row to the counterparty label shown in the table. */
+  /**
+   * Maps a summary row to the counterparty label shown in the table.
+   *
+   * The name is document content, not master data: it is read off the row the backend sent,
+   * which carries the name as it stood at issuance and keeps carrying it after the party is
+   * renamed or soft-deleted (ADR 033). A row with neither name is a walk-in sale.
+   */
   protected counterparty(invoice: InvoiceSummaryResponse): string {
-    if (invoice.supplierId != null) {
-      return this.supplierNames().get(invoice.supplierId) ?? `#${invoice.supplierId}`;
+    const name = invoice.supplierName ?? invoice.customerName;
+    if (name != null) {
+      return name;
     }
-    if (invoice.customerId != null) {
-      return this.customerNames().get(invoice.customerId) ?? `#${invoice.customerId}`;
-    }
-    // Neither id set: a walk-in sale, which legitimately has no counterparty record.
+    // Neither name set: a walk-in sale, which legitimately has no counterparty record.
     return this.translate.instant('invoices.walkIn') as string;
   }
 
@@ -120,17 +116,10 @@ export class InvoiceListComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    // Counterparties are resolved client-side because the summary DTO carries ids only: the
-    // backend builds the list without initializing associations, which is what keeps the list
-    // query free of extra per-row lookups. The detail endpoint carries names instead.
-    forkJoin({
-      invoices: this.invoices.getPagedInvoices(this.pageIndex(), this.pageSize()),
-      suppliers: this.suppliers.getAll(),
-      customers: this.customers.getAll()
-    }).subscribe({
-      next: ({ invoices, suppliers, customers }) => {
-        this.supplierNames.set(new Map(suppliers.map((s) => [s.id, s.name])));
-        this.customerNames.set(new Map(customers.map((c) => [c.id, c.name])));
+    // One request per page. The summary rows carry their own counterparty names, so the page no
+    // longer fetches the whole supplier and customer catalogues to join against.
+    this.invoices.getPagedInvoices(this.pageIndex(), this.pageSize()).subscribe({
+      next: (invoices) => {
         this.rows.set(invoices.content);
         this.totalElements.set(invoices.totalElements);
         this.loading.set(false);

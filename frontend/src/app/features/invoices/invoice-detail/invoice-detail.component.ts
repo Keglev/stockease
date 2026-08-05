@@ -11,6 +11,7 @@ import { Observable } from 'rxjs';
 
 import { InvoiceItemResponse, InvoiceResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import {
   ConfirmDialogComponent,
@@ -162,7 +163,14 @@ export class InvoiceDetailComponent implements OnInit {
         },
         error: (err: Error) => {
           this.working.set(false);
-          this.notifications.error(err.message);
+          // A 409 here is the deleted-product veto: the backend refuses a return whose product has
+          // been soft-deleted and names the restore path in its own untranslated sentence. That is
+          // a case the operator can act on, so it gets the translated explanation rather than the
+          // raw text - the same treatment products.restoreConflict gives its own conflict.
+          const isConflict = err instanceof ApiError && err.status === 409;
+          this.notifications.error(
+            isConflict ? 'invoices.returnDialog.deletedProduct' : err.message
+          );
         }
       });
   }

@@ -298,7 +298,8 @@
       "directionSupplier": "Ware geht an den Lieferanten zurück",
       "confirm": "Retoure erfassen",
       "cancel": "Abbrechen",
-      "registered": "Retoure wurde erfasst."
+      "registered": "Retoure wurde erfasst.",
+      "deletedProduct": "Dieses Produkt ist gelöscht und kann keine Retouren annehmen. Stellen Sie es zuerst wieder her, dann erfassen Sie die Retoure."
     },
     "columns": {
       "id": "Nr.",

@@ -298,7 +298,8 @@
       "directionSupplier": "Stock goes back to the supplier",
       "confirm": "Register return",
       "cancel": "Cancel",
-      "registered": "Return registered."
+      "registered": "Return registered.",
+      "deletedProduct": "This product is deleted and cannot take returns. Restore it first, then register the return."
     },
     "columns": {
       "id": "No.",
