@@ -14,63 +14,65 @@
   <p class="customer-error" role="alert">{{ message }}</p>
 }
 
-<table mat-table [dataSource]="visibleRows()" class="customer-table">
-  <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.name' | translate }}</th>
-    <td mat-cell *matCellDef="let customer">{{ customer.name }}</td>
-  </ng-container>
+<div class="table-scroll">
+  <table mat-table [dataSource]="visibleRows()" class="customer-table">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.name' | translate }}</th>
+      <td mat-cell *matCellDef="let customer">{{ customer.name }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="email">
-    <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.email' | translate }}</th>
-    <td mat-cell *matCellDef="let customer">{{ customer.email || '—' }}</td>
-  </ng-container>
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.email' | translate }}</th>
+      <td mat-cell *matCellDef="let customer">{{ customer.email || '—' }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="phone">
-    <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.phone' | translate }}</th>
-    <td mat-cell *matCellDef="let customer">{{ customer.phone || '—' }}</td>
-  </ng-container>
+    <ng-container matColumnDef="phone">
+      <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.phone' | translate }}</th>
+      <td mat-cell *matCellDef="let customer">{{ customer.phone || '—' }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="city">
-    <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.city' | translate }}</th>
-    <td mat-cell *matCellDef="let customer">{{ customer.city || '—' }}</td>
-  </ng-container>
+    <ng-container matColumnDef="city">
+      <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.city' | translate }}</th>
+      <td mat-cell *matCellDef="let customer">{{ customer.city || '—' }}</td>
+    </ng-container>
 
-  <ng-container matColumnDef="createdAt">
-    <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.createdAt' | translate }}</th>
-    <td mat-cell *matCellDef="let customer">{{ customer.createdAt | appDateTime }}</td>
-  </ng-container>
+    <ng-container matColumnDef="createdAt">
+      <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.createdAt' | translate }}</th>
+      <td mat-cell *matCellDef="let customer">{{ customer.createdAt | appDateTime }}</td>
+    </ng-container>
 
-  <!-- Summary and delete only: the API has no customer update endpoint, so no edit action
-       exists. The summary is read-only and open to both roles. -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.actions' | translate }}</th>
-    <td mat-cell *matCellDef="let customer">
-      <button
-        matIconButton
-        type="button"
-        class="customer-summary"
-        [attr.aria-label]="'customers.summary.action' | translate"
-        (click)="openSummary(customer)"
-      >
-        <mat-icon>insights</mat-icon>
-      </button>
-      @if (canDelete()) {
+    <!-- Summary and delete only: the API has no customer update endpoint, so no edit action
+         exists. The summary is read-only and open to both roles. -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>{{ 'customers.columns.actions' | translate }}</th>
+      <td mat-cell *matCellDef="let customer">
         <button
           matIconButton
           type="button"
-          class="customer-delete"
-          [attr.aria-label]="'customers.delete.action' | translate"
-          (click)="confirmDelete(customer)"
+          class="customer-summary"
+          [attr.aria-label]="'customers.summary.action' | translate"
+          (click)="openSummary(customer)"
         >
-          <mat-icon>delete</mat-icon>
+          <mat-icon>insights</mat-icon>
         </button>
-      }
-    </td>
-  </ng-container>
+        @if (canDelete()) {
+          <button
+            matIconButton
+            type="button"
+            class="customer-delete"
+            [attr.aria-label]="'customers.delete.action' | translate"
+            (click)="confirmDelete(customer)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+      </td>
+    </ng-container>
 
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-</table>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</div>
 
 @if (!loading() && !error() && rows().length === 0) {
   <p class="customer-empty">{{ 'customers.empty' | translate }}</p>

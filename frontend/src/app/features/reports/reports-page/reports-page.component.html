@@ -86,61 +86,63 @@
             @if (profitRows().length === 0) {
               <p class="empty-state">{{ 'reports.profit.empty' | translate }}</p>
             } @else {
-              <table
-                mat-table
-                [dataSource]="profitRows()"
-                matSort
-                (matSortChange)="sortProfit($event)"
-                class="profit-table"
-              >
-                <ng-container matColumnDef="name">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.name' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">
-                    {{ row.name }}
-                    @if (row.deleted) {
-                      <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
-                    }
-                  </td>
-                </ng-container>
+              <div class="table-scroll">
+                <table
+                  mat-table
+                  [dataSource]="profitRows()"
+                  matSort
+                  (matSortChange)="sortProfit($event)"
+                  class="profit-table"
+                >
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.name' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                      {{ row.name }}
+                      @if (row.deleted) {
+                        <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+                      }
+                    </td>
+                  </ng-container>
 
-                <ng-container matColumnDef="sku">
-                  <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
-                  <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="sku">
+                    <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
+                    <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="revenue">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.revenue' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.revenue | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="revenue">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.revenue' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.revenue | appCurrency }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="cost">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.cost' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.cost | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="cost">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.cost' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.cost | appCurrency }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="grossProfit">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.grossProfit' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.grossProfit | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="grossProfit">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.grossProfit' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.grossProfit | appCurrency }}</td>
+                  </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="profitColumns"></tr>
-                <tr
-                  mat-row
-                  *matRowDef="let row; columns: profitColumns"
-                  class="profit-row"
-                  tabindex="0"
-                  (click)="openDetail(row)"
-                  (keydown.enter)="openDetail(row)"
-                ></tr>
-              </table>
+                  <tr mat-header-row *matHeaderRowDef="profitColumns"></tr>
+                  <tr
+                    mat-row
+                    *matRowDef="let row; columns: profitColumns"
+                    class="profit-row"
+                    tabindex="0"
+                    (click)="openDetail(row)"
+                    (keydown.enter)="openDetail(row)"
+                  ></tr>
+                </table>
+              </div>
             }
           </mat-card-content>
         </mat-card>
@@ -164,44 +166,46 @@
             @if (supplierRows().length === 0) {
               <p class="empty-state">{{ 'reports.profit.suppliersEmpty' | translate }}</p>
             } @else {
-              <table
-                mat-table
-                [dataSource]="supplierRows()"
-                matSort
-                (matSortChange)="sortSuppliers($event)"
-                class="supplier-table"
-              >
-                <ng-container matColumnDef="name">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.name' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-                </ng-container>
+              <div class="table-scroll">
+                <table
+                  mat-table
+                  [dataSource]="supplierRows()"
+                  matSort
+                  (matSortChange)="sortSuppliers($event)"
+                  class="supplier-table"
+                >
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.name' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="revenue">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.revenue' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.revenue | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="revenue">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.revenue' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.revenue | appCurrency }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="cost">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.cost' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.cost | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="cost">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.cost' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.cost | appCurrency }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="grossProfit">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.grossProfit' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.grossProfit | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="grossProfit">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.grossProfit' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.grossProfit | appCurrency }}</td>
+                  </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="supplierColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: supplierColumns"></tr>
-              </table>
+                  <tr mat-header-row *matHeaderRowDef="supplierColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: supplierColumns"></tr>
+                </table>
+              </div>
             }
           </mat-card-content>
         </mat-card>
@@ -329,52 +333,54 @@
               </div>
             }
             @if (cashFlow()?.products?.length) {
-              <table mat-table [dataSource]="cashFlowRows()" class="cash-flow-table">
-                <ng-container matColumnDef="name">
-                  <th mat-header-cell *matHeaderCellDef>
-                    {{ 'reports.cashFlow.columns.name' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">
-                    {{ row.name }}
-                    @if (row.deleted) {
-                      <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
-                    }
-                  </td>
-                </ng-container>
+              <div class="table-scroll">
+                <table mat-table [dataSource]="cashFlowRows()" class="cash-flow-table">
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef>
+                      {{ 'reports.cashFlow.columns.name' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                      {{ row.name }}
+                      @if (row.deleted) {
+                        <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+                      }
+                    </td>
+                  </ng-container>
 
-                <ng-container matColumnDef="sku">
-                  <th mat-header-cell *matHeaderCellDef>
-                    {{ 'reports.cashFlow.columns.sku' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="sku">
+                    <th mat-header-cell *matHeaderCellDef>
+                      {{ 'reports.cashFlow.columns.sku' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="inflow">
-                  <th mat-header-cell *matHeaderCellDef>
-                    {{ 'reports.cashFlow.columns.inflow' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.inflow | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="inflow">
+                    <th mat-header-cell *matHeaderCellDef>
+                      {{ 'reports.cashFlow.columns.inflow' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.inflow | appCurrency }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="outflow">
-                  <th mat-header-cell *matHeaderCellDef>
-                    {{ 'reports.cashFlow.columns.outflow' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.outflow | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="outflow">
+                    <th mat-header-cell *matHeaderCellDef>
+                      {{ 'reports.cashFlow.columns.outflow' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.outflow | appCurrency }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="net">
-                  <th mat-header-cell *matHeaderCellDef>
-                    {{ 'reports.cashFlow.columns.net' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row" [class.cash-flow-negative]="row.net < 0">
-                    {{ row.net | appCurrency }}
-                  </td>
-                </ng-container>
+                  <ng-container matColumnDef="net">
+                    <th mat-header-cell *matHeaderCellDef>
+                      {{ 'reports.cashFlow.columns.net' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row" [class.cash-flow-negative]="row.net < 0">
+                      {{ row.net | appCurrency }}
+                    </td>
+                  </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="cashFlowColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: cashFlowColumns"></tr>
-              </table>
+                  <tr mat-header-row *matHeaderRowDef="cashFlowColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: cashFlowColumns"></tr>
+                </table>
+              </div>
             } @else {
               <p class="empty-state cash-flow-empty">{{ 'reports.cashFlow.empty' | translate }}</p>
             }
@@ -457,56 +463,58 @@
             @if (stockRows().length === 0) {
               <p class="empty-state">{{ 'reports.stock.empty' | translate }}</p>
             } @else {
-              <table
-                mat-table
-                [dataSource]="filteredStockRows()"
-                matSort
-                (matSortChange)="sortStock($event)"
-                class="stock-table"
-              >
-                <ng-container matColumnDef="name">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.name' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-                </ng-container>
+              <div class="table-scroll">
+                <table
+                  mat-table
+                  [dataSource]="filteredStockRows()"
+                  matSort
+                  (matSortChange)="sortStock($event)"
+                  class="stock-table"
+                >
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.name' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="sku">
-                  <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
-                  <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="sku">
+                    <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
+                    <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="soldUnits">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.soldUnits' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.soldUnits }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="soldUnits">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.soldUnits' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.soldUnits }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="soldRevenue">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.soldRevenue' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.soldRevenue | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="soldRevenue">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.soldRevenue' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.soldRevenue | appCurrency }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="inStockUnits">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.inStockUnits' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.inStockUnits }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="inStockUnits">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.inStockUnits' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.inStockUnits }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="inStockValue">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.inStockValue' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.inStockValue | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="inStockValue">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.inStockValue' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.inStockValue | appCurrency }}</td>
+                  </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="stockColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: stockColumns"></tr>
-              </table>
+                  <tr mat-header-row *matHeaderRowDef="stockColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: stockColumns"></tr>
+                </table>
+              </div>
             }
           </mat-card-content>
         </mat-card>
@@ -602,54 +610,56 @@
             @if (lossRows().length === 0) {
               <p class="empty-state">{{ 'reports.losses.empty' | translate }}</p>
             } @else {
-              <table
-                mat-table
-                [dataSource]="filteredLossRows()"
-                matSort
-                (matSortChange)="sortLosses($event)"
-                class="loss-table"
-              >
-                <ng-container matColumnDef="name">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.name' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">
-                    {{ row.name }}
-                    @if (row.deleted) {
-                      <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
-                    }
-                  </td>
-                </ng-container>
+              <div class="table-scroll">
+                <table
+                  mat-table
+                  [dataSource]="filteredLossRows()"
+                  matSort
+                  (matSortChange)="sortLosses($event)"
+                  class="loss-table"
+                >
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.name' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                      {{ row.name }}
+                      @if (row.deleted) {
+                        <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+                      }
+                    </td>
+                  </ng-container>
 
-                <ng-container matColumnDef="sku">
-                  <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
-                  <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="sku">
+                    <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
+                    <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="lostUnits">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.lostUnits' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.lostUnits }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="lostUnits">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.lostUnits' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.lostUnits }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="destroyedUnits">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.destroyedUnits' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.destroyedUnits }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="destroyedUnits">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.destroyedUnits' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.destroyedUnits }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="lossValue">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                    {{ 'reports.columns.lossValue' | translate }}
-                  </th>
-                  <td mat-cell *matCellDef="let row">{{ row.lossValue | appCurrency }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="lossValue">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                      {{ 'reports.columns.lossValue' | translate }}
+                    </th>
+                    <td mat-cell *matCellDef="let row">{{ row.lossValue | appCurrency }}</td>
+                  </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="lossColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: lossColumns"></tr>
-              </table>
+                  <tr mat-header-row *matHeaderRowDef="lossColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: lossColumns"></tr>
+                </table>
+              </div>
             }
           </mat-card-content>
         </mat-card>
@@ -665,42 +675,44 @@
           @if (lossRemarkRows().length === 0) {
             <p class="empty-state losses-remark-empty">{{ 'reports.losses.empty' | translate }}</p>
           } @else {
-            <table mat-table [dataSource]="lossRemarkRows()" class="loss-remark-table">
-              <ng-container matColumnDef="remark">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.columns.remark' | translate }}
-                </th>
-                <!-- The movement form's own option labels, reached by the same dynamic key it
-                     builds. One taxonomy, one set of translations. -->
-                <td mat-cell *matCellDef="let row">
-                  {{ 'movements.form.remarkOption.' + row.remark | translate }}
-                </td>
-              </ng-container>
+            <div class="table-scroll">
+              <table mat-table [dataSource]="lossRemarkRows()" class="loss-remark-table">
+                <ng-container matColumnDef="remark">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.columns.remark' | translate }}
+                  </th>
+                  <!-- The movement form's own option labels, reached by the same dynamic key it
+                       builds. One taxonomy, one set of translations. -->
+                  <td mat-cell *matCellDef="let row">
+                    {{ 'movements.form.remarkOption.' + row.remark | translate }}
+                  </td>
+                </ng-container>
 
-              <ng-container matColumnDef="lostUnits">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.columns.lostUnits' | translate }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.lostUnits }}</td>
-              </ng-container>
+                <ng-container matColumnDef="lostUnits">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.columns.lostUnits' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">{{ row.lostUnits }}</td>
+                </ng-container>
 
-              <ng-container matColumnDef="destroyedUnits">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.columns.destroyedUnits' | translate }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.destroyedUnits }}</td>
-              </ng-container>
+                <ng-container matColumnDef="destroyedUnits">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.columns.destroyedUnits' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">{{ row.destroyedUnits }}</td>
+                </ng-container>
 
-              <ng-container matColumnDef="lossValue">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.columns.lossValue' | translate }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ row.lossValue | appCurrency }}</td>
-              </ng-container>
+                <ng-container matColumnDef="lossValue">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.columns.lossValue' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">{{ row.lossValue | appCurrency }}</td>
+                </ng-container>
 
-              <tr mat-header-row *matHeaderRowDef="lossRemarkColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: lossRemarkColumns"></tr>
-            </table>
+                <tr mat-header-row *matHeaderRowDef="lossRemarkColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: lossRemarkColumns"></tr>
+              </table>
+            </div>
           }
         </mat-card-content>
       </mat-card>
@@ -852,59 +864,61 @@
           @if (changeRows().length === 0) {
             <p class="empty-state changes-empty">{{ 'reports.changes.empty' | translate }}</p>
           } @else {
-            <table mat-table [dataSource]="filteredChangeRows()" class="change-table">
-              <ng-container matColumnDef="time">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.changes.columns.time' | translate }}
-                </th>
-                <!-- The same format the product's own history uses, so one change reads alike wherever
-                     it is seen. -->
-                <td mat-cell *matCellDef="let row">{{ row.createdAt | appDateTime }}</td>
-              </ng-container>
+            <div class="table-scroll">
+              <table mat-table [dataSource]="filteredChangeRows()" class="change-table">
+                <ng-container matColumnDef="time">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.changes.columns.time' | translate }}
+                  </th>
+                  <!-- The same format the product's own history uses, so one change reads alike wherever
+                       it is seen. -->
+                  <td mat-cell *matCellDef="let row">{{ row.createdAt | appDateTime }}</td>
+                </ng-container>
 
-              <ng-container matColumnDef="user">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.changes.columns.user' | translate }}
-                </th>
-                <td mat-cell *matCellDef="let row" class="change-user">{{ row.username }}</td>
-              </ng-container>
+                <ng-container matColumnDef="user">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.changes.columns.user' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row" class="change-user">{{ row.username }}</td>
+                </ng-container>
 
-              <ng-container matColumnDef="product">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.changes.columns.product' | translate }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  {{ row.productName }}
-                  @if (row.productDeleted) {
-                    <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
-                  }
-                </td>
-              </ng-container>
+                <ng-container matColumnDef="product">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.changes.columns.product' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">
+                    {{ row.productName }}
+                    @if (row.productDeleted) {
+                      <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+                    }
+                  </td>
+                </ng-container>
 
-              <ng-container matColumnDef="field">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.changes.columns.field' | translate }}
-                </th>
-                <td mat-cell *matCellDef="let row">{{ 'audit.field.' + row.field | translate }}</td>
-              </ng-container>
+                <ng-container matColumnDef="field">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.changes.columns.field' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row">{{ 'audit.field.' + row.field | translate }}</td>
+                </ng-container>
 
-              <ng-container matColumnDef="oldValue">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.changes.columns.oldValue' | translate }}
-                </th>
-                <td mat-cell *matCellDef="let row" class="change-old">{{ row.oldValue }}</td>
-              </ng-container>
+                <ng-container matColumnDef="oldValue">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.changes.columns.oldValue' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row" class="change-old">{{ row.oldValue }}</td>
+                </ng-container>
 
-              <ng-container matColumnDef="newValue">
-                <th mat-header-cell *matHeaderCellDef>
-                  {{ 'reports.changes.columns.newValue' | translate }}
-                </th>
-                <td mat-cell *matCellDef="let row" class="change-new">{{ row.newValue }}</td>
-              </ng-container>
+                <ng-container matColumnDef="newValue">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'reports.changes.columns.newValue' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let row" class="change-new">{{ row.newValue }}</td>
+                </ng-container>
 
-              <tr mat-header-row *matHeaderRowDef="changeColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: changeColumns" class="change-row"></tr>
-            </table>
+                <tr mat-header-row *matHeaderRowDef="changeColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: changeColumns" class="change-row"></tr>
+              </table>
+            </div>
           }
         </mat-card-content>
       </mat-card>

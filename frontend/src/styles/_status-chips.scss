@@ -36,14 +36,56 @@
 }
 
 @mixin invoice-status-chips {
-  // The Art column states a classification, not a state, so it takes the neutral surface rather
-  // than one of the status colours: it sits one column from the status chip and must not compete
-  // with it. A container role in both schemes, because neutral is the point.
+  // The type column states a classification, not a state, so it stays quieter than the status chip
+  // one column over and must not compete with it. But quiet is not the same as identical: both
+  // types wore this one neutral surface, which left the column stating the direction the money runs
+  // in words alone - and the word is the first thing a scanning eye skips.
+  //
+  // The two now separate on the surface CONTAINER ramp rather than on a colour role. That is the
+  // whole design: a purchase and a sale differ from each other without either one claiming the
+  // semantic weight the status colours carry. The base rule below still holds everything they
+  // share, so a chip that somehow reaches neither modifier still renders as a chip.
   .type-chip {
     @include chip-colors(
       light-dark(var(--mat-sys-surface-container-highest), var(--mat-sys-surface-container-high)),
       var(--mat-sys-on-surface)
     );
+  }
+
+  // The two separate by SHAPE - outlined against filled - rather than by two neutral fills, and
+  // that is a measurement result rather than a preference. Every level of the neutral ramp lands
+  // between 1.05:1 and 1.62:1 against the row behind it in both schemes, so a chip filled with one
+  // is not a shape anybody sees; the four tokens that do clear WCAG 1.4.11's 3:1 are outline,
+  // on-surface-variant, inverse-surface and secondary, and no two of THOSE clear 3:1 against each
+  // OTHER while staying neutral. A palette that cannot deliver two distinguishable neutral fills
+  // can deliver one fill and one border, which is what these two rules are.
+  //
+  // Colour was the other way out and is not taken: tertiary, secondary, error and primary are all
+  // spoken for by the status, paid and overdue chips one column over, and a type chip wearing one
+  // of them would read as a state.
+
+  // Money going out: M3's unfilled chip, with the border promoted from outline-variant (1.62:1 and
+  // 2:1 - invisible) to outline, which measures 4.27:1 light and 5.84:1 dark against the row. The
+  // boundary is the part 1.4.11 asks about for an unfilled component.
+  // The border is declared outright rather than through --mat-chip-outline-*. Those tokens resolve
+  // (measured: 1px and light-dark(#74777f, #8e9099)) but nothing paints them once a container
+  // colour is set, even to transparent - the chip has taken Material's filled branch by then, and
+  // every element in its shadow measures `0px none`. A plain border on the host is one declaration
+  // that renders, and the number below is read off the pixels rather than off the token.
+  .type-chip.type-purchase {
+    --mat-chip-elevated-container-color: transparent;
+    --mat-chip-label-text-color: var(--mat-sys-on-surface);
+    --mat-chip-outline-width: 0;
+    border: 1px solid var(--mat-sys-outline);
+    color: var(--mat-sys-on-surface);
+  }
+
+  // Money coming in: the filled one. The inverse pair is the only neutral fill that separates from
+  // the surface in BOTH schemes - 12.59:1 light, 14.41:1 dark - because it steps off the ramp
+  // instead of along it, and a dark scheme's ramp is a narrow band of near-blacks where two
+  // adjacent levels are not a distinction anybody sees on a phone.
+  .type-chip.type-sale {
+    @include chip-colors(var(--mat-sys-inverse-surface), var(--mat-sys-inverse-on-surface));
   }
 
   .status-chip.status-open {

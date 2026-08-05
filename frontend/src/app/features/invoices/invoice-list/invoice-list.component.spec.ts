@@ -270,6 +270,34 @@ describe('InvoiceListComponent', () => {
     expect(host().querySelector('.type-chip')?.textContent?.trim()).toBe('Sale');
   });
 
+  it('typeChip_purchaseInvoice_carriesThePurchaseClass', async () => {
+    await setUp([invoice({ id: 1, type: 'PURCHASE' })]);
+
+    const chip = host().querySelector('.type-chip');
+    expect(chip?.classList.contains('type-purchase')).toBe(true);
+    expect(chip?.classList.contains('type-sale')).toBe(false);
+  });
+
+  it('typeChip_saleInvoice_carriesTheSaleClass', async () => {
+    await setUp([invoice({ id: 2, type: 'SALE', supplierId: null, customerId: 9 })]);
+
+    // The class is what the stylesheet colours on, so the two types are told apart by something
+    // other than the word - which is the first thing a scanning eye skips.
+    const chip = host().querySelector('.type-chip');
+    expect(chip?.classList.contains('type-sale')).toBe(true);
+    expect(chip?.classList.contains('type-purchase')).toBe(false);
+  });
+
+  it('typeChip_bothTypes_keepTheSharedBaseClass', async () => {
+    await setUp([invoice({ id: 1, type: 'PURCHASE' }), invoice({ id: 2, type: 'SALE' })]);
+
+    // The modifier is added to the base, not swapped for it: the shared rule carries everything
+    // the two chips have in common, and a chip reaching neither modifier still renders as a chip.
+    const chips = Array.from(host().querySelectorAll('.type-chip'));
+    expect(chips).toHaveLength(2);
+    expect(chips.map((chip) => chip.classList.contains('type-chip'))).toEqual([true, true]);
+  });
+
   it('typeChip_germanLanguage_readsTheGermanWords', async () => {
     await setUp([invoice({ id: 1, type: 'PURCHASE' }), invoice({ id: 2, type: 'SALE' })]);
 

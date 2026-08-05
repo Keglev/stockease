@@ -1,3 +1,4 @@
+@use '../../../../styles/table-scroll' as scroll;
 :host {
   display: block;
 }
@@ -192,4 +193,10 @@ table {
 .days-overdue {
   color: var(--mat-sys-error);
   font: var(--mat-sys-label-medium);
+}
+
+
+// Every table on this page scrolls inside its own wrapper rather than widening the page.
+.table-scroll {
+  @include scroll.table-scroll;
 }
