@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,9 +24,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * REST controller for customer master data.
  *
- * &lt;p&gt;Covers listing, lookup, creation and soft deletion, delegating every operation to
- * {@link CustomerService}. There is deliberately no update endpoint: customer master-data management
- * is out of scope by design. All endpoints require at minimum ROLE_USER; deletion requires ROLE_ADMIN.
+ * &lt;p&gt;Covers listing, lookup, creation, update and soft deletion, delegating every operation to
+ * {@link CustomerService}. All endpoints require at minimum ROLE_USER; deletion requires ROLE_ADMIN.
  */
 @RestController
 @RequestMapping(&quot;/api/customers&quot;)
@@ -76,6 +76,24 @@ public class CustomerController {
     }
 
     /**
+     * Replaces a customer's fields, including the optional contact ones.
+     *
+     * @param id customer identifier
+     * @param request new customer fields (name, email, phone, address, city)
+     * @return HTTP 200 with the updated customer
+     * @throws EntityNotFoundException if no customer exists with the given ID
+     */
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
+    public ResponseEntity&lt;ApiResponse&lt;CustomerResponse&gt;&gt; updateCustomer(@PathVariable long id,
+            @Valid @RequestBody UpdateCustomerRequest request) {
+<span class="fc" id="L90">        Customer updated = customerService.update(id, request.name(), request.email(), request.phone(),</span>
+<span class="fc" id="L91">                request.address(), request.city());</span>
+<span class="fc" id="L92">        return ResponseEntity.ok(</span>
+<span class="fc" id="L93">                new ApiResponse&lt;&gt;(true, &quot;Customer updated successfully&quot;, CustomerResponse.from(updated)));</span>
+    }
+
+    /**
      * Soft-deletes a customer by ID (ADMIN only).
      *
      * @param id customer identifier to delete
@@ -85,8 +103,8 @@ public class CustomerController {
     @DeleteMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; deleteCustomer(@PathVariable long id) {
-<span class="fc" id="L88">        customerService.deleteById(id);</span>
-<span class="fc" id="L89">        return ResponseEntity.ok(</span>
+<span class="fc" id="L106">        customerService.deleteById(id);</span>
+<span class="fc" id="L107">        return ResponseEntity.ok(</span>
                 new ApiResponse&lt;&gt;(true, &quot;Customer with ID &quot; + id + &quot; has been successfully deleted.&quot;, null));
     }
 }

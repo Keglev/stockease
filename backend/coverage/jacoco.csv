@@ -21,7 +21,8 @@ StockEase,com.stocks.stockease.shared,PaginatedResponse,0,23,0,0,0,7,0,1,0,1
 StockEase,com.stocks.stockease.shared,InsufficientStockException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,EntityInUseException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,InvoiceStateException,0,4,0,0,0,2,0,1,0,1
-StockEase,com.stocks.stockease.customer.web,CustomerController,0,63,0,0,0,10,0,5,0,5
+StockEase,com.stocks.stockease.customer.web,UpdateCustomerRequest,0,18,0,0,0,1,0,1,0,1
+StockEase,com.stocks.stockease.customer.web,CustomerController,0,87,0,0,0,14,0,6,0,6
 StockEase,com.stocks.stockease.customer.web,CustomerResponse,0,42,0,0,0,3,0,2,0,2
 StockEase,com.stocks.stockease.customer.web,CreateCustomerRequest,0,18,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.invoice.web,CreateInvoiceRequest,0,63,0,0,0,5,0,3,0,3
@@ -51,7 +52,7 @@ StockEase,com.stocks.stockease.movement,MovementReason,0,56,0,0,0,11,0,3,0,3
 StockEase,com.stocks.stockease.movement,StockMovementService,5,370,1,63,0,78,2,42,1,10
 StockEase,com.stocks.stockease.movement,MovementRemark,0,27,0,0,0,5,0,1,0,1
 StockEase,com.stocks.stockease.movement,MovementType,0,15,0,0,0,3,0,1,0,1
-StockEase,com.stocks.stockease.customer,CustomerService,0,66,0,0,0,14,0,5,0,5
+StockEase,com.stocks.stockease.customer,CustomerService,0,103,0,0,0,22,0,7,0,7
 StockEase,com.stocks.stockease.customer,CustomerDeletedEvent,0,9,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,ProductProfitReport,0,24,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.report,StockHistoryPoint,0,12,0,0,0,1,0,1,0,1

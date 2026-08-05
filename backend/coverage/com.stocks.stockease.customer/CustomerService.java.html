@@ -13,7 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Customer module's public API for looking up and registering customers.
+ * Customer module's public API for querying and mutating customers.
  * Other modules depend on this service rather than reaching into the module's repository.
  */
 @Service
@@ -65,6 +65,41 @@ public class CustomerService {
     }
 
     /**
+     * Replaces a customer's fields.
+     *
+     * &lt;p&gt;Every field is replaced, including the optional ones: a {@code null} email clears the
+     * stored email rather than leaving it in place. Name is the only mandatory field, as on
+     * creation.
+     *
+     * &lt;p&gt;Unlike {@link com.stocks.stockease.supplier.SupplierService#update}, there is no
+     * service-level argument guard. The supplier's exists because two of its fields are mandatory
+     * and its create path is reached from more than the controller; a customer's rules are the ones
+     * {@link com.stocks.stockease.customer.web.CreateCustomerRequest} already states, and its create
+     * method carries no guard either. Adding one only here would make an edit stricter than the
+     * creation it edits.
+     *
+     * @param id customer identifier
+     * @param name new display name
+     * @param email new email, may be {@code null} to clear it
+     * @param phone new phone number, may be {@code null} to clear it
+     * @param address new postal address, may be {@code null} to clear it
+     * @param city new city, may be {@code null} to clear it
+     * @return the updated customer
+     * @throws EntityNotFoundException if no customer exists with the given ID
+     */
+    @Transactional
+    public Customer update(long id, String name, String email, String phone, String address, String city) {
+<span class="fc" id="L92">        Customer customer = customerRepository.findById(id)</span>
+<span class="fc" id="L93">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L94">        customer.setName(name);</span>
+<span class="fc" id="L95">        customer.setEmail(email);</span>
+<span class="fc" id="L96">        customer.setPhone(phone);</span>
+<span class="fc" id="L97">        customer.setAddress(address);</span>
+<span class="fc" id="L98">        customer.setCity(city);</span>
+<span class="fc" id="L99">        return customerRepository.save(customer);</span>
+    }
+
+    /**
      * Soft-deletes a customer, unless a listener vetoes the deletion.
      *
      * @param id customer identifier
@@ -74,12 +109,12 @@ public class CustomerService {
      */
     @Transactional
     public void deleteById(long id) {
-<span class="fc" id="L77">        Customer customer = customerRepository.findById(id)</span>
-<span class="fc" id="L78">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L112">        Customer customer = customerRepository.findById(id)</span>
+<span class="fc" id="L113">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
         // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
         // rolls back the transaction
-<span class="fc" id="L81">        eventPublisher.publishEvent(new CustomerDeletedEvent(customer.getId(), customer.getName()));</span>
-<span class="fc" id="L82">        customerRepository.delete(customer);</span>
-<span class="fc" id="L83">    }</span>
+<span class="fc" id="L116">        eventPublisher.publishEvent(new CustomerDeletedEvent(customer.getId(), customer.getName()));</span>
+<span class="fc" id="L117">        customerRepository.delete(customer);</span>
+<span class="fc" id="L118">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
