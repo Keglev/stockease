@@ -3,7 +3,9 @@ import { Router, provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { InvoiceSummaryResponse, PaginatedInvoices } from '../../../core/api/api-models';
+import { FormatService } from '../../../core/format/format.service';
 import { LanguageService } from '../../../core/i18n/language.service';
+import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { CustomerService } from '../../customers/customer.service';
 import { SupplierService } from '../../suppliers/supplier.service';
@@ -12,6 +14,7 @@ import { InvoiceListComponent } from './invoice-list.component';
 
 const TRANSLATIONS = {
   en: {
+    common: { exportCsv: 'Export CSV' },
     invoices: {
       title: 'Invoices',
       empty: 'No invoices found.',
@@ -32,11 +35,23 @@ const TRANSLATIONS = {
       status: { OPEN: 'Open', CLOSED: 'Closed', FULLY_RETURNED: 'Fully returned' }
     }
   },
-  // Only what the type chip needs: it is the one cell whose entire meaning is its text, so it is
-  // the one this spec reads in both languages.
+  // The type chip is the one cell whose entire meaning is its text, so it is read in both
+  // languages - and the export writes it, the status and the walk-in label into the file, so those
+  // are here too.
   de: {
     invoices: {
-      type: { PURCHASE: 'Einkauf', SALE: 'Verkauf' }
+      walkIn: 'Barverkauf',
+      columns: {
+        id: 'Nr.',
+        invoiceNumber: 'Rechnungsnummer',
+        type: 'Art',
+        status: 'Status',
+        counterparty: 'Geschäftspartner',
+        dueDate: 'Fällig am',
+        createdAt: 'Erstellt am'
+      },
+      type: { PURCHASE: 'Einkauf', SALE: 'Verkauf' },
+      status: { OPEN: 'Offen', CLOSED: 'Abgeschlossen', FULLY_RETURNED: 'Vollständig retourniert' }
     }
   }
 };
@@ -102,6 +117,7 @@ describe('InvoiceListComponent', () => {
   let invoiceService: InvoiceServiceStub;
   let supplierService: ForbiddenLookupStub;
   let customerService: ForbiddenLookupStub;
+  let download: ReturnType<typeof vi.fn>;
 
   function host(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
@@ -119,11 +135,14 @@ describe('InvoiceListComponent', () => {
     invoiceService.result = result;
     supplierService = new ForbiddenLookupStub();
     customerService = new ForbiddenLookupStub();
+    download = vi.fn();
     await TestBed.configureTestingModule({
       imports: [InvoiceListComponent],
       providers: [
         provideRouter([]),
         provideTestTranslations(TRANSLATIONS),
+        // A provider stub rather than a module mock, for the reason ADR 016 records.
+        { provide: CSV_DOWNLOADER, useValue: download },
         { provide: InvoiceService, useValue: invoiceService },
         // Still provided, so a component that started calling them again would find them and the
         // counter below would catch it rather than the injector failing for an unrelated reason.
@@ -150,6 +169,123 @@ describe('InvoiceListComponent', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  /**
+   * The CSV export, asserted as WHOLE FILES.
+   *
+   * <p>Two things are specific to this list. Its cells carry TRANSLATIONS - type, status and the
+   * walk-in label - so the file has to move with the interface language as well as with the number
+   * locale. And it pages SERVER-side, so the export is the page on screen and a spec says so.
+   */
+  describe('csv export', () => {
+    afterEach(() => localStorage.clear());
+
+    /** Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
+    const SPACES = new Set([0x20, 0xa0, 0x202f]);
+
+    function plain(value: string): string {
+      return [...value].map((ch) => (SPACES.has(ch.codePointAt(0) ?? 0) ? ' ' : ch)).join('');
+    }
+
+    function setFormats(lang: 'en' | 'de', numbers: 'auto' | 'en' | 'de'): void {
+      TestBed.inject(LanguageService).setLanguage(lang);
+      TestBed.inject(FormatService).setNumberFormat(numbers);
+      fixture.detectChanges();
+    }
+
+    function exported(): { filename: string; content: string } {
+      host().querySelector<HTMLButtonElement>('.export-invoices')?.click();
+      const [filename, content] = download.mock.calls[0] as [string, string];
+      return { filename, content: plain(content) };
+    }
+
+    const BOM = String.fromCharCode(0xfeff);
+
+    /** A purchase with a supplier, and a walk-in sale that is overdue - the two shapes of row. */
+    const LEDGER = [
+      invoice({ id: 1, type: 'PURCHASE', supplierId: 7, supplierName: 'Acme', status: 'OPEN' }),
+      invoice({
+        id: 2,
+        invoiceNumber: 'RE-2026-0118',
+        type: 'SALE',
+        status: 'CLOSED',
+        dueDate: '2026-02-01',
+        createdAt: '2026-01-03T15:04:00'
+      })
+    ];
+
+    it('export_englishInterfaceAndNumbers_writesTheWholeFileWithCommas', async () => {
+      await setUp(LEDGER);
+      setFormats('en', 'auto');
+
+      const { filename, content } = exported();
+
+      expect(filename).toBe('invoices.csv');
+      expect(content).toBe(
+        BOM +
+          'No.,Invoice number,Type,Status,Counterparty,Due date,Created\r\n' +
+          '1,RE-2026-0117,Purchase,Open,Acme,03/01/2026,01/02/2026 03:04 AM\r\n' +
+          '2,RE-2026-0118,Sale,Closed,Walk-in sale,02/01/2026,01/03/2026 03:04 PM\r\n'
+      );
+    });
+
+    it('export_germanInterfaceAndNumbers_translatesTheCellsAndSwitchesSeparator', async () => {
+      await setUp(LEDGER);
+      setFormats('de', 'auto');
+
+      // Type, status and the walk-in label are enum VALUES the cells render through translation
+      // keys, so the file carries the reader's words - the changes tab exports its field labels
+      // the same way. The whole file, so a separator that failed to follow would be caught here.
+      expect(exported().content).toBe(
+        BOM +
+          'Nr.;Rechnungsnummer;Art;Status;Geschäftspartner;Fällig am;Erstellt am\r\n' +
+          '1;RE-2026-0117;Einkauf;Offen;Acme;01.03.2026;02.01.2026 03:04\r\n' +
+          '2;RE-2026-0118;Verkauf;Abgeschlossen;Barverkauf;01.02.2026;03.01.2026 15:04\r\n'
+      );
+    });
+
+    it('export_overdueInvoice_carriesDueDateAndStatusRatherThanTheChipText', async () => {
+      // The row IS overdue at the pinned clock - the chip renders - and the file still says
+      // nothing about it. The chip is derived presentation; due date and status are the data it is
+      // derived from, and they are the columns, so a reader can re-derive it.
+      await setUp([invoice({ id: 3, status: 'CLOSED', dueDate: '2026-02-01', supplierName: 'Acme' })]);
+      setFormats('en', 'auto');
+      expect(host().querySelector('.overdue-chip')).not.toBeNull();
+
+      const { content } = exported();
+
+      expect(content).not.toContain('Overdue');
+      expect(content).toContain('Closed');
+      expect(content).toContain('02/01/2026');
+    });
+
+    it('export_secondPage_carriesThatPageOnly', async () => {
+      const many = Array.from({ length: 12 }, (unused, index) =>
+        invoice({ id: index + 1, invoiceNumber: `RE-${index + 1}`, supplierName: 'Acme' })
+      );
+      await setUp(many);
+      setFormats('en', 'auto');
+
+      const page = fixture.componentInstance as unknown as { onPage: (e: unknown) => void };
+      page.onPage({ pageIndex: 1, pageSize: 10 });
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      // Server-side paging: the component holds the rows it last fetched and the export is those.
+      // Exporting more would mean firing unpaged requests behind a download button.
+      const { content } = exported();
+      expect(content).toContain('RE-11');
+      expect(content).toContain('RE-12');
+      expect(content).not.toContain('RE-1,');
+    });
+
+    it('exportButton_emptyLedger_isAbsent', async () => {
+      await setUp([]);
+
+      expect(host().querySelector('.export-invoices')).toBeNull();
+    });
   });
 
   it('load_invoicesReturned_rendersOneRowPerInvoice', async () => {

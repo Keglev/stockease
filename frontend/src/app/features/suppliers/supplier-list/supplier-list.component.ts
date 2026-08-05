@@ -9,7 +9,9 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { SupplierResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { FormatService } from '../../../core/format/format.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData
@@ -41,9 +43,21 @@ export class SupplierListComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
+  private readonly csv = inject(CsvExportService);
+  private readonly format = inject(FormatService);
 
   // UI convenience only: the server is the authority and answers 403 regardless of this flag.
   protected readonly canDelete = computed(() => this.auth.role() === 'ADMIN');
+
+  /**
+   * The columns the CSV carries, which is not quite what the table shows.
+   *
+   * <p>Address is here and not there on purpose: the export is the record, the table is the view.
+   * #167 dropped the column because it was the widest field on a table read for a different reason,
+   * which says nothing about whether a downloaded supplier register should state where a supplier
+   * is. The same reasoning puts it on the customer export.
+   */
+  private readonly exportColumns = ['name', 'email', 'phone', 'address', 'city', 'createdAt'];
 
   protected readonly rows = signal<SupplierResponse[]>([]);
 
@@ -73,6 +87,31 @@ export class SupplierListComponent implements OnInit {
 
   protected openCreate(): void {
     this.openForm({});
+  }
+
+  /**
+   * Downloads the loaded register, the way each reports tab downloads its table.
+   *
+   * <p>Every row the page holds, not the visible page: the list pages every client-side, over an
+   * array that is already in memory in full - so there is no unpaged fetch to avoid here, and
+   * exporting one screenful of a register the user already has would be the surprising answer.
+   */
+  protected exportCsv(): void {
+    this.csv.export(
+      'suppliers.csv',
+      this.exportColumns,
+      this.rows().map((row) => [
+        row.name,
+        row.email,
+        row.phone,
+        row.address,
+        row.city,
+        // Through the same service the column uses, so the file reads the way the screen did
+        // rather than shipping a raw ISO timestamp beside localized numbers.
+        this.format.formatDateTime(row.createdAt)
+      ]),
+      'suppliers.columns.'
+    );
   }
 
   protected openEdit(supplier: SupplierResponse): void {

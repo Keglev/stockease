@@ -6,15 +6,17 @@ import { SupplierResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { SupplierFormDialogComponent } from '../supplier-form-dialog/supplier-form-dialog.component';
+import { FormatService } from '../../../core/format/format.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { SupplierService } from '../supplier.service';
 import { SupplierListComponent } from './supplier-list.component';
 
 const TRANSLATIONS = {
   en: {
-    common: { confirm: 'Confirm', cancel: 'Cancel' },
+    common: { confirm: 'Confirm', cancel: 'Cancel', exportCsv: 'Export CSV' },
     suppliers: {
       title: 'Suppliers',
       create: 'New supplier',
@@ -30,6 +32,19 @@ const TRANSLATIONS = {
         actions: 'Actions'
       },
       delete: { action: 'Delete supplier', title: 'Delete supplier', message: 'Delete "{{name}}"?' }
+    }
+  },
+  // The headers the export writes in a German interface; nothing else on this page is read twice.
+  de: {
+    suppliers: {
+      columns: {
+        name: 'Name',
+        email: 'E-Mail',
+        phone: 'Telefon',
+        address: 'Adresse',
+        city: 'Stadt',
+        createdAt: 'Erstellt am'
+      }
     }
   }
 };
@@ -95,6 +110,7 @@ describe('SupplierListComponent', () => {
   let suppliers: SupplierServiceStub;
   let notifications: NotificationServiceStub;
   let dialog: MatDialogStub;
+  let download: ReturnType<typeof vi.fn>;
 
   function deleteButtons(): NodeListOf<HTMLButtonElement> {
     return (fixture.nativeElement as HTMLElement).querySelectorAll('.supplier-delete');
@@ -131,6 +147,7 @@ describe('SupplierListComponent', () => {
     suppliers.getAllResult = source;
     notifications = new NotificationServiceStub();
     dialog = new MatDialogStub();
+    download = vi.fn();
 
     await TestBed.configureTestingModule({
       imports: [SupplierListComponent],
@@ -139,7 +156,10 @@ describe('SupplierListComponent', () => {
         { provide: SupplierService, useValue: suppliers },
         { provide: NotificationService, useValue: notifications },
         { provide: MatDialog, useValue: dialog },
-        { provide: AuthService, useValue: { role: () => role } }
+        { provide: AuthService, useValue: { role: () => role } },
+        // A provider stub rather than a module mock, for the reason ADR 016 records and the reports
+        // page's own export specs follow: the module registry is shared across a Vitest worker.
+        { provide: CSV_DOWNLOADER, useValue: download }
       ]
     }).compileComponents();
 
@@ -153,6 +173,125 @@ describe('SupplierListComponent', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.resetTestingModule();
+  });
+
+  /**
+   * The CSV export, asserted as WHOLE FILES.
+   *
+   * <p>A `toContain` on one cell would pass against the wrong separator, the wrong decimal mark and
+   * the wrong date order all at once, which are exactly the three things ADR 031 is about. The
+   * fixture is two suppliers - one with every contact field, one with none - so the file also has
+   * to get empty cells and quoting right.
+   */
+  describe('csv export', () => {
+    // Both preferences persist to storage and the specs in a Vitest worker share their origin.
+    afterEach(() => localStorage.clear());
+
+    const EXPORTABLE: SupplierResponse[] = [
+      {
+        id: 7,
+        name: 'Acme',
+        email: 'acme@example.com',
+        phone: '555-1234',
+        address: '1 Main St',
+        city: 'Springfield',
+        createdAt: '2026-01-02T03:04:00'
+      },
+      // Address is mandatory on a supplier, so the empty-cell case here is the optional trio.
+      {
+        id: 8,
+        name: 'Globex',
+        email: null,
+        phone: null,
+        address: '5 Side St',
+        city: null,
+        createdAt: '2026-01-03T15:04:00'
+      }
+    ];
+
+    /** Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
+    const SPACES = new Set([0x20, 0xa0, 0x202f]);
+
+    function plain(value: string): string {
+      return [...value].map((ch) => (SPACES.has(ch.codePointAt(0) ?? 0) ? ' ' : ch)).join('');
+    }
+
+    function setFormats(lang: 'en' | 'de', numbers: 'auto' | 'en' | 'de'): void {
+      TestBed.inject(LanguageService).setLanguage(lang);
+      TestBed.inject(FormatService).setNumberFormat(numbers);
+      fixture.detectChanges();
+    }
+
+    /** Clicks Export and returns what the seam was handed. */
+    function exported(): { filename: string; content: string } {
+      host().querySelector<HTMLButtonElement>('.export-suppliers')?.click();
+      const [filename, content] = download.mock.calls[0] as [string, string];
+      return { filename, content: plain(content) };
+    }
+
+    const BOM = String.fromCharCode(0xfeff);
+
+    it('export_englishInterfaceAndNumbers_writesTheWholeFileWithCommas', async () => {
+      await setUp('ADMIN', EXPORTABLE);
+      setFormats('en', 'auto');
+
+      const { filename, content } = exported();
+
+      expect(filename).toBe('suppliers.csv');
+      expect(content).toBe(
+        BOM +
+          'Name,Email,Phone,Address,City,Created\r\n' +
+          'Acme,acme@example.com,555-1234,1 Main St,Springfield,01/02/2026 03:04 AM\r\n' +
+          'Globex,,,5 Side St,,01/03/2026 03:04 PM\r\n'
+      );
+    });
+
+    it('export_germanNumberOverride_switchesToSemicolonsAndGermanDates', async () => {
+      await setUp('ADMIN', EXPORTABLE);
+
+      // English interface, German numbers - the override the file has to follow rather than the
+      // language. A comma separator beside German decimals would arrive as one spreadsheet column.
+      setFormats('en', 'de');
+
+      expect(exported().content).toBe(
+        BOM +
+          'Name;Email;Phone;Address;City;Created\r\n' +
+          'Acme;acme@example.com;555-1234;1 Main St;Springfield;02.01.2026 03:04\r\n' +
+          'Globex;;;5 Side St;;03.01.2026 15:04\r\n'
+      );
+    });
+
+    it('export_germanInterfaceWithEnglishNumbers_movesHeadersButNotSeparators', async () => {
+      await setUp('ADMIN', EXPORTABLE);
+
+      // The triangle's third corner: the headers are the interface language, everything a
+      // spreadsheet parses is the number locale, and the two are genuinely independent.
+      setFormats('de', 'en');
+
+      expect(exported().content).toBe(
+        BOM +
+          'Name,E-Mail,Telefon,Adresse,Stadt,Erstellt am\r\n' +
+          'Acme,acme@example.com,555-1234,1 Main St,Springfield,01/02/2026 03:04 AM\r\n' +
+          'Globex,,,5 Side St,,01/03/2026 03:04 PM\r\n'
+      );
+    });
+
+    it('export_anyLocale_carriesTheAddressTheTableDoesNot', async () => {
+      await setUp('ADMIN', EXPORTABLE);
+      setFormats('en', 'auto');
+
+      // #167 took the column off the table; the export is the record rather than the view, so the
+      // address is still in the file. Asserted as its own spec because the two can drift apart.
+      expect(host().querySelector('.supplier-table')?.textContent).not.toContain('1 Main St');
+      expect(exported().content).toContain('1 Main St');
+    });
+
+    it('exportButton_emptyRegister_isAbsent', async () => {
+      await setUp('ADMIN', []);
+
+      // Same gate the reports tabs use: nothing loaded, nothing to download.
+      expect(host().querySelector('.export-suppliers')).toBeNull();
+    });
   });
 
   it('load_serviceReturnsSuppliers_rendersOneRowPerSupplier', async () => {

@@ -9,7 +9,9 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { CustomerResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { FormatService } from '../../../core/format/format.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData
@@ -45,9 +47,15 @@ export class CustomerListComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
+  private readonly csv = inject(CsvExportService);
+  private readonly format = inject(FormatService);
 
   // UI convenience only: the server is the authority and answers 403 regardless of this flag.
   protected readonly canDelete = computed(() => this.auth.role() === 'ADMIN');
+
+  // Address is exported though the table does not show it: the export is the record, the table is
+  // the view. The supplier export carries it for the same reason.
+  private readonly exportColumns = ['name', 'email', 'phone', 'address', 'city', 'createdAt'];
 
   // The actions column always renders: Edit and the summary are available to every user, only
   // Delete is gated. Address stays off the table and on the dialog, matching the supplier list.
@@ -78,6 +86,30 @@ export class CustomerListComponent implements OnInit {
 
   protected openEdit(customer: CustomerResponse): void {
     this.openForm({ customer });
+  }
+
+  /**
+   * Downloads the loaded register, the way each reports tab downloads its table.
+   *
+   * <p>Every row the page holds, not the visible page: this list pages client-side over an array
+   * already in memory in full, so there is no unpaged fetch to avoid and no reason to hand back
+   * one screenful of a register the user already has.
+   */
+  protected exportCsv(): void {
+    this.csv.export(
+      'customers.csv',
+      this.exportColumns,
+      this.rows().map((row) => [
+        row.name,
+        row.email,
+        row.phone,
+        row.address,
+        row.city,
+        // Through the same service the column uses, so the file reads the way the screen did.
+        this.format.formatDateTime(row.createdAt)
+      ]),
+      'customers.columns.'
+    );
   }
 
   /** Opens the read-only sales summary; open to both roles because it changes nothing. */

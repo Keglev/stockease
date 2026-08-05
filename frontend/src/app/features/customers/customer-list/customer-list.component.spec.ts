@@ -4,8 +4,10 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { CustomerResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { FormatService } from '../../../core/format/format.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { CustomerFormDialogComponent } from '../customer-form-dialog/customer-form-dialog.component';
 import { CustomerSummaryDialogComponent } from '../customer-summary-dialog/customer-summary-dialog.component';
@@ -14,7 +16,7 @@ import { CustomerListComponent } from './customer-list.component';
 
 const TRANSLATIONS = {
   en: {
-    common: { confirm: 'Confirm', cancel: 'Cancel' },
+    common: { confirm: 'Confirm', cancel: 'Cancel', exportCsv: 'Export CSV' },
     customers: {
       title: 'Customers',
       create: 'New customer',
@@ -25,12 +27,26 @@ const TRANSLATIONS = {
         name: 'Name',
         email: 'Email',
         phone: 'Phone',
+        address: 'Address',
         city: 'City',
         createdAt: 'Created',
         actions: 'Actions'
       },
       delete: { action: 'Delete customer', title: 'Delete customer', message: 'Delete "{{name}}"?' },
       summary: { action: 'Summary' }
+    }
+  },
+  // The headers the export writes in a German interface; nothing else here is read twice.
+  de: {
+    customers: {
+      columns: {
+        name: 'Name',
+        email: 'E-Mail',
+        phone: 'Telefon',
+        address: 'Adresse',
+        city: 'Stadt',
+        createdAt: 'Erstellt am'
+      }
     }
   }
 };
@@ -109,6 +125,7 @@ describe('CustomerListComponent', () => {
   let customers: CustomerServiceStub;
   let notifications: NotificationServiceStub;
   let dialog: MatDialogStub;
+  let download: ReturnType<typeof vi.fn>;
 
   function deleteButtons(): NodeListOf<HTMLButtonElement> {
     return (fixture.nativeElement as HTMLElement).querySelectorAll('.customer-delete');
@@ -157,6 +174,7 @@ describe('CustomerListComponent', () => {
     customers.getAllResult = source;
     notifications = new NotificationServiceStub();
     dialog = new MatDialogStub();
+    download = vi.fn();
 
     await TestBed.configureTestingModule({
       imports: [CustomerListComponent],
@@ -165,7 +183,9 @@ describe('CustomerListComponent', () => {
         { provide: CustomerService, useValue: customers },
         { provide: NotificationService, useValue: notifications },
         { provide: MatDialog, useValue: dialog },
-        { provide: AuthService, useValue: { role: () => role } }
+        { provide: AuthService, useValue: { role: () => role } },
+        // A provider stub rather than a module mock, for the reason ADR 016 records.
+        { provide: CSV_DOWNLOADER, useValue: download }
       ]
     }).compileComponents();
 
@@ -230,6 +250,78 @@ describe('CustomerListComponent', () => {
     expect(dialog.openCalls.length).toBe(1);
     expect(dialog.openCalls[0].component).toBe(CustomerSummaryDialogComponent);
     expect(dialog.openCalls[0].config?.data).toEqual({ customerId: 9 });
+  });
+
+  /**
+   * The CSV export, asserted as WHOLE FILES - a `toContain` on one cell would pass against the
+   * wrong separator, the wrong decimal mark and the wrong date order at once. The two fixture rows
+   * cover a fully populated customer and one whose every optional field is absent.
+   */
+  describe('csv export', () => {
+    afterEach(() => localStorage.clear());
+
+    /** Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
+    const SPACES = new Set([0x20, 0xa0, 0x202f]);
+
+    function plain(value: string): string {
+      return [...value].map((ch) => (SPACES.has(ch.codePointAt(0) ?? 0) ? ' ' : ch)).join('');
+    }
+
+    function setFormats(lang: 'en' | 'de', numbers: 'auto' | 'en' | 'de'): void {
+      TestBed.inject(LanguageService).setLanguage(lang);
+      TestBed.inject(FormatService).setNumberFormat(numbers);
+      fixture.detectChanges();
+    }
+
+    function exported(): { filename: string; content: string } {
+      host().querySelector<HTMLButtonElement>('.export-customers')?.click();
+      const [filename, content] = download.mock.calls[0] as [string, string];
+      return { filename, content: plain(content) };
+    }
+
+    const BOM = String.fromCharCode(0xfeff);
+
+    it('export_englishInterfaceAndNumbers_writesTheWholeFileWithCommas', async () => {
+      await setUp('ADMIN');
+      setFormats('en', 'auto');
+
+      const { filename, content } = exported();
+
+      expect(filename).toBe('customers.csv');
+      expect(content).toBe(
+        BOM +
+          'Name,Email,Phone,Address,City,Created\r\n' +
+          'Jane Doe,jane@example.com,555-1234,1 Main St,Springfield,01/02/2026 03:04 AM\r\n' +
+          'John Roe,,,,,01/03/2026 03:04 AM\r\n'
+      );
+    });
+
+    it('export_germanInterfaceAndNumbers_writesTheWholeFileWithSemicolons', async () => {
+      await setUp('ADMIN');
+      setFormats('de', 'auto');
+
+      expect(exported().content).toBe(
+        BOM +
+          'Name;E-Mail;Telefon;Adresse;Stadt;Erstellt am\r\n' +
+          'Jane Doe;jane@example.com;555-1234;1 Main St;Springfield;02.01.2026 03:04\r\n' +
+          'John Roe;;;;;03.01.2026 03:04\r\n'
+      );
+    });
+
+    it('export_anyLocale_carriesTheAddressTheTableDoesNot', async () => {
+      await setUp('ADMIN');
+      setFormats('en', 'auto');
+
+      // The export is the record, the table is the view - the same reasoning as the supplier list.
+      expect(host().querySelector('.customer-table')?.textContent).not.toContain('1 Main St');
+      expect(exported().content).toContain('1 Main St');
+    });
+
+    it('exportButton_emptyRegister_isAbsent', async () => {
+      await setUp('ADMIN', []);
+
+      expect(host().querySelector('.export-customers')).toBeNull();
+    });
   });
 
   /**

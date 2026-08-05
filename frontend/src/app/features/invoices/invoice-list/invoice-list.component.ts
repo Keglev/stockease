@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -8,6 +9,8 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { InvoiceSummaryResponse } from '../../../core/api/api-models';
+import { FormatService } from '../../../core/format/format.service';
+import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import { InvoiceService } from '../invoice.service';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { AppDatePipe } from '../../../shared/format/app-date.pipe';
@@ -35,6 +38,7 @@ function today(): string {
   imports: [
     AppDateTimePipe, AppDatePipe, MatButtonModule,
     MatChipsModule,
+    MatIconModule,
     MatPaginatorModule,
     MatProgressBarModule,
     MatTableModule,
@@ -48,6 +52,8 @@ export class InvoiceListComponent implements OnInit {
   private readonly invoices = inject(InvoiceService);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
+  private readonly csv = inject(CsvExportService);
+  private readonly format = inject(FormatService);
 
   protected readonly displayedColumns = [
     'id',
@@ -120,6 +126,41 @@ export class InvoiceListComponent implements OnInit {
 
   protected openDetail(invoice: InvoiceSummaryResponse): void {
     void this.router.navigate(['/app/invoices', invoice.id]);
+  }
+
+  /**
+   * Downloads the ledger page on screen, the way each reports tab downloads its table.
+   *
+   * <p>The visible page, and only it. Unlike the two master-data lists this one pages SERVER-side -
+   * the component holds exactly the rows it last fetched - so exporting more would mean issuing
+   * fresh unpaged requests behind a download button, which is a different feature from this one.
+   *
+   * <p>The file says so nowhere, because the reports pattern has no convention for scoping
+   * metadata: none of its six exports carries a header row, a date or a filter summary, and
+   * inventing one here would make this export the odd one out rather than the consistent one.
+   *
+   * <p>The chips are not exported as chips. Type and status go through the same translation keys
+   * the cells render, because those are enum VALUES that happen to be styled - the changes tab
+   * exports its field labels the same way. The paid and overdue chips are different: they are
+   * derived from `paidAt`, `status` and `dueDate` for display only, and the CSV carries the
+   * columns rather than the badge, so a reader can re-derive them and disagree if they want to.
+   */
+  protected exportCsv(): void {
+    this.csv.export(
+      'invoices.csv',
+      this.displayedColumns,
+      this.rows().map((row) => [
+        row.id,
+        row.invoiceNumber,
+        this.translate.instant('invoices.type.' + row.type) as string,
+        this.translate.instant('invoices.status.' + row.status) as string,
+        // The same method the cell calls, so a walk-in sale reads as a walk-in sale here too.
+        this.counterparty(row),
+        this.format.formatDate(row.dueDate),
+        this.format.formatDateTime(row.createdAt)
+      ]),
+      'invoices.columns.'
+    );
   }
 
   private load(): void {

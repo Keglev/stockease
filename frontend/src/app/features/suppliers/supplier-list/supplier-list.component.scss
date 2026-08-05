@@ -30,3 +30,12 @@
 .table-scroll {
   @include scroll.table-scroll;
 }
+
+// The toolbar's right-hand pair. Wraps rather than shrinks: at phone width the export and create
+// buttons drop to their own line together instead of squeezing the title.
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
