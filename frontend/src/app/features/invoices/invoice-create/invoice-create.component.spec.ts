@@ -83,7 +83,9 @@ const CREATED: InvoiceSummaryResponse = {
   status: 'OPEN',
   dueDate: '2026-03-01',
   supplierId: null,
+  supplierName: null,
   customerId: null,
+  customerName: null,
   closedAt: null,
   paidAt: null,
   createdAt: '2026-01-02T03:04:00'

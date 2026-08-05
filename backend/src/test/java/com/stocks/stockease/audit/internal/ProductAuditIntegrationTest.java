@@ -78,7 +78,7 @@ class ProductAuditIntegrationTest extends AbstractIntegrationTest {
     @Test
     void deleteThenRestore_writesDeletedThenRestoredRows() {
         Product product = productRepository.saveAndFlush(
-                withSku(new Product("Audit Delete Restore", 10, 5.0), "TST-AUD-2"));
+                withSku(new Product("Audit Delete Restore", 0, 5.0), "TST-AUD-2"));
 
         productService.deleteById(product.getId(), user);
         productService.restore(product.getId(), user);
@@ -92,7 +92,7 @@ class ProductAuditIntegrationTest extends AbstractIntegrationTest {
     @Test
     void restore_blockedByLiveNameConflict_writesNoRestoredRow() {
         Product product = productRepository.saveAndFlush(
-                withSku(new Product("Audit Conflict Name", 10, 5.0), "TST-AUD-3"));
+                withSku(new Product("Audit Conflict Name", 0, 5.0), "TST-AUD-3"));
         productService.deleteById(product.getId(), user);
         // flush the soft delete first: within one flush Hibernate orders inserts before updates, so the
         // new row would otherwise hit the partial name index before the old one is marked deleted

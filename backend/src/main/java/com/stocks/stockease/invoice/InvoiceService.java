@@ -77,8 +77,9 @@ public class InvoiceService {
 
     /**
      * Finds one invoice with everything the detail view needs already loaded.
-     * The items, each item's product, and both counterparties are initialized by the query, so the
-     * result stays fully readable after the transaction ends.
+     * The items are initialized by the query; the parties are not, and are not needed - names and
+     * identifiers come from the invoice's own snapshot columns and foreign-key scalars, so the
+     * result stays fully readable after the transaction ends and after a party is deleted (ADR 033).
      *
      * @param id invoice identifier
      * @return the initialized invoice, or empty if none exists with that ID
@@ -154,6 +155,10 @@ public class InvoiceService {
                     .orElseThrow(() -> new EntityNotFoundException(
                             "Supplier with ID " + command.supplierId() + " not found."));
             invoice.setSupplier(supplier);
+            // The snapshot is taken here and nowhere else: this is the moment the document names its
+            // party, and an invoice is immutable afterwards (ADR 033).
+            invoice.setSupplierName(supplier.getName());
+            invoice.setSupplierId(supplier.getId());
             return;
         }
         if (command.supplierId() != null) {
@@ -164,6 +169,8 @@ public class InvoiceService {
                     .orElseThrow(() -> new EntityNotFoundException(
                             "Customer with ID " + command.customerId() + " not found."));
             invoice.setCustomer(customer);
+            invoice.setCustomerName(customer.getName());
+            invoice.setCustomerId(customer.getId());
         }
     }
 
@@ -182,6 +189,14 @@ public class InvoiceService {
         InvoiceItem item = new InvoiceItem();
         item.setInvoice(invoice);
         item.setProduct(product);
+        // Snapshotted beside the unit price, and for the same reason: the line records what was
+        // bought at what price on the day, not what the catalogue says today.
+        item.setProductName(product.getName());
+        // The association owns the column, so this assignment is ignored on insert. It is made
+        // anyway to keep the in-memory line consistent with the row: a read-only mapping is filled
+        // only when the entity is loaded, and a caller that creates and then uses the item inside
+        // one persistence context would otherwise read null from the scalar.
+        item.setProductId(product.getId());
         item.setQuantity(line.quantity());
         item.setUnitPrice(line.unitPrice());
         item.setReturnedQty(0);

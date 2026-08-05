@@ -45,6 +45,24 @@ public class InvoiceItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    /**
+     * The product's name as it stood when the invoice was issued. Written once, never updated.
+     *
+     * <p>Mandatory, unlike the counterparty snapshots: every line has a product. It is also the more
+     * urgent of the two - this association is {@code nullable = false}, so a soft-deleted product
+     * makes Hibernate raise {@code FetchNotFoundException} on the fetch join rather than resolving to
+     * null, which used to turn the whole invoice detail into a 500 (ADR 033).
+     */
+    @Column(name = "product_name", nullable = false)
+    private String productName;
+
+    /**
+     * The product foreign key as a plain scalar, readable when the joined row is restriction-hidden.
+     * Read-only: the association above is the single writer for this column.
+     */
+    @Column(name = "product_id", insertable = false, updatable = false)
+    private Long productId;
+
     /** Quantity ordered. */
     @Column(nullable = false)
     private Integer quantity;

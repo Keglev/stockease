@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.DuplicateResourceException;
+import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.SearchLimits;
 
@@ -98,6 +99,8 @@ public class ProductService {
      * @param id product identifier
      * @param user user performing the deletion
      * @return {@code true} if the product existed and was deleted, {@code false} if no such product exists
+     * @throws EntityInUseException if the product still holds stock, or if a listener vetoes the
+     *         deletion because the product appears on an open invoice
      */
     @Transactional
     public boolean deleteById(long id, User user) {
@@ -105,10 +108,18 @@ public class ProductService {
         if (found.isEmpty()) {
             return false;
         }
+        Product product = found.get();
+        // Stocked products are not deletable. Soft deletion hides the row from the catalogue, the
+        // stock report and every picker, so deleting a stocked product would strand its units where
+        // no surface shows them and no movement can reach them - inventory that exists only in the
+        // ledger. Write the stock off or sell it first; the quantity is then honestly zero (ADR 033).
+        if (product.getQuantity() != null && product.getQuantity() != 0) {
+            throw new EntityInUseException("Cannot delete product '" + product.getName() + "': "
+                    + product.getQuantity() + " units are still in stock.");
+        }
         // stamped explicitly rather than via repository.deleteById: that marks the entity removed, and the
         // change log row written by the listener may not reference a removed instance. Same soft-delete
         // result, and symmetric with restore below.
-        Product product = found.get();
         product.setDeletedAt(LocalDateTime.now());
         productRepository.save(product);
         eventPublisher.publishEvent(

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: StockEase API
-  version: 2.16.2
+  version: 2.17.0
   description: |
     StockEase is an inventory management system built around stock movements as the single source of
     truth for quantity. The API covers the product catalogue, the two counterparty registers
@@ -573,7 +573,9 @@ components:
         - status
         - dueDate
         - supplierId
+        - supplierName
         - customerId
+        - customerName
         - closedAt
         - paidAt
         - createdAt
@@ -599,10 +601,23 @@ components:
           format: int64
           nullable: true
           example: 7
+        supplierName:
+          type: string
+          nullable: true
+          description: >-
+            Supplier name as it stood when the invoice was issued, snapshotted on the invoice row.
+            Null on sale invoices. Survives the supplier being renamed or soft-deleted (ADR 033).
+          example: Acme Supplies
         customerId:
           type: integer
           format: int64
           nullable: true
+        customerName:
+          type: string
+          nullable: true
+          description: >-
+            Customer name as it stood at issuance. Null on purchase invoices and on walk-in sales.
+          example: Jane Doe
         closedAt:
           type: string
           description: ISO-8601 local date-time, serialized without a zone offset

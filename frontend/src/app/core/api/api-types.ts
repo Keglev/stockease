@@ -1363,8 +1363,18 @@ export interface components {
              * @example 7
              */
             supplierId: number | null;
+            /**
+             * @description Supplier name as it stood when the invoice was issued, snapshotted on the invoice row. Null on sale invoices. Survives the supplier being renamed or soft-deleted (ADR 033).
+             * @example Acme Supplies
+             */
+            supplierName: string | null;
             /** Format: int64 */
             customerId: number | null;
+            /**
+             * @description Customer name as it stood at issuance. Null on purchase invoices and on walk-in sales.
+             * @example Jane Doe
+             */
+            customerName: string | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */
             closedAt: string | null;
             /** @description ISO-8601 local date-time, serialized without a zone offset */

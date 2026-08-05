@@ -11,8 +11,10 @@ import com.stocks.stockease.invoice.InvoiceType;
 /**
  * API representation of a single invoice in full, including its lines and counterparty names.
  *
- * <p>Reads associations that are lazy on the entity, so it may only be built from an invoice loaded
- * through the fetch-joined detail query; building it from a list query would fail outside a session.
+ * <p>Touches no association. Names come from the invoice's snapshot columns and ids from its
+ * foreign-key scalars, both of which are plain columns on the invoice row - so this builds from any
+ * loaded invoice, in or out of a session, and keeps naming its parties after they are soft-deleted
+ * (ADR 033). Only the items collection still needs initializing, which the detail query fetches.
  *
  * @param id unique invoice identifier
  * @param invoiceNumber operator-assigned business identifier; never {@code null}
@@ -35,16 +37,14 @@ public record InvoiceResponse(Long id, String invoiceNumber, InvoiceType type, I
     /**
      * Maps a fetch-joined invoice to its detail representation.
      *
-     * @param invoice the entity to map, loaded with items, products and counterparties initialized
+     * @param invoice the entity to map, loaded with its items initialized; the parties need not be
      * @return the detail record
      */
     public static InvoiceResponse from(Invoice invoice) {
         return new InvoiceResponse(invoice.getId(), invoice.getInvoiceNumber(), invoice.getType(),
                 invoice.getStatus(), invoice.getDueDate(),
-                invoice.getSupplier() == null ? null : invoice.getSupplier().getId(),
-                invoice.getSupplier() == null ? null : invoice.getSupplier().getName(),
-                invoice.getCustomer() == null ? null : invoice.getCustomer().getId(),
-                invoice.getCustomer() == null ? null : invoice.getCustomer().getName(),
+                invoice.getSupplierId(), invoice.getSupplierName(),
+                invoice.getCustomerId(), invoice.getCustomerName(),
                 invoice.getClosedAt(), invoice.getPaidAt(), invoice.getCreatedAt(),
                 invoice.getItems().stream().map(InvoiceItemResponse::from).toList());
     }

@@ -66,14 +66,16 @@ class InvoiceFetchControllerTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void getAllInvoices_summaryShape_omitsCounterpartyNamesAndItems() throws Exception {
+    void getAllInvoices_summaryShape_carriesTheCounterpartyNameButNoItems() throws Exception {
         Mockito.when(invoiceService.findAll())
                 .thenReturn(List.of(InvoiceTestFixtures.purchaseInvoice(InvoiceStatus.OPEN)));
 
-        // names and items belong to the detail response only; the list must stay proxy-safe
+        // The name now travels with the row: it is a column on the invoice, not an association, so
+        // carrying it costs no query and keeps the list proxy-safe (ADR 033). Items still belong to
+        // the detail response alone - those are a collection, and the reason the list stays cheap.
         mockMvc.perform(get("/api/invoices"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].supplierName").doesNotExist())
+                .andExpect(jsonPath("$[0].supplierName").value("Acme"))
                 .andExpect(jsonPath("$[0].items").doesNotExist());
     }
 
