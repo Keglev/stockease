@@ -17,7 +17,6 @@
       "headline": "Wissen, was auf Lager ist - und was es einbringt."
     },
     "demo": {
-      "title": "Demo ausprobieren",
       "tryAdmin": "Als Admin testen",
       "tryUser": "Als Benutzer testen",
       "resetNotice": "Demodaten - werden nächtlich um 03:00 UTC zurückgesetzt"
@@ -562,11 +561,9 @@
       "priceTitle": "Preis ändern",
       "name": "Name",
       "sku": "Artikelnummer",
-      "quantity": "Menge",
       "purchasePrice": "Einkaufspreis",
       "nameRequired": "Name ist erforderlich.",
       "skuRequired": "Artikelnummer ist erforderlich.",
-      "quantityInvalid": "Bitte geben Sie eine ganze Zahl ab 0 ein.",
       "priceInvalid": "Bitte geben Sie einen Preis größer als 0 ein."
     }
   }
