@@ -48,7 +48,7 @@ convert_arch() {
   echo "==> [build-architecture-docs] Converting $count file(s) for $CONTEXT"
 
   find "$SRC_DIR" -type f -name "*.md" | while read -r md; do
-    rel="${md#$SRC_DIR/}"
+    rel="${md#"$SRC_DIR"/}"
     out="$DST_DIR/${rel%.md}.html"
     mkdir -p "$(dirname "$out")"
 
@@ -99,7 +99,7 @@ convert_decisions() {
   mkdir -p "$DST_DIR"
 
   find "$SRC_DIR" -type f -name "*.md" | while read -r md; do
-    rel="${md#$SRC_DIR/}"
+    rel="${md#"$SRC_DIR"/}"
     out="$DST_DIR/${rel%.md}.html"
     mkdir -p "$(dirname "$out")"
 
