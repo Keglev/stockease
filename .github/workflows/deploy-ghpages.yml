@@ -42,6 +42,24 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      # The job's worktree is the gh-pages branch, which carries only the published site —
+      # repository scripts are never in it. Omitting `ref` is deliberate: it resolves to
+      # github.sha, which is main's head under workflow_run and the dispatched ref's head
+      # under workflow_dispatch, so production publishes with main's scripts and branch
+      # verification with the branch's, without a conditional.
+      - name: Fetch deploy scripts
+        uses: actions/checkout@v7
+        with:
+          path: .ci-scripts
+
+      # Staging the scripts outside the worktree leaves the gh-pages tree exactly as the sync
+      # script expects: its wipe exclusion list stays untouched, and no helper directory can
+      # be swept into the publish commit.
+      - name: Stage deploy scripts outside the worktree
+        run: |
+          cp -R .ci-scripts/.github/scripts/deploy "$RUNNER_TEMP/deploy"
+          rm -rf .ci-scripts
+
       - name: Download docs-site artifact
         uses: actions/download-artifact@v8
         with:
@@ -51,7 +69,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync docs-site into gh-pages root
-        run: bash .github/scripts/deploy/ghpages-sync-site.sh
+        run: bash "$RUNNER_TEMP/deploy/ghpages-sync-site.sh"
 
       - name: Opt gh-pages out of Vercel deployments
         run: |
@@ -64,10 +82,10 @@ jobs:
           cp vercel.json frontend/vercel.json
 
       - name: Inject back-to-docs link into coverage report
-        run: bash .github/scripts/deploy/ghpages-inject-backlink.sh
+        run: bash "$RUNNER_TEMP/deploy/ghpages-inject-backlink.sh"
 
       - name: Commit and push to gh-pages
-        run: bash .github/scripts/deploy/ghpages-publish.sh
+        run: bash "$RUNNER_TEMP/deploy/ghpages-publish.sh"
         env:
           RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
 
