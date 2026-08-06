@@ -17,7 +17,6 @@
       "headline": "Know what's in stock - and what it earns."
     },
     "demo": {
-      "title": "Try the demo",
       "tryAdmin": "Try as Admin",
       "tryUser": "Try as User",
       "resetNotice": "Demo data - resets nightly at 03:00 UTC"
@@ -562,11 +561,9 @@
       "priceTitle": "Change price",
       "name": "Name",
       "sku": "SKU",
-      "quantity": "Quantity",
       "purchasePrice": "Purchase price",
       "nameRequired": "Name is required.",
       "skuRequired": "SKU is required.",
-      "quantityInvalid": "Enter a whole number of 0 or more.",
       "priceInvalid": "Enter a price greater than 0."
     }
   }
