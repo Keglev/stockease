@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchTerms.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.shared</a> &gt; <span class="el_source">SearchTerms.java</span></div><h1>SearchTerms.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.shared;
+
+import java.util.List;
+
+/**
+ * Splits a typeahead term into the tokens every search matches on (ADR 035).
+ *
+ * &lt;p&gt;A term is whitespace-separated words, and EVERY word must match for a row to answer - &quot;dru pap&quot;
+ * finds &quot;Druckerpapier A4&quot; because both fragments are in it, in either order. The alternative, one
+ * substring match on the whole term, made a reader type a product's words in the order the catalogue
+ * happened to record them.
+ *
+ * &lt;p&gt;A blank term is zero tokens, and zero tokens is the empty conjunction: everything matches. That
+ * is what the browse-on-focus behaviour rides on, and it is what the endpoints already did by
+ * accident - {@code LIKE '%%'} matches every row - so this makes an existing behaviour a stated one
+ * rather than changing it.
+ */
+public final class SearchTerms {
+
+    private SearchTerms() {
+    }
+
+    /**
+     * Splits a term into its tokens, discarding surrounding and repeated whitespace.
+     *
+     * @param term the raw search term; may be {@code null} or blank
+     * @return one entry per word, empty when the term carries no words
+     */
+    public static List&lt;String&gt; tokenize(String term) {
+<span class="pc bpc" id="L30" title="1 of 4 branches missed.">        if (term == null || term.isBlank()) {</span>
+<span class="fc" id="L31">            return List.of();</span>
+        }
+<span class="fc" id="L33">        return List.of(term.strip().split(&quot;\\s+&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

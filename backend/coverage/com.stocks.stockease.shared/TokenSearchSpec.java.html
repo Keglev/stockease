@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TokenSearchSpec.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.shared</a> &gt; <span class="el_source">TokenSearchSpec.java</span></div><h1>TokenSearchSpec.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.shared;
+
+import java.util.List;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+
+import jakarta.persistence.criteria.Predicate;
+
+/**
+ * Builds the token-AND predicate the typeahead searches share (ADR 035).
+ *
+ * &lt;p&gt;A Specification rather than a derived query or native SQL, and both alternatives were
+ * considered. A derived query cannot express a predicate whose SHAPE depends on how many words the
+ * reader typed. Native SQL can - Postgres would do it in one {@code ILIKE ALL} - but a native query
+ * bypasses {@code @SQLRestriction}, the mapping-level filter that keeps soft-deleted rows out of
+ * every search on this codebase, and re-stating {@code deleted_at IS NULL} by hand in each query is
+ * exactly the kind of duplicated invariant that goes wrong quietly. A criteria query is a mapped
+ * query, so the restriction still applies and the contract holds for free.
+ */
+public final class TokenSearchSpec {
+
+    private TokenSearchSpec() {
+    }
+
+    /**
+     * A page request that turns the search cap and ordering into one reusable request.
+     *
+     * &lt;p&gt;The order is part of the contract, not a nicety: under a cap the ordering decides which
+     * matches a caller sees at all, and an unordered LIMIT hands the same search different rows on
+     * different runs.
+     *
+     * @param sortBy the attribute to order by, ascending
+     * @return the first {@link SearchLimits#TYPEAHEAD_LIMIT} rows in that order
+     */
+    public static PageRequest capped(String sortBy) {
+<span class="fc" id="L38">        return PageRequest.of(0, SearchLimits.TYPEAHEAD_LIMIT, Sort.by(sortBy));</span>
+    }
+
+    /**
+     * Matches rows where every token is a case-insensitive substring of at least one of
+     * {@code attributes}.
+     *
+     * &lt;p&gt;Zero tokens is the empty conjunction, which matches everything - so a blank term answers
+     * the first capped page alphabetically, which is what an empty focused typeahead browses.
+     *
+     * @param &lt;T&gt; the entity type
+     * @param tokens the words the term was split into
+     * @param attributes the string attributes a token may match, in any combination
+     * @return the conjunction of one per-token disjunction
+     */
+    public static &lt;T&gt; Specification&lt;T&gt; matchingAllTokens(List&lt;String&gt; tokens, String... attributes) {
+<span class="fc" id="L54">        return (root, query, builder) -&gt; {</span>
+<span class="fc" id="L55">            Predicate[] perToken = tokens.stream()</span>
+<span class="fc" id="L56">                    .map(token -&gt; builder.or(java.util.Arrays.stream(attributes)</span>
+<span class="fc" id="L57">                            .map(attribute -&gt; builder.like(</span>
+<span class="fc" id="L58">                                    builder.lower(root.get(attribute)),</span>
+<span class="fc" id="L59">                                    &quot;%&quot; + token.toLowerCase() + &quot;%&quot;))</span>
+<span class="fc" id="L60">                            .toArray(Predicate[]::new)))</span>
+<span class="fc" id="L61">                    .toArray(Predicate[]::new);</span>
+<span class="fc" id="L62">            return builder.and(perToken);</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

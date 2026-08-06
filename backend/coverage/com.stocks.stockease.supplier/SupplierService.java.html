@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.shared.SearchLimits;
+import com.stocks.stockease.shared.SearchTerms;
+import com.stocks.stockease.shared.TokenSearchSpec;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -33,7 +35,7 @@ public class SupplierService {
      * @return the supplier, or empty if none exists with that ID
      */
     public Optional&lt;Supplier&gt; findById(long id) {
-<span class="fc" id="L36">        return supplierRepository.findById(id);</span>
+<span class="fc" id="L38">        return supplierRepository.findById(id);</span>
     }
 
     /**
@@ -42,18 +44,28 @@ public class SupplierService {
      * @return list of all suppliers that have not been soft-deleted
      */
     public List&lt;Supplier&gt; findAll() {
-<span class="fc" id="L45">        return supplierRepository.findAll();</span>
+<span class="fc" id="L47">        return supplierRepository.findAll();</span>
     }
 
     /**
-     * Searches live suppliers by a case-insensitive substring match on name, capped for typeahead use.
+     * Searches live suppliers for the typeahead, matching every token of {@code term} against the
+     * name (ADR 035).
      *
-     * @param name search substring
+     * &lt;p&gt;Name only, unlike the product search: a supplier has no SKU or any other second identifier
+     * worth matching, so there is nothing for a token to fall back to. Multi-token matching still
+     * applies - &quot;nor tra&quot; finds &quot;North Trading&quot; - because a reader typing into two pickers on one
+     * screen should not have to remember which of them tolerates word order.
+     *
+     * &lt;p&gt;A blank term matches everything and answers the first capped page alphabetically, which is
+     * what a focused, empty picker browses.
+     *
+     * @param term search term, whitespace-separated; may be blank
      * @return matching suppliers, alphabetical, at most {@link SearchLimits#TYPEAHEAD_LIMIT} of them
      */
-    public List&lt;Supplier&gt; searchByName(String name) {
-<span class="fc" id="L55">        return supplierRepository.findByNameContainingIgnoreCaseOrderByNameAsc(</span>
-<span class="fc" id="L56">                name, Limit.of(SearchLimits.TYPEAHEAD_LIMIT));</span>
+    public List&lt;Supplier&gt; searchByName(String term) {
+<span class="fc" id="L66">        return supplierRepository.findAll(</span>
+<span class="fc" id="L67">                TokenSearchSpec.&lt;Supplier&gt;matchingAllTokens(SearchTerms.tokenize(term), &quot;name&quot;),</span>
+<span class="fc" id="L68">                TokenSearchSpec.capped(&quot;name&quot;)).getContent();</span>
     }
 
     /**
@@ -69,14 +81,14 @@ public class SupplierService {
      */
     @Transactional
     public Supplier create(String name, String email, String phone, String address, String city) {
-<span class="fc" id="L72">        requireNameAndAddress(name, address);</span>
-<span class="fc" id="L73">        Supplier supplier = new Supplier();</span>
-<span class="fc" id="L74">        supplier.setName(name);</span>
-<span class="fc" id="L75">        supplier.setEmail(email);</span>
-<span class="fc" id="L76">        supplier.setPhone(phone);</span>
-<span class="fc" id="L77">        supplier.setAddress(address);</span>
-<span class="fc" id="L78">        supplier.setCity(city);</span>
-<span class="fc" id="L79">        return supplierRepository.save(supplier);</span>
+<span class="fc" id="L84">        requireNameAndAddress(name, address);</span>
+<span class="fc" id="L85">        Supplier supplier = new Supplier();</span>
+<span class="fc" id="L86">        supplier.setName(name);</span>
+<span class="fc" id="L87">        supplier.setEmail(email);</span>
+<span class="fc" id="L88">        supplier.setPhone(phone);</span>
+<span class="fc" id="L89">        supplier.setAddress(address);</span>
+<span class="fc" id="L90">        supplier.setCity(city);</span>
+<span class="fc" id="L91">        return supplierRepository.save(supplier);</span>
     }
 
     /**
@@ -97,15 +109,15 @@ public class SupplierService {
      */
     @Transactional
     public Supplier update(long id, String name, String email, String phone, String address, String city) {
-<span class="fc" id="L100">        Supplier supplier = supplierRepository.findById(id)</span>
-<span class="fc" id="L101">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L102">        requireNameAndAddress(name, address);</span>
-<span class="fc" id="L103">        supplier.setName(name);</span>
-<span class="fc" id="L104">        supplier.setEmail(email);</span>
-<span class="fc" id="L105">        supplier.setPhone(phone);</span>
-<span class="fc" id="L106">        supplier.setAddress(address);</span>
-<span class="fc" id="L107">        supplier.setCity(city);</span>
-<span class="fc" id="L108">        return supplierRepository.save(supplier);</span>
+<span class="fc" id="L112">        Supplier supplier = supplierRepository.findById(id)</span>
+<span class="fc" id="L113">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L114">        requireNameAndAddress(name, address);</span>
+<span class="fc" id="L115">        supplier.setName(name);</span>
+<span class="fc" id="L116">        supplier.setEmail(email);</span>
+<span class="fc" id="L117">        supplier.setPhone(phone);</span>
+<span class="fc" id="L118">        supplier.setAddress(address);</span>
+<span class="fc" id="L119">        supplier.setCity(city);</span>
+<span class="fc" id="L120">        return supplierRepository.save(supplier);</span>
     }
 
     /**
@@ -118,19 +130,19 @@ public class SupplierService {
      */
     @Transactional
     public void deleteById(long id) {
-<span class="fc" id="L121">        Supplier supplier = supplierRepository.findById(id)</span>
-<span class="fc" id="L122">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L133">        Supplier supplier = supplierRepository.findById(id)</span>
+<span class="fc" id="L134">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
         // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
         // rolls back the transaction
-<span class="fc" id="L125">        eventPublisher.publishEvent(new SupplierDeletedEvent(supplier.getId(), supplier.getName()));</span>
-<span class="fc" id="L126">        supplierRepository.delete(supplier);</span>
-<span class="fc" id="L127">    }</span>
+<span class="fc" id="L137">        eventPublisher.publishEvent(new SupplierDeletedEvent(supplier.getId(), supplier.getName()));</span>
+<span class="fc" id="L138">        supplierRepository.delete(supplier);</span>
+<span class="fc" id="L139">    }</span>
 
     /** Rejects a missing or blank name or address with the shared message. */
     private static void requireNameAndAddress(String name, String address) {
-<span class="fc bfc" id="L131" title="All 8 branches covered.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
-<span class="fc" id="L132">            throw new IllegalArgumentException(&quot;Supplier name and address are required.&quot;);</span>
+<span class="fc bfc" id="L143" title="All 8 branches covered.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
+<span class="fc" id="L144">            throw new IllegalArgumentException(&quot;Supplier name and address are required.&quot;);</span>
         }
-<span class="fc" id="L134">    }</span>
+<span class="fc" id="L146">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
