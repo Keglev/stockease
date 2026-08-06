@@ -11,6 +11,14 @@ on:
   workflow_run:
     workflows: ["Docs Pipeline"]
     types: [completed]
+  # A workflow_run event always executes the default branch's copy of this file, so a
+  # change to it can only be exercised through a manual dispatch. The trigger stays as
+  # a standing republish path, consistent with the dispatch-over-rerun practice.
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Docs Pipeline run id whose docs-site artifact to publish"
+        required: true
 
 permissions:
   contents: write
@@ -23,7 +31,7 @@ concurrency:
 
 jobs:
   deploy-ghpages:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -39,51 +47,11 @@ jobs:
         with:
           name: docs-site
           path: docs-site
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id || inputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync docs-site into gh-pages root
-        run: |
-          set -euo pipefail
-
-          # Preserve the published reports the current build did not regenerate. Each arrives
-          # only with its own CI trigger — backend coverage with backend CI, frontend coverage
-          # and the API reference with frontend CI — so any given deploy is missing most of
-          # them, and without this backup the wipe below would delete what it did not rebuild.
-          #
-          # backend/api is deliberately absent from this list: ReDoc rebuilds it from the
-          # OpenAPI spec on every docs build, so it is never missing and never needs restoring.
-          PRESERVED="backend/coverage frontend/coverage frontend/api"
-
-          for REPORT in $PRESERVED; do
-            if [ ! -d "docs-site/$REPORT" ] && [ -d "$REPORT" ]; then
-              echo "$REPORT not in current build — preserving existing report"
-              mkdir -p "/tmp/docs-preserve/$(dirname "$REPORT")"
-              cp -R "$REPORT" "/tmp/docs-preserve/$(dirname "$REPORT")/"
-            fi
-          done
-
-          # Clear gh-pages content, keeping only .git and .github metadata
-          find . -mindepth 1 -maxdepth 1 \
-            ! -name '.git' ! -name '.github' ! -name 'docs-site' \
-            -exec rm -rf {} +
-
-          if [ -d "docs-site" ] && [ "$(ls -A docs-site)" ]; then
-            cp -R docs-site/* .
-            rm -rf docs-site
-          else
-            echo "::error::docs-site artifact is empty or missing"
-            exit 1
-          fi
-
-          for REPORT in $PRESERVED; do
-            if [ -d "/tmp/docs-preserve/$REPORT" ]; then
-              mkdir -p "$REPORT"
-              cp -R "/tmp/docs-preserve/$REPORT/." "$REPORT/"
-              echo "Restored existing $REPORT"
-            fi
-          done
-          rm -rf /tmp/docs-preserve
+        run: bash .github/scripts/deploy/ghpages-sync-site.sh
 
       - name: Opt gh-pages out of Vercel deployments
         run: |
@@ -96,32 +64,12 @@ jobs:
           cp vercel.json frontend/vercel.json
 
       - name: Inject back-to-docs link into coverage report
-        run: |
-          set -euo pipefail
-          for COV in backend/coverage/index.html frontend/coverage/index.html; do
-            if [ -f "$COV" ]; then
-              if grep -q 'id="back-to-docs"' "$COV"; then
-                echo "$COV: back-to-docs link already present — skipping"
-              else
-                sed -i 's|<body[^>]*>|&<a id="back-to-docs" href="/stockease/" style="position:fixed;top:8px;right:12px;z-index:9999;font:14px sans-serif;padding:6px 12px;background:#2563eb;color:#fff;text-decoration:none;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.2);">\&larr; Back to docs</a>|' "$COV"
-                echo "$COV: back-to-docs link injected"
-              fi
-            fi
-          done
+        run: bash .github/scripts/deploy/ghpages-inject-backlink.sh
 
       - name: Commit and push to gh-pages
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if git status --porcelain | grep .; then
-            git add .
-            git commit -m "docs: publish from workflow_run ${{ github.event.workflow_run.id }}"
-            git push origin gh-pages
-            echo "Documentation published"
-          else
-            echo "No changes to publish"
-          fi
+        run: bash .github/scripts/deploy/ghpages-publish.sh
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
 
       - name: Job summary
         if: always()
