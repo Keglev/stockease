@@ -20,6 +20,10 @@ public class HealthController {
 
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * @param jdbcTemplate used only to issue the probe query; the endpoint reports on the connection
+     *                     itself, so no repository or domain service sits in between
+     */
     public HealthController(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
