@@ -23,6 +23,11 @@ if [ ! -f "$OPENAPI_YAML" ]; then
 fi
 
 mkdir -p "$API_OUT"
+
+# The spec is a published contract, so invalid OAS must fail the build rather than
+# render. Exits non-zero on errors only - warnings still pass.
+redocly lint "$OPENAPI_YAML"
+
 redocly build-docs "$OPENAPI_YAML" -o "$API_OUT/index.html"
 
 # Inject a fixed-position "back to docs" link into the self-contained ReDoc page.
