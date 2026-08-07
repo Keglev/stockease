@@ -27,26 +27,11 @@ SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ---------------------------------------------------------------------------
 # Lua filter — owned here to avoid duplication across sibling scripts.
-# Converts .md links to .html and wraps mermaid blocks in a div for the browser.
 # (Filter logic optimization remains deferred.)
 # ---------------------------------------------------------------------------
 write_lua_filter() {
   mkdir -p "$PROJECT_DIR/scripts"
-  cat > "$LUA_FILTER" << 'LUA'
-function Link(el)
-  el.target = el.target:gsub("%.md#", ".html#")
-  el.target = el.target:gsub("%.md$", ".html")
-  return el
-end
-
-function CodeBlock(el)
-  if el.classes:includes('mermaid') then
-    local html = '<div class="mermaid">\n' .. el.text .. '\n</div>'
-    return pandoc.RawBlock('html', html)
-  end
-  return el
-end
-LUA
+  cp "$SCRIPTS_DIR/md-to-html-links.lua" "$LUA_FILTER"
   echo "✓ Lua filter written"
 }
 
@@ -78,44 +63,23 @@ copy_landing_pages() {
   echo "✓ Landing pages copied"
 }
 
-# JaCoCo HTML is downloaded by the workflow to target/site/jacoco; absent on
-# docs-only pushes, in which case deploy-ghpages preserves the existing report.
-copy_backend_coverage() {
-  local SRC="$PROJECT_DIR/target/site/jacoco"
-  local DEST="$OUTPUT_DIR/backend/coverage"
+# Every downloaded report copies in the same shape: present only when the CI run that
+# produces it fed this build, and skipped with a notice otherwise — deploy-ghpages
+# preserves the published copy whenever a build skips one.
+#
+# The skip notice reads mid-sentence, so it lowercases the label by default. Backend
+# coverage passes its own because the success line names the tool and the notice does not.
+copy_artifact() {
+  local SRC="$1"
+  local DEST="$2"
+  local LABEL="$3"
+  local SKIP_LABEL="${4:-${LABEL,}}"
   if [ -d "$SRC" ] && [ "$(ls -A "$SRC")" ]; then
     mkdir -p "$DEST"
     cp -R "$SRC/." "$DEST/"
-    echo "✓ Backend coverage (JaCoCo) copied"
+    echo "✓ $LABEL copied"
   else
-    echo "ℹ️  No backend coverage found — skipping"
-  fi
-}
-
-copy_frontend_coverage() {
-  local SRC="$PROJECT_DIR/target/frontend/coverage"
-  local DEST="$OUTPUT_DIR/frontend/coverage"
-  if [ -d "$SRC" ] && [ "$(ls -A "$SRC")" ]; then
-    mkdir -p "$DEST"
-    cp -R "$SRC/." "$DEST/"
-    echo "✓ Frontend coverage copied"
-  else
-    echo "ℹ️  No frontend coverage found — skipping"
-  fi
-}
-
-# The TypeDoc reference the frontend workflow built and the docs pipeline downloaded. Same
-# skip-with-notice shape as the coverage copies: it is present only on builds a frontend CI run
-# triggered, and the deploy step preserves the published copy on every other build.
-copy_frontend_api() {
-  local SRC="$PROJECT_DIR/target/frontend/api-src"
-  local DEST="$OUTPUT_DIR/frontend/api"
-  if [ -d "$SRC" ] && [ "$(ls -A "$SRC")" ]; then
-    mkdir -p "$DEST"
-    cp -R "$SRC/." "$DEST/"
-    echo "✓ Frontend API reference copied"
-  else
-    echo "ℹ️  No frontend API reference found — skipping"
+    echo "ℹ️  No $SKIP_LABEL found — skipping"
   fi
 }
 
@@ -127,9 +91,17 @@ build_theme_assets
 copy_landing_pages
 bash "$SCRIPTS_DIR/build-openapi-docs.sh"      "$PROJECT_DIR"
 bash "$SCRIPTS_DIR/build-architecture-docs.sh" "$PROJECT_DIR"
-copy_backend_coverage
-copy_frontend_coverage
-copy_frontend_api
+# JaCoCo HTML is downloaded by the workflow to target/site/jacoco; absent on
+# docs-only pushes, in which case deploy-ghpages preserves the existing report.
+copy_artifact "$PROJECT_DIR/target/site/jacoco" "$OUTPUT_DIR/backend/coverage" \
+  "Backend coverage (JaCoCo)" "backend coverage"
+copy_artifact "$PROJECT_DIR/target/frontend/coverage" "$OUTPUT_DIR/frontend/coverage" \
+  "Frontend coverage"
+# The TypeDoc reference the frontend workflow built and the docs pipeline downloaded: present
+# only on builds a frontend CI run triggered, and the deploy step preserves the published copy
+# on every other build.
+copy_artifact "$PROJECT_DIR/target/frontend/api-src" "$OUTPUT_DIR/frontend/api" \
+  "Frontend API reference"
 
 echo ""
 echo "✓ Docs build complete — $(find "$OUTPUT_DIR" -type f | wc -l) files, $(du -sh "$OUTPUT_DIR" | cut -f1)"
