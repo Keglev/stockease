@@ -1,21 +1,19 @@
 package com.stocks.stockease.shared.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
@@ -24,84 +22,33 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.stocks.stockease.shared.ApiResponse;
-import com.stocks.stockease.shared.DuplicateResourceException;
-import com.stocks.stockease.shared.EntityInUseException;
-import com.stocks.stockease.shared.InsufficientStockException;
-import com.stocks.stockease.shared.InvalidMovementException;
-import com.stocks.stockease.shared.InvoiceStateException;
 
-import io.jsonwebtoken.JwtException;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
 
-/**
- * Tests for {@link GlobalExceptionHandler} covering all exception handler methods and branch paths.
+/*
+ * Contract: what the response body carries when the status alone would not tell a caller what to
+ * fix. These handlers do work rather than map: they walk a binding result or a violation set and
+ * assemble a field-keyed payload.
+ *
+ * Every case here answers 400 with the same envelope on purpose, so a client parses one shape
+ * whether a parameter was missing, unreadable, or merely invalid - which is why the assertions
+ * are on getData() rather than on the status. Each handler's failure branches get their own
+ * test, because a branch that silently produced an empty map would still answer 400 and look
+ * correct from the outside.
+ *
+ * The catch-all 500 lives here too: it is the branch that runs when nothing matched, and what it
+ * must NOT do is leak the underlying exception's message to the caller.
+ *
+ * Out of scope: which status each exception type earns. That mapping is specified in
+ * GlobalExceptionStatusMappingTest.
  */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings({"null", "unchecked"}) // Objects.requireNonNull() guarantees non-null at runtime; mock(ConstraintViolation.class) produces an unavoidable unchecked cast
-class GlobalExceptionHandlerTest {
+class GlobalExceptionErrorDetailTest {
 
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
-
-    // --- 404 not found ---
-
-    @Test
-    void handleNoSuchElementException_returns404WithExceptionMessage() {
-        var response = handler.handleNoSuchElementException(new NoSuchElementException("item missing"));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(404);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).contains("item missing");
-    }
-
-    @Test
-    void handleEntityNotFoundException_returns404WithExceptionMessage() {
-        var response = handler.handleEntityNotFoundException(new EntityNotFoundException("product 42"));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(404);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).contains("product 42");
-    }
-
-    // --- 401 unauthorized ---
-
-    @Test
-    void handleJwtException_returns401() {
-        var response = handler.handleJwtException(new JwtException("token expired"));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(401);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("Invalid or expired token.");
-    }
-
-    @Test
-    void handleBadCredentialsException_returns401() {
-        var response = handler.handleBadCredentialsException(new BadCredentialsException("bad credentials"));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(401);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("Invalid username or password");
-    }
-
-    // --- 403 forbidden ---
-
-    @Test
-    void handleAccessDeniedException_returns403() {
-        var response = handler.handleAccessDeniedException(new AccessDeniedException("access denied"));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(403);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("You do not have permission to access this resource.");
-    }
-
-    // --- 400 bad request ---
 
     @Test
     void handleMissingRequestParameter_returns400NamingTheParameter() {
@@ -116,75 +63,6 @@ class GlobalExceptionHandlerTest {
         // same envelope shape as the other parameter-validation cases, so clients parse one form
         assertThat(body.getData()).containsExactly(Map.entry("name", "required parameter is missing"));
     }
-
-    @Test
-    void handleIllegalArgumentException_returns400WithOriginalMessage() {
-        var response = handler.handleIllegalArgumentException(new IllegalArgumentException("price must be positive"));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(400);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("price must be positive");
-    }
-
-    @Test
-    void handleInvalidMovementException_returns400WithOriginalMessage() {
-        var response = handler.handleInvalidMovementException(
-                new InvalidMovementException("Quantity must be positive."));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(400);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("Quantity must be positive.");
-    }
-
-    // --- 409 conflict ---
-
-    @Test
-    void handleInvoiceStateException_returns409WithOriginalMessage() {
-        var response = handler.handleInvoiceStateException(
-                new InvoiceStateException("Only open invoices can be closed."));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(409);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("Only open invoices can be closed.");
-    }
-
-    @Test
-    void handleEntityInUseException_returns409WithOriginalMessage() {
-        var response = handler.handleEntityInUseException(
-                new EntityInUseException("Cannot delete supplier 'Acme': open invoices exist."));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(409);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("Cannot delete supplier 'Acme': open invoices exist.");
-    }
-
-    @Test
-    void handleDuplicateResourceException_returns409WithOriginalMessage() {
-        var response = handler.handleDuplicateResourceException(
-                new DuplicateResourceException("A product named 'Widget' already exists."));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(409);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("A product named 'Widget' already exists.");
-    }
-
-    @Test
-    void handleInsufficientStockException_returns409WithOriginalMessage() {
-        var response = handler.handleInsufficientStockException(
-                new InsufficientStockException("Adjustment of -5 would result in negative stock."));
-        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
-
-        assertThat(response.getStatusCode().value()).isEqualTo(409);
-        assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("Adjustment of -5 would result in negative stock.");
-    }
-
-    // --- 400 bad request (continued) ---
 
     @Test
     void handleValidationException_returns400WithFieldErrors() {
