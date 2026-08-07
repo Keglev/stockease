@@ -45,7 +45,7 @@ class CustomerCreateControllerTest {
 
     private Customer customer;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUpMocks() {
         customer = new Customer(1L, "Jane Doe", "jane@example.com", "555-1234", "1 Main St", "Springfield",

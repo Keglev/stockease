@@ -51,7 +51,7 @@ class CustomerUpdateControllerTest {
 
     private Customer updated;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUpMocks() {
         updated = new Customer(1L, "Jane Roe", null, null, null, null, LocalDateTime.of(2026, 1, 2, 3, 4), null);
