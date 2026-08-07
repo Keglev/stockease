@@ -22,7 +22,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.report.ProductProfitReport;
-import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.CashFlowReportingService;
+import com.stocks.stockease.report.CounterpartyReportingService;
+import com.stocks.stockease.report.ProfitReportingService;
+import com.stocks.stockease.report.StockReportingService;
 import com.stocks.stockease.report.SupplierProfitReport;
 
 /** Slice tests for the profit endpoints under /api/reports/profit. */
@@ -31,8 +34,19 @@ import com.stocks.stockease.report.SupplierProfitReport;
 @Import({TestConfig.class, ReportMethodSecurityTestConfig.class})
 class ReportProfitControllerTest {
 
+    // Constructor injection needs every collaborator on the context, so all four are declared
+    // here even where this slice stubs only one of them.
     @MockitoBean
-    private ReportingService reportingService;
+    private ProfitReportingService profitReportingService;
+
+    @MockitoBean
+    private CashFlowReportingService cashFlowReportingService;
+
+    @MockitoBean
+    private StockReportingService stockReportingService;
+
+    @MockitoBean
+    private CounterpartyReportingService counterpartyReportingService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,7 +55,8 @@ class ReportProfitControllerTest {
     @BeforeEach
     void setUpMocks() {
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
-        Mockito.reset(reportingService);
+        Mockito.reset(profitReportingService, cashFlowReportingService, stockReportingService,
+                counterpartyReportingService);
     }
 
     private static ProductProfitReport productProfit() {
@@ -52,7 +67,7 @@ class ReportProfitControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void profitPerProduct_withRows_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.profitPerProduct(null, null)).thenReturn(List.of(productProfit()));
+        Mockito.when(profitReportingService.profitPerProduct(null, null)).thenReturn(List.of(productProfit()));
 
         mockMvc.perform(get("/api/reports/profit/products"))
                 .andExpect(status().isOk())
@@ -61,13 +76,13 @@ class ReportProfitControllerTest {
                 .andExpect(jsonPath("$[0].deleted").value(false))
                 .andExpect(jsonPath("$[0].grossProfit").value(60.00));
 
-        Mockito.verify(reportingService).profitPerProduct(null, null);
+        Mockito.verify(profitReportingService).profitPerProduct(null, null);
     }
 
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void profitPerProduct_asUserRole_returns200() throws Exception {
-        Mockito.when(reportingService.profitPerProduct(null, null)).thenReturn(List.of(productProfit()));
+        Mockito.when(profitReportingService.profitPerProduct(null, null)).thenReturn(List.of(productProfit()));
 
         mockMvc.perform(get("/api/reports/profit/products"))
                 .andExpect(status().isOk())
@@ -79,14 +94,14 @@ class ReportProfitControllerTest {
     void profitPerProduct_withPeriod_passesBothBoundsThrough() throws Exception {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 3, 31);
-        Mockito.when(reportingService.profitPerProduct(from, to)).thenReturn(List.of(productProfit()));
+        Mockito.when(profitReportingService.profitPerProduct(from, to)).thenReturn(List.of(productProfit()));
 
         mockMvc.perform(get("/api/reports/profit/products")
                         .param("from", "2026-01-01").param("to", "2026-03-31"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].productId").value(3));
 
-        Mockito.verify(reportingService).profitPerProduct(from, to);
+        Mockito.verify(profitReportingService).profitPerProduct(from, to);
     }
 
     @Test
@@ -98,7 +113,7 @@ class ReportProfitControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
 
-        Mockito.verify(reportingService, Mockito.never()).profitPerProduct(Mockito.any(), Mockito.any());
+        Mockito.verify(profitReportingService, Mockito.never()).profitPerProduct(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -106,13 +121,13 @@ class ReportProfitControllerTest {
         mockMvc.perform(get("/api/reports/profit/products"))
                 .andExpect(status().isUnauthorized());
 
-        Mockito.verify(reportingService, Mockito.never()).profitPerProduct(null, null);
+        Mockito.verify(profitReportingService, Mockito.never()).profitPerProduct(null, null);
     }
 
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void profitForProduct_withExistingProduct_returnsEnvelope() throws Exception {
-        Mockito.when(reportingService.profitForProduct(3L, null, null)).thenReturn(Optional.of(productProfit()));
+        Mockito.when(profitReportingService.profitForProduct(3L, null, null)).thenReturn(Optional.of(productProfit()));
 
         mockMvc.perform(get("/api/reports/profit/products/3"))
                 .andExpect(status().isOk())
@@ -125,7 +140,7 @@ class ReportProfitControllerTest {
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void profitForProduct_withUnknownProduct_returns404() throws Exception {
-        Mockito.when(reportingService.profitForProduct(9L, null, null)).thenReturn(Optional.empty());
+        Mockito.when(profitReportingService.profitForProduct(9L, null, null)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/reports/profit/products/9"))
                 .andExpect(status().isNotFound())
@@ -137,7 +152,7 @@ class ReportProfitControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void profitPerSupplier_withRows_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.profitPerSupplier(null, null)).thenReturn(List.of(new SupplierProfitReport(
+        Mockito.when(profitReportingService.profitPerSupplier(null, null)).thenReturn(List.of(new SupplierProfitReport(
                 7L, "Acme", new BigDecimal("100.00"), new BigDecimal("40.00"), new BigDecimal("60.00"))));
 
         mockMvc.perform(get("/api/reports/profit/suppliers"))
@@ -146,13 +161,13 @@ class ReportProfitControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Acme"))
                 .andExpect(jsonPath("$[0].grossProfit").value(60.00));
 
-        Mockito.verify(reportingService).profitPerSupplier(null, null);
+        Mockito.verify(profitReportingService).profitPerSupplier(null, null);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void profitPerSupplier_withNoRows_returnsEmptyList() throws Exception {
-        Mockito.when(reportingService.profitPerSupplier(null, null)).thenReturn(List.of());
+        Mockito.when(profitReportingService.profitPerSupplier(null, null)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/reports/profit/suppliers"))
                 .andExpect(status().isOk())
@@ -164,7 +179,7 @@ class ReportProfitControllerTest {
     void profitPerSupplier_withPeriod_passesBothBoundsThrough() throws Exception {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 3, 31);
-        Mockito.when(reportingService.profitPerSupplier(from, to)).thenReturn(List.of(new SupplierProfitReport(
+        Mockito.when(profitReportingService.profitPerSupplier(from, to)).thenReturn(List.of(new SupplierProfitReport(
                 7L, "Acme", new BigDecimal("100.00"), new BigDecimal("40.00"), new BigDecimal("60.00"))));
 
         mockMvc.perform(get("/api/reports/profit/suppliers")
@@ -172,7 +187,7 @@ class ReportProfitControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].supplierId").value(7));
 
-        Mockito.verify(reportingService).profitPerSupplier(from, to);
+        Mockito.verify(profitReportingService).profitPerSupplier(from, to);
     }
 
     @Test
@@ -184,6 +199,6 @@ class ReportProfitControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
 
-        Mockito.verify(reportingService, Mockito.never()).profitPerSupplier(Mockito.any(), Mockito.any());
+        Mockito.verify(profitReportingService, Mockito.never()).profitPerSupplier(Mockito.any(), Mockito.any());
     }
 }

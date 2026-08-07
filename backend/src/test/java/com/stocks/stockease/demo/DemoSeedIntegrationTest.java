@@ -22,8 +22,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.stocks.stockease.report.CashFlowReport;
+import com.stocks.stockease.report.CashFlowReportingService;
 import com.stocks.stockease.report.ProductProfitReport;
-import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.ProfitReportingService;
 import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /**
@@ -47,7 +48,10 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private ReportingService reportingService;
+    private ProfitReportingService profitReportingService;
+
+    @Autowired
+    private CashFlowReportingService cashFlowReportingService;
 
     @Autowired
     private DemoTemporalSpread temporalSpread;
@@ -196,10 +200,10 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
         LocalDate from = LocalDate.now().minusDays(30);
         LocalDate today = LocalDate.now();
 
-        List<ProductProfitReport> allTimeProfit = reportingService.profitPerProduct(null, null);
-        List<ProductProfitReport> recentProfit = reportingService.profitPerProduct(from, today);
-        CashFlowReport allTimeCash = reportingService.cashFlow(null, null);
-        CashFlowReport recentCash = reportingService.cashFlow(from, today);
+        List<ProductProfitReport> allTimeProfit = profitReportingService.profitPerProduct(null, null);
+        List<ProductProfitReport> recentProfit = profitReportingService.profitPerProduct(from, today);
+        CashFlowReport allTimeCash = cashFlowReportingService.cashFlow(null, null);
+        CashFlowReport recentCash = cashFlowReportingService.cashFlow(from, today);
 
         // the user-visible fix: before the spread every window held everything, so these pairs were
         // equal and the presets looked broken
@@ -222,7 +226,7 @@ class DemoSeedIntegrationTest extends AbstractIntegrationTest {
                 WHERE i.invoice_number = 'AR-2026-0009' AND p.sku = 'BUE-0003'
                 """)).isEqualTo(4L);
 
-        CashFlowReport allTime = reportingService.cashFlow(null, null);
+        CashFlowReport allTime = cashFlowReportingService.cashFlow(null, null);
 
         // 2986.30 = 932.40 (AR-2026-0003) + 848.50 (AR-2026-0008) + 1205.40 (AR-2026-0009, whose
         // 20-unit line bills 16 after the return): the four returned units come off the inflow.

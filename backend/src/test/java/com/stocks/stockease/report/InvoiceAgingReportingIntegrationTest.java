@@ -50,7 +50,7 @@ import com.stocks.stockease.support.AbstractIntegrationTest;
 class InvoiceAgingReportingIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
-    private ReportingService reportingService;
+    private CounterpartyReportingService reportingService;
 
     @Autowired
     private ProductService productService;

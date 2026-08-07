@@ -39,7 +39,7 @@ import com.stocks.stockease.support.AbstractIntegrationTest;
 class StockHistoryIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
-    private ReportingService reportingService;
+    private StockReportingService reportingService;
 
     @Autowired
     private ProductService productService;

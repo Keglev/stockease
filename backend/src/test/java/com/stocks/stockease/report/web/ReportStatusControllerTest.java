@@ -29,7 +29,10 @@ import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
 import com.stocks.stockease.report.LossReport;
-import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.CashFlowReportingService;
+import com.stocks.stockease.report.CounterpartyReportingService;
+import com.stocks.stockease.report.ProfitReportingService;
+import com.stocks.stockease.report.StockReportingService;
 import com.stocks.stockease.report.StockHistoryPoint;
 import com.stocks.stockease.report.StockStatusReport;
 
@@ -41,8 +44,19 @@ class ReportStatusControllerTest {
 
     private static final LocalDate DUE_DATE = LocalDate.of(2026, 3, 1);
 
+    // Constructor injection needs every collaborator on the context, so all four are declared
+    // here even where this slice stubs only one of them.
     @MockitoBean
-    private ReportingService reportingService;
+    private ProfitReportingService profitReportingService;
+
+    @MockitoBean
+    private CashFlowReportingService cashFlowReportingService;
+
+    @MockitoBean
+    private StockReportingService stockReportingService;
+
+    @MockitoBean
+    private CounterpartyReportingService counterpartyReportingService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,7 +65,8 @@ class ReportStatusControllerTest {
     @BeforeEach
     void setUpMocks() {
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
-        Mockito.reset(reportingService);
+        Mockito.reset(profitReportingService, cashFlowReportingService, stockReportingService,
+                counterpartyReportingService);
     }
 
     private static InvoiceDueSummary dueSummary(Long daysOverdue) {
@@ -62,7 +77,7 @@ class ReportStatusControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void stockStatus_withRows_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.stockStatus()).thenReturn(List.of(new StockStatusReport(
+        Mockito.when(stockReportingService.stockStatus()).thenReturn(List.of(new StockStatusReport(
                 3L, "Widget", "SKU-3", 4, new BigDecimal("60.00"), 6, new BigDecimal("30.00"))));
 
         mockMvc.perform(get("/api/reports/stock-status"))
@@ -71,13 +86,13 @@ class ReportStatusControllerTest {
                 .andExpect(jsonPath("$[0].soldUnits").value(4))
                 .andExpect(jsonPath("$[0].inStockValue").value(30.00));
 
-        Mockito.verify(reportingService).stockStatus();
+        Mockito.verify(stockReportingService).stockStatus();
     }
 
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void lossReport_withRows_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.lossReport(null, null)).thenReturn(List.of(losses()));
+        Mockito.when(stockReportingService.lossReport(null, null)).thenReturn(List.of(losses()));
 
         mockMvc.perform(get("/api/reports/losses"))
                 .andExpect(status().isOk())
@@ -85,7 +100,7 @@ class ReportStatusControllerTest {
                 .andExpect(jsonPath("$[0].destroyedUnits").value(1))
                 .andExpect(jsonPath("$[0].lossValue").value(15.00));
 
-        Mockito.verify(reportingService).lossReport(null, null);
+        Mockito.verify(stockReportingService).lossReport(null, null);
     }
 
     private static LossReport losses() {
@@ -97,13 +112,13 @@ class ReportStatusControllerTest {
     void lossReport_withPeriod_passesBothBoundsThrough() throws Exception {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 3, 31);
-        Mockito.when(reportingService.lossReport(from, to)).thenReturn(List.of(losses()));
+        Mockito.when(stockReportingService.lossReport(from, to)).thenReturn(List.of(losses()));
 
         mockMvc.perform(get("/api/reports/losses").param("from", "2026-01-01").param("to", "2026-03-31"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].lostUnits").value(2));
 
-        Mockito.verify(reportingService).lossReport(from, to);
+        Mockito.verify(stockReportingService).lossReport(from, to);
     }
 
     @Test
@@ -114,13 +129,13 @@ class ReportStatusControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
 
-        Mockito.verify(reportingService, Mockito.never()).lossReport(Mockito.any(), Mockito.any());
+        Mockito.verify(stockReportingService, Mockito.never()).lossReport(Mockito.any(), Mockito.any());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void dueDateBuckets_withRows_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.dueDateBuckets())
+        Mockito.when(counterpartyReportingService.dueDateBuckets())
                 .thenReturn(List.of(new DueDateBucket(DUE_DATE, "SALE", 2L, new BigDecimal("60.00"))));
 
         mockMvc.perform(get("/api/reports/due-dates"))
@@ -133,7 +148,7 @@ class ReportStatusControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void dueSoon_withoutDaysParam_appliesSevenDayDefault() throws Exception {
-        Mockito.when(reportingService.dueSoon(anyInt())).thenReturn(List.of(dueSummary(null)));
+        Mockito.when(counterpartyReportingService.dueSoon(anyInt())).thenReturn(List.of(dueSummary(null)));
 
         mockMvc.perform(get("/api/reports/due-soon"))
                 .andExpect(status().isOk())
@@ -142,20 +157,20 @@ class ReportStatusControllerTest {
 
         // captured rather than assumed: the default lives in the annotation and would silently drift
         ArgumentCaptor<Integer> days = ArgumentCaptor.forClass(Integer.class);
-        Mockito.verify(reportingService).dueSoon(days.capture());
+        Mockito.verify(counterpartyReportingService).dueSoon(days.capture());
         assertThat(days.getValue()).isEqualTo(7);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void dueSoon_withExplicitDays_passesValueThrough() throws Exception {
-        Mockito.when(reportingService.dueSoon(30)).thenReturn(List.of(dueSummary(null)));
+        Mockito.when(counterpartyReportingService.dueSoon(30)).thenReturn(List.of(dueSummary(null)));
 
         mockMvc.perform(get("/api/reports/due-soon").param("days", "30"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].invoiceId").value(1));
 
-        Mockito.verify(reportingService).dueSoon(30);
+        Mockito.verify(counterpartyReportingService).dueSoon(30);
     }
 
     @ParameterizedTest
@@ -167,20 +182,20 @@ class ReportStatusControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Days must be positive."));
 
-        Mockito.verify(reportingService, Mockito.never()).dueSoon(anyInt());
+        Mockito.verify(counterpartyReportingService, Mockito.never()).dueSoon(anyInt());
     }
 
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void overdue_withRows_includesDaysOverdue() throws Exception {
-        Mockito.when(reportingService.overdue()).thenReturn(List.of(dueSummary(5L)));
+        Mockito.when(counterpartyReportingService.overdue()).thenReturn(List.of(dueSummary(5L)));
 
         mockMvc.perform(get("/api/reports/overdue"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].daysOverdue").value(5))
                 .andExpect(jsonPath("$[0].outstandingValue").value(30.00));
 
-        Mockito.verify(reportingService).overdue();
+        Mockito.verify(counterpartyReportingService).overdue();
     }
 
     @Test
@@ -188,7 +203,7 @@ class ReportStatusControllerTest {
         mockMvc.perform(get("/api/reports/overdue"))
                 .andExpect(status().isUnauthorized());
 
-        Mockito.verify(reportingService, Mockito.never()).overdue();
+        Mockito.verify(counterpartyReportingService, Mockito.never()).overdue();
     }
 
     private static List<StockHistoryPoint> history() {
@@ -198,7 +213,7 @@ class ReportStatusControllerTest {
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void stockHistory_withPoints_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.stockHistory(3L, null, null)).thenReturn(Optional.of(history()));
+        Mockito.when(stockReportingService.stockHistory(3L, null, null)).thenReturn(Optional.of(history()));
 
         mockMvc.perform(get("/api/reports/products/3/stock-history"))
                 .andExpect(status().isOk())
@@ -206,7 +221,7 @@ class ReportStatusControllerTest {
                 .andExpect(jsonPath("$[0].stockLevel").value(32))
                 .andExpect(jsonPath("$[0].cumulativeSoldUnits").value(8));
 
-        Mockito.verify(reportingService).stockHistory(3L, null, null);
+        Mockito.verify(stockReportingService).stockHistory(3L, null, null);
     }
 
     @Test
@@ -214,20 +229,20 @@ class ReportStatusControllerTest {
     void stockHistory_withPeriod_passesBothBoundsThrough() throws Exception {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 3, 31);
-        Mockito.when(reportingService.stockHistory(3L, from, to)).thenReturn(Optional.of(history()));
+        Mockito.when(stockReportingService.stockHistory(3L, from, to)).thenReturn(Optional.of(history()));
 
         mockMvc.perform(get("/api/reports/products/3/stock-history")
                         .param("from", "2026-01-01").param("to", "2026-03-31"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].stockLevel").value(32));
 
-        Mockito.verify(reportingService).stockHistory(3L, from, to);
+        Mockito.verify(stockReportingService).stockHistory(3L, from, to);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void stockHistory_unknownProduct_returns404() throws Exception {
-        Mockito.when(reportingService.stockHistory(9L, null, null)).thenReturn(Optional.empty());
+        Mockito.when(stockReportingService.stockHistory(9L, null, null)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/reports/products/9/stock-history"))
                 .andExpect(status().isNotFound())
@@ -243,7 +258,7 @@ class ReportStatusControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("The start of the period must not be after its end."));
 
-        Mockito.verify(reportingService, Mockito.never()).stockHistory(Mockito.anyLong(), Mockito.any(),
+        Mockito.verify(stockReportingService, Mockito.never()).stockHistory(Mockito.anyLong(), Mockito.any(),
                 Mockito.any());
     }
 
@@ -252,7 +267,7 @@ class ReportStatusControllerTest {
         mockMvc.perform(get("/api/reports/products/3/stock-history"))
                 .andExpect(status().isUnauthorized());
 
-        Mockito.verify(reportingService, Mockito.never()).stockHistory(Mockito.anyLong(), Mockito.any(),
+        Mockito.verify(stockReportingService, Mockito.never()).stockHistory(Mockito.anyLong(), Mockito.any(),
                 Mockito.any());
     }
 }

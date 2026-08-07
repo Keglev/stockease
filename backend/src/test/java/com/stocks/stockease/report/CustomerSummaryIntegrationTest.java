@@ -36,7 +36,7 @@ import com.stocks.stockease.support.AbstractIntegrationTest;
 class CustomerSummaryIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
-    private ReportingService reportingService;
+    private CounterpartyReportingService reportingService;
 
     @Autowired
     private CustomerService customerService;

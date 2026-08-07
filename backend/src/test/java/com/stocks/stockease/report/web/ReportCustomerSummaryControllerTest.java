@@ -21,7 +21,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.report.CustomerSummary;
-import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.CashFlowReportingService;
+import com.stocks.stockease.report.CounterpartyReportingService;
+import com.stocks.stockease.report.ProfitReportingService;
+import com.stocks.stockease.report.StockReportingService;
 
 /** Slice tests for GET /api/reports/customers/{id}/summary. */
 @ExtendWith(MockitoExtension.class)
@@ -29,8 +32,19 @@ import com.stocks.stockease.report.ReportingService;
 @Import({TestConfig.class, ReportMethodSecurityTestConfig.class})
 class ReportCustomerSummaryControllerTest {
 
+    // Constructor injection needs every collaborator on the context, so all four are declared
+    // here even where this slice stubs only one of them.
     @MockitoBean
-    private ReportingService reportingService;
+    private ProfitReportingService profitReportingService;
+
+    @MockitoBean
+    private CashFlowReportingService cashFlowReportingService;
+
+    @MockitoBean
+    private StockReportingService stockReportingService;
+
+    @MockitoBean
+    private CounterpartyReportingService counterpartyReportingService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -39,7 +53,8 @@ class ReportCustomerSummaryControllerTest {
     @BeforeEach
     void setUpMocks() {
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
-        Mockito.reset(reportingService);
+        Mockito.reset(profitReportingService, cashFlowReportingService, stockReportingService,
+                counterpartyReportingService);
     }
 
     private static CustomerSummary summary() {
@@ -50,7 +65,7 @@ class ReportCustomerSummaryControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void customerSummary_withExistingCustomer_returnsEnvelope() throws Exception {
-        Mockito.when(reportingService.customerSummary(9L)).thenReturn(Optional.of(summary()));
+        Mockito.when(counterpartyReportingService.customerSummary(9L)).thenReturn(Optional.of(summary()));
 
         mockMvc.perform(get("/api/reports/customers/9/summary"))
                 .andExpect(status().isOk())
@@ -68,7 +83,7 @@ class ReportCustomerSummaryControllerTest {
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void customerSummary_asUserRole_returns200() throws Exception {
-        Mockito.when(reportingService.customerSummary(9L)).thenReturn(Optional.of(summary()));
+        Mockito.when(counterpartyReportingService.customerSummary(9L)).thenReturn(Optional.of(summary()));
 
         mockMvc.perform(get("/api/reports/customers/9/summary"))
                 .andExpect(status().isOk())
@@ -78,7 +93,7 @@ class ReportCustomerSummaryControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void customerSummary_withUnknownId_returns404() throws Exception {
-        Mockito.when(reportingService.customerSummary(999L)).thenReturn(Optional.empty());
+        Mockito.when(counterpartyReportingService.customerSummary(999L)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/reports/customers/999/summary"))
                 .andExpect(status().isNotFound())
@@ -91,6 +106,6 @@ class ReportCustomerSummaryControllerTest {
         mockMvc.perform(get("/api/reports/customers/9/summary"))
                 .andExpect(status().isUnauthorized());
 
-        Mockito.verify(reportingService, Mockito.never()).customerSummary(anyLong());
+        Mockito.verify(counterpartyReportingService, Mockito.never()).customerSummary(anyLong());
     }
 }
