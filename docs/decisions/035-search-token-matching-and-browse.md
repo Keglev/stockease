@@ -163,3 +163,10 @@ predicates explicitly.
 ---
 
 [Back to the Decision Log](index.md)
+
+---
+
+*Amendment (2026-08-07): `ReportingService`, named above, was split into four
+family services in #187 (ProfitReporting, CashFlowReporting, StockReporting,
+CounterpartyReporting). The role described here now lives in
+CounterpartyReportingService. The decision itself is unchanged.*

@@ -42,6 +42,21 @@ runs feed fresh coverage into the next docs build via artifact. The
 gh-pages branch is disposable build output - the site is a pure function of
 `main` and can be regenerated wholesale at any time.
 
+## Health checks
+
+Koyeb probes `GET /actuator/health` on port 8081 - the application's single
+server port (`application.properties:40`), permitted anonymously in
+`SecurityConfig` so the probe needs no credentials. The grace period is 240
+seconds, which is generous on purpose: Flyway runs its migrations before the
+port opens, and a probe that gave up sooner would kill a container that was
+still doing legitimate work. Thereafter the probe runs every 80 seconds with a
+10-second timeout, and five consecutive failures trigger a restart.
+
+This configuration lives in the Koyeb console, not in the repository. The
+in-repo `koyeb.yaml` was deleted (#176) once its values had drifted from the
+live service and it had become a misleading second source of truth; this
+section is the record instead.
+
 ## Configuration and secrets
 
 Runtime configuration reaches the container as environment variables.
