@@ -7,6 +7,9 @@
 # written by build-docs.sh before this script is called.
 # Prerequisites: pandoc
 # =============================================================================
+# SIZE WAIVER: 76 code lines vs the ~70 shell target. One conversion concern at
+# one abstraction level - no split criterion applies; splitting would separate
+# two pandoc passes that share their filter, nav metadata, and failure mode.
 set -euo pipefail
 
 PROJECT_DIR="${1:?Usage: build-architecture-docs.sh <project-dir>}"
