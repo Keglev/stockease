@@ -1,11 +1,8 @@
-# =============================================================================
-# StockEase - Deploy Docs to GitHub Pages
-#
-# Triggered after docs-pipeline.yml succeeds.
-# Consumes: docs-site artifact (built by docs-pipeline.yml).
-# Publishes static documentation to the gh-pages branch.
-# =============================================================================
 name: Deploy Docs to GitHub Pages
+
+# Publishes the static documentation site to the gh-pages branch. It builds
+# nothing of its own: docs-pipeline.yml does the building, and this workflow runs
+# after that one succeeds and publishes the docs-site artifact it produced.
 
 on:
   workflow_run:

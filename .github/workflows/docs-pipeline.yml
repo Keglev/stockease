@@ -1,5 +1,11 @@
 name: Docs Pipeline
 
+# Builds the documentation site and uploads it as the docs-site artifact; it does
+# not publish - Deploy Docs to GitHub Pages consumes that artifact and does. Which
+# reports a run can include depends on what triggered it: a Backend Tests run
+# brings JaCoCo, a Frontend Tests run brings Vitest coverage and the TypeDoc
+# reference, a docs push brings none, so each run publishes what its trigger made.
+
 on:
   workflow_run:
     workflows: ["Backend Tests", "Frontend Tests"]

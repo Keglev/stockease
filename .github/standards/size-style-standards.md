@@ -53,6 +53,13 @@ workflows >5 lines -> a script (`build-frontend-api.sh` pattern). DELIVERY
 PREMISE (from #177): verify WHAT the workflow checks out before extracting.
 SHELL COMMENT EXEMPLAR: `.github/scripts/deploy/demo-reset.sh`.
 
+*[rev 5]* WORKFLOW HEADERS: every workflow file opens with a 2-5 line plain `#`
+prose header stating WHY - what the workflow does that its `name:` key does not
+say, and its trigger-chain position where non-obvious (what triggers it, what it
+feeds). No banner rules. A header that restates WHAT the file plainly shows is a
+defect, not compliance. WORKFLOW HEADER EXEMPLAR:
+`.github/workflows/demo-reset.yml`.
+
 Test files: controller/integration 250 (>300), others 150 (>200); entity tests
 only for custom logic.
 
