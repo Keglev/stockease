@@ -30,6 +30,10 @@ import com.stocks.stockease.shared.ProductDeletedException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 
+// SIZE WAIVER (2026-08-07): 150 code lines vs the exception-advice alarm of >100. WAIVED: the
+// "status mapping only in GlobalExceptionHandler" rule concentrates status mapping here by design,
+// so the length is the rule working, not a missing split. Splitting would decentralize the one
+// concern the rule centralizes.
 /**
  * Centralized exception handler that intercepts exceptions from {@code @RestController} methods and converts them to HTTP responses.
  * All responses follow the {@link ApiResponse} envelope format with {@code success: false} and an appropriate HTTP status.
