@@ -39,7 +39,7 @@ import com.stocks.stockease.support.AbstractIntegrationTest;
 class CashFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
-    private ReportingService reportingService;
+    private CashFlowReportingService reportingService;
 
     @Autowired
     private CustomerService customerService;

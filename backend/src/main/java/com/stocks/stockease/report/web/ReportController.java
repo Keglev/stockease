@@ -14,15 +14,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.report.CashFlowReport;
+import com.stocks.stockease.report.CashFlowReportingService;
 import com.stocks.stockease.report.CashFlowTimelineBucket;
+import com.stocks.stockease.report.CounterpartyReportingService;
 import com.stocks.stockease.report.CustomerSummary;
 import com.stocks.stockease.report.DueDateBucket;
 import com.stocks.stockease.report.InvoiceDueSummary;
 import com.stocks.stockease.report.LossByRemark;
 import com.stocks.stockease.report.LossReport;
 import com.stocks.stockease.report.ProductProfitReport;
-import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.ProfitReportingService;
 import com.stocks.stockease.report.StockHistoryPoint;
+import com.stocks.stockease.report.StockReportingService;
 import com.stocks.stockease.report.StockStatusReport;
 import com.stocks.stockease.report.SupplierProduct;
 import com.stocks.stockease.report.SupplierProfitReport;
@@ -53,7 +56,10 @@ public class ReportController {
     /** Window applied to the due-soon listing when the caller names none. */
     private static final int DEFAULT_DUE_SOON_DAYS = 7;
 
-    private final ReportingService reportingService;
+    private final ProfitReportingService profitReportingService;
+    private final CashFlowReportingService cashFlowReportingService;
+    private final StockReportingService stockReportingService;
+    private final CounterpartyReportingService counterpartyReportingService;
 
     /**
      * Returns gross profit for every product, including soft-deleted ones.
@@ -69,7 +75,7 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
-        return reportingService.profitPerProduct(from, to);
+        return profitReportingService.profitPerProduct(from, to);
     }
 
     /**
@@ -88,7 +94,7 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
-        ProductProfitReport report = reportingService.profitForProduct(id, from, to)
+        ProductProfitReport report = profitReportingService.profitForProduct(id, from, to)
                 .orElseThrow(() -> new EntityNotFoundException("No profit report for product with ID " + id + "."));
         return ResponseEntity.ok(new ApiResponse<>(true, "Product profit fetched successfully", report));
     }
@@ -107,7 +113,7 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
-        return reportingService.cashFlow(from, to);
+        return cashFlowReportingService.cashFlow(from, to);
     }
 
     /**
@@ -134,10 +140,10 @@ public class ReportController {
         // Checked rather than left to return an empty series, matching the stock-history endpoint: a
         // product that moved no money and a product that does not exist are different answers, and
         // only the second is the caller's mistake.
-        if (productId != null && !reportingService.productExists(productId)) {
+        if (productId != null && !stockReportingService.productExists(productId)) {
             throw new EntityNotFoundException("Product with ID " + productId + " not found.");
         }
-        return reportingService.cashFlowTimeline(from, to, productId);
+        return cashFlowReportingService.cashFlowTimeline(from, to, productId);
     }
 
     /**
@@ -159,7 +165,7 @@ public class ReportController {
     @GetMapping("/suppliers/{id}/products/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<SupplierProduct> supplierProducts(@PathVariable long id, @RequestParam String name) {
-        return reportingService.supplierProducts(id, name)
+        return counterpartyReportingService.supplierProducts(id, name)
                 .orElseThrow(() -> new EntityNotFoundException("Supplier with ID " + id + " not found."));
     }
 
@@ -181,7 +187,7 @@ public class ReportController {
         validatePeriod(from, to);
         // An empty optional means no such product; an empty list means one that never moved. Only
         // the first is a 404 - a product nobody has traded yet has a real, empty history.
-        return reportingService.stockHistory(id, from, to)
+        return stockReportingService.stockHistory(id, from, to)
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
     }
 
@@ -206,7 +212,7 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
-        return reportingService.profitPerSupplier(from, to);
+        return profitReportingService.profitPerSupplier(from, to);
     }
 
     /**
@@ -219,7 +225,7 @@ public class ReportController {
     @GetMapping("/customers/{id}/summary")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<CustomerSummary>> customerSummary(@PathVariable long id) {
-        CustomerSummary summary = reportingService.customerSummary(id)
+        CustomerSummary summary = counterpartyReportingService.customerSummary(id)
                 .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + id + " not found."));
         return ResponseEntity.ok(new ApiResponse<>(true, "Customer summary fetched successfully", summary));
     }
@@ -232,7 +238,7 @@ public class ReportController {
     @GetMapping("/stock-status")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<StockStatusReport> stockStatus() {
-        return reportingService.stockStatus();
+        return stockReportingService.stockStatus();
     }
 
     /**
@@ -249,7 +255,7 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
-        return reportingService.lossReport(from, to);
+        return stockReportingService.lossReport(from, to);
     }
 
     /**
@@ -269,7 +275,7 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
-        return reportingService.lossesByRemark(from, to);
+        return stockReportingService.lossesByRemark(from, to);
     }
 
     /**
@@ -280,7 +286,7 @@ public class ReportController {
     @GetMapping("/due-dates")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<DueDateBucket> dueDateBuckets() {
-        return reportingService.dueDateBuckets();
+        return counterpartyReportingService.dueDateBuckets();
     }
 
     /**
@@ -297,7 +303,7 @@ public class ReportController {
         if (days < 1) {
             throw new IllegalArgumentException("Days must be positive.");
         }
-        return reportingService.dueSoon(days);
+        return counterpartyReportingService.dueSoon(days);
     }
 
     /**
@@ -308,6 +314,6 @@ public class ReportController {
     @GetMapping("/overdue")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<InvoiceDueSummary> overdue() {
-        return reportingService.overdue();
+        return counterpartyReportingService.overdue();
     }
 }

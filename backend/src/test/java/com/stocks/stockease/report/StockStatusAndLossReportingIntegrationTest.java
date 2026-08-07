@@ -45,7 +45,7 @@ import com.stocks.stockease.support.AbstractIntegrationTest;
 class StockStatusAndLossReportingIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
-    private ReportingService reportingService;
+    private StockReportingService reportingService;
 
     @Autowired
     private ProductService productService;

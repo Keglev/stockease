@@ -22,7 +22,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.stocks.stockease.config.test.TestConfig;
-import com.stocks.stockease.report.ReportingService;
+import com.stocks.stockease.report.CashFlowReportingService;
+import com.stocks.stockease.report.CounterpartyReportingService;
+import com.stocks.stockease.report.ProfitReportingService;
+import com.stocks.stockease.report.StockReportingService;
 import com.stocks.stockease.report.SupplierProduct;
 
 /** Slice tests for GET /api/reports/suppliers/{id}/products/search, the scoped product typeahead. */
@@ -31,8 +34,19 @@ import com.stocks.stockease.report.SupplierProduct;
 @Import({TestConfig.class, ReportMethodSecurityTestConfig.class})
 class ReportSupplierProductsControllerTest {
 
+    // Constructor injection needs every collaborator on the context, so all four are declared
+    // here even where this slice stubs only one of them.
     @MockitoBean
-    private ReportingService reportingService;
+    private ProfitReportingService profitReportingService;
+
+    @MockitoBean
+    private CashFlowReportingService cashFlowReportingService;
+
+    @MockitoBean
+    private StockReportingService stockReportingService;
+
+    @MockitoBean
+    private CounterpartyReportingService counterpartyReportingService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,7 +55,8 @@ class ReportSupplierProductsControllerTest {
     @BeforeEach
     void setUpMocks() {
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests
-        Mockito.reset(reportingService);
+        Mockito.reset(profitReportingService, cashFlowReportingService, stockReportingService,
+                counterpartyReportingService);
     }
 
     private static SupplierProduct product() {
@@ -52,7 +67,7 @@ class ReportSupplierProductsControllerTest {
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void supplierProducts_withMatches_returnsRecordsDirectly() throws Exception {
-        Mockito.when(reportingService.supplierProducts(7L, "wid")).thenReturn(Optional.of(List.of(product())));
+        Mockito.when(counterpartyReportingService.supplierProducts(7L, "wid")).thenReturn(Optional.of(List.of(product())));
 
         mockMvc.perform(get("/api/reports/suppliers/7/products/search").param("name", "wid"))
                 .andExpect(status().isOk())
@@ -64,7 +79,7 @@ class ReportSupplierProductsControllerTest {
     @Test
     @WithMockUser(username = "user", roles = {"USER"})
     void supplierProducts_supplierBoughtNothingMatching_returns200WithEmptyArray() throws Exception {
-        Mockito.when(reportingService.supplierProducts(7L, "zzz")).thenReturn(Optional.of(List.of()));
+        Mockito.when(counterpartyReportingService.supplierProducts(7L, "zzz")).thenReturn(Optional.of(List.of()));
 
         // a real supplier with no match is an empty array, not a 404 and not a 204-with-body
         mockMvc.perform(get("/api/reports/suppliers/7/products/search").param("name", "zzz"))
@@ -75,7 +90,7 @@ class ReportSupplierProductsControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void supplierProducts_unknownSupplier_returns404() throws Exception {
-        Mockito.when(reportingService.supplierProducts(999L, "wid")).thenReturn(Optional.empty());
+        Mockito.when(counterpartyReportingService.supplierProducts(999L, "wid")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/reports/suppliers/999/products/search").param("name", "wid"))
                 .andExpect(status().isNotFound())
@@ -88,6 +103,6 @@ class ReportSupplierProductsControllerTest {
         mockMvc.perform(get("/api/reports/suppliers/7/products/search").param("name", "wid"))
                 .andExpect(status().isUnauthorized());
 
-        Mockito.verify(reportingService, Mockito.never()).supplierProducts(Mockito.anyLong(), Mockito.any());
+        Mockito.verify(counterpartyReportingService, Mockito.never()).supplierProducts(Mockito.anyLong(), Mockito.any());
     }
 }

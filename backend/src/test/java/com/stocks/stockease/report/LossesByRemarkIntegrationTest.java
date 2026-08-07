@@ -53,7 +53,7 @@ import com.stocks.stockease.support.AbstractIntegrationTest;
 @ActiveProfiles("test")
 class LossesByRemarkIntegrationTest extends AbstractIntegrationTest {
 
-    @Autowired private ReportingService reportingService;
+    @Autowired private StockReportingService reportingService;
     @Autowired private ProductService productService;
     @Autowired private SupplierService supplierService;
     @Autowired private InvoiceService invoiceService;
