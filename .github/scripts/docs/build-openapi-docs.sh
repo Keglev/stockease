@@ -26,7 +26,8 @@ mkdir -p "$API_OUT"
 redocly build-docs "$OPENAPI_YAML" -o "$API_OUT/index.html"
 
 # Inject a fixed-position "back to docs" link into the self-contained ReDoc page.
-# Same pattern as the JaCoCo coverage injection in 3-deploy-ghpages.yml, applied
-# at build time because this file is regenerated on every docs build.
+# Same pattern as the JaCoCo coverage injection in
+# .github/scripts/deploy/ghpages-inject-backlink.sh, applied at build time because
+# this file is regenerated on every docs build.
 sed -i 's|<body[^>]*>|&<a id="back-to-docs" href="/stockease/" style="position:fixed;top:8px;right:12px;z-index:9999;font:14px sans-serif;padding:6px 12px;background:#2563eb;color:#fff;text-decoration:none;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.2);">\&larr; Back to docs</a>|' "$API_OUT/index.html"
 echo "✓ ReDoc HTML generated at backend/api/index.html (back-to-docs link injected)"

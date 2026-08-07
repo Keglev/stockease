@@ -30,7 +30,7 @@ import com.stocks.stockease.supplier.SupplierService;
  * product names, one shared user, and the single invoice-number counter below.
  *
  * Out of scope: reading the reports. Each spec file queries and asserts for itself; nothing here
- * calls ReportingService.
+ * calls the reporting services.
  */
 class ReportingTestFixtures {
 
@@ -51,7 +51,7 @@ class ReportingTestFixtures {
     private final InvoiceService invoiceService;
     private final StockMovementService stockMovementService;
 
-    /** The one reporting user, seeded on first use and reused by every later test. */
+    /* The one reporting user, seeded on first use and reused by every later test. */
     final User user;
 
     ReportingTestFixtures(ProductService productService, SupplierService supplierService,
@@ -65,7 +65,7 @@ class ReportingTestFixtures {
                 .orElseGet(() -> userRepository.saveAndFlush(new User("report-tester", "hash", "ROLE_ADMIN")));
     }
 
-    /** Products start at quantity 0 so all stock exists only via movements the reports read. */
+    /* Products start at quantity 0 so all stock exists only via movements the reports read. */
     Product newProduct(String name, String purchasePrice) {
         return productService.create(name, "RPT-" + name.hashCode(), new BigDecimal(purchasePrice).doubleValue());
     }
@@ -100,11 +100,11 @@ class ReportingTestFixtures {
                 new RecordMovementCommand(productId, reason, qty, itemId, null, remark), user);
     }
 
-    /** Product id and supplier id of one full purchase-sale-return-loss scenario. */
+    /* Product id and supplier id of one full purchase-sale-return-loss scenario. */
     record Scenario(long productId, long supplierId) {
     }
 
-    /**
+    /*
      * Builds scenario A: buy 10 at 10.00, sell 4 at 30.00, take 1 back from the customer,
      * return 2 to the supplier and lose 1.
      */
