@@ -1,0 +1,10 @@
+extends:
+  - recommended
+
+rules:
+  # The localhost:8081 entry is the documented local development server, listed
+  # deliberately beside production so a reader can run the API locally.
+  no-server-example.com: off
+  # Health is an anonymous liveness probe with no 4xx by design; it is the one
+  # endpoint this rule flags.
+  operation-4xx-response: off

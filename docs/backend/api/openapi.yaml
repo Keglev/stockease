@@ -153,7 +153,6 @@ components:
           description: Human-readable outcome message
           example: Product fetched successfully
         data:
-          nullable: true
           description: |
             Operation result payload; null for errors and for operations with no output. Left
             untyped here because each endpoint narrows it - see the ApiResponse* variants.
@@ -171,7 +170,6 @@ components:
               type: boolean
               example: false
             data:
-              nullable: true
               example: null
             code:
               type: string
@@ -965,9 +963,10 @@ components:
           description: Cost snapshot, set for initial stock and purchases
           example: 7.50
         remark:
+          type: string
+          nullable: true
           allOf:
             - $ref: '#/components/schemas/MovementRemark'
-          nullable: true
           description: Why the stock was lost; set for LOST and DESTROYED, null for every other reason
         createdAt:
           type: string
