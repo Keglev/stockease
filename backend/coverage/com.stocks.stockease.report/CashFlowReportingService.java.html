@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CashFlowReportingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.report</a> &gt; <span class="el_source">CashFlowReportingService.java</span></div><h1>CashFlowReportingService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.report;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Money in and out, on a payment basis, grouped either by product or by calendar month.
+ *
+ * &lt;p&gt;An invoice counts on the date it was paid, never on the date it was booked (ADR 025), so a
+ * booked-but-unpaid invoice is invisible here whatever the period. That is the whole difference from
+ * {@link ProfitReportingService}: purchases and supplier returns move cash and appear here, while
+ * profit ignores them (ADR 024).
+ *
+ * &lt;p&gt;The two reports answer the same question at different groupings and share their SQL fragments
+ * for that reason - a timeline month and the product rows underneath it must never sum to different
+ * figures, and a forked query is how they would start to.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class CashFlowReportingService {
+
+    /** Money received, netting each line's returned quantity out of its value at the line's own price. */
+    private static final String CASH_FLOW_INFLOW = &quot;&quot;&quot;
+            COALESCE(SUM(CASE WHEN i.invoice_type = 'SALE'
+                              THEN (ii.quantity - ii.returned_qty) * ii.unit_price
+                              ELSE 0 END), 0)&quot;&quot;&quot;;
+
+    /** Money spent, on the same net-of-returns basis as the inflow above. */
+    private static final String CASH_FLOW_OUTFLOW = &quot;&quot;&quot;
+            COALESCE(SUM(CASE WHEN i.invoice_type = 'PURCHASE'
+                              THEN (ii.quantity - ii.returned_qty) * ii.unit_price
+                              ELSE 0 END), 0)&quot;&quot;&quot;;
+
+    /**
+     * The paid lines a cash-flow query reads, through the payment-date window it reads them in.
+     *
+     * &lt;p&gt;Plain WHERE rather than a JOIN predicate, unlike the profit queries: unpaid invoices are
+     * excluded by the report's own definition, so there is no zero row to preserve. Anything that
+     * moved no money in the window is simply absent - a cash-flow report lists money that moved, and
+     * padding it with zeros would invite reading &quot;nothing happened&quot; as &quot;nothing exists&quot;.
+     */
+    private static final String CASH_FLOW_SOURCE = &quot;&quot;&quot;
+            FROM invoice_item ii
+            JOIN invoice i ON i.id = ii.invoice_id
+            JOIN product p ON p.id = ii.product_id
+            WHERE i.paid_at IS NOT NULL AND i.deleted_at IS NULL
+              AND (CAST(:from AS date) IS NULL OR i.paid_at &gt;= CAST(:from AS date))
+              AND (CAST(:to AS date) IS NULL OR i.paid_at &lt; CAST(:to AS date) + INTERVAL '1 day')
+            &quot;&quot;&quot;;
+
+    /**
+     * The one predicate that scopes a cash-flow query to a single product.
+     *
+     * &lt;p&gt;A fragment rather than a second copy of each query for the same reason the inflow and
+     * outflow expressions are shared: the timeline and the per-product rows must never disagree
+     * about what a product's cash flow is, and a forked query is how they would start to. Null
+     * {@code productId} leaves every line in, so the unscoped call is the same query it always was.
+     */
+    private static final String CASH_FLOW_PRODUCT_FILTER = &quot;&quot;&quot;
+              AND (CAST(:productId AS bigint) IS NULL OR ii.product_id = :productId)
+            &quot;&quot;&quot;;
+
+    private final JdbcClient jdbcClient;
+
+<span class="fc" id="L74">    private static final RowMapper&lt;CashFlowProductRow&gt; CASH_FLOW_MAPPER = (rs, rowNum) -&gt; {</span>
+<span class="fc" id="L75">        BigDecimal inflow = rs.getBigDecimal(&quot;inflow&quot;);</span>
+<span class="fc" id="L76">        BigDecimal outflow = rs.getBigDecimal(&quot;outflow&quot;);</span>
+<span class="fc" id="L77">        return new CashFlowProductRow(rs.getLong(&quot;id&quot;), rs.getString(&quot;name&quot;), rs.getString(&quot;sku&quot;),</span>
+<span class="fc" id="L78">                rs.getBoolean(&quot;deleted&quot;), inflow, outflow, inflow.subtract(outflow));</span>
+    };
+
+<span class="fc" id="L81">    private static final RowMapper&lt;CashFlowTimelineBucket&gt; CASH_FLOW_TIMELINE_MAPPER = (rs, rowNum) -&gt; {</span>
+<span class="fc" id="L82">        BigDecimal inflow = rs.getBigDecimal(&quot;inflow&quot;);</span>
+<span class="fc" id="L83">        BigDecimal outflow = rs.getBigDecimal(&quot;outflow&quot;);</span>
+<span class="fc" id="L84">        return new CashFlowTimelineBucket(rs.getString(&quot;month&quot;), inflow, outflow, inflow.subtract(outflow));</span>
+    };
+
+    /**
+     * Returns money in and out over an optional payment period, overall and per product.
+     *
+     * &lt;p&gt;Payment basis: an invoice counts on the date it was paid, so booked-but-unpaid invoices are
+     * invisible here whatever the period. Each line contributes its quantity net of returns at the
+     * line's own price snapshot.
+     *
+     * @param from first payment date to count, or {@code null} for no lower bound
+     * @param to last payment date to count, or {@code null} for no upper bound
+     * @return the totals and the per-product rows, ordered by net descending
+     */
+    public CashFlowReport cashFlow(LocalDate from, LocalDate to) {
+<span class="fc" id="L99">        String sql = &quot;SELECT p.id, p.name, p.sku, (p.deleted_at IS NOT NULL) AS deleted,\n&quot;</span>
+                + CASH_FLOW_INFLOW + &quot; AS inflow,\n&quot;
+                + CASH_FLOW_OUTFLOW + &quot; AS outflow\n&quot;
+                + CASH_FLOW_SOURCE
+                + &quot;GROUP BY p.id, p.name, p.sku, p.deleted_at\n&quot;
+                + &quot;ORDER BY (&quot; + CASH_FLOW_INFLOW + &quot; - &quot; + CASH_FLOW_OUTFLOW + &quot;) DESC, p.id\n&quot;;
+<span class="fc" id="L105">        List&lt;CashFlowProductRow&gt; products = jdbcClient.sql(sql)</span>
+<span class="fc" id="L106">                .param(&quot;from&quot;, from)</span>
+<span class="fc" id="L107">                .param(&quot;to&quot;, to)</span>
+<span class="fc" id="L108">                .query(CASH_FLOW_MAPPER)</span>
+<span class="fc" id="L109">                .list();</span>
+
+        // Summed from the rows rather than fetched by a second aggregate query: every invoice line
+        // names a product, so the rows already account for every cent the query matched.
+<span class="fc" id="L113">        BigDecimal inflow = products.stream().map(CashFlowProductRow::inflow)</span>
+<span class="fc" id="L114">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+<span class="fc" id="L115">        BigDecimal outflow = products.stream().map(CashFlowProductRow::outflow)</span>
+<span class="fc" id="L116">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+<span class="fc" id="L117">        return new CashFlowReport(inflow, outflow, inflow.subtract(outflow), products);</span>
+    }
+
+    /**
+     * Returns money in and out per calendar month over an optional payment period.
+     *
+     * &lt;p&gt;The same payment basis, the same net-of-returns line value and the same window as
+     * {@link #cashFlow}, regrouped by the month an invoice was paid in rather than by product.
+     *
+     * @param from first payment date to count, or {@code null} for no lower bound
+     * @param to last payment date to count, or {@code null} for no upper bound
+     * @param productId narrows the report to one product's lines, or {@code null} for all products
+     * @return one bucket per month that moved money, oldest first
+     */
+    public List&lt;CashFlowTimelineBucket&gt; cashFlowTimeline(LocalDate from, LocalDate to, Long productId) {
+        // A month nothing was paid in produces no bucket rather than a zero one. Generating the empty
+        // months would need a date series bounded by the open-ended window this endpoint accepts, and
+        // the chart plots the categories it is handed - so an idle month is a gap in the axis, which
+        // is what an idle month is. Scoping to a product only narrows which lines are counted, so a
+        // product with a quiet month has a gap there for the same reason the whole business does.
+<span class="fc" id="L137">        String sql = &quot;SELECT to_char(date_trunc('month', i.paid_at), 'YYYY-MM') AS month,\n&quot;</span>
+                + CASH_FLOW_INFLOW + &quot; AS inflow,\n&quot;
+                + CASH_FLOW_OUTFLOW + &quot; AS outflow\n&quot;
+                + CASH_FLOW_SOURCE
+                + CASH_FLOW_PRODUCT_FILTER
+                + &quot;GROUP BY date_trunc('month', i.paid_at)\n&quot;
+                + &quot;ORDER BY date_trunc('month', i.paid_at)\n&quot;;
+<span class="fc" id="L144">        return jdbcClient.sql(sql)</span>
+<span class="fc" id="L145">                .param(&quot;from&quot;, from)</span>
+<span class="fc" id="L146">                .param(&quot;to&quot;, to)</span>
+<span class="fc" id="L147">                .param(&quot;productId&quot;, productId)</span>
+<span class="fc" id="L148">                .query(CASH_FLOW_TIMELINE_MAPPER)</span>
+<span class="fc" id="L149">                .list();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
