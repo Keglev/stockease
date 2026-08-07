@@ -102,14 +102,29 @@
         native SQL aggregations with zero Java dependencies on other
         modules.</p>
         <h2 id="exposed-api">Exposed API</h2>
-        <p><code>ReportingService</code> and its own result records:
+        <p>Four services, one per report family:</p>
+        <ul>
+        <li><code>ProfitReportingService</code> - gross profit per
+        product and per supplier, on a cost-of-goods-sold basis.</li>
+        <li><code>CashFlowReportingService</code> - money in and out on
+        a payment basis, grouped by product or by calendar month.</li>
+        <li><code>StockReportingService</code> - one product’s history,
+        every product’s current position, and the units written
+        off.</li>
+        <li><code>CounterpartyReportingService</code> - what is owed and
+        when, plus what a single customer bought or a single supplier
+        sold.</li>
+        </ul>
+        <p>Each exposes its own result records:
         <code>ProductProfitReport</code>,
         <code>SupplierProfitReport</code>,
         <code>StockStatusReport</code>, <code>LossReport</code>,
         <code>InvoiceDueSummary</code>, <code>DueDateBucket</code>.
         Cross-module vocabulary (invoice types) travels as strings.</p>
+        <p>The controller injects all four directly - there is no facade
+        over them (D1).</p>
         <h2 id="internals">Internals</h2>
-        <p>None - the service queries via JdbcClient and owns no
+        <p>None - the services query via JdbcClient and own no
         state.</p>
         <h2 id="invariants">Invariants</h2>
         <ul>
