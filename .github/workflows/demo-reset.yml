@@ -33,42 +33,19 @@ jobs:
       RESET_URL: https://stockeasebackend.koyeb.app/api/demo/reset
 
     steps:
+      # This job is otherwise checkout-free — a pure curl call. The checkout exists
+      # solely to deliver the reset script to the runner: a script, unlike inline
+      # shell, does not travel inside the workflow file.
+      - name: Checkout scripts
+        uses: actions/checkout@v7
+
       - name: Reset demo data
         env:
           # The same value lives in two places and must be kept in step: here as
           # an Actions secret, and on Koyeb as the backend's app.demo.reset-token.
           # A mismatch shows up as 403, not as a silent no-op.
           DEMO_RESET_TOKEN: ${{ secrets.DEMO_RESET_TOKEN }}
-        run: |
-          set -uo pipefail
-
-          # No --verbose anywhere: it would echo the request headers, and the
-          # token is one of them. --silent --show-error keeps errors visible
-          # without the header dump.
-          #
-          # Retries cover the free-tier instance's cold start: the first request
-          # after an idle period can time out while the container wakes.
-          status=$(curl \
-            --silent --show-error \
-            --request POST \
-            --header "X-Demo-Reset-Token: ${DEMO_RESET_TOKEN}" \
-            --fail-with-body \
-            --max-time 120 \
-            --retry 3 \
-            --retry-delay 30 \
-            --retry-all-errors \
-            --output response.txt \
-            --write-out '%{http_code}' \
-            "${RESET_URL}") && curl_exit=0 || curl_exit=$?
-
-          echo "HTTP status: ${status:-<no response>}"
-          echo "Response body:"
-          # The body is the standard API envelope; its message is the whole
-          # diagnostic, so it is printed on success and on failure alike.
-          cat response.txt 2>/dev/null || echo "<no body received>"
-          echo
-
-          exit "${curl_exit}"
+        run: bash .github/scripts/deploy/demo-reset.sh
 
       - name: Triage hint
         if: failure()
