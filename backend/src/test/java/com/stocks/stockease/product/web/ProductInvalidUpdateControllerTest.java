@@ -57,7 +57,7 @@ class ProductInvalidUpdateControllerTest {
 
     private Product product1;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUpJwtMock() {
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);

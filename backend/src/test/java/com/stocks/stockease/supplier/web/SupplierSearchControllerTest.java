@@ -37,7 +37,7 @@ class SupplierSearchControllerTest {
 
     private Supplier supplier;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUpMocks() {
         supplier = new Supplier(1L, "Acme", null, null, "1 Main St", null, LocalDateTime.of(2026, 1, 2, 3, 4), null);

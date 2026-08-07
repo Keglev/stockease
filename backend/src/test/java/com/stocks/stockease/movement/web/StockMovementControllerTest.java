@@ -56,7 +56,7 @@ class StockMovementControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUpMocks() {
         // @MockitoBean stubs survive for the Spring context lifetime; explicit reset prevents state bleeding between tests

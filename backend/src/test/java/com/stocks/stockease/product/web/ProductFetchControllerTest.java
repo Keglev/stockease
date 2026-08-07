@@ -52,7 +52,7 @@ class ProductFetchControllerTest {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUp() {
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);

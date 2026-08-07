@@ -50,7 +50,7 @@ class ProductCreateControllerTest {
 
     private Product product1;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // invoked by JUnit via reflection, not by direct call
     @BeforeEach
     void setUpMocks() {
         Mockito.when(jwtUtil.validateToken(Mockito.anyString())).thenReturn(true);
