@@ -1,5 +1,11 @@
 name: Backend Tests
 
+# The repository's primary merge gate: this file's job carries the build-and-test
+# name branch protection requires, and every path not claimed by the frontend or
+# docs workflows falls through to it. Its success on main is also what starts the
+# release chain - Deploy Backend waits on this workflow, and the JaCoCo artifact
+# uploaded here is what lets Docs Pipeline publish current coverage.
+
 on:
   schedule:
     - cron: '0 6 1,15 * *'  # rebuild every two weeks to pick up patched base images

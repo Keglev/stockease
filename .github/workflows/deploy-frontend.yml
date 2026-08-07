@@ -1,5 +1,10 @@
 name: Deploy Frontend
 
+# Releases the frontend once Frontend Tests has passed on main. Unlike the backend
+# deploy, the production bundle is built here on the runner and shipped with
+# --prebuilt, so Vercel publishes exactly what this run produced instead of
+# rebuilding from the repository.
+
 on:
   workflow_run:
     workflows: ["Frontend Tests"]

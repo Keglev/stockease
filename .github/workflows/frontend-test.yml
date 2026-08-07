@@ -1,5 +1,11 @@
 name: Frontend Tests
 
+# Gates frontend changes under the same required build-and-test name the backend suite
+# reports, so a PR touching only frontend/ still produces the check branch protection
+# demands. It also builds the two artifacts the docs site publishes - Vitest coverage and
+# the TypeDoc reference, which needs this workflow's node_modules - and its success on
+# main triggers Deploy Frontend.
+
 on:
   push:
     branches: [main]

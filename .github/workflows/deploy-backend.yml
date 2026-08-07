@@ -1,5 +1,11 @@
 name: Deploy Backend
 
+# Releases the backend once Backend Tests has passed on main - the tests are the
+# gate, this is the release act. It never builds or pushes an image: Koyeb rebuilds
+# from the repository's Dockerfile itself, so all this workflow does is validate
+# that file, POST a redeploy to the Koyeb API and poll until the service reports
+# healthy.
+
 on:
   workflow_run:
     workflows: ["Backend Tests"]
