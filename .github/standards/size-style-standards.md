@@ -1,6 +1,8 @@
-# StockEase - Size, Style, and Comment Standards (rev 6, 2026-08-08)
+# StockEase - Size, Style, and Comment Standards (rev 7, 2026-08-08)
 
-Supersedes rev 5 (2026-08-07). Changes: tools/ dev-script row added.
+Supersedes rev 6 (2026-08-08). Changes: exemption rows for generated, content
+and route files; a frontend spec band row; a docs/_theme section; and the
+no-emoji rule.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -31,6 +33,16 @@ docs site. Temporary - this file is deleted when the refactoring phases close.
   stated total is recomputed from its own parts; any classifier or counter is
   validated against a known file/site before its numbers are believed (the
   cross-check rule, now universal).
+- GENERATED FILES *[rev 7]*: exempt from every size band, and from dead-code and
+  comment sweeps. The file header names its generator and states that it must not
+  be edited by hand. Exemplar: `app/core/api/api-types.ts`.
+- CONTENT/DATA MODULES *[rev 7]*: typed content modules (ADR 029 artifacts, e.g.
+  `features/help/help-content.en.ts` and `.de.ts`) are exempt from the size bands.
+  They split on editorial grounds only, never on line count.
+- ROUTE TABLES *[rev 7]*: `app.routes.ts`, and any route table added later, is
+  exempt from the Util band and watched against the 300 code-line hard cap only.
+- NO EMOJIS *[rev 7]*: comments and documentation prose carry no emojis (owner
+  directive, 2026-08-08).
 
 ## Backend (Spring tables)
 
@@ -117,6 +129,10 @@ Guards/interceptors 10-50 (>80); Utils 20-80 (>120); Templates soft 150 (>200);
 Functions aim <40, >75 alarm. Standalone, signals, `inject()`, `--mat-sys-*`
 tokens only, DI seams over module mocks.
 
+*[rev 7]* FRONTEND SPEC FILES: component/page specs 100-350 (>450); service,
+pipe, guard and util specs 40-150 (>200); `it()` body <=20 code lines (>30);
+`describe` nesting <=2.
+
 ## Frontend doc dialect
 
 - Class/service-level TSDoc (summary + `@remarks` WHY), not file-level headers;
@@ -125,6 +141,13 @@ tokens only, DI seams over module mocks.
   members; backticks not `{@code}`.
 - Spec files: plain block comment naming the contract + out-of-scope note.
 - SCSS: block header only where non-obvious.
+
+## docs/_theme (Pandoc theme files)
+
+*[rev 7]* CSS 30-200 (>250); Pandoc HTML template 30-100 (>150); theme JS 30-100
+(>150). Every theme file opens with a plain prose header stating what it is and
+why it exists; the nav partials (`templates/nav-*.html`) are the exemplar. No
+banner-rule headers, consistent with the workflow-header ruling.
 
 ## i18n
 
