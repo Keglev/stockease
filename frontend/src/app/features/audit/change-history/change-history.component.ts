@@ -10,7 +10,7 @@ import { AuditService } from '../audit.service';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 
 /** Which of the two audit queries this page is showing. */
-export type HistoryMode = 'product' | 'user';
+type HistoryMode = 'product' | 'user';
 
 const LIFECYCLE_FIELDS = ['DELETED', 'RESTORED'];
 

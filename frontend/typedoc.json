@@ -64,5 +64,17 @@
 
   // Form shapes that are deliberately internal to their components: naming them here states that
   // "referenced but not documented" is the intent, rather than exporting them to quiet a warning.
-  "intentionallyNotExported": ["MovementForm", "PricePoint"]
+  //
+  // The four that follow are view-state unions referenced only by PROTECTED members, which this
+  // config publishes because it excludes private and not protected. That reference is what warns
+  // once the type stops being exported; the type itself is internal to its component, so the
+  // intent is recorded here rather than by re-widening the module surface.
+  "intentionallyNotExported": [
+    "MovementForm",
+    "PricePoint",
+    "HistoryMode",
+    "CardView",
+    "ReportView",
+    "ReportPeriod"
+  ]
 }

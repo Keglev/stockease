@@ -4,7 +4,7 @@
  * a readable chart. A backend top-N parameter is deliberately deferred; see ADR 023.
  */
 
-export const CHART_TOP_N = 10;
+const CHART_TOP_N = 10;
 
 export interface ChartSlice {
   name: string;
