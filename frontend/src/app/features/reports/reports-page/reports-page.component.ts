@@ -929,6 +929,11 @@ function toMarginOption(rows: ProductProfitReport[], format: ChartFormat): Chart
         min: 0,
         max: 100,
         // Bands read low-to-high against the same thresholds a reader would apply by eye.
+        // The three literals are sanctioned rather than overlooked: M3 defines no success or
+        // warning role, so no --mat-sys-* token spells a red-amber-green ramp at all. The gauge
+        // paints to canvas, outside the DOM cascade a custom property would resolve in, so a
+        // token could not be read here even if one existed.
+        // Feeding theme-aware values through the chart context waits on the reports-page split.
         axisLine: { lineStyle: { width: 14, color: [[0.2, '#d9534f'], [0.5, '#f0ad4e'], [1, '#5cb85c']] } },
         // The dial still runs 0-100 and its value is still 42.5; only the reading changes, from a
         // hardcoded '{value}%' to the decimal mark and percent spacing the reader's locale uses.
