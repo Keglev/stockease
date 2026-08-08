@@ -31,10 +31,10 @@ export class ProductService {
   }
 
   /**
-   * Products whose name contains {@code name}, for the typeahead pickers.
+   * Products whose name contains `name`, for the typeahead pickers.
    *
    * <p>Bare array, and empty when nothing matches. Signature-for-signature with
-   * {@code SupplierService.search}: the three search endpoints carry one contract (ADR 028), and
+   * `SupplierService.search`: the three search endpoints carry one contract (ADR 028), and
    * the clients that read them should be recognizable from each other.
    */
   search(name: string): Observable<ProductResponse[]> {
