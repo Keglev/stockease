@@ -1,4 +1,7 @@
-# StockEase - Size, Style, and Comment Standards (rev 4)
+# StockEase - Size, Style, and Comment Standards (rev 5, 2026-08-07)
+
+Supersedes rev 4 (2026-08-07). Changes: workflow headers over 5 lines are
+waiver-register material; `docs-pr-check.yml`'s 17-line header GRANTED.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -57,8 +60,9 @@ SHELL COMMENT EXEMPLAR: `.github/scripts/deploy/demo-reset.sh`.
 prose header stating WHY - what the workflow does that its `name:` key does not
 say, and its trigger-chain position where non-obvious (what triggers it, what it
 feeds). No banner rules. A header that restates WHAT the file plainly shows is a
-defect, not compliance. WORKFLOW HEADER EXEMPLAR:
-`.github/workflows/demo-reset.yml`.
+defect, not compliance. A header longer than 5 lines is waiver-register material:
+it is above the alarm and survives only with a register entry. WORKFLOW HEADER
+EXEMPLAR: `.github/workflows/demo-reset.yml`.
 
 Test files: controller/integration 250 (>300), others 150 (>200); entity tests
 only for custom logic.
@@ -149,6 +153,12 @@ change.
   length is the rule working, not a missing split. In-file comment at L33-36.
 - `.github/scripts/docs/build-architecture-docs.sh` - 76 vs ~70 (#179,
   2026-08-07). In-file comment present.
+- `.github/workflows/docs-pr-check.yml` - 17-line header vs the 2-5 line rule
+  (2026-08-07). The header documents the branch-protection mechanism - that the
+  required check is a NAME, not a workflow - which is load-bearing WHY with no
+  better home; trimming it would delete the content the header rule exists to
+  preserve. No in-file comment: workflow headers do not carry waiver
+  annotations, so this register entry is the record.
 
 **RESOLVED WITHOUT WAIVER:**
 

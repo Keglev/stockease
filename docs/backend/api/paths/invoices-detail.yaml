@@ -29,6 +29,7 @@ get:
             message: Invoice fetched successfully
             data:
               id: 1
+              invoiceNumber: RE-2026-0117
               type: PURCHASE
               status: CLOSED
               dueDate: '2026-03-01'

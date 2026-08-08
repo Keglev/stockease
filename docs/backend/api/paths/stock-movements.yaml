@@ -53,7 +53,7 @@ post:
       content:
         application/json:
           schema:
-            oneOf:
+            anyOf:
               - $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
               - $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           examples:

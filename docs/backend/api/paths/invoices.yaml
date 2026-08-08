@@ -28,11 +28,14 @@ get:
               $ref: '../openapi.yaml#/components/schemas/InvoiceSummaryResponse'
           example:
             - id: 2
+              invoiceNumber: RE-2026-0118
               type: SALE
               status: OPEN
               dueDate: '2026-03-01'
               supplierId: null
+              supplierName: null
               customerId: 9
+              customerName: Jane Doe
               closedAt: null
               paidAt: null
               createdAt: '2026-01-02T03:04:00'
@@ -61,6 +64,7 @@ post:
           $ref: '../openapi.yaml#/components/schemas/CreateInvoiceRequest'
         example:
           type: PURCHASE
+          invoiceNumber: RE-2026-0117
           supplierId: 7
           dueDate: '2026-03-01'
           items:
@@ -76,11 +80,14 @@ post:
             $ref: '../openapi.yaml#/components/schemas/InvoiceSummaryResponse'
           example:
             id: 1
+            invoiceNumber: RE-2026-0117
             type: PURCHASE
             status: OPEN
             dueDate: '2026-03-01'
             supplierId: 7
+            supplierName: Acme
             customerId: null
+            customerName: null
             closedAt: null
             paidAt: null
             createdAt: '2026-01-02T03:04:00'
@@ -91,7 +98,10 @@ post:
       content:
         application/json:
           schema:
-            oneOf:
+            # anyOf, not oneOf: ApiResponseError leaves data untyped, so it legitimately
+            # matches a field-error map too. The branches are not mutually exclusive and
+            # oneOf claimed they were.
+            anyOf:
               - $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
               - $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           examples:

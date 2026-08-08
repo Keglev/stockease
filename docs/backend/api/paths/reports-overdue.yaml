@@ -19,6 +19,7 @@ get:
               $ref: '../openapi.yaml#/components/schemas/InvoiceDueSummary'
           example:
             - invoiceId: 1
+              invoiceNumber: RE-2026-0118
               invoiceType: SALE
               counterparty: Jane Doe
               dueDate: '2026-03-01'

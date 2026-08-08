@@ -8,3 +8,7 @@ rules:
   # Health is an anonymous liveness probe with no 4xx by design; it is the one
   # endpoint this rule flags.
   operation-4xx-response: off
+  # Examples are executable contract documentation - a reader copies them. Now that
+  # they all validate, drift must fail the build rather than accumulate as warnings.
+  no-invalid-media-type-examples: error
+  no-invalid-schema-examples: error
