@@ -1345,7 +1345,12 @@
 <a name='L1280'></a><a href='#L1280'>1280</a>
 <a name='L1281'></a><a href='#L1281'>1281</a>
 <a name='L1282'></a><a href='#L1282'>1282</a>
-<a name='L1283'></a><a href='#L1283'>1283</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1283'></a><a href='#L1283'>1283</a>
+<a name='L1284'></a><a href='#L1284'>1284</a>
+<a name='L1285'></a><a href='#L1285'>1285</a>
+<a name='L1286'></a><a href='#L1286'>1286</a>
+<a name='L1287'></a><a href='#L1287'>1287</a>
+<a name='L1288'></a><a href='#L1288'>1288</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1393,24 +1398,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1422,9 +1427,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1456,7 +1461,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">881x</span>
+<span class="cline-any cline-yes">889x</span>
 <span class="cline-any cline-yes">111x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1785,7 +1790,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7700x</span>
+<span class="cline-any cline-yes">7780x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2270,6 +2275,11 @@
 <span class="cline-any cline-yes">122x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">122x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3558,6 +3568,11 @@ function toMarginOption(rows: ProductProfitReport[], format: ChartFormat): Chart
         min: 0,
         max: 100,
         // Bands read low-to-high against the same thresholds a reader would apply by eye.
+        // The three literals are sanctioned rather than overlooked: M3 defines no success or
+        // warning role, so no --mat-sys-* token spells a red-amber-green ramp at all. The gauge
+        // paints to canvas, outside the DOM cascade a custom property would resolve in, so a
+        // token could not be read here even if one existed.
+        // Feeding theme-aware values through the chart context waits on the reports-page split.
         axisLine: { lineStyle: { width: 14, color: [[0.2, '#d9534f'], [0.5, '#f0ad4e'], [1, '#5cb85c']] } },
         // The dial still runs 0-100 and its value is still 42.5; only the reading changes, from a
         // hardcoded '{value}%' to the decimal mark and percent spacing the reader's locale uses.
@@ -3916,7 +3931,7 @@ function sortRows&lt;T&gt;(rows: T[], sort: Sort): T[] {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-08T18:50:11.935Z
+                at 2026-08-08T19:05:48.117Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
