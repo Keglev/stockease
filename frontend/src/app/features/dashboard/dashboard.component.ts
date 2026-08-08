@@ -86,8 +86,8 @@ export class DashboardComponent implements OnInit {
    * Everything a chart needs that is not its own data - here, the one translated label.
    *
    * <p>It exists to be a DEPENDENCY, exactly as the reports page's own context does, and carries
-   * the same measured caveat: the explicit {@code currentLang()} read is redundant today, because
-   * ngx-translate's {@code instant} reads its own language signal and the derivation tracks it
+   * the same measured caveat: the explicit `currentLang()` read is redundant today, because
+   * ngx-translate's `instant` reads its own language signal and the derivation tracks it
    * through that. It stays because that is the library's internal wiring rather than a contract.
    *
    * <p>{@link chartFormat} registers the format-preference reads, and every chart below inherits

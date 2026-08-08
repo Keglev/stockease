@@ -24,7 +24,7 @@ export class CsvExportService {
    * Builds one CSV from column keys and rows, and hands it to the browser.
    *
    * @param filename the download's name; the convention is a bare kebab-case entity name
-   * @param columns column identifiers, appended to {@code keyPrefix} to resolve each header
+   * @param columns column identifiers, appended to `keyPrefix` to resolve each header
    * @param rows the cells, already carrying whatever translation or formatting the table shows
    * @param keyPrefix the i18n namespace the column identifiers live under
    */

@@ -347,11 +347,11 @@ export class ReportsPageComponent implements OnInit {
   /**
    * Everything a chart option needs that is not its own data.
    *
-   * <p>It exists to be a DEPENDENCY. Reading it inside an option's {@code computed} is what makes
+   * <p>It exists to be a DEPENDENCY. Reading it inside an option's `computed` is what makes
    * that option rebuild when the interface language changes.
    *
-   * <p>The explicit {@code currentLang()} read is measured redundant TODAY: removing it leaves the
-   * language-switch spec green, because ngx-translate's {@code instant} reads its own language
+   * <p>The explicit `currentLang()` read is measured redundant TODAY: removing it leaves the
+   * language-switch spec green, because ngx-translate's `instant` reads its own language
    * signal and the derivation tracks it through that. It stays because that is the library's
    * internal wiring rather than a contract - a version that resolved keys without touching a
    * signal would silently restore the staleness this slice fixes, and the spec would be the only
@@ -890,7 +890,7 @@ export class ReportsPageComponent implements OnInit {
    *
    * <p>The three list pages export the same way, so the body of this moved to
    * {@link CsvExportService} rather than being copied a fourth time. This stays as the page's own
-   * default for {@code keyPrefix}, which is the only part that was ever page-specific.
+   * default for `keyPrefix`, which is the only part that was ever page-specific.
    */
   private exportCsv(
     filename: string,
@@ -1049,7 +1049,7 @@ function toStockHistoryOption(
 }
 
 /**
- * Narrows report rows to those whose name or SKU contains {@code needle}, ignoring case.
+ * Narrows report rows to those whose name or SKU contains `needle`, ignoring case.
  *
  * <p>One predicate for all three filtered tables. They ask the reader the same question, so three
  * copies would only be three chances for them to start answering it differently.
