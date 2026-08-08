@@ -139,6 +139,7 @@
       <li><a href="/stockease/decisions/033-invoice-party-name-snapshots.html">033 Invoices snapshot party names</a></li>
       <li><a href="/stockease/decisions/034-no-password-expiry.html">034 No forced password expiry</a></li>
       <li><a href="/stockease/decisions/035-search-token-matching-and-browse.html">035 Token search and browse on focus</a></li>
+      <li><a href="/stockease/decisions/036-client-token-storage.html">036 Client token storage and threat model</a></li>
     </ul>
   </details>
 </aside>
@@ -147,8 +148,10 @@
       <article class="doc-body">
         <h1 id="adr-013-jwt-in-localstorage-no-refresh-token">ADR 013:
         JWT in localStorage, No Refresh Token</h1>
-        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
-        28, 2026</p>
+        <p><strong>Status</strong>: Superseded by ADR 036 (2026-08-08) -
+        decision unchanged; superseded by expansion: 036 adds the full
+        threat model, grounds, and production path.
+        <strong>Date</strong>: July 28, 2026</p>
         <hr />
         <h2 id="context">Context</h2>
         <p>Authentication is a single stateless HMAC-signed JWT with a
