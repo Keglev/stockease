@@ -46,19 +46,19 @@ import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { AppDatePipe } from '../../../shared/format/app-date.pipe';
 
-export const PROFIT_TAB = 0;
+const PROFIT_TAB = 0;
 // Cash flow sits second, next to profit: the two answer the paired questions of what the business
 // earned and what it actually collected, and reading one usually prompts the other.
-export const CASH_FLOW_TAB = 1;
-export const STOCK_TAB = 2;
-export const LOSSES_TAB = 3;
-export const DUE_TAB = 4;
+const CASH_FLOW_TAB = 1;
+const STOCK_TAB = 2;
+const LOSSES_TAB = 3;
+const DUE_TAB = 4;
 // Last, and appended rather than slotted in: the audit trail answers a different kind of question
 // from the five figures before it, and renumbering them would touch every tab's tests to say so.
-export const CHANGES_TAB = 5;
+const CHANGES_TAB = 5;
 // Appended last for the same reason the changes tab was: it asks about one product rather than the
 // whole business, and renumbering the six before it would touch every tab's tests to say so.
-export const ANALYTICS_TAB = 6;
+const ANALYTICS_TAB = 6;
 
 const TAB_COUNT = 7;
 
@@ -66,14 +66,14 @@ const TAB_COUNT = 7;
 const ALL_USERS = '';
 
 /** Which half of a tab is on screen; the two never share the vertical space any more. */
-export type ReportView = 'chart' | 'table';
+type ReportView = 'chart' | 'table';
 
 /**
  * The windows the period toggles offer. One type for both tabs: they present the same choices,
  * and only the date each tab's endpoint compares against differs - payment dates for cash flow,
  * booking dates for profit.
  */
-export type ReportPeriod = 'd30' | 'd90' | 'd180' | 'year' | 'all';
+type ReportPeriod = 'd30' | 'd90' | 'd180' | 'year' | 'all';
 
 const PERIOD_DAYS: Record<'d30' | 'd90' | 'd180', number> = { d30: 30, d90: 90, d180: 180 };
 
