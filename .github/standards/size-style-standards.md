@@ -1,7 +1,6 @@
-# StockEase - Size, Style, and Comment Standards (rev 5, 2026-08-07)
+# StockEase - Size, Style, and Comment Standards (rev 6, 2026-08-08)
 
-Supersedes rev 4 (2026-08-07). Changes: workflow headers over 5 lines are
-waiver-register material; `docs-pr-check.yml`'s 17-line header GRANTED.
+Supersedes rev 5 (2026-08-07). Changes: tools/ dev-script row added.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -55,6 +54,11 @@ Shell scripts ~70 code lines; workflow YAML ~150 code lines; inline shell in
 workflows >5 lines -> a script (`build-frontend-api.sh` pattern). DELIVERY
 PREMISE (from #177): verify WHAT the workflow checks out before extracting.
 SHELL COMMENT EXEMPLAR: `.github/scripts/deploy/demo-reset.sh`.
+
+*[rev 6]* `tools/` DEV SCRIPTS 100-250 (>300). Standalone developer instruments
+run by hand, not by CI. A header comment states what it measures or does, its
+provenance, one-line usage, and why it is not a gate. Node dependencies belong
+to an existing workspace rather than a new root manifest.
 
 *[rev 5]* WORKFLOW HEADERS: every workflow file opens with a 2-5 line plain `#`
 prose header stating WHY - what the workflow does that its `name:` key does not
