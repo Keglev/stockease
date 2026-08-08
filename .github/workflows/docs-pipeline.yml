@@ -17,6 +17,11 @@ on:
       - 'docs/**'
       - '.github/scripts/docs/**'
       - '.github/workflows/docs-pipeline.yml'
+      # A merge that changes only the lychee config must still exercise the checker
+      # it configures. backend-test.yml now ignores lychee.toml on push, so this
+      # entry is what runs it - the two lists move together or the config ships
+      # untriggered.
+      - 'lychee.toml'
   workflow_dispatch:
 
 permissions:

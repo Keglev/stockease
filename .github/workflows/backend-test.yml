@@ -18,6 +18,7 @@ on:
       - 'frontend/**'
       - '.github/scripts/docs/**'
       - '.github/workflows/docs-pipeline.yml'
+      - 'lychee.toml'
   pull_request:
     branches: [main]
     # A path may be ignored here ONLY if another workflow gives that PR a
