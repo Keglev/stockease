@@ -8,6 +8,11 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { FooterComponent } from '../../../shared/footer/footer.component';
 import { PublicHeaderComponent } from '../../../shared/public-header/public-header.component';
 
+/**
+ * Confirms a signed-out session and offers the way back in. It holds no state and performs no
+ * request: signing out has already happened by the time this route is reached, so the page exists
+ * to say so rather than to do it.
+ */
 @Component({
   selector: 'app-logout',
   imports: [

@@ -10,6 +10,11 @@ import { ProductResponse } from '../../../core/api/api-models';
 import { positivePrice } from '../positive-price.validator';
 import { ProductService } from '../product.service';
 
+/**
+ * Creates a product from its name, SKU and purchase price. There is no quantity control, because
+ * creation is master-data maintenance and books no stock (ADR 018): a new product starts at zero
+ * and moves only through recorded stock events.
+ */
 @Component({
   selector: 'app-product-create-dialog',
   imports: [

@@ -18,6 +18,18 @@ interface JwtPayload {
   iat?: number;
 }
 
+/**
+ * Holds the session token and answers who the current reader is.
+ *
+ * @remarks
+ * Every question about the session is derived from the token rather than tracked beside it:
+ * whether a session exists is the `exp` claim read against the clock, and the role is the `role`
+ * claim. There is nothing to ask the server, because the token is the whole session (ADR 036).
+ *
+ * The claims are typed optional because a token read back from storage is untrusted input - it
+ * may be absent, truncated, or issued by a version that spelled things differently - so every
+ * read has to survive a payload that does not carry what it should.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);

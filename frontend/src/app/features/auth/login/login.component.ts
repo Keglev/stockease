@@ -13,6 +13,15 @@ import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { FooterComponent } from '../../../shared/footer/footer.component';
 import { PublicHeaderComponent } from '../../../shared/public-header/public-header.component';
 
+/**
+ * The credential form, and the only place a session begins.
+ *
+ * @remarks
+ * A failure is held as two signals rather than one string: a translation key when the failure is
+ * one this application names, and raw text when it is the backend's own sentence. Only a key
+ * stays live in the template, so a visitor who switches language mid-page sees the message follow
+ * them instead of freezing in the language it was raised in.
+ */
 @Component({
   selector: 'app-login',
   imports: [

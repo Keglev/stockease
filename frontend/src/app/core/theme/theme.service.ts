@@ -11,6 +11,17 @@ const FALLBACK_THEME: ThemeMode = 'light';
 
 const DARK_MEDIA_QUERY = '(prefers-color-scheme: dark)';
 
+/**
+ * Owns light and dark mode: resolves it at startup, toggles it, remembers the choice.
+ *
+ * @remarks
+ * Setting the root `color-scheme` is the entire implementation, because Material emits every
+ * system colour through `light-dark()` - one property repaints the whole application.
+ *
+ * With nothing stored the operating system preference decides; once a reader has chosen, the
+ * stored value wins on every later visit. That choice is kept per browser rather than on the
+ * server (ADR 030).
+ */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);

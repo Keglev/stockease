@@ -25,6 +25,14 @@ import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 
 const DEFAULT_PAGE_SIZE = 10;
 
+/**
+ * The supplier register: the whole list, with create, edit and delete.
+ *
+ * @remarks
+ * The register is fetched in full and paged in memory. It is small, and the dialogs and the
+ * delete guard all read the same array, so a paged endpoint would buy a round trip per page
+ * without taking any work off the client.
+ */
 @Component({
   selector: 'app-supplier-list',
   imports: [

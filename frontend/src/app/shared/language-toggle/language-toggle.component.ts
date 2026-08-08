@@ -4,6 +4,11 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { LanguageService, SUPPORTED_LANGUAGES } from '../../core/i18n/language.service';
 
+/**
+ * The toolbar language switch: one button per supported language, marking the active one. It owns
+ * no state, because the choice belongs to the language service - every control that offers the
+ * same choice therefore stays in step without any of them knowing about the others.
+ */
 @Component({
   selector: 'app-language-toggle',
   imports: [MatButtonModule, TranslatePipe],
