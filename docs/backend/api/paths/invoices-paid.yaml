@@ -30,11 +30,14 @@ patch:
             message: Invoice marked as paid
             data:
               id: 1
+              invoiceNumber: RE-2026-0117
               type: PURCHASE
               status: CLOSED
               dueDate: '2026-03-01'
               supplierId: 7
+              supplierName: Acme
               customerId: null
+              customerName: null
               closedAt: '2026-01-03T09:00:00'
               paidAt: '2026-01-04T10:00:00'
               createdAt: '2026-01-02T03:04:00'

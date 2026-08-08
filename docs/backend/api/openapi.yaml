@@ -683,8 +683,9 @@ components:
           description: ISO-8601 local date-time, serialized without a zone offset
           example: '2026-01-02T03:04:00'
       description: |
-        List representation. Counterparties appear as identifiers only, never as names: the list is
-        built without initializing associations, which is what keeps it free of extra queries.
+        List representation. The counterparty name travels on the row itself, from the snapshot
+        column written when the invoice was created (ADR 033), so the list is still built without
+        initializing associations - which is what keeps it free of extra queries.
 
     InvoiceItemResponse:
       type: object
@@ -911,6 +912,10 @@ components:
         answers either way, and a shared list keeps the loss report groupable across the pair. The
         value is informational - losses are valued identically whichever remark they carry.
 
+        MovementResponse.remark carries an inline nullable mirror of this list, because a response
+        remark may be null and OAS 3.0 cannot make a referenced enum nullable; an edit here must
+        land there too.
+
     MovementResponse:
       type: object
       required:
@@ -965,8 +970,11 @@ components:
         remark:
           type: string
           nullable: true
-          allOf:
-            - $ref: '#/components/schemas/MovementRemark'
+          # Mirror of MovementRemark plus null. OAS 3.0 cannot express
+          # nullable-by-reference; response-remark (enum or null) and
+          # request-remark (enum, non-null) are genuinely different value
+          # spaces. Keep the two lists in sync.
+          enum: [EXPIRED, IN_TRANSIT_TO_CUSTOMER, INTERNAL, FROM_SUPPLIER, null]
           description: Why the stock was lost; set for LOST and DESTROYED, null for every other reason
         createdAt:
           type: string

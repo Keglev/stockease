@@ -47,6 +47,7 @@ post:
             invoiceItemId: 4
             soldPrice: 15.00
             unitCost: null
+            remark: null
             createdAt: '2026-01-02T03:04:00'
     '400':
       description: |
@@ -55,7 +56,7 @@ post:
       content:
         application/json:
           schema:
-            oneOf:
+            anyOf:
               - $ref: '../openapi.yaml#/components/schemas/ValidationErrorResponse'
               - $ref: '../openapi.yaml#/components/schemas/ApiResponseError'
           examples:
