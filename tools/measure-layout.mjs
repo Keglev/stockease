@@ -11,6 +11,10 @@
 //          --viewports 1920x1080,390x844 --routes /app,/app/reports
 //          [--selector ".type-chip"] [--schemes light,dark] [--json]
 //
+// On Git Bash, MSYS path conversion rewrites route arguments into Windows paths
+// (/app becomes C:/Program Files/Git/app). Prefix MSYS_NO_PATHCONV=1, or use
+// PowerShell.
+//
 // Deliberately NOT wired into CI. It is a measurement instrument, not a gate:
 // it asserts nothing, and a number that needs a human to interpret it does not
 // belong in a required check.
