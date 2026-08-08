@@ -10,7 +10,7 @@ import { ApiError, errorInterceptor } from './error.interceptor';
 const API_URL = `${environment.apiBaseUrl}/api/products`;
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
 
-/** Stands in for the real service through DI: the interceptor only ever calls logout on it. */
+/* Stands in for the real service through DI: the interceptor only ever calls logout on it. */
 class AuthServiceStub {
   logoutCalls = 0;
 
@@ -39,7 +39,7 @@ function setUp(): { http: HttpClient; controller: HttpTestingController } {
   };
 }
 
-/**
+/*
  * Fails a GET against API_URL with the given envelope and status, returning what was thrown.
  * The code is left off the body entirely when not given, which is how most errors arrive.
  */

@@ -12,7 +12,7 @@ import { LoginComponent } from './login.component';
 
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
 
-/** Unsigned JWT-shaped token; the frontend only reads the payload. */
+/* Unsigned JWT-shaped token; the frontend only reads the payload. */
 function validToken(): string {
   const encode = (value: object) =>
     btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -20,7 +20,7 @@ function validToken(): string {
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.signature`;
 }
 
-/** Keeps the footer's health poll off the HTTP testing backend, where it would fail verify(). */
+/* Keeps the footer's health poll off the HTTP testing backend, where it would fail verify(). */
 class HealthServiceStub {
   check() {
     return of<HealthProbe>({ up: true, latencyMs: 12 });
@@ -164,7 +164,7 @@ describe('LoginComponent', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.login-error')).toBeNull();
   });
 
-  /** Rebuilds the component with the given query params supplied through the ActivatedRoute seam. */
+  /* Rebuilds the component with the given query params supplied through the ActivatedRoute seam. */
   async function withQueryParams(params: Record<string, string>): Promise<void> {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
@@ -218,7 +218,7 @@ describe('LoginComponent', () => {
     (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
   }
 
-  /** Fails the pending login with the given status and backend message, then settles the view. */
+  /* Fails the pending login with the given status and backend message, then settles the view. */
   async function failWith(status: number, message: string): Promise<void> {
     controller
       .expectOne(LOGIN_URL)

@@ -19,7 +19,7 @@ const TRANSLATIONS = {
 describe('TypeaheadComponent', () => {
   let fixture: ComponentFixture<TypeaheadComponent<Row>>;
 
-  /** Every term the bound search was called with, so "sends nothing" is assertable. */
+  /* Every term the bound search was called with, so "sends nothing" is assertable. */
   let terms: string[];
   let result: Observable<Row[]>;
 
@@ -55,7 +55,7 @@ describe('TypeaheadComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelector('input.typeahead-input')!;
   }
 
-  /**
+  /*
    * Types a term the way the DOM does, then lets the debounce elapse unless told otherwise.
    *
    * <p>The focus event is not decoration: MatAutocomplete attaches its panel only while the trigger
@@ -69,7 +69,7 @@ describe('TypeaheadComponent', () => {
     fixture.detectChanges();
   }
 
-  /**
+  /*
    * Focuses the rendered input and lets the debounce elapse, with no keystroke after it.
    *
    * <p>`focusin` rather than `focus`: it is what MatAutocomplete's own trigger listens for, and the

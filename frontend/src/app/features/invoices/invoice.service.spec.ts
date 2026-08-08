@@ -48,7 +48,7 @@ const CLOSED: InvoiceSummaryResponse = {
 
 const PAID: InvoiceSummaryResponse = { ...SUMMARY, paidAt: '2026-02-02T10:00:00' };
 
-/** Built through the same helper the create page uses, so the payload pins test real construction. */
+/* Built through the same helper the create page uses, so the payload pins test real construction. */
 function purchaseDraft() {
   return buildCreateInvoiceRequest({
     type: 'PURCHASE',

@@ -38,7 +38,7 @@ class ProductServiceStub {
   renameCalls: { id: number; name: string }[] = [];
   priceCalls: { id: number; purchasePrice: number }[] = [];
 
-  /** Overridable so a spec can make the save fail without touching the price path. */
+  /* Overridable so a spec can make the save fail without touching the price path. */
   renameResult: Observable<ProductResponse> | null = null;
 
   rename(id: number, name: string): Observable<ProductResponse> {

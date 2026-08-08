@@ -122,7 +122,7 @@ const PROFIT: ProductProfitReport[] = [
   { productId: 4, name: 'Gadget', sku: 'SKU-4', deleted: false, revenue: 60, cost: 35, grossProfit: 25 }
 ];
 
-/** Eleven products, so topNWithRemainder has a remainder to bucket. */
+/* Eleven products, so topNWithRemainder has a remainder to bucket. */
 const MANY_PROFIT: ProductProfitReport[] = Array.from({ length: 11 }, (unused, index) => ({
   productId: index + 1,
   name: 'Product ' + index,
@@ -133,7 +133,7 @@ const MANY_PROFIT: ProductProfitReport[] = Array.from({ length: 11 }, (unused, i
   grossProfit: 60 - index
 }));
 
-/** Nine rows, so the list's cap at eight is observable rather than incidental. */
+/* Nine rows, so the list's cap at eight is observable rather than incidental. */
 const DUE_SOON: InvoiceDueSummary[] = Array.from({ length: 9 }, (unused, index) => ({
   invoiceId: index + 1,
   invoiceNumber: 'RE-2026-100' + index,
@@ -162,7 +162,7 @@ class ReportServiceStub {
     return of(BUCKETS);
   }
 
-  /** Still offered, and deliberately counted: the dashboard must no longer ask for it. */
+  /* Still offered, and deliberately counted: the dashboard must no longer ask for it. */
   lossRequests = 0;
 
   losses(): Observable<LossReport[]> {
@@ -176,7 +176,7 @@ class ReportServiceStub {
     return of(OVERDUE);
   }
 
-  /** Counted separately: the due list must fetch these only when it is actually opened. */
+  /* Counted separately: the due list must fetch these only when it is actually opened. */
   dueSoonRequests = 0;
 
   dueSoon(): Observable<InvoiceDueSummary[]> {
@@ -188,9 +188,9 @@ class ReportServiceStub {
 
 class ProductServiceStub {
   lowStockRows: ProductResponse[] = [WIDGET];
-  /** Counts fetches, so opening the dialog can be shown to reuse the rows rather than reload them. */
+  /* Counts fetches, so opening the dialog can be shown to reuse the rows rather than reload them. */
   lowStockCalls = 0;
-  /** Set to make the paged call fail, which is what puts the component into its error state. */
+  /* Set to make the paged call fail, which is what puts the component into its error state. */
   pagedFailure: Error | null = null;
 
   getPagedProducts(): Observable<PaginatedProducts> {
@@ -203,7 +203,7 @@ class ProductServiceStub {
   }
 }
 
-/** The established dialog stub, recording what was opened and with what data. */
+/* The established dialog stub, recording what was opened and with what data. */
 class MatDialogStub {
   openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
 
@@ -213,7 +213,7 @@ class MatDialogStub {
   }
 }
 
-/** Counts calls, so a test can prove the dashboard itself no longer polls health. */
+/* Counts calls, so a test can prove the dashboard itself no longer polls health. */
 class HealthServiceStub {
   checks = 0;
 
@@ -231,7 +231,7 @@ describe('DashboardComponent', () => {
   let dialog: MatDialogStub;
   let breakpoints: BreakpointObserverStub;
 
-  /**
+  /*
    * The app is zoneless, so fakeAsync is unavailable and vitest's timers stand in for any rxjs
    * timer the component might start. They must be faked before it is created.
    */
@@ -250,21 +250,21 @@ describe('DashboardComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  /** Flips the due card to its list half, the way the toggle group does. */
+  /* Flips the due card to its list half, the way the toggle group does. */
   function showDueList(): void {
     const page = fixture.componentInstance as unknown as { setDueView: (view: string) => void };
     page.setDueView('table');
     fixture.detectChanges();
   }
 
-  /** Returns the due card to its chart half. */
+  /* Returns the due card to its chart half. */
   function showDueChart(): void {
     const page = fixture.componentInstance as unknown as { setDueView: (view: string) => void };
     page.setDueView('chart');
     fixture.detectChanges();
   }
 
-  /** Flips the profit card to its table half, the way the toggle group does. */
+  /* Flips the profit card to its table half, the way the toggle group does. */
   function showProfitTable(): void {
     const page = fixture.componentInstance as unknown as { setProfitView: (view: string) => void };
     page.setProfitView('table');
@@ -448,7 +448,7 @@ describe('DashboardComponent', () => {
     expect(host().querySelector('.slice-table')?.textContent).not.toContain('Other');
   });
 
-  /**
+  /*
    * The figures inside the two cards' charts, asserted by invoking the callbacks the options hand
    * ECharts. The fake engine paints nothing, and a formatter is a function rather than a rendered
    * string, so calling it is the only reading available - and the honest one, since it is exactly
@@ -634,14 +634,14 @@ describe('DashboardComponent', () => {
     expect(chartHeights()).toEqual(['20rem', '20rem']);
   });
 
-  /** The height each rendered chart was handed, in template order. */
+  /* The height each rendered chart was handed, in template order. */
   function chartHeights(): string[] {
     return fixture.debugElement
       .queryAll(By.directive(ChartComponent))
       .map((chart) => (chart.componentInstance as ChartComponent).height());
   }
 
-  /** The four KPI values in template order: products, low stock, overdue, loss value. */
+  /* The four KPI values in template order: products, low stock, overdue, loss value. */
   function kpiValues(): string[] {
     return Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll('.kpi-card .kpi-value')
@@ -649,7 +649,7 @@ describe('DashboardComponent', () => {
   }
 });
 
-/**
+/*
  * The formatting callbacks an option carries. Typed loosely on purpose: it mirrors the parts of
  * echarts' own option shape these specs invoke, and importing its types would tie the spec to a
  * structure only ChartComponent is supposed to know.

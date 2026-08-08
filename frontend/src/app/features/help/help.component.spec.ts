@@ -34,7 +34,7 @@ const TRANSLATIONS = {
   }
 };
 
-/** Unsigned JWT-shaped token, so the /app guard admits the navigation. */
+/* Unsigned JWT-shaped token, so the /app guard admits the navigation. */
 function validToken(): string {
   const encode = (value: object) =>
     btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -42,14 +42,14 @@ function validToken(): string {
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.signature`;
 }
 
-/** Keeps the shell footer's health poll off the network; the real probe has its own spec. */
+/* Keeps the shell footer's health poll off the network; the real probe has its own spec. */
 class HealthServiceStub {
   check() {
     return of<HealthProbe>({ up: true, latencyMs: 12 });
   }
 }
 
-/** Host carrying the outlet, so assertions observe what the real route table renders. */
+/* Host carrying the outlet, so assertions observe what the real route table renders. */
 @Component({ selector: 'app-test-host', imports: [RouterOutlet], template: '<router-outlet />' })
 class TestHostComponent {}
 
@@ -58,7 +58,7 @@ describe('HelpComponent', () => {
   let host: HTMLElement;
   let router: Router;
 
-  /**
+  /*
    * Navigates the real route table into the shell and returns the rendered host.
    *
    * <p>The real table rather than a local one, because the redirect and the `:topic` parameter are
@@ -87,7 +87,7 @@ describe('HelpComponent', () => {
     host = fixture.nativeElement as HTMLElement;
   }
 
-  /** Lets the routed component's redirect effect and any language swap reach the DOM. */
+  /* Lets the routed component's redirect effect and any language swap reach the DOM. */
   async function settle(): Promise<void> {
     fixture.detectChanges();
     await fixture.whenStable();
@@ -202,7 +202,7 @@ describe('HelpComponent', () => {
     expect(router.url).toBe('/app/help/products');
   });
 
-  /**
+  /*
    * The routed instance, reached through the outlet so the real route table stays in charge.
    *
    * <p>Typed to the handler under test rather than to the class: selectTopic is protected, which is

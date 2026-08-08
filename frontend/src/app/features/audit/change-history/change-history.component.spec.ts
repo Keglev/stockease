@@ -65,7 +65,7 @@ class AuditServiceStub {
   productResult: ChangeLogResponse[] = [PRICE_CHANGE, DELETED_EVENT];
   userResult: ChangeLogResponse[] = [PRICE_CHANGE, DELETED_EVENT];
 
-  /** Overridable so a spec can hold the query open or fail it outright. */
+  /* Overridable so a spec can hold the query open or fail it outright. */
   productSource: (() => Observable<ChangeLogResponse[]>) | null = null;
 
   productChanges(productId: number): Observable<ChangeLogResponse[]> {
@@ -112,7 +112,7 @@ describe('ChangeHistoryComponent', () => {
     await fixture.whenStable();
   }
 
-  /** Emits a new parameter map on the same route, as Angular does when it reuses the component. */
+  /* Emits a new parameter map on the same route, as Angular does when it reuses the component. */
   async function navigateTo(next: Record<string, string>): Promise<void> {
     params.next(convertToParamMap(next));
     fixture.detectChanges();

@@ -51,7 +51,7 @@ const JANE: CustomerResponse = {
   createdAt: '2026-01-02T03:04:00'
 };
 
-/** Jane with every optional field filled in, which is what an edit pre-fills from. */
+/* Jane with every optional field filled in, which is what an edit pre-fills from. */
 const JANE_FULL: CustomerResponse = {
   ...JANE,
   email: 'jane@example.com',
@@ -60,7 +60,7 @@ const JANE_FULL: CustomerResponse = {
   city: 'Springfield'
 };
 
-/**
+/*
  * Reads one customers.form message out of a shipped locale file. Walks up from the working
  * directory so it resolves whether the runner starts in frontend/ or at the repository root, and
  * reads from disk rather than importing, because public/ sits outside the spec tsconfig's rootDir -
@@ -103,7 +103,7 @@ describe('CustomerFormDialogComponent', () => {
   let service: CustomerServiceStub;
   let dialogRef: { close: ReturnType<typeof vi.fn> };
 
-  /** Fields render in template order: name, email, phone, address, city. */
+  /* Fields render in template order: name, email, phone, address, city. */
   function setField(index: number, value: string): void {
     const input = (fixture.nativeElement as HTMLElement).querySelectorAll('input')[index];
     input.value = value;
@@ -208,7 +208,7 @@ describe('CustomerFormDialogComponent', () => {
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
 
-  /**
+  /*
    * The mode the owner's ruling added. Its own setup, so every create spec above stays exactly the
    * spec it was: the dialog reached create mode by having no dialog data, and it still does.
    */

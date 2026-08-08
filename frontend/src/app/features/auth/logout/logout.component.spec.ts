@@ -29,7 +29,7 @@ const TRANSLATIONS = {
   }
 };
 
-/** Keeps the footer's health poll off the network; the real probe has its own spec. */
+/* Keeps the footer's health poll off the network; the real probe has its own spec. */
 class HealthServiceStub {
   check() {
     return of<HealthProbe>({ up: true, latencyMs: 12 });

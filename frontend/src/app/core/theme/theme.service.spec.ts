@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { THEME_STORAGE_KEY, ThemeService } from './theme.service';
 
-/**
+/*
  * jsdom's matchMedia always reports `matches: false`, so the preference is stubbed
  * on the injected document's defaultView to drive the resolution branches.
  */

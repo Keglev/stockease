@@ -2,7 +2,7 @@ import { ChartSlice, topNWithRemainder } from './chart-data';
 
 const OTHER = 'Other';
 
-/** Builds n slices with descending values, so the ranking order is known up front. */
+/* Builds n slices with descending values, so the ranking order is known up front. */
 function slices(n: number, from = 100): ChartSlice[] {
   return Array.from({ length: n }, (_, index) => ({
     name: `P${index}`,

@@ -121,7 +121,7 @@ class NotificationServiceStub {
   }
 }
 
-/**
+/*
  * Stands in for MatDialog. The confirm dialog answers with `confirmed`; the create and edit dialogs
  * answer with `saved`, and every call is recorded so a spec can name which one was opened with what.
  */
@@ -147,7 +147,7 @@ describe('ProductListComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  /** The menu renders into an overlay only once its trigger is clicked. */
+  /* The menu renders into an overlay only once its trigger is clicked. */
   async function openRowMenu(rowIndex = 0): Promise<void> {
     host().querySelectorAll<HTMLButtonElement>('.product-actions')[rowIndex].click();
     fixture.detectChanges();
@@ -426,7 +426,7 @@ describe('ProductListComponent', () => {
     expect(notifications.errors).toEqual(['Product cannot be deleted.']);
   });
 
-  /** Flips the "Show deleted" toggle, which only an admin can reach. */
+  /* Flips the "Show deleted" toggle, which only an admin can reach. */
   async function toggleDeleted(): Promise<void> {
     host().querySelector<HTMLElement>('.product-show-deleted button')?.click();
     fixture.detectChanges();

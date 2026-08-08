@@ -11,7 +11,7 @@ import { NotificationService } from '../../core/notifications/notification.servi
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { LandingComponent } from './landing.component';
 
-/** The rendered result once {{app}} is interpolated from common.appName. */
+/* The rendered result once {{app}} is interpolated from common.appName. */
 const DESCRIPTION = 'StockEase is an inventory management application for small businesses.';
 
 const TOKEN_ENVELOPE: ApiEnvelope<string> = {
@@ -81,7 +81,7 @@ const TRANSLATIONS = {
   }
 };
 
-/** Keeps the footer's health poll off the network; the real probe has its own spec. */
+/* Keeps the footer's health poll off the network; the real probe has its own spec. */
 class HealthServiceStub {
   check() {
     return of<HealthProbe>({ up: true, latencyMs: 12 });
@@ -152,7 +152,7 @@ describe('LandingComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(DESCRIPTION);
   });
 
-  /** Points the page at one language/theme pair and lets the recomputed sources render. */
+  /* Points the page at one language/theme pair and lets the recomputed sources render. */
   async function choose(lang: string, theme: string): Promise<void> {
     TestBed.inject(LanguageService).setLanguage(lang);
     TestBed.inject(ThemeService).setTheme(theme);
@@ -161,7 +161,7 @@ describe('LandingComponent', () => {
     fixture.detectChanges();
   }
 
-  /** Hero shot first, then the gallery's three - the order the page stages them in. */
+  /* Hero shot first, then the gallery's three - the order the page stages them in. */
   function screenshotSources(): (string | null)[] {
     return Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll(

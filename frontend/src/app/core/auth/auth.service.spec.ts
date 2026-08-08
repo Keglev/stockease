@@ -10,7 +10,7 @@ const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
 
 const DEMO_LOGIN_URL = `${environment.apiBaseUrl}/api/demo/login`;
 
-/** Builds an unsigned JWT-shaped token; the frontend only reads the payload. */
+/* Builds an unsigned JWT-shaped token; the frontend only reads the payload. */
 function tokenWith(payload: Record<string, unknown>): string {
   const encode = (value: object) =>
     btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

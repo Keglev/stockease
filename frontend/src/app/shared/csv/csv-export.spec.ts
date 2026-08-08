@@ -4,10 +4,10 @@ import { CSV_DOWNLOADER, buildCsv, downloadCsv } from './csv-export';
 
 const HEADERS = ['Name', 'Value'];
 
-/** Spelled by code point rather than written literally, which would be invisible in the source. */
+/* Spelled by code point rather than written literally, which would be invisible in the source. */
 const BOM = String.fromCharCode(0xfeff);
 
-/** The data lines without the BOM, so assertions read the rows rather than the preamble. */
+/* The data lines without the BOM, so assertions read the rows rather than the preamble. */
 function lines(content: string): string[] {
   return content.slice(BOM.length).trimEnd().split('\r\n');
 }
