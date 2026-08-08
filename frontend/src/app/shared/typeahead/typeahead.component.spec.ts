@@ -136,8 +136,11 @@ describe('TypeaheadComponent', () => {
   });
 
   it('focus_thenImmediateTyping_sendsOneRequestCarryingTheTypedTerm', () => {
-    // The browse rides the same debounced pipeline as a keystroke, so a user who focuses and types
-    // straight away asks once - for what they typed, not for the empty page they passed through.
+    // The focus lands but its browse has not fired yet, which is the case this covers: the browse
+    // rides the same debounced pipeline as a keystroke, so typing inside the quiet period supersedes
+    // it. One request goes out, for what the user typed rather than the empty page they passed
+    // through.
+    focus(100);
     type('acm');
 
     expect(terms).toEqual(['acm']);
