@@ -48,7 +48,7 @@ const ACME: SupplierResponse = {
   createdAt: '2026-01-02T03:04:00'
 };
 
-/**
+/*
  * Reads one suppliers.form message out of a shipped locale file. Walks up from the working
  * directory so it resolves whether the runner starts in frontend/ or at the repository root, and
  * reads from disk rather than importing, because public/ sits outside the spec tsconfig's
@@ -74,7 +74,7 @@ class SupplierServiceStub {
   createCalls: SupplierPayload[] = [];
   updateCalls: { id: number; payload: SupplierPayload }[] = [];
 
-  /** Overridable so a spec can make the save fail without touching the update path. */
+  /* Overridable so a spec can make the save fail without touching the update path. */
   createResult: Observable<SupplierResponse> | null = null;
 
   create(payload: SupplierPayload): Observable<SupplierResponse> {
@@ -97,7 +97,7 @@ describe('SupplierFormDialogComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelectorAll('input');
   }
 
-  /** Fields in template order: name, email, phone, address, city. */
+  /* Fields in template order: name, email, phone, address, city. */
   function setField(index: number, value: string): void {
     const field = Array.from(inputs())[index];
     field.value = value;
@@ -109,7 +109,7 @@ describe('SupplierFormDialogComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelector('.form-submit');
   }
 
-  /** The mandatory pair only, which is what most specs need. */
+  /* The mandatory pair only, which is what most specs need. */
   function fill(name: string, address: string): void {
     setField(0, name);
     setField(3, address);

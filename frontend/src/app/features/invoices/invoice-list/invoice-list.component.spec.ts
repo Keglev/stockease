@@ -76,7 +76,7 @@ function invoice(overrides: Partial<InvoiceSummaryResponse>): InvoiceSummaryResp
   };
 }
 
-/**
+/*
  * Stands in for the master-data services the page used to join against. Any call is a
  * regression: the counterparty column is served by the summary rows alone, so a page load that
  * reaches for a catalogue has reintroduced the client-side lookup this component dropped.
@@ -90,20 +90,20 @@ class ForbiddenLookupStub {
   }
 }
 
-/** Serves one page out of the given rows, recording what the component asked for. */
+/* Serves one page out of the given rows, recording what the component asked for. */
 class InvoiceServiceStub {
   readonly requests: { page: number; size: number }[] = [];
-  /** Overridable so a spec can hold the ledger fetch open or fail it outright. */
+  /* Overridable so a spec can hold the ledger fetch open or fail it outright. */
   result: (() => Observable<PaginatedInvoices>) | null = null;
 
-  /** Counted separately from the paged requests: the export is the only caller of the unpaged one. */
+  /* Counted separately from the paged requests: the export is the only caller of the unpaged one. */
   unpagedCalls = 0;
-  /** Overridable so a spec can hold the export's own fetch open or fail it. */
+  /* Overridable so a spec can hold the export's own fetch open or fail it. */
   unpagedResult: (() => Observable<InvoiceSummaryResponse[]>) | null = null;
 
   constructor(private readonly all: InvoiceSummaryResponse[]) {}
 
-  /** The unpaged ledger the CSV export reads; #143 removed this method, a ruling brought it back. */
+  /* The unpaged ledger the CSV export reads; #143 removed this method, a ruling brought it back. */
   getAll(): Observable<InvoiceSummaryResponse[]> {
     this.unpagedCalls += 1;
     return this.unpagedResult ? this.unpagedResult() : of(this.all);
@@ -184,7 +184,7 @@ describe('InvoiceListComponent', () => {
     vi.useRealTimers();
   });
 
-  /**
+  /*
    * The CSV export, asserted as WHOLE FILES.
    *
    * <p>Three things are specific to this list. Its cells carry TRANSLATIONS - type, status and the
@@ -195,7 +195,7 @@ describe('InvoiceListComponent', () => {
   describe('csv export', () => {
     afterEach(() => localStorage.clear());
 
-    /** Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
+    /* Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
     const SPACES = new Set([0x20, 0xa0, 0x202f]);
 
     function plain(value: string): string {
@@ -216,7 +216,7 @@ describe('InvoiceListComponent', () => {
 
     const BOM = String.fromCharCode(0xfeff);
 
-    /**
+    /*
      * An unpaid purchase and a PAID walk-in sale - the two shapes of row, and the two shapes of
      * payment-date cell the file has to get right.
      */

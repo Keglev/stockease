@@ -4,14 +4,14 @@ import { LanguageService } from '../i18n/language.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { FORMAT_DATE_KEY, FORMAT_NUMBER_KEY, FormatService } from './format.service';
 
-/** The last day of 2026 at 15:04, which reads differently in every option this service offers. */
+/* The last day of 2026 at 15:04, which reads differently in every option this service offers. */
 const MOMENT = new Date(2026, 11, 31, 15, 4);
 
 describe('FormatService', () => {
   let format: FormatService;
   let language: LanguageService;
 
-  /**
+  /*
    * Intl separates a currency symbol with a no-break space, and which one it uses varies by ICU
    * version - U+00A0 in some builds, U+202F in others. Compared on code points rather than with
    * an escape in a regex literal, so these assertions stay about the format itself.

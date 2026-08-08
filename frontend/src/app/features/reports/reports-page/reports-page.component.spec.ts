@@ -169,7 +169,7 @@ const LOSSES: LossReport[] = [
   { productId: 4, name: 'Gadget', sku: 'ABC-4', deleted: false, lostUnits: 3, destroyedUnits: 4, lossValue: 25 }
 ];
 
-/** The same write-offs LOSSES holds, grouped by cause instead of by product. */
+/* The same write-offs LOSSES holds, grouped by cause instead of by product. */
 const LOSSES_BY_REMARK: LossByRemark[] = [
   { remark: 'EXPIRED', lostUnits: 1, destroyedUnits: 2, lossValue: 12 },
   { remark: 'IN_TRANSIT_TO_CUSTOMER', lostUnits: 3, destroyedUnits: 0, lossValue: 30 }
@@ -247,7 +247,7 @@ const CHANGES: ChangeLogEntryResponse[] = [
   }
 ];
 
-/** Newest first, as the endpoint orders it; one row is deliberately not a number. */
+/* Newest first, as the endpoint orders it; one row is deliberately not a number. */
 const PRODUCT_CHANGES: ChangeLogResponse[] = [
   { id: 4, productId: 3, userId: 11, field: 'PURCHASE_PRICE', oldValue: '12.00', newValue: '14.00',
     createdAt: '2026-03-14T10:00:00' },
@@ -262,7 +262,7 @@ const STOCK_HISTORY: StockHistoryPoint[] = [
   { date: '2026-03-14', stockLevel: 32, cumulativeSoldUnits: 8 }
 ];
 
-/** The supplier typeahead's source; the page never sends the supplier, only searches within it. */
+/* The supplier typeahead's source; the page never sends the supplier, only searches within it. */
 class SupplierServiceStub {
   terms: string[] = [];
   payload: SupplierResponse[] = [
@@ -288,11 +288,11 @@ class AuditServiceStub {
       : of(this.changePayload);
   }
 
-  /** The per-product listing the analytics tab reads its price series from. */
+  /* The per-product listing the analytics tab reads its price series from. */
   productChangePayload: ChangeLogResponse[] = PRODUCT_CHANGES;
   productChangeIds: number[] = [];
 
-  /** Endpoints that must reject, so the analytics and changes error paths can be driven. */
+  /* Endpoints that must reject, so the analytics and changes error paths can be driven. */
   readonly failing = new Set<string>();
 
   productChanges(productId: number): Observable<ChangeLogResponse[]> {
@@ -304,10 +304,10 @@ class AuditServiceStub {
 }
 
 class ReportServiceStub {
-  /** Endpoints that must reject, so each tab's error path can be driven by name. */
+  /* Endpoints that must reject, so each tab's error path can be driven by name. */
   readonly failing = new Set<string>();
 
-  /** Rejects when the endpoint is in {@link failing}, otherwise answers with the payload. */
+  /* Rejects when the endpoint is in {@link failing}, otherwise answers with the payload. */
   private answer<T>(endpoint: string, payload: T): Observable<T> {
     return this.failing.has(endpoint)
       ? throwError(() => new Error(`${endpoint} is unavailable.`))
@@ -321,19 +321,19 @@ class ReportServiceStub {
   stockPayload: StockStatusReport[] = STOCK;
   dueSoonPayload: InvoiceDueSummary[] = DUE_SOON;
   overduePayload: InvoiceDueSummary[] = OVERDUE;
-  /** Holds the profit query open, so the loading state can be observed mid-flight. */
+  /* Holds the profit query open, so the loading state can be observed mid-flight. */
   holdProfit = false;
   lossPayload: LossReport[] = LOSSES;
   lossRemarkPayload: LossByRemark[] = LOSSES_BY_REMARK;
   cashFlowPayload: CashFlowReport = CASH_FLOW;
   calls: string[] = [];
   timelinePayload: CashFlowTimelineBucket[] = TIMELINE;
-  /** Every from/to pair the page asked for, so the period presets can be asserted exactly. */
+  /* Every from/to pair the page asked for, so the period presets can be asserted exactly. */
   cashFlowRanges: (string | undefined)[][] = [];
   timelineRanges: (string | undefined)[][] = [];
   lossRanges: (string | undefined)[][] = [];
   lossRemarkRanges: (string | undefined)[][] = [];
-  /** The same record for each profit endpoint, keyed by method so one period covers all three. */
+  /* The same record for each profit endpoint, keyed by method so one period covers all three. */
   profitRanges: Record<string, (string | undefined)[][]> = { products: [], suppliers: [], detail: [] };
   detail: ProductProfitReport = PROFIT[0];
 
@@ -343,10 +343,10 @@ class ReportServiceStub {
     return this.answer('cashFlow', this.cashFlowPayload);
   }
 
-  /** Every productId the timeline was asked for, undefined meaning the whole business. */
+  /* Every productId the timeline was asked for, undefined meaning the whole business. */
   timelineProductIds: (number | undefined)[] = [];
 
-  /** Fails only the scoped call, so the unscoped activation fetch still populates the tab. */
+  /* Fails only the scoped call, so the unscoped activation fetch still populates the tab. */
   timelineFailsWhenScoped = false;
 
   cashFlowTimeline(from?: string, to?: string, productId?: number): Observable<CashFlowTimelineBucket[]> {
@@ -358,11 +358,11 @@ class ReportServiceStub {
       : of(this.timelinePayload);
   }
 
-  /** Search terms the scoped product typeahead sent, so "nothing is fetched" can be asserted. */
+  /* Search terms the scoped product typeahead sent, so "nothing is fetched" can be asserted. */
   supplierProductTerms: string[] = [];
   supplierProductPayload: SupplierProduct[] = [];
 
-  /** Stands in for the preview environment, whose backend does not serve this endpoint yet. */
+  /* Stands in for the preview environment, whose backend does not serve this endpoint yet. */
   supplierProductsFails = false;
 
   supplierProducts(supplierId: number, name: string): Observable<SupplierProduct[]> {
@@ -386,7 +386,7 @@ class ReportServiceStub {
     return this.answer('profitSuppliers', this.supplierPayload);
   }
 
-  /** The row is on screen but its detail fetch fails - a deleted product, or a dropped request. */
+  /* The row is on screen but its detail fetch fails - a deleted product, or a dropped request. */
   detailFails = false;
 
   profitProductDetail(id: number, from?: string, to?: string): Observable<ProductProfitReport> {
@@ -453,7 +453,7 @@ describe('ReportsPageComponent', () => {
     fixture.detectChanges();
   }
 
-  /** Flips a tab to its table half, which is what the chart/table toggle exists to do. */
+  /* Flips a tab to its table half, which is what the chart/table toggle exists to do. */
   async function showTable(tab: number): Promise<void> {
     const page = fixture.componentInstance as unknown as {
       setView: (tab: number, view: 'chart' | 'table') => void;
@@ -472,7 +472,7 @@ describe('ReportsPageComponent', () => {
     return host().querySelector(selector)?.textContent ?? '';
   }
 
-  /**
+  /*
    * Drives the tab group through the component's own handler and waits for the tab body to
    * attach, which MatTabGroup defers past the first change-detection pass.
    */
@@ -732,7 +732,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(JSON.stringify(optionOf('profitOption'))).not.toContain('Widget');
   });
 
-  /**
+  /*
    * The values, rather than the labels the block above covers.
    *
    * <p>Asserted by CALLING the callbacks the option hands ECharts, with values the fixtures do not
@@ -746,7 +746,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     // this file shares its origin with every other spec in the worker.
     afterEach(() => localStorage.clear());
 
-    /**
+    /*
      * Intl separates a currency symbol and a percent sign with a no-break space, and which one it
      * uses varies by ICU build. Normalised for the same reason FormatService's own spec does it.
      */
@@ -762,7 +762,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
       fixture.detectChanges();
     }
 
-    /** The callbacks one option hands ECharts, read straight off the component. */
+    /* The callbacks one option hands ECharts, read straight off the component. */
     function formattersOf(name: string): FormatProbe {
       const page = fixture.componentInstance as unknown as Record<string, () => FormatProbe>;
       return page[name]();
@@ -780,7 +780,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
       return plain(formattersOf(name).yAxis?.axisLabel?.formatter?.(value) ?? '');
     }
 
-    /** Puts the three tabs the triangle reads - profit, due dates, analytics - on screen. */
+    /* Puts the three tabs the triangle reads - profit, due dates, analytics - on screen. */
     async function showTheThreeShapes(): Promise<void> {
       render();
       await activateTab(0);
@@ -883,7 +883,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
       expect(xTickOf('cashFlowOption', '2026-03')).toBe('Mar 2026');
     });
 
-    /**
+    /*
      * Every value surface on the page in one pass, which is the point: the routing decision - is
      * this figure money or a count - is made once per axis and per tooltip, and the ones the
      * triangle above does not reach are exactly where a wrong one would survive unnoticed.
@@ -1055,7 +1055,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(host().querySelector('.analytics-no-prices')).not.toBeNull();
   });
 
-  /** A row of the shape the supplier-scoped product search answers with. */
+  /* A row of the shape the supplier-scoped product search answers with. */
   function productRow(id: number): SupplierProduct {
     return {
       id,
@@ -1068,7 +1068,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     };
   }
 
-  /** Access to the handlers the typeaheads and the Show button call. */
+  /* Access to the handlers the typeaheads and the Show button call. */
   function page(): {
     setAnalyticsSupplier: (value: SupplierResponse | null) => void;
     setAnalyticsProduct: (value: SupplierProduct | null) => void;
@@ -1086,7 +1086,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     fixture.detectChanges();
   }
 
-  /**
+  /*
    * Picks a product without asking for it, which is now the whole of choosing: the cascade sets a
    * supplier first, and only the Show button fetches.
    */
@@ -1096,13 +1096,13 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     await settle();
   }
 
-  /** Presses Show, the only control that fetches the two analytics series. */
+  /* Presses Show, the only control that fetches the two analytics series. */
   async function showAnalytics(): Promise<void> {
     page().showAnalytics();
     await settle();
   }
 
-  /** Clicks an analytics period preset through the component, the way the toggle group does. */
+  /* Clicks an analytics period preset through the component, the way the toggle group does. */
   async function selectAnalyticsPeriod(period: string): Promise<void> {
     const page = fixture.componentInstance as unknown as {
       setAnalyticsPeriod: (value: string) => void;
@@ -1165,7 +1165,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(rows[0].textContent).toContain('Gadget');
   });
 
-  /** Clicks a changes period preset through the component, the way the toggle group does. */
+  /* Clicks a changes period preset through the component, the way the toggle group does. */
   async function selectChangePeriod(period: string): Promise<void> {
     const page = fixture.componentInstance as unknown as {
       setChangePeriod: (value: string) => void;
@@ -1236,7 +1236,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(content).not.toContain('Gadget');
   });
 
-  /** Types into one of the tabs' filters through the component, the way its input does. */
+  /* Types into one of the tabs' filters through the component, the way its input does. */
   async function setFilter(method: string, value: string): Promise<void> {
     const page = fixture.componentInstance as unknown as Record<string, (value: string) => void>;
     page[method](value);
@@ -1245,7 +1245,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     fixture.detectChanges();
   }
 
-  /** Clicks a loss period preset through the component, the way the toggle group does. */
+  /* Clicks a loss period preset through the component, the way the toggle group does. */
   async function selectLossPeriod(period: string): Promise<void> {
     const page = fixture.componentInstance as unknown as {
       setLossPeriod: (value: string) => void;
@@ -1359,7 +1359,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(reports.profitRanges['detail'].at(-1)).toEqual(['2026-02-13', '2026-03-15']);
   });
 
-  /** Clicks a profit period preset through the component, the way the toggle group does. */
+  /* Clicks a profit period preset through the component, the way the toggle group does. */
   async function selectProfitPeriod(period: string): Promise<void> {
     const page = fixture.componentInstance as unknown as {
       setProfitPeriod: (value: string) => void;
@@ -1458,7 +1458,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(host().querySelector('.cash-flow-empty')).not.toBeNull();
   });
 
-  /** Types into the cash-flow filter through the component, the way the input does. */
+  /* Types into the cash-flow filter through the component, the way the input does. */
   async function setCashFlowFilter(value: string): Promise<void> {
     const page = fixture.componentInstance as unknown as {
       setCashFlowFilter: (value: string) => void;
@@ -1469,7 +1469,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     fixture.detectChanges();
   }
 
-  /** Clicks a period preset through the component, the way the toggle group does. */
+  /* Clicks a period preset through the component, the way the toggle group does. */
   async function selectPeriod(period: string): Promise<void> {
     const page = fixture.componentInstance as unknown as {
       setCashFlowPeriod: (value: string) => void;
@@ -1480,20 +1480,20 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     fixture.detectChanges();
   }
 
-  /** Reads a chart option straight off the component; the stub renders nothing to assert on. */
+  /* Reads a chart option straight off the component; the stub renders nothing to assert on. */
   function optionOf(name: string): SeriesProbe | null {
     const page = fixture.componentInstance as unknown as Record<string, () => SeriesProbe | null>;
     return page[name]();
   }
 
-  /** Clicks a sortable column header, which is the only way a reader reorders a report table. */
+  /* Clicks a sortable column header, which is the only way a reader reorders a report table. */
   async function sortBy(table: string, columnIndex: number): Promise<void> {
     const headers = host().querySelectorAll<HTMLElement>(`${table} th.mat-sort-header`);
     headers[columnIndex].click();
     await settle();
   }
 
-  /** The visible text of one column, top to bottom, which is what sorting rearranges. */
+  /* The visible text of one column, top to bottom, which is what sorting rearranges. */
   function columnText(table: string, columnIndex: number): string[] {
     return Array.from(host().querySelectorAll(`${table} tbody tr`)).map(
       (row) => row.querySelectorAll('td')[columnIndex].textContent?.trim() ?? ''
@@ -1574,7 +1574,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
   });
 
-  /**
+  /*
    * The typeahead the page put at this selector, reached as a component so the spec can call the
    * `[search]` function the template bound and emit the `(selected)` output the template listens to.
    *
@@ -1647,7 +1647,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(reports.timelineProductIds.at(-1)).toBe(3);
   });
 
-  /** The banner every tab reports a failed load through, and the bar that must stop with it. */
+  /* The banner every tab reports a failed load through, and the bar that must stop with it. */
   function expectFailureBanner(message: string): void {
     expect(host().querySelector('.reports-error')?.textContent?.trim()).toBe(message);
     expect(host().querySelector('mat-progress-bar')).toBeNull();
@@ -1727,7 +1727,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expectFailureBanner('productChanges is unavailable.');
   });
 
-  /** Types into a rendered filter box, which is how a reader narrows any of the report tables. */
+  /* Types into a rendered filter box, which is how a reader narrows any of the report tables. */
   async function typeFilter(value: string): Promise<void> {
     const input = host().querySelector<HTMLInputElement>('.report-filter input');
     input!.value = value;
@@ -1831,7 +1831,7 @@ expect(reports.calls).toEqual(['profitProducts', 'profitSuppliers']);
     expect(host().textContent).toContain('No losses have been recorded.');
   });
 
-  /** Cells of the by-cause table, row by row, in column order. */
+  /* Cells of the by-cause table, row by row, in column order. */
   function remarkRows(): string[][] {
     return Array.from(host().querySelectorAll('.loss-remark-table tbody tr')).map((row) =>
       Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent?.trim() ?? '')
@@ -2104,7 +2104,7 @@ interface SeriesProbe {
   series?: { data?: { value?: number }[] }[];
 }
 
-/**
+/*
  * The formatting callbacks an option carries. Typed loosely on purpose: these mirror the parts of
  * echarts' own option shape the value specs invoke, and importing its types here would tie the
  * spec to a structure only ChartComponent is supposed to know.

@@ -53,7 +53,7 @@ const PRODUCTS: ProductResponse[] = [
   }
 ];
 
-/**
+/*
  * Records every search the field asks for, so what the component sent can be asserted from the
  * rendered input rather than by calling the method under test.
  */
@@ -105,7 +105,7 @@ class NotificationServiceStub {
   }
 }
 
-/** Narrow view of the component's protected surface, so the spec needs no `any` casts. */
+/* Narrow view of the component's protected surface, so the spec needs no `any` casts. */
 interface ComponentApi {
   form: FormGroup;
   reasons: readonly string[];
@@ -139,7 +139,7 @@ describe('MovementRecordComponent', () => {
     await settle();
   }
 
-  /**
+  /*
    * Types into the rendered typeahead input and lets its debounce elapse.
    *
    * <p>The focus event is not decoration: MatAutocomplete attaches its panel only while the trigger
@@ -156,7 +156,7 @@ describe('MovementRecordComponent', () => {
     await settle();
   }
 
-  /** Picks the first suggestion the panel is offering. */
+  /* Picks the first suggestion the panel is offering. */
   async function pickFirstOption(): Promise<void> {
     const option = document.querySelector<HTMLElement>('mat-option');
     option?.click();

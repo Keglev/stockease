@@ -69,7 +69,7 @@ describe('SettingsComponent', () => {
   let theme: ThemeService;
   let language: LanguageService;
 
-  /** The token facts the Session section displays; the page only reads them. */
+  /* The token facts the Session section displays; the page only reads them. */
   interface Session {
     username: string | null;
     role: 'ADMIN' | 'USER' | null;
@@ -119,7 +119,7 @@ describe('SettingsComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  /**
+  /*
    * The toggles of one group, as directive instances.
    *
    * <p>Queried through the debug element rather than by CSS: `value` is an input, so it never
@@ -136,7 +136,7 @@ describe('SettingsComponent', () => {
     return toggles(group).find((toggle) => toggle.value === value);
   }
 
-  /** Clicks a toggle the way a user does, through its rendered button. */
+  /* Clicks a toggle the way a user does, through its rendered button. */
   function choose(group: string, value: string): void {
     const toggle = option(group, value);
     (toggle?._buttonElement.nativeElement as HTMLButtonElement | undefined)?.click();
@@ -152,11 +152,11 @@ describe('SettingsComponent', () => {
     return option(group, value)?._buttonElement.nativeElement.textContent?.trim() ?? '';
   }
 
-  /** Host carrying the outlet, so the route assertion observes the real table's rendering. */
+  /* Host carrying the outlet, so the route assertion observes the real table's rendering. */
   @Component({ selector: 'app-test-host', imports: [RouterOutlet], template: '<router-outlet />' })
   class TestHostComponent {}
 
-  /** Unsigned JWT-shaped token, so the /app guard admits the navigation. */
+  /* Unsigned JWT-shaped token, so the /app guard admits the navigation. */
   function validToken(): string {
     const encode = (value: object) =>
       btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -164,7 +164,7 @@ describe('SettingsComponent', () => {
     return `${encode({ alg: 'HS256' })}.${encode(payload)}.signature`;
   }
 
-  /** Navigates the real route table into the shell and returns the rendered host. */
+  /* Navigates the real route table into the shell and returns the rendered host. */
   async function renderRoute(url: string): Promise<HTMLElement> {
     localStorage.clear();
     localStorage.setItem(TOKEN_STORAGE_KEY, validToken());
@@ -261,7 +261,7 @@ describe('SettingsComponent', () => {
     expect(labelOf('settings-language', 'de')).toBe('Deutsch');
   });
 
-  /** The options of one select, opened so the overlay renders them. */
+  /* The options of one select, opened so the overlay renders them. */
   function selectOptions(cssClass: string): HTMLElement[] {
     const trigger = host().querySelector<HTMLElement>(`.${cssClass} .mat-mdc-select-trigger`);
     trigger?.click();

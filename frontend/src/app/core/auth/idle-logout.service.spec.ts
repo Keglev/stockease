@@ -4,7 +4,7 @@ import { Router, provideRouter } from '@angular/router';
 import { AuthService } from './auth.service';
 import { IDLE_TIMEOUT_MS, IDLE_WARNING_MS, IdleLogoutService } from './idle-logout.service';
 
-/** When the warning is due: the quiet stretch before the last two minutes. */
+/* When the warning is due: the quiet stretch before the last two minutes. */
 const WARNING_AT_MS = IDLE_TIMEOUT_MS - IDLE_WARNING_MS;
 
 class AuthServiceStub {
@@ -43,7 +43,7 @@ describe('IdleLogoutService', () => {
     vi.useRealTimers();
   });
 
-  /** Real user activity, as the document sees it. */
+  /* Real user activity, as the document sees it. */
   function activity(type = 'mousedown'): void {
     document.dispatchEvent(new Event(type));
   }

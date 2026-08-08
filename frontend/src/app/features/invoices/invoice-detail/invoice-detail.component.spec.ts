@@ -86,7 +86,7 @@ const SUMMARY: InvoiceSummaryResponse = {
   createdAt: '2026-01-02T03:04:00'
 };
 
-/**
+/*
  * Reads one invoices.returnDialog message out of a shipped locale file. Walks up from the working
  * directory so it resolves whether the runner starts in frontend/ or at the repository root, and
  * reads from disk rather than importing, because public/ sits outside the spec tsconfig's
@@ -122,7 +122,7 @@ class NotificationServiceStub {
   }
 }
 
-/** Counts detail reads so the re-fetch behaviour after a lifecycle call can be asserted. */
+/* Counts detail reads so the re-fetch behaviour after a lifecycle call can be asserted. */
 class InvoiceServiceStub {
   getByIdCalls = 0;
   closeCalls: number[] = [];
@@ -159,10 +159,10 @@ class InvoiceServiceStub {
 class MatDialogStub {
   confirmed: boolean | undefined = true;
   returnResult: { quantity: number } | undefined = { quantity: 1 };
-  /** Data of the last dialog opened, so the confirmation copy's parameters can be asserted. */
+  /* Data of the last dialog opened, so the confirmation copy's parameters can be asserted. */
   lastData: ConfirmDialogData | undefined;
 
-  /** The return dialog resolves to a quantity; the lifecycle confirmations resolve to a boolean. */
+  /* The return dialog resolves to a quantity; the lifecycle confirmations resolve to a boolean. */
   open(component: unknown, config?: { data?: unknown }) {
     const isReturn = component === InvoiceReturnDialogComponent;
     if (!isReturn) {

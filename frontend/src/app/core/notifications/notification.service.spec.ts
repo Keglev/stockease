@@ -22,7 +22,7 @@ const TRANSLATIONS = {
   }
 };
 
-/** Records what the service asked Material to show, without rendering a snack bar. */
+/* Records what the service asked Material to show, without rendering a snack bar. */
 class MatSnackBarStub {
   calls: { message: string; action: string | undefined; config: unknown }[] = [];
 

@@ -2,7 +2,7 @@ import { HELP_TOPICS as DE } from './help-content.de';
 import { HELP_TOPICS as EN } from './help-content.en';
 import { HelpSection, HelpTopic } from './help-content.types';
 
-/**
+/*
  * The parity guarantee the translation files get from CI, applied to the prose modules instead.
  *
  * <p>Nothing outside this spec checks that the two languages describe the same product: the shared

@@ -87,7 +87,7 @@ const PRODUCTS: ProductResponse[] = [
   }
 ];
 
-/**
+/*
  * Records every search each line's field asks for, so what the page sent can be asserted from the
  * rendered inputs rather than by calling the method under test.
  */
@@ -139,7 +139,7 @@ class NotificationServiceStub {
   }
 }
 
-/** Narrow view of the component's protected surface, so the spec needs no `any` casts. */
+/* Narrow view of the component's protected surface, so the spec needs no `any` casts. */
 interface ComponentApi {
   form: FormGroup;
   counterpartyOptions(): (SupplierResponse | CustomerResponse)[];
@@ -154,7 +154,7 @@ describe('InvoiceCreateComponent', () => {
   let notifications: NotificationServiceStub;
   let products: ProductServiceStub;
 
-  /** The members under test are protected, so the instance is read through this narrow view. */
+  /* The members under test are protected, so the instance is read through this narrow view. */
   function api(): ComponentApi {
     return fixture.componentInstance as unknown as ComponentApi;
   }
@@ -176,7 +176,7 @@ describe('InvoiceCreateComponent', () => {
     await fixture.whenStable();
   }
 
-  /** Fills one item row directly; the fields render in an overlay that most tests need not open. */
+  /* Fills one item row directly; the fields render in an overlay that most tests need not open. */
   function fillItem(index: number, productId: number, quantity: number, unitPrice: number): void {
     itemsArray().at(index).setValue({ productId, quantity, unitPrice });
   }
@@ -189,7 +189,7 @@ describe('InvoiceCreateComponent', () => {
     );
   }
 
-  /**
+  /*
    * Types into one line's product field and lets its debounce elapse.
    *
    * <p>The focus event is not decoration: MatAutocomplete attaches its panel only while the trigger
@@ -204,7 +204,7 @@ describe('InvoiceCreateComponent', () => {
     await settle();
   }
 
-  /** Picks the nth suggestion the open panel is offering. */
+  /* Picks the nth suggestion the open panel is offering. */
   async function pickOption(position: number): Promise<void> {
     Array.from(document.querySelectorAll<HTMLElement>('mat-option'))[position]?.click();
     await settle();

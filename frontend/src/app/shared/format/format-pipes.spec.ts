@@ -9,7 +9,7 @@ import { AppDatePipe } from './app-date.pipe';
 
 const MOMENT = new Date(2026, 11, 31, 15, 4);
 
-/**
+/*
  * The pipes carry no logic of their own; these pin that they delegate to the service and survive
  * a null, which is the only thing a template can hand them that the service must not choke on.
  */
@@ -17,7 +17,7 @@ describe('format pipes', () => {
   let format: FormatService;
   let language: LanguageService;
 
-  /**
+  /*
    * Intl separates a currency symbol with a no-break space, and which one it uses varies by ICU
    * version - U+00A0 in some builds, U+202F in others. Compared on code points rather than with
    * an escape in a regex literal, so these assertions stay about the format itself.

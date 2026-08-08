@@ -63,7 +63,7 @@ const TRANSLATIONS = {
   }
 };
 
-/** Unsigned JWT-shaped token; the frontend only reads the payload. */
+/* Unsigned JWT-shaped token; the frontend only reads the payload. */
 function validToken(): string {
   const encode = (value: object) =>
     btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -71,7 +71,7 @@ function validToken(): string {
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.signature`;
 }
 
-/** Records the shell's calls, so arming and disarming are observable without real timers. */
+/* Records the shell's calls, so arming and disarming are observable without real timers. */
 class IdleLogoutServiceStub {
   starts = 0;
   stops = 0;
@@ -92,7 +92,7 @@ class IdleLogoutServiceStub {
   }
 }
 
-/**
+/*
  * Stands in for MatSnackBar. A provider stub rather than the real overlay for the reason ADR 016
  * records for the chart engine: the overlay container is shared across a Vitest worker, a
  * TestBed is not - and the action here is a subscription, which a stub can hand back directly.
@@ -108,7 +108,7 @@ class MatSnackBarStub {
     return { onAction: () => this.action.asObservable(), dismiss: () => this.dismissed++ };
   }
 
-  /** What pressing "Stay signed in" does. */
+  /* What pressing "Stay signed in" does. */
   pressAction(): void {
     this.action.next();
   }
@@ -145,7 +145,7 @@ describe('ShellComponent', () => {
     return (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.nav-toggle');
   }
 
-  /** The drawer instance: mode and opened are inputs, so neither reaches the DOM as an attribute. */
+  /* The drawer instance: mode and opened are inputs, so neither reaches the DOM as an attribute. */
   function sidenav(): MatSidenav {
     return fixture.debugElement.query(By.directive(MatSidenav)).componentInstance as MatSidenav;
   }
@@ -366,14 +366,14 @@ describe('ShellComponent', () => {
     expect(text()).not.toContain('DEMO');
   });
 
-  /** The icon-only logout the phone tier substitutes for the text button. */
+  /* The icon-only logout the phone tier substitutes for the text button. */
   function logoutIcon(): HTMLButtonElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
       'button.logout-icon'
     );
   }
 
-  /** Asserted on the element rather than a literal: the name is what differs most between languages. */
+  /* Asserted on the element rather than a literal: the name is what differs most between languages. */
   function appName(): HTMLElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('mat-toolbar .app-name');
   }
@@ -443,7 +443,7 @@ describe('ShellComponent', () => {
     expect(auth.isAuthenticated()).toBe(false);
   });
 
-  /** The drawer's own logout, which is a command rather than a destination. */
+  /* The drawer's own logout, which is a command rather than a destination. */
   function sidebarLogout(): HTMLButtonElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
       '.sidenav-logout'

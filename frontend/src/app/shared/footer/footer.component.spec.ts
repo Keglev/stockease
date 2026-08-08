@@ -41,7 +41,7 @@ describe('FooterComponent', () => {
     return host().querySelector(selector)?.textContent?.trim() ?? '';
   }
 
-  /**
+  /*
    * The app is zoneless, so fakeAsync is unavailable and vitest's timers stand in for the
    * poll's rxjs timer. They must be faked before the component subscribes.
    */

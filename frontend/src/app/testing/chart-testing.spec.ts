@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { CHART_ENGINE } from '../shared/chart/chart.component';
 import { provideFakeChartEngine } from './chart-testing';
 
-/**
+/*
  * Pins the fake engine against the contract {@link ChartComponent} actually calls.
  *
  * <p>Today's consumers reach only `setOption`: jsdom ships no ResizeObserver, so the component

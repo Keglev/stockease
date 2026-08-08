@@ -51,7 +51,7 @@ describe('ProductCreateDialogComponent', () => {
   let service: ProductServiceStub;
   let dialogRef: { close: ReturnType<typeof vi.fn> };
 
-  /** Fields render in template order: name, sku, purchasePrice. */
+  /* Fields render in template order: name, sku, purchasePrice. */
   function setField(index: number, value: string): void {
     const input = (fixture.nativeElement as HTMLElement).querySelectorAll('input')[index];
     input.value = value;

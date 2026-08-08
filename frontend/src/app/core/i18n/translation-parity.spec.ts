@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-/**
+/*
  * Guards the EN/DE locale files against divergence.
  *
  * Runtime i18n (ngx-translate) resolves messages by string key at runtime, so nothing in the
@@ -22,7 +22,7 @@ import { dirname, join } from 'node:path';
 
 const LOCALE_FILES = ['en.json', 'de.json'] as const;
 
-/**
+/*
  * Walks up from the working directory to the folder holding public/i18n, so the spec resolves
  * the same whether the runner starts in frontend/ or at the repository root.
  */
@@ -51,7 +51,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** Dot-path list of every leaf, in file order - depth-first, keys in declaration order. */
+/* Dot-path list of every leaf, in file order - depth-first, keys in declaration order. */
 function keyPaths(value: unknown, prefix = ''): string[] {
   if (!isRecord(value)) {
     return [prefix];
@@ -61,7 +61,7 @@ function keyPaths(value: unknown, prefix = ''): string[] {
   );
 }
 
-/** Leaf path/value pairs, so a failure can point at the offending key rather than the file. */
+/* Leaf path/value pairs, so a failure can point at the offending key rather than the file. */
 function leaves(value: unknown, prefix = ''): [string, unknown][] {
   if (!isRecord(value)) {
     return [[prefix, value]];
@@ -71,7 +71,7 @@ function leaves(value: unknown, prefix = ''): [string, unknown][] {
   );
 }
 
-/**
+/*
  * Names what diverged: keys present on only one side, and - when both carry the same set - the
  * first position at which the declaration order differs.
  */

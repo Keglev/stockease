@@ -22,19 +22,19 @@ const TRANSLATIONS = {
   }
 };
 
-/** Keeps the footer's health poll off the network; the real probe has its own spec. */
+/* Keeps the footer's health poll off the network; the real probe has its own spec. */
 class HealthServiceStub {
   check() {
     return of<HealthProbe>({ up: true, latencyMs: 12 });
   }
 }
 
-/** Host carrying the outlet, so the assertions observe what the real route table renders. */
+/* Host carrying the outlet, so the assertions observe what the real route table renders. */
 @Component({ selector: 'app-test-host', imports: [RouterOutlet], template: '<router-outlet />' })
 class TestHostComponent {}
 
 describe('NotFoundComponent', () => {
-  /** Navigates the real route table to a URL and returns the rendered host element. */
+  /* Navigates the real route table to a URL and returns the rendered host element. */
   async function renderRoute(url: string): Promise<HTMLElement> {
     localStorage.clear();
     TestBed.resetTestingModule();

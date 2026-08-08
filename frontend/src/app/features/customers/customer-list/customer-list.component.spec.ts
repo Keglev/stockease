@@ -75,12 +75,12 @@ const CUSTOMERS: CustomerResponse[] = [
 
 class CustomerServiceStub {
   removeCalls: number[] = [];
-  /** Mutable so a delete can shrink the list the component reloads. */
+  /* Mutable so a delete can shrink the list the component reloads. */
   roster = [...CUSTOMERS];
   removeResult: Observable<string> = of('Customer deleted.');
-  /** Overridable so a spec can hold the load open or fail it outright. */
+  /* Overridable so a spec can hold the load open or fail it outright. */
   getAllResult: (() => Observable<CustomerResponse[]>) | null = null;
-  /** Counted so a spec can tell a reload apart from a dialog that closed with nothing. */
+  /* Counted so a spec can tell a reload apart from a dialog that closed with nothing. */
   getAllCalls = 0;
 
   getAll(): Observable<CustomerResponse[]> {
@@ -109,7 +109,7 @@ class NotificationServiceStub {
 
 class MatDialogStub {
   confirmed: boolean | undefined = true;
-  /** What the form dialog hands back; the confirm dialog answers with `confirmed` instead. */
+  /* What the form dialog hands back; the confirm dialog answers with `confirmed` instead. */
   created: CustomerResponse | undefined = undefined;
   openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
 
@@ -159,7 +159,7 @@ describe('CustomerListComponent', () => {
     }));
   }
 
-  /** Builds the component against a load that fails, or never answers at all. */
+  /* Builds the component against a load that fails, or never answers at all. */
   async function setUpWith(source: () => Observable<CustomerResponse[]>): Promise<void> {
     await setUp('ADMIN', CUSTOMERS, source);
   }
@@ -252,7 +252,7 @@ describe('CustomerListComponent', () => {
     expect(dialog.openCalls[0].config?.data).toEqual({ customerId: 9 });
   });
 
-  /**
+  /*
    * The CSV export, asserted as WHOLE FILES - a `toContain` on one cell would pass against the
    * wrong separator, the wrong decimal mark and the wrong date order at once. The two fixture rows
    * cover a fully populated customer and one whose every optional field is absent.
@@ -260,7 +260,7 @@ describe('CustomerListComponent', () => {
   describe('csv export', () => {
     afterEach(() => localStorage.clear());
 
-    /** Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
+    /* Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
     const SPACES = new Set([0x20, 0xa0, 0x202f]);
 
     function plain(value: string): string {
@@ -324,7 +324,7 @@ describe('CustomerListComponent', () => {
     });
   });
 
-  /**
+  /*
    * The reversal, asserted from the other side. This spec used to pin the ABSENCE of an edit path -
    * "the backend has no customer update endpoint; the UI must expose no edit path" - which the
    * owner's ruling makes false. It is replaced rather than deleted, so the row's edit affordance is

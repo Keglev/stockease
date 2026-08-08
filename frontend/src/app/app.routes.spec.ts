@@ -3,13 +3,13 @@ import { Route, Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { routes } from './app.routes';
 
-/**
+/*
  * The route table is configuration that only executes on navigation, so a broken lazy import - a
  * moved file, a renamed export - stays invisible until someone opens that page in a browser.
  * These specs resolve every loader and pin the ordering rules the file itself calls load-bearing.
  */
 
-/** Every route in the table, parents before children, with its full path for readable failures. */
+/* Every route in the table, parents before children, with its full path for readable failures. */
 function flatten(table: Routes, prefix = ''): { path: string; route: Route }[] {
   return table.flatMap((route) => {
     const path = [prefix, route.path].filter((part) => part !== undefined && part !== '').join('/');
@@ -21,7 +21,7 @@ const ALL = flatten(routes);
 
 const LAZY = ALL.filter((entry) => entry.route.loadComponent !== undefined);
 
-/**
+/*
  * The compiled class name. The build renames declarations, so `LandingComponent` arrives here as
  * `_LandingComponent`; the leading underscore is an artefact of the bundler rather than anything
  * the route table controls.
@@ -30,7 +30,7 @@ function nameOf(loaded: unknown): string {
   return (loaded as { name: string }).name.replace(/^_+/, '');
 }
 
-/** Paths of `parent`'s direct children, in declaration order. */
+/* Paths of `parent`'s direct children, in declaration order. */
 function childPaths(parentPath: string): (string | undefined)[] {
   return (ALL.find((entry) => entry.path === parentPath)?.route.children ?? []).map((c) => c.path);
 }

@@ -2,7 +2,7 @@ import { AbstractControl } from '@angular/forms';
 
 import { positivePrice } from './positive-price.validator';
 
-/** Wraps a raw value as the only thing the validator reads off a control. */
+/* Wraps a raw value as the only thing the validator reads off a control. */
 function control(value: unknown): AbstractControl {
   return { value } as AbstractControl;
 }

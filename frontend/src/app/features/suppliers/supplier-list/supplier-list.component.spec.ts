@@ -56,10 +56,10 @@ const SUPPLIERS: SupplierResponse[] = [
 
 class SupplierServiceStub {
   removeCalls: number[] = [];
-  /** Mutable so a delete can shrink the list the component reloads. */
+  /* Mutable so a delete can shrink the list the component reloads. */
   roster = [...SUPPLIERS];
   removeResult: Observable<string> = of('Supplier deleted.');
-  /** Overridable so a spec can hold the load open or fail it outright. */
+  /* Overridable so a spec can hold the load open or fail it outright. */
   getAllResult: (() => Observable<SupplierResponse[]>) | null = null;
 
   getAll(): Observable<SupplierResponse[]> {
@@ -85,7 +85,7 @@ class NotificationServiceStub {
   }
 }
 
-/**
+/*
  * Stands in for MatDialog. `confirmed` drives what the confirm dialog answers; `result` drives what
  * the form dialog hands back, and both are recorded so a spec can name which dialog was opened.
  */
@@ -132,7 +132,7 @@ describe('SupplierListComponent', () => {
     }));
   }
 
-  /** Builds the component against a load that fails, or never answers at all. */
+  /* Builds the component against a load that fails, or never answers at all. */
   async function setUpWith(source: () => Observable<SupplierResponse[]>): Promise<void> {
     await setUp('ADMIN', SUPPLIERS, source);
   }
@@ -175,7 +175,7 @@ describe('SupplierListComponent', () => {
     TestBed.resetTestingModule();
   });
 
-  /**
+  /*
    * The CSV export, asserted as WHOLE FILES.
    *
    * <p>A `toContain` on one cell would pass against the wrong separator, the wrong decimal mark and
@@ -209,7 +209,7 @@ describe('SupplierListComponent', () => {
       }
     ];
 
-    /** Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
+    /* Intl's no-break spaces vary by ICU build; normalised as FormatService's own spec does it. */
     const SPACES = new Set([0x20, 0xa0, 0x202f]);
 
     function plain(value: string): string {
@@ -222,7 +222,7 @@ describe('SupplierListComponent', () => {
       fixture.detectChanges();
     }
 
-    /** Clicks Export and returns what the seam was handed. */
+    /* Clicks Export and returns what the seam was handed. */
     function exported(): { filename: string; content: string } {
       host().querySelector<HTMLButtonElement>('.export-suppliers')?.click();
       const [filename, content] = download.mock.calls[0] as [string, string];

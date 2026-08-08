@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ThemeService } from '../../core/theme/theme.service';
 import { CHART_ENGINE, ChartComponent, ChartOption } from './chart.component';
 
-/**
+/*
  * jsdom has no canvas, so the engine is stubbed through CHART_ENGINE and the assertions cover
  * the wiring this component owns - init, setOption and dispose - rather than rendered pixels.
  */
@@ -105,7 +105,7 @@ describe('ChartComponent', () => {
 });
 
 describe('ChartComponent resize handling', () => {
-  /** The callback the component handed to ResizeObserver, so a resize can be simulated. */
+  /* The callback the component handed to ResizeObserver, so a resize can be simulated. */
   let observed: (() => void) | null;
   let disconnect: ReturnType<typeof vi.fn>;
 

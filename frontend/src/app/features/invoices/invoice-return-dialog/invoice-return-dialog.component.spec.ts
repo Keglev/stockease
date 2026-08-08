@@ -36,7 +36,7 @@ const ITEM: InvoiceItemResponse = {
   returnedQty: 2
 };
 
-/** Narrow view of the component's protected surface, so the spec needs no `any` casts. */
+/* Narrow view of the component's protected surface, so the spec needs no `any` casts. */
 interface ComponentApi {
   form: FormGroup;
 }
