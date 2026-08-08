@@ -28,6 +28,25 @@ mkdir -p "$API_OUT"
 # render. Exits non-zero on errors only - warnings still pass.
 redocly lint "$OPENAPI_YAML"
 
+# OAS 3.0 cannot express nullable-by-reference, so MovementResponse.remark is a
+# hand-maintained mirror of MovementRemark's values plus null. The sync comments on
+# both schemas ask for that; this check is what enforces it. Compared on the bundled
+# spec, where the $refs are already resolved.
+REMARK_BUNDLE="$(mktemp -t openapi-bundle-XXXXXX.json)"
+trap 'rm -f "$REMARK_BUNDLE"' EXIT
+redocly bundle "$OPENAPI_YAML" -o "$REMARK_BUNDLE"
+node -e '
+  const fs = require("fs");
+  const s = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).components.schemas;
+  const shared = s.MovementRemark.enum;
+  const mirror = s.MovementResponse.properties.remark.enum;
+  if (JSON.stringify(mirror) !== JSON.stringify(shared.concat([null]))) {
+    console.error("::error::MovementResponse.remark enum has drifted from MovementRemark: "
+      + JSON.stringify(mirror) + " vs " + JSON.stringify(shared) + " + null");
+    process.exit(1);
+  }
+' "$REMARK_BUNDLE"
+
 redocly build-docs "$OPENAPI_YAML" -o "$API_OUT/index.html"
 
 # Inject a fixed-position "back to docs" link into the self-contained ReDoc page.
