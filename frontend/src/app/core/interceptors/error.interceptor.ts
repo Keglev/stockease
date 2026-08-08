@@ -34,7 +34,7 @@ export class ApiError extends Error {
 /**
  * Maps HTTP failures to Errors carrying the backend message, so components can render
  * err.message without knowing about HTTP. A consumer that needs to branch on a known case may
- * check {@code instanceof ApiError} for the status; the message contract is unchanged either way.
+ * check `instanceof ApiError` for the status; the message contract is unchanged either way.
  * Successful bodies pass through untouched because the report endpoints are not enveloped.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
