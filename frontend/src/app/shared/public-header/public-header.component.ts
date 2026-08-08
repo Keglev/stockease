@@ -12,7 +12,8 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
  * left every one of them anchorless - a visitor could not tell what product they were looking at
  * until they read the body copy.
  *
- * <p>It is the shell's toolbar minus everything that describes a session: no navigation, no role,
+ * @remarks
+ * It is the shell's toolbar minus everything that describes a session: no navigation, no role,
  * no logout, and no DEMO badge, because that badge marks being signed into the demo rather than
  * the deployment being one.
  */

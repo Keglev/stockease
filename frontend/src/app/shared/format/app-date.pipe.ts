@@ -6,7 +6,8 @@ import { FormatService } from '../../core/format/format.service';
  * The date alone, through {@link FormatService}. Replaces `| date: 'mediumDate'`, which rendered
  * en-US in both languages because the app registers no locale data (ADR 031).
  *
- * <p>Impure, following the TranslatePipe precedent this app already relies on: the output depends
+ * @remarks
+ * Impure, following the TranslatePipe precedent this app already relies on: the output depends
  * on the interface language and on a stored preference, neither of which is an argument, so a pure
  * pipe would keep showing the old format until its input happened to change identity.
  */

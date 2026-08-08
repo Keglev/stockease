@@ -34,13 +34,14 @@ export const TYPEAHEAD_DEBOUNCE_MS = 300;
 /**
  * Search-as-you-type picker over an endpoint that answers a list.
  *
- * <p>The app's standard control for choosing from a set too large to render: it replaces the
+ * @remarks
+ * The app's standard control for choosing from a set too large to render: it replaces the
  * full-list selects, which fetched an entire table so a user could pick one row from it. Every
  * behaviour that makes that replacement safe lives here once rather than in each tab - the minimum
  * term length, the debounce, and the {@link switchMap} that drops an in-flight response the moment a
  * newer keystroke supersedes it, so a slow early request can never overwrite a later one's results.
  *
- * <p>Generic in the row type and told how to search and how to label a row, because what differs
+ * Generic in the row type and told how to search and how to label a row, because what differs
  * between the four places this appears is only those two functions.
  */
 @Component({

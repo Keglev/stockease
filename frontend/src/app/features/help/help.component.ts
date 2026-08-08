@@ -17,11 +17,12 @@ import { DEFAULT_HELP_TOPIC, HelpTopic, HelpTopicId, helpTopicTitleKey } from '.
 /**
  * The in-app manual: eight topics of prose, one on screen at a time, addressed by the route.
  *
- * <p>The URL is the single source of truth for which topic is open. Both pickers - the desktop nav
+ * @remarks
+ * The URL is the single source of truth for which topic is open. Both pickers - the desktop nav
  * list and the select below it - navigate rather than setting local state, so the back button works
  * across topics and a topic can be linked to or bookmarked.
  *
- * <p>The prose itself is not in the translation files. It lives in two typed modules beside this
+ * The prose itself is not in the translation files. It lives in two typed modules beside this
  * one, loaded with this route rather than eagerly at startup; ADR 029 records why. Only the topic
  * titles go through ngx-translate, because the nav has to read in the current language whether or
  * not the body has been rendered yet.
