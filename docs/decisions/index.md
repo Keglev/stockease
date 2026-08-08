@@ -24,7 +24,7 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 010 - Pooled Inventory - No Lot Tracking](010-no-lot-tracking.md) - **[Backend]**
 - [ADR 011 - Merchandise Scope and the Payment Fact](011-merchandise-scope-and-payment.md) - **[Backend]**
 - [ADR 012 - Frontend Hosting on a CDN, Not a Container](012-frontend-hosting.md) - **[Frontend]**
-- [ADR 013 - JWT in localStorage, No Refresh Token](013-token-storage.md) - **[Frontend]**
+- [ADR 013 - JWT in localStorage, No Refresh Token](013-token-storage.md) - **[Frontend]** - *superseded by ADR 036*
 - [ADR 014 - Types-Only Generation from the OpenAPI Spec](014-openapi-types-only.md) - **[Cross-cutting]**
 - [ADR 015 - Runtime Translation over Compile-Time Localization](015-runtime-i18n.md) - **[Frontend]**
 - [ADR 016 - Direct ECharts, Not an Angular Wrapper](016-charting-library.md) - **[Frontend]**
@@ -47,5 +47,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 033 - Invoice Documents Snapshot Their Party Names](033-invoice-party-name-snapshots.md) - **[Cross-cutting]**
 - [ADR 034 - No Forced Password Expiry](034-no-password-expiry.md) - **[Cross-cutting]**
 - [ADR 035 - Search Matches Tokens, and an Empty Picker Browses](035-search-token-matching-and-browse.md) - **[Cross-cutting]**
+- [ADR 036 - Client Token Storage and Its Accepted Threat Model](036-client-token-storage.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)

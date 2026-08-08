@@ -1,6 +1,6 @@
 # ADR 013: JWT in localStorage, No Refresh Token
 
-**Status**: Accepted
+**Status**: Superseded by ADR 036 (2026-08-08) - decision unchanged; superseded by expansion: 036 adds the full threat model, grounds, and production path.
 **Date**: July 28, 2026
 
 ---
