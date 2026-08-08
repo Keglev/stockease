@@ -1,7 +1,7 @@
 :host {
   display: block;
-  // M3 defines no success role, so the one green in the app is declared here rather than
-  // repeated inline. This is the single sanctioned literal colour: every other value in this
+  // M3 defines no success role, so this component's green is declared here rather than
+  // repeated inline. It is this component's only literal colour: every other value in this
   // component resolves through a Material system token and follows the active scheme.
   --app-health-up: light-dark(#2e7d32, #81c995);
 }
