@@ -14,6 +14,11 @@ export interface SupplierFormDialogData {
   supplier?: SupplierResponse;
 }
 
+/**
+ * Creates a supplier, or edits one. Name and address are required while the contact fields are
+ * not, which is the supplier register's own contract rather than a rule shared by every form in
+ * the application.
+ */
 @Component({
   selector: 'app-supplier-form-dialog',
   imports: [

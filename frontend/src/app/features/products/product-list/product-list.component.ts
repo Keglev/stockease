@@ -31,6 +31,14 @@ import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 
 const DEFAULT_PAGE_SIZE = 10;
 
+/**
+ * The product catalogue: a paged list of live products, plus an admin-only view of deleted ones.
+ *
+ * @remarks
+ * The deleted set is a separate view rather than a filter over the same table. It is fetched
+ * unpaged and held apart from the live page, and it trades the actions column for a restore-only
+ * one, because the only thing anyone can do with a deleted product is bring it back.
+ */
 @Component({
   selector: 'app-product-list',
   imports: [

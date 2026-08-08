@@ -15,6 +15,15 @@ export interface SupplierPayload {
   city?: string;
 }
 
+/**
+ * Reads and writes the supplier register.
+ *
+ * @remarks
+ * The envelope handling is mixed on purpose, endpoint by endpoint: the collection read and the
+ * create return bare payloads, while detail, update and delete are enveloped. That mirrors the
+ * backend's contract rather than hiding it, and it is the reason unwrapping lives in this service
+ * instead of an interceptor, which would have to guess which shape it was holding.
+ */
 @Injectable({ providedIn: 'root' })
 export class SupplierService {
   private readonly http = inject(HttpClient);

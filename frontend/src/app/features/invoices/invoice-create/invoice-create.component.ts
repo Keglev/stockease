@@ -30,6 +30,11 @@ import { InvoiceService } from '../invoice.service';
 /**
  * Routed page for recording a new invoice. The counterparty control changes source and
  * obligation with the selected type.
+ *
+ * @remarks
+ * The counterparty select reads a whole register rather than searching it: both registers are
+ * small, and choosing one is the first thing this page asks for, so a search box would put a
+ * keystroke in front of every invoice. Only the product picker searches.
  */
 @Component({
   selector: 'app-invoice-create',

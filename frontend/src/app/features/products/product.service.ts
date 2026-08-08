@@ -6,6 +6,18 @@ import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../core/api/api-envelope';
 import { PaginatedProducts, ProductResponse } from '../../core/api/api-models';
 
+/**
+ * Reads and writes products.
+ *
+ * @remarks
+ * Quantity is deliberately not writable here, because no product endpoint accepts a quantity
+ * change: stock moves only through recorded movements, so there is nothing for this service to
+ * offer.
+ *
+ * The envelope handling is per endpoint rather than uniform - the paged read is enveloped while
+ * the searches return bare arrays - which is why unwrapping lives here rather than in an
+ * interceptor that would have to guess which shape it was holding.
+ */
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly http = inject(HttpClient);

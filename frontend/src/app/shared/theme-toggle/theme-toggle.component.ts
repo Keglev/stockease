@@ -5,6 +5,11 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { ThemeService } from '../../core/theme/theme.service';
 
+/**
+ * The toolbar light and dark switch. Its icon and label name the action rather than the current
+ * mode - in dark mode it offers the sun - because a control that describes its own state reads as
+ * a status indicator, and a reader then cannot tell what pressing it will do.
+ */
 @Component({
   selector: 'app-theme-toggle',
   imports: [MatButtonModule, MatIconModule, TranslatePipe],

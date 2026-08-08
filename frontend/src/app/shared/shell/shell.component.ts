@@ -18,6 +18,14 @@ import { FooterComponent } from '../footer/footer.component';
 import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
+/**
+ * The frame around every authenticated page: toolbar, navigation drawer and the routed outlet.
+ *
+ * @remarks
+ * It exists only behind the auth guard, which is what makes it the right owner of the idle timer:
+ * the countdown cannot run while a visitor reads a public page, and it stops when the shell is
+ * destroyed (ADR 032).
+ */
 @Component({
   selector: 'app-shell',
   imports: [

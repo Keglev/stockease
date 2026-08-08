@@ -15,6 +15,15 @@ export interface CustomerPayload {
   city?: string;
 }
 
+/**
+ * Reads and writes the customer register.
+ *
+ * @remarks
+ * The envelope handling is mixed on purpose, endpoint by endpoint: the collection read and the
+ * create return bare payloads, while update and delete are enveloped. That is the backend's
+ * contract rather than an inconsistency to smooth over, and it is the reason unwrapping lives in
+ * this service instead of an interceptor, which would have to guess which shape it was holding.
+ */
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
   private readonly http = inject(HttpClient);

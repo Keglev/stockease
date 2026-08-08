@@ -6,6 +6,15 @@ const SUCCESS_DURATION_MS = 3000;
 
 const ERROR_DURATION_MS = 5000;
 
+/**
+ * One place to raise a transient message, so success and failure read the same everywhere.
+ *
+ * @remarks
+ * A caller passes either a translation key or a message the backend produced, and does not have
+ * to know which it holds: anything that resolves as a key is translated, anything else is shown
+ * as written. Backend messages arrive untranslated by design, and echoing a raw key at the reader
+ * is worse than showing the server's own sentence.
+ */
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private readonly snackBar = inject(MatSnackBar);

@@ -10,6 +10,17 @@ export const LANGUAGE_STORAGE_KEY = 'stockease.lang';
 
 const FALLBACK_LANGUAGE: SupportedLanguage = 'en';
 
+/**
+ * Owns the interface language: resolves it at startup, switches it at runtime, remembers it.
+ *
+ * @remarks
+ * The language changes without reloading the application (ADR 015), so the current language is a
+ * signal consumers read rather than a value fixed at bootstrap.
+ *
+ * The choice is stored per browser rather than on the server (ADR 030), which is why an
+ * unsupported stored value is ignored instead of overwritten: it is the reader's choice, and a
+ * value this build does not recognise is not this build's to discard.
+ */
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
   private readonly translate = inject(TranslateService);

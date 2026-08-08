@@ -31,6 +31,12 @@ import { AppDatePipe } from '../../../shared/format/app-date.pipe';
 /**
  * Shows one invoice with its line items. Monetary totals are derived here rather than read
  * from the payload.
+ *
+ * @remarks
+ * Deriving them is presentation-side arithmetic over lines the page already holds, following the
+ * same precedent a product's total value sets. A server-computed total would be a second source
+ * for a number this page can already add up, and two sources for one figure is how they start to
+ * disagree.
  */
 @Component({
   selector: 'app-invoice-detail',
