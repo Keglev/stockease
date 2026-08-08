@@ -17,7 +17,8 @@ const SAMPLE_AMOUNT = 1234.56;
 /**
  * Where the preferences scattered across the toolbar are stated in one place.
  *
- * <p>It owns no state. Both controls read and write the same services the toolbar toggles do, so a
+ * @remarks
+ * It owns no state. Both controls read and write the same services the toolbar toggles do, so a
  * change here and a change there are the same event - including the persistence, which is
  * localStorage per browser rather than anything the backend knows about (ADR 030). Anyone looking
  * for where the preference is really kept should look at the services, not here.

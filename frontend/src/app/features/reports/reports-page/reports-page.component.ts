@@ -84,7 +84,8 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
  * table. The dashboard stays the at-a-glance summary; this page is where the full figures live,
  * which is why the tables here are exhaustive and exportable while the charts are a top ten.
  *
- * <p>The changes tab is the one exception, and reads the audit module rather than the reporting
+ * @remarks
+ * The changes tab is the one exception, and reads the audit module rather than the reporting
  * one: it lists events rather than figures, so it has a table and no chart.
  */
 @Component({

@@ -39,8 +39,9 @@ const DUE_LIST_LIMIT = 8;
  * navigation and on the refresh button, because the backend offers no push channel and polling
  * every figure would cost far more than the freshness is worth.
  *
- * <p>The low-stock products are loaded here but shown in a dialog behind their KPI. A section of
- * their own wasted the space when three products were low and overran the page when fifty were.</p>
+ * @remarks
+ * The low-stock products are loaded here but shown in a dialog behind their KPI. A section of
+ * their own wasted the space when three products were low and overran the page when fifty were.
  *
  * API health is deliberately absent: the footer carries the same dot and latency on every screen,
  * so a card here polled a second time for a signal the operator could already see.

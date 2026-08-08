@@ -7,7 +7,8 @@ import { CSV_DOWNLOADER, buildCsv } from './csv-export';
 /**
  * The reports page's export step, lifted so the list pages can perform it too.
  *
- * <p>It is deliberately thin: {@link buildCsv} still does the rendering and {@link CSV_DOWNLOADER}
+ * @remarks
+ * It is deliberately thin: {@link buildCsv} still does the rendering and {@link CSV_DOWNLOADER}
  * still does the handing over. What lives here is the part every caller was about to copy - resolve
  * the header keys through the interface language, read the effective number locale, download - and
  * the reason it is worth extracting is that all three of those must happen at CLICK time. A cached

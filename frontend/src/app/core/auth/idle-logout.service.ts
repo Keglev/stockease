@@ -37,11 +37,12 @@ const REARM_THROTTLE_MS = 1_000;
 /**
  * Signs a walked-away user out, and warns them first.
  *
- * <p>Client-side because the server cannot see activity: with a single non-refreshing token
+ * @remarks
+ * Client-side because the server cannot see activity: with a single non-refreshing token
  * (ADR 032) there is no round trip to observe, so a token valid for another nine hours stays valid
  * on an unattended screen no matter what the backend does. The timer closes that window.
  *
- * <p>The logout lands on exactly the destination the 401 interceptor uses - `/login` with
+ * The logout lands on exactly the destination the 401 interceptor uses - `/login` with
  * `reason=expired` - so an idle expiry and a server-side expiry are one tested experience rather
  * than two that drift.
  */

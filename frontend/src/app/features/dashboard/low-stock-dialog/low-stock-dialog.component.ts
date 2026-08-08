@@ -13,7 +13,8 @@ export interface LowStockDialogData {
 /**
  * The products currently below the reorder threshold, listed in a scrollable body.
  *
- * <p>A pure presenter, unlike its customer-summary sibling: the rows are handed in rather than
+ * @remarks
+ * A pure presenter, unlike its customer-summary sibling: the rows are handed in rather than
  * fetched, because the dashboard already loaded them to show the count on the card that opens this.
  * Asking the endpoint a second time would risk the dialog and the KPI behind it disagreeing.
  */

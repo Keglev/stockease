@@ -28,13 +28,14 @@ const CURRENCY = 'EUR';
 /**
  * Renders dates and money the way the reader expects, at the moment of rendering.
  *
- * <p>The application registers no `LOCALE_ID` and no locale data, so every `| date` and
+ * @remarks
+ * The application registers no `LOCALE_ID` and no locale data, so every `| date` and
  * `| currency` in the app rendered en-US regardless of the interface language - a German reader
  * saw `12/31/2026` and `€1,234.56`. That is the defect this service closes. Registration would not
  * have closed it: `LOCALE_ID` is fixed at bootstrap while this app changes language at runtime
  * (ADR 015), and the format overrides below need a per-call decision point anyway (ADR 031).
  *
- * <p>Two preferences, each 'auto' by default and each stored per browser (ADR 030). 'auto' means
+ * Two preferences, each 'auto' by default and each stored per browser (ADR 030). 'auto' means
  * "follow the interface language"; an explicit date format pins the order and separators only,
  * while the time of day and the currency follow the effective number locale - a reader who wants
  * ISO dates has said nothing about wanting a dot as a decimal mark.
