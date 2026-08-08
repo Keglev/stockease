@@ -10,9 +10,20 @@
 <ul class="tsd-breadcrumb" aria-label="Breadcrumb">
 <li><a href="../modules/core_i18n_language.service.html">core/i18n/language.service</a></li>
 <li><a href="" aria-current="page">LanguageService</a></li></ul>
-<h1>Class LanguageService</h1></div><aside class="tsd-sources">
+<h1>Class LanguageService</h1></div>
+<section class="tsd-panel tsd-comment">
+<div class="tsd-comment tsd-typography"><p>Owns the interface language: resolves it at startup, switches it at runtime, remembers it.</p>
+</div>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-remarks">
+<h4 class="tsd-anchor-link" id="remarks">Remarks<a href="#remarks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>The language changes without reloading the application (ADR 015), so the current language is a
+signal consumers read rather than a value fixed at bootstrap.</p>
+<p>The choice is stored per browser rather than on the server (ADR 030), which is why an
+unsupported stored value is ignored instead of overwritten: it is the reader's choice, and a
+value this build does not recognise is not this build's to discard.</p>
+</div></div></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/6a24ab1208663c226a6aa0376f416abd22ca3c7d/frontend/src/app/core/i18n/language.service.ts#L14">core/i18n/language.service.ts:14</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/76c6171ab40146c44a7f58c6999d5c5652966d0c/frontend/src/app/core/i18n/language.service.ts#L25">core/i18n/language.service.ts:25</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -48,7 +59,7 @@
 <h3 class="tsd-anchor-link" id="currentlang"><code class="tsd-tag">Readonly</code><span>current<wbr/>Lang</span><a href="#currentlang" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">currentLang</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Signal</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">&quot;en&quot;</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;de&quot;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/6a24ab1208663c226a6aa0376f416abd22ca3c7d/frontend/src/app/core/i18n/language.service.ts#L19">core/i18n/language.service.ts:19</a></li></ul></aside></section></section></details>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/76c6171ab40146c44a7f58c6999d5c5652966d0c/frontend/src/app/core/i18n/language.service.ts#L30">core/i18n/language.service.ts:30</a></li></ul></aside></section></section></details>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
 <h2 class="tsd-anchor-link" id="methods-1">Methods<a href="#methods-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
@@ -63,7 +74,7 @@ initialization can wait for it and the first rendered page is already localized.
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Observable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/6a24ab1208663c226a6aa0376f416abd22ca3c7d/frontend/src/app/core/i18n/language.service.ts#L25">core/i18n/language.service.ts:25</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/76c6171ab40146c44a7f58c6999d5c5652966d0c/frontend/src/app/core/i18n/language.service.ts#L36">core/i18n/language.service.ts:36</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="setlanguage"><span>set<wbr/>Language</span><a href="#setlanguage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -78,7 +89,7 @@ initialization can wait for it and the first rendered page is already localized.
 <li><span><span class="tsd-kind-parameter">lang</span>: <span class="tsd-signature-type">string</span></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/6a24ab1208663c226a6aa0376f416abd22ca3c7d/frontend/src/app/core/i18n/language.service.ts#L33">core/i18n/language.service.ts:33</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/76c6171ab40146c44a7f58c6999d5c5652966d0c/frontend/src/app/core/i18n/language.service.ts#L44">core/i18n/language.service.ts:44</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
