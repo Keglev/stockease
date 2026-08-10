@@ -15,6 +15,19 @@
  * <p>A file's own `beforeEach` still runs after this one, so specs that deliberately seed or pin
  * storage are unaffected - they set their state after the slate is wiped, which is the order they
  * already assumed.
+ *
+ * <p>What this is not is the suite's protection. Under coverage, in a worker shared by many spec
+ * files, hooks registered at a file's root level - this one included - have been observed not to
+ * run for most files: in that reproduction this clear ran for 31 of the suite's 795 tests, while
+ * hooks registered inside a `describe` ran every time. A spec's own clear is therefore
+ * load-bearing rather than a duplicate of this one, and removing those clears as redundant breaks
+ * the suite under coverage even where it stays green without it.
+ *
+ * <p>The shortfall is environment-dependent, so treat the figure above as one observation and not
+ * as what any run will show: instrumenting this hook to count its own firings and running the full
+ * suite under coverage reproduced nothing, with 795 of 795 firings across all 58 files under a
+ * shared environment, under a single worker, and under both together. That it cannot be summoned
+ * on demand is the reason the per-file clears stay rather than the reason to doubt it.
  */
 beforeEach(() => {
   localStorage.clear();
