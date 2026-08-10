@@ -5,18 +5,9 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { SupplierResponse } from '../../core/api/api-models';
 import { SupplierService } from './supplier.service';
+import { ACME } from './suppliers.fixtures';
 
 const BASE_URL = `${environment.apiBaseUrl}/api/suppliers`;
-
-const ACME: SupplierResponse = {
-  id: 7,
-  name: 'Acme',
-  email: 'acme@example.com',
-  phone: '555-1234',
-  address: '1 Main St',
-  city: 'Springfield',
-  createdAt: '2026-01-02T03:04:00'
-};
 
 /*
  * The per-endpoint envelope contract across the supplier API, and that a blank optional field is omitted
