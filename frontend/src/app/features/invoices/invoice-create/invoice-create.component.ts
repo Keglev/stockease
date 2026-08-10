@@ -16,6 +16,7 @@ import { Observable } from 'rxjs';
 
 import { CustomerResponse, ProductResponse, SupplierResponse } from '../../../core/api/api-models';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { integerOnly } from '../../../shared/forms/integer-only.validator';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { CustomerService } from '../../customers/customer.service';
 // Deliberate cross-feature import: the price rule is identical here, so it is reused rather
@@ -216,12 +217,4 @@ function toIsoDate(value: Date | null): string {
   const month = `${value.getMonth() + 1}`.padStart(2, '0');
   const day = `${value.getDate()}`.padStart(2, '0');
   return `${value.getFullYear()}-${month}-${day}`;
-}
-
-function integerOnly(control: { value: unknown }) {
-  const value = control.value;
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-  return Number.isInteger(Number(value)) ? null : { integerOnly: true };
 }

@@ -12,6 +12,7 @@ import { ProductResponse } from '../../../core/api/api-models';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { productLabel } from '../../products/product-label';
 import { ProductService } from '../../products/product.service';
+import { integerOnly } from '../../../shared/forms/integer-only.validator';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import {
   MOVEMENT_REMARKS,
@@ -133,12 +134,4 @@ interface MovementForm {
 /** Starts empty and required, so a loss cannot be submitted until its cause is chosen. */
 function remarkControl(): FormControl<MovementRemarkValue | null> {
   return new FormControl<MovementRemarkValue | null>(null, Validators.required);
-}
-
-function integerOnly(control: { value: unknown }) {
-  const value = control.value;
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-  return Number.isInteger(Number(value)) ? null : { integerOnly: true };
 }
