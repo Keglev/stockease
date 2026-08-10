@@ -65,11 +65,6 @@ function failedRequest(status: number, message: string, code?: string): Promise<
  * Out of scope: how a component displays the message it is handed.
  */
 describe('errorInterceptor', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('intercept_failedResponse_throwsApiErrorCarryingTheStatus', async () => {
     const error = await failedRequest(409, 'Product is in use.');
 

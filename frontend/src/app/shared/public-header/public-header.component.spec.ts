@@ -19,9 +19,6 @@ describe('PublicHeaderComponent', () => {
   let fixture: ComponentFixture<PublicHeaderComponent>;
 
   beforeEach(async () => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-
     await TestBed.configureTestingModule({
       imports: [PublicHeaderComponent],
       providers: [provideRouter([]), provideTestTranslations(TRANSLATIONS)]

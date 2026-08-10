@@ -97,7 +97,6 @@ describe('CustomerSummaryDialogComponent', () => {
     // this one - which passed locally and failed in CI on the same commit.
     localStorage.clear();
     localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
-    TestBed.resetTestingModule();
     reports = new ReportServiceStub();
     notifications = new NotificationServiceStub();
     dialogRef = { close: vi.fn() };

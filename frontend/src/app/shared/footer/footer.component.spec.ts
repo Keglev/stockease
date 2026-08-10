@@ -69,7 +69,6 @@ describe('FooterComponent', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
-    TestBed.resetTestingModule();
     health = new HealthServiceStub();
   });
 

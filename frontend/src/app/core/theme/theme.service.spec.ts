@@ -35,9 +35,7 @@ function appliedScheme(): string {
  */
 describe('ThemeService', () => {
   beforeEach(() => {
-    localStorage.clear();
     document.documentElement.style.colorScheme = '';
-    TestBed.resetTestingModule();
   });
 
   it('initialize_storedDark_winsOverMediaQuery', () => {

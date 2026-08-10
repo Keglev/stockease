@@ -66,7 +66,6 @@ describe('ProfitDetailDialogComponent', () => {
     // without this the rendered currency would depend on whichever spec file ran before this one.
     localStorage.clear();
     localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
-    TestBed.resetTestingModule();
     dialogRef = { close: vi.fn() };
   });
 

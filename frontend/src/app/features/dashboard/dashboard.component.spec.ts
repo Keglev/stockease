@@ -284,7 +284,6 @@ describe('DashboardComponent', () => {
     localStorage.clear();
     localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
     vi.useFakeTimers();
-    TestBed.resetTestingModule();
     reports = new ReportServiceStub();
     products = new ProductServiceStub();
     health = new HealthServiceStub();

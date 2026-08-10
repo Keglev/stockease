@@ -81,11 +81,6 @@ describe('InvoiceReturnDialogComponent', () => {
     await fixture.whenStable();
   }
 
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('render_saleInvoice_showsCustomerDirection', async () => {
     await setUp({ item: ITEM, invoiceType: 'SALE' });
 

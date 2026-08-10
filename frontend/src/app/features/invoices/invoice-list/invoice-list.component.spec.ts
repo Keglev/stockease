@@ -178,8 +178,6 @@ describe('InvoiceListComponent', () => {
   }
 
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
     // Only Date is faked: the overdue predicate compares against today, and a test that reads the
     // real clock changes its answer at midnight. Timers stay real so nothing else is affected.
     vi.useFakeTimers({ toFake: ['Date'] });

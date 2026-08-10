@@ -33,8 +33,6 @@ describe('TypeaheadComponent', () => {
     vi.useFakeTimers();
     terms = [];
     result = of([{ name: 'Acme' }]);
-    TestBed.resetTestingModule();
-
     await TestBed.configureTestingModule({
       imports: [TypeaheadComponent],
       providers: [

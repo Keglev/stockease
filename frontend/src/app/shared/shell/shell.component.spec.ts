@@ -215,11 +215,6 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
   }
 
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('render_defaultLanguage_showsEnglishNavigation', async () => {
     await setUp();
 

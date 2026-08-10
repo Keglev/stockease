@@ -230,8 +230,6 @@ describe('InvoiceCreateComponent', () => {
   }
 
   beforeEach(async () => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
     vi.useFakeTimers();
     invoices = new InvoiceServiceStub();
     products = new ProductServiceStub();

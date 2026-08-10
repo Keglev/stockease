@@ -39,11 +39,6 @@ function setUp(): { service: AuthService; http: HttpTestingController } {
  * (auth.interceptor.spec.ts) and when an idle session ends (idle-logout.service.spec.ts).
  */
 describe('AuthService', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('login_validCredentials_storesTokenAndSetsState', () => {
     const { service, http } = setUp();
     const token = futureToken('ADMIN');

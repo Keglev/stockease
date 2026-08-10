@@ -126,7 +126,6 @@ describe('ChangeHistoryComponent', () => {
   }
 
   beforeEach(() => {
-    TestBed.resetTestingModule();
     audit = new AuditServiceStub();
   });
 

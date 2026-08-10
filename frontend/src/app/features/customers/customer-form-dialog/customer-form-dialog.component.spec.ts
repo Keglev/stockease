@@ -128,8 +128,6 @@ describe('CustomerFormDialogComponent', () => {
   }
 
   beforeEach(async () => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
     service = new CustomerServiceStub();
     dialogRef = { close: vi.fn() };
 

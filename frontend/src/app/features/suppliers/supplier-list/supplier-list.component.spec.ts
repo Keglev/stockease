@@ -177,11 +177,6 @@ describe('SupplierListComponent', () => {
     await fixture.whenStable();
   }
 
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   /*
    * The CSV export, asserted as WHOLE FILES.
    *

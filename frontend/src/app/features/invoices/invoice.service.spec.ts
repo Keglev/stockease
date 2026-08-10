@@ -71,7 +71,6 @@ describe('InvoiceService', () => {
   let controller: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()]
     });

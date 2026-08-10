@@ -146,11 +146,6 @@ describe('SupplierFormDialogComponent', () => {
     await fixture.whenStable();
   }
 
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('submit_emptyForm_isBlocked', async () => {
     await setUp({});
 

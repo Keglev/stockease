@@ -24,9 +24,6 @@ describe('LanguageToggleComponent', () => {
   }
 
   beforeEach(async () => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-
     await TestBed.configureTestingModule({
       imports: [LanguageToggleComponent],
       providers: [provideTestTranslations(TRANSLATIONS)]

@@ -101,7 +101,6 @@ describe('ReportService', () => {
   let controller: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()]
     });

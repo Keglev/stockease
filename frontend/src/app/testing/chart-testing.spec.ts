@@ -13,7 +13,6 @@ import { provideFakeChartEngine } from './chart-testing';
  */
 describe('provideFakeChartEngine', () => {
   beforeEach(() => {
-    TestBed.resetTestingModule();
     TestBed.configureTestingModule({ providers: [provideFakeChartEngine()] });
   });
 

@@ -105,11 +105,6 @@ describe('ProductEditDialogComponent', () => {
     await fixture.whenStable();
   }
 
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('open_nameMode_prefillsCurrentName', async () => {
     await setUp({ mode: 'name', product: LAPTOP });
 

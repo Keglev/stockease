@@ -33,11 +33,6 @@ function runGuard(guard: CanActivateFn): boolean | UrlTree {
  * Out of scope: how the session is established or expires - auth.service.spec.ts.
  */
 describe('auth guards', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('authGuard_authenticatedUser_allowsActivation', () => {
     localStorage.setItem(TOKEN_STORAGE_KEY, tokenFor('USER'));
 

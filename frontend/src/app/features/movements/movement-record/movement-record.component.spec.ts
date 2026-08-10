@@ -170,8 +170,6 @@ describe('MovementRecordComponent', () => {
   }
 
   beforeEach(async () => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
     vi.useFakeTimers();
     movements = new MovementServiceStub();
     notifications = new NotificationServiceStub();

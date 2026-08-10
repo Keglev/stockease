@@ -38,7 +38,6 @@ describe('LoginComponent', () => {
   let controller: HttpTestingController;
 
   beforeEach(async () => {
-    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
       providers: [

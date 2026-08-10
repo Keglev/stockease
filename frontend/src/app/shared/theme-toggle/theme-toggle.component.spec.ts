@@ -42,9 +42,7 @@ describe('ThemeToggleComponent', () => {
   }
 
   beforeEach(() => {
-    localStorage.clear();
     document.documentElement.style.colorScheme = '';
-    TestBed.resetTestingModule();
   });
 
   it('render_lightMode_showsMoonIconOfferingDark', async () => {

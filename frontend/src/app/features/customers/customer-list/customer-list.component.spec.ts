@@ -203,11 +203,6 @@ describe('CustomerListComponent', () => {
     await fixture.whenStable();
   }
 
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('load_serviceReturnsCustomers_rendersOneRowPerCustomer', async () => {
     await setUp('USER');
 

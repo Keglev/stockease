@@ -497,7 +497,6 @@ describe('ReportsPageComponent', () => {
     // Only Date is faked: the period presets compute their bounds from today, and a test reading
     // the real clock would change its expected range every day. Timers stay real.
     vi.useFakeTimers({ toFake: ['Date'] });
-    TestBed.resetTestingModule();
     reports = new ReportServiceStub();
     audit = new AuditServiceStub();
     suppliers = new SupplierServiceStub();

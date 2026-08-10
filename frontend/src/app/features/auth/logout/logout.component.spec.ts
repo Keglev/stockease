@@ -45,9 +45,6 @@ describe('LogoutComponent', () => {
   let fixture: ComponentFixture<LogoutComponent>;
 
   beforeEach(async () => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-
     await TestBed.configureTestingModule({
       imports: [LogoutComponent],
       providers: [

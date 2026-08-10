@@ -29,8 +29,6 @@ describe('format pipes', () => {
   }
 
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
     TestBed.configureTestingModule({ providers: [provideTestTranslations({ en: {}, de: {} })] });
     language = TestBed.inject(LanguageService);
     language.initialize().subscribe();

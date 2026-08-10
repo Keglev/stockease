@@ -193,11 +193,6 @@ describe('ProductListComponent', () => {
     await fixture.whenStable();
   }
 
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('load_serviceReturnsProducts_rendersOneRowPerProduct', async () => {
     await setUp(of(pageWith(['Laptop', 'Monitor', 'Keyboard'])));
 

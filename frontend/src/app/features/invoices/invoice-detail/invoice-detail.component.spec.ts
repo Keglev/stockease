@@ -240,11 +240,6 @@ describe('InvoiceDetailComponent', () => {
     await fixture.whenStable();
   }
 
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('load_invoiceWithItems_rendersOneRowPerItem', async () => {
     await setUp(of(detail()));
 

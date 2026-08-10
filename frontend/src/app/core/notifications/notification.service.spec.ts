@@ -50,7 +50,6 @@ describe('NotificationService', () => {
     // asserted text depends on the active language (#136).
     localStorage.clear();
     localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
-    TestBed.resetTestingModule();
     snackBar = new MatSnackBarStub();
 
     TestBed.configureTestingModule({

@@ -82,8 +82,6 @@ describe('ProductCreateDialogComponent', () => {
   }
 
   beforeEach(async () => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
     service = new ProductServiceStub();
     dialogRef = { close: vi.fn() };
 

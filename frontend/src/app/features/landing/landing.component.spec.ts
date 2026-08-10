@@ -130,8 +130,6 @@ describe('LandingComponent', () => {
   }
 
   beforeEach(async () => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
     auth = new AuthServiceStub();
     notifications = new NotificationServiceStub();
 

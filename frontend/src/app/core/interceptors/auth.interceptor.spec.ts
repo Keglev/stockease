@@ -32,11 +32,6 @@ function setUp(): { http: HttpClient; controller: HttpTestingController } {
  * Out of scope: where the token comes from - auth.service.spec.ts.
  */
 describe('authInterceptor', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('intercept_apiUrlWithToken_addsAuthorizationHeader', () => {
     const token = validToken();
     localStorage.setItem(TOKEN_STORAGE_KEY, token);

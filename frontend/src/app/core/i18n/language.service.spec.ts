@@ -39,11 +39,6 @@ function setUp(browserLang: string | undefined): {
  * control that calls this service (language-toggle.component.spec.ts).
  */
 describe('LanguageService', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    TestBed.resetTestingModule();
-  });
-
   it('initialize_storedGerman_winsOverBrowserLanguage', () => {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, 'de');
     const { service, translate } = setUp('en-US');
