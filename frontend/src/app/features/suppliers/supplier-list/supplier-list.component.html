@@ -3,7 +3,7 @@
   <div class="toolbar-actions">
     <!-- Same affordance as each reports tab's: outlined, download icon, hidden while there is
          nothing to export. -->
-    @if (rows().length > 0) {
+    @if (list.rows().length > 0) {
       <button
         matButton="outlined"
         type="button"
@@ -20,17 +20,17 @@
   </div>
 </div>
 
-@if (loading()) {
+@if (list.loading()) {
   <mat-progress-bar mode="indeterminate" [attr.aria-label]="'suppliers.loading' | translate" />
 }
 
 <!-- Rendered verbatim: this text comes from the backend, which has no i18n. -->
-@if (error(); as message) {
+@if (list.error(); as message) {
   <p class="supplier-error" role="alert">{{ message }}</p>
 }
 
 <div class="table-scroll">
-  <table mat-table [dataSource]="visibleRows()" class="supplier-table">
+  <table mat-table [dataSource]="list.visibleRows()" class="supplier-table">
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>{{ 'suppliers.columns.name' | translate }}</th>
       <td mat-cell *matCellDef="let supplier">{{ supplier.name }}</td>
@@ -90,14 +90,14 @@
   </table>
 </div>
 
-@if (!loading() && !error() && rows().length === 0) {
+@if (!list.loading() && !list.error() && list.rows().length === 0) {
   <p class="supplier-empty">{{ 'suppliers.empty' | translate }}</p>
 }
 
 <mat-paginator
-  [length]="rows().length"
-  [pageIndex]="pageIndex()"
-  [pageSize]="pageSize()"
+  [length]="list.rows().length"
+  [pageIndex]="list.pageIndex()"
+  [pageSize]="list.pageSize()"
   [pageSizeOptions]="[10, 25, 50]"
-  (page)="onPage($event)"
+  (page)="list.onPage($event)"
 />

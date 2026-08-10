@@ -476,9 +476,9 @@ describe('CustomerListComponent', () => {
     await setUp('ADMIN', many);
 
     const page = fixture.componentInstance as unknown as {
-      onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void;
+      list: { onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void };
     };
-    page.onPage({ pageIndex: 1, pageSize: 10, length: 12 });
+    page.list.onPage({ pageIndex: 1, pageSize: 10, length: 12 });
     fixture.detectChanges();
 
     // client-side: the second page is a slice of rows already in memory, with no new request
@@ -489,10 +489,12 @@ describe('CustomerListComponent', () => {
     const many = Array.from({ length: 12 }, (unused, index) => ({ id: index + 1, name: 'Customer ' + index, email: null, phone: null, address: null, city: null, createdAt: '2026-01-02T03:04:00' }));
     await setUp('ADMIN', many);
     const page = fixture.componentInstance as unknown as {
-      onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void;
-      pageIndex: () => number;
+      list: {
+        onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void;
+        pageIndex: () => number;
+      };
     };
-    page.onPage({ pageIndex: 1, pageSize: 10, length: 12 });
+    page.list.onPage({ pageIndex: 1, pageSize: 10, length: 12 });
     fixture.detectChanges();
 
     // the reload leaves ten rows, so page 1 no longer exists and the table must come back to 0
@@ -502,7 +504,7 @@ describe('CustomerListComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(page.pageIndex()).toBe(0);
+    expect(page.list.pageIndex()).toBe(0);
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr').length).toBe(10);
   });
 });
