@@ -31,37 +31,37 @@
         }
       </div>
 
-      @if (canClose() || canMarkPaid() || canDelete()) {
+      @if (actions.canClose() || actions.canMarkPaid() || actions.canDelete()) {
         <div class="detail-actions">
-          @if (canClose()) {
+          @if (actions.canClose()) {
             <button
               matButton="filled"
               type="button"
               class="action-close"
               [disabled]="working()"
-              (click)="confirmClose()"
+              (click)="actions.confirmClose()"
             >
               {{ 'invoices.actions.close' | translate }}
             </button>
           }
-          @if (canMarkPaid()) {
+          @if (actions.canMarkPaid()) {
             <button
               matButton
               type="button"
               class="action-paid"
               [disabled]="working()"
-              (click)="confirmMarkPaid()"
+              (click)="actions.confirmMarkPaid()"
             >
               {{ 'invoices.actions.markPaid' | translate }}
             </button>
           }
-          @if (canDelete()) {
+          @if (actions.canDelete()) {
             <button
               matButton
               type="button"
               class="action-delete"
               [disabled]="working()"
-              (click)="confirmDelete()"
+              (click)="actions.confirmDelete()"
             >
               {{ 'invoices.actions.delete' | translate }}
             </button>

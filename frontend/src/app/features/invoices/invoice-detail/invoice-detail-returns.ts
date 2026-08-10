@@ -46,7 +46,7 @@ export class InvoiceDetailReturns {
   }
 
   /** Units still returnable on one line. */
-  remaining(item: InvoiceItemResponse): number {
+  private remaining(item: InvoiceItemResponse): number {
     return (item.quantity ?? 0) - (item.returnedQty ?? 0);
   }
 
