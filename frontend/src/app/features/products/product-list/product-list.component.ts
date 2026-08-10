@@ -13,7 +13,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { ProductResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import {
   ConfirmDialogComponent,
@@ -26,6 +25,7 @@ import {
   ProductEditMode
 } from '../product-edit-dialog/product-edit-dialog.component';
 import { ProductService } from '../product.service';
+import { ProductRecycleBin } from './product-recycle-bin';
 import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 
@@ -53,7 +53,8 @@ const DEFAULT_PAGE_SIZE = 10;
     TranslatePipe
   ],
   templateUrl: './product-list.component.html',
-  styleUrl: './product-list.component.scss'
+  styleUrl: './product-list.component.scss',
+  providers: [ProductRecycleBin]
 })
 export class ProductListComponent implements OnInit {
   private readonly products = inject(ProductService);
@@ -61,6 +62,8 @@ export class ProductListComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
   private readonly router = inject(Router);
+
+  protected readonly bin = inject(ProductRecycleBin);
 
   // UI convenience only: the server is the authority and answers 403 regardless of these flags.
   // Creation and deletion are admin acts; renaming and repricing are open to every role.
@@ -77,19 +80,6 @@ export class ProductListComponent implements OnInit {
     'actions'
   ];
 
-  // The deleted view swaps the actions column for a restore-only one and gains a status chip, so it
-  // declares its own column list rather than branching inside every cell.
-  protected readonly deletedColumns = [
-    'name',
-    'sku',
-    'quantity',
-    'purchasePrice',
-    'totalValue',
-    'createdAt',
-    'status',
-    'deletedActions'
-  ];
-
   protected readonly rows = signal<ProductResponse[]>([]);
   protected readonly totalElements = signal(0);
   protected readonly pageIndex = signal(0);
@@ -97,67 +87,25 @@ export class ProductListComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  // Admin-only recycle bin. The deleted set is fetched unpaged and kept apart from the live page, so
-  // toggling back does not refetch the live list or lose the page the operator was on.
-  protected readonly showDeleted = signal(false);
-  protected readonly deletedRows = signal<ProductResponse[]>([]);
-
+  // The composition point: which of the two views the table is showing. It stays here because it
+  // is the only member that reads both sides.
   protected readonly visibleColumns = computed(() =>
-    this.showDeleted() ? this.deletedColumns : this.displayedColumns
+    this.bin.showDeleted() ? this.bin.deletedColumns : this.displayedColumns
   );
   protected readonly visibleRows = computed(() =>
-    this.showDeleted() ? this.deletedRows() : this.rows()
+    this.bin.showDeleted() ? this.bin.deletedRows() : this.rows()
   );
+
+  constructor() {
+    this.bin.connect({
+      loading: this.loading,
+      error: this.error,
+      reloadLive: () => this.load()
+    });
+  }
 
   ngOnInit(): void {
     this.load();
-  }
-
-  /** Switches between the live paged catalogue and the unpaged deleted set. */
-  protected onToggleDeleted(showDeleted: boolean): void {
-    this.showDeleted.set(showDeleted);
-    this.error.set(null);
-    if (showDeleted) {
-      this.loadDeleted();
-    }
-  }
-
-  /**
-   * Restores a product. Not destructive, so it runs without a confirmation step. A 409 means a live
-   * product has taken the name or SKU, which needs its own message: the backend's own text names the
-   * colliding attribute but is untranslated, and this is a case the operator can act on.
-   */
-  protected restore(product: ProductResponse): void {
-    this.products.restore(product.id).subscribe({
-      next: () => {
-        this.notifications.success('products.restored');
-        // both lists move: the product leaves the bin and rejoins the catalogue the operator returns to
-        this.loadDeleted();
-        this.load();
-      },
-      error: (err: Error) => {
-        const isConflict = err instanceof ApiError && err.status === 409;
-        this.notifications.error(isConflict ? 'products.restoreConflict' : err.message);
-      }
-    });
-  }
-
-  private loadDeleted(): void {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.products.getDeleted().subscribe({
-      next: (deleted) => {
-        this.deletedRows.set(deleted);
-        this.loading.set(false);
-      },
-      error: (err: Error) => {
-        // the loading bar has to stop on the error path too, or a failed fetch reads as a hung one
-        this.deletedRows.set([]);
-        this.error.set(err.message);
-        this.loading.set(false);
-      }
-    });
   }
 
   /** Server-side paging: every page or size change refetches rather than slicing locally. */
