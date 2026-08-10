@@ -32,9 +32,9 @@ import {
   SupplierResponse
 } from '../../../core/api/api-models';
 import { FormatService } from '../../../core/format/format.service';
-import { LanguageService } from '../../../core/i18n/language.service';
+import { createChartContext } from '../../../shared/chart/chart-context';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
-import { ChartFormat, chartFormat } from '../../../shared/chart/chart-format';
+import { ChartFormat } from '../../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
 import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
@@ -120,7 +120,6 @@ export class ReportsPageComponent implements OnInit {
   private readonly suppliers = inject(SupplierService);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
-  private readonly language = inject(LanguageService);
   private readonly format = inject(FormatService);
   private readonly csv = inject(CsvExportService);
 
@@ -345,43 +344,26 @@ export class ReportsPageComponent implements OnInit {
     );
   });
 
+  private readonly baseChartContext = createChartContext();
+
   /**
-   * Everything a chart option needs that is not its own data.
+   * The shared chart context, widened with the vocabulary only this page's charts use.
    *
-   * <p>It exists to be a DEPENDENCY. Reading it inside an option's `computed` is what makes
-   * that option rebuild when the interface language changes.
-   *
-   * <p>The explicit `currentLang()` read is measured redundant TODAY: removing it leaves the
-   * language-switch spec green, because ngx-translate's `instant` reads its own language
-   * signal and the derivation tracks it through that. It stays because that is the library's
-   * internal wiring rather than a contract - a version that resolved keys without touching a
-   * signal would silently restore the staleness this slice fixes, and the spec would be the only
-   * thing that noticed.
-   *
-   * <p>{@link chartFormat} is the seam doing what it was built for. It registers the reads of
-   * `numberLocale()` and the two override signals here, and every option below inherits format
-   * reactivity with no further replumbing, because each one already re-runs when this context
-   * changes. That is also why the options with nothing translated in them - the margin gauge, the
-   * price history - read it: they render values, which is the second thing a reader configures.
-   *
-   * <p>Unlike the language read above, these ones are load-bearing. ECharts calls the formatters
-   * while it paints, outside any reactive context, so the service reads inside them are tracked by
-   * nothing - reading the signals at BUILD time is the whole of the dependency.
+   * <p>The extra labels name series and legend entries on two tabs rather than anything a chart
+   * elsewhere in the app renders, which is why they are resolved here instead of in the shared
+   * derivation. Spreading the shared one in rather than reading it separately is what lets every
+   * option below take its data, its labels and its formatters from a single read.
    */
-  private readonly chartContext = computed(() => {
-    this.language.currentLang();
-    return {
-      other: this.translate.instant('charts.other') as string,
-      format: chartFormat(this.format),
-      stockLevel: this.translate.instant('reports.analytics.stockLevel') as string,
-      soldUnits: this.translate.instant('reports.analytics.soldUnits') as string,
-      cashFlow: {
-        inflow: this.translate.instant('reports.cashFlow.inflow') as string,
-        outflow: this.translate.instant('reports.cashFlow.outflow') as string,
-        net: this.translate.instant('reports.cashFlow.net') as string
-      }
-    };
-  });
+  private readonly chartContext = computed(() => ({
+    ...this.baseChartContext(),
+    stockLevel: this.translate.instant('reports.analytics.stockLevel') as string,
+    soldUnits: this.translate.instant('reports.analytics.soldUnits') as string,
+    cashFlow: {
+      inflow: this.translate.instant('reports.cashFlow.inflow') as string,
+      outflow: this.translate.instant('reports.cashFlow.outflow') as string,
+      net: this.translate.instant('reports.cashFlow.net') as string
+    }
+  }));
 
   // Derived, not stored. Each one re-runs when its rows change - which is what the load methods
   // used to trigger by hand - and when the rendering context above changes, which nothing used to
@@ -934,7 +916,8 @@ function toMarginOption(rows: ProductProfitReport[], format: ChartFormat): Chart
         // warning role, so no --mat-sys-* token spells a red-amber-green ramp at all. The gauge
         // paints to canvas, outside the DOM cascade a custom property would resolve in, so a
         // token could not be read here even if one existed.
-        // Feeding theme-aware values through the chart context waits on the reports-page split.
+        // TODO(BL-15): route theme-aware gauge values through the chart context when the profit
+        // tab is extracted.
         axisLine: { lineStyle: { width: 14, color: [[0.2, '#d9534f'], [0.5, '#f0ad4e'], [1, '#5cb85c']] } },
         // The dial still runs 0-100 and its value is still 42.5; only the reading changes, from a
         // hardcoded '{value}%' to the decimal mark and percent spacing the reader's locale uses.
