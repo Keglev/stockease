@@ -9,6 +9,7 @@ import { SupplierResponse } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { SupplierPayload, SupplierService } from '../supplier.service';
+import { ACME } from '../suppliers.fixtures';
 import { SupplierFormDialogComponent, SupplierFormDialogData } from './supplier-form-dialog.component';
 
 const TRANSLATIONS = {
@@ -36,16 +37,6 @@ const TRANSLATIONS = {
       }
     }
   }
-};
-
-const ACME: SupplierResponse = {
-  id: 7,
-  name: 'Acme',
-  email: 'acme@example.com',
-  phone: '555-1234',
-  address: '1 Main St',
-  city: 'Springfield',
-  createdAt: '2026-01-02T03:04:00'
 };
 
 /*

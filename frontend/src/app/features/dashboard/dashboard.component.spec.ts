@@ -24,6 +24,7 @@ import { provideTestTranslations } from '../../testing/i18n-testing';
 import { ProductService } from '../products/product.service';
 import { ReportService } from '../reports/report.service';
 import { DashboardComponent } from './dashboard.component';
+import { WIDGET } from './dashboard.fixtures';
 
 const TRANSLATIONS = {
   // Only the remainder label in German: it is the one chart string the language spec reads.
@@ -45,16 +46,6 @@ const TRANSLATIONS = {
       charts: { profitByProduct: 'Profit by product', dueDates: 'Upcoming due dates' }
     }
   }
-};
-
-const WIDGET: ProductResponse = {
-  id: 3,
-  name: 'Widget',
-  sku: 'SKU-3',
-  quantity: 2,
-  purchasePrice: 15,
-  totalValue: 30,
-  createdAt: '2026-01-02T03:04:00'
 };
 
 // pageSize 1 with totalElements 42: the count must come from the envelope, not the payload.

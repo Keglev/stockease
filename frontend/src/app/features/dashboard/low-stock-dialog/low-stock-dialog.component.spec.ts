@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 
 import { ProductResponse } from '../../../core/api/api-models';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
+import { WIDGET } from '../dashboard.fixtures';
 import { LowStockDialogComponent, LowStockDialogData } from './low-stock-dialog.component';
 
 const TRANSLATIONS = {
@@ -15,16 +16,6 @@ const TRANSLATIONS = {
       lowStockNone: 'All products are sufficiently stocked.'
     }
   }
-};
-
-const WIDGET: ProductResponse = {
-  id: 3,
-  name: 'Widget',
-  sku: 'SKU-3',
-  quantity: 2,
-  purchasePrice: 15,
-  totalValue: 30,
-  createdAt: '2026-01-02T03:04:00'
 };
 
 const GADGET: ProductResponse = { ...WIDGET, id: 4, name: 'Gadget', sku: 'SKU-4', quantity: 0 };
