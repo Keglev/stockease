@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -9,6 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ProductResponse } from '../../../core/api/api-models';
 import { positivePrice } from '../positive-price.validator';
 import { ProductService } from '../product.service';
+import { createDialogSubmitStore } from '../../../shared/dialog/dialog-submit-store';
 
 /**
  * Creates a product from its name, SKU and purchase price. There is no quantity control, because
@@ -33,8 +34,9 @@ export class ProductCreateDialogComponent {
   private readonly dialogRef =
     inject<MatDialogRef<ProductCreateDialogComponent, ProductResponse>>(MatDialogRef);
 
-  protected readonly pending = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly submitState = createDialogSubmitStore<ProductResponse>((saved) =>
+    this.dialogRef.close(saved)
+  );
 
   // No quantity control: creation is master-data only and books no stock (ADR 018). The SKU is
   // operator-assigned - it is the article number the business already uses, not ours to invent.
@@ -45,24 +47,11 @@ export class ProductCreateDialogComponent {
   });
 
   protected submit(): void {
-    if (this.form.invalid || this.pending()) {
+    if (this.form.invalid || this.submitState.pending()) {
       return;
     }
-    this.pending.set(true);
-    this.errorMessage.set(null);
-
     const { name, sku, purchasePrice } = this.form.getRawValue();
-    this.products.create(name, sku, Number(purchasePrice)).subscribe({
-      next: (created) => {
-        this.pending.set(false);
-        this.dialogRef.close(created);
-      },
-      error: (err: Error) => {
-        // The dialog stays open so the user can correct the input (e.g. a duplicate name).
-        this.pending.set(false);
-        this.errorMessage.set(err.message);
-      }
-    });
+    this.submitState.submit(this.products.create(name, sku, Number(purchasePrice)));
   }
 
   protected cancel(): void {

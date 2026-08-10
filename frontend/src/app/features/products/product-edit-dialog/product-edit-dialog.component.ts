@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -10,6 +10,7 @@ import { Observable } from 'rxjs';
 import { ProductResponse } from '../../../core/api/api-models';
 import { positivePrice } from '../positive-price.validator';
 import { ProductService } from '../product.service';
+import { createDialogSubmitStore } from '../../../shared/dialog/dialog-submit-store';
 
 export type ProductEditMode = 'name' | 'price';
 
@@ -51,8 +52,9 @@ export class ProductEditDialogComponent {
     ? 'products.form.priceInvalid'
     : 'products.form.nameRequired';
 
-  protected readonly pending = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly submitState = createDialogSubmitStore<ProductResponse>((saved) =>
+    this.dialogRef.close(saved)
+  );
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     value: [
@@ -62,23 +64,10 @@ export class ProductEditDialogComponent {
   });
 
   protected submit(): void {
-    if (this.form.invalid || this.pending()) {
+    if (this.form.invalid || this.submitState.pending()) {
       return;
     }
-    this.pending.set(true);
-    this.errorMessage.set(null);
-
-    this.request(this.form.getRawValue().value).subscribe({
-      next: (saved) => {
-        this.pending.set(false);
-        this.dialogRef.close(saved);
-      },
-      error: (err: Error) => {
-        // The dialog stays open so the user can correct the input.
-        this.pending.set(false);
-        this.errorMessage.set(err.message);
-      }
-    });
+    this.submitState.submit(this.request(this.form.getRawValue().value));
   }
 
   protected cancel(): void {

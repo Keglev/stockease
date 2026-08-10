@@ -36,7 +36,7 @@
     </mat-form-field>
 
     <!-- Rendered verbatim: this text comes from the backend, which has no i18n. -->
-    @if (errorMessage(); as message) {
+    @if (submitState.errorMessage(); as message) {
       <p class="form-error" role="alert">{{ message }}</p>
     }
   </mat-dialog-content>
@@ -49,7 +49,7 @@
       matButton="filled"
       type="submit"
       class="form-submit"
-      [disabled]="form.invalid || pending()"
+      [disabled]="form.invalid || submitState.pending()"
     >
       {{ 'common.save' | translate }}
     </button>
