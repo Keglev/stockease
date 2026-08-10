@@ -2,32 +2,23 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
 import { DueDateBucket, InvoiceDueSummary, ProductResponse } from '../../core/api/api-models';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
-import { createChartContext } from '../../shared/chart/chart-context';
-import { ChartSlice, topNWithRemainder } from '../../shared/chart/chart-data';
-import { ChartFormat } from '../../shared/chart/chart-format';
-import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
 import { ProductService } from '../products/product.service';
 // Deliberate cross-feature import: the reporting endpoints have one client, and the reports
 // pages that own it are the next feature to build on it. The shared positive-price validator
 // set the same precedent.
 import { ReportService } from '../reports/report.service';
+import { CardView } from './card-view';
+import { DueCardComponent } from './due-card/due-card.component';
 import { LowStockDialogComponent } from './low-stock-dialog/low-stock-dialog.component';
+import { ProfitCardComponent } from './profit-card/profit-card.component';
 import { AppCurrencyPipe } from '../../shared/format/app-currency.pipe';
-import { AppDatePipe } from '../../shared/format/app-date.pipe';
-
-/** Which half of a card is on screen; the cards open on their chart, the at-a-glance reading. */
-type CardView = 'chart' | 'table';
-
-const CARD_VIEWS: readonly CardView[] = ['chart', 'table'];
 
 // The dashboard shows the head of the list and points at the reports page for the rest; eight rows
 // is what fits beside the profit card without the row growing past one 1080p viewport.
@@ -48,11 +39,11 @@ const DUE_LIST_LIMIT = 8;
 @Component({
   selector: 'app-dashboard',
   imports: [
-    AppCurrencyPipe, AppDatePipe, ChartComponent,
+    AppCurrencyPipe,
+    DueCardComponent,
     MatButtonModule,
-    MatButtonToggleModule,
     MatCardModule,
-    RouterLink,
+    ProfitCardComponent,
     TranslatePipe
   ],
   templateUrl: './dashboard.component.html',
@@ -79,40 +70,15 @@ export class DashboardComponent implements OnInit {
   protected readonly overdueCount = signal(0);
   protected readonly grossProfit = signal(0);
 
-  // Every chart option below depends on this, which is what rebuilds them when the reader's
-  // language or number format moves; the reasoning lives with the factory.
-  private readonly chartContext = createChartContext();
-
   // The chart and the table are two readings of one dataset, so the ROWS are what the component
   // holds and both views derive from them - null until the first load, so no empty chart flashes.
   //
   // Rows rather than finished slices, which is the change: the remainder bucket carries a
   // translated name, and baking it in at load time is what left "Other" on screen after a reader
   // switched to German.
-  private readonly profitData = signal<{ name: string; value: number }[] | null>(null);
+  protected readonly profitData = signal<{ name: string; value: number }[] | null>(null);
 
-  private readonly profitSlices = computed(() => {
-    const rows = this.profitData();
-    return rows ? topNWithRemainder(rows, this.chartContext().other) : null;
-  });
-
-  protected readonly profitOption = computed(() => {
-    const slices = this.profitSlices();
-    return slices ? toProfitOption(slices, this.chartContext().format) : null;
-  });
-
-  protected readonly profitRows = computed(() => this.profitSlices() ?? []);
-
-  protected readonly profitView = signal<CardView>('chart');
-
-  protected readonly dueDateOption = computed(() => {
-    const buckets = this.dueBuckets();
-    return buckets ? toDueDateOption(buckets, this.chartContext().format) : null;
-  });
-
-  private readonly dueBuckets = signal<DueDateBucket[] | null>(null);
-
-  protected readonly dueView = signal<CardView>('chart');
+  protected readonly dueBuckets = signal<DueDateBucket[] | null>(null);
 
   protected readonly dueSoonRows = signal<InvoiceDueSummary[]>([]);
 
@@ -126,24 +92,13 @@ export class DashboardComponent implements OnInit {
     this.load();
   }
 
-  /** Switches the profit card between its chart and the same slices as rows. */
-  protected setProfitView(view: CardView): void {
-    // The group emits once with no value while it is being created; without this the card would
-    // end up on neither view. Same guard as the reports page's period presets.
-    if (CARD_VIEWS.includes(view)) {
-      this.profitView.set(view);
-    }
-  }
-
   /**
-   * Switches the due card between the bucket chart and the invoices behind the same window.
+   * Loads the due list the first time the card is switched to it.
+   *
+   * <p>The card cannot make this call itself: whether the rows have already been fetched is this
+   * page's state, and the request is this page's to own.
    */
-  protected setDueView(view: CardView): void {
-    // Same guard as the profit card: the group emits once with no value while it is being created.
-    if (!CARD_VIEWS.includes(view)) {
-      return;
-    }
-    this.dueView.set(view);
+  protected onDueViewChange(view: CardView): void {
     if (view === 'table' && !this.dueSoonLoaded) {
       this.loadDueSoon();
     }
@@ -231,63 +186,4 @@ export class DashboardComponent implements OnInit {
   private fail(err: Error): void {
     this.error.set(err.message);
   }
-}
-
-// Takes the already-ranked slices rather than the raw rows, so the chart and the table below it
-// can never disagree about what the top ten are.
-function toProfitOption(slices: ChartSlice[], format: ChartFormat): ChartOption {
-  // A category axis draws its first entry at the bottom, so the order is reversed to put the
-  // most profitable product at the top of the chart.
-  const ordered = [...slices].reverse();
-
-  return {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      valueFormatter: (value) => format.currency(value as number)
-    },
-    grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
-    xAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
-    yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
-    series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
-  };
-}
-
-function toDueDateOption(buckets: DueDateBucket[], format: ChartFormat): ChartOption {
-  const dates = [...new Set(buckets.map((bucket) => bucket.dueDate))].sort();
-  const types = [...new Set(buckets.map((bucket) => bucket.invoiceType))].sort();
-
-  return {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      valueFormatter: (value) => format.currency(value as number)
-    },
-    // The legend sits below the axis rather than floating over it: with containLabel the grid's
-    // bottom inset has to cover the rotated date labels AND the legend row, which the previous
-    // 24px did not, so the two drew on top of each other at both chart heights.
-    legend: { bottom: 0 },
-    grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
-    // The axis keeps the raw ISO keys - they are what the series are indexed by and what sorts
-    // correctly - and shows the reader's date format through the label formatter instead.
-    xAxis: {
-      type: 'category',
-      data: dates,
-      axisLabel: { formatter: (value: string) => format.date(value) }
-    },
-    yAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
-    // One stacked series per invoice type: the bar height is what falls due on that date and
-    // the split shows how much of it is money in versus money out.
-    series: types.map((type) => ({
-      name: type,
-      type: 'bar' as const,
-      stack: 'due',
-      data: dates.map((date) => valueOf(buckets, date, type))
-    }))
-  };
-}
-
-function valueOf(buckets: DueDateBucket[], date: string, type: string): number {
-  const match = buckets.find((bucket) => bucket.dueDate === date && bucket.invoiceType === type);
-  return match ? match.totalValue : 0;
 }

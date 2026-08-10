@@ -1,0 +1,50 @@
+// display: contents so the card below stays the grid item of .chart-row, as it was
+// when this markup lived in the dashboard template.
+:host {
+  display: contents;
+}
+
+.section-title {
+  margin: 0 0 0.75rem;
+  font: var(--mat-sys-title-medium);
+}
+
+// The toggle shares the title's line rather than sitting above it, so switching views costs the
+// card no extra height - the dashboard is budgeted to one 1080p viewport.
+.card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.slice-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--mat-sys-body-small);
+}
+
+.slice-table th {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+  text-align: left;
+}
+
+.slice-table th,
+.slice-table td {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.slice-row:last-child td {
+  border-bottom: none;
+}
+
+.slice-value {
+  text-align: right;
+}
+
+.kpi-negative {
+  color: var(--mat-sys-error);
+}

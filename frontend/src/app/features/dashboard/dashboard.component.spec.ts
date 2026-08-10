@@ -16,6 +16,8 @@ import {
 import { HealthProbe, HealthService } from '../../core/health/health.service';
 import { LANGUAGE_STORAGE_KEY } from '../../core/i18n/language.service';
 import { ChartComponent } from '../../shared/chart/chart.component';
+import { DueCardComponent } from './due-card/due-card.component';
+import { ProfitCardComponent } from './profit-card/profit-card.component';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
 import { FormatService } from '../../core/format/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
@@ -248,24 +250,31 @@ describe('DashboardComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  /* The due card instance, which owns the view toggle the dashboard used to hold. */
+  function dueCard(): { setDueView: (view: string) => void; dueDateOption: () => FormatProbe } {
+    return fixture.debugElement.query(By.directive(DueCardComponent)).componentInstance;
+  }
+
+  /* The profit card instance, for the same reason. */
+  function profitCard(): { setProfitView: (view: string) => void; profitOption: () => FormatProbe } {
+    return fixture.debugElement.query(By.directive(ProfitCardComponent)).componentInstance;
+  }
+
   /* Flips the due card to its list half, the way the toggle group does. */
   function showDueList(): void {
-    const page = fixture.componentInstance as unknown as { setDueView: (view: string) => void };
-    page.setDueView('table');
+    dueCard().setDueView('table');
     fixture.detectChanges();
   }
 
   /* Returns the due card to its chart half. */
   function showDueChart(): void {
-    const page = fixture.componentInstance as unknown as { setDueView: (view: string) => void };
-    page.setDueView('chart');
+    dueCard().setDueView('chart');
     fixture.detectChanges();
   }
 
   /* Flips the profit card to its table half, the way the toggle group does. */
   function showProfitTable(): void {
-    const page = fixture.componentInstance as unknown as { setProfitView: (view: string) => void };
-    page.setProfitView('table');
+    profitCard().setProfitView('table');
     fixture.detectChanges();
   }
 
@@ -469,8 +478,7 @@ describe('DashboardComponent', () => {
     }
 
     function optionOf(name: string): FormatProbe {
-      const page = fixture.componentInstance as unknown as Record<string, () => FormatProbe>;
-      return page[name]();
+      return name === 'profitOption' ? profitCard().profitOption() : dueCard().dueDateOption();
     }
 
     it('dueCard_germanInterfaceOnAuto_readsMoneyAndDatesTheGermanWay', () => {

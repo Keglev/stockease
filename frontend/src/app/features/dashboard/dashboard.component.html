@@ -65,95 +65,12 @@
 
 
 <div class="chart-row">
-  <mat-card class="chart-card chart-profit">
-    <mat-card-content>
-      <div class="card-heading">
-        <h2 class="section-title">{{ 'dashboard.charts.profitByProduct' | translate }}</h2>
-        <mat-button-toggle-group
-          class="card-view-toggle"
-          hideSingleSelectionIndicator
-          [value]="profitView()"
-          (valueChange)="setProfitView($event)"
-        >
-          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-          <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
+  <app-profit-card [data]="profitData()" [chartHeight]="chartHeight()" />
 
-      @if (profitView() === 'chart') {
-        @if (profitOption(); as option) {
-          <app-chart [option]="option" [height]="chartHeight()" />
-        }
-      } @else {
-        <!-- The chart's own slices as rows, remainder bucket included: no sorting, no export, no
-             paging. This is the picture read as numbers; the exhaustive table lives in reports. -->
-        <table class="slice-table">
-          <thead>
-            <tr>
-              <th scope="col">{{ 'reports.columns.name' | translate }}</th>
-              <th scope="col" class="slice-value">
-                {{ 'reports.columns.grossProfit' | translate }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (slice of profitRows(); track slice.name) {
-              <tr class="slice-row">
-                <td>{{ slice.name }}</td>
-                <td class="slice-value" [class.kpi-negative]="slice.value < 0">
-                  {{ slice.value | appCurrency }}
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card class="chart-card chart-due-dates">
-    <mat-card-content>
-      <div class="card-heading">
-        <h2 class="section-title">{{ 'dashboard.charts.dueDates' | translate }}</h2>
-        <mat-button-toggle-group
-          class="card-view-toggle"
-          hideSingleSelectionIndicator
-          [value]="dueView()"
-          (valueChange)="setDueView($event)"
-        >
-          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-          <mat-button-toggle value="table">{{ 'reports.view.list' | translate }}</mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
-
-      @if (dueView() === 'chart') {
-        @if (dueDateOption(); as option) {
-          <app-chart [option]="option" [height]="chartHeight()" />
-        }
-      } @else {
-        <!-- The invoices behind the chart's window rather than the buckets it plots: the buckets
-             are aggregated server-side and name no invoice, so a linked row needs its own source.
-             The reports due tab reads the same window the same two ways. -->
-        @if (dueSoonRows().length > 0) {
-          <ul class="due-list">
-            @for (row of dueSoonRows(); track row.invoiceId) {
-              <li class="due-soon-row">
-                <!-- The label is the business number, the route key stays the technical id
-                     (ADR 022). -->
-                <a [routerLink]="['/app/invoices', row.invoiceId]">{{ row.invoiceNumber }}</a>
-                <span class="due-type">{{ 'invoices.type.' + row.invoiceType | translate }}</span>
-                <span class="due-counterparty">{{ row.counterparty }}</span>
-                <span class="due-date">{{ row.dueDate | appDate }}</span>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="due-none">{{ 'reports.due.dueSoonEmpty' | translate }}</p>
-        }
-        <a class="due-view-all" routerLink="/app/reports">
-          {{ 'dashboard.due.viewAll' | translate }}
-        </a>
-      }
-    </mat-card-content>
-  </mat-card>
+  <app-due-card
+    [buckets]="dueBuckets()"
+    [dueSoonRows]="dueSoonRows()"
+    [chartHeight]="chartHeight()"
+    (viewChange)="onDueViewChange($event)"
+  />
 </div>
