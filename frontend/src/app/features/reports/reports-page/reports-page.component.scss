@@ -32,14 +32,6 @@
   margin-bottom: 1rem;
 }
 
-.view-toggle {
-  margin-bottom: 1rem;
-}
-
-.period-toggle {
-  margin-bottom: 1rem;
-}
-
 // The three figures read as one line of summary, so they share a row and wrap together rather
 // than each claiming a card.
 .totals-strip {
@@ -60,16 +52,13 @@
   margin-bottom: 1rem;
 
   // The children carry the row's margin now, so they must not add their own inside it.
-  .totals-strip,
-  .view-toggle {
+  .totals-strip {
     margin-bottom: 0;
   }
 
-  // Pushed right by auto margin rather than by space-between, so the toggle still sits at the end
-  // when the strip is absent - which is what a period with no data renders.
-  .view-toggle {
-    margin-left: auto;
-  }
+  // The view toggle is the row's other child and needs the same treatment, plus the auto margin
+  // that keeps it at the end. Both live in its own stylesheet now: it is a component, and a rule
+  // here cannot reach inside one.
 }
 
 .total-item {

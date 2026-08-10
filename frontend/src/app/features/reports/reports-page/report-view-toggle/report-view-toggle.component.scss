@@ -1,0 +1,22 @@
+// The host takes over the box the toggle group itself used to be, which is why it declares a
+// display rather than leaving the default: an inline host would drop the vertical margin
+// altogether, and a block one would stop two toggles sharing a line on the tabs that place them
+// side by side.
+:host {
+  display: inline-flex;
+  margin-bottom: 1rem;
+}
+
+// On the tabs that put this toggle on the totals strip's line, the row carries the margin:
+//
+// The children carry the row's margin now, so they must not add their own inside it.
+//
+// Pushed right by auto margin rather than by space-between, so the toggle still sits at the end
+// when the strip is absent - which is what a period with no data renders.
+//
+// Reached by :host-context because the row is in the page's stylesheet and a parent rule cannot
+// style into a child component under emulated encapsulation.
+:host-context(.strip-line) {
+  margin-bottom: 0;
+  margin-left: auto;
+}

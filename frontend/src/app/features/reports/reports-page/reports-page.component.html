@@ -19,28 +19,9 @@
     <div class="tab-body">
       <!-- Placed and styled as the cash-flow tab's, so the same control reads the same way on
            both. Each one re-queries, because the window is a server-side filter. -->
-      <mat-button-toggle-group
-        class="period-toggle"
-        hideSingleSelectionIndicator
-        [value]="profitPeriod()"
-        (valueChange)="setProfitPeriod($event)"
-      >
-        <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d180">{{ 'reports.period.d180' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+      <app-period-toggle [value]="profitPeriod()" (selected)="setProfitPeriod($event)" />
 
-      <mat-button-toggle-group
-        class="view-toggle"
-        hideSingleSelectionIndicator
-        [value]="viewOf(0)"
-        (valueChange)="setView(0, $event)"
-      >
-        <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+      <app-report-view-toggle [value]="viewOf(0)" (selected)="setView(0, $event)" />
 
       @if (viewOf(0) === 'chart') {
         <div class="chart-row">
@@ -217,18 +198,7 @@
     <div class="tab-body">
       <!-- Presets rather than a date picker is a deliberate scope decision; a custom range is
            backlog. Each one re-queries, because the window is a server-side filter. -->
-      <mat-button-toggle-group
-        class="period-toggle"
-        hideSingleSelectionIndicator
-        [value]="cashFlowPeriod()"
-        (valueChange)="setCashFlowPeriod($event)"
-      >
-        <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d180">{{ 'reports.period.d180' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+      <app-period-toggle [value]="cashFlowPeriod()" (selected)="setCashFlowPeriod($event)" />
 
       <!-- Scopes the TIMELINE and the totals derived from it. The supplier narrows which products
            can be searched and is never sent: cash flow by supplier would be a different report from
@@ -285,15 +255,7 @@
           </div>
         }
 
-        <mat-button-toggle-group
-          class="view-toggle"
-          hideSingleSelectionIndicator
-          [value]="viewOf(1)"
-          (valueChange)="setView(1, $event)"
-        >
-          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-          <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
-        </mat-button-toggle-group>
+        <app-report-view-toggle [value]="viewOf(1)" (selected)="setView(1, $event)" />
       </div>
 
       @if (viewOf(1) === 'chart') {
@@ -413,15 +375,7 @@
           </div>
         }
 
-        <mat-button-toggle-group
-          class="view-toggle"
-          hideSingleSelectionIndicator
-          [value]="viewOf(2)"
-          (valueChange)="setView(2, $event)"
-        >
-          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-          <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
-        </mat-button-toggle-group>
+        <app-report-view-toggle [value]="viewOf(2)" (selected)="setView(2, $event)" />
       </div>
 
       @if (viewOf(2) === 'chart') {
@@ -526,18 +480,7 @@
     <div class="tab-body">
       <!-- Placed and styled as the other period toggles. Write-offs count on the date they were
            booked, so this reads movement dates like the profit tab rather than payment dates. -->
-      <mat-button-toggle-group
-        class="period-toggle"
-        hideSingleSelectionIndicator
-        [value]="lossPeriod()"
-        (valueChange)="setLossPeriod($event)"
-      >
-        <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d180">{{ 'reports.period.d180' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+      <app-period-toggle [value]="lossPeriod()" (selected)="setLossPeriod($event)" />
 
       <!-- The view toggle shares the strip's line rather than claiming one below it: the
            figures are the answer and the toggle only chooses how the detail is drawn, so
@@ -560,15 +503,7 @@
           </div>
         }
 
-        <mat-button-toggle-group
-          class="view-toggle"
-          hideSingleSelectionIndicator
-          [value]="viewOf(3)"
-          (valueChange)="setView(3, $event)"
-        >
-          <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-          <mat-button-toggle value="table">{{ 'reports.view.table' | translate }}</mat-button-toggle>
-        </mat-button-toggle-group>
+        <app-report-view-toggle [value]="viewOf(3)" (selected)="setView(3, $event)" />
       </div>
 
       @if (viewOf(3) === 'chart') {
@@ -723,15 +658,11 @@
     <div class="tab-body">
       <!-- 'list' rather than 'table': this tab's other half is two navigation lists over
            invoices, not a dataset. -->
-      <mat-button-toggle-group
-        class="view-toggle"
-        hideSingleSelectionIndicator
+      <app-report-view-toggle
         [value]="viewOf(4)"
-        (valueChange)="setView(4, $event)"
-      >
-        <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="table">{{ 'reports.view.list' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+        tableLabelKey="reports.view.list"
+        (selected)="setView(4, $event)"
+      />
 
       @if (viewOf(4) === 'chart') {
         <mat-card class="chart-card">
@@ -809,18 +740,7 @@
       <!-- No Chart|Table toggle here, and deliberately: a log is a sequence of individual events,
            and every aggregation that would make a chart of it - changes per day, per field, per
            person - answers a question nobody brought to an audit trail. The table is the report. -->
-      <mat-button-toggle-group
-        class="period-toggle"
-        hideSingleSelectionIndicator
-        [value]="changePeriod()"
-        (valueChange)="setChangePeriod($event)"
-      >
-        <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d180">{{ 'reports.period.d180' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+      <app-period-toggle [value]="changePeriod()" (selected)="setChangePeriod($event)" />
 
       <mat-card class="table-card">
         <mat-card-content>
@@ -961,18 +881,7 @@
         </button>
       </div>
 
-      <mat-button-toggle-group
-        class="period-toggle"
-        hideSingleSelectionIndicator
-        [value]="analyticsPeriod()"
-        (valueChange)="setAnalyticsPeriod($event)"
-      >
-        <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="d180">{{ 'reports.period.d180' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
-        <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
-      </mat-button-toggle-group>
+      <app-period-toggle [value]="analyticsPeriod()" (selected)="setAnalyticsPeriod($event)" />
 
       <!-- Keyed on what is SHOWN, not what is picked: choosing a product without pressing Show
            leaves this prompt exactly where it was, which is what makes the gate visible. -->
