@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.87% </span>
+                <span class="strong">93.61% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>92/98</span>
+                <span class='fraction'>88/94</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.88% </span>
+                <span class="strong">88.63% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>40/45</span>
+                <span class='fraction'>39/44</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.02% </span>
+                <span class="strong">92.77% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>80/86</span>
+                <span class='fraction'>77/83</span>
             </div>
         
             
@@ -356,27 +356,7 @@
 <a name='L291'></a><a href='#L291'>291</a>
 <a name='L292'></a><a href='#L292'>292</a>
 <a name='L293'></a><a href='#L293'>293</a>
-<a name='L294'></a><a href='#L294'>294</a>
-<a name='L295'></a><a href='#L295'>295</a>
-<a name='L296'></a><a href='#L296'>296</a>
-<a name='L297'></a><a href='#L297'>297</a>
-<a name='L298'></a><a href='#L298'>298</a>
-<a name='L299'></a><a href='#L299'>299</a>
-<a name='L300'></a><a href='#L300'>300</a>
-<a name='L301'></a><a href='#L301'>301</a>
-<a name='L302'></a><a href='#L302'>302</a>
-<a name='L303'></a><a href='#L303'>303</a>
-<a name='L304'></a><a href='#L304'>304</a>
-<a name='L305'></a><a href='#L305'>305</a>
-<a name='L306'></a><a href='#L306'>306</a>
-<a name='L307'></a><a href='#L307'>307</a>
-<a name='L308'></a><a href='#L308'>308</a>
-<a name='L309'></a><a href='#L309'>309</a>
-<a name='L310'></a><a href='#L310'>310</a>
-<a name='L311'></a><a href='#L311'>311</a>
-<a name='L312'></a><a href='#L312'>312</a>
-<a name='L313'></a><a href='#L313'>313</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L294'></a><a href='#L294'>294</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -441,9 +421,6 @@
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
-<span class="cline-any cline-yes">29x</span>
-<span class="cline-any cline-yes">29x</span>
-<span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
@@ -462,22 +439,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -695,15 +657,14 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
 &nbsp;
 import { DueDateBucket, InvoiceDueSummary, ProductResponse } from '../../core/api/api-models';
-import { FormatService } from '../../core/format/format.service';
-import { LanguageService } from '../../core/i18n/language.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
+import { createChartContext } from '../../shared/chart/chart-context';
 import { ChartSlice, topNWithRemainder } from '../../shared/chart/chart-data';
-import { ChartFormat, chartFormat } from '../../shared/chart/chart-format';
+import { ChartFormat } from '../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
 import { ProductService } from '../products/product.service';
 // Deliberate cross-feature import: the reporting endpoints have one client, and the reports
@@ -753,9 +714,6 @@ export class DashboardComponent implements OnInit {
   private readonly products = inject(ProductService);
   private readonly dialog = inject(MatDialog);
   private readonly breakpoints = inject(BreakpointObserver);
-  private readonly translate = inject(TranslateService);
-  private readonly language = inject(LanguageService);
-  private readonly format = inject(FormatService);
 &nbsp;
   private readonly isDesktop = toSignal(
     this.breakpoints.observe(DESKTOP_MEDIA_QUERY).pipe(map((state) =&gt; state.matches)),
@@ -772,24 +730,9 @@ export class DashboardComponent implements OnInit {
   protected readonly overdueCount = signal(0);
   protected readonly grossProfit = signal(0);
 &nbsp;
-  /**
-   * Everything a chart needs that is not its own data - here, the one translated label.
-   *
-   * &lt;p&gt;It exists to be a DEPENDENCY, exactly as the reports page's own context does, and carries
-   * the same measured caveat: the explicit `currentLang()` read is redundant today, because
-   * ngx-translate's `instant` reads its own language signal and the derivation tracks it
-   * through that. It stays because that is the library's internal wiring rather than a contract.
-   *
-   * &lt;p&gt;{@link chartFormat} registers the format-preference reads, and every chart below inherits
-   * format reactivity from them. Those ones are load-bearing rather than belt-and-braces: ECharts
-   * calls the formatters while it paints, outside any reactive context, so the reads inside them
-   * are tracked by nothing.
-   */
-  private readonly chartContext = computed(() =&gt; ({
-    language: this.language.currentLang(),
-    other: this.translate.instant('charts.other') as string,
-    format: chartFormat(this.format)
-  }));
+  // Every chart option below depends on this, which is what rebuilds them when the reader's
+  // language or number format moves; the reasoning lives with the factory.
+  private readonly chartContext = createChartContext();
 &nbsp;
   // The chart and the table are two readings of one dataset, so the ROWS are what the component
   // holds and both views derive from them - null until the first load, so no empty chart flashes.
@@ -1006,7 +949,7 @@ function valueOf(buckets: DueDateBucket[], date: string, type: string): number {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-10T11:11:52.068Z
+                at 2026-08-10T11:25:01.506Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
