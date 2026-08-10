@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 
 import { SupplierResponse } from '../../../core/api/api-models';
 import { SupplierPayload, SupplierService } from '../supplier.service';
+import { createDialogSubmitStore } from '../../../shared/dialog/dialog-submit-store';
 
 export interface SupplierFormDialogData {
   supplier?: SupplierResponse;
@@ -42,8 +43,9 @@ export class SupplierFormDialogComponent {
   protected readonly supplier = this.data?.supplier;
   protected readonly isEdit = this.supplier !== undefined;
 
-  protected readonly pending = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly submitState = createDialogSubmitStore<SupplierResponse>((saved) =>
+    this.dialogRef.close(saved)
+  );
 
   // Edit mode pre-fills from the supplier, including the optional fields; a null one becomes the
   // empty string the control needs, and the service turns it back into an absent key on submit.
@@ -56,23 +58,10 @@ export class SupplierFormDialogComponent {
   });
 
   protected submit(): void {
-    if (this.form.invalid || this.pending()) {
+    if (this.form.invalid || this.submitState.pending()) {
       return;
     }
-    this.pending.set(true);
-    this.errorMessage.set(null);
-
-    this.request(this.form.getRawValue()).subscribe({
-      next: (saved) => {
-        this.pending.set(false);
-        this.dialogRef.close(saved);
-      },
-      error: (err: Error) => {
-        // The dialog stays open so the user can correct the input.
-        this.pending.set(false);
-        this.errorMessage.set(err.message);
-      }
-    });
+    this.submitState.submit(this.request(this.form.getRawValue()));
   }
 
   protected cancel(): void {
