@@ -6,15 +6,14 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
 import { DueDateBucket, InvoiceDueSummary, ProductResponse } from '../../core/api/api-models';
-import { FormatService } from '../../core/format/format.service';
-import { LanguageService } from '../../core/i18n/language.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
+import { createChartContext } from '../../shared/chart/chart-context';
 import { ChartSlice, topNWithRemainder } from '../../shared/chart/chart-data';
-import { ChartFormat, chartFormat } from '../../shared/chart/chart-format';
+import { ChartFormat } from '../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../shared/chart/chart.component';
 import { ProductService } from '../products/product.service';
 // Deliberate cross-feature import: the reporting endpoints have one client, and the reports
@@ -64,9 +63,6 @@ export class DashboardComponent implements OnInit {
   private readonly products = inject(ProductService);
   private readonly dialog = inject(MatDialog);
   private readonly breakpoints = inject(BreakpointObserver);
-  private readonly translate = inject(TranslateService);
-  private readonly language = inject(LanguageService);
-  private readonly format = inject(FormatService);
 
   private readonly isDesktop = toSignal(
     this.breakpoints.observe(DESKTOP_MEDIA_QUERY).pipe(map((state) => state.matches)),
@@ -83,24 +79,9 @@ export class DashboardComponent implements OnInit {
   protected readonly overdueCount = signal(0);
   protected readonly grossProfit = signal(0);
 
-  /**
-   * Everything a chart needs that is not its own data - here, the one translated label.
-   *
-   * <p>It exists to be a DEPENDENCY, exactly as the reports page's own context does, and carries
-   * the same measured caveat: the explicit `currentLang()` read is redundant today, because
-   * ngx-translate's `instant` reads its own language signal and the derivation tracks it
-   * through that. It stays because that is the library's internal wiring rather than a contract.
-   *
-   * <p>{@link chartFormat} registers the format-preference reads, and every chart below inherits
-   * format reactivity from them. Those ones are load-bearing rather than belt-and-braces: ECharts
-   * calls the formatters while it paints, outside any reactive context, so the reads inside them
-   * are tracked by nothing.
-   */
-  private readonly chartContext = computed(() => ({
-    language: this.language.currentLang(),
-    other: this.translate.instant('charts.other') as string,
-    format: chartFormat(this.format)
-  }));
+  // Every chart option below depends on this, which is what rebuilds them when the reader's
+  // language or number format moves; the reasoning lives with the factory.
+  private readonly chartContext = createChartContext();
 
   // The chart and the table are two readings of one dataset, so the ROWS are what the component
   // holds and both views derive from them - null until the first load, so no empty chart flashes.
