@@ -89,6 +89,13 @@ const STOCK: StockStatusReport[] = [
   { productId: 3, name: 'Widget', sku: 'SKU-3', soldUnits: 4, soldRevenue: 60, inStockUnits: 6, inStockValue: 30 }
 ];
 
+/*
+ * Every reporting read: which URL each one requests, that the bare list responses are emitted unchanged
+ * while the two enveloped ones are unwrapped, and that a period or a product scope is serialized only
+ * when given.
+ * Out of scope: how any of it is displayed - reports-page.component.spec.ts and
+ * dashboard.component.spec.ts.
+ */
 describe('ReportService', () => {
   let service: ReportService;
   let controller: HttpTestingController;

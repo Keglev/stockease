@@ -79,6 +79,12 @@ class AuditServiceStub {
   }
 }
 
+/*
+ * The one page behind both audit routes: it queries by product or by user according to the route, and
+ * renders value changes and lifecycle entries differently - a lifecycle entry never prints a null.
+ * Also which actors and products become links in each mode, and that a param change reloads in place.
+ * Out of scope: the requests themselves - audit.service.spec.ts.
+ */
 describe('ChangeHistoryComponent', () => {
   let fixture: ComponentFixture<ChangeHistoryComponent>;
   let audit: AuditServiceStub;

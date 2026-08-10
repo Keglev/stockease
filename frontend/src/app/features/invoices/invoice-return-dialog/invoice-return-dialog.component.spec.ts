@@ -41,6 +41,11 @@ interface ComponentApi {
   form: FormGroup;
 }
 
+/*
+ * The quantity form for a return: the direction is shown but never chosen, the remaining quantity
+ * bounds the input, and a fractional or cleared value is rejected for its own reason.
+ * Out of scope: posting the return and mapping its rejections - invoice-detail.component.spec.ts.
+ */
 describe('InvoiceReturnDialogComponent', () => {
   let fixture: ComponentFixture<InvoiceReturnDialogComponent>;
   let dialogRef: { close: ReturnType<typeof vi.fn> };

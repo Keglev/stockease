@@ -125,6 +125,12 @@ class InvoiceServiceStub {
   }
 }
 
+/*
+ * The ledger: pagination against the backend's own order, the counterparty read from the row's snapshot
+ * with no master-data lookup, and the chips for type, status, paid and overdue. Also the CSV export,
+ * which carries every invoice rather than the visible page.
+ * Out of scope: one invoice's detail and actions - invoice-detail.component.spec.ts.
+ */
 describe('InvoiceListComponent', () => {
   let fixture: ComponentFixture<InvoiceListComponent>;
   let invoiceService: InvoiceServiceStub;

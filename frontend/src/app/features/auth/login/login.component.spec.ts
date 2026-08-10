@@ -27,6 +27,12 @@ class HealthServiceStub {
   }
 }
 
+/*
+ * The credential form: a rejected sign-in shows the translated message while a server error shows the
+ * backend's own sentence, and a valid one navigates into the application. Also the password toggle,
+ * which must not submit the form, and the expired-session notice.
+ * Out of scope: the token handling behind a successful login - auth.service.spec.ts.
+ */
 describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let controller: HttpTestingController;

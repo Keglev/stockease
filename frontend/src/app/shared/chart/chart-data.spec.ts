@@ -10,6 +10,11 @@ function slices(n: number, from = 100): ChartSlice[] {
   }));
 }
 
+/*
+ * The top-N rule: everything up to the cut is returned as-is, past it the remainder collapses into one
+ * bucket, and ranking is by absolute value so a large loss is as chart-worthy as a large gain.
+ * Out of scope: drawing the result - chart.component.spec.ts.
+ */
 describe('topNWithRemainder', () => {
   it('topNWithRemainder_fewerThanTenSlices_returnsAllWithoutBucket', () => {
     const result = topNWithRemainder(slices(4), OTHER);

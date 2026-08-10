@@ -27,6 +27,11 @@ function runGuard(guard: CanActivateFn): boolean | UrlTree {
   ) as boolean | UrlTree;
 }
 
+/*
+ * Who gets through: an authenticated visitor activates, an unauthenticated one is sent to login, and
+ * adminGuard sends an authenticated non-admin to the authenticated home rather than to login.
+ * Out of scope: how the session is established or expires - auth.service.spec.ts.
+ */
 describe('auth guards', () => {
   beforeEach(() => {
     localStorage.clear();

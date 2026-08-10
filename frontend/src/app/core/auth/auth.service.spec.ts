@@ -31,6 +31,13 @@ function setUp(): { service: AuthService; http: HttpTestingController } {
   };
 }
 
+/*
+ * The session contract: a token in, session facts out. Login and demo login store it, logout clears
+ * it, a stored token is restored on construction, and every claim read from an expired or malformed
+ * token degrades to a safe default rather than throwing.
+ * Out of scope: who may pass through a route (auth.guard.spec.ts), how the token reaches a request
+ * (auth.interceptor.spec.ts) and when an idle session ends (idle-logout.service.spec.ts).
+ */
 describe('AuthService', () => {
   beforeEach(() => {
     localStorage.clear();

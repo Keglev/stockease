@@ -16,6 +16,12 @@ const TRANSLATIONS = {
   }
 };
 
+/*
+ * The search field's request discipline: nothing below the minimum, one request per pause, no repeat for
+ * a term already answered, and a slow response dropped when a later term has superseded it. Also the
+ * browse on focus, which is a different question from a short term and so bypasses the minimum.
+ * Out of scope: what any consumer searches - the invoice, movement and reports specs.
+ */
 describe('TypeaheadComponent', () => {
   let fixture: ComponentFixture<TypeaheadComponent<Row>>;
 

@@ -7,6 +7,11 @@ import { HealthProbe, HealthService } from './health.service';
 
 const HEALTH_URL = `${environment.apiBaseUrl}/health`;
 
+/*
+ * The liveness probe reports up with a measured latency, and reports down for both a down body and a
+ * transport failure - a failing probe must never surface as an error to its caller.
+ * Out of scope: where the result is displayed - footer.component.spec.ts.
+ */
 describe('HealthService', () => {
   let service: HealthService;
   let controller: HttpTestingController;

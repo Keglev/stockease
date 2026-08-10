@@ -105,6 +105,13 @@ class MatDialogStub {
   }
 }
 
+/*
+ * The supplier register end to end: rows including the contact columns, the role-gated delete, and what
+ * each dialog outcome announces. Also the CSV export, which follows the number override rather than the
+ * interface language for its separators.
+ * Out of scope: the form's validation (supplier-form-dialog.component.spec.ts) and the requests
+ * (supplier.service.spec.ts).
+ */
 describe('SupplierListComponent', () => {
   let fixture: ComponentFixture<SupplierListComponent>;
   let suppliers: SupplierServiceStub;

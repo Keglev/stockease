@@ -58,6 +58,12 @@ function failedRequest(status: number, message: string, code?: string): Promise<
   return thrown;
 }
 
+/*
+ * The error contract every consumer downstream depends on: a failure becomes an ApiError carrying the
+ * status, the envelope message and the optional machine code, with a generic fallback when the body
+ * carries none. Also the three different 401 cases, which must not all log out.
+ * Out of scope: how a component displays the message it is handed.
+ */
 describe('errorInterceptor', () => {
   beforeEach(() => {
     localStorage.clear();

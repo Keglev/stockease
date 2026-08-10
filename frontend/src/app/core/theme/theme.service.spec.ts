@@ -28,6 +28,11 @@ function appliedScheme(): string {
   return document.documentElement.style.colorScheme;
 }
 
+/*
+ * Theme resolution in priority order - stored choice, then the system preference, then light - and that
+ * setting a theme persists it, updates the signal and applies the root colour scheme.
+ * Out of scope: the toolbar control that calls this service - theme-toggle.component.spec.ts.
+ */
 describe('ThemeService', () => {
   beforeEach(() => {
     localStorage.clear();

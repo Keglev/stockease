@@ -148,6 +148,14 @@ interface ComponentApi {
   removeItem(index: number): void;
 }
 
+/*
+ * Recording an invoice: the type decides which register the counterparty comes from and whether one is
+ * required at all - a sale may name nobody, which is a walk-in rather than a missing field. Also the
+ * line rows, the running total, and that the posted body carries exactly the expected keys and no
+ * financial fields.
+ * Out of scope: the search control itself (typeahead.component.spec.ts) and the request
+ * (invoice.service.spec.ts).
+ */
 describe('InvoiceCreateComponent', () => {
   let fixture: ComponentFixture<InvoiceCreateComponent>;
   let invoices: InvoiceServiceStub;

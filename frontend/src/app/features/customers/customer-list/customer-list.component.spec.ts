@@ -120,6 +120,13 @@ class MatDialogStub {
   }
 }
 
+/*
+ * The customer register end to end: rows, the role-gated delete, the summary and edit affordances, and
+ * what each dialog outcome announces. Also the CSV export, which carries the whole register in the
+ * reader's own separators and includes a column the table does not show.
+ * Out of scope: the dialogs' own validation (customer-form-dialog and customer-summary-dialog specs)
+ * and the requests behind them (customer.service.spec.ts).
+ */
 describe('CustomerListComponent', () => {
   let fixture: ComponentFixture<CustomerListComponent>;
   let customers: CustomerServiceStub;

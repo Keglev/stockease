@@ -45,6 +45,11 @@ const ENRICHED: ChangeLogEntryResponse[] = [
   }
 ];
 
+/*
+ * The three audit reads: each hits its own URL, emits the bare array unchanged, and serializes a period
+ * into query parameters only when one is given.
+ * Out of scope: how the entries are rendered - change-history.component.spec.ts.
+ */
 describe('AuditService', () => {
   let service: AuditService;
   let controller: HttpTestingController;

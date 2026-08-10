@@ -46,6 +46,12 @@ class ProductServiceStub {
   }
 }
 
+/*
+ * Creation is master data: the dialog offers a SKU and no quantity control, blocks a blank name, a
+ * blank SKU or a non-positive price, and posts exactly the three fields.
+ * Out of scope: the list that opens it and the request behind it - product-list.component.spec.ts and
+ * product.service.spec.ts.
+ */
 describe('ProductCreateDialogComponent', () => {
   let fixture: ComponentFixture<ProductCreateDialogComponent>;
   let service: ProductServiceStub;

@@ -39,6 +39,11 @@ const PAGE: PaginatedProducts = {
   totalPages: 4
 };
 
+/*
+ * The per-endpoint envelope contract across the product API, including the two shapes low-stock can
+ * answer with - an array, or a message object that must read as empty rather than as a failure.
+ * Out of scope: the screens that call these methods.
+ */
 describe('ProductService', () => {
   let service: ProductService;
   let controller: HttpTestingController;

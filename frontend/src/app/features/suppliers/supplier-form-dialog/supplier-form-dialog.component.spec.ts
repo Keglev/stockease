@@ -88,6 +88,12 @@ class SupplierServiceStub {
   }
 }
 
+/*
+ * The supplier form in both modes: name and address are required where the contact fields are not, an
+ * invalid email is blocked and named, edit mode prefills and sends the supplier id, and clearing a
+ * contact field sends it blank. Also that both shipped locales read as intended.
+ * Out of scope: the list that opens this dialog - supplier-list.component.spec.ts.
+ */
 describe('SupplierFormDialogComponent', () => {
   let fixture: ComponentFixture<SupplierFormDialogComponent>;
   let service: SupplierServiceStub;

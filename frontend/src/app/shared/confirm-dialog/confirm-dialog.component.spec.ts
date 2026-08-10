@@ -24,6 +24,11 @@ const DATA: ConfirmDialogData = {
   messageParams: { name: 'Acme' }
 };
 
+/*
+ * A generic confirmation: it renders the translation keys it is handed, shows the optional detail line
+ * only when one is given, and closes with true or false.
+ * Out of scope: what any caller does with that answer - nothing domain-specific belongs here.
+ */
 describe('ConfirmDialogComponent', () => {
   let fixture: ComponentFixture<ConfirmDialogComponent>;
   let dialogRef: { close: ReturnType<typeof vi.fn> };

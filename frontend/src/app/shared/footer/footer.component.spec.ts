@@ -29,6 +29,11 @@ class HealthServiceStub {
   }
 }
 
+/*
+ * The footer's own health poll: it shows the measured latency when the probe is up, an unavailable label
+ * when it is down, re-probes on its interval, and stops polling on destroy.
+ * Out of scope: what the probe itself does with a failure - health.service.spec.ts.
+ */
 describe('FooterComponent', () => {
   let fixture: ComponentFixture<FooterComponent>;
   let health: HealthServiceStub;

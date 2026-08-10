@@ -18,6 +18,12 @@ const JANE: CustomerResponse = {
   createdAt: '2026-01-02T03:04:00'
 };
 
+/*
+ * The per-endpoint envelope contract: the collection read and the create emit their bare payloads while
+ * update and delete are unwrapped. Also that a blank optional field is omitted from the body, which is
+ * how the backend is asked to clear it.
+ * Out of scope: the screens that call these methods.
+ */
 describe('CustomerService', () => {
   let service: CustomerService;
   let controller: HttpTestingController;

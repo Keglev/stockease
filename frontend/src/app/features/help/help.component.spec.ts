@@ -53,6 +53,12 @@ class HealthServiceStub {
 @Component({ selector: 'app-test-host', imports: [RouterOutlet], template: '<router-outlet />' })
 class TestHostComponent {}
 
+/*
+ * The URL is the single source of truth for which topic is open: both pickers navigate rather than
+ * setting local state, an unknown topic and the bare path redirect to the overview, and the back
+ * button therefore works across topics. Also that a language switch swaps title and body in place.
+ * Out of scope: whether the two prose modules agree - help-content.spec.ts.
+ */
 describe('HelpComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: HTMLElement;

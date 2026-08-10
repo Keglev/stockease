@@ -41,6 +41,12 @@ class HostComponent {
   readonly option = signal<ChartOption>(OPTION);
 }
 
+/*
+ * The wrapper owns the whole instance lifecycle: init once, set options without reinitialising, dispose
+ * and reinit on a theme change, and dispose and disconnect on destroy. Also that the injection token
+ * resolves to the real library when nothing overrides it.
+ * Out of scope: what any feature puts in an option object.
+ */
 describe('ChartComponent', () => {
   let fixture: ComponentFixture<HostComponent>;
   let theme: ThemeServiceStub;

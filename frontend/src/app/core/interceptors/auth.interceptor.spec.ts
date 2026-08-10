@@ -26,6 +26,11 @@ function setUp(): { http: HttpClient; controller: HttpTestingController } {
   };
 }
 
+/*
+ * The header rule: an API request with a token gets the Authorization header, and a request that is
+ * either off-API or token-less is passed through untouched.
+ * Out of scope: where the token comes from - auth.service.spec.ts.
+ */
 describe('authInterceptor', () => {
   beforeEach(() => {
     localStorage.clear();

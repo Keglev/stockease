@@ -98,6 +98,11 @@ function describeDivergence(en: string[], de: string[]): string {
   return `EN and DE locale files diverged - ${problems.join('; ') || 'no difference detected'}`;
 }
 
+/*
+ * The CI parity rule applied to the shipped files: the two locales carry the same key paths in the
+ * same order, and no value is an empty string.
+ * Out of scope: whether any translation is a good one - that is a review question, not a testable one.
+ */
 describe('translation parity', () => {
   it('keyPaths_enAndDe_matchExactlyIncludingOrder', () => {
     const en = keyPaths(readLocale('en.json'));

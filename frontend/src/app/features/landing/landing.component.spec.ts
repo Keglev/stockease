@@ -106,6 +106,12 @@ class NotificationServiceStub {
   }
 }
 
+/*
+ * The public entry page: it describes the product, stages the screenshots for the current language and
+ * theme, and offers both demo roles. The demo buttons sign in and enter the application, are disabled
+ * while in flight, and re-enable on rejection.
+ * Out of scope: what happens after entry - login.component.spec.ts and the authenticated shell.
+ */
 describe('LandingComponent', () => {
   let fixture: ComponentFixture<LandingComponent>;
   let auth: AuthServiceStub;

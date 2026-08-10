@@ -52,6 +52,12 @@ class ProductServiceStub {
   }
 }
 
+/*
+ * One dialog, two modes mirroring the API's separate endpoints: each prefills its own current value and
+ * calls its own method with the product id.
+ * Out of scope: quantity, which no endpoint accepts, and the list that opens this
+ * (product-list.component.spec.ts).
+ */
 describe('ProductEditDialogComponent', () => {
   let fixture: ComponentFixture<ProductEditDialogComponent>;
   let service: ProductServiceStub;

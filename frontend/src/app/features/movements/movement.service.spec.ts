@@ -25,6 +25,11 @@ const RECORDED: MovementResponse = {
   createdAt: '2026-01-02T03:04:00'
 };
 
+/*
+ * The two movement writes: each emits its bare response, a loss omits the unit-cost key entirely, and a
+ * return carries all four keys including the product id.
+ * Out of scope: the form that collects them - movement-record.component.spec.ts.
+ */
 describe('MovementService', () => {
   let service: MovementService;
   let controller: HttpTestingController;

@@ -35,6 +35,12 @@ function childPaths(parentPath: string): (string | undefined)[] {
   return (ALL.find((entry) => entry.path === parentPath)?.route.children ?? []).map((c) => c.path);
 }
 
+/*
+ * Pins the route table itself: every lazy route resolves to a component, the guarded area is
+ * guarded, and the two orderings that are silent when wrong - 'invoices/new' before 'invoices/:id',
+ * the wildcard last - stay that way.
+ * Out of scope: what any routed component renders. Each has its own spec.
+ */
 describe('app.routes', () => {
   // 60s for this one test, against the suite's 20s ceiling: resolving 18 lazy chunks compiles all
   // of them, which legitimately exceeds the ceiling on a cold .angular/cache or a loaded worker.

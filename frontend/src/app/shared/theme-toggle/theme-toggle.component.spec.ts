@@ -8,6 +8,11 @@ const TRANSLATIONS = {
   en: { common: { themeLight: 'Light mode', themeDark: 'Dark mode' } }
 };
 
+/*
+ * The icon offers the action rather than naming the current mode, and a click writes through to the
+ * theme service rather than holding state here.
+ * Out of scope: how the theme is resolved and stored - theme.service.spec.ts.
+ */
 describe('ThemeToggleComponent', () => {
   let fixture: ComponentFixture<ThemeToggleComponent>;
   let theme: ThemeService;

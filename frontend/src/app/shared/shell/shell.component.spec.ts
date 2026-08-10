@@ -114,6 +114,12 @@ class MatSnackBarStub {
   }
 }
 
+/*
+ * The authenticated frame: the sidenav is fixed open on desktop and an overlay on a handset, navigation
+ * closes the overlay but not the desktop drawer, and the toolbar sheds content by tier rather than
+ * wrapping. Also that the shell starts and stops the idle timer and surfaces its warning as a snackbar.
+ * Out of scope: the idle timing itself - idle-logout.service.spec.ts.
+ */
 describe('ShellComponent', () => {
   let fixture: ComponentFixture<ShellComponent>;
   let breakpoints: BreakpointObserverStub;
