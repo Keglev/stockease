@@ -1,7 +1,6 @@
 ﻿import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -45,6 +44,8 @@ import { SupplierService } from '../../suppliers/supplier.service';
 import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { AppDatePipe } from '../../../shared/format/app-date.pipe';
+import { PeriodToggleComponent, ReportPeriod } from './period-toggle/period-toggle.component';
+import { ReportView, ReportViewToggleComponent } from './report-view-toggle/report-view-toggle.component';
 
 const PROFIT_TAB = 0;
 // Cash flow sits second, next to profit: the two answer the paired questions of what the business
@@ -65,16 +66,6 @@ const TAB_COUNT = 7;
 /** Sentinel for the changes tab's user select; no account can collide with it. */
 const ALL_USERS = '';
 
-/** Which half of a tab is on screen; the two never share the vertical space any more. */
-type ReportView = 'chart' | 'table';
-
-/**
- * The windows the period toggles offer. One type for both tabs: they present the same choices,
- * and only the date each tab's endpoint compares against differs - payment dates for cash flow,
- * booking dates for profit.
- */
-type ReportPeriod = 'd30' | 'd90' | 'd180' | 'year' | 'all';
-
 const PERIOD_DAYS: Record<'d30' | 'd90' | 'd180', number> = { d30: 30, d90: 90, d180: 180 };
 
 const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
@@ -93,7 +84,6 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
   imports: [
     AppCurrencyPipe, AppDateTimePipe, AppDatePipe, ChartComponent,
     MatButtonModule,
-    MatButtonToggleModule,
     MatCardModule,
     MatFormFieldModule,
     MatIconModule,
@@ -103,6 +93,8 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
     MatSortModule,
     MatTableModule,
     MatTabsModule,
+    PeriodToggleComponent,
+    ReportViewToggleComponent,
     RouterLink,
     TranslatePipe,
     TypeaheadComponent

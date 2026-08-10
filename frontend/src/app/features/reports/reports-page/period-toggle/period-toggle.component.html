@@ -1,0 +1,12 @@
+<mat-button-toggle-group
+  class="period-toggle"
+  hideSingleSelectionIndicator
+  [value]="value()"
+  (valueChange)="selected.emit($event)"
+>
+  <mat-button-toggle value="d30">{{ 'reports.period.d30' | translate }}</mat-button-toggle>
+  <mat-button-toggle value="d90">{{ 'reports.period.d90' | translate }}</mat-button-toggle>
+  <mat-button-toggle value="d180">{{ 'reports.period.d180' | translate }}</mat-button-toggle>
+  <mat-button-toggle value="year">{{ 'reports.period.year' | translate }}</mat-button-toggle>
+  <mat-button-toggle value="all">{{ 'reports.period.all' | translate }}</mat-button-toggle>
+</mat-button-toggle-group>

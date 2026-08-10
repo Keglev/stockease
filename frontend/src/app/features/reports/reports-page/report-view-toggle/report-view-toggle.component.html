@@ -1,0 +1,9 @@
+<mat-button-toggle-group
+  class="view-toggle"
+  hideSingleSelectionIndicator
+  [value]="value()"
+  (valueChange)="selected.emit($event)"
+>
+  <mat-button-toggle value="chart">{{ 'reports.view.chart' | translate }}</mat-button-toggle>
+  <mat-button-toggle value="table">{{ tableLabelKey() | translate }}</mat-button-toggle>
+</mat-button-toggle-group>

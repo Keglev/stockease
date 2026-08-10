@@ -1,0 +1,8 @@
+// The host takes over the box the toggle group itself used to be, which is why it declares a
+// display rather than leaving the default: an inline host would drop the vertical margin
+// altogether, and a block one would stop two toggles sharing a line on the tabs that place them
+// side by side.
+:host {
+  display: inline-flex;
+  margin-bottom: 1rem;
+}
