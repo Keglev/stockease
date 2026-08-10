@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>21/21</span>
+                <span class='fraction'>15/15</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>17/17</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -123,18 +123,8 @@
 <a name='L58'></a><a href='#L58'>58</a>
 <a name='L59'></a><a href='#L59'>59</a>
 <a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a>
-<a name='L63'></a><a href='#L63'>63</a>
-<a name='L64'></a><a href='#L64'>64</a>
-<a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a>
-<a name='L67'></a><a href='#L67'>67</a>
-<a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a>
-<a name='L70'></a><a href='#L70'>70</a>
-<a name='L71'></a><a href='#L71'>71</a>
-<a name='L72'></a><a href='#L72'>72</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -170,7 +160,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -187,25 +178,12 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Component, inject, signal } from '@angular/core';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -216,6 +194,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ProductResponse } from '../../../core/api/api-models';
 import { positivePrice } from '../positive-price.validator';
 import { ProductService } from '../product.service';
+import { createDialogSubmitStore } from '../../../shared/dialog/dialog-submit-store';
 &nbsp;
 /**
  * Creates a product from its name, SKU and purchase price. There is no quantity control, because
@@ -240,8 +219,9 @@ export class ProductCreateDialogComponent {
   private readonly dialogRef =
     inject&lt;MatDialogRef&lt;ProductCreateDialogComponent, ProductResponse&gt;&gt;(MatDialogRef);
 &nbsp;
-  protected readonly pending = signal(false);
-  protected readonly errorMessage = signal&lt;string | null&gt;(null);
+  protected readonly submitState = createDialogSubmitStore&lt;ProductResponse&gt;((saved) =&gt;
+    this.dialogRef.close(saved)
+  );
 &nbsp;
   // No quantity control: creation is master-data only and books no stock (ADR 018). The SKU is
   // operator-assigned - it is the article number the business already uses, not ours to invent.
@@ -252,24 +232,11 @@ export class ProductCreateDialogComponent {
   });
 &nbsp;
   protected submit(): void {
-    if (this.form.invalid || this.pending()) {
+    if (this.form.invalid || this.submitState.pending()) {
       return;
     }
-    this.pending.set(true);
-    this.errorMessage.set(null);
-&nbsp;
     const { name, sku, purchasePrice } = this.form.getRawValue();
-    this.products.create(name, sku, Number(purchasePrice)).subscribe({
-      next: (created) =&gt; {
-        this.pending.set(false);
-        this.dialogRef.close(created);
-      },
-      error: (err: Error) =&gt; {
-        // The dialog stays open so the user can correct the input (e.g. a duplicate name).
-        this.pending.set(false);
-        this.errorMessage.set(err.message);
-      }
-    });
+    this.submitState.submit(this.products.create(name, sku, Number(purchasePrice)));
   }
 &nbsp;
   protected cancel(): void {
@@ -283,7 +250,7 @@ export class ProductCreateDialogComponent {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-10T10:31:38.580Z
+                at 2026-08-10T10:48:29.071Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
