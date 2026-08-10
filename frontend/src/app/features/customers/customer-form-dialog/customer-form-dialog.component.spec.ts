@@ -98,6 +98,12 @@ class CustomerServiceStub {
   }
 }
 
+/*
+ * The customer form in both modes: name is the only required field, an invalid email blocks the
+ * submit, edit mode prefills every field and sends the customer id, and clearing an optional field
+ * sends it blank so the backend clears it. Also that both shipped locales read as intended.
+ * Out of scope: the list that opens this dialog - customer-list.component.spec.ts.
+ */
 describe('CustomerFormDialogComponent', () => {
   let fixture: ComponentFixture<CustomerFormDialogComponent>;
   let service: CustomerServiceStub;

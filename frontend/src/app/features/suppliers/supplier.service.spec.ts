@@ -18,6 +18,11 @@ const ACME: SupplierResponse = {
   createdAt: '2026-01-02T03:04:00'
 };
 
+/*
+ * The per-endpoint envelope contract across the supplier API, and that a blank optional field is omitted
+ * from the body rather than sent empty.
+ * Out of scope: the screens that call these methods.
+ */
 describe('SupplierService', () => {
   let service: SupplierService;
   let controller: HttpTestingController;

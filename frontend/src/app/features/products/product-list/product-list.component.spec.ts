@@ -137,6 +137,13 @@ class MatDialogStub {
   }
 }
 
+/*
+ * The catalogue: paged rows, the role-gated create, delete and recycle-bin toggle, and the menu items
+ * each role may reach. The deleted view is a separate view with its own empty state and no paginator,
+ * and restore has its own conflict handling.
+ * Out of scope: the dialogs (product-create-dialog and product-edit-dialog specs) and the requests
+ * (product.service.spec.ts).
+ */
 describe('ProductListComponent', () => {
   let fixture: ComponentFixture<ProductListComponent>;
   let stub: ProductServiceStub;

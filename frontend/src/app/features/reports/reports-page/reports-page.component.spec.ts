@@ -440,6 +440,15 @@ class ReportServiceStub {
   }
 }
 
+/*
+ * The reporting page tab by tab: each loads lazily on first activation and refetches on its own period
+ * change, each offers a chart and a table view whose choice survives switching away, and each failure
+ * reports itself and clears the loading bar rather than hanging it. Also the sorting, the filters, the
+ * CSV exports, and that every rendered value follows the reader's language and format overrides.
+ * Out of scope: the requests (report.service.spec.ts), the chart wrapper
+ * (chart.component.spec.ts), the top-N rule (chart-data.spec.ts) and the profit drill-down
+ * (profit-detail-dialog.component.spec.ts).
+ */
 describe('ReportsPageComponent', () => {
   let fixture: ComponentFixture<ReportsPageComponent>;
   let reports: ReportServiceStub;

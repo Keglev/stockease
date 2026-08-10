@@ -64,6 +64,13 @@ const TRANSLATIONS = {
   }
 };
 
+/*
+ * The preferences page owns no state: every control reads its service and writes back through it, and
+ * the date and number options label themselves with a live example. Also the session facts, which show
+ * em dashes rather than blanks when a claim is missing.
+ * Out of scope: what the services do with those choices - theme.service, language.service and
+ * format.service specs.
+ */
 describe('SettingsComponent', () => {
   let fixture: ComponentFixture<SettingsComponent>;
   let theme: ThemeService;

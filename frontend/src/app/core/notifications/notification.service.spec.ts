@@ -31,6 +31,12 @@ class MatSnackBarStub {
   }
 }
 
+/*
+ * The resolve rule: a known translation key is translated, and anything else - a backend sentence, an
+ * unknown dotted key, a key resolving to a nested node - is shown verbatim rather than echoed at the
+ * reader. Also that a language switch after injection is picked up.
+ * Out of scope: which callers raise which message.
+ */
 describe('NotificationService', () => {
   let service: NotificationService;
   let snackBar: MatSnackBarStub;

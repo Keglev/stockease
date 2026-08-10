@@ -26,6 +26,12 @@ const DETAIL: ProductProfitReport = {
   grossProfit: 60
 };
 
+/*
+ * A read-only drill-down on one profit row: every figure is rendered, including a negative profit and an
+ * all-zero product, formatted in the reader's own language, and a deleted product is marked.
+ * Out of scope: fetching the detail, which the reports page does before opening this
+ * (reports-page.component.spec.ts).
+ */
 describe('ProfitDetailDialogComponent', () => {
   let fixture: ComponentFixture<ProfitDetailDialogComponent>;
   let dialogRef: { close: ReturnType<typeof vi.fn> };

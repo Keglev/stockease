@@ -12,6 +12,12 @@ function lines(content: string): string[] {
   return content.slice(BOM.length).trimEnd().split('\r\n');
 }
 
+/*
+ * The CSV contract: the separator and decimal mark follow the locale, a field containing a separator or
+ * a quote is escaped, and every file starts with a byte-order mark so a spreadsheet reads it as UTF-8.
+ * Also that the download hands over a blob and revokes its URL.
+ * Out of scope: which columns any page exports - the list and reports specs.
+ */
 describe('buildCsv', () => {
   it('buildCsv_germanLocale_usesSemicolonAndCommaDecimals', () => {
     const csv = buildCsv(HEADERS, [['Möbel', 1234.5]], 'de-DE');

@@ -182,6 +182,14 @@ class MovementServiceStub {
   }
 }
 
+/*
+ * One invoice and what may be done to it: totals are computed from the lines, the counterparty is read
+ * from the snapshot on the row, and which of close, mark-paid, delete and return are offered depends on
+ * status, payment and role. Also that each rejection maps to the right message, by code where one is
+ * carried.
+ * Out of scope: the return quantity form (invoice-return-dialog.component.spec.ts) and the requests
+ * (invoice.service.spec.ts).
+ */
 describe('InvoiceDetailComponent', () => {
   let fixture: ComponentFixture<InvoiceDetailComponent>;
   let notifications: NotificationServiceStub;

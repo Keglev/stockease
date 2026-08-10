@@ -29,6 +29,12 @@ const WIDGET: ProductResponse = {
 
 const GADGET: ProductResponse = { ...WIDGET, id: 4, name: 'Gadget', sku: 'SKU-4', quantity: 0 };
 
+/*
+ * A pure presenter: it lists the rows it was handed, links each to the products page, closes on
+ * navigation, and shows an empty state when there are none.
+ * Out of scope: fetching those rows, which the dashboard did before opening this
+ * (dashboard.component.spec.ts).
+ */
 describe('LowStockDialogComponent', () => {
   let fixture: ComponentFixture<LowStockDialogComponent>;
   let dialogRef: { close: ReturnType<typeof vi.fn> };

@@ -111,6 +111,12 @@ interface ComponentApi {
   reasons: readonly string[];
 }
 
+/*
+ * The loss form: it offers only the two loss reasons and excludes every reason booked elsewhere, always
+ * offers a remark and never a unit cost, and submits exactly the keys the endpoint accepts.
+ * Out of scope: the product search control (typeahead.component.spec.ts) and the request
+ * (movement.service.spec.ts).
+ */
 describe('MovementRecordComponent', () => {
   let fixture: ComponentFixture<MovementRecordComponent>;
   let movements: MovementServiceStub;

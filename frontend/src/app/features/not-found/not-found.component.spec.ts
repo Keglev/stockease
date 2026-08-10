@@ -33,6 +33,11 @@ class HealthServiceStub {
 @Component({ selector: 'app-test-host', imports: [RouterOutlet], template: '<router-outlet />' })
 class TestHostComponent {}
 
+/*
+ * The wildcard route renders this page for an unmatched URL at either level, and the page offers a way
+ * back to the start.
+ * Out of scope: the ordering that makes the wildcard reachable last - app.routes.spec.ts.
+ */
 describe('NotFoundComponent', () => {
   /* Navigates the real route table to a URL and returns the rendered host element. */
   async function renderRoute(url: string): Promise<HTMLElement> {

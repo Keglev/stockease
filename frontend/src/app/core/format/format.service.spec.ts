@@ -7,6 +7,12 @@ import { FORMAT_DATE_KEY, FORMAT_NUMBER_KEY, FormatService } from './format.serv
 /* The last day of 2026 at 15:04, which reads differently in every option this service offers. */
 const MOMENT = new Date(2026, 11, 31, 15, 4);
 
+/*
+ * Every rendered date, amount and number, in both languages: 'auto' follows the interface language,
+ * an explicit override beats it, and the two preferences are independent of each other. Also that the
+ * choices survive a reload and that an unsupported value is ignored.
+ * Out of scope: the pipes that call this service - format-pipes.spec.ts.
+ */
 describe('FormatService', () => {
   let format: FormatService;
   let language: LanguageService;

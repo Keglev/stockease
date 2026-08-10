@@ -10,6 +10,11 @@ const TRANSLATIONS = {
   de: { common: { appName: 'Bestandskontrolle', language: 'Sprache' } }
 };
 
+/*
+ * The header the public pages share: it shows the application name and both toggles, and deliberately
+ * carries none of the session chrome the authenticated shell has.
+ * Out of scope: the authenticated toolbar - shell.component.spec.ts.
+ */
 describe('PublicHeaderComponent', () => {
   let fixture: ComponentFixture<PublicHeaderComponent>;
 

@@ -57,6 +57,11 @@ class NotificationServiceStub {
   }
 }
 
+/*
+ * A read-only drill-down: it loads for the id it was handed, renders every figure including an
+ * all-zero summary, marks a deleted customer, and closes with a notification when the load fails.
+ * Out of scope: the reporting endpoint it reads - report.service.spec.ts.
+ */
 describe('CustomerSummaryDialogComponent', () => {
   let fixture: ComponentFixture<CustomerSummaryDialogComponent>;
   let reports: ReportServiceStub;

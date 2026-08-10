@@ -36,6 +36,11 @@ class HealthServiceStub {
   }
 }
 
+/*
+ * A static acknowledgement page: it names the application, offers the way back to the landing page and
+ * to login, and carries the public header and footer rather than the authenticated chrome.
+ * Out of scope: the sign-out itself, which has already happened before this page is reached.
+ */
 describe('LogoutComponent', () => {
   let fixture: ComponentFixture<LogoutComponent>;
 

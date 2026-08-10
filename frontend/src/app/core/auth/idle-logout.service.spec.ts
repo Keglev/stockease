@@ -15,6 +15,12 @@ class AuthServiceStub {
   }
 }
 
+/*
+ * The idle window: silence for the full window signs out to the expired login, activity re-arms it,
+ * and the warning fires at its own point and is cleared by activity. Also that the timers are
+ * throttled, and that starting twice arms one window rather than two.
+ * Out of scope: what the shell does with the warning - shell.component.spec.ts.
+ */
 describe('IdleLogoutService', () => {
   let idle: IdleLogoutService;
   let auth: AuthServiceStub;

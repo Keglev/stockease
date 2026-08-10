@@ -223,6 +223,13 @@ class HealthServiceStub {
   }
 }
 
+/*
+ * The first screen after login: each KPI reads its own source, a failed load shows a dash rather than a
+ * number, and refresh re-reads everything. Also the two cards' chart and table views, and the values
+ * they render, which follow the reader's language and format overrides.
+ * Out of scope: health, which the footer owns and this page deliberately does not poll
+ * (footer.component.spec.ts), and the low-stock dialog (low-stock-dialog.component.spec.ts).
+ */
 describe('DashboardComponent', () => {
   let fixture: ComponentFixture<DashboardComponent>;
   let reports: ReportServiceStub;

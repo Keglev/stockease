@@ -60,6 +60,12 @@ function purchaseDraft() {
   });
 }
 
+/*
+ * The per-endpoint envelope contract across the invoice API, and the create body: financial fields are
+ * never sent, and a counterparty key is omitted rather than sent null - including a walk-in sale, which
+ * sends neither.
+ * Out of scope: the screens that call these methods.
+ */
 describe('InvoiceService', () => {
   let service: InvoiceService;
   let controller: HttpTestingController;

@@ -7,6 +7,11 @@ function control(value: unknown): AbstractControl {
   return { value } as AbstractControl;
 }
 
+/*
+ * A price must be positive, and a blank value is not this validator's error to claim - it defers to
+ * required rather than reporting twice on the same field.
+ * Out of scope: the forms that apply it.
+ */
 describe('positivePrice', () => {
   it('validate_positiveAmount_returnsNoError', () => {
     expect(positivePrice(control(0.01))).toBeNull();

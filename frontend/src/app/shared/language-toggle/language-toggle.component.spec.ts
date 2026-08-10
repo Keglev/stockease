@@ -9,6 +9,11 @@ const TRANSLATIONS = {
   de: { common: { language: 'Sprache' } }
 };
 
+/*
+ * One button per supported language, the active one marked, and a click that writes through to the
+ * language service rather than holding state here.
+ * Out of scope: how the choice is resolved and stored - language.service.spec.ts.
+ */
 describe('LanguageToggleComponent', () => {
   let fixture: ComponentFixture<LanguageToggleComponent>;
 

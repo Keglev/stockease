@@ -32,6 +32,12 @@ function setUp(browserLang: string | undefined): {
   return { service: TestBed.inject(LanguageService), translate };
 }
 
+/*
+ * Startup language resolution in priority order - stored value, then browser, then English - and that
+ * an unsupported value at either source is skipped rather than accepted.
+ * Out of scope: that the two translation files agree (translation-parity.spec.ts) and the toolbar
+ * control that calls this service (language-toggle.component.spec.ts).
+ */
 describe('LanguageService', () => {
   beforeEach(() => {
     localStorage.clear();
