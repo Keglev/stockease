@@ -11,19 +11,13 @@ import { Observable } from 'rxjs';
 
 import { InvoiceItemResponse, InvoiceResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ApiError } from '../../../core/interceptors/error.interceptor';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData
 } from '../../../shared/confirm-dialog/confirm-dialog.component';
-import { MovementService } from '../../movements/movement.service';
-import {
-  InvoiceReturnDialogComponent,
-  InvoiceReturnDialogData,
-  InvoiceReturnDialogResult
-} from '../invoice-return-dialog/invoice-return-dialog.component';
 import { InvoiceService } from '../invoice.service';
+import { InvoiceDetailReturns } from './invoice-detail-returns';
 import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { AppDatePipe } from '../../../shared/format/app-date.pipe';
@@ -50,16 +44,18 @@ import { AppDatePipe } from '../../../shared/format/app-date.pipe';
     TranslatePipe
   ],
   templateUrl: './invoice-detail.component.html',
-  styleUrl: './invoice-detail.component.scss'
+  styleUrl: './invoice-detail.component.scss',
+  providers: [InvoiceDetailReturns]
 })
 export class InvoiceDetailComponent implements OnInit {
   private readonly invoices = inject(InvoiceService);
-  private readonly movements = inject(MovementService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  protected readonly returns = inject(InvoiceDetailReturns);
 
   // Same admin detection the products feature uses; UI convenience only, the server enforces 403.
   protected readonly isAdmin = computed(() => this.auth.role() === 'ADMIN');
@@ -103,102 +99,16 @@ export class InvoiceDetailComponent implements OnInit {
     this.items().reduce((sum, item) => sum + this.lineTotal(item), 0)
   );
 
+  constructor() {
+    this.returns.connect({
+      invoice: this.invoice,
+      working: this.working,
+      reload: () => this.load(this.currentId())
+    });
+  }
+
   ngOnInit(): void {
     this.load(Number(this.route.snapshot.paramMap.get('id')));
-  }
-
-  /** Units still returnable on one line. */
-  protected remaining(item: InvoiceItemResponse): number {
-    return (item.quantity ?? 0) - (item.returnedQty ?? 0);
-  }
-
-  /**
-   * Mirrors the backend guard: returns need a closed invoice and a line with units left.
-   * Open to both roles, because the return endpoint authorizes hasAnyRole(ADMIN, USER).
-   */
-  protected canReturn(item: InvoiceItemResponse): boolean {
-    return this.invoice()?.status !== 'OPEN' && this.remaining(item) > 0;
-  }
-
-  protected openReturn(item: InvoiceItemResponse): void {
-    const invoice = this.invoice();
-    if (!invoice) {
-      return;
-    }
-
-    const data: InvoiceReturnDialogData = {
-      item,
-      invoiceType: invoice.type === 'SALE' ? 'SALE' : 'PURCHASE'
-    };
-
-    this.dialog
-      .open(InvoiceReturnDialogComponent, { data })
-      .afterClosed()
-      .subscribe((result: InvoiceReturnDialogResult | undefined) => {
-        if (result) {
-          this.registerReturn(item, result.quantity);
-        }
-      });
-  }
-
-  private registerReturn(item: InvoiceItemResponse, quantity: number): void {
-    const invoice = this.invoice();
-    if (!invoice) {
-      return;
-    }
-    this.working.set(true);
-
-    this.movements
-      .registerReturn({
-        invoiceItemId: item.id as number,
-        // The line's own product id: the backend compares it against the line and rejects a
-        // mismatch, so sending it arms that coherence check rather than repeating data.
-        productId: item.productId as number,
-        // Never user-chosen: the invoice type fixes the direction, and offering the other
-        // reason could only ever produce a 400.
-        reason: invoice.type === 'SALE' ? 'RETURN_FROM_CUSTOMER' : 'RETURNED_TO_SUPPLIER',
-        quantity
-      })
-      .subscribe({
-        next: () => {
-          this.working.set(false);
-          this.notifications.success('invoices.returnDialog.registered');
-          // returnedQty changes and a fully returned invoice flips to FULLY_RETURNED; patching
-          // local state would miss that flip, so the detail is re-read instead.
-          this.load(this.currentId());
-        },
-        error: (err: Error) => {
-          this.working.set(false);
-          this.notifications.error(this.returnFailureMessage(err));
-        }
-      });
-  }
-
-  /**
-   * Picks what a failed return says to the operator.
-   *
-   * The endpoint answers 409 for several unrelated causes, and until the API carried error codes
-   * they were indistinguishable here - which is why every conflict on this operation showed the
-   * deleted-product message, including the stock shortfall it gives exactly the wrong advice for.
-   * The code discriminates them; a return whose product is deleted is fixed by restoring it, a
-   * return the stock cannot cover is not.
-   *
-   * Anything else - no code, an unrecognized one, or a failure that is not an ApiError at all -
-   * falls through to the backend message, which is what every other action on this page does with
-   * a failure it has nothing specific to say about.
-   */
-  private returnFailureMessage(err: Error): string {
-    if (!(err instanceof ApiError)) {
-      return err.message;
-    }
-    switch (err.code) {
-      case 'PRODUCT_DELETED':
-        return 'invoices.returnDialog.deletedProduct';
-      case 'INSUFFICIENT_STOCK':
-        return 'invoices.returnDialog.insufficientStock';
-      default:
-        return err.message;
-    }
   }
 
   /** Line total for one item; display only, never sent back to the API. */
