@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { InvoiceItemResponse } from '../../../core/api/api-models';
+import { integerOnly } from '../../../shared/forms/integer-only.validator';
 
 export interface InvoiceReturnDialogData {
   item: InvoiceItemResponse;
@@ -63,12 +64,4 @@ export class InvoiceReturnDialogComponent {
   protected cancel(): void {
     this.dialogRef.close();
   }
-}
-
-function integerOnly(control: { value: unknown }) {
-  const value = control.value;
-  if (value === null || value === undefined || value === '') {
-    return null;
-  }
-  return Number.isInteger(Number(value)) ? null : { integerOnly: true };
 }
