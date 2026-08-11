@@ -26,6 +26,7 @@ import {
 import { FormatService } from '../../../core/format/format.service';
 import { GaugeBand, createChartContext } from '../../../shared/chart/chart-context';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
+import { bucketValueAt } from '../../../shared/chart/due-buckets';
 import { ChartFormat } from '../../../shared/chart/chart-format';
 import { ChartOption } from '../../../shared/chart/chart.component';
 import { CsvExportService } from '../../../shared/csv/csv-export.service';
@@ -66,6 +67,12 @@ const ALL_USERS = '';
 const PERIOD_DAYS: Record<'d30' | 'd90' | 'd180', number> = { d30: 30, d90: 90, d180: 180 };
 
 const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
+
+/** One purchase price and the day it took effect. */
+interface PricePoint {
+  date: string;
+  price: number;
+}
 
 /**
  * Detail view over the reporting endpoints, each tab switching between its chart and its sortable
@@ -122,6 +129,9 @@ export class ReportsPageComponent implements OnInit {
 
   // One entry per tab so a chosen view survives leaving the tab and coming back; charts open
   // first because the chart is what the page is scanned for.
+  // Seven entries for five readers: the changes and analytics tabs carry no view toggle, so their
+  // slots are never read. Indexing by tab number is what keeps every other slot addressable by the
+  // number the tab already has, and two unread booleans are cheaper than a second numbering.
   private readonly views = signal<ReportView[]>(Array<ReportView>(TAB_COUNT).fill('chart'));
 
   protected readonly loading = signal(false);
@@ -868,7 +878,6 @@ export class ReportsPageComponent implements OnInit {
     });
   }
 
-
   /**
    * Headers and separators are resolved at click time, so the file matches the UI language.
    *
@@ -946,12 +955,6 @@ function periodRange(period: ReportPeriod): { from?: string; to?: string } {
   const start = new Date(today);
   start.setDate(start.getDate() - PERIOD_DAYS[period]);
   return { from: isoDate(start), to: isoDate(today) };
-}
-
-/** One purchase price and the day it took effect. */
-interface PricePoint {
-  date: string;
-  price: number;
 }
 
 /**
@@ -1242,14 +1245,9 @@ function toDueOption(buckets: DueDateBucket[], format: ChartFormat): ChartOption
       name: type,
       type: 'line' as const,
       areaStyle: {},
-      data: dates.map((date) => valueOf(buckets, date, type))
+      data: dates.map((date) => bucketValueAt(buckets, date, type))
     }))
   };
-}
-
-function valueOf(buckets: DueDateBucket[], date: string, type: string): number {
-  const match = buckets.find((bucket) => bucket.dueDate === date && bucket.invoiceType === type);
-  return match ? match.totalValue : 0;
 }
 
 /** Sorts in the component rather than through MatTableDataSource, whose MatSort wiring would
@@ -1269,4 +1267,3 @@ function sortRows<T>(rows: T[], sort: Sort): T[] {
     return String(a).localeCompare(String(b)) * factor;
   });
 }
-

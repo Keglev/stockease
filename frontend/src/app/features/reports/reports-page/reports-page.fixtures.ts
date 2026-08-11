@@ -615,7 +615,14 @@ export function createReportsPageHelpers(
     await settle();
   }
 
-  /* Types into a rendered filter box, which is how a reader narrows any of the report tables. */
+  /*
+   * Types into a rendered filter box, which is how a reader narrows any of the report tables.
+   *
+   * <p>The selector is unscoped and still deterministic, on a premise worth stating: MatTabGroup
+   * attaches one tab body at a time, so exactly one filter box is in the DOM whichever tab the
+   * caller activated. A second attached body would make this the first of two, and the helper would
+   * need the tab to scope by.
+   */
   async function typeFilter(value: string): Promise<void> {
     const input = host().querySelector<HTMLInputElement>('.report-filter input');
     input!.value = value;

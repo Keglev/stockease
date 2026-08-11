@@ -1,33 +1,20 @@
-// display: contents so no host box comes between .tab-body and the halves below, as none did when
-// this markup lived in the reports-page template; the dashboard cards take the same treatment.
+@use '../report-card-shared' as card;
+
+// display: contents so no host box comes between .tab-body and the content below, as none did when
+// this markup lived in the reports-page template; every extracted card takes the same treatment.
 :host {
   display: contents;
 }
 
-// Ungrouped from .chart-row, which stays in the page for the tabs that use it.
+@include card.card-frame;
+@include card.section-title;
+@include card.empty-state;
+
+// The two invoice lists sit side by side and wrap together, as the chart row does.
 .due-lists {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-}
-
-// Duplicated from the page's stylesheet rather than moved: .chart-card, .table-card,
-// .section-title and .empty-state are shared classes the other tabs still use, and a page rule
-// cannot reach inside a component. A shared partial is planned to consolidate the copies; until it
-// lands, the two must be changed together.
-.chart-card,
-.table-card {
-  margin-bottom: 1rem;
-}
-
-.section-title {
-  margin: 0 0 0.75rem;
-  font: var(--mat-sys-title-medium);
-}
-
-.empty-state {
-  margin: 0;
-  color: var(--mat-sys-on-surface-variant);
 }
 
 .due-list {

@@ -8,6 +8,7 @@ import { DueDateBucket, InvoiceDueSummary } from '../../../core/api/api-models';
 import { createChartContext } from '../../../shared/chart/chart-context';
 import { ChartFormat } from '../../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
+import { bucketValueAt } from '../../../shared/chart/due-buckets';
 import { AppDatePipe } from '../../../shared/format/app-date.pipe';
 import { CARD_VIEWS, CardView } from '../card-view';
 
@@ -96,12 +97,7 @@ function toDueDateOption(buckets: DueDateBucket[], format: ChartFormat): ChartOp
       name: type,
       type: 'bar' as const,
       stack: 'due',
-      data: dates.map((date) => valueOf(buckets, date, type))
+      data: dates.map((date) => bucketValueAt(buckets, date, type))
     }))
   };
-}
-
-function valueOf(buckets: DueDateBucket[], date: string, type: string): number {
-  const match = buckets.find((bucket) => bucket.dueDate === date && bucket.invoiceType === type);
-  return match ? match.totalValue : 0;
 }

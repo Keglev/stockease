@@ -3,9 +3,10 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { TranslatePipe } from '@ngx-translate/core';
 
 /**
- * The windows the period toggles offer. One type for both tabs: they present the same choices,
- * and only the date each tab's endpoint compares against differs - payment dates for cash flow,
- * booking dates for profit.
+ * The windows the period toggles offer. One type for all five tabs that have one - profit, cash
+ * flow, losses, changes and analytics: they present the same choices, and only the date each tab's
+ * endpoint compares against differs, such as payment dates for cash flow against booking dates for
+ * profit.
  */
 export type ReportPeriod = 'd30' | 'd90' | 'd180' | 'year' | 'all';
 
