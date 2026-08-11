@@ -1,0 +1,123 @@
+@use '../../../../styles/table-scroll' as scroll;
+
+// The rules every extracted report card needs, as mixins.
+//
+// Each tab's body is its own component, so a rule written once in the page's stylesheet could no
+// longer reach any of them - view encapsulation stops at the component boundary. Each card
+// therefore carried its own copy, and the copies had to be changed together. This is where they
+// live now: one definition, included where it applies, so the seven cards cannot drift apart.
+//
+// Mixins rather than plain classes because Angular scopes a component's styles to its own
+// elements: the emitted CSS has to be inside each card's stylesheet, not in a global sheet the
+// cards' host attributes would never match.
+
+/// The bottom margin that separates one card from the next down a tab body.
+@mixin card-frame {
+  .chart-card,
+  .table-card {
+    margin-bottom: 1rem;
+  }
+}
+
+/// The heading above a card's content.
+@mixin section-title {
+  .section-title {
+    margin: 0 0 0.75rem;
+    font: var(--mat-sys-title-medium);
+  }
+}
+
+/// The sentence a card shows in place of content it has none of.
+@mixin empty-state {
+  .empty-state {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+/// The row above a table, carrying its filters and its export.
+@mixin table-heading {
+  // The export sits on the heading line rather than above the table, so it reads as an action on
+  // this table and not on the tab.
+  .table-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  // Tables whose card carries no title still put the button on the right.
+  .table-heading-end {
+    justify-content: flex-end;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/// A report table: full width, its deleted marker, and the wrapper it scrolls inside.
+@mixin report-table {
+  table {
+    width: 100%;
+  }
+
+  // Soft-deleted products stay in the historical reports, so the row says so rather than hiding.
+  .deleted-hint {
+    margin-left: 0.5rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 0.75rem;
+    background: var(--mat-sys-surface-variant);
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-small);
+  }
+
+  // Every table scrolls inside its own wrapper rather than widening the page.
+  .table-scroll {
+    @include scroll.table-scroll;
+  }
+}
+
+/// The headline figures and the view toggle that shares their line.
+@mixin totals-strip {
+  // The three figures read as one line of summary, so they share a row and wrap together rather
+  // than each claiming a card.
+  .totals-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  // One row for the figures and the view toggle, on the tabs that have both. The toggle used to
+  // take a line of its own directly beneath a strip that already had free width to its right, which
+  // cost a whole row of vertical space on three tabs for nothing.
+  .strip-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    // The children carry the row's margin now, so they must not add their own inside it.
+    .totals-strip {
+      margin-bottom: 0;
+    }
+
+    // The view toggle is the row's other child and needs the same treatment, plus the auto margin
+    // that keeps it at the end. Both live in its own stylesheet: it is a component, and a rule here
+    // cannot reach inside one.
+  }
+
+  .total-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .total-label {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  .total-value {
+    font: var(--mat-sys-headline-small);
+  }
+}

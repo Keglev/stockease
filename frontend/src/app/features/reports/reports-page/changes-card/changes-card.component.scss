@@ -1,56 +1,12 @@
-@use '../../../../../styles/table-scroll' as scroll;
+@use '../report-card-shared' as card;
 
-// display: contents so no host box comes between .tab-body and the card below, as none did when
-// this markup lived in the reports-page template; the other extracted cards take the same treatment.
+// display: contents so no host box comes between .tab-body and the content below, as none did when
+// this markup lived in the reports-page template; every extracted card takes the same treatment.
 :host {
   display: contents;
 }
 
-// Every rule below is DUPLICATED from the page's stylesheet rather than moved: each class is still
-// used by the profit, cash-flow, stock or losses tabs, and a page rule cannot reach inside a
-// component. A shared partial is planned to consolidate the copies; until it lands, the two must be
-// changed together. Nothing here is changes-only - the seven change-* classes carry no styles.
-
-.table-card {
-  margin-bottom: 1rem;
-}
-
-// The export sits on the heading line rather than above the table, so it reads as an action on
-// this table and not on the tab.
-.table-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-// Tables whose card carries no title still put the button on the right.
-.table-heading-end {
-  justify-content: flex-end;
-  margin-bottom: 0.75rem;
-}
-
-.empty-state {
-  margin: 0;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-table {
-  width: 100%;
-}
-
-// Soft-deleted products stay in the historical reports, so the row says so rather than hiding.
-.deleted-hint {
-  margin-left: 0.5rem;
-  padding: 0.05rem 0.4rem;
-  border-radius: 0.75rem;
-  background: var(--mat-sys-surface-variant);
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-label-small);
-}
-
-// The table scrolls inside its own wrapper rather than widening the page.
-.table-scroll {
-  @include scroll.table-scroll;
-}
+@include card.card-frame;
+@include card.empty-state;
+@include card.table-heading;
+@include card.report-table;

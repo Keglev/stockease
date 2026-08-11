@@ -1,23 +1,11 @@
-// display: contents so no host box comes between .tab-body and the cards below, as none did when
-// this markup lived in the reports-page template; the other extracted cards take the same treatment.
+@use '../report-card-shared' as card;
+
+// display: contents so no host box comes between .tab-body and the content below, as none did when
+// this markup lived in the reports-page template; every extracted card takes the same treatment.
 :host {
   display: contents;
 }
 
-// These three MOVED out of the page's stylesheet: with this tab and the cash-flow one extracted,
-// the page template has no element left that uses them. The sibling cards carry their own copies,
-// which is what the planned shared partial will consolidate; until it lands, the copies must be
-// changed together.
-.chart-card {
-  margin-bottom: 1rem;
-}
-
-.section-title {
-  margin: 0 0 0.75rem;
-  font: var(--mat-sys-title-medium);
-}
-
-.empty-state {
-  margin: 0;
-  color: var(--mat-sys-on-surface-variant);
-}
+@include card.card-frame;
+@include card.section-title;
+@include card.empty-state;
