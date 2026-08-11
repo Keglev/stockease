@@ -80,5 +80,5 @@ export class StockCardComponent {
   readonly viewChange = output<ReportView>();
   readonly filterChange = output<string>();
   readonly sortChange = output<Sort>();
-  readonly export = output<void>();
+  readonly exportRequested = output<void>();
 }
