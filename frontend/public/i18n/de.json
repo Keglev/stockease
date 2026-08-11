@@ -8,7 +8,19 @@
     "cancel": "Abbrechen",
     "close": "Schließen",
     "save": "Speichern",
-    "exportCsv": "CSV exportieren"
+    "exportCsv": "CSV exportieren",
+    "search": {
+      "noMatches": "Keine Treffer"
+    },
+    "paginator": {
+      "itemsPerPage": "Einträge pro Seite:",
+      "firstPage": "Erste Seite",
+      "previousPage": "Vorherige Seite",
+      "nextPage": "Nächste Seite",
+      "lastPage": "Letzte Seite",
+      "range": "{{start}} - {{end}} von {{total}}",
+      "rangeEmpty": "0 von {{total}}"
+    }
   },
   "landing": {
     "description": "{{app}} ist eine Bestandsverwaltung für kleine Unternehmen: Produkte und Lagerbestände verfolgen, Lieferanten und Kunden verwalten sowie Ein- und Verkäufe über den Rechnungslauf abwickeln. Diese Demo arbeitet mit der aktiven Spring-Boot-API.",
@@ -241,8 +253,7 @@
     },
     "search": {
       "supplier": "Lieferant suchen (mind. 3 Buchstaben)",
-      "product": "Produkt suchen",
-      "noMatches": "Keine Treffer"
+      "product": "Produkt suchen"
     },
     "analytics": {
       "show": "Anzeigen",

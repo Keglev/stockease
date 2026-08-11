@@ -8,7 +8,19 @@
     "cancel": "Cancel",
     "close": "Close",
     "save": "Save",
-    "exportCsv": "Export CSV"
+    "exportCsv": "Export CSV",
+    "search": {
+      "noMatches": "No matches"
+    },
+    "paginator": {
+      "itemsPerPage": "Items per page:",
+      "firstPage": "First page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "lastPage": "Last page",
+      "range": "{{start}} - {{end}} of {{total}}",
+      "rangeEmpty": "0 of {{total}}"
+    }
   },
   "landing": {
     "description": "{{app}} is an inventory management application for small businesses: track products and stock levels, manage suppliers and customers, and settle purchases and sales through the invoice lifecycle. This demo runs against the live Spring Boot API.",
@@ -241,8 +253,7 @@
     },
     "search": {
       "supplier": "Search supplier (min. 3 letters)",
-      "product": "Search product",
-      "noMatches": "No matches"
+      "product": "Search product"
     },
     "analytics": {
       "show": "Show",

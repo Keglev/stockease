@@ -10,7 +10,8 @@ import { SupplierProductPickerComponent } from './supplier-product-picker.compon
 
 const TRANSLATIONS = {
   en: {
-    reports: { search: { supplier: 'Search supplier', product: 'Search product', noMatches: 'No matches' } }
+    common: { search: { noMatches: 'No matches' } },
+    reports: { search: { supplier: 'Search supplier', product: 'Search product' } }
   }
 };
 
