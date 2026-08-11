@@ -1,14 +1,9 @@
 ﻿import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Sort } from '@angular/material/sort';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -32,13 +27,14 @@ import { FormatService } from '../../../core/format/format.service';
 import { GaugeBand, createChartContext } from '../../../shared/chart/chart-context';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartFormat } from '../../../shared/chart/chart-format';
-import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
+import { ChartOption } from '../../../shared/chart/chart.component';
 import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
 import { ReportService } from '../report.service';
 import { SupplierService } from '../../suppliers/supplier.service';
-import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
+import { AnalyticsCardComponent } from './analytics-card/analytics-card.component';
+import { CashFlowCardComponent } from './cash-flow-card/cash-flow-card.component';
 import { ChangesCardComponent } from './changes-card/changes-card.component';
 import { DueDatesCardComponent } from './due-dates-card/due-dates-card.component';
 import { LossesCardComponent } from './losses-card/losses-card.component';
@@ -83,17 +79,13 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 @Component({
   selector: 'app-reports-page',
   imports: [
-    AppCurrencyPipe, ChartComponent,
+    AnalyticsCardComponent,
+    CashFlowCardComponent,
     ChangesCardComponent,
     DueDatesCardComponent,
     LossesCardComponent,
     MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
     MatProgressBarModule,
-    MatTableModule,
     MatTabsModule,
     PeriodToggleComponent,
     ProfitCardComponent,

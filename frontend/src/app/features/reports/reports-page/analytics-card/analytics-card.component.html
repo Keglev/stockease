@@ -1,0 +1,31 @@
+<!-- Keyed on what is SHOWN, not what is picked: choosing a product without pressing Show
+     leaves this prompt exactly where it was, which is what makes the gate visible. -->
+@if (!shown()) {
+  <p class="empty-state analytics-prompt">
+    {{ 'reports.analytics.selectProduct' | translate }}
+  </p>
+} @else {
+  <mat-card class="chart-card">
+    <mat-card-content>
+      <h2 class="section-title">{{ 'reports.analytics.priceHistory' | translate }}</h2>
+      @if (priceOption(); as option) {
+        <app-chart [option]="option" height="20rem" />
+      } @else {
+        <p class="empty-state analytics-no-prices">
+          {{ 'reports.analytics.noPriceChanges' | translate }}
+        </p>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="chart-card">
+    <mat-card-content>
+      <h2 class="section-title">{{ 'reports.analytics.stockVsSales' | translate }}</h2>
+      @if (stockOption(); as option) {
+        <app-chart [option]="option" height="24rem" />
+      } @else {
+        <p class="empty-state analytics-no-stock">{{ 'reports.stock.empty' | translate }}</p>
+      }
+    </mat-card-content>
+  </mat-card>
+}

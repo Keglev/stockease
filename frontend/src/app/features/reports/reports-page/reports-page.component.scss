@@ -1,4 +1,3 @@
-@use '../../../../styles/table-scroll' as scroll;
 :host {
   display: block;
 }
@@ -18,76 +17,6 @@
 
 .tab-body {
   padding-top: 1rem;
-}
-
-.chart-card,
-.table-card {
-  margin-bottom: 1rem;
-}
-
-// The three figures read as one line of summary, so they share a row and wrap together rather
-// than each claiming a card.
-.totals-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 2.5rem;
-  margin-bottom: 1rem;
-}
-
-// One row for the figures and the view toggle, on the tabs that have both. The toggle used to take
-// a line of its own directly beneath a strip that already had free width to its right, which cost a
-// whole row of vertical space on three tabs for nothing.
-.strip-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-
-  // The children carry the row's margin now, so they must not add their own inside it.
-  .totals-strip {
-    margin-bottom: 0;
-  }
-
-  // The view toggle is the row's other child and needs the same treatment, plus the auto margin
-  // that keeps it at the end. Both live in its own stylesheet now: it is a component, and a rule
-  // here cannot reach inside one.
-}
-
-.total-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.total-label {
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-label-large);
-}
-
-.total-value {
-  font: var(--mat-sys-headline-small);
-}
-
-// Only the negative case is coloured: a positive net is the expected reading and needs no mark,
-// while money going out net is the one figure worth catching the eye.
-.cash-flow-negative {
-  color: var(--mat-sys-error);
-}
-
-// The export sits on the heading line rather than above the table, so it reads as an action on
-// this table and not on the tab.
-.table-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-// Tables whose card carries no title still put the button on the right.
-.table-heading-end {
-  justify-content: flex-end;
-  margin-bottom: 0.75rem;
 }
 
 // The cascading pickers, read left to right in the order they must be filled. Wraps rather than
@@ -113,34 +42,4 @@
   margin: 1rem 0 0;
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-body-small);
-}
-
-.section-title {
-  margin: 0 0 0.75rem;
-  font: var(--mat-sys-title-medium);
-}
-
-.empty-state {
-  margin: 0;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-table {
-  width: 100%;
-}
-
-// Soft-deleted products stay in the historical reports, so the row says so rather than hiding.
-.deleted-hint {
-  margin-left: 0.5rem;
-  padding: 0.05rem 0.4rem;
-  border-radius: 0.75rem;
-  background: var(--mat-sys-surface-variant);
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-label-small);
-}
-
-
-// Every table on this page scrolls inside its own wrapper rather than widening the page.
-.table-scroll {
-  @include scroll.table-scroll;
 }
