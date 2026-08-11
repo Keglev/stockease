@@ -20,12 +20,6 @@
   padding-top: 1rem;
 }
 
-.chart-row {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-}
-
 .chart-card,
 .table-card {
   margin-bottom: 1rem;
@@ -143,10 +137,6 @@ table {
   background: var(--mat-sys-surface-variant);
   color: var(--mat-sys-on-surface-variant);
   font: var(--mat-sys-label-small);
-}
-
-.profit-row {
-  cursor: pointer;
 }
 
 

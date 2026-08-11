@@ -1,0 +1,168 @@
+@if (view() === 'chart') {
+  <div class="chart-row">
+    <mat-card class="chart-card margin-card">
+      <mat-card-content>
+        <h2 class="section-title">{{ 'reports.profit.margin' | translate }}</h2>
+        @if (marginOption(); as option) {
+          <app-chart [option]="option" height="16rem" />
+        } @else {
+          <p class="empty-state margin-empty">{{ 'reports.profit.empty' | translate }}</p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card profit-chart-card">
+      <mat-card-content>
+        <h2 class="section-title">{{ 'reports.profit.byProduct' | translate }}</h2>
+        @if (profitOption(); as option) {
+          <app-chart [option]="option" height="24rem" />
+        } @else {
+          <p class="empty-state">{{ 'reports.profit.empty' | translate }}</p>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+} @else {
+  <mat-card class="table-card">
+    <mat-card-content>
+      <div class="table-heading">
+        <h2 class="section-title">{{ 'reports.profit.products' | translate }}</h2>
+        @if (profitRows().length > 0) {
+          <button
+            matButton="outlined"
+            type="button"
+            class="export-button export-profit"
+            (click)="exportProfitRequested.emit()"
+          >
+            <mat-icon>download</mat-icon>
+            {{ 'reports.exportCsv' | translate }}
+          </button>
+        }
+      </div>
+      @if (profitRows().length === 0) {
+        <p class="empty-state">{{ 'reports.profit.empty' | translate }}</p>
+      } @else {
+        <div class="table-scroll">
+          <table
+            mat-table
+            [dataSource]="profitRows()"
+            matSort
+            (matSortChange)="profitSortChange.emit($event)"
+            class="profit-table"
+          >
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'reports.columns.name' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.name }}
+                @if (row.deleted) {
+                  <span class="deleted-hint">{{ 'reports.deletedHint' | translate }}</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="sku">
+              <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="revenue">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'reports.columns.revenue' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.revenue | appCurrency }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="cost">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'reports.columns.cost' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.cost | appCurrency }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="grossProfit">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'reports.columns.grossProfit' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.grossProfit | appCurrency }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="profitColumns()"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: profitColumns()"
+              class="profit-row"
+              tabindex="0"
+              (click)="rowActivated.emit(row)"
+              (keydown.enter)="rowActivated.emit(row)"
+            ></tr>
+          </table>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="table-card">
+    <mat-card-content>
+      <div class="table-heading">
+        <h2 class="section-title">{{ 'reports.profit.suppliers' | translate }}</h2>
+        @if (supplierRows().length > 0) {
+          <button
+            matButton="outlined"
+            type="button"
+            class="export-button export-suppliers"
+            (click)="exportSuppliersRequested.emit()"
+          >
+            <mat-icon>download</mat-icon>
+            {{ 'reports.exportCsv' | translate }}
+          </button>
+        }
+      </div>
+      @if (supplierRows().length === 0) {
+        <p class="empty-state">{{ 'reports.profit.suppliersEmpty' | translate }}</p>
+      } @else {
+        <div class="table-scroll">
+          <table
+            mat-table
+            [dataSource]="supplierRows()"
+            matSort
+            (matSortChange)="supplierSortChange.emit($event)"
+            class="supplier-table"
+          >
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'reports.columns.name' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="revenue">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'reports.columns.revenue' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.revenue | appCurrency }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="cost">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'reports.columns.cost' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.cost | appCurrency }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="grossProfit">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'reports.columns.grossProfit' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.grossProfit | appCurrency }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="supplierColumns()"></tr>
+            <tr mat-row *matRowDef="let row; columns: supplierColumns()"></tr>
+          </table>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+}
