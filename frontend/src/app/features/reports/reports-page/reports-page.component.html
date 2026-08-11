@@ -205,21 +205,15 @@
            this one. Clearing the product returns to the whole business; the table below is
            untouched, because it already answers the per-product question in rows. -->
       <div class="search-row">
-        <app-typeahead
-          class="cash-flow-supplier-search"
-          [label]="'reports.search.supplier'"
-          [search]="searchSuppliers"
-          [displayWith]="supplierLabel"
-          (selected)="setCashFlowSupplier($event)"
-        />
-        <app-typeahead
-          #cashFlowProductField
-          class="cash-flow-product-search"
-          [label]="'reports.search.product'"
-          [search]="searchCashFlowProducts"
-          [displayWith]="productLabel"
-          [disabled]="cashFlowSupplier() === null"
-          (selected)="setCashFlowProduct($event)"
+        <app-supplier-product-picker
+          class="cash-flow-picker"
+          [supplierSearch]="searchSuppliers"
+          [productSearch]="searchCashFlowProducts"
+          [supplierLabel]="supplierLabel"
+          [productLabel]="productLabel"
+          [productDisabled]="cashFlowSupplier() === null"
+          (supplierSelected)="setCashFlowSupplier($event)"
+          (productSelected)="setCashFlowProduct($event)"
         />
         <p class="search-scope">
           @if (cashFlowProduct(); as product) {
@@ -854,21 +848,15 @@
            the search and is never sent: these two series are a product's own history, which no
            supplier scopes. -->
       <div class="search-row">
-        <app-typeahead
-          class="analytics-supplier-search"
-          [label]="'reports.search.supplier'"
-          [search]="searchSuppliers"
-          [displayWith]="supplierLabel"
-          (selected)="setAnalyticsSupplier($event)"
-        />
-        <app-typeahead
-          #analyticsProductField
-          class="analytics-product-search"
-          [label]="'reports.search.product'"
-          [search]="searchAnalyticsProducts"
-          [displayWith]="productLabel"
-          [disabled]="analyticsSupplier() === null"
-          (selected)="setAnalyticsProduct($event)"
+        <app-supplier-product-picker
+          class="analytics-picker"
+          [supplierSearch]="searchSuppliers"
+          [productSearch]="searchAnalyticsProducts"
+          [supplierLabel]="supplierLabel"
+          [productLabel]="productLabel"
+          [productDisabled]="analyticsSupplier() === null"
+          (supplierSelected)="setAnalyticsSupplier($event)"
+          (productSelected)="setAnalyticsProduct($event)"
         />
         <button
           matButton="filled"

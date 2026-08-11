@@ -1,0 +1,16 @@
+<app-typeahead
+  class="supplier-search"
+  [label]="'reports.search.supplier'"
+  [search]="supplierSearch()"
+  [displayWith]="supplierLabel()"
+  (selected)="onSupplier($event)"
+/>
+<app-typeahead
+  #productField
+  class="product-search"
+  [label]="'reports.search.product'"
+  [search]="productSearch()"
+  [displayWith]="productLabel()"
+  [disabled]="productDisabled()"
+  (selected)="productSelected.emit($event)"
+/>

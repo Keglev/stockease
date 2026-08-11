@@ -147,7 +147,7 @@ describe('ReportsPageComponent analytics tab', () => {
     page().setAnalyticsSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     await settle();
 
-    typeaheadAt('.analytics-product-search').search()('wid').subscribe();
+    typeaheadAt('.analytics-picker .product-search').search()('wid').subscribe();
 
     expect(reports.supplierProductTerms).toEqual(['wid']);
   });
@@ -157,7 +157,7 @@ describe('ReportsPageComponent analytics tab', () => {
     await activateTab(6);
 
     let emitted: SupplierProduct[] | undefined;
-    typeaheadAt('.analytics-product-search').search()('wid').subscribe((rows) => (emitted = rows));
+    typeaheadAt('.analytics-picker .product-search').search()('wid').subscribe((rows) => (emitted = rows));
 
     // No supplier means no scope to search within, so the field answers empty without a request.
     expect(emitted).toEqual([]);
@@ -170,7 +170,7 @@ describe('ReportsPageComponent analytics tab', () => {
     page().setAnalyticsSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     await settle();
 
-    typeaheadAt('.analytics-product-search').selected.emit(productRow(3));
+    typeaheadAt('.analytics-picker .product-search').selected.emit(productRow(3));
     await settle();
 
     expect(host().querySelector<HTMLButtonElement>('.analytics-show')?.disabled).toBe(false);
@@ -191,9 +191,9 @@ describe('ReportsPageComponent analytics tab', () => {
   it('analyticsSupplierField_selectionEmitted_enablesTheProductField', async () => {
     render();
     await activateTab(6);
-    expect(host().querySelector<HTMLInputElement>('.analytics-product-search input')?.disabled).toBe(true);
+    expect(host().querySelector<HTMLInputElement>('.analytics-picker .product-search input')?.disabled).toBe(true);
 
-    typeaheadAt('.analytics-supplier-search').selected.emit({
+    typeaheadAt('.analytics-picker .supplier-search').selected.emit({
       id: 5,
       name: 'Acme',
       address: '1 Main St',
@@ -201,13 +201,13 @@ describe('ReportsPageComponent analytics tab', () => {
     } as never);
     await settle();
 
-    expect(host().querySelector<HTMLInputElement>('.analytics-product-search input')?.disabled).toBe(false);
+    expect(host().querySelector<HTMLInputElement>('.analytics-picker .product-search input')?.disabled).toBe(false);
   });
 
   it('supplierSearch_typed_queriesTheSupplierServiceAndLabelsTheRows', async () => {
     render();
     await activateTab(6);
-    const field = typeaheadAt('.analytics-supplier-search') as unknown as TypeaheadComponent<SupplierResponse>;
+    const field = typeaheadAt('.analytics-picker .supplier-search') as unknown as TypeaheadComponent<SupplierResponse>;
 
     field.search()('acm').subscribe();
 
@@ -220,7 +220,7 @@ describe('ReportsPageComponent analytics tab', () => {
     render();
     await activateTab(6);
 
-    expect(typeaheadAt('.analytics-product-search').displayWith()(productRow(3))).toBe('Product 3');
+    expect(typeaheadAt('.analytics-picker .product-search').displayWith()(productRow(3))).toBe('Product 3');
   });
 
   it('analyticsChart_noStockHistory_rendersEmptyStateInsteadOfAnEmptyChart', async () => {

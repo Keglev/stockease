@@ -1,0 +1,9 @@
+// display: contents so the two fields stay direct flex items of .search-row, as they were when
+// this markup lived in the reports-page template - a host box between them would collapse the
+// pair into one item and take the row's gap and wrapping off the fields.
+// The inverse of the period toggle's ruling, and for the same reason: there the host had to
+// BECOME the box the toggle group was, because the group was the row's item; here the row's items
+// are the fields themselves, so the host must not be a box at all.
+:host {
+  display: contents;
+}
