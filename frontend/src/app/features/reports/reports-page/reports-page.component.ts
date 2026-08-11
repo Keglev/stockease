@@ -5,7 +5,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -40,7 +39,7 @@ import { AuditService } from '../../audit/audit.service';
 import { ReportService } from '../report.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
-import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
+import { ChangesCardComponent } from './changes-card/changes-card.component';
 import { DueDatesCardComponent } from './due-dates-card/due-dates-card.component';
 import { LossesCardComponent } from './losses-card/losses-card.component';
 import { PeriodToggleComponent, ReportPeriod } from './period-toggle/period-toggle.component';
@@ -83,7 +82,8 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 @Component({
   selector: 'app-reports-page',
   imports: [
-    AppCurrencyPipe, AppDateTimePipe, ChartComponent,
+    AppCurrencyPipe, ChartComponent,
+    ChangesCardComponent,
     DueDatesCardComponent,
     LossesCardComponent,
     MatButtonModule,
@@ -92,7 +92,6 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
-    MatSelectModule,
     MatSortModule,
     MatTableModule,
     MatTabsModule,
