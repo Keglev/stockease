@@ -1,0 +1,65 @@
+// display: contents so no host box comes between .tab-body and the halves below, as none did when
+// this markup lived in the reports-page template; the dashboard cards take the same treatment.
+:host {
+  display: contents;
+}
+
+// Ungrouped from .chart-row, which stays in the page for the tabs that use it.
+.due-lists {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+
+// Duplicated from the page's stylesheet rather than moved: .chart-card, .table-card,
+// .section-title and .empty-state are shared classes the other tabs still use, and a page rule
+// cannot reach inside a component. A shared partial is planned to consolidate the copies; until it
+// lands, the two must be changed together.
+.chart-card,
+.table-card {
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  margin: 0 0 0.75rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.due-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.due-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.due-list li:last-child {
+  border-bottom: none;
+}
+
+.due-counterparty {
+  flex: 1 1 auto;
+}
+
+.due-type,
+.due-date {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.days-overdue {
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-label-medium);
+}

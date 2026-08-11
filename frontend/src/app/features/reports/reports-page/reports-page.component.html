@@ -658,74 +658,12 @@
         (selected)="setView(4, $event)"
       />
 
-      @if (viewOf(4) === 'chart') {
-        <mat-card class="chart-card">
-          <mat-card-content>
-            <h2 class="section-title">{{ 'reports.due.chart' | translate }}</h2>
-            @if (dueOption(); as option) {
-              <app-chart [option]="option" height="24rem" />
-            } @else {
-              <p class="empty-state">{{ 'reports.due.empty' | translate }}</p>
-            }
-          </mat-card-content>
-        </mat-card>
-      } @else {
-        <div class="due-lists">
-          <mat-card class="table-card due-soon-card">
-            <mat-card-content>
-              <h2 class="section-title">{{ 'reports.due.dueSoon' | translate }}</h2>
-              @if (dueSoonRows().length === 0) {
-                <p class="empty-state">{{ 'reports.due.dueSoonEmpty' | translate }}</p>
-              } @else {
-                <ul class="due-list">
-                  @for (row of dueSoonRows(); track row.invoiceId) {
-                    <li class="due-soon-row">
-                      <!-- The label is the business number, the route key stays the technical id:
-                           the number identifies the invoice to people, the id to the system
-                           (ADR 022). -->
-                      <a [routerLink]="['/app/invoices', row.invoiceId]">{{ row.invoiceNumber }}</a>
-                      <span class="due-type">{{
-                        'invoices.type.' + row.invoiceType | translate
-                      }}</span>
-                      <span class="due-counterparty">{{ row.counterparty }}</span>
-                      <span class="due-date">{{ row.dueDate | appDate }}</span>
-                    </li>
-                  }
-                </ul>
-              }
-            </mat-card-content>
-          </mat-card>
-
-          <mat-card class="table-card overdue-card">
-            <mat-card-content>
-              <h2 class="section-title">{{ 'reports.due.overdue' | translate }}</h2>
-              @if (overdueRows().length === 0) {
-                <p class="empty-state">{{ 'reports.due.overdueEmpty' | translate }}</p>
-              } @else {
-                <ul class="due-list">
-                  @for (row of overdueRows(); track row.invoiceId) {
-                    <li class="overdue-row">
-                      <!-- Business number as the label, technical id as the route key; see above. -->
-                      <a [routerLink]="['/app/invoices', row.invoiceId]">{{ row.invoiceNumber }}</a>
-                      <span class="due-type">{{
-                        'invoices.type.' + row.invoiceType | translate
-                      }}</span>
-                      <span class="due-counterparty">{{ row.counterparty }}</span>
-                      <span class="due-date">{{ row.dueDate | appDate }}</span>
-                      <!-- Only the overdue query computes this; due-soon rows carry null by design. -->
-                      @if (row.daysOverdue !== null) {
-                        <span class="days-overdue">
-                          {{ 'reports.due.daysOverdue' | translate: { days: row.daysOverdue } }}
-                        </span>
-                      }
-                    </li>
-                  }
-                </ul>
-              }
-            </mat-card-content>
-          </mat-card>
-        </div>
-      }
+      <app-due-dates-card
+        [view]="viewOf(4)"
+        [option]="dueOption()"
+        [dueSoonRows]="dueSoonRows()"
+        [overdueRows]="overdueRows()"
+      />
     </div>
   </mat-tab>
 

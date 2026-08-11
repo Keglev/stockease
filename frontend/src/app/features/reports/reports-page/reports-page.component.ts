@@ -11,7 +11,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
-import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
@@ -42,7 +41,7 @@ import { ReportService } from '../report.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
-import { AppDatePipe } from '../../../shared/format/app-date.pipe';
+import { DueDatesCardComponent } from './due-dates-card/due-dates-card.component';
 import { PeriodToggleComponent, ReportPeriod } from './period-toggle/period-toggle.component';
 import { SupplierProductPickerComponent } from './supplier-product-picker/supplier-product-picker.component';
 import { ReportView, ReportViewToggleComponent } from './report-view-toggle/report-view-toggle.component';
@@ -82,7 +81,8 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 @Component({
   selector: 'app-reports-page',
   imports: [
-    AppCurrencyPipe, AppDateTimePipe, AppDatePipe, ChartComponent,
+    AppCurrencyPipe, AppDateTimePipe, ChartComponent,
+    DueDatesCardComponent,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
@@ -95,7 +95,6 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
     MatTabsModule,
     PeriodToggleComponent,
     ReportViewToggleComponent,
-    RouterLink,
     SupplierProductPickerComponent,
     TranslatePipe
   ],
