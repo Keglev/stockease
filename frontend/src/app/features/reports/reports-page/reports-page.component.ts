@@ -42,6 +42,7 @@ import { SupplierService } from '../../suppliers/supplier.service';
 import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { DueDatesCardComponent } from './due-dates-card/due-dates-card.component';
+import { LossesCardComponent } from './losses-card/losses-card.component';
 import { PeriodToggleComponent, ReportPeriod } from './period-toggle/period-toggle.component';
 import { StockCardComponent } from './stock-card/stock-card.component';
 import { SupplierProductPickerComponent } from './supplier-product-picker/supplier-product-picker.component';
@@ -84,6 +85,7 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
   imports: [
     AppCurrencyPipe, AppDateTimePipe, ChartComponent,
     DueDatesCardComponent,
+    LossesCardComponent,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
@@ -121,7 +123,6 @@ export class ReportsPageComponent implements OnInit {
   protected readonly stockColumns = ['name', 'sku', 'soldUnits', 'soldRevenue', 'inStockUnits', 'inStockValue'];
   protected readonly lossColumns = ['name', 'sku', 'lostUnits', 'destroyedUnits', 'lossValue'];
 
-  protected readonly lossRemarkColumns = ['remark', 'lostUnits', 'destroyedUnits', 'lossValue'];
   protected readonly cashFlowColumns = ['name', 'sku', 'inflow', 'outflow', 'net'];
   protected readonly changeColumns = ['time', 'user', 'product', 'field', 'oldValue', 'newValue'];
 

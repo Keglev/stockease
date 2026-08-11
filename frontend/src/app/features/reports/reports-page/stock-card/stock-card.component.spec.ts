@@ -177,7 +177,7 @@ describe('StockCardComponent', () => {
   it('exportButton_clicked_emitsTheRequest', async () => {
     await render();
     let asked = 0;
-    fixture.componentInstance.export.subscribe(() => asked++);
+    fixture.componentInstance.exportRequested.subscribe(() => asked++);
 
     host().querySelector<HTMLButtonElement>('.export-stock')?.click();
     await settle();

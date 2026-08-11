@@ -51,7 +51,7 @@
             matButton="outlined"
             type="button"
             class="export-button export-stock"
-            (click)="export.emit()"
+            (click)="exportRequested.emit()"
           >
             <mat-icon>download</mat-icon>
             {{ 'reports.exportCsv' | translate }}
