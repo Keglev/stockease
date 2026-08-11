@@ -14,9 +14,9 @@
 <section class="tsd-panel tsd-comment">
 <div class="tsd-comment tsd-typography"><p>Everything a chart option needs that is not its own data.</p>
 </div></section>
-<div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">ChartContext</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#format">format</a><span class="tsd-signature-symbol">:</span> <a href="shared_chart_chart-format.ChartFormat.html" class="tsd-signature-type tsd-kind-interface">ChartFormat</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#language">language</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#other">other</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">ChartContext</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#format">format</a><span class="tsd-signature-symbol">:</span> <a href="shared_chart_chart-format.ChartFormat.html" class="tsd-signature-type tsd-kind-interface">ChartFormat</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#gaugebands">gaugeBands</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-keyword">readonly</span> <a href="shared_chart_chart-context.GaugeBand.html" class="tsd-signature-type tsd-kind-interface">GaugeBand</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#language">language</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#other">other</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/e6b3f0ab6df4e4466f23739cd36161a9a9e95a61/frontend/src/app/shared/chart/chart-context.ts#L9">shared/chart/chart-context.ts:9</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/699682dbbfa68545da99ec608865ca26034c46a6/frontend/src/app/shared/chart/chart-context.ts#L30">shared/chart/chart-context.ts:30</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -25,6 +25,7 @@
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading tsd-anchor-link" id="properties">Properties<a href="#properties" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-index-list"><a href="#format" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>format</span></a>
+<a href="#gaugebands" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>gauge<wbr/>Bands</span></a>
 <a href="#language" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>language</span></a>
 <a href="#other" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>other</span></a>
 </div></section></div></details></section></section>
@@ -35,19 +36,26 @@
 <h3 class="tsd-anchor-link" id="format"><span>format</span><a href="#format" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">format</span><span class="tsd-signature-symbol">:</span> <a href="shared_chart_chart-format.ChartFormat.html" class="tsd-signature-type tsd-kind-interface">ChartFormat</a></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/e6b3f0ab6df4e4466f23739cd36161a9a9e95a61/frontend/src/app/shared/chart/chart-context.ts#L13">shared/chart/chart-context.ts:13</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/699682dbbfa68545da99ec608865ca26034c46a6/frontend/src/app/shared/chart/chart-context.ts#L34">shared/chart/chart-context.ts:34</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member">
+<h3 class="tsd-anchor-link" id="gaugebands"><span>gauge<wbr/>Bands</span><a href="#gaugebands" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">gaugeBands</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-keyword">readonly</span> <a href="shared_chart_chart-context.GaugeBand.html" class="tsd-signature-type tsd-kind-interface">GaugeBand</a><span class="tsd-signature-symbol">[]</span></div>
+<div class="tsd-comment tsd-typography"><p>The gauge ramp for the theme on screen; see GAUGE_BANDS.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/699682dbbfa68545da99ec608865ca26034c46a6/frontend/src/app/shared/chart/chart-context.ts#L36">shared/chart/chart-context.ts:36</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="language"><span>language</span><a href="#language" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">language</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/e6b3f0ab6df4e4466f23739cd36161a9a9e95a61/frontend/src/app/shared/chart/chart-context.ts#L10">shared/chart/chart-context.ts:10</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/699682dbbfa68545da99ec608865ca26034c46a6/frontend/src/app/shared/chart/chart-context.ts#L31">shared/chart/chart-context.ts:31</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="other"><span>other</span><a href="#other" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">other</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>The label the remainder bucket carries, translated.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/e6b3f0ab6df4e4466f23739cd36161a9a9e95a61/frontend/src/app/shared/chart/chart-context.ts#L12">shared/chart/chart-context.ts:12</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/699682dbbfa68545da99ec608865ca26034c46a6/frontend/src/app/shared/chart/chart-context.ts#L33">shared/chart/chart-context.ts:33</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -63,7 +71,7 @@
 <h3>On This Page</h3></summary>
 <div class="tsd-accordion-details">
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Properties</summary>
-<div><a href="#format"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>format</span></a><a href="#language"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>language</span></a><a href="#other"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>other</span></a></div></details></div></details></div>
+<div><a href="#format"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>format</span></a><a href="#gaugebands"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>gauge<wbr/>Bands</span></a><a href="#language"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>language</span></a><a href="#other"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>other</span></a></div></details></div></details></div>
 <div class="site-menu">
 <nav id="tsd-sidebar-links" class="tsd-navigation"><a href="/stockease/" class="tsd-nav-link">Docs home</a></nav>
 <nav class="tsd-navigation"><a href="../index.html">Bestandskontrolle / StockEase - Frontend API</a>
