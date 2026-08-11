@@ -43,6 +43,7 @@ import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { DueDatesCardComponent } from './due-dates-card/due-dates-card.component';
 import { PeriodToggleComponent, ReportPeriod } from './period-toggle/period-toggle.component';
+import { StockCardComponent } from './stock-card/stock-card.component';
 import { SupplierProductPickerComponent } from './supplier-product-picker/supplier-product-picker.component';
 import { ReportView, ReportViewToggleComponent } from './report-view-toggle/report-view-toggle.component';
 
@@ -95,6 +96,7 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
     MatTabsModule,
     PeriodToggleComponent,
     ReportViewToggleComponent,
+    StockCardComponent,
     SupplierProductPickerComponent,
     TranslatePipe
   ],
