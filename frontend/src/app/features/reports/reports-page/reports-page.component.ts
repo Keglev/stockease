@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+﻿import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -36,7 +36,6 @@ import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartFormat } from '../../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
 import { CsvExportService } from '../../../shared/csv/csv-export.service';
-import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import { AuditService } from '../../audit/audit.service';
 import { ReportService } from '../report.service';
@@ -45,6 +44,7 @@ import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { AppDatePipe } from '../../../shared/format/app-date.pipe';
 import { PeriodToggleComponent, ReportPeriod } from './period-toggle/period-toggle.component';
+import { SupplierProductPickerComponent } from './supplier-product-picker/supplier-product-picker.component';
 import { ReportView, ReportViewToggleComponent } from './report-view-toggle/report-view-toggle.component';
 
 const PROFIT_TAB = 0;
@@ -96,8 +96,8 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
     PeriodToggleComponent,
     ReportViewToggleComponent,
     RouterLink,
-    TranslatePipe,
-    TypeaheadComponent
+    SupplierProductPickerComponent,
+    TranslatePipe
   ],
   templateUrl: './reports-page.component.html',
   styleUrl: './reports-page.component.scss'
@@ -257,14 +257,6 @@ export class ReportsPageComponent implements OnInit {
 
   /** Enabled only once a product is picked; with nothing picked there is nothing to show. */
   protected readonly canShowAnalytics = computed(() => this.analyticsProduct() !== null);
-
-  // The typeahead owns the text in its field, so clearing the signal alone would leave the previous
-  // supplier's product still spelled out in a field that can no longer offer it.
-  private readonly analyticsProductField =
-    viewChild<TypeaheadComponent<SupplierProduct>>('analyticsProductField');
-
-  private readonly cashFlowProductField =
-    viewChild<TypeaheadComponent<SupplierProduct>>('cashFlowProductField');
 
   /** How a supplier and a product read in the typeahead panels. */
   protected readonly supplierLabel = (supplier: SupplierResponse): string => supplier.name;
@@ -489,14 +481,14 @@ export class ReportsPageComponent implements OnInit {
   /**
    * Narrows which products the analytics search can offer.
    *
-   * <p>Empties the product field with it: the one that was picked came from the previous supplier's
-   * catalogue, and leaving it under a field naming a different supplier would misdescribe it. The
-   * reset emits null, so the product signal clears through the ordinary path rather than a second
-   * one. Whatever is already charted stays on screen - the user has not asked a new question yet.
+   * <p>The picker empties the product field with it: the one that was picked came from the previous
+   * supplier's catalogue, and leaving it under a field naming a different supplier would misdescribe
+   * it. That reset emits null, so the product signal clears through the ordinary path rather than a
+   * second one. Whatever is already charted stays on screen - the user has not asked a new question
+   * yet.
    */
   protected setAnalyticsSupplier(supplier: SupplierResponse | null): void {
     this.analyticsSupplier.set(supplier);
-    this.analyticsProductField()?.reset();
   }
 
   protected setAnalyticsProduct(product: SupplierProduct | null): void {
@@ -800,13 +792,12 @@ export class ReportsPageComponent implements OnInit {
    * Narrows which products the cash-flow search can offer; see {@link setAnalyticsSupplier}.
    *
    * <p>Clearing the product returns the timeline to the whole business, because a scoped series
-   * under a field that no longer names a product would have nothing on screen explaining it.
+   * under a field that no longer names a product would have nothing on screen explaining it. The
+   * picker's reset emits null, which returns the timeline to all products if one was scoped and does
+   * nothing if none was; the guard in {@link setCashFlowProduct} decides which.
    */
   protected setCashFlowSupplier(supplier: SupplierResponse | null): void {
     this.cashFlowSupplier.set(supplier);
-    // Emits null, which returns the timeline to all products if one was scoped and does nothing if
-    // none was; the guard in setCashFlowProduct decides which.
-    this.cashFlowProductField()?.reset();
   }
 
   /**

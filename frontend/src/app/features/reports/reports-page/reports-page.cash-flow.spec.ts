@@ -166,7 +166,7 @@ describe('ReportsPageComponent cash-flow tab', () => {
     page().setCashFlowSupplier({ id: 5, name: 'Acme', email: null, phone: null, address: '1 Main St', city: null, createdAt: '' });
     await settle();
 
-    typeaheadAt('.cash-flow-product-search').selected.emit(productRow(3));
+    typeaheadAt('.cash-flow-picker .product-search').selected.emit(productRow(3));
     await settle();
 
     expect(reports.timelineProductIds.at(-1)).toBe(3);
@@ -213,7 +213,7 @@ describe('ReportsPageComponent cash-flow tab', () => {
     render();
     await activateTab(1);
 
-    typeaheadAt('.cash-flow-supplier-search').selected.emit({
+    typeaheadAt('.cash-flow-picker .supplier-search').selected.emit({
       id: 5,
       name: 'Acme',
       address: '1 Main St',
@@ -221,7 +221,7 @@ describe('ReportsPageComponent cash-flow tab', () => {
     } as never);
     await settle();
 
-    typeaheadAt('.cash-flow-product-search').search()('wid').subscribe();
+    typeaheadAt('.cash-flow-picker .product-search').search()('wid').subscribe();
     expect(reports.supplierProductTerms).toEqual(['wid']);
   });
 
