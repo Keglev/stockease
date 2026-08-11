@@ -1,5 +1,6 @@
 import { ComponentFixture } from '@angular/core/testing';
 
+import { ProductProfitReport } from '../../../core/api/api-models';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
 import {
   PROFIT,
@@ -25,6 +26,18 @@ import { ReportsPageComponent } from './reports-page.component';
  * (chart.component.spec.ts), the top-N rule (chart-data.spec.ts) and the profit drill-down
  * (profit-detail-dialog.component.spec.ts).
  */
+/*
+ * Three rows whose server order matches neither the ascending nor the descending name order, so a
+ * sort pin can tell all three apart. Two rows could not: with two, descending IS the server order
+ * whenever the server happened to send them descending, and the return-to-server-order case then
+ * asserts nothing.
+ */
+const SORT_ROWS: ProductProfitReport[] = [
+  { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 9, cost: 3, grossProfit: 8 },
+  { productId: 5, name: 'Anvil', sku: 'SKU-5', deleted: false, revenue: 100, cost: 1, grossProfit: 99 },
+  { productId: 4, name: 'Gadget', sku: 'SKU-4', deleted: false, revenue: 50, cost: 2, grossProfit: 20 }
+];
+
 describe('ReportsPageComponent profit tab', () => {
   let fixture: ComponentFixture<ReportsPageComponent>;
   let reports: ReportServiceStub;
@@ -154,35 +167,30 @@ describe('ReportsPageComponent profit tab', () => {
   });
 
   it('sortProfit_nameHeaderClicked_ordersRowsAlphabeticallyThenReverses', async () => {
-    reports.profitPayload = [
-      { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 9, cost: 1, grossProfit: 8 },
-      { productId: 4, name: 'Gadget', sku: 'SKU-4', deleted: false, revenue: 100, cost: 1, grossProfit: 99 }
-    ];
+    reports.profitPayload = SORT_ROWS;
     render();
     await showTable(0);
 
     await sortBy('.profit-table', 0);
-    expect(columnText('.profit-table', 0)).toEqual(['Gadget', 'Widget']);
+    expect(columnText('.profit-table', 0)).toEqual(['Anvil', 'Gadget', 'Widget']);
 
     await sortBy('.profit-table', 0);
-    expect(columnText('.profit-table', 0)).toEqual(['Widget', 'Gadget']);
+    expect(columnText('.profit-table', 0)).toEqual(['Widget', 'Gadget', 'Anvil']);
   });
 
   it('sortProfit_numericColumn_ordersByValueRatherThanByText', async () => {
-    reports.profitPayload = [
-      { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 9, cost: 1, grossProfit: 8 },
-      { productId: 4, name: 'Gadget', sku: 'SKU-4', deleted: false, revenue: 100, cost: 1, grossProfit: 99 }
-    ];
+    reports.profitPayload = SORT_ROWS;
     render();
     await showTable(0);
 
-    // Sorted as text, 100 would come before 9 - which is the whole reason the comparator checks
-    // the operand types rather than stringifying everything.
-    await sortBy('.profit-table', 2);
-    expect(columnText('.profit-table', 0)).toEqual(['Widget', 'Gadget']);
+    // Sorted as text, 100 would come before 50 and 9 last - which is the whole reason the
+    // comparator checks the operand types rather than stringifying everything.
+    await sortBy('.profit-table', 1);
+    expect(columnText('.profit-table', 0)).toEqual(['Widget', 'Gadget', 'Anvil']);
   });
 
   it('sortProfit_clickedPastDescending_returnsToTheServerOrder', async () => {
+    reports.profitPayload = SORT_ROWS;
     render();
     await showTable(0);
     const asLoaded = columnText('.profit-table', 0);

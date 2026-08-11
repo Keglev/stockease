@@ -5,7 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSortModule, Sort } from '@angular/material/sort';
+import { Sort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
@@ -29,7 +29,7 @@ import {
   SupplierResponse
 } from '../../../core/api/api-models';
 import { FormatService } from '../../../core/format/format.service';
-import { createChartContext } from '../../../shared/chart/chart-context';
+import { GaugeBand, createChartContext } from '../../../shared/chart/chart-context';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { ChartFormat } from '../../../shared/chart/chart-format';
 import { ChartComponent, ChartOption } from '../../../shared/chart/chart.component';
@@ -43,6 +43,7 @@ import { ChangesCardComponent } from './changes-card/changes-card.component';
 import { DueDatesCardComponent } from './due-dates-card/due-dates-card.component';
 import { LossesCardComponent } from './losses-card/losses-card.component';
 import { PeriodToggleComponent, ReportPeriod } from './period-toggle/period-toggle.component';
+import { ProfitCardComponent } from './profit-card/profit-card.component';
 import { StockCardComponent } from './stock-card/stock-card.component';
 import { SupplierProductPickerComponent } from './supplier-product-picker/supplier-product-picker.component';
 import { ReportView, ReportViewToggleComponent } from './report-view-toggle/report-view-toggle.component';
@@ -92,10 +93,10 @@ const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
-    MatSortModule,
     MatTableModule,
     MatTabsModule,
     PeriodToggleComponent,
+    ProfitCardComponent,
     ReportViewToggleComponent,
     StockCardComponent,
     SupplierProductPickerComponent,
@@ -136,6 +137,23 @@ export class ReportsPageComponent implements OnInit {
 
   protected readonly profitRows = signal<ProductProfitReport[]>([]);
   protected readonly supplierRows = signal<SupplierProfitReport[]>([]);
+
+  /**
+   * Which column each profit table is sorted by, held apart from the rows themselves.
+   *
+   * <p>The rows above stay in the order the server sent for as long as they are loaded, and the
+   * order on screen is derived from them below. Sorting in place instead - replacing the signal
+   * with a sorted copy - destroys that original order on the first click, so the third click, which
+   * clears the direction, has nothing to return to and leaves the last sorted order standing.
+   */
+  private readonly profitSort = signal<Sort>({ active: '', direction: '' });
+  private readonly supplierSort = signal<Sort>({ active: '', direction: '' });
+
+  protected readonly sortedProfitRows = computed(() => sortRows(this.profitRows(), this.profitSort()));
+
+  protected readonly sortedSupplierRows = computed(() =>
+    sortRows(this.supplierRows(), this.supplierSort())
+  );
   protected readonly stockRows = signal<StockStatusReport[]>([]);
   protected readonly lossRows = signal<LossReport[]>([]);
   protected readonly lossRemarkRows = signal<LossByRemark[]>([]);
@@ -354,7 +372,7 @@ export class ReportsPageComponent implements OnInit {
   // used to trigger by hand - and when the rendering context above changes, which nothing used to
   // trigger at all: a language switch left every chart showing the words it was built with.
   protected readonly marginOption = computed(() =>
-    toMarginOption(this.profitRows(), this.chartContext().format)
+    toMarginOption(this.profitRows(), this.chartContext().gaugeBands, this.chartContext().format)
   );
 
   protected readonly profitOption = computed(() =>
@@ -421,7 +439,8 @@ export class ReportsPageComponent implements OnInit {
     this.exportCsv(
       'profit-products.csv',
       this.profitColumns,
-      this.profitRows().map((row) => [row.name, row.sku, row.revenue, row.cost, row.grossProfit])
+      // The sorted view, so the download is in the order the reader is looking at.
+      this.sortedProfitRows().map((row) => [row.name, row.sku, row.revenue, row.cost, row.grossProfit])
     );
   }
 
@@ -429,7 +448,7 @@ export class ReportsPageComponent implements OnInit {
     this.exportCsv(
       'profit-suppliers.csv',
       this.supplierColumns,
-      this.supplierRows().map((row) => [row.name, row.revenue, row.cost, row.grossProfit])
+      this.sortedSupplierRows().map((row) => [row.name, row.revenue, row.cost, row.grossProfit])
     );
   }
 
@@ -604,11 +623,11 @@ export class ReportsPageComponent implements OnInit {
   }
 
   protected sortProfit(sort: Sort): void {
-    this.profitRows.update((rows) => sortRows(rows, sort));
+    this.profitSort.set(sort);
   }
 
   protected sortSuppliers(sort: Sort): void {
-    this.supplierRows.update((rows) => sortRows(rows, sort));
+    this.supplierSort.set(sort);
   }
 
   protected sortStock(sort: Sort): void {
@@ -662,13 +681,19 @@ export class ReportsPageComponent implements OnInit {
     this.reports.profitProducts(range.from, range.to).subscribe({
       next: (rows) => {
         this.profitRows.set(rows);
+        // A re-query answers in the server order, which is what the table showed before this
+        // sorted by derivation rather than in place.
+        this.profitSort.set({ active: '', direction: '' });
         this.loading.set(false);
       },
       error: (err: Error) => this.fail(err)
     });
 
     this.reports.profitSuppliers(range.from, range.to).subscribe({
-      next: (rows) => this.supplierRows.set(rows),
+      next: (rows) => {
+        this.supplierRows.set(rows);
+        this.supplierSort.set({ active: '', direction: '' });
+      },
       error: (err: Error) => this.fail(err)
     });
   }
@@ -881,7 +906,11 @@ export class ReportsPageComponent implements OnInit {
  * state instead. Display-only arithmetic over server-authoritative figures, as with the
  * invoice totals.
  */
-function toMarginOption(rows: ProductProfitReport[], format: ChartFormat): ChartOption | null {
+function toMarginOption(
+  rows: ProductProfitReport[],
+  bands: readonly GaugeBand[],
+  format: ChartFormat
+): ChartOption | null {
   const revenue = rows.reduce((sum, row) => sum + row.revenue, 0);
   if (revenue === 0) {
     return null;
@@ -895,14 +924,10 @@ function toMarginOption(rows: ProductProfitReport[], format: ChartFormat): Chart
         type: 'gauge',
         min: 0,
         max: 100,
-        // Bands read low-to-high against the same thresholds a reader would apply by eye.
-        // The three literals are sanctioned rather than overlooked: M3 defines no success or
-        // warning role, so no --mat-sys-* token spells a red-amber-green ramp at all. The gauge
-        // paints to canvas, outside the DOM cascade a custom property would resolve in, so a
-        // token could not be read here even if one existed.
-        // TODO(BL-15): route theme-aware gauge values through the chart context when the profit
-        // tab is extracted.
-        axisLine: { lineStyle: { width: 14, color: [[0.2, '#d9534f'], [0.5, '#f0ad4e'], [1, '#5cb85c']] } },
+        // Bands read low-to-high against the same thresholds a reader would apply by eye. The
+        // colours come from the chart context, which is what makes them follow the theme; the
+        // literals and the reason they are sanctioned live there.
+        axisLine: { lineStyle: { width: 14, color: bands.map((band) => [band.upTo, band.color]) } },
         // The dial still runs 0-100 and its value is still 42.5; only the reading changes, from a
         // hardcoded '{value}%' to the decimal mark and percent spacing the reader's locale uses.
         detail: { formatter: (value: number) => format.percent(value), fontSize: 22 },

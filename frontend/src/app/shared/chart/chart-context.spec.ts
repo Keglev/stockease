@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { FormatService } from '../../core/format/format.service';
 import { LanguageService } from '../../core/i18n/language.service';
+import { ThemeService } from '../../core/theme/theme.service';
 import { ChartContext, createChartContext } from './chart-context';
 
 /*
@@ -42,24 +43,31 @@ class TranslateServiceStub {
   }
 }
 
+class ThemeServiceStub {
+  readonly currentTheme = signal('light');
+}
+
 /*
  * The chart context is a dependency, so what matters is when it REBUILDS: a chart option that
- * reads it must be invalidated by a language switch and by a format switch, and must not be
- * invalidated by nothing at all.
+ * reads it must be invalidated by a language switch, by a format switch and by a theme switch,
+ * and must not be invalidated by nothing at all.
  * Out of scope: what the options built from it look like - the pages that own those charts.
  */
 describe('createChartContext', () => {
   let language: LanguageServiceStub;
   let format: FormatServiceStub;
+  let theme: ThemeServiceStub;
 
   function setUp(): Signal<ChartContext> {
     language = new LanguageServiceStub();
     format = new FormatServiceStub();
+    theme = new ThemeServiceStub();
     TestBed.configureTestingModule({
       providers: [
         { provide: LanguageService, useValue: language },
         { provide: FormatService, useValue: format },
-        { provide: TranslateService, useValue: new TranslateServiceStub() }
+        { provide: TranslateService, useValue: new TranslateServiceStub() },
+        { provide: ThemeService, useValue: theme }
       ]
     });
     return TestBed.runInInjectionContext(() => createChartContext());
@@ -87,6 +95,30 @@ describe('createChartContext', () => {
     // to be registered here or a format switch never reaches the canvas.
     expect(context()).not.toBe(before);
     expect(context().format.currency(2)).toBe('de-DE:2');
+  });
+
+  it('read_themeChanged_rebuildsTheContext', () => {
+    const context = setUp();
+    const before = context();
+
+    theme.currentTheme.set('dark');
+
+    // Gauge colours are painted to canvas, so nothing repaints them unless the derivation they
+    // came from is invalidated - the same reason the format reads are registered here.
+    expect(context()).not.toBe(before);
+  });
+
+  it('gaugeBands_perTheme_carryADifferentRampInEach', () => {
+    const context = setUp();
+    const light = context().gaugeBands;
+
+    theme.currentTheme.set('dark');
+
+    // The thresholds are the reading and do not move; only the colours do, because the light
+    // ramp reads as muddy against a dark plot area.
+    const dark = context().gaugeBands;
+    expect(dark.map((band) => band.upTo)).toEqual(light.map((band) => band.upTo));
+    expect(dark.map((band) => band.color)).not.toEqual(light.map((band) => band.color));
   });
 
   it('read_nothingChanged_reusesTheSameContext', () => {
