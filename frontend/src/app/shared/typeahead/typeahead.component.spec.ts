@@ -11,8 +11,8 @@ interface Row {
 
 const TRANSLATIONS = {
   en: {
-    common: { close: 'Clear' },
-    reports: { search: { supplier: 'Search supplier', noMatches: 'No matches' } }
+    common: { close: 'Clear', search: { noMatches: 'No matches' } },
+    reports: { search: { supplier: 'Search supplier' } }
   }
 };
 

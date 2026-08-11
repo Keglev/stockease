@@ -49,6 +49,7 @@ import { ReportsPageComponent } from './reports-page.component';
 
 export const TRANSLATIONS = {
   en: {
+    common: { search: { noMatches: 'No matches' } },
     invoices: { type: { PURCHASE: 'Purchase', SALE: 'Sale' } },
     audit: {
       field: { NAME: 'Name', PURCHASE_PRICE: 'Purchase price', DELETED: 'Deleted', RESTORED: 'Restored' }
@@ -115,7 +116,7 @@ export const TRANSLATIONS = {
         empty: 'No profit has been recorded yet.',
         suppliersEmpty: 'No supplier has supplied a product yet.'
       },
-      search: { supplier: 'Search supplier', product: 'Search product', noMatches: 'No matches' },
+      search: { supplier: 'Search supplier', product: 'Search product' },
       analytics: {
         show: 'Show',
         selectProduct: 'Select a product to analyze',
