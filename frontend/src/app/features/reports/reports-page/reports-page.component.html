@@ -348,125 +348,19 @@
 
   <mat-tab [label]="'reports.tabs.stock' | translate">
     <div class="tab-body">
-      <!-- The view toggle shares the strip's line rather than claiming one below it: the
-           figures are the answer and the toggle only chooses how the detail is drawn, so
-           the two belong on one row. Wraps on narrow screens. -->
-      <div class="strip-line">
-        @if (stockTotals(); as totals) {
-          <div class="totals-strip">
-            <div class="total-item">
-              <span class="total-label">{{ 'reports.columns.inStockValue' | translate }}</span>
-              <span class="total-value stock-total-value">{{ totals.value | appCurrency }}</span>
-            </div>
-            <div class="total-item">
-              <span class="total-label">{{ 'reports.columns.inStockUnits' | translate }}</span>
-              <span class="total-value stock-total-units">{{ totals.units }}</span>
-            </div>
-            <div class="total-item">
-              <span class="total-label">{{ 'reports.stock.productCount' | translate }}</span>
-              <span class="total-value stock-total-products">{{ totals.products }}</span>
-            </div>
-          </div>
-        }
-
-        <app-report-view-toggle [value]="viewOf(2)" (selected)="setView(2, $event)" />
-      </div>
-
-      @if (viewOf(2) === 'chart') {
-        <mat-card class="chart-card">
-          <mat-card-content>
-            <h2 class="section-title">{{ 'reports.stock.byValue' | translate }}</h2>
-            @if (stockOption(); as option) {
-              <app-chart [option]="option" height="24rem" />
-            } @else {
-              <p class="empty-state">{{ 'reports.stock.empty' | translate }}</p>
-            }
-          </mat-card-content>
-        </mat-card>
-      } @else {
-        <mat-card class="table-card">
-          <mat-card-content>
-            @if (stockRows().length > 0) {
-              <div class="table-heading table-heading-end">
-                <mat-form-field class="report-filter" appearance="outline" subscriptSizing="dynamic">
-                  <mat-label>{{ 'reports.filter' | translate }}</mat-label>
-                  <input
-                    matInput
-                    type="text"
-                    [value]="stockFilter()"
-                    (input)="setStockFilter($any($event.target).value)"
-                  />
-                </mat-form-field>
-                <button
-                  matButton="outlined"
-                  type="button"
-                  class="export-button export-stock"
-                  (click)="exportStock()"
-                >
-                  <mat-icon>download</mat-icon>
-                  {{ 'reports.exportCsv' | translate }}
-                </button>
-              </div>
-            }
-            @if (stockRows().length === 0) {
-              <p class="empty-state">{{ 'reports.stock.empty' | translate }}</p>
-            } @else {
-              <div class="table-scroll">
-                <table
-                  mat-table
-                  [dataSource]="filteredStockRows()"
-                  matSort
-                  (matSortChange)="sortStock($event)"
-                  class="stock-table"
-                >
-                  <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                      {{ 'reports.columns.name' | translate }}
-                    </th>
-                    <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="sku">
-                    <th mat-header-cell *matHeaderCellDef>{{ 'reports.columns.sku' | translate }}</th>
-                    <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="soldUnits">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                      {{ 'reports.columns.soldUnits' | translate }}
-                    </th>
-                    <td mat-cell *matCellDef="let row">{{ row.soldUnits }}</td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="soldRevenue">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                      {{ 'reports.columns.soldRevenue' | translate }}
-                    </th>
-                    <td mat-cell *matCellDef="let row">{{ row.soldRevenue | appCurrency }}</td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="inStockUnits">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                      {{ 'reports.columns.inStockUnits' | translate }}
-                    </th>
-                    <td mat-cell *matCellDef="let row">{{ row.inStockUnits }}</td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="inStockValue">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                      {{ 'reports.columns.inStockValue' | translate }}
-                    </th>
-                    <td mat-cell *matCellDef="let row">{{ row.inStockValue | appCurrency }}</td>
-                  </ng-container>
-
-                  <tr mat-header-row *matHeaderRowDef="stockColumns"></tr>
-                  <tr mat-row *matRowDef="let row; columns: stockColumns"></tr>
-                </table>
-              </div>
-            }
-          </mat-card-content>
-        </mat-card>
-      }
+      <app-stock-card
+        [view]="viewOf(2)"
+        [option]="stockOption()"
+        [totals]="stockTotals()"
+        [filter]="stockFilter()"
+        [rows]="filteredStockRows()"
+        [hasRows]="stockRows().length > 0"
+        [columns]="stockColumns"
+        (viewChange)="setView(2, $event)"
+        (filterChange)="setStockFilter($event)"
+        (sortChange)="sortStock($event)"
+        (export)="exportStock()"
+      />
     </div>
   </mat-tab>
 
