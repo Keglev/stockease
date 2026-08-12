@@ -1,9 +1,25 @@
 # Building Blocks
 
-StockEase is one deployable divided into nine domain modules plus a global
-infrastructure package, organized package-per-module under Spring Modulith.
-The boundaries below are not conventions - they are verified by a test on
-every build and violating them fails CI.
+StockEase is one deployable divided into **eight domain modules** - counting
+bounded business capabilities, whether or not they own persistence - plus
+three infrastructure packages: `shared`, `config` and `demo`. The eight are
+`product`, `supplier`, `customer`, `invoice`, `movement`, `audit`, `report`
+and `security`. Every one is a direct sub-package of the application's root
+package, organized package-per-module under Spring Modulith. The boundaries
+below are not conventions - they are verified by a test on every build and
+violating them fails CI.
+
+Two of the eight are worth naming explicitly, because a definition drawn
+around persistence would exclude one and admit the other. `report` owns no
+entity and no repository at all - it answers aggregations with native SQL
+over other modules' tables (ADR 006) - and is a domain module because
+reporting is a business capability with its own boundary, not because it
+stores anything. `security` does own an aggregate, the application's user,
+and is a domain module for the same reason: authentication and authorization
+are a capability, not plumbing. The three infrastructure packages are
+excluded because none of them answers a business question: `shared` carries
+response envelopes and global exception handling, `config` holds framework
+wiring, and `demo` seeds and resets demonstration data.
 
 ## Module map
 
@@ -13,7 +29,7 @@ cycle or where a module must react to another without being known to it.
 
 ```mermaid
 graph TD
-  subgraph Domain modules
+  subgraph Domain modules - eight business capabilities
     product[product]
     supplier[supplier]
     customer[customer]
@@ -21,9 +37,13 @@ graph TD
     movement[movement]
     audit[audit]
     report[report]
+    security[security]
   end
-  security[security]
-  shared[shared]
+  subgraph Infrastructure
+    shared[shared]
+    config[config]
+    demo[demo]
+  end
 
   movement -->|item lookups| invoice
   movement -->|adjustQuantity| product
@@ -46,11 +66,13 @@ listens for supplier and product deletion events and throws inside the
 deleting transaction while open invoices pin the party - the deletion rolls
 back whole. Veto listeners are pinned to run before all other listeners.
 
-Not on the diagram: the `report` module has no arrows because it has no Java
-dependencies at all - it answers aggregations with native SQL and returns
-its own records (ADR 006). Web layers across modules use `shared` (response
-envelopes, global exception handling) and resolve their principal through
-the `security` module's user service.
+Two modules carry no arrows, for different reasons. `report` has no Java
+dependencies at all - it answers aggregations with native SQL and returns its
+own records (ADR 006). `security` is reached by every web layer rather than by
+any one module, so drawing it would add eight edges that say the same thing.
+The infrastructure packages are undrawn for the same reason: web layers across
+modules use `shared` for response envelopes and global exception handling, and
+resolve their principal through `security`'s user service.
 
 ## Module anatomy
 

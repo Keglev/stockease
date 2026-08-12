@@ -26,9 +26,10 @@ auditing and reporting in a single Spring Boot deployable.
 
 ## Key architectural principles
 
-- **Modular monolith.** Eight domain modules plus shared infrastructure in one
-  deployable; boundaries are enforced by Spring Modulith and verified by a test
-  on every build - not by convention.
+- **Modular monolith.** Eight domain modules - bounded business capabilities,
+  whether or not they own persistence - plus three infrastructure packages
+  (`shared`, `config`, `demo`) in one deployable; boundaries are enforced by
+  Spring Modulith and verified by a test on every build, not by convention.
 - **Events inside the transaction.** Closing an invoice publishes an event; a
   synchronous listener books the stock movements in the same transaction.
   Either everything commits or nothing does.
