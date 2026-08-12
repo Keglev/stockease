@@ -1,3 +1,7 @@
+<!-- The change timeline, serving both audit routes from one template. The mode signal is the only
+     difference between them: it chooses the heading, and on a user's trail it adds a link to each
+     entry's product, which a single product's history would only ever point back at itself.
+     Everything else renders from the same payload shape either way. -->
 <div class="audit-toolbar">
   <h1 class="audit-title">
     @if (mode() === 'product') {

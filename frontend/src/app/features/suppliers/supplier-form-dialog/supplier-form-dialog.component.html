@@ -1,3 +1,7 @@
+<!-- One dialog for both creating and editing a supplier; the title and the submit label are what
+     switch, and every field below is shared. Name and address carry the required markers because
+     the supplier register asks for both - the customer dialog is this same layout with only a
+     required name, and the two are meant to differ there. -->
 <h2 mat-dialog-title>
   {{ (isEdit ? 'suppliers.form.editTitle' : 'suppliers.form.createTitle') | translate }}
 </h2>

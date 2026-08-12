@@ -1,3 +1,6 @@
+<!-- The loss form: product, reason, quantity and a mandatory remark. There is deliberately no price
+     control anywhere below - a loss is valued from the product's own purchase price at booking time,
+     and offering a figure here would invite an operator to set one the ledger then ignores. -->
 <h1>{{ 'movements.title' | translate }}</h1>
 
 <form [formGroup]="form" (ngSubmit)="submit()">

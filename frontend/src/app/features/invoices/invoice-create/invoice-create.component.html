@@ -1,3 +1,6 @@
+<!-- The new-invoice form: header fields in the first card, the line items in the second, actions
+     below both. The two cards are one <form> - the boundary is visual only, so validity and submit
+     span both halves and a header field left empty blocks a submit pressed under the items. -->
 <h1>{{ 'invoices.createPage.title' | translate }}</h1>
 
 <form [formGroup]="form" (ngSubmit)="submit()">

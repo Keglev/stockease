@@ -1,3 +1,7 @@
+<!-- Seven report tabs, each a toggle strip above a card that draws that tab's body. The tab ORDER
+     here is load-bearing: the component addresses tabs by numeric index, and the constants it uses
+     assume exactly this sequence, so moving a mat-tab reassigns which query loads on activation
+     without changing a line of TypeScript. -->
 <div class="reports-toolbar">
   <h1>{{ 'reports.title' | translate }}</h1>
   <button matButton="outlined" type="button" class="reports-refresh" (click)="refresh()">

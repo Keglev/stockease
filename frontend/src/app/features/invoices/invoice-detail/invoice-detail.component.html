@@ -1,3 +1,7 @@
+<!-- One invoice: its identity and back link, then the header card, the line items, and whichever
+     lifecycle actions its status still permits. The invoice signal is unwrapped twice rather than
+     once around the whole page, so the identity strip and the way back stay on screen while a
+     reload replaces the body under them. -->
 <div class="detail-header">
   <h1>
     {{ 'invoices.detail.title' | translate }}

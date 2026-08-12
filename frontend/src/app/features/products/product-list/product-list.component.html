@@ -1,3 +1,7 @@
+<!-- The product catalogue as a sortable table with a row menu. One table markup serves two
+     different datasets: the admin toggle above swaps the live catalogue for the deleted set behind
+     the same rows binding, and the column list swaps with it. Nothing below branches on which view
+     is showing except that column set and the empty-state key. -->
 <div class="product-toolbar">
   <h1>{{ 'products.title' | translate }}</h1>
   @if (isAdmin()) {

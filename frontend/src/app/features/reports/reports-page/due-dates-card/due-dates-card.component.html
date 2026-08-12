@@ -1,3 +1,7 @@
+<!-- The due-dates tab's body: the outstanding-value chart, or the overdue and due-soon lists behind
+     it. Nothing here raises an output at all, unlike the dashboard's due card - the tab loads all
+     three of its queries together on activation, so both halves are already in hand and switching
+     between them tells the page nothing it does not know. -->
 @if (view() === 'chart') {
   <mat-card class="chart-card">
     <mat-card-content>
