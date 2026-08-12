@@ -11,7 +11,9 @@ import {
 /*
  * The two stored formatting preferences: their defaults, that an unsupported value is ignored
  * rather than applied, that a choice persists for the next visit, and that a stored choice is read
- * back when the service is constructed.
+ * back when the service is constructed. Also the locale those preferences resolve to, which every
+ * renderer reads: which language maps to which locale, that an explicit preference beats the
+ * language, and which of the two a language change moves.
  * Out of scope: everything rendered from these preferences - format.service.spec.ts.
  */
 describe('FormatPreferencesService', () => {
@@ -55,5 +57,51 @@ describe('FormatPreferencesService', () => {
 
     expect(restored.dateFormat()).toBe('ymdDash');
     expect(restored.numberFormat()).toBe('de');
+  });
+
+  it('numberLocale_autoInBothLanguages_followsTheInterfaceLanguage', () => {
+    // Both directions rather than one example: a mapping pinned by a single language would still
+    // pass if every language resolved to that one locale.
+    language.setLanguage('de');
+    expect(format.numberLocale()).toBe('de-DE');
+
+    language.setLanguage('en');
+    expect(format.numberLocale()).toBe('en-US');
+  });
+
+  it('numberLocale_explicitPreference_beatsTheLanguageInBothDirections', () => {
+    // The branch the settings page exists for, asserted where the two disagree - agreeing values
+    // would be satisfied by an implementation that ignored the preference entirely.
+    language.setLanguage('en');
+    format.setNumberFormat('de');
+    expect(format.numberLocale()).toBe('de-DE');
+
+    setUp();
+    language.setLanguage('de');
+    format.setNumberFormat('en');
+    expect(format.numberLocale()).toBe('en-US');
+  });
+
+  it('numberLocale_languageChangedWhileAuto_reDerives', () => {
+    language.setLanguage('en');
+    expect(format.numberLocale()).toBe('en-US');
+
+    language.setLanguage('de');
+
+    // The property is the computed re-deriving, not the value it happened to start on.
+    expect(format.numberLocale()).toBe('de-DE');
+  });
+
+  it('numberLocale_languageChangedWhileOverridden_staysOnThePreference', () => {
+    language.setLanguage('en');
+    format.setNumberFormat('de');
+
+    language.setLanguage('de');
+
+    // An explicit choice is not undone by a language switch, and switching TO the preference's own
+    // language must not be what makes this pass: it is read again after moving away from it.
+    expect(format.numberLocale()).toBe('de-DE');
+    language.setLanguage('en');
+    expect(format.numberLocale()).toBe('de-DE');
   });
 });
