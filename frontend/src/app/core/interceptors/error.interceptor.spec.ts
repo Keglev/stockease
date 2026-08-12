@@ -119,6 +119,39 @@ describe('errorInterceptor', () => {
     expect((await thrown as ApiError).code).toBeUndefined();
   });
 
+  it('intercept_envelopeWithEmptyCode_leavesTheCodeUndefined', async () => {
+    const { http, controller } = setUp();
+    const thrown = new Promise<unknown>((resolve) => {
+      http.get(API_URL).subscribe({ error: (error: unknown) => resolve(error) });
+    });
+
+    // An empty string is present but says nothing, and it is the one malformed value that would
+    // survive a typed read: it has the declared type, so only the length check rejects it.
+    controller.expectOne(API_URL).flush(
+      { success: false, message: 'Odd.', data: null, code: '' },
+      { status: 409, statusText: 'Error' }
+    );
+
+    expect((await thrown as ApiError).code).toBeUndefined();
+  });
+
+  it('intercept_bodyThatIsNotAnObject_leavesTheCodeUndefined', async () => {
+    const { http, controller } = setUp();
+    const thrown = new Promise<unknown>((resolve) => {
+      http.get(API_URL).subscribe({ error: (error: unknown) => resolve(error) });
+    });
+
+    // A gateway or proxy answers with no envelope at all, and reading a field off that must not
+    // throw on the way to the generic failure every consumer already handles.
+    controller.expectOne(API_URL).flush(null, { status: 502, statusText: 'Bad Gateway' });
+
+    // Asserting the type as well as the code: reading a field off null throws, and a thrown
+    // TypeError has no code either, so the undefined alone would pass for the wrong reason.
+    const error = await thrown;
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).code).toBeUndefined();
+  });
+
   it('intercept_bodyWithoutMessage_fallsBackToTheGenericMessage', async () => {
     const { http, controller } = setUp();
     const thrown = new Promise<unknown>((resolve) => {
