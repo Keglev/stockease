@@ -1,9 +1,9 @@
-# StockEase - Size, Style, and Comment Standards (rev 8, 2026-08-12)
+# StockEase - Size, Style, and Comment Standards (rev 9, 2026-08-12)
 
-Supersedes rev 7 (2026-08-08). Changes: the i18n section rewritten for the
-authoring split (ADR 037); a fixtures-module size exemption; the shell/card
-division of labour recorded; CRUD symmetry and sub-3-site duplication ruled
-acceptable; and the tables' filter/sort/export store recorded as deferred.
+Supersedes rev 8 (2026-08-12). Changes: a band row for build-and-gate scripts,
+which the hand-run `tools/` row excludes by construction; and an errata
+correcting the Error-to-UI contract, whose opening claim was wrong about the
+notification fall-through.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -72,6 +72,25 @@ SHELL COMMENT EXEMPLAR: `.github/scripts/deploy/demo-reset.sh`.
 run by hand, not by CI. A header comment states what it measures or does, its
 provenance, one-line usage, and why it is not a gate. Node dependencies belong
 to an existing workspace rather than a new root manifest.
+
+*[rev 9]* BUILD-AND-GATE SCRIPTS 70-150 (>200). Node or shell scripts that live
+inside the project they serve and are invoked by CI rather than by hand: they
+produce a committed artifact, or they check one, or both. The header states what
+the script produces, how CI invokes it, and its failure mode - the last because a
+gate that fails quietly is worse than no gate. The band sits below the `tools/`
+one because a gate does one thing and says why it stopped; length here is a sign
+the script has taken on a second job.
+
+This row is additional to the `tools/` row above, which is unchanged and
+continues to govern hand-run instruments. A gate cannot be filed under that row:
+its wording excludes one by construction, requiring a script that runs "not by
+CI" and a header stating "why it is not a gate". The two coexist, and a script
+belongs to whichever describes how it is invoked.
+
+REFERENCE INSTANCE: `frontend/tools/build-i18n.mjs` - 83 code lines, WITHIN the
+band. It assembles the shipped translation bundles from their authored sources
+and, under `--check`, re-assembles and refuses any difference. Note the
+directory: living under `tools/` does not put a script under the `tools/` row.
 
 *[rev 5]* WORKFLOW HEADERS: every workflow file opens with a 2-5 line plain `#`
 prose header stating WHY - what the workflow does that its `name:` key does not
@@ -196,10 +215,39 @@ namespace and by nothing else.
 
 ## Error-to-UI contract
 
-Backend messages are never user-facing copy; UI renders translated keys off the
-envelope; machine `code` is the discriminator; matching backend prose is
-forbidden. *[rev 4 cross-reference: BL-13 records that several tests assert
-exception-message prose - non-contract coupling, ruling pending.]*
+*[rev 9 ERRATA]* The rev 4 wording opened "Backend messages are never user-facing
+copy". That was a factual claim about the code, and it was wrong: a backend
+sentence does reach the reader, by design, on a path the rule did not account
+for. The contract below is the one the code holds. What follows is a correction,
+not a relaxation - the three rules that were right are unchanged.
+
+UI renders translated keys off the error envelope, and never matches backend
+prose to decide anything. Prose is display material; it is never a discriminant,
+and a branch on message text is a finding in any review pass.
+
+The envelope's machine `code` is the discriminator where one status carries
+several causes. The worked case is a return whose 409 may mean a deleted product
+or a stock shortfall - opposite advice to the operator, indistinguishable before
+codes existed, and each mapped to its own key now.
+
+Where no code is recognised - absent, unknown, or a failure that is not an
+envelope at all - the operation's generic fallback applies. A consumer branching
+on a code treats "absent" and "a value I do not know" as the same case, because
+the API adds codes to responses that previously carried none.
+
+Where that fallback hands the notification path the server's own sentence, it is
+displayed verbatim. The notification path translates anything resolving as a
+known key and shows anything else as written, so a caller need not know which it
+holds. This is the designed fall-through and not a leak: echoing a raw key at the
+reader is worse than showing the server's sentence, and the alternative - one
+generic apology for every unmapped failure - discards the only specific
+information available. The obligation the rule was reaching for survives in the
+first paragraph: prose may be shown, never matched.
+
+*[rev 4 cross-reference: BL-13 records that several tests assert
+exception-message prose - non-contract coupling, ruling pending.]* That ruling is
+untouched here. This errata corrects what the UI does; it says nothing about what
+the tests may assert.
 
 ## OpenAPI / declarative YAML
 
