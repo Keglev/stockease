@@ -49,5 +49,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 035 - Search Matches Tokens, and an Empty Picker Browses](035-search-token-matching-and-browse.md) - **[Cross-cutting]**
 - [ADR 036 - Client Token Storage and Its Accepted Threat Model](036-client-token-storage.md) - **[Cross-cutting]**
 - [ADR 037 - Translations Are Authored Per Namespace and Assembled at Build Time](037-i18n-authoring-split.md) - **[Frontend]**
+- [ADR 038 - AI-Assisted Development With Human Decision Authority](038-ai-assisted-development-workflow.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)
