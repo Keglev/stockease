@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<!-- The one page template the docs build wires: build-architecture-docs.sh
+     passes every architecture page and every decision record through it, so
+     the topbar, sidebar and theme handling here are what the whole generated
+     site carries - this comment included, since it ships inside each page.
+     Do not put template syntax in it. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend · 10-quality-requirements · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Frontend sidebar navigation, included by the doc templates as a Pandoc
+     partial. It carries the same Docs group as nav-backend.html so a frontend
+     page never inherits backend navigation. The active link is marked at
+     runtime by docs.js. Do not put template syntax in this comment - a partial
+     is itself a template.
+
+     The Frontend group lists the architecture tree's entry pages, English and
+     German side by side in the same order nav-backend.html uses. The two
+     Quality entries below are published from frontend CI artifacts rather than
+     from this repository's Markdown. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Frontend</p>
+  <ul>
+    <li><a href="/stockease/frontend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/frontend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/frontend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/frontend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/frontend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/frontend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/frontend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/frontend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/frontend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/frontend/api/index.html">Frontend API</a></li>
+    <li><a href="/stockease/frontend/coverage/index.html">Frontend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="quality-requirements">Quality Requirements</h1>
+        <p>Quality goals from the <a href="index.html">introduction</a>,
+        made concrete and checkable. The frontend’s are enforced almost
+        entirely by one suite and two gates.</p>
+        <h2 id="the-runner">The runner</h2>
+        <p>Vitest runs through Angular’s <code>unit-test</code> builder
+        against jsdom. The distinction matters: the chain is
+        <code>ng test</code>, not <code>vitest</code>. The builder
+        compiles the application the way the production build does, so a
+        spec exercises components through the real Angular compiler
+        rather than a separately configured one, and a template error is
+        a test failure rather than something the runner never sees.
+        Invoking the raw runner would skip that compilation and test a
+        different thing.</p>
+        <p>CI runs a single command, <code>npm run test:coverage</code>,
+        which is <code>ng test --watch=false --coverage</code>. Coverage
+        is produced in the same pass rather than a second one, so the
+        reported numbers belong to the run that just passed.
+        <code>--watch=false</code> is the non-interactive mode; the
+        watch-mode <code>npm test</code> passes no
+        <code>--coverage</code> flag, which is what keeps the thresholds
+        inert during development.</p>
+        <h2 id="the-coverage-gate">The coverage gate</h2>
+        <p><code>angular.json</code> declares four thresholds:</p>
+        <table>
+        <thead>
+        <tr class="header">
+        <th>Metric</th>
+        <th>Floor</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="odd">
+        <td>Statements</td>
+        <td>90</td>
+        </tr>
+        <tr class="even">
+        <td>Branches</td>
+        <td>85</td>
+        </tr>
+        <tr class="odd">
+        <td>Functions</td>
+        <td>85</td>
+        </tr>
+        <tr class="even">
+        <td>Lines</td>
+        <td>90</td>
+        </tr>
+        </tbody>
+        </table>
+        <p>They are regression floors, deliberately set below what the
+        suite achieves rather than at it. Gating at the achieved number
+        would fail any honest refactor that moves a few lines; these
+        trip only when coverage has genuinely fallen away. They are
+        global rather than per-file - a per-file gate fails on the first
+        small file with one uncovered guard, which is a different
+        question from whether the suite regressed.</p>
+        <p>The published coverage report is linked in the sidebar and is
+        uploaded by every run, pull requests included.</p>
+        <h2 id="what-the-suite-tests-and-how">What the suite tests, and
+        how</h2>
+        <p><strong>Dependency-injection seams, not module
+        mocks.</strong> A spec provides a stub for the real token and
+        lets Angular wire it. This is possible because the pieces are
+        shaped for it: <code>core/</code> services are ordinary
+        root-provided classes, the two signal stores are factories that
+        take a <code>fetch</code> or a <code>close</code> callback
+        rather than a service, and the CSV downloader is an injection
+        token. The seams substituted most often are the feature
+        services, <code>NotificationService</code>,
+        <code>HealthService</code>, <code>AuthService</code>,
+        <code>MatDialog</code> and <code>MatDialogRef</code>,
+        <code>BreakpointObserver</code> for viewport-dependent
+        behaviour, and <code>ThemeService</code> and
+        <code>TranslateService</code> where rendering depends on
+        them.</p>
+        <p><strong>Component specs render.</strong> They assert on what
+        the real template produces - that a row appears per product,
+        that an admin sees a create button and a non-admin does not,
+        that a German reader sees German currency and not en-US - rather
+        than on component fields. The rendered output is the contract;
+        the fields behind it are not.</p>
+        <p><strong>A shell spec plus tab siblings</strong>, where a page
+        is large enough to need it. The reports area is the example:
+        <code>reports-page.component.spec.ts</code> owns what belongs to
+        the page rather than to any one tab - tab selection and
+        first-activation loading, what a refresh refetches, the single
+        loading bar and single error banner every tab reports through,
+        and the chart context rebuilding on a language change. Each
+        tab’s own rendering, filters, sorting and exports live in a
+        sibling named for it, seven of them, sharing one fixtures
+        module. The whole-page fetch-timing contracts stay in the shell
+        spec permanently, because each asserts on the page’s entire call
+        list rather than on one tab’s.</p>
+        <h2 id="test-isolation">Test isolation</h2>
+        <p><strong>Every spec file owns its start state.</strong> This
+        is an operational rule, not a style preference, and the reason
+        is specific: the browser-storage services resolve their state at
+        construction. <code>LanguageService</code> reads its stored key
+        ahead of the browser language, and <code>ThemeService</code> and
+        <code>FormatService</code> do the same with theirs. Spec files
+        share a worker, so residue left by an earlier file changes what
+        a later one renders - and because Vitest orders files
+        differently on different machines, the resulting failure appears
+        on one runner and not another, on the same commit.</p>
+        <p>A global setup file, wired through the builder’s
+        <code>setupFiles</code> option, clears storage before every spec
+        file. A file’s own <code>beforeEach</code> still runs after it,
+        so specs that deliberately seed storage are unaffected: they set
+        their state after the slate is wiped, which is the order they
+        already assumed. That setup is a safety net rather than the
+        guarantee - a spec that depends on state it did not set is still
+        incorrect.</p>
+        <h2 id="naming">Naming</h2>
+        <p>Specs follow <code>method_state_expected</code>, verified by
+        reading rather than assumed:</p>
+        <pre><code>load_serviceReturnsProducts_rendersOneRowPerProduct
+load_serviceErrors_rendersErrorMessage
+render_adminRole_showsCreateButton
+render_userRole_hidesCreateButton
+priceCell_germanLanguage_rendersGermanCurrencyNotEnUs
+delete_confirmed_callsServiceAndReloadsCurrentPage</code></pre>
+        <p>The three parts are what is exercised, the condition, and the
+        observable result. Each spec file also opens with a plain block
+        comment naming the contract it covers and what is out of scope,
+        and names its sibling files where a concern was split away.</p>
+        <p><a href="index.html">Back to Introduction and Goals</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#quality-requirements"
+      id="toc-quality-requirements">Quality Requirements</a>
+      <ul>
+      <li><a href="#the-runner" id="toc-the-runner">The runner</a></li>
+      <li><a href="#the-coverage-gate" id="toc-the-coverage-gate">The
+      coverage gate</a></li>
+      <li><a href="#what-the-suite-tests-and-how"
+      id="toc-what-the-suite-tests-and-how">What the suite tests, and
+      how</a></li>
+      <li><a href="#test-isolation" id="toc-test-isolation">Test
+      isolation</a></li>
+      <li><a href="#naming" id="toc-naming">Naming</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>

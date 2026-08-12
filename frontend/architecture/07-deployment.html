@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<!-- The one page template the docs build wires: build-architecture-docs.sh
+     passes every architecture page and every decision record through it, so
+     the topbar, sidebar and theme handling here are what the whole generated
+     site carries - this comment included, since it ships inside each page.
+     Do not put template syntax in it. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend · 07-deployment · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Frontend sidebar navigation, included by the doc templates as a Pandoc
+     partial. It carries the same Docs group as nav-backend.html so a frontend
+     page never inherits backend navigation. The active link is marked at
+     runtime by docs.js. Do not put template syntax in this comment - a partial
+     is itself a template.
+
+     The Frontend group lists the architecture tree's entry pages, English and
+     German side by side in the same order nav-backend.html uses. The two
+     Quality entries below are published from frontend CI artifacts rather than
+     from this repository's Markdown. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Frontend</p>
+  <ul>
+    <li><a href="/stockease/frontend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/frontend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/frontend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/frontend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/frontend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/frontend/architecture/06-runtime.html">Runtime View</a></li>
+    <li><a href="/stockease/frontend/architecture/07-deployment.html">Deployment</a></li>
+    <li><a href="/stockease/frontend/architecture/08-concepts.html">Concepts</a></li>
+    <li><a href="/stockease/frontend/architecture/10-quality-requirements.html">Quality Requirements</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/frontend/api/index.html">Frontend API</a></li>
+    <li><a href="/stockease/frontend/coverage/index.html">Frontend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="deployment-view">Deployment View</h1>
+        <p>Everything deploys from <code>main</code>; nothing deploys
+        from anywhere else. Merging is the release act.</p>
+        <div class="mermaid">
+        graph LR
+          GH[GitHub main] -->|push| FT[Frontend Tests<br/>lint, i18n check, build, coverage]
+          FT -->|gate| DF[Deploy Frontend]
+          DF -->|vercel deploy --prebuilt| CDN[Vercel CDN]
+          CDN -->|REST| API[Koyeb backend]
+          FT -.->|coverage + TypeDoc artifacts| DOCS[Docs Pipeline]
+          GH -->|"push (docs/**)"| DOCS
+          DOCS -->|docs-site artifact| PAGES[Deploy Docs<br/>GitHub Pages]
+        </div>
+        <h2 id="what-ci-checks">What CI checks</h2>
+        <p>One workflow, <code>Frontend Tests</code>, runs on pull
+        requests and pushes to <code>main</code> that touch
+        <code>frontend/**</code> or the workflow’s own file. It reports
+        under the same required check name the backend and docs
+        workflows use, so whichever side a pull request touches, a job
+        with the required name reports on it.</p>
+        <p>Its steps, in order:</p>
+        <ol type="1">
+        <li><strong>Lint</strong> - <code>ng lint</code> over the
+        TypeScript and the templates.</li>
+        <li><strong>The i18n drift check</strong> - re-assembles the
+        shipped translation bundles from their authored sources and
+        fails if the committed files differ. It runs before the build so
+        a mismatch fails fast rather than after a full compile.</li>
+        <li><strong>Production build</strong> -
+        <code>ng build --configuration production</code>, which is also
+        the type check.</li>
+        <li><strong>Unit tests with coverage</strong> - one command,
+        <code>npm run test:coverage</code>. The coverage thresholds in
+        <code>angular.json</code> gate this step.</li>
+        </ol>
+        <p>The order is deliberate: the cheap checks that can fail for
+        unrelated reasons run before the expensive one.</p>
+        <p>Two artifacts are uploaded. The Vitest coverage HTML uploads
+        on every run including pull requests, with
+        <code>always()</code>, because a failing suite’s numbers are
+        exactly what a reviewer wants. The TypeDoc API reference uploads
+        on success only - a reference built from a tree that failed to
+        compile is not something to publish over the last good one.</p>
+        <h2 id="how-the-bundle-reaches-the-cdn">How the bundle reaches
+        the CDN</h2>
+        <p><code>Deploy Frontend</code> runs on the completion of
+        <code>Frontend Tests</code> on <code>main</code>, gated on that
+        run having succeeded and not having been a pull request. It
+        checks out the exact commit the test run used, then builds and
+        deploys through the Vercel CLI: <code>vercel build --prod</code>
+        on the runner, followed by
+        <code>vercel deploy --prebuilt</code>.</p>
+        <p>Building on the runner rather than letting Vercel rebuild
+        from the repository is the point of the arrangement. What is
+        published is exactly the artifact this run produced, from the
+        commit that passed the gate - there is no second build, on
+        another machine, with another toolchain resolution, that could
+        differ from the one the tests ran against. It also means the
+        deploy step performs no verification of its own and needs
+        none.</p>
+        <p>The application is a static bundle on a CDN rather than a
+        served application (ADR 012). A rewrite rule sends every path
+        that is not an asset to <code>index.html</code>, which is what
+        makes client-side routing work on a direct visit to a deep
+        link.</p>
+        <h2 id="documentation-delivery">Documentation delivery</h2>
+        <p>The docs site is built by <code>Docs Pipeline</code> and
+        published by <code>Deploy Docs to GitHub Pages</code>; the
+        pipeline builds and uploads, the deploy workflow publishes, and
+        neither does the other’s job. The pipeline is triggered both by
+        a push touching <code>docs/**</code> and by the completion of a
+        test workflow on <code>main</code>.</p>
+        <p>Which reports a given run can include depends on what
+        triggered it, and this is the mechanism worth understanding:</p>
+        <ul>
+        <li>A <code>Frontend Tests</code> run brings the Vitest coverage
+        report and the TypeDoc reference.</li>
+        <li>A <code>Backend Tests</code> run brings JaCoCo.</li>
+        <li>A docs-only push brings none of them.</li>
+        </ul>
+        <p>Each run therefore publishes what its trigger produced, and
+        the deploy step preserves the published copy of anything a given
+        build did not regenerate. This is also why the link checker
+        excludes those three trees: they are legitimately absent from
+        any single build and present on the deployed site.</p>
+        <p><strong>The frontend API reference is generated in the
+        frontend workflow, not the docs pipeline.</strong> TypeDoc needs
+        the frontend’s installed <code>node_modules</code>, and the docs
+        pipeline installs only Pandoc and the OpenAPI tooling. Producing
+        it where the dependencies already exist is cheaper than
+        installing a second copy of them in a workflow that otherwise
+        needs none; the docs build copies in the downloaded artifact
+        exactly as it does for the two coverage reports.</p>
+        <p>Pull requests touching documentation get their own check,
+        <code>Docs PR Check</code>, which builds the site and runs the
+        link checker without uploading or deploying anything.</p>
+        <h2 id="configuration">Configuration</h2>
+        <p>The frontend needs one value at build time: the API base URL.
+        It is not an environment variable - it is committed in
+        <code>src/environments/</code>, and the Angular build swaps the
+        file per configuration. <code>environment.ts</code> carries the
+        production values and is what a production build uses;
+        <code>environment.development.ts</code> replaces it under the
+        development configuration and points at a local backend on port
+        8081.</p>
+        <p>A second flag, <code>demo</code>, marks the deployment rather
+        than the user: this build is the demo, so the flag is true in
+        the production file and dies naturally the day a non-demo
+        deployment exists.</p>
+        <p>Deploy credentials - the Vercel token, organisation and
+        project identifiers - live in GitHub Actions secrets and appear
+        nowhere in the repository.</p>
+        <h2 id="environments">Environments</h2>
+        <p>There is one: production. Pull requests get the full check
+        suite and no deployment. There is no staging tier, which is the
+        same free-tier constraint the backend accepts, for a portfolio
+        system whose data resets nightly.</p>
+        <p><a href="index.html">Back to Introduction and Goals</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#deployment-view" id="toc-deployment-view">Deployment
+      View</a>
+      <ul>
+      <li><a href="#what-ci-checks" id="toc-what-ci-checks">What CI
+      checks</a></li>
+      <li><a href="#how-the-bundle-reaches-the-cdn"
+      id="toc-how-the-bundle-reaches-the-cdn">How the bundle reaches the
+      CDN</a></li>
+      <li><a href="#documentation-delivery"
+      id="toc-documentation-delivery">Documentation delivery</a></li>
+      <li><a href="#configuration"
+      id="toc-configuration">Configuration</a></li>
+      <li><a href="#environments"
+      id="toc-environments">Environments</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
