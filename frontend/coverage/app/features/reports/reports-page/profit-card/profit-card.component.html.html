@@ -231,7 +231,32 @@
 <a name='L166'></a><a href='#L166'>166</a>
 <a name='L167'></a><a href='#L167'>167</a>
 <a name='L168'></a><a href='#L168'>168</a>
-<a name='L169'></a><a href='#L169'>169</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">169x</span>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">169x</span>
 <span class="cline-any cline-yes">114x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -322,6 +347,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">49x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">38x</span>
@@ -334,6 +364,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">25x</span>
@@ -399,7 +435,14 @@
 <span class="cline-any cline-yes">25x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">@if (view() === 'chart') {
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&lt;!--
+  Profit is one question asked at two groupings - per product and per supplier - so both live in
+  this one tab body rather than in tabs of their own. The two views are not the same content
+  drawn twice: the chart view pairs the overall-margin gauge with the per-product chart and has
+  no supplier equivalent, because a supplier ranking reads as a table and adds nothing as a
+  second chart beside the first.
+--&gt;
+@if (view() === 'chart') {
   &lt;div class="chart-row"&gt;
     &lt;mat-card class="chart-card margin-card"&gt;
       &lt;mat-card-content&gt;
@@ -490,6 +533,11 @@
             &lt;/ng-container&gt;
 &nbsp;
             &lt;tr mat-header-row *matHeaderRowDef="profitColumns()"&gt;&lt;/tr&gt;
+            &lt;!--
+              Only the product rows activate. A product has a detail worth opening; a supplier
+              row is already the whole of what the report knows about it, so making it look
+              clickable would promise a drill-down that does not exist.
+            --&gt;
             &lt;tr
               mat-row
               *matRowDef="let row; columns: profitColumns()"
@@ -504,6 +552,12 @@
     &lt;/mat-card-content&gt;
   &lt;/mat-card&gt;
 &nbsp;
+  &lt;!--
+    The second table carries its own sort and its own export rather than sharing the first's.
+    They are independent row sets over different entities, so a sort chosen here must not
+    reorder the products above, and each download is its own file with its own columns - a
+    reader exporting supplier profit does not want product rows in the sheet.
+  --&gt;
   &lt;mat-card class="table-card"&gt;
     &lt;mat-card-content&gt;
       &lt;div class="table-heading"&gt;
@@ -574,7 +628,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-12T11:49:39.794Z
+                at 2026-08-12T14:44:33.116Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>
