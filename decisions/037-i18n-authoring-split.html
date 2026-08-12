@@ -8,7 +8,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Decisions · index · StockEase Docs</title>
+  <title>Decisions · 037-i18n-authoring-split · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -151,138 +151,134 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="architecture-decision-records">Architecture Decision
-        Records</h1>
-        <p>Decisions with justification: why a design was chosen, what
-        alternatives were rejected, and which trade-offs are accepted.
-        ADRs are append-only; superseded decisions are marked, never
-        rewritten.</p>
-        <p>This is the system-wide decision log. The backend and
-        frontend architecture documentations reference it from their
-        section 9 rather than keeping separate logs, so one numbered
-        sequence covers the whole system. Each entry is tagged with the
-        tier it decides for: <strong>[Backend]</strong>,
-        <strong>[Frontend]</strong> or
-        <strong>[Cross-cutting]</strong>.</p>
-        <h2 id="index">Index</h2>
+        <h1
+        id="adr-037-translations-are-authored-per-namespace-and-assembled-at-build-time">ADR
+        037: Translations Are Authored Per Namespace and Assembled at
+        Build Time</h1>
+        <p><strong>Scope</strong>: [Frontend] <strong>Status</strong>:
+        Accepted <strong>Date</strong>: August 12, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The application ships two translation bundles,
+        <code>en.json</code> and <code>de.json</code>, each 581 lines
+        carrying 413 leaf keys across 19 top-level namespaces. Every key
+        the frontend renders lives in one of those two files, and both
+        are edited by hand.</p>
+        <p>That shape costs on two fronts. Any two branches adding keys
+        touch the same file per language, so a key change is a
+        merge-conflict candidate by default - not because the changes
+        conflict in meaning, but because they land in one document. And
+        finding a key means scrolling a large document rather than
+        opening the file named for the feature.</p>
+        <p>The safety net is thinner than it looks. ngx-translate
+        resolves keys as strings at runtime; there is no compiler check
+        that a key exists, and a missing one surfaces as the key itself
+        rendered into the page (ADR 015). What substitutes for that
+        check is the EN/DE parity spec, which pins both membership and
+        ordering across the two bundles. Ordering is part of the
+        contract, not a formatting preference: it is what makes a diff
+        between the languages readable and what catches a key appended
+        to one side and forgotten on the other.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Translations are authored as one file per namespace
+        per language</strong>, under <code>frontend/src/i18n/en/</code>
+        and <code>frontend/src/i18n/de/</code>, each file containing
+        that namespace’s body.
+        <strong><code>frontend/src/i18n/namespaces.json</code> is the
+        manifest</strong>: an ordered array naming the namespaces, and
+        that order is the key order of the assembled bundle.</p>
+        <p><strong><code>frontend/tools/build-i18n.mjs</code> assembles
+        the two runtime files at build time.</strong> The assembled
+        bundles remain committed under <code>public/i18n/</code>, and CI
+        re-assembles them on every frontend pull request and fails on
+        any difference.</p>
+        <p>The runtime contract is unchanged. One HTTP fetch per
+        language, the same paths, the same bytes. Nothing in the
+        application knows the sources exist; this is a change to how the
+        artifact is produced, not to what is served.</p>
+        <h2 id="why-namespace-granularity-specifically">Why namespace
+        granularity specifically</h2>
+        <p>A split boundary that cut through a dynamically-constructed
+        key would be invisible to every check the project has, because
+        such keys are never written out in full anywhere. The protected
+        dynamic prefixes - <code>audit.field.*</code>,
+        <code>invoices.status.*</code>, the <code>*.columns.*</code>
+        family and the rest - each resolve entirely within a single
+        top-level namespace. Splitting at namespace boundaries therefore
+        cannot cut one, whatever else changes: the constraint is
+        satisfied by construction, not by remembering to respect it.</p>
+        <p>The manifest carries the same property for ordering. Because
+        the assembler walks the manifest to build each bundle, and both
+        languages walk the same manifest, the parity spec’s ordering
+        assertion cannot be broken by an authoring mistake - only by
+        editing the manifest, which is a visible one-line diff.</p>
+        <h2 id="alternatives-considered">Alternatives considered</h2>
+        <p><strong>A runtime multi-file loader.</strong> ngx-translate
+        can be given a loader that fetches several files per language
+        and merges them. Rejected: it turns one request per language
+        into nineteen, requires custom loader code to maintain, and
+        introduces load-timing behaviour where there currently is none -
+        all to buy an authoring benefit the build-time split already
+        delivers without touching runtime at all.</p>
+        <p><strong>Lazy per-feature translation scopes.</strong> Loading
+        each feature’s translations with the feature. Rejected as
+        disproportionate: it is an architectural change to how the
+        application boots, justified when translation payloads are large
+        enough to matter for load time. At 413 keys they are not.</p>
+        <p><strong>Gitignoring the assembled bundles.</strong> Author
+        the sources, generate the artifacts, keep them out of the
+        repository. Rejected because their correctness would then depend
+        on which command each environment happens to run - the CI
+        runner’s build, the Vercel preview build, a local
+        <code>ng serve</code>, and the test run are four different entry
+        points, and a missing hook in any of them produces an
+        application with no translations. That failure appears at
+        runtime, in front of a user, rather than at review time.
+        Committing the artifacts and gating them moves the failure to
+        the pull request, where it is cheap.</p>
+        <p><strong>Status quo.</strong> Rejected: the merge-conflict
+        surface and the navigation cost are real and grow with every
+        namespace, and nothing about them improves on its own.</p>
+        <h2 id="consequences">Consequences</h2>
         <ul>
-        <li><a href="001-database-choice.html">ADR 001 - Database
-        Choice</a> - <strong>[Backend]</strong></li>
-        <li><a href="002-validation-strategy.html">ADR 002 - Validation
-        Strategy</a> - <strong>[Backend]</strong></li>
-        <li><a href="003-authentication-mechanism.html">ADR 003 -
-        Authentication Mechanism</a> - <strong>[Backend]</strong></li>
-        <li><a href="004-inventory-domain-model.html">ADR 004 -
-        Inventory Domain Model</a> - <strong>[Backend]</strong></li>
-        <li><a href="005-demo-access.html">ADR 005 - Demo Access Without
-        Credentials</a> - <strong>[Cross-cutting]</strong></li>
-        <li><a href="006-audit-and-profit-model.html">ADR 006 - Audit
-        and Profit Model</a> - <strong>[Backend]</strong></li>
-        <li><a href="007-modular-monolith.html">ADR 007 - Modular
-        Monolith with Spring Modulith</a> -
-        <strong>[Backend]</strong></li>
-        <li><a href="008-documentation-structure.html">ADR 008 -
-        Documentation Structure</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="009-sales-invoices-and-customers.html">ADR 009 -
-        Sales Invoices and Customers</a> -
-        <strong>[Backend]</strong></li>
-        <li><a href="010-no-lot-tracking.html">ADR 010 - Pooled
-        Inventory - No Lot Tracking</a> -
-        <strong>[Backend]</strong></li>
-        <li><a href="011-merchandise-scope-and-payment.html">ADR 011 -
-        Merchandise Scope and the Payment Fact</a> -
-        <strong>[Backend]</strong></li>
-        <li><a href="012-frontend-hosting.html">ADR 012 - Frontend
-        Hosting on a CDN, Not a Container</a> -
-        <strong>[Frontend]</strong></li>
-        <li><a href="013-token-storage.html">ADR 013 - JWT in
-        localStorage, No Refresh Token</a> - <strong>[Frontend]</strong>
-        - <em>superseded by ADR 036</em></li>
-        <li><a href="014-openapi-types-only.html">ADR 014 - Types-Only
-        Generation from the OpenAPI Spec</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="015-runtime-i18n.html">ADR 015 - Runtime
-        Translation over Compile-Time Localization</a> -
-        <strong>[Frontend]</strong></li>
-        <li><a href="016-charting-library.html">ADR 016 - Direct
-        ECharts, Not an Angular Wrapper</a> -
-        <strong>[Frontend]</strong></li>
-        <li><a href="017-central-decision-log.html">ADR 017 - Central
-        Decision Log at the System Level</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="018-product-master-data.html">ADR 018 - Product
-        Creation is Master-Data Maintenance</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="019-last-purchase-price.html">ADR 019 - The
-        Purchase Price Follows the Last Closed Purchase</a> -
-        <strong>[Backend]</strong></li>
-        <li><a href="020-loss-remark.html">ADR 020 - Losses Carry a
-        Remark from a Fixed Taxonomy</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="021-stock-only-via-invoices.html">ADR 021 - Stock
-        Enters Only Through Closed Purchase Invoices</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="022-invoice-numbers.html">ADR 022 - Invoice Numbers
-        Are Operator-Assigned</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="023-chart-aggregation-and-csv.html">ADR 023 -
-        Client-Side Chart Aggregation and CSV Export Conventions</a> -
-        <strong>[Frontend]</strong></li>
-        <li><a href="024-profit-cogs.html">ADR 024 - Gross Profit as
-        Cost of Goods Sold, Captured at Sale</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="025-cash-flow-payment-basis.html">ADR 025 - Cash
-        Flow Report on a Payment Basis</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="026-low-stock-ever-stocked.html">ADR 026 - Low
-        Stock Applies Only to Ever-Stocked Products</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="027-demo-temporal-spread.html">ADR 027 -
-        Deterministic Temporal Spread of Demo Data</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="028-supplier-traceability-search.html">ADR 028 -
-        Search-First Navigation and Supplier-Scoped Product
-        Discovery</a> - <strong>[Cross-cutting]</strong></li>
-        <li><a href="029-help-content-architecture.html">ADR 029 - Help
-        Content as Typed, Lazy-Loaded Modules</a> -
-        <strong>[Frontend]</strong></li>
-        <li><a href="030-settings-in-local-storage.html">ADR 030 - User
-        Preferences Live in localStorage, Not on the Server</a> -
-        <strong>[Frontend]</strong></li>
-        <li><a href="031-runtime-formatting-via-intl.html">ADR 031 -
-        Runtime Date and Currency Formatting Through Intl, Not
-        LOCALE_ID</a> - <strong>[Frontend]</strong></li>
-        <li><a href="032-client-side-idle-logout.html">ADR 032 - Idle
-        Sign-Out Is a Client Concern, With a Warning</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="033-invoice-party-name-snapshots.html">ADR 033 -
-        Invoice Documents Snapshot Their Party Names</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="034-no-password-expiry.html">ADR 034 - No Forced
-        Password Expiry</a> - <strong>[Cross-cutting]</strong></li>
-        <li><a href="035-search-token-matching-and-browse.html">ADR 035
-        - Search Matches Tokens, and an Empty Picker Browses</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="036-client-token-storage.html">ADR 036 - Client
-        Token Storage and Its Accepted Threat Model</a> -
-        <strong>[Cross-cutting]</strong></li>
-        <li><a href="037-i18n-authoring-split.html">ADR 037 -
-        Translations Are Authored Per Namespace and Assembled at Build
-        Time</a> - <strong>[Frontend]</strong></li>
+        <li>38 small files replace 2 large ones. A key change touches
+        the file named for its feature, and two branches editing
+        different features no longer collide.</li>
+        <li>The EN/DE parity spec is unchanged and still reads the
+        shipped bundles. That is deliberate: it asserts against the
+        artifact the browser actually fetches, which is the thing whose
+        correctness matters.</li>
+        <li>Adding a namespace requires a manifest entry as well as two
+        source files. The assembler fails loudly if either half is
+        missing. This friction is intended - a new top-level namespace
+        is a decision, and the manifest is where it is recorded.</li>
+        <li>The drift gate is the only thing standing between a
+        hand-edited artifact and <code>main</code>. If that step is
+        removed or skipped, an edit to <code>public/i18n/en.json</code>
+        survives until the next assembly silently reverts it.</li>
         </ul>
-        <p><a href="/stockease/">Back to Documentation Home</a></p>
+        <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
     </main>
 
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#architecture-decision-records"
-      id="toc-architecture-decision-records">Architecture Decision
-      Records</a>
+      <li><a
+      href="#adr-037-translations-are-authored-per-namespace-and-assembled-at-build-time"
+      id="toc-adr-037-translations-are-authored-per-namespace-and-assembled-at-build-time">ADR
+      037: Translations Are Authored Per Namespace and Assembled at
+      Build Time</a>
       <ul>
-      <li><a href="#index" id="toc-index">Index</a></li>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#why-namespace-granularity-specifically"
+      id="toc-why-namespace-granularity-specifically">Why namespace
+      granularity specifically</a></li>
+      <li><a href="#alternatives-considered"
+      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
       </ul></li>
       </ul>
     </nav>
