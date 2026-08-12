@@ -9,7 +9,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { ApiError } from '../../../core/interceptors/error.interceptor';
+import { ApiError } from '../../../core/api/api-envelope';
 import { FooterComponent } from '../../../shared/footer/footer.component';
 import { PublicHeaderComponent } from '../../../shared/public-header/public-header.component';
 

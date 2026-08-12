@@ -1,7 +1,7 @@
 import { Injectable, WritableSignal, inject, signal } from '@angular/core';
 
 import { ProductResponse } from '../../../core/api/api-models';
-import { ApiError } from '../../../core/interceptors/error.interceptor';
+import { ApiError } from '../../../core/api/api-envelope';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { ProductService } from '../product.service';
 

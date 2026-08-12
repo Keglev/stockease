@@ -5,7 +5,7 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { PaginatedProducts, ProductResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ApiError } from '../../../core/interceptors/error.interceptor';
+import { ApiError } from '../../../core/api/api-envelope';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';

@@ -5,7 +5,8 @@ import { Router, provideRouter } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
-import { ApiError, errorInterceptor } from './error.interceptor';
+import { ApiError } from '../api/api-envelope';
+import { errorInterceptor } from './error.interceptor';
 
 const API_URL = `${environment.apiBaseUrl}/api/products`;
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
