@@ -197,13 +197,25 @@ self-evident markup is a defect, not compliance, exactly as for every other
 comment in this project.
 
 The threshold counts CODE LINES, so a template's own comments never push it over
-its own bar. EXEMPLARS: the strip-line note shared by
-`reports-page/stock-card`, `losses-card` and `cash-flow-card` (why the toggle
-sits on the figures' row); `reports-page/profit-card` (why one tab body holds two
-groupings, and why the second table sorts and exports on its own). Below the
-threshold, `reports-page/analytics-card` at 28 code lines carries one because its
-gate is keyed on what is shown rather than what is picked - which is the case the
-"unless genuinely non-obvious" clause exists for.
+its own bar.
+
+EXEMPLARS, both halves visible: `reports-page.component.html` opens by naming what
+it renders - seven tabs, each a toggle strip above a card - and then states the one
+thing the markup cannot show, that the tab ORDER is load-bearing because the
+component addresses tabs by numeric index. `settings.component.html` names its four
+cards and then states an ABSENCE: there is no save button anywhere below and none
+is missing, because every control writes its service on change. The two are the
+pair to copy because their second halves are different in kind - one is a coupling
+to code outside the file, the other is something the file does not contain - and an
+absence is the category markup can never show a reader on its own.
+
+Terser headers that state only the non-obvious half remain acceptable where the
+first half would be self-evident: the strip-line note shared by
+`reports-page/stock-card`, `losses-card` and `cash-flow-card` says why the toggle
+sits on the figures' row and nothing else, because a totals strip needs no
+summary. Below the threshold, `reports-page/analytics-card` at 28 code lines
+carries a header because its gate is keyed on what is shown rather than what is
+picked - the case the "unless genuinely non-obvious" clause exists for.
 
 GROUNDING, because this rule is a house invention and should be read as one: no
 external standard covers it. Angular's own style guide does not address template

@@ -5,11 +5,21 @@
 
 ---
 
+**ERRATA (August 12, 2026)**: the Context below cited ADR 008 for the OpenAPI
+document's source-of-truth status. That cross-reference is wrong. ADR 008 decides
+the documentation structure - arc42 adoption, the docs tree layout, the ported
+theme and build pipeline - and says nothing about the HTTP contract or about any
+artifact being a source of truth. No other decision record establishes that status
+either, so the claim stands on this record's own authority, which is where it was
+first stated. The decision this ADR takes is unaffected and unchanged; only the
+attribution was incorrect.
+
 ## Context
 
 The OpenAPI document under `docs/backend/api` is the source of truth for the
-HTTP contract (ADR 008). The frontend needs the same request and response
-shapes, and hand-copying them guarantees drift.
+HTTP contract (ADR 008 - see the errata above; the citation is incorrect and the
+claim rests here). The frontend needs the same request and response shapes, and
+hand-copying them guarantees drift.
 
 Generation is the obvious answer, but the API's response shape is not uniform
 and not accidentally so: some endpoints return a bare payload, others wrap it
