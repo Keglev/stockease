@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ApiError } from '../api/api-envelope';
+import { ApiError, ApiErrorEnvelope } from '../api/api-envelope';
 import { AuthService } from '../auth/auth.service';
 
 const LOGIN_ENDPOINT = `${environment.apiBaseUrl}/api/auth/login`;
@@ -48,18 +48,23 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 /**
  * Reads the envelope's optional error code. Absent is the normal case and yields undefined, which
  * is also what a malformed or non-string value yields - a consumer branching on the code must not
- * be handed something that is not one.
+ * be handed something that is not one. Reading through {@link ApiErrorEnvelope} names the shape
+ * expected here, and nothing more: the type is the expectation, the checks below are the
+ * guarantee, because nothing stops the wire from carrying something else.
  */
 function extractCode(error: unknown): string | undefined {
   if (!(error instanceof HttpErrorResponse)) {
     return undefined;
   }
   const body: unknown = error.error;
-  if (body !== null && typeof body === 'object' && 'code' in body) {
-    const code = (body as { code: unknown }).code;
-    if (typeof code === 'string' && code.length > 0) {
-      return code;
-    }
+  if (body === null || typeof body !== 'object') {
+    return undefined;
+  }
+  // Partial, not the interface itself: a body that arrived is not a body that kept its promises,
+  // and every field has to be treated as one that might be missing.
+  const code = (body as Partial<ApiErrorEnvelope>).code;
+  if (typeof code === 'string' && code.length > 0) {
+    return code;
   }
   return undefined;
 }
