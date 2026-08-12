@@ -111,10 +111,10 @@
           BE -. explicitly out of scope .-> BH[Bookkeeping / Buchhaltung]
         </div>
         <p>The backend is the system boundary: a REST API consumed by
-        exactly one client, the web frontend (currently the legacy React
-        app; an Angular frontend inside this repository replaces it).
-        Users authenticate with JWT; public demo accounts exercise the
-        same paths as the admin.</p>
+        exactly one client, the Angular frontend in this repository’s
+        <code>frontend/</code> directory, deployed separately and in
+        production. Users authenticate with JWT; public demo accounts
+        exercise the same paths as the admin.</p>
         <p>There are no third-party integrations - no payment providers,
         no external inventory feeds. The one neighboring system worth
         drawing is the one deliberately NOT integrated: bookkeeping.

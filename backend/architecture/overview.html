@@ -179,10 +179,12 @@
         <h2 id="key-architectural-principles">Key architectural
         principles</h2>
         <ul>
-        <li><strong>Modular monolith.</strong> Eight domain modules plus
-        shared infrastructure in one deployable; boundaries are enforced
-        by Spring Modulith and verified by a test on every build - not
-        by convention.</li>
+        <li><strong>Modular monolith.</strong> Eight domain modules -
+        bounded business capabilities, whether or not they own
+        persistence - plus three infrastructure packages
+        (<code>shared</code>, <code>config</code>, <code>demo</code>) in
+        one deployable; boundaries are enforced by Spring Modulith and
+        verified by a test on every build, not by convention.</li>
         <li><strong>Events inside the transaction.</strong> Closing an
         invoice publishes an event; a synchronous listener books the
         stock movements in the same transaction. Either everything

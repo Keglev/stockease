@@ -103,11 +103,32 @@
     <main class="content" id="main">
       <article class="doc-body">
         <h1 id="building-blocks">Building Blocks</h1>
-        <p>StockEase is one deployable divided into nine domain modules
-        plus a global infrastructure package, organized
+        <p>StockEase is one deployable divided into <strong>eight domain
+        modules</strong> - counting bounded business capabilities,
+        whether or not they own persistence - plus three infrastructure
+        packages: <code>shared</code>, <code>config</code> and
+        <code>demo</code>. The eight are <code>product</code>,
+        <code>supplier</code>, <code>customer</code>,
+        <code>invoice</code>, <code>movement</code>, <code>audit</code>,
+        <code>report</code> and <code>security</code>. Every one is a
+        direct sub-package of the application’s root package, organized
         package-per-module under Spring Modulith. The boundaries below
         are not conventions - they are verified by a test on every build
         and violating them fails CI.</p>
+        <p>Two of the eight are worth naming explicitly, because a
+        definition drawn around persistence would exclude one and admit
+        the other. <code>report</code> owns no entity and no repository
+        at all - it answers aggregations with native SQL over other
+        modules’ tables (ADR 006) - and is a domain module because
+        reporting is a business capability with its own boundary, not
+        because it stores anything. <code>security</code> does own an
+        aggregate, the application’s user, and is a domain module for
+        the same reason: authentication and authorization are a
+        capability, not plumbing. The three infrastructure packages are
+        excluded because none of them answers a business question:
+        <code>shared</code> carries response envelopes and global
+        exception handling, <code>config</code> holds framework wiring,
+        and <code>demo</code> seeds and resets demonstration data.</p>
         <h2 id="module-map">Module map</h2>
         <p>Solid arrows are service calls in the natural dependency
         direction; dashed arrows are application events, used exactly
@@ -115,7 +136,7 @@
         to another without being known to it.</p>
         <div class="mermaid">
         graph TD
-          subgraph Domain modules
+          subgraph Domain modules - eight business capabilities
             product[product]
             supplier[supplier]
             customer[customer]
@@ -123,9 +144,13 @@
             movement[movement]
             audit[audit]
             report[report]
+            security[security]
           end
-          security[security]
-          shared[shared]
+          subgraph Infrastructure
+            shared[shared]
+            config[config]
+            demo[demo]
+          end
 
           movement -->|item lookups| invoice
           movement -->|adjustQuantity| product
@@ -148,13 +173,16 @@
         and throws inside the deleting transaction while open invoices
         pin the party - the deletion rolls back whole. Veto listeners
         are pinned to run before all other listeners.</p>
-        <p>Not on the diagram: the <code>report</code> module has no
-        arrows because it has no Java dependencies at all - it answers
+        <p>Two modules carry no arrows, for different reasons.
+        <code>report</code> has no Java dependencies at all - it answers
         aggregations with native SQL and returns its own records (ADR
-        006). Web layers across modules use <code>shared</code>
-        (response envelopes, global exception handling) and resolve
-        their principal through the <code>security</code> module’s user
-        service.</p>
+        006). <code>security</code> is reached by every web layer rather
+        than by any one module, so drawing it would add eight edges that
+        say the same thing. The infrastructure packages are undrawn for
+        the same reason: web layers across modules use
+        <code>shared</code> for response envelopes and global exception
+        handling, and resolve their principal through
+        <code>security</code>’s user service.</p>
         <h2 id="module-anatomy">Module anatomy</h2>
         <p>Every module follows the same three-level layout:</p>
         <table>
