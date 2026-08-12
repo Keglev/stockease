@@ -1,9 +1,10 @@
-# StockEase - Size, Style, and Comment Standards (rev 9, 2026-08-12)
+# StockEase - Size, Style, and Comment Standards (rev 10, 2026-08-12)
 
-Supersedes rev 8 (2026-08-12). Changes: a band row for build-and-gate scripts,
-which the hand-run `tools/` row excludes by construction; and an errata
-correcting the Error-to-UI contract, whose opening claim was wrong about the
-notification fall-through.
+Supersedes rev 9 (2026-08-12). Changes: a template-header rule for component
+templates at or above 40 code lines, adopted against a measured population and
+grounded in the absence of any external standard for it; and component
+stylesheets confirmed unchanged, closing the survey's open question as
+deliberate.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -186,6 +187,49 @@ piece of work and is not owed by any pass that merely touches these files.
   members; backticks not `{@code}`.
 - Spec files: plain block comment naming the contract + out-of-scope note.
 - SCSS: block header only where non-obvious.
+
+*[rev 10]* TEMPLATE HEADERS: a component template of 40 code lines or more opens
+with an HTML comment stating what the template renders and the one thing about it
+a reader would otherwise have to infer - a gating rule, a shared row, an
+accessibility affordance, a deliberate duplication. Below 40 code lines a header
+is NOT written unless something is genuinely non-obvious. A header that restates
+self-evident markup is a defect, not compliance, exactly as for every other
+comment in this project.
+
+The threshold counts CODE LINES, so a template's own comments never push it over
+its own bar. EXEMPLARS: the strip-line note shared by
+`reports-page/stock-card`, `losses-card` and `cash-flow-card` (why the toggle
+sits on the figures' row); `reports-page/profit-card` (why one tab body holds two
+groupings, and why the second table sorts and exports on its own). Below the
+threshold, `reports-page/analytics-card` at 28 code lines carries one because its
+gate is keyed on what is shown rather than what is picked - which is the case the
+"unless genuinely non-obvious" clause exists for.
+
+GROUNDING, because this rule is a house invention and should be read as one: no
+external standard covers it. Angular's own style guide does not address template
+comments at all, and refers TypeScript matters to Google's TypeScript style
+guide; that guide in turn makes a file-overview comment optional - "a file MAY
+have a top-level `@fileoverview` JSDoc" - and neither document says anything
+about HTML. Nor is there a tool to lean on: TypeDoc's entry points are
+TypeScript, so it never parses a template. A class TSDoc is machine-read and can
+fail loudly - one unknown tag in a generated file once produced 319 of 337 build
+warnings - while a template comment renders nowhere and warns nowhere. It exists
+purely for a reader of the source, which is why the threshold matters: it is what
+keeps the header landing where a reader is actually lost instead of becoming
+boilerplate at the top of every file.
+
+ADOPTED AGAINST A MEASURED POPULATION, not in the abstract. As of this rev, 43
+component templates exist; 25 are at or above 40 code lines and 4 of those
+already carry a header. The rule therefore describes 4 existing instances and
+asks for 21 more, to be added as passes touch those files rather than in one
+sweep.
+
+COMPONENT STYLESHEETS ARE UNCHANGED and deliberately so: block header only where
+non-obvious, and NO size band row exists for them. The survey filed component
+SCSS as an open question; this rev closes it as intentional. A stylesheet is a
+list of independent rules with no abstraction to violate, so its length carries
+no signal worth banding, and its non-obvious parts are local to a rule rather
+than to the file - which a block header at the top could not explain anyway.
 
 ## docs/_theme (Pandoc theme files)
 
