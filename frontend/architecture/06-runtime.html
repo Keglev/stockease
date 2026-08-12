@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<!-- The one page template the docs build wires: build-architecture-docs.sh
+     passes every architecture page and every decision record through it, so
+     the topbar, sidebar and theme handling here are what the whole generated
+     site carries - this comment included, since it ships inside each page.
+     Do not put template syntax in it. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend · 06-runtime · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Frontend sidebar navigation, included by the doc templates as a Pandoc
+     partial. It carries the same Docs group as nav-backend.html so a frontend
+     page never inherits backend navigation. The active link is marked at
+     runtime by docs.js. Do not put template syntax in this comment - a partial
+     is itself a template.
+
+     The Frontend group lists the architecture tree's entry pages, English and
+     German side by side in the same order nav-backend.html uses. The two
+     Quality entries below are published from frontend CI artifacts rather than
+     from this repository's Markdown. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Frontend</p>
+  <ul>
+    <li><a href="/stockease/frontend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/frontend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/frontend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/frontend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+    <li><a href="/stockease/frontend/architecture/05-building-blocks.html">Building Blocks</a></li>
+    <li><a href="/stockease/frontend/architecture/06-runtime.html">Runtime View</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/frontend/api/index.html">Frontend API</a></li>
+    <li><a href="/stockease/frontend/coverage/index.html">Frontend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="runtime-view">Runtime View</h1>
+        <p>Four sequences carry the behaviour worth tracing: what
+        happens before the first render, how a session starts and ends,
+        how a data page loads, and what moves when the reader switches
+        language. Everything else is a form posting to a service.</p>
+        <h2 id="startup">Startup</h2>
+        <p>Bootstrap is held open until the interface can be rendered in
+        the right language. <code>app.config.ts</code> registers two
+        initializers, and the language one returns the loader observable
+        rather than firing and forgetting - which is what stops the
+        login page flashing raw translation keys.</p>
+        <div class="mermaid">
+        sequenceDiagram
+          participant M as main.ts
+          participant C as app.config.ts
+          participant L as LanguageService
+          participant T as ThemeService
+          participant X as TranslateHttpLoader
+
+          M->>C: bootstrapApplication(App, appConfig)
+          C->>L: initialize()
+          L->>L: read stockease.lang, else browser language, else en
+          L->>X: use(lang)
+          X-->>L: /i18n/<lang>.json
+          L-->>C: observable - bootstrap waits here
+          C->>T: initialize()
+          T->>T: read stockease.theme, else prefers-color-scheme
+          T->>T: set root color-scheme
+          C-->>M: first render, already localized and themed
+        </div>
+        <p>Three services resolve state from <code>localStorage</code>
+        before anything renders, each under its own key:
+        <code>LanguageService</code> reads <code>stockease.lang</code>,
+        <code>ThemeService</code> reads <code>stockease.theme</code>,
+        and <code>FormatService</code> reads
+        <code>stockease.format.date</code> and
+        <code>stockease.format.number</code>. All four follow the same
+        rule - a stored value that this build does not recognise is
+        ignored rather than overwritten, because it is the reader’s
+        choice and not this build’s to discard.</p>
+        <p>With nothing stored, each falls back differently and
+        deliberately: language to the browser’s language when it starts
+        with <code>de</code>, otherwise English; theme to the operating
+        system’s <code>prefers-color-scheme</code>; both format
+        preferences to <code>auto</code>, meaning “follow the interface
+        language”. <code>AuthService</code> restores its token in its
+        constructor rather than through an initializer, which is what
+        keeps a session alive across a reload.</p>
+        <p>Applying the theme is one property. Material emits every
+        system colour through <code>light-dark()</code>, so setting
+        <code>color-scheme</code> on the root element repaints the whole
+        application.</p>
+        <h2 id="sign-in-and-the-authenticated-session">Sign-in and the
+        authenticated session</h2>
+        <p>A session is one JWT in <code>localStorage</code> under
+        <code>stockease.token</code>, and every question about it is
+        derived from the token rather than tracked beside it: whether a
+        session exists is the <code>exp</code> claim read against the
+        clock, the role is the <code>role</code> claim, and the sign-in
+        time is <code>iat</code>. There is nothing to ask the server,
+        because the token is the whole session.</p>
+        <div class="mermaid">
+        sequenceDiagram
+          actor U as Reader
+          participant LP as Login page
+          participant A as AuthService
+          participant G as authGuard
+          participant AI as authInterceptor
+          participant EI as errorInterceptor
+          participant I as IdleLogoutService
+
+          U->>LP: credentials, or demo entry
+          LP->>A: login / demoLogin
+          A->>A: store token under stockease.token
+          U->>G: navigate to /app/...
+          G->>A: isAuthenticated()
+          alt token valid
+            G-->>U: activate the shell
+            U->>I: shell starts the idle timer
+          else absent or expired
+            G-->>U: UrlTree to /login
+          end
+          Note over AI: every request to the API base URL<br/>carries Authorization: Bearer
+          EI-->>U: 401 - logout, /login?reason=expired
+          I-->>U: 30 min idle - warning at 28, then the same destination
+        </div>
+        <p>Details that matter at runtime:</p>
+        <ul>
+        <li><strong>The guard returns a <code>UrlTree</code>, not a
+        boolean false.</strong> An unauthenticated visit to a deep link
+        redirects rather than dead-ending.</li>
+        <li><strong>The interceptor attaches the token only to the
+        configured API base URL</strong>, so a request to any
+        third-party host never carries it.</li>
+        <li><strong>A 401 signs out and redirects with
+        <code>replaceUrl</code></strong>, keeping the dead deep link out
+        of history. The login endpoint is excluded, or a rejected login
+        would redirect to the page it is already on. A guard against
+        navigating when already on <code>/login</code> handles the page
+        that fired several requests and got several 401s.</li>
+        <li><strong>Idle logout lands on exactly the same
+        destination</strong> - <code>/login</code> with
+        <code>reason=expired</code> - so a client-side idle expiry and a
+        server-side rejection are one tested experience rather than two
+        that drift apart.</li>
+        <li><strong>The idle timer belongs to the shell</strong>, arms
+        for 30 minutes, raises a warning at 28, and re-arms on pointer,
+        keyboard, touch, wheel and route change, throttled to once a
+        second. The throttle is lifted while the warning is on screen,
+        because dismissing it is the whole point of the click.</li>
+        </ul>
+        <h2 id="a-data-pages-lifecycle">A data page’s lifecycle</h2>
+        <p>The reports page shows the full pattern, including the
+        two-stage lazy fetch.</p>
+        <div class="mermaid">
+        sequenceDiagram
+          participant R as Router
+          participant P as Reports page
+          participant S as ReportService
+          participant C as Card
+
+          R->>P: activate /app/reports (loadComponent)
+          P->>P: ngOnInit - activate(profit tab)
+          P->>S: the profit query only
+          S-->>P: rows
+          P->>P: computed - totals, chart option, sorted rows
+          P->>C: inputs
+          Note over P: opening another tab fetches it once,<br/>then never again
+          C->>P: output - view switched to table
+          P->>S: second query, first time only
+          S-->>P: per-product breakdown
+        </div>
+        <p>Reading it in order:</p>
+        <ol type="1">
+        <li><strong>Route activation.</strong> Every route in the table
+        uses <code>loadComponent</code>, so the page’s code arrives with
+        the navigation rather than in the initial bundle.</li>
+        <li><strong>First fetch.</strong> <code>ngOnInit</code>
+        activates the profit tab and nothing else. Loading all seven
+        would fire seven aggregate queries for tabs the reader may never
+        open, so each tab fetches on its first activation and is left
+        alone afterwards. A <code>Set</code> of activated tab indexes is
+        the whole mechanism, and an explicit refresh refetches only the
+        visible tab.</li>
+        <li><strong>The error banner arms once.</strong> The page holds
+        one <code>loading</code> signal and one <code>error</code>
+        signal for all seven tabs. Every request routes its failure
+        through the same handler, so whichever tab fails raises the same
+        banner in the same place, and no card carries error state of its
+        own.</li>
+        <li><strong>The lazy second fetch.</strong> The cash-flow tab’s
+        chart needs a timeline; its table needs a per-product breakdown
+        that the chart never shows. The breakdown is therefore not
+        fetched when the tab opens. Switching that tab’s view to
+        <code>table</code> triggers it, once - a boolean guards the
+        fetch rather than the rows, so a reader who never opens the
+        table half never pays for the query. Afterwards a period change
+        refetches both, because by then the reader has the table open.
+        The dashboard’s due card uses the same guard for the same
+        reason.</li>
+        </ol>
+        <h2 id="switching-language">Switching language</h2>
+        <p>The switch is a runtime event, not a reload.
+        <code>LanguageService.setLanguage</code> calls
+        <code>translate.use</code>, persists the choice and updates its
+        signal; ngx-translate resolves keys through the pipe, so every
+        template binding re-renders on its own.</p>
+        <p>Two things do not re-render on their own, and both are
+        handled explicitly:</p>
+        <p><strong>Chart options are snapshots.</strong> An option
+        object is built once from translated labels and formatted
+        numbers, and nothing about a language change invalidates a plain
+        object. That is why the chart context is a <code>computed</code>
+        over language, number format and theme, and why every option is
+        itself computed from it - the dependency is what forces the
+        rebuild.</p>
+        <p><strong>Material’s paginator reads its labels once per
+        render.</strong> The strings are plain properties on
+        <code>MatPaginatorIntl</code> and the range label is a function
+        the component calls while rendering, so no
+        <code>translate</code> pipe can reach them. The application
+        registers <code>LocalizedPaginatorIntl</code> as the provider,
+        which re-resolves the five labels on <code>onLangChange</code>
+        and then emits <code>changes</code>. Without that emission every
+        paginator already on screen would keep the previous language
+        until something else happened to redraw it. The range label is
+        also why a plain object of strings would not do: it reports
+        which slice of how many, so it takes parameters, and the word
+        order around them differs between English and German - which an
+        interpolated message resolves and a concatenation cannot.</p>
+        <p>Date and currency rendering follows the same runtime rule.
+        The application registers no <code>LOCALE_ID</code>, because
+        that is fixed at bootstrap while this application changes
+        language while running; <code>FormatService</code> decides per
+        call instead, honouring an explicit stored preference and
+        otherwise following the interface language.</p>
+        <p><a href="index.html">Back to Introduction and Goals</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#runtime-view" id="toc-runtime-view">Runtime View</a>
+      <ul>
+      <li><a href="#startup" id="toc-startup">Startup</a></li>
+      <li><a href="#sign-in-and-the-authenticated-session"
+      id="toc-sign-in-and-the-authenticated-session">Sign-in and the
+      authenticated session</a></li>
+      <li><a href="#a-data-pages-lifecycle"
+      id="toc-a-data-pages-lifecycle">A data page’s lifecycle</a></li>
+      <li><a href="#switching-language"
+      id="toc-switching-language">Switching language</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
