@@ -1,0 +1,7 @@
+{
+  "tagline": "Bestandsverwaltung - Demo",
+  "repository": "Repository",
+  "documentation": "Dokumentation",
+  "apiDown": "API nicht erreichbar",
+  "apiLatency": "API {{ms}} ms"
+}

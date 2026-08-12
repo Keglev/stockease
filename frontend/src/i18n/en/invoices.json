@@ -1,0 +1,92 @@
+{
+  "title": "Invoices",
+  "loading": "Loading invoices…",
+  "empty": "No invoices found.",
+  "create": "New invoice",
+  "created": "Invoice created.",
+  "paid": "Paid",
+  "overdue": "Overdue",
+  "walkIn": "Walk-in sale",
+  "returnAction": "Return",
+  "returnDialog": {
+    "title": "Register return",
+    "product": "Product",
+    "remaining": "Returnable",
+    "quantity": "Quantity",
+    "directionCustomer": "Stock returns from the customer",
+    "directionSupplier": "Stock goes back to the supplier",
+    "confirm": "Register return",
+    "cancel": "Cancel",
+    "registered": "Return registered.",
+    "deletedProduct": "This product is deleted and cannot take returns. Restore it first, then register the return.",
+    "insufficientStock": "More units were returned than are in stock. Check the current stock level before returning these units."
+  },
+  "columns": {
+    "id": "No.",
+    "invoiceNumber": "Invoice number",
+    "type": "Type",
+    "status": "Status",
+    "counterparty": "Counterparty",
+    "dueDate": "Due date",
+    "createdAt": "Created",
+    "paidAt": "Paid"
+  },
+  "form": {
+    "invoiceNumber": "Invoice number",
+    "invoiceNumberRequired": "Invoice number is required."
+  },
+  "type": {
+    "PURCHASE": "Purchase",
+    "SALE": "Sale"
+  },
+  "status": {
+    "OPEN": "Open",
+    "CLOSED": "Closed",
+    "FULLY_RETURNED": "Fully returned"
+  },
+  "actions": {
+    "close": "Close invoice",
+    "closeConfirmTitle": "Close invoice",
+    "closeConfirmMessage": "Do you really want to close invoice {{number}}?",
+    "closeConfirmDetail": "Closing books the stock movements for every line and cannot be undone.",
+    "closed": "Invoice closed.",
+    "markPaid": "Mark as paid",
+    "paidConfirmTitle": "Mark invoice as paid",
+    "paidConfirmMessage": "Do you really want to mark invoice {{number}} as paid?",
+    "markedPaid": "Invoice marked as paid.",
+    "delete": "Delete",
+    "deleteConfirmTitle": "Delete invoice",
+    "deleteConfirmMessage": "Do you really want to delete invoice {{number}}?"
+  },
+  "createPage": {
+    "title": "New invoice",
+    "typeLabel": "Invoice type",
+    "counterpartySupplier": "Supplier",
+    "counterpartyCustomer": "Customer",
+    "dueDate": "Due date",
+    "items": "Items",
+    "addItem": "Add item",
+    "removeItem": "Remove item",
+    "product": "Product",
+    "quantity": "Quantity",
+    "unitPrice": "Unit price",
+    "runningTotal": "Running total",
+    "submit": "Create invoice",
+    "cancel": "Cancel"
+  },
+  "detail": {
+    "title": "Invoice",
+    "dueDate": "Due date",
+    "createdAt": "Created",
+    "closedAt": "Closed",
+    "paidAt": "Paid",
+    "items": "Items",
+    "product": "Product",
+    "quantity": "Quantity",
+    "unitPrice": "Unit price",
+    "returnedQty": "Returned",
+    "lineTotal": "Line total",
+    "total": "Invoice total",
+    "back": "Back to invoices"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "description": "{{app}} is an inventory management application for small businesses: track products and stock levels, manage suppliers and customers, and settle purchases and sales through the invoice lifecycle. This demo runs against the live Spring Boot API.",
+  "hero": {
+    "eyebrow": "INVENTORY MANAGEMENT FOR SMALL BUSINESSES",
+    "headline": "Know what's in stock - and what it earns."
+  },
+  "demo": {
+    "tryAdmin": "Try as Admin",
+    "tryUser": "Try as User",
+    "resetNotice": "Demo data - resets nightly at 03:00 UTC"
+  },
+  "loginCta": "Login",
+  "screenshots": {
+    "title": "A look inside",
+    "dashboard": "Dashboard with key figures and charts",
+    "profit": "COGS-based profit reporting",
+    "cashflow": "Payment-basis cash flow over time",
+    "duedates": "Due-date monitoring"
+  },
+  "features": {
+    "title": "What's inside",
+    "subtitle": "Six building blocks designed as one coherent domain, not a loose set of CRUD screens.",
+    "inventory": {
+      "title": "Products and stock",
+      "text": "Master data with operator-assigned SKUs; stock enters only through closed purchase invoices, never by hand."
+    },
+    "invoices": {
+      "title": "Invoice lifecycle",
+      "text": "Purchases and sales with returns, payment tracking and operator-assigned invoice numbers."
+    },
+    "profit": {
+      "title": "Honest profit",
+      "text": "Gross profit charges only the goods actually sold - cost is captured at the moment of sale and survives price changes."
+    },
+    "cashflow": {
+      "title": "Cash flow over time",
+      "text": "Money counts when invoices are paid: inflow, outflow and net, overall and per product."
+    },
+    "audit": {
+      "title": "Complete history",
+      "text": "Every price change and stock movement is recorded with its actor - and readable as a report."
+    },
+    "i18n": {
+      "title": "German and English, light and dark",
+      "text": "The entire interface ships in both languages and both themes - this page included."
+    }
+  },
+  "steps": {
+    "title": "How it works",
+    "one": {
+      "title": "Open the demo",
+      "text": "One click as admin or user - seeded data, reset nightly."
+    },
+    "two": {
+      "title": "Run stock through invoices",
+      "text": "Create products, book purchases and sales, record losses with a reason."
+    },
+    "three": {
+      "title": "Read the numbers",
+      "text": "Seven reports turn the ledger into profit, cash flow, stock history and an audit trail."
+    }
+  },
+  "tech": {
+    "title": "Built like production software",
+    "text": "Spring Boot on Java 21 with a Spring Modulith architecture, PostgreSQL with a Flyway-owned schema, and Angular with Material 3. Every change ships through CI with the full test suite, and the architecture is documented in arc42 with a decision record behind every trade-off.",
+    "docs": "Read the architecture docs",
+    "source": "View source on GitHub"
+  },
+  "cta": {
+    "title": "See it with real data",
+    "text": "The demo runs against the live API and resets nightly - nothing you click is permanent."
+  }
+}

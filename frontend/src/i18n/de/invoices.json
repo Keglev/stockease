@@ -1,0 +1,92 @@
+{
+  "title": "Rechnungen",
+  "loading": "Rechnungen werden geladen…",
+  "empty": "Keine Rechnungen gefunden.",
+  "create": "Neue Rechnung",
+  "created": "Rechnung wurde angelegt.",
+  "paid": "Bezahlt",
+  "overdue": "Überfällig",
+  "walkIn": "Barverkauf",
+  "returnAction": "Retoure",
+  "returnDialog": {
+    "title": "Retoure erfassen",
+    "product": "Produkt",
+    "remaining": "Retournierbar",
+    "quantity": "Menge",
+    "directionCustomer": "Ware kommt vom Kunden zurück",
+    "directionSupplier": "Ware geht an den Lieferanten zurück",
+    "confirm": "Retoure erfassen",
+    "cancel": "Abbrechen",
+    "registered": "Retoure wurde erfasst.",
+    "deletedProduct": "Dieses Produkt ist gelöscht und kann keine Retouren annehmen. Stellen Sie es zuerst wieder her, dann erfassen Sie die Retoure.",
+    "insufficientStock": "Es wurden mehr Einheiten retourniert, als auf Lager sind. Prüfen Sie den aktuellen Lagerbestand, bevor Sie diese Einheiten retournieren."
+  },
+  "columns": {
+    "id": "Nr.",
+    "invoiceNumber": "Rechnungsnummer",
+    "type": "Art",
+    "status": "Status",
+    "counterparty": "Geschäftspartner",
+    "dueDate": "Fällig am",
+    "createdAt": "Erstellt am",
+    "paidAt": "Bezahlt am"
+  },
+  "form": {
+    "invoiceNumber": "Rechnungsnummer",
+    "invoiceNumberRequired": "Rechnungsnummer ist erforderlich."
+  },
+  "type": {
+    "PURCHASE": "Einkauf",
+    "SALE": "Verkauf"
+  },
+  "status": {
+    "OPEN": "Offen",
+    "CLOSED": "Geschlossen",
+    "FULLY_RETURNED": "Vollständig retourniert"
+  },
+  "actions": {
+    "close": "Abschließen",
+    "closeConfirmTitle": "Rechnung abschließen",
+    "closeConfirmMessage": "Möchten Sie die Rechnung {{number}} wirklich abschließen?",
+    "closeConfirmDetail": "Beim Abschließen werden die Lagerbewegungen aller Positionen gebucht; dies kann nicht rückgängig gemacht werden.",
+    "closed": "Rechnung wurde abgeschlossen.",
+    "markPaid": "Als bezahlt markieren",
+    "paidConfirmTitle": "Rechnung als bezahlt markieren",
+    "paidConfirmMessage": "Möchten Sie die Rechnung {{number}} wirklich als bezahlt markieren?",
+    "markedPaid": "Rechnung wurde als bezahlt markiert.",
+    "delete": "Löschen",
+    "deleteConfirmTitle": "Rechnung löschen",
+    "deleteConfirmMessage": "Möchten Sie die Rechnung {{number}} wirklich löschen?"
+  },
+  "createPage": {
+    "title": "Neue Rechnung",
+    "typeLabel": "Rechnungsart",
+    "counterpartySupplier": "Lieferant",
+    "counterpartyCustomer": "Kunde",
+    "dueDate": "Fällig am",
+    "items": "Positionen",
+    "addItem": "Position hinzufügen",
+    "removeItem": "Position entfernen",
+    "product": "Produkt",
+    "quantity": "Menge",
+    "unitPrice": "Einzelpreis",
+    "runningTotal": "Zwischensumme",
+    "submit": "Rechnung anlegen",
+    "cancel": "Abbrechen"
+  },
+  "detail": {
+    "title": "Rechnung",
+    "dueDate": "Fällig am",
+    "createdAt": "Erstellt am",
+    "closedAt": "Geschlossen am",
+    "paidAt": "Bezahlt am",
+    "items": "Positionen",
+    "product": "Produkt",
+    "quantity": "Menge",
+    "unitPrice": "Einzelpreis",
+    "returnedQty": "Retourniert",
+    "lineTotal": "Positionssumme",
+    "total": "Rechnungssumme",
+    "back": "Zurück zu den Rechnungen"
+  }
+}

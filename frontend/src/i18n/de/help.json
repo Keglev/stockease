@@ -1,0 +1,14 @@
+{
+  "title": "Hilfe",
+  "selectTopic": "Thema",
+  "topics": {
+    "overview": "Übersicht",
+    "products": "Produkte",
+    "invoices": "Rechnungen",
+    "movements": "Lagerbewegungen",
+    "reports": "Berichte",
+    "partners": "Lieferanten & Kunden",
+    "demo": "Demomodus & Rollen",
+    "languageTheme": "Sprache & Design"
+  }
+}

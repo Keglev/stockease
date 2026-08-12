@@ -1,0 +1,45 @@
+{
+  "title": "Customers",
+  "create": "New customer",
+  "edit": "Edit",
+  "loading": "Loading customers…",
+  "empty": "No customers found.",
+  "created": "Customer created.",
+  "updated": "Customer updated.",
+  "deleteHint": "Customers with open invoices cannot be deleted.",
+  "columns": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "createdAt": "Created",
+    "actions": "Actions"
+  },
+  "delete": {
+    "action": "Delete customer",
+    "title": "Delete customer",
+    "message": "Do you really want to delete \"{{name}}\"?"
+  },
+  "summary": {
+    "action": "Summary",
+    "title": "Customer summary",
+    "saleInvoiceCount": "Sales invoices",
+    "boughtUnits": "Units bought",
+    "boughtValue": "Purchase value",
+    "returnedUnits": "Units returned",
+    "returnedValue": "Return value",
+    "loading": "Loading summary…"
+  },
+  "form": {
+    "createTitle": "New customer",
+    "editTitle": "Edit customer",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "nameRequired": "Name is required.",
+    "emailInvalid": "Enter a valid email address."
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "title": "Übersicht",
+  "refresh": "Aktualisieren",
+  "kpi": {
+    "products": "Produkte",
+    "lowStock": "Bestand niedrig",
+    "overdue": "Überfällige Rechnungen",
+    "grossProfit": "Bruttogewinn",
+    "lowStockOpen": "Produkte mit niedrigem Bestand anzeigen"
+  },
+  "lowStockTitle": "Bestand niedrig",
+  "lowStockNone": "Alle Produkte sind ausreichend bevorratet.",
+  "charts": {
+    "profitByProduct": "Gewinn je Produkt",
+    "dueDates": "Anstehende Fälligkeiten"
+  },
+  "due": {
+    "viewAll": "Alle Fälligkeiten"
+  }
+}

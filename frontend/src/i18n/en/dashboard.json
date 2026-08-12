@@ -1,0 +1,20 @@
+{
+  "title": "Dashboard",
+  "refresh": "Refresh",
+  "kpi": {
+    "products": "Products",
+    "lowStock": "Low stock",
+    "overdue": "Overdue invoices",
+    "grossProfit": "Gross profit",
+    "lowStockOpen": "Show low-stock products"
+  },
+  "lowStockTitle": "Low stock",
+  "lowStockNone": "All products are sufficiently stocked.",
+  "charts": {
+    "profitByProduct": "Profit by product",
+    "dueDates": "Upcoming due dates"
+  },
+  "due": {
+    "viewAll": "All due dates"
+  }
+}

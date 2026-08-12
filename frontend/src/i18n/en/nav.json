@@ -1,0 +1,11 @@
+{
+  "dashboard": "Overview",
+  "products": "Products",
+  "invoices": "Invoices",
+  "movements": "Stock movements",
+  "reports": "Reports",
+  "suppliers": "Suppliers",
+  "customers": "Customers",
+  "settings": "Settings",
+  "help": "Help"
+}

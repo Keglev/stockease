@@ -1,0 +1,45 @@
+{
+  "title": "Kunden",
+  "create": "Neuer Kunde",
+  "edit": "Bearbeiten",
+  "loading": "Kunden werden geladen…",
+  "empty": "Keine Kunden gefunden.",
+  "created": "Kunde wurde angelegt.",
+  "updated": "Kunde wurde aktualisiert.",
+  "deleteHint": "Kunden mit offenen Rechnungen können nicht gelöscht werden.",
+  "columns": {
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "createdAt": "Erstellt am",
+    "actions": "Aktionen"
+  },
+  "delete": {
+    "action": "Kunde löschen",
+    "title": "Kunde löschen",
+    "message": "Möchten Sie „{{name}}“ wirklich löschen?"
+  },
+  "summary": {
+    "action": "Übersicht",
+    "title": "Kundenübersicht",
+    "saleInvoiceCount": "Verkaufsrechnungen",
+    "boughtUnits": "Gekaufte Einheiten",
+    "boughtValue": "Kaufwert",
+    "returnedUnits": "Retournierte Einheiten",
+    "returnedValue": "Retourenwert",
+    "loading": "Übersicht wird geladen…"
+  },
+  "form": {
+    "createTitle": "Neuer Kunde",
+    "editTitle": "Kunde bearbeiten",
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "nameRequired": "Name ist erforderlich.",
+    "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "title": "Berichte",
+  "refresh": "Aktualisieren",
+  "exportCsv": "CSV exportieren",
+  "view": {
+    "chart": "Diagramm",
+    "table": "Tabelle",
+    "list": "Liste"
+  },
+  "loading": "Bericht wird geladen…",
+  "deletedHint": "gelöscht",
+  "tabs": {
+    "profit": "Gewinn",
+    "cashFlow": "Cashflow",
+    "stock": "Bestand",
+    "losses": "Verluste",
+    "dueDates": "Fälligkeiten",
+    "changes": "Änderungen",
+    "analytics": "Analyse"
+  },
+  "columns": {
+    "name": "Name",
+    "sku": "Artikelnummer",
+    "revenue": "Umsatz",
+    "cost": "Kosten",
+    "grossProfit": "Rohgewinn",
+    "soldUnits": "Verkaufte Einheiten",
+    "soldRevenue": "Verkaufserlös",
+    "inStockUnits": "Einheiten am Lager",
+    "inStockValue": "Bestandswert",
+    "lostUnits": "Verloren",
+    "destroyedUnits": "Zerstört",
+    "lossValue": "Verlustwert",
+    "remark": "Ursache"
+  },
+  "profit": {
+    "margin": "Gesamtgewinnmarge",
+    "byProduct": "Gewinn je Produkt",
+    "products": "Gewinn je Produkt",
+    "suppliers": "Gewinn je Lieferant",
+    "empty": "Es wurde noch kein Gewinn erfasst.",
+    "suppliersEmpty": "Bisher hat kein Lieferant ein Produkt geliefert."
+  },
+  "stock": {
+    "byValue": "Produkte nach Bestandswert",
+    "empty": "Derzeit ist kein Produkt am Lager.",
+    "productCount": "Produkte"
+  },
+  "losses": {
+    "byProduct": "Verlustanteil je Produkt",
+    "byRemark": "Verluste nach Ursache",
+    "empty": "Es wurden keine Verluste erfasst."
+  },
+  "due": {
+    "chart": "Offener Betrag nach Fälligkeitsdatum",
+    "dueSoon": "Bald fällig",
+    "overdue": "Überfällig",
+    "daysOverdue": "{{days}} Tage überfällig",
+    "empty": "Derzeit sind keine Rechnungen offen.",
+    "dueSoonEmpty": "In der kommenden Woche wird keine Rechnung fällig.",
+    "overdueEmpty": "Keine Rechnung ist überfällig."
+  },
+  "cashFlow": {
+    "allProducts": "Alle Produkte",
+    "inflow": "Einzahlungen",
+    "outflow": "Auszahlungen",
+    "net": "Saldo",
+    "columns": {
+      "name": "Produkt",
+      "sku": "Artikelnummer",
+      "inflow": "Einzahlungen",
+      "outflow": "Auszahlungen",
+      "net": "Saldo"
+    },
+    "empty": "Keine bezahlten Rechnungen in diesem Zeitraum."
+  },
+  "period": {
+    "d30": "30 Tage",
+    "d90": "90 Tage",
+    "d180": "180 Tage",
+    "year": "Dieses Jahr",
+    "all": "Gesamt"
+  },
+  "filter": "Nach Name oder Artikelnummer filtern",
+  "changes": {
+    "allUsers": "Alle Benutzer",
+    "empty": "Keine Änderungen in diesem Zeitraum.",
+    "columns": {
+      "time": "Zeitpunkt",
+      "user": "Benutzer",
+      "product": "Produkt",
+      "field": "Feld",
+      "oldValue": "Alter Wert",
+      "newValue": "Neuer Wert"
+    }
+  },
+  "search": {
+    "supplier": "Lieferant suchen (mind. 3 Buchstaben)",
+    "product": "Produkt suchen"
+  },
+  "analytics": {
+    "show": "Anzeigen",
+    "selectProduct": "Produkt für die Analyse wählen",
+    "priceHistory": "Einkaufspreis im Zeitverlauf",
+    "stockVsSales": "Bestand vs. verkaufte Einheiten",
+    "stockLevel": "Bestand",
+    "soldUnits": "Verkaufte Einheiten",
+    "noPriceChanges": "Keine Preisänderungen erfasst."
+  }
+}

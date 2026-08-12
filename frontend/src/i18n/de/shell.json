@@ -1,0 +1,12 @@
+{
+  "logout": "Abmelden",
+  "openNavigation": "Navigation öffnen",
+  "demoBadge": "DEMO",
+  "demoTooltip": "Demosystem - Daten werden nächtlich zurückgesetzt",
+  "role": {
+    "ADMIN": "Administrator",
+    "USER": "Benutzer"
+  },
+  "idleWarning": "Sie werden in 2 Minuten wegen Inaktivität abgemeldet.",
+  "idleStay": "Angemeldet bleiben"
+}

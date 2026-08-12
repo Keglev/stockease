@@ -1,0 +1,110 @@
+{
+  "title": "Reports",
+  "refresh": "Refresh",
+  "exportCsv": "Export CSV",
+  "view": {
+    "chart": "Chart",
+    "table": "Table",
+    "list": "List"
+  },
+  "loading": "Loading report…",
+  "deletedHint": "deleted",
+  "tabs": {
+    "profit": "Profit",
+    "cashFlow": "Cash flow",
+    "stock": "Stock",
+    "losses": "Losses",
+    "dueDates": "Due dates",
+    "changes": "Changes",
+    "analytics": "Analytics"
+  },
+  "columns": {
+    "name": "Name",
+    "sku": "SKU",
+    "revenue": "Revenue",
+    "cost": "Cost",
+    "grossProfit": "Gross profit",
+    "soldUnits": "Sold units",
+    "soldRevenue": "Sales revenue",
+    "inStockUnits": "Units in stock",
+    "inStockValue": "Stock value",
+    "lostUnits": "Lost",
+    "destroyedUnits": "Destroyed",
+    "lossValue": "Loss value",
+    "remark": "Cause"
+  },
+  "profit": {
+    "margin": "Overall profit margin",
+    "byProduct": "Profit by product",
+    "products": "Profit per product",
+    "suppliers": "Profit per supplier",
+    "empty": "No profit has been recorded yet.",
+    "suppliersEmpty": "No supplier has supplied a product yet."
+  },
+  "stock": {
+    "byValue": "Products by stock value",
+    "empty": "No products are currently in stock.",
+    "productCount": "Products"
+  },
+  "losses": {
+    "byProduct": "Loss share by product",
+    "byRemark": "Losses by cause",
+    "empty": "No losses have been recorded."
+  },
+  "due": {
+    "chart": "Outstanding value by due date",
+    "dueSoon": "Due soon",
+    "overdue": "Overdue",
+    "daysOverdue": "{{days}} days late",
+    "empty": "No invoices are currently outstanding.",
+    "dueSoonEmpty": "No invoices fall due in the coming week.",
+    "overdueEmpty": "No invoice is overdue."
+  },
+  "cashFlow": {
+    "allProducts": "All products",
+    "inflow": "Inflow",
+    "outflow": "Outflow",
+    "net": "Net",
+    "columns": {
+      "name": "Product",
+      "sku": "SKU",
+      "inflow": "Inflow",
+      "outflow": "Outflow",
+      "net": "Net"
+    },
+    "empty": "No paid invoices in this period."
+  },
+  "period": {
+    "d30": "30 days",
+    "d90": "90 days",
+    "d180": "180 days",
+    "year": "This year",
+    "all": "All"
+  },
+  "filter": "Filter by name or SKU",
+  "changes": {
+    "allUsers": "All users",
+    "empty": "No changes in this period.",
+    "columns": {
+      "time": "Time",
+      "user": "User",
+      "product": "Product",
+      "field": "Field",
+      "oldValue": "Old value",
+      "newValue": "New value"
+    }
+  },
+  "search": {
+    "supplier": "Search supplier (min. 3 letters)",
+    "product": "Search product"
+  },
+  "analytics": {
+    "show": "Show",
+    "selectProduct": "Select a product to analyze",
+    "priceHistory": "Purchase price over time",
+    "stockVsSales": "Stock level vs. units sold",
+    "stockLevel": "Stock level",
+    "soldUnits": "Units sold",
+    "noPriceChanges": "No price changes recorded."
+  }
+}

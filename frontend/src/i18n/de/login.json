@@ -1,0 +1,12 @@
+{
+  "title": "Bei {{app}} anmelden",
+  "username": "Benutzername",
+  "password": "Passwort",
+  "showPassword": "Passwort anzeigen",
+  "hidePassword": "Passwort verbergen",
+  "submit": "Anmelden",
+  "submitting": "Anmeldung läuft…",
+  "backToLanding": "Zurück zur Startseite",
+  "invalidCredentials": "Benutzername oder Passwort ungültig",
+  "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
+}

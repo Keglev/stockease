@@ -1,0 +1,15 @@
+{
+  "productTitle": "Änderungshistorie - Produkt #{{id}}",
+  "userTitle": "Änderungen von Benutzer #{{id}}",
+  "userChip": "Benutzer #{{id}}",
+  "productLink": "Produkt #{{id}}",
+  "field": {
+    "PURCHASE_PRICE": "Einkaufspreis",
+    "NAME": "Name",
+    "DELETED": "Gelöscht",
+    "RESTORED": "Wiederhergestellt"
+  },
+  "empty": "Es wurden keine Änderungen erfasst.",
+  "loading": "Änderungshistorie wird geladen…",
+  "back": "Zurück"
+}

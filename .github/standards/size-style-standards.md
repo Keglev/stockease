@@ -1,8 +1,9 @@
-# StockEase - Size, Style, and Comment Standards (rev 7, 2026-08-08)
+# StockEase - Size, Style, and Comment Standards (rev 8, 2026-08-12)
 
-Supersedes rev 6 (2026-08-08). Changes: exemption rows for generated, content
-and route files; a frontend spec band row; a docs/_theme section; and the
-no-emoji rule.
+Supersedes rev 7 (2026-08-08). Changes: the i18n section rewritten for the
+authoring split (ADR 037); a fixtures-module size exemption; the shell/card
+division of labour recorded; CRUD symmetry and sub-3-site duplication ruled
+acceptable; and the tables' filter/sort/export store recorded as deferred.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -133,6 +134,31 @@ tokens only, DI seams over module mocks.
 pipe, guard and util specs 40-150 (>200); `it()` body <=20 code lines (>30);
 `describe` nesting <=2.
 
+*[rev 8]* FIXTURES MODULES: exempt from every size band. A fixtures module is a
+collection of independent builders with no shared abstraction to violate, so
+length carries no signal about cohesion. Membership is governed by the 2+ rule
+already stated for backend fixtures - a helper earns its place when 2+ spec files
+consume it, and a helper consumed by another fixtures member counts as a call
+site. Growth is the module working, not a split trigger.
+
+*[rev 8]* SHELL AND CARD DIVISION OF LABOUR: on a page split into a shell plus
+presentational cards, the SHELL owns data fetching, the error banner, every
+derivation feeding the cards, and the lazy-loading decisions. CARDS are
+presentational: they take inputs, render, and emit only the small set of outputs
+their host has sanctioned. A card that fetches, or that derives what its shell
+could hand it, is a finding.
+
+*[rev 8]* NOT EXTRACTION TARGETS: CRUD symmetry - create/edit/delete paths that
+read alike because the operations are genuinely parallel - is ACCEPTED. So is a
+duplication appearing at fewer than 3 sites. The 3+ threshold in the split
+criteria is the rule; a 2-site duplication is below it and stays. Neither is
+raised as a finding, and neither is refactored on sight.
+
+*[rev 8]* DEFERRED: a third signal store absorbing the filter/sort/export
+repetition across the list tables. Recorded as deferred, not rejected - the
+repetition is real and above the 3-site threshold, but the extraction is its own
+piece of work and is not owed by any pass that merely touches these files.
+
 ## Frontend doc dialect
 
 - Class/service-level TSDoc (summary + `@remarks` WHY), not file-level headers;
@@ -151,10 +177,22 @@ banner-rule headers, consistent with the workflow-header ruling.
 
 ## i18n
 
-`en.json` + `de.json`, CI parity (membership AND ordering), EN review reference,
-no in-code fallbacks. Baseline 406 leaf keys / 19 namespaces / 570 lines each
-side. PROTECTED DYNAMIC SUBTREES: the 12 verified patterns PLUS `*.columns.*` -
-orphan scans exclude BY CONSTRUCTION SITE.
+CI parity (membership AND ordering), EN review reference, no in-code fallbacks.
+Baseline as observed on this branch: 413 leaf keys / 19 namespaces / 581 physical
+lines per shipped file (rev 7 recorded 406 / 570; the difference is keys added
+since, not a recount correction). PROTECTED DYNAMIC SUBTREES: the 12 verified patterns PLUS
+`*.columns.*` - orphan scans exclude BY CONSTRUCTION SITE.
+
+*[rev 8]* AUTHORING SPLIT (ADR 037): translations are AUTHORED as one file per
+namespace per language under `frontend/src/i18n/<lang>/`. The shipped
+`public/i18n/en.json` and `de.json` are ASSEMBLED ARTIFACTS and are NEVER
+hand-edited - an edit to either is a finding in any review pass and is caught by
+the `i18n:check` gate before merge. `frontend/src/i18n/namespaces.json` is the
+manifest and GOVERNS KEY ORDER in both bundles; the ordering half of the parity
+spec is satisfied by construction through it. A new namespace needs a manifest
+entry plus both source files; the assembler fails loudly on any of the three
+mismatches. Source files carry no size band - they are content, split by
+namespace and by nothing else.
 
 ## Error-to-UI contract
 
