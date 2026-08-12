@@ -49,8 +49,14 @@ enforced on the server and described in the
 Decisions affecting both sides live in the single system-wide
 [decision log](../../decisions/index.md) rather than in either tree.
 
+This tree reuses the backend tree's section numbers where a section applies to
+the frontend, and the gaps are deliberate: constraints, system context and the
+glossary are system-level and are documented once, in the backend tree.
+
 ## Documentation map
 
 - [Frontend architecture overview](overview.md) (English) -
   [Deutsche Fassung](overview-de.md)
+- [Building Blocks](05-building-blocks.md)
+- [Runtime View](06-runtime.md)
 - [Architecture decisions](../../decisions/index.md)

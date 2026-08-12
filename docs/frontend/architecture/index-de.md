@@ -53,8 +53,15 @@ Entscheidungen, die beide Seiten betreffen, stehen im systemweiten
 [Entscheidungsprotokoll](../../decisions/index.md) und nicht in einem der beiden
 Baeume.
 
+Dieser Baum uebernimmt die Abschnittsnummern des Backend-Baums, wo ein Abschnitt
+auf das Frontend zutrifft; die Luecken sind beabsichtigt: Randbedingungen,
+Systemkontext und Glossar sind systemweit und werden einmal im Backend-Baum
+dokumentiert.
+
 ## Dokumentationsuebersicht
 
 - [Frontend-Architektur im Ueberblick](overview-de.md) -
   [English version](overview.md)
+- [Bausteine](05-building-blocks.md) (EN)
+- [Laufzeitsicht](06-runtime.md) (EN)
 - [Architekturentscheidungen](../../decisions/index.md) (EN)
