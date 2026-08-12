@@ -94,6 +94,20 @@ domain module is - are the ones a model has no standing to make. It has no stake
 in the consequences and no memory of why the last three attempts failed. The
 decision records exist because those choices needed an owner.
 
+**Code-generated API documentation.** A different question, recorded here because
+it turns on the same principle: which artifact is authored and which is derived.
+Generating the OpenAPI document from controller annotations, in the springdoc
+style, was rejected. The document under `docs/backend/api` is the authored source
+of truth for the HTTP contract, and the frontend's types are generated from it
+(ADR 014); generating the document from code as well would produce a second
+candidate contract, and the two would disagree the first time an annotation and
+the specification drifted. A Swagger UI page was likewise not shipped. It would
+render the same document the published Redoc reference already renders, so it adds
+nothing for a reader, and its one distinguishing feature is interactive calls -
+which on this deployment would mean a public page able to exercise twenty
+write endpoints against a demo whose login endpoint is deliberately
+credential-free.
+
 ## Consequences
 
 The process is justified by what it caught, so three cases are recorded here with
