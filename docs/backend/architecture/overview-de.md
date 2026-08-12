@@ -27,9 +27,11 @@ Aenderungsprotokollierung und Berichte in einer einzigen Spring-Boot-Anwendung.
 
 ## Architekturprinzipien
 
-- **Modularer Monolith.** Acht Fachmodule plus gemeinsame Infrastruktur in
-  einer Anwendung; die Modulgrenzen werden durch Spring Modulith erzwungen und
-  bei jedem Build durch einen Test verifiziert - nicht durch Konvention.
+- **Modularer Monolith.** Acht Fachmodule - abgegrenzte fachliche Faehigkeiten,
+  unabhaengig davon, ob sie eigene Persistenz besitzen - plus drei
+  Infrastrukturpakete (`shared`, `config`, `demo`) in einer Anwendung; die
+  Modulgrenzen werden durch Spring Modulith erzwungen und bei jedem Build durch
+  einen Test verifiziert - nicht durch Konvention.
 - **Ereignisse innerhalb der Transaktion.** Das Abschliessen einer Rechnung
   veroeffentlicht ein Ereignis; ein synchroner Listener bucht die
   Lagerbewegungen in derselben Transaktion. Alles wird gemeinsam festgeschrieben
