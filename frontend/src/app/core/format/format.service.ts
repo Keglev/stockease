@@ -1,20 +1,21 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
-import { LanguageService, SupportedLanguage } from '../i18n/language.service';
+import {
+  DateFormat,
+  FormatPreferencesService,
+  LANGUAGE_LOCALES,
+  NumberFormat
+} from './format-preferences.service';
 
-export const DATE_FORMATS = ['auto', 'dmyDot', 'mdySlash', 'ymdDash'] as const;
-
-export type DateFormat = (typeof DATE_FORMATS)[number];
-
-export const NUMBER_FORMATS = ['auto', 'de', 'en'] as const;
-
-export type NumberFormat = (typeof NUMBER_FORMATS)[number];
-
-export const FORMAT_DATE_KEY = 'stockease.format.date';
-export const FORMAT_NUMBER_KEY = 'stockease.format.number';
-
-/** The locale each language means when a preference is left on 'auto'. */
-const LANGUAGE_LOCALES: Record<SupportedLanguage, string> = { en: 'en-US', de: 'de-DE' };
+// Re-exported so the paths consumers already import from stay valid: the declarations moved to
+// the preference store, the import sites did not have to.
+export {
+  DATE_FORMATS,
+  FORMAT_DATE_KEY,
+  FORMAT_NUMBER_KEY,
+  NUMBER_FORMATS
+} from './format-preferences.service';
+export type { DateFormat, NumberFormat } from './format-preferences.service';
 
 /** The order and separator each explicit date option pins, independent of any locale. */
 const DATE_PATTERNS: Record<Exclude<DateFormat, 'auto'>, { order: ('day' | 'month' | 'year')[]; separator: string }> = {
@@ -35,51 +36,25 @@ const CURRENCY = 'EUR';
  * have closed it: `LOCALE_ID` is fixed at bootstrap while this app changes language at runtime
  * (ADR 015), and the format overrides below need a per-call decision point anyway (ADR 031).
  *
- * Two preferences, each 'auto' by default and each stored per browser (ADR 030). 'auto' means
- * "follow the interface language"; an explicit date format pins the order and separators only,
- * while the time of day and the currency follow the effective number locale - a reader who wants
- * ISO dates has said nothing about wanting a dot as a decimal mark.
+ * What to render with is not decided here. {@link FormatPreferencesService} owns the two
+ * preferences and the locale they resolve to; this reads them. The preference members below are
+ * delegations to it, kept on this class because every consumer already reaches them through this
+ * one injection.
  */
 @Injectable({ providedIn: 'root' })
 export class FormatService {
-  private readonly language = inject(LanguageService);
+  private readonly preferences = inject(FormatPreferencesService);
 
-  private readonly date = signal<DateFormat>(readStored(FORMAT_DATE_KEY, DATE_FORMATS, 'auto'));
-  private readonly number = signal<NumberFormat>(
-    readStored(FORMAT_NUMBER_KEY, NUMBER_FORMATS, 'auto')
-  );
+  readonly dateFormat = this.preferences.dateFormat;
+  readonly numberFormat = this.preferences.numberFormat;
+  readonly numberLocale = this.preferences.numberLocale;
 
-  readonly dateFormat = this.date.asReadonly();
-  readonly numberFormat = this.number.asReadonly();
-
-  /**
-   * The locale every number, currency and time is rendered in.
-   *
-   * <p>Also what the CSV export reads: its field separator has to agree with the decimal mark, or
-   * a German-formatted file with comma separators arrives in a spreadsheet as one column.
-   */
-  readonly numberLocale = computed(() => {
-    const override = this.number();
-    return override === 'auto'
-      ? LANGUAGE_LOCALES[this.language.currentLang()]
-      : LANGUAGE_LOCALES[override];
-  });
-
-  /** Unsupported values are ignored rather than silently resetting the reader's choice. */
   setDateFormat(value: string): void {
-    const supported = toSupported(value, DATE_FORMATS);
-    if (supported) {
-      this.date.set(supported);
-      persist(FORMAT_DATE_KEY, supported);
-    }
+    this.preferences.setDateFormat(value);
   }
 
   setNumberFormat(value: string): void {
-    const supported = toSupported(value, NUMBER_FORMATS);
-    if (supported) {
-      this.number.set(supported);
-      persist(FORMAT_NUMBER_KEY, supported);
-    }
+    this.preferences.setNumberFormat(value);
   }
 
   /** The date alone. Anything unparseable renders as nothing rather than "Invalid Date". */
@@ -88,7 +63,7 @@ export class FormatService {
     if (!date) {
       return '';
     }
-    const pattern = this.date();
+    const pattern = this.dateFormat();
     if (pattern === 'auto') {
       return formatter(this.numberLocale(), 'date').format(date);
     }
@@ -254,25 +229,4 @@ function toDate(value: Date | string | number | null | undefined): Date | null {
   }
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function toSupported<T extends string>(value: string, allowed: readonly T[]): T | null {
-  return allowed.includes(value as T) ? (value as T) : null;
-}
-
-function readStored<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
-  try {
-    return toSupported(localStorage.getItem(key) ?? '', allowed) ?? fallback;
-  } catch {
-    // Storage can be unavailable (private mode); the default still applies.
-    return fallback;
-  }
-}
-
-function persist(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // As above: the in-memory choice still applies for this session.
-  }
 }
