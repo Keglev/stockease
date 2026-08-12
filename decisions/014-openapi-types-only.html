@@ -145,6 +145,8 @@
       <li><a href="/stockease/decisions/034-no-password-expiry.html">034 No forced password expiry</a></li>
       <li><a href="/stockease/decisions/035-search-token-matching-and-browse.html">035 Token search and browse on focus</a></li>
       <li><a href="/stockease/decisions/036-client-token-storage.html">036 Client token storage and threat model</a></li>
+      <li><a href="/stockease/decisions/037-i18n-authoring-split.html">037 Translations authored per namespace</a></li>
+      <li><a href="/stockease/decisions/038-ai-assisted-development-workflow.html">038 AI-assisted development workflow</a></li>
     </ul>
   </details>
 </aside>
@@ -156,11 +158,22 @@
         <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
         28, 2026</p>
         <hr />
+        <p><strong>ERRATA (August 12, 2026)</strong>: the Context below
+        cited ADR 008 for the OpenAPI document’s source-of-truth status.
+        That cross-reference is wrong. ADR 008 decides the documentation
+        structure - arc42 adoption, the docs tree layout, the ported
+        theme and build pipeline - and says nothing about the HTTP
+        contract or about any artifact being a source of truth. No other
+        decision record establishes that status either, so the claim
+        stands on this record’s own authority, which is where it was
+        first stated. The decision this ADR takes is unaffected and
+        unchanged; only the attribution was incorrect.</p>
         <h2 id="context">Context</h2>
         <p>The OpenAPI document under <code>docs/backend/api</code> is
-        the source of truth for the HTTP contract (ADR 008). The
-        frontend needs the same request and response shapes, and
-        hand-copying them guarantees drift.</p>
+        the source of truth for the HTTP contract (ADR 008 - see the
+        errata above; the citation is incorrect and the claim rests
+        here). The frontend needs the same request and response shapes,
+        and hand-copying them guarantees drift.</p>
         <p>Generation is the obvious answer, but the API’s response
         shape is not uniform and not accidentally so: some endpoints
         return a bare payload, others wrap it in the shared envelope,

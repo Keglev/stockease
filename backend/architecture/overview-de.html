@@ -184,10 +184,13 @@
         </table>
         <h2 id="architekturprinzipien">Architekturprinzipien</h2>
         <ul>
-        <li><strong>Modularer Monolith.</strong> Acht Fachmodule plus
-        gemeinsame Infrastruktur in einer Anwendung; die Modulgrenzen
-        werden durch Spring Modulith erzwungen und bei jedem Build durch
-        einen Test verifiziert - nicht durch Konvention.</li>
+        <li><strong>Modularer Monolith.</strong> Acht Fachmodule -
+        abgegrenzte fachliche Faehigkeiten, unabhaengig davon, ob sie
+        eigene Persistenz besitzen - plus drei Infrastrukturpakete
+        (<code>shared</code>, <code>config</code>, <code>demo</code>) in
+        einer Anwendung; die Modulgrenzen werden durch Spring Modulith
+        erzwungen und bei jedem Build durch einen Test verifiziert -
+        nicht durch Konvention.</li>
         <li><strong>Ereignisse innerhalb der Transaktion.</strong> Das
         Abschliessen einer Rechnung veroeffentlicht ein Ereignis; ein
         synchroner Listener bucht die Lagerbewegungen in derselben
