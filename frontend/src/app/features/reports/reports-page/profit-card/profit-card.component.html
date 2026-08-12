@@ -1,3 +1,10 @@
+<!--
+  Profit is one question asked at two groupings - per product and per supplier - so both live in
+  this one tab body rather than in tabs of their own. The two views are not the same content
+  drawn twice: the chart view pairs the overall-margin gauge with the per-product chart and has
+  no supplier equivalent, because a supplier ranking reads as a table and adds nothing as a
+  second chart beside the first.
+-->
 @if (view() === 'chart') {
   <div class="chart-row">
     <mat-card class="chart-card margin-card">
@@ -89,6 +96,11 @@
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="profitColumns()"></tr>
+            <!--
+              Only the product rows activate. A product has a detail worth opening; a supplier
+              row is already the whole of what the report knows about it, so making it look
+              clickable would promise a drill-down that does not exist.
+            -->
             <tr
               mat-row
               *matRowDef="let row; columns: profitColumns()"
@@ -103,6 +115,12 @@
     </mat-card-content>
   </mat-card>
 
+  <!--
+    The second table carries its own sort and its own export rather than sharing the first's.
+    They are independent row sets over different entities, so a sort chosen here must not
+    reorder the products above, and each download is its own file with its own columns - a
+    reader exporting supplier profit does not want product rows in the sheet.
+  -->
   <mat-card class="table-card">
     <mat-card-content>
       <div class="table-heading">
