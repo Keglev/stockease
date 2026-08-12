@@ -87,7 +87,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 ## Documentation
 
 - **[Architecture site](https://keglev.github.io/stockease/)** - arc42 documentation for both tiers, module reference, and 38 Architecture Decision Records. Backend entry pages are bilingual EN/DE.
-- **[Backend API reference](https://keglev.github.io/stockease/backend/api/index.html)** - the REST contract, generated from the OpenAPI specification by Redocly and published by CI. The project ships no Swagger UI deliberately: the specification is hand-maintained as the contract's source of truth rather than generated from annotations, so there is nothing for a runtime UI to reflect that this page does not already show, and no endpoint is exposed in production to serve it.
+- **[Backend API reference](https://keglev.github.io/stockease/backend/api/index.html)** - the REST contract, generated from the OpenAPI specification by Redocly and published by CI. Neither the specification nor a Swagger UI is generated from code; ADR 038 records why.
 - **[OpenAPI specification](docs/backend/api/openapi.yaml)** - the document itself, for readers who want to consume the contract rather than read it: it generates the frontend's types and is what the reference above is built from.
 - **[Backend coverage report](https://keglev.github.io/stockease/backend/coverage/index.html)** - JaCoCo, republished by CI on every run that changes it.
 - **[Frontend coverage report](https://keglev.github.io/stockease/frontend/coverage/index.html)** - Vitest with V8 instrumentation.
