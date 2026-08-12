@@ -1,10 +1,10 @@
-# StockEase - Size, Style, and Comment Standards (rev 10, 2026-08-12)
+# StockEase - Size, Style, and Comment Standards (rev 11, 2026-08-12)
 
-Supersedes rev 9 (2026-08-12). Changes: a template-header rule for component
-templates at or above 40 code lines, adopted against a measured population and
-grounded in the absence of any external standard for it; and component
-stylesheets confirmed unchanged, closing the survey's open question as
-deliberate.
+Supersedes rev 10 (2026-08-12). Changes: a spec storage-isolation rule for
+frontend specs - the three accepted mechanisms and the entry-clear/exit-clear
+asymmetry; and a note that the rev-10 template-header exemplar swap (#241,
+reports-page.component.html and settings.component.html) landed without its own
+rev bump.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -178,6 +178,30 @@ raised as a finding, and neither is refactored on sight.
 repetition across the list tables. Recorded as deferred, not rejected - the
 repetition is real and above the 3-site threshold, but the extraction is its own
 piece of work and is not owed by any pass that merely touches these files.
+
+*[rev 11]* SPEC STORAGE ISOLATION: several services resolve startup state from
+`localStorage` before falling back to anything else - `FormatService` (through
+`FormatPreferencesService`) reads its keys at construction, `LanguageService`
+reads `stockease.lang` when `initialize()` runs, and `ThemeService` reads its
+key - so a spec that leaves storage dirty changes what a later file renders.
+The root-level clear in `global-test-setup.ts` is NOT this protection: under
+coverage in a shared worker, root-level hooks have been observed not to fire
+for most files. Isolation is each spec file's own responsibility, met by ANY
+ONE of three mechanisms:
+
+- a clear registered INSIDE a `describe` (fires every time under coverage,
+  unlike a root-level hook);
+- a per-test setup helper that clears before each test;
+- a shared TestBed fixture that clears - one clear in the fixture COUNTS for
+  every spec that consumes it, the way any shared setup carries to its
+  children.
+
+Entry clears and exit clears are not interchangeable. An ENTRY clear defends
+the file that owns it against inherited residue; an EXIT clear (`afterEach`) is
+the only cleanup the next file gets. A spec that writes storage and never
+clears on exit is a finding whether or not it is green - exit hygiene, not a
+green run, is what this rule requires. Of the 26 spec files that write storage,
+exactly five clear on exit; closing that gap is the work this rule governs.
 
 ## Frontend doc dialect
 
