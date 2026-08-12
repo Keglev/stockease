@@ -64,4 +64,7 @@ dokumentiert.
   [English version](overview.md)
 - [Bausteine](05-building-blocks.md) (EN)
 - [Laufzeitsicht](06-runtime.md) (EN)
+- [Verteilungssicht](07-deployment.md) (EN)
+- [Uebergreifende Konzepte](08-concepts.md) (EN)
+- [Qualitaetsanforderungen](10-quality-requirements.md) (EN)
 - [Architekturentscheidungen](../../decisions/index.md) (EN)
