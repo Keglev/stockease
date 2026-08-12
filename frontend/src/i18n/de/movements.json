@@ -1,0 +1,27 @@
+{
+  "title": "Lagerbewegung erfassen",
+  "product": "Produkt",
+  "reasonLabel": "Grund",
+  "reason": {
+    "LOST": "Verlust",
+    "DESTROYED": "Zerstört"
+  },
+  "directionHint": {
+    "LOST": "Ein Verlust verringert den erfassten Bestand.",
+    "DESTROYED": "Eine Zerstörung verringert den erfassten Bestand."
+  },
+  "quantity": "Menge",
+  "stockHint": "Bestand entsteht durch das Abschließen einer Einkaufsrechnung, nicht hier.",
+  "form": {
+    "remark": "Anmerkung",
+    "remarkRequired": "Bitte wählen Sie aus, was mit der Ware geschehen ist.",
+    "remarkOption": {
+      "EXPIRED": "Abgelaufen",
+      "IN_TRANSIT_TO_CUSTOMER": "Beim Transport zum Kunden",
+      "INTERNAL": "Intern",
+      "FROM_SUPPLIER": "Vom Lieferanten"
+    }
+  },
+  "submit": "Bewegung erfassen",
+  "recorded": "Lagerbewegung wurde erfasst."
+}

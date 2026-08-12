@@ -1,0 +1,23 @@
+{
+  "appName": "StockEase",
+  "language": "Language",
+  "themeLight": "Light mode",
+  "themeDark": "Dark mode",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "close": "Close",
+  "save": "Save",
+  "exportCsv": "Export CSV",
+  "search": {
+    "noMatches": "No matches"
+  },
+  "paginator": {
+    "itemsPerPage": "Items per page:",
+    "firstPage": "First page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "lastPage": "Last page",
+    "range": "{{start}} - {{end}} of {{total}}",
+    "rangeEmpty": "0 of {{total}}"
+  }
+}

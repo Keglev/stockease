@@ -1,0 +1,12 @@
+{
+  "logout": "Log out",
+  "openNavigation": "Open navigation",
+  "demoBadge": "DEMO",
+  "demoTooltip": "Demo system - data resets nightly",
+  "role": {
+    "ADMIN": "Administrator",
+    "USER": "User"
+  },
+  "idleWarning": "You will be signed out in 2 minutes due to inactivity.",
+  "idleStay": "Stay signed in"
+}

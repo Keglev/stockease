@@ -1,0 +1,23 @@
+{
+  "title": "Einstellungen",
+  "appearance": {
+    "title": "Darstellung"
+  },
+  "language": {
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "formats": {
+    "title": "Formate",
+    "auto": "Automatisch (folgt der Sprache)",
+    "date": "Datumsformat",
+    "number": "Zahlen & Währung"
+  },
+  "session": {
+    "title": "Sitzung",
+    "username": "Benutzername",
+    "role": "Rolle",
+    "loginTime": "Angemeldet seit",
+    "idleNote": "Nach 30 Minuten Inaktivität werden Sie automatisch abgemeldet."
+  }
+}

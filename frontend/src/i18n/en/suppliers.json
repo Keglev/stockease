@@ -1,0 +1,35 @@
+{
+  "title": "Suppliers",
+  "create": "New supplier",
+  "edit": "Edit",
+  "loading": "Loading suppliers…",
+  "empty": "No suppliers found.",
+  "created": "Supplier created.",
+  "updated": "Supplier updated.",
+  "columns": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "createdAt": "Created",
+    "actions": "Actions"
+  },
+  "delete": {
+    "action": "Delete supplier",
+    "title": "Delete supplier",
+    "message": "Do you really want to delete \"{{name}}\"?"
+  },
+  "form": {
+    "createTitle": "New supplier",
+    "editTitle": "Edit supplier",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "nameRequired": "Name is required.",
+    "addressRequired": "Address is required.",
+    "emailInvalid": "Enter a valid email address."
+  }
+}

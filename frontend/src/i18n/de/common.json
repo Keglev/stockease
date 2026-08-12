@@ -1,0 +1,23 @@
+{
+  "appName": "Bestandskontrolle",
+  "language": "Sprache",
+  "themeLight": "Helles Design",
+  "themeDark": "Dunkles Design",
+  "confirm": "Bestätigen",
+  "cancel": "Abbrechen",
+  "close": "Schließen",
+  "save": "Speichern",
+  "exportCsv": "CSV exportieren",
+  "search": {
+    "noMatches": "Keine Treffer"
+  },
+  "paginator": {
+    "itemsPerPage": "Einträge pro Seite:",
+    "firstPage": "Erste Seite",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "lastPage": "Letzte Seite",
+    "range": "{{start}} - {{end}} von {{total}}",
+    "rangeEmpty": "0 von {{total}}"
+  }
+}

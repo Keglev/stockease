@@ -1,0 +1,7 @@
+{
+  "tagline": "Inventory management demo",
+  "repository": "Repository",
+  "documentation": "Documentation",
+  "apiDown": "API unavailable",
+  "apiLatency": "API {{ms}} ms"
+}

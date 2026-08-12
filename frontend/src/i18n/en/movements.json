@@ -1,0 +1,27 @@
+{
+  "title": "Record stock movement",
+  "product": "Product",
+  "reasonLabel": "Reason",
+  "reason": {
+    "LOST": "Lost",
+    "DESTROYED": "Destroyed"
+  },
+  "directionHint": {
+    "LOST": "A loss decreases the recorded quantity.",
+    "DESTROYED": "Destruction decreases the recorded quantity."
+  },
+  "quantity": "Quantity",
+  "stockHint": "To add stock, close a purchase invoice. Stock is never added here.",
+  "form": {
+    "remark": "Remark",
+    "remarkRequired": "Please choose what happened to the stock.",
+    "remarkOption": {
+      "EXPIRED": "Expired",
+      "IN_TRANSIT_TO_CUSTOMER": "In transit to customer",
+      "INTERNAL": "Internal",
+      "FROM_SUPPLIER": "From supplier"
+    }
+  },
+  "submit": "Record movement",
+  "recorded": "Stock movement recorded."
+}

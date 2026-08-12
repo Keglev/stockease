@@ -1,0 +1,12 @@
+{
+  "title": "Sign in to {{app}}",
+  "username": "Username",
+  "password": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "submit": "Sign in",
+  "submitting": "Signing in…",
+  "backToLanding": "Back to start page",
+  "invalidCredentials": "Invalid username or password",
+  "sessionExpired": "Your session has expired. Please log in again."
+}

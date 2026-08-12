@@ -1,0 +1,23 @@
+{
+  "title": "Settings",
+  "appearance": {
+    "title": "Appearance"
+  },
+  "language": {
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "formats": {
+    "title": "Formats",
+    "auto": "Automatic (follows language)",
+    "date": "Date format",
+    "number": "Numbers & currency"
+  },
+  "session": {
+    "title": "Session",
+    "username": "Username",
+    "role": "Role",
+    "loginTime": "Signed in since",
+    "idleNote": "You will be signed out automatically after 30 minutes of inactivity."
+  }
+}

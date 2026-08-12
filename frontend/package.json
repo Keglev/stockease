@@ -9,6 +9,8 @@
     "test": "ng test",
     "test:coverage": "ng test --watch=false --coverage",
     "lint": "ng lint",
+    "i18n:build": "node tools/build-i18n.mjs",
+    "i18n:check": "node tools/build-i18n.mjs --check",
     "gen:api": "npx --yes --package openapi-typescript@7.13.0 -- openapi-typescript ../docs/backend/api/openapi.yaml -o src/app/core/api/api-types.ts"
   },
   "private": true,

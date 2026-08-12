@@ -1,0 +1,35 @@
+{
+  "title": "Lieferanten",
+  "create": "Neuer Lieferant",
+  "edit": "Bearbeiten",
+  "loading": "Lieferanten werden geladen…",
+  "empty": "Keine Lieferanten gefunden.",
+  "created": "Lieferant wurde angelegt.",
+  "updated": "Lieferant wurde aktualisiert.",
+  "columns": {
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "createdAt": "Erstellt am",
+    "actions": "Aktionen"
+  },
+  "delete": {
+    "action": "Lieferant löschen",
+    "title": "Lieferant löschen",
+    "message": "Möchten Sie „{{name}}“ wirklich löschen?"
+  },
+  "form": {
+    "createTitle": "Neuer Lieferant",
+    "editTitle": "Lieferant bearbeiten",
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "nameRequired": "Name ist erforderlich.",
+    "addressRequired": "Adresse ist erforderlich.",
+    "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+  }
+}

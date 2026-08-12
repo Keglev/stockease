@@ -53,6 +53,14 @@ jobs:
       - name: Lint
         run: npx ng lint
 
+      - name: Check i18n bundles match their sources
+        # The two files under public/i18n are assembled artifacts, not authored ones: the
+        # sources are one file per namespace under src/i18n (ADR 037). Both stay committed,
+        # so nothing at runtime depends on a build step - which is exactly what lets them
+        # drift. This step re-assembles and refuses any difference, making a hand-edit to a
+        # shipped bundle impossible to merge. Before the build so a mismatch fails fast.
+        run: npm run i18n:check
+
       - name: Type-check and build (production)
         run: npx ng build --configuration production
 
