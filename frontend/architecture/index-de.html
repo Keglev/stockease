@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<!-- The one page template the docs build wires: build-architecture-docs.sh
+     passes every architecture page and every decision record through it, so
+     the topbar, sidebar and theme handling here are what the whole generated
+     site carries - this comment included, since it ships inside each page.
+     Do not put template syntax in it. -->
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend · index-de · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Frontend sidebar navigation, included by the doc templates as a Pandoc
+     partial. It carries the same Docs group as nav-backend.html so a frontend
+     page never inherits backend navigation. The active link is marked at
+     runtime by docs.js. Do not put template syntax in this comment - a partial
+     is itself a template.
+
+     The Frontend group lists the architecture tree's entry pages, English and
+     German side by side in the same order nav-backend.html uses. The two
+     Quality entries below are published from frontend CI artifacts rather than
+     from this repository's Markdown. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Frontend</p>
+  <ul>
+    <li><a href="/stockease/frontend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/frontend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/frontend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/frontend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/frontend/api/index.html">Frontend API</a></li>
+    <li><a href="/stockease/frontend/coverage/index.html">Frontend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="einfuehrung-und-ziele">Einfuehrung und Ziele</h1>
+        <p>Das StockEase-Frontend ist die Oberflaeche, in der im Lager
+        oder im Buero gearbeitet wird: Es uebersetzt die
+        Warenwirtschafts-Domaene des Backends in Seiten, die sich
+        bedienen lassen, ohne die dahinterliegende API zu kennen. Es ist
+        nach denselben Massstaeben gebaut wie das Backend - typisiert
+        gegen den generierten API-Vertrag, auf jeder Ebene getestet und
+        mit der Begruendung dokumentiert, die neben dem Code bleibt.</p>
+        <h2 id="anforderungsueberblick">Anforderungsueberblick</h2>
+        <p>Die Anwendung deckt den Warenkreislauf aus Sicht der
+        Bedienung ab: Produktstammdaten, Lieferanten- und
+        Kundenregister, Eingangs- und Ausgangsrechnungen mit ihrem
+        Lebenszyklus, die daraus entstehenden Lagerbewegungen, ein
+        Aenderungsprotokoll, das von einem Produkt oder einer handelnden
+        Person aus erreichbar ist, ein Berichtsbereich sowie
+        benutzerbezogene Einstellungen fuer Sprache und Theme. Eine
+        oeffentliche Landing-Page und ein Hilfebereich stehen daneben
+        fuer Leser ohne Konto.</p>
+        <h2 id="qualitaetsziele">Qualitaetsziele</h2>
+        <ol type="1">
+        <li><strong>Die Oberflaeche erfindet keine fachlichen
+        Wahrheiten.</strong> Werte werden so dargestellt, wie das
+        Backend sie meldet. Wo der Client rechnet -
+        Diagramm-Aggregation, CSV-Export, Berichtssummen -, geschieht
+        das aus geladenen Zeilen, und nichts wird
+        zurueckgeschrieben.</li>
+        <li><strong>Beide Sprachen bleiben vollstaendig.</strong> Bei
+        Laufzeituebersetzung prueft kein Compiler, ob ein Schluessel
+        existiert; deshalb erzwingt eine Paritaetspruefung ueber die
+        ausgelieferten Bundles bei jedem Build Vollstaendigkeit und
+        Reihenfolge in Englisch und Deutsch, und eine zweite Pruefung
+        weist ein Bundle zurueck, das nicht mehr zu seinen gepflegten
+        Quellen passt.</li>
+        <li><strong>Zugaenglich und lesbar auf jedem Viewport.</strong>
+        Helles und dunkles Theme entstehen aus Material-System-Tokens
+        statt aus fest codierten Farben, und die Shell passt ihre
+        Navigation an den Breakpoint an, statt auf dem Telefon ein
+        Desktop-Layout zu zeigen.</li>
+        </ol>
+        <h2 id="stakeholder">Stakeholder</h2>
+        <p>Ein Solo-Entwickler, der fuer technische Gutachter baut:
+        Recruiter und Ingenieure, die Codequalitaet,
+        Architekturbegruendung und Dokumentationspraxis fuer den
+        deutschen Markt bewerten. Die deutsche Oberflaeche ist Teil
+        dieses Nachweises, keine nachtraeglich hinzugefuegte
+        Uebersetzung.</p>
+        <h2 id="abgrenzung">Abgrenzung</h2>
+        <p>Dieser Baum dokumentiert die Browser-Anwendung in
+        <code>frontend/</code>: ihren Aufbau, ihren Zustand, ihren
+        Zugriff auf die API sowie Build und Tests. Er dokumentiert nicht
+        die fachlichen Regeln selbst - was eine Rechnung darf, wie die
+        Bestandsarithmetik abgesichert ist, was das Protokoll festhaelt
+        -, die auf dem Server entschieden und erzwungen werden und in
+        der <a
+        href="../../backend/architecture/index-de.html">Backend-Architektur</a>
+        beschrieben sind.</p>
+        <p>Entscheidungen, die beide Seiten betreffen, stehen im
+        systemweiten <a
+        href="../../decisions/index.html">Entscheidungsprotokoll</a> und
+        nicht in einem der beiden Baeume.</p>
+        <h2 id="dokumentationsuebersicht">Dokumentationsuebersicht</h2>
+        <ul>
+        <li><a href="overview-de.html">Frontend-Architektur im
+        Ueberblick</a> - <a href="overview.html">English
+        version</a></li>
+        <li><a
+        href="../../decisions/index.html">Architekturentscheidungen</a>
+        (EN)</li>
+        </ul>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#einfuehrung-und-ziele"
+      id="toc-einfuehrung-und-ziele">Einfuehrung und Ziele</a>
+      <ul>
+      <li><a href="#anforderungsueberblick"
+      id="toc-anforderungsueberblick">Anforderungsueberblick</a></li>
+      <li><a href="#qualitaetsziele"
+      id="toc-qualitaetsziele">Qualitaetsziele</a></li>
+      <li><a href="#stakeholder"
+      id="toc-stakeholder">Stakeholder</a></li>
+      <li><a href="#abgrenzung" id="toc-abgrenzung">Abgrenzung</a></li>
+      <li><a href="#dokumentationsuebersicht"
+      id="toc-dokumentationsuebersicht">Dokumentationsuebersicht</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>

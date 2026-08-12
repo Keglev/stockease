@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<!-- The one page template the docs build wires: build-architecture-docs.sh
+     passes every architecture page and every decision record through it, so
+     the topbar, sidebar and theme handling here are what the whole generated
+     site carries - this comment included, since it ships inside each page.
+     Do not put template syntax in it. -->
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend · overview-de · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Frontend sidebar navigation, included by the doc templates as a Pandoc
+     partial. It carries the same Docs group as nav-backend.html so a frontend
+     page never inherits backend navigation. The active link is marked at
+     runtime by docs.js. Do not put template syntax in this comment - a partial
+     is itself a template.
+
+     The Frontend group lists the architecture tree's entry pages, English and
+     German side by side in the same order nav-backend.html uses. The two
+     Quality entries below are published from frontend CI artifacts rather than
+     from this repository's Markdown. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decisions (ADRs)</a></li>
+  </ul>
+
+  <p class="nav-title">Frontend</p>
+  <ul>
+    <li><a href="/stockease/frontend/architecture/overview.html">Architecture overview</a></li>
+    <li><a href="/stockease/frontend/architecture/overview-de.html">Architektur-&Uuml;berblick (DE)</a></li>
+    <li><a href="/stockease/frontend/architecture/index.html">Introduction &amp; Goals</a></li>
+    <li><a href="/stockease/frontend/architecture/index-de.html">Einf&uuml;hrung &amp; Ziele (DE)</a></li>
+  </ul>
+
+  <p class="nav-title">Quality</p>
+  <ul>
+    <li><a href="/stockease/frontend/api/index.html">Frontend API</a></li>
+    <li><a href="/stockease/frontend/coverage/index.html">Frontend coverage</a></li>
+  </ul>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1 id="frontend-architektur">Frontend-Architektur</h1>
+        <p>Das StockEase-Frontend ist eine Single-Page-Angular-Anwendung
+        auf der REST-API des Backends: Produktstammdaten, Lieferanten
+        und Kunden, Eingangs- und Ausgangsrechnungen, Lagerbewegungen,
+        ein Aenderungsprotokoll und ein Berichtsbereich, hinter einer
+        einzigen authentifizierten Huelle.</p>
+        <blockquote>
+        <p><strong>Dies ist eine einseitige Zusammenfassung.</strong>
+        Einfuehrung und Ziele des Frontend-Kontexts - Qualitaetsziele,
+        Zielgruppe und die Abgrenzung zum Backend - finden sich unter <a
+        href="index-de.html">Einfuehrung und Ziele</a>.</p>
+        </blockquote>
+        <h2 id="technologie-stack">Technologie-Stack</h2>
+        <table>
+        <thead>
+        <tr class="header">
+        <th>Komponente</th>
+        <th>Technologie</th>
+        <th>Version</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="odd">
+        <td>Sprache</td>
+        <td>TypeScript</td>
+        <td>6.0</td>
+        </tr>
+        <tr class="even">
+        <td>Framework</td>
+        <td>Angular (standalone, Signals)</td>
+        <td>22.0</td>
+        </tr>
+        <tr class="odd">
+        <td>UI-Komponenten</td>
+        <td>Angular Material und CDK</td>
+        <td>22.0</td>
+        </tr>
+        <tr class="even">
+        <td>Diagramme</td>
+        <td>Apache ECharts, direkt verwendet</td>
+        <td>6.1.0</td>
+        </tr>
+        <tr class="odd">
+        <td>Uebersetzung</td>
+        <td>ngx-translate</td>
+        <td>18.0</td>
+        </tr>
+        <tr class="even">
+        <td>Asynchronitaet</td>
+        <td>RxJS</td>
+        <td>7.8</td>
+        </tr>
+        <tr class="odd">
+        <td>Tests</td>
+        <td>Vitest mit jsdom</td>
+        <td>4.0</td>
+        </tr>
+        <tr class="even">
+        <td>Build</td>
+        <td>Angular CLI (<code>@angular/build</code>)</td>
+        <td>22.0</td>
+        </tr>
+        <tr class="odd">
+        <td>CI/CD</td>
+        <td>GitHub Actions</td>
+        <td>-</td>
+        </tr>
+        <tr class="even">
+        <td>Hosting</td>
+        <td>Vercel CDN</td>
+        <td>-</td>
+        </tr>
+        </tbody>
+        </table>
+        <h2 id="aufbau-der-anwendung">Aufbau der Anwendung</h2>
+        <p>Die Anwendung ist durchgaengig standalone: Es gibt kein
+        einziges <code>NgModule</code>, und <code>main.ts</code> startet
+        eine einzelne Wurzelkomponente mit einer Provider-Liste in
+        <code>app/app.config.ts</code>. <code>zone.js</code> ist weder
+        installiert noch im Produktions-Bundle enthalten, und
+        <code>angular.json</code> konfiguriert keinen Polyfills-Eintrag;
+        Komponenten halten ihren Zustand in Signals und veroeffentlichen
+        ihn ueber <code>input()</code> und <code>output()</code>.</p>
+        <p>Das Routing ist ausnahmslos lazy. Jeder Eintrag in
+        <code>app/app.routes.ts</code> verwendet
+        <code>loadComponent</code>, sodass kein Fachbereich im initialen
+        Bundle liegt. Drei Routen sind oeffentlich - Landing-Page,
+        Anmeldung und Abmeldung -, alles Weitere ist Kind von
+        <code>/app</code>, das die Shell-Komponente hinter einem
+        Auth-Guard laedt. Eine zuletzt deklarierte Wildcard-Route
+        rendert die Nicht-gefunden-Seite.</p>
+        <h2 id="shell-seiten-und-karten">Shell, Seiten und Karten</h2>
+        <p>Drei Rollen teilen sich die Arbeit, und die Aufteilung wird
+        durch Review durchgesetzt, nicht durch das Framework:</p>
+        <ul>
+        <li><strong>Die Shell</strong> (<code>shared/shell</code>) ist
+        der Rahmen um jede authentifizierte Seite: Toolbar,
+        Navigationsleiste und der Router-Outlet. Sie besitzt den Timer
+        fuer die automatische Abmeldung bei Inaktivitaet - weshalb
+        dieser nicht laufen kann, waehrend jemand eine oeffentliche
+        Seite liest.</li>
+        <li><strong>Eine Seite</strong> besitzt ihre Daten. Sie ruft die
+        Services auf, haelt die geladenen Zeilen, zeigt das
+        Fehlerbanner, berechnet alles, was ihre Kinder darstellen, und
+        entscheidet, was lazy geladen wird.</li>
+        <li><strong>Eine Karte</strong> ist rein darstellend. Ihre Werte
+        kommen bereits berechnet als Inputs an, und ihre Bedienelemente
+        melden eine Entscheidung ueber einen Output, statt sie selbst
+        auszufuehren. Der Berichtsbereich ist das ausgearbeitete
+        Beispiel: Jeder Tab-Inhalt ist eine Karte, und die Seite
+        dahinter besitzt jeden Abruf und jede Ableitung.</li>
+        </ul>
+        <h2 id="wo-der-zustand-liegt">Wo der Zustand liegt</h2>
+        <p>Es gibt keinen globalen Store. Zustand liegt dort, wo er
+        gebraucht wird:</p>
+        <ul>
+        <li><strong>Services</strong> (<code>app/core</code>) besitzen
+        alles Uebergreifende und Langlebige: Sitzung und Token, aktuelle
+        Sprache, Theme, Formatierung, Benachrichtigungen und
+        Health-Status. Sie sind <code>providedIn: 'root'</code> und
+        stellen Signals bereit.</li>
+        <li><strong>Komponenten</strong> halten ihren eigenen
+        Ansichtszustand in Signals und leiten mit <code>computed</code>
+        ab, statt im Template neu zu berechnen.</li>
+        <li><strong>Zwei gemeinsame Signal-Stores</strong> tragen
+        Muster, die haeufig genug auftraten, um benannt zu werden:
+        <code>shared/list/list-page-store.ts</code> fuer Registerseiten,
+        die eine begrenzte Liste einmal laden und clientseitig
+        blaettern, sowie
+        <code>shared/dialog/dialog-submit-store.ts</code> fuer den
+        Absendezustand von Dialogen.</li>
+        </ul>
+        <h2 id="kommunikation-mit-dem-backend">Kommunikation mit dem
+        Backend</h2>
+        <p>Fachservices rufen die API ueber Angulars
+        <code>HttpClient</code> auf; die Basis-URL liefert
+        <code>src/environments/</code> je Build. Zwei funktionale
+        Interceptors liegen vor jeder Anfrage: einer haengt das
+        Bearer-Token an, der andere wandelt eine fehlgeschlagene Antwort
+        in einen <code>ApiError</code> mit Status und maschinenlesbarem
+        Code des Backends um. Die meisten Endpunkte antworten in einer
+        Huelle aus
+        <code>success</code>/<code>message</code>/<code>data</code>, die
+        die Fachservices auspacken - bewusst nicht der Interceptor, weil
+        die Berichtsendpunkte ihre Nutzdaten direkt zurueckgeben.</p>
+        <h2 id="sprache-und-formatierung">Sprache und Formatierung</h2>
+        <p>Die Oberflaeche erscheint auf Englisch und Deutsch.
+        Uebersetzungen werden als je eine Datei pro Namensraum und
+        Sprache unter <code>frontend/src/i18n/</code> gepflegt und zur
+        Bauzeit zu den beiden Bundles zusammengesetzt, die die Anwendung
+        zur Laufzeit laedt (ADR 037). ngx-translate loest Schluessel zur
+        Laufzeit auf, sodass die Sprache ohne Neuladen wechselt (ADR
+        015), und der Start wartet auf das erste Bundle, damit keine
+        Seite rohe Schluessel anzeigt. Datums- und Waehrungsangaben
+        werden zur Renderzeit ueber <code>Intl</code> formatiert, nicht
+        ueber eine zur Bauzeit festgelegte Locale (ADR 031).</p>
+        <h2 id="tests">Tests</h2>
+        <p>Vitest fuehrt die Suite ueber Angulars
+        <code>unit-test</code>-Builder gegen jsdom aus. Die
+        Coverage-Schwellen stehen in <code>angular.json</code> als
+        Regressionsuntergrenzen unterhalb der erreichten Werte. Der
+        Frontend-Workflow fuehrt Linting, einen Produktions-Build, die
+        Suite mit Coverage und eine Drift-Pruefung aus, die die
+        Uebersetzungs-Bundles neu zusammensetzt und fehlschlaegt, wenn
+        die eingecheckten davon abweichen.</p>
+        <h2 id="dokumentationsuebersicht">Dokumentationsuebersicht</h2>
+        <ul>
+        <li><a href="index-de.html">Einfuehrung und Ziele</a> - <a
+        href="overview.html">English version</a></li>
+        <li><a
+        href="../../decisions/index.html">Architekturentscheidungen</a>
+        (EN)</li>
+        <li><a
+        href="../../backend/architecture/overview-de.html">Backend-Architektur</a></li>
+        </ul>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a href="#frontend-architektur"
+      id="toc-frontend-architektur">Frontend-Architektur</a>
+      <ul>
+      <li><a href="#technologie-stack"
+      id="toc-technologie-stack">Technologie-Stack</a></li>
+      <li><a href="#aufbau-der-anwendung"
+      id="toc-aufbau-der-anwendung">Aufbau der Anwendung</a></li>
+      <li><a href="#shell-seiten-und-karten"
+      id="toc-shell-seiten-und-karten">Shell, Seiten und Karten</a></li>
+      <li><a href="#wo-der-zustand-liegt"
+      id="toc-wo-der-zustand-liegt">Wo der Zustand liegt</a></li>
+      <li><a href="#kommunikation-mit-dem-backend"
+      id="toc-kommunikation-mit-dem-backend">Kommunikation mit dem
+      Backend</a></li>
+      <li><a href="#sprache-und-formatierung"
+      id="toc-sprache-und-formatierung">Sprache und
+      Formatierung</a></li>
+      <li><a href="#tests" id="toc-tests">Tests</a></li>
+      <li><a href="#dokumentationsuebersicht"
+      id="toc-dokumentationsuebersicht">Dokumentationsuebersicht</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
