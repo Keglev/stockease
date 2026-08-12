@@ -2,16 +2,16 @@ import { TestBed } from '@angular/core/testing';
 
 import { LanguageService } from '../i18n/language.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
-import { FORMAT_DATE_KEY, FORMAT_NUMBER_KEY, FormatService } from './format.service';
+import { FormatService } from './format.service';
 
 /* The last day of 2026 at 15:04, which reads differently in every option this service offers. */
 const MOMENT = new Date(2026, 11, 31, 15, 4);
 
 /*
  * Every rendered date, amount and number, in both languages: 'auto' follows the interface language,
- * an explicit override beats it, and the two preferences are independent of each other. Also that the
- * choices survive a reload and that an unsupported value is ignored.
- * Out of scope: the pipes that call this service - format-pipes.spec.ts.
+ * an explicit override beats it, and the two preferences are independent of each other.
+ * Out of scope: how the preferences themselves are stored, guarded and read back -
+ * format-preferences.service.spec.ts; and the pipes that call this service - format-pipes.spec.ts.
  */
 describe('FormatService', () => {
   let format: FormatService;
@@ -216,31 +216,4 @@ describe('FormatService', () => {
     expect(format.formatCurrency(value)).toBe('');
   });
 
-  it('setDateFormat_unsupportedValue_keepsThePreviousChoice', () => {
-    format.setDateFormat('ymdDash');
-
-    format.setDateFormat('klingon');
-
-    expect(format.dateFormat()).toBe('ymdDash');
-  });
-
-  it('setFormats_anyChoice_persistsForTheNextVisit', () => {
-    format.setDateFormat('dmyDot');
-    format.setNumberFormat('en');
-
-    expect(localStorage.getItem(FORMAT_DATE_KEY)).toBe('dmyDot');
-    expect(localStorage.getItem(FORMAT_NUMBER_KEY)).toBe('en');
-  });
-
-  it('construct_storedChoices_areReadBackOnStartup', () => {
-    localStorage.setItem(FORMAT_DATE_KEY, 'ymdDash');
-    localStorage.setItem(FORMAT_NUMBER_KEY, 'de');
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ providers: [provideTestTranslations({ en: {}, de: {} })] });
-
-    const restored = TestBed.inject(FormatService);
-
-    expect(restored.dateFormat()).toBe('ymdDash');
-    expect(restored.numberFormat()).toBe('de');
-  });
 });
