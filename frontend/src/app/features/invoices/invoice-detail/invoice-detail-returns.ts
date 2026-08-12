@@ -2,7 +2,7 @@ import { Injectable, Signal, WritableSignal, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { InvoiceItemResponse, InvoiceResponse } from '../../../core/api/api-models';
-import { ApiError } from '../../../core/interceptors/error.interceptor';
+import { ApiError } from '../../../core/api/api-envelope';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { MovementService } from '../../movements/movement.service';
 import {

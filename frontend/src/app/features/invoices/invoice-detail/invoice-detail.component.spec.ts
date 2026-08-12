@@ -12,7 +12,7 @@ import {
   RegisterReturnRequest
 } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ApiError } from '../../../core/interceptors/error.interceptor';
+import { ApiError } from '../../../core/api/api-envelope';
 import { ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { MovementService } from '../../movements/movement.service';
 import { InvoiceReturnDialogComponent } from '../invoice-return-dialog/invoice-return-dialog.component';
