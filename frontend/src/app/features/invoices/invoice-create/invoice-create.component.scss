@@ -19,6 +19,10 @@
   font: var(--mat-sys-label-medium);
 }
 
+// Full width with a cap, not a fixed width: the field fills a narrow viewport and stops growing
+// on a wide one, so the form never stretches a text input across a desktop screen. The bare
+// element selector reaches every field this template declares, which is why the item rows below
+// narrow theirs again rather than widening from a smaller default.
 mat-form-field {
   width: 100%;
   max-width: 22rem;
@@ -30,6 +34,10 @@ mat-form-field {
   gap: 0.75rem;
   align-items: center;
 
+  // Narrower than a header field so the quantity and unit-price inputs, the product typeahead
+  // beside them and the remove button all fit one line at desktop width; the wrap above catches
+  // them when they no longer do. Only the two numeric fields are reached from here - the
+  // typeahead is its own component and caps its own width.
   mat-form-field {
     max-width: 14rem;
   }

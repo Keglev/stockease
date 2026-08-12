@@ -1,3 +1,9 @@
+# Consumed by .github/scripts/docs/build-openapi-docs.sh - `redocly lint`, `redocly bundle` and
+# `redocly build-docs` - which the docs check runs from the repository root. That working
+# directory is load-bearing: the CLI reads redocly.yaml from the CWD, not from beside the spec and
+# not by walking up, so from anywhere else these overrides vanish and an invalid example warns
+# instead of failing the build. Moving this file needs an explicit --config at every call site.
+
 extends:
   - recommended
 
