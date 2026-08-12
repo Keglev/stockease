@@ -1,226 +1,28 @@
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
-import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
 
-import {
-  DueDateBucket,
-  InvoiceDueSummary,
-  LossReport,
-  PaginatedProducts,
-  ProductProfitReport,
-  ProductResponse
-} from '../../core/api/api-models';
-import { HealthProbe, HealthService } from '../../core/health/health.service';
-import { LANGUAGE_STORAGE_KEY } from '../../core/i18n/language.service';
-import { ChartComponent } from '../../shared/chart/chart.component';
-import { DueCardComponent } from './due-card/due-card.component';
-import { ProfitCardComponent } from './profit-card/profit-card.component';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
-import { FormatService } from '../../core/format/format.service';
-import { LanguageService } from '../../core/i18n/language.service';
-import { provideFakeChartEngine } from '../../testing/chart-testing';
-import { provideTestTranslations } from '../../testing/i18n-testing';
-import { ProductService } from '../products/product.service';
-import { ReportService } from '../reports/report.service';
 import { DashboardComponent } from './dashboard.component';
-import { WIDGET } from './dashboard.fixtures';
-
-const TRANSLATIONS = {
-  // Only the remainder label in German: it is the one chart string the language spec reads.
-  de: { charts: { other: 'Sonstige' } },
-  en: {
-    charts: { other: 'Other' },
-    reports: { view: { chart: 'Chart', table: 'Table' }, columns: { name: 'Name', grossProfit: 'Gross profit' } },
-    dashboard: {
-      title: 'Dashboard',
-      refresh: 'Refresh',
-      kpi: {
-        products: 'Products',
-        lowStock: 'Low stock',
-        overdue: 'Overdue invoices',
-        grossProfit: 'Gross profit'
-      },
-      lowStockTitle: 'Low stock',
-      lowStockNone: 'All products are sufficiently stocked.',
-      charts: { profitByProduct: 'Profit by product', dueDates: 'Upcoming due dates' }
-    }
-  }
-};
-
-// pageSize 1 with totalElements 42: the count must come from the envelope, not the payload.
-const PAGE: PaginatedProducts = {
-  content: [WIDGET],
-  pageNumber: 0,
-  pageSize: 1,
-  totalElements: 42,
-  totalPages: 42
-};
-
-const LOSSES: LossReport[] = [
-  {
-    productId: 3,
-    name: 'Widget',
-    sku: 'SKU-3',
-    deleted: false,
-    lostUnits: 2,
-    destroyedUnits: 1,
-    lossValue: 15
-  },
-  {
-    productId: 4,
-    name: 'Gadget',
-    sku: 'SKU-4',
-    deleted: false,
-    lostUnits: 1,
-    destroyedUnits: 0,
-    lossValue: 5
-  }
-];
-
-const OVERDUE: InvoiceDueSummary[] = [
-  {
-    invoiceId: 1,
-    invoiceNumber: 'RE-2026-0001',
-    invoiceType: 'SALE',
-    counterparty: 'Jane Doe',
-    dueDate: '2026-03-01',
-    outstandingValue: 30,
-    daysOverdue: 5
-  },
-  {
-    invoiceId: 2,
-    invoiceNumber: 'RE-2026-0002',
-    invoiceType: 'PURCHASE',
-    counterparty: 'Acme',
-    dueDate: '2026-03-02',
-    outstandingValue: 10,
-    daysOverdue: 2
-  },
-  {
-    invoiceId: 3,
-    invoiceNumber: 'RE-2026-0003',
-    invoiceType: 'SALE',
-    counterparty: 'John Roe',
-    dueDate: '2026-03-03',
-    outstandingValue: 20,
-    daysOverdue: 1
-  }
-];
-
-const PROFIT: ProductProfitReport[] = [
-  { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 100, cost: 40, grossProfit: 60 },
-  { productId: 4, name: 'Gadget', sku: 'SKU-4', deleted: false, revenue: 60, cost: 35, grossProfit: 25 }
-];
-
-/* Eleven products, so topNWithRemainder has a remainder to bucket. */
-const MANY_PROFIT: ProductProfitReport[] = Array.from({ length: 11 }, (unused, index) => ({
-  productId: index + 1,
-  name: 'Product ' + index,
-  sku: 'SKU-' + index,
-  deleted: false,
-  revenue: 100,
-  cost: 40,
-  grossProfit: 60 - index
-}));
-
-/* Nine rows, so the list's cap at eight is observable rather than incidental. */
-const DUE_SOON: InvoiceDueSummary[] = Array.from({ length: 9 }, (unused, index) => ({
-  invoiceId: index + 1,
-  invoiceNumber: 'RE-2026-100' + index,
-  invoiceType: index % 2 === 0 ? 'SALE' : 'PURCHASE',
-  counterparty: 'Customer ' + index,
-  dueDate: '2026-03-0' + ((index % 9) + 1),
-  outstandingValue: 100 + index,
-  daysOverdue: null
-}));
-
-const BUCKETS: DueDateBucket[] = [
-  { dueDate: '2026-03-01', invoiceType: 'SALE', invoiceCount: 2, totalValue: 60 }
-];
-
-class ReportServiceStub {
-  calls = 0;
-  profitPayload: ProductProfitReport[] = PROFIT;
-
-  profitProducts(): Observable<ProductProfitReport[]> {
-    this.calls += 1;
-    return of(this.profitPayload);
-  }
-
-  dueDates(): Observable<DueDateBucket[]> {
-    this.calls += 1;
-    return of(BUCKETS);
-  }
-
-  /* Still offered, and deliberately counted: the dashboard must no longer ask for it. */
-  lossRequests = 0;
-
-  losses(): Observable<LossReport[]> {
-    this.calls += 1;
-    this.lossRequests += 1;
-    return of(LOSSES);
-  }
-
-  overdue(): Observable<InvoiceDueSummary[]> {
-    this.calls += 1;
-    return of(OVERDUE);
-  }
-
-  /* Counted separately: the due list must fetch these only when it is actually opened. */
-  dueSoonRequests = 0;
-
-  dueSoon(): Observable<InvoiceDueSummary[]> {
-    this.calls += 1;
-    this.dueSoonRequests += 1;
-    return of(DUE_SOON);
-  }
-}
-
-class ProductServiceStub {
-  lowStockRows: ProductResponse[] = [WIDGET];
-  /* Counts fetches, so opening the dialog can be shown to reuse the rows rather than reload them. */
-  lowStockCalls = 0;
-  /* Set to make the paged call fail, which is what puts the component into its error state. */
-  pagedFailure: Error | null = null;
-
-  getPagedProducts(): Observable<PaginatedProducts> {
-    return this.pagedFailure ? throwError(() => this.pagedFailure) : of(PAGE);
-  }
-
-  lowStock(): Observable<ProductResponse[]> {
-    this.lowStockCalls++;
-    return of(this.lowStockRows);
-  }
-}
-
-/* The established dialog stub, recording what was opened and with what data. */
-class MatDialogStub {
-  openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
-
-  open(component: unknown, config?: { data?: unknown }) {
-    this.openCalls.push({ component, config });
-    return { afterClosed: () => of(undefined) };
-  }
-}
-
-/* Counts calls, so a test can prove the dashboard itself no longer polls health. */
-class HealthServiceStub {
-  checks = 0;
-
-  check(): Observable<HealthProbe> {
-    this.checks++;
-    return of({ up: true, latencyMs: 12 });
-  }
-}
+import {
+  chartHeights,
+  configureDashboardTestBed,
+  HealthServiceStub,
+  host,
+  kpiValues,
+  MatDialogStub,
+  PROFIT,
+  ProductServiceStub,
+  ReportServiceStub,
+  showDueList,
+  textOf,
+  WIDGET
+} from './dashboard.fixtures';
 
 /*
  * The first screen after login: each KPI reads its own source, a failed load shows a dash rather than a
- * number, and refresh re-reads everything. Also the two cards' chart and table views, and the values
- * they render, which follow the reader's language and format overrides.
- * Out of scope: health, which the footer owns and this page deliberately does not poll
+ * number, and refresh re-reads everything - including the due rows, but only once they have been asked
+ * for.
+ * Out of scope: the two cards' own views and the figures inside them (due-card.component.spec.ts and
+ * profit-card.component.spec.ts), health, which the footer owns and this page deliberately does not poll
  * (footer.component.spec.ts), and the low-stock dialog (low-stock-dialog.component.spec.ts).
  */
 describe('DashboardComponent', () => {
@@ -242,84 +44,21 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
   }
 
-  function textOf(selector: string): string {
-    return (fixture.nativeElement as HTMLElement).querySelector(selector)?.textContent ?? '';
-  }
-
-  function host(): HTMLElement {
-    return fixture.nativeElement as HTMLElement;
-  }
-
-  /* The due card instance, which owns the view toggle the dashboard used to hold. */
-  function dueCard(): { setDueView: (view: string) => void; dueDateOption: () => FormatProbe } {
-    return fixture.debugElement.query(By.directive(DueCardComponent)).componentInstance;
-  }
-
-  /* The profit card instance, for the same reason. */
-  function profitCard(): { setProfitView: (view: string) => void; profitOption: () => FormatProbe } {
-    return fixture.debugElement.query(By.directive(ProfitCardComponent)).componentInstance;
-  }
-
-  /* Flips the due card to its list half, the way the toggle group does. */
-  function showDueList(): void {
-    dueCard().setDueView('table');
-    fixture.detectChanges();
-  }
-
-  /* Returns the due card to its chart half. */
-  function showDueChart(): void {
-    dueCard().setDueView('chart');
-    fixture.detectChanges();
-  }
-
-  /* Flips the profit card to its table half, the way the toggle group does. */
-  function showProfitTable(): void {
-    profitCard().setProfitView('table');
-    fixture.detectChanges();
-  }
-
   beforeEach(() => {
-    // Pinned for the same reason the customer-summary spec pins it: LanguageService resolves from
-    // storage first, so a currency assertion here would otherwise depend on spec file order.
-    localStorage.clear();
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
     vi.useFakeTimers();
-    TestBed.resetTestingModule();
-    reports = new ReportServiceStub();
-    products = new ProductServiceStub();
-    health = new HealthServiceStub();
-    dialog = new MatDialogStub();
-    // Pinned to desktop so every assertion below sees one fixed tier; jsdom applies no media
-    // queries, so the real observer would answer whatever matchMedia stubs out to.
-    breakpoints = new BreakpointObserverStub(true);
-
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        provideTestTranslations(TRANSLATIONS),
-        { provide: BreakpointObserver, useValue: breakpoints },
-        { provide: ReportService, useValue: reports },
-        { provide: ProductService, useValue: products },
-        { provide: HealthService, useValue: health },
-        { provide: MatDialog, useValue: dialog },
-        // The real ChartComponent renders, drawing through a fake engine. Swapping the component
-        // out with overrideComponent instead forces a runtime recompile whose template is no
-        // longer attributed to dashboard.component.html, which reported it at 0% coverage while
-        // these specs were rendering and asserting on it (#142).
-        provideFakeChartEngine()
-      ]
-    });
+    ({ reports, products, health, dialog, breakpoints } = configureDashboardTestBed());
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    localStorage.clear();
   });
 
   it('ngOnInit_pagedEnvelope_showsTotalElementsAsProductCount', () => {
     render();
 
     // The count is the envelope's totalElements, not the length of the one-row payload.
-    expect(textOf('.kpi-products .kpi-value')).toContain('42');
+    expect(textOf(fixture, '.kpi-products .kpi-value')).toContain('42');
   });
 
   it('kpi_profitRows_sumsGrossProfit', () => {
@@ -327,7 +66,7 @@ describe('DashboardComponent', () => {
 
     // summed over every row the profit report returned, not over the ten the chart plots
     // The full rendered amount, so the language pinned in beforeEach also pins the format.
-    expect(textOf('.kpi-gross-profit .kpi-value').trim()).toBe('€85.00');
+    expect(textOf(fixture, '.kpi-gross-profit .kpi-value').trim()).toBe('€85.00');
   });
 
   it('kpi_negativeProfitSum_rendersErrorColorClass', () => {
@@ -335,33 +74,33 @@ describe('DashboardComponent', () => {
     render();
 
     // the class, not the computed colour: jsdom resolves no tokens
-    expect(host().querySelector('.kpi-gross-profit .kpi-negative')).not.toBeNull();
+    expect(host(fixture).querySelector('.kpi-gross-profit .kpi-negative')).not.toBeNull();
   });
 
   it('kpi_positiveProfitSum_omitsErrorColorClass', () => {
     render();
 
     // the other direction, so the assertion above cannot pass on an always-present class
-    expect(host().querySelector('.kpi-gross-profit .kpi-value')).not.toBeNull();
-    expect(host().querySelector('.kpi-gross-profit .kpi-negative')).toBeNull();
+    expect(host(fixture).querySelector('.kpi-gross-profit .kpi-value')).not.toBeNull();
+    expect(host(fixture).querySelector('.kpi-gross-profit .kpi-negative')).toBeNull();
   });
 
   it('ngOnInit_overdueInvoices_showsRowCount', () => {
     render();
 
-    expect(textOf('.kpi-overdue .kpi-value').trim()).toBe('3');
+    expect(textOf(fixture, '.kpi-overdue .kpi-value').trim()).toBe('3');
   });
 
   it('ngOnInit_lowStockProducts_showsCountKpi', () => {
     render();
 
-    expect(textOf('.kpi-low-stock .kpi-value').trim()).toBe('1');
+    expect(textOf(fixture, '.kpi-low-stock .kpi-value').trim()).toBe('1');
   });
 
   it('kpiLowStock_clicked_opensDialogWithLoadedRows', () => {
     render();
 
-    host().querySelector<HTMLButtonElement>('.low-stock-open')?.click();
+    host(fixture).querySelector<HTMLButtonElement>('.low-stock-open')?.click();
 
     // the rows already on the component, not a second request: the count and the list behind it
     // are one answer
@@ -375,8 +114,8 @@ describe('DashboardComponent', () => {
     render();
 
     // the em dash means the rows never loaded, so there is nothing the card could open
-    expect(host().querySelector('.low-stock-open')).toBeNull();
-    expect(textOf('.kpi-low-stock .kpi-value').trim()).toBe('—');
+    expect(host(fixture).querySelector('.low-stock-open')).toBeNull();
+    expect(textOf(fixture, '.kpi-low-stock .kpi-value').trim()).toBe('—');
   });
 
   it('refresh_clicked_reinvokesEveryReportLoad', () => {
@@ -401,7 +140,7 @@ describe('DashboardComponent', () => {
     // The footer carries the same dot and latency on every screen; a second poll here would fetch
     // a signal the operator can already see.
     expect(health.checks).toBe(0);
-    expect(host().querySelector('.health-card')).toBeNull();
+    expect(host(fixture).querySelector('.health-card')).toBeNull();
   });
 
   it('kpiCards_loadFailed_renderEmDashInsteadOfNumbers', () => {
@@ -410,205 +149,25 @@ describe('DashboardComponent', () => {
 
     // scoped to the KPI values: a substring search over the whole page also hits icon ligatures
     // and the low-stock list, so it would pass or fail for reasons that are not this behaviour
-    expect(kpiValues()).toEqual(['—', '—', '—', '—']);
-    expect(kpiValues().join('')).not.toContain('42');
-    expect(kpiValues().join('')).not.toContain('85.00');
+    expect(kpiValues(fixture)).toEqual(['—', '—', '—', '—']);
+    expect(kpiValues(fixture).join('')).not.toContain('42');
+    expect(kpiValues(fixture).join('')).not.toContain('85.00');
   });
 
   it('kpiCards_loadedWithoutError_renderTheirNumbers', () => {
     render();
 
     // the other direction: the em dash appears only as a stand-in, never over real data
-    expect(kpiValues().join('')).not.toContain('—');
-    expect(kpiValues()[0]).toBe('42');
-    expect(kpiValues()[2]).toBe('3');
-  });
-
-  it('profitCard_tableView_rendersSameSlicesAsChart', () => {
-    reports.profitPayload = MANY_PROFIT;
-    render();
-    expect(host().querySelector('.slice-table')).toBeNull();
-
-    showProfitTable();
-
-    // ten products plus the aggregated remainder, the exact slices the chart plots
-    const rows = host().querySelectorAll('.slice-row');
-    expect(rows.length).toBe(11);
-    expect(host().querySelector('.slice-table')?.textContent).toContain('Other');
-  });
-
-  it('profitCard_languageSwitched_rebuildsTheRemainderLabel', async () => {
-    reports.profitPayload = MANY_PROFIT;
-    render();
-    showProfitTable();
-    expect(host().querySelector('.slice-table')?.textContent).toContain('Other');
-
-    TestBed.inject(LanguageService).setLanguage('de');
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    // The regression this slice fixes: the remainder bucket's name was resolved when the data
-    // landed and frozen into the slices, so a reader who switched language kept the English word
-    // until something refetched. Nothing refetches here - only the language changed.
-    expect(host().querySelector('.slice-table')?.textContent).toContain('Sonstige');
-    expect(host().querySelector('.slice-table')?.textContent).not.toContain('Other');
-  });
-
-  /*
-   * The figures inside the two cards' charts, asserted by invoking the callbacks the options hand
-   * ECharts. The fake engine paints nothing, and a formatter is a function rather than a rendered
-   * string, so calling it is the only reading available - and the honest one, since it is exactly
-   * what echarts does with it.
-   */
-  describe('chart values', () => {
-    // Both preferences persist to storage, and the specs in a Vitest worker share their origin.
-    afterEach(() => localStorage.clear());
-
-    const SPACES = new Set([0x20, 0xa0, 0x202f]);
-
-    function plain(value: string): string {
-      return [...value].map((ch) => (SPACES.has(ch.codePointAt(0) ?? 0) ? ' ' : ch)).join('');
-    }
-
-    function setFormats(lang: 'en' | 'de', numbers: 'auto' | 'en' | 'de'): void {
-      TestBed.inject(LanguageService).setLanguage(lang);
-      TestBed.inject(FormatService).setNumberFormat(numbers);
-      fixture.detectChanges();
-    }
-
-    function optionOf(name: string): FormatProbe {
-      return name === 'profitOption' ? profitCard().profitOption() : dueCard().dueDateOption();
-    }
-
-    it('dueCard_germanInterfaceOnAuto_readsMoneyAndDatesTheGermanWay', () => {
-      render();
-
-      setFormats('de', 'auto');
-
-      expect(plain(optionOf('dueDateOption').tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('1.234,56 €');
-      expect(optionOf('dueDateOption').xAxis?.axisLabel?.formatter?.('2026-03-01')).toBe('01.03.2026');
-      expect(plain(optionOf('profitOption').tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('1.234,56 €');
-
-      // The value axis on each card. The profit bars lie on their side, so theirs is x.
-      expect(plain(optionOf('profitOption').xAxis?.axisLabel?.formatter?.(1234.56) ?? '')).toBe('1.234,56 €');
-      expect(plain(optionOf('dueDateOption').yAxis?.axisLabel?.formatter?.(1234.56) ?? '')).toBe('1.234,56 €');
-    });
-
-    it('dueCard_englishInterfaceOnAuto_readsMoneyAndDatesTheEnglishWay', () => {
-      render();
-
-      setFormats('en', 'auto');
-
-      expect(plain(optionOf('dueDateOption').tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('€1,234.56');
-      expect(optionOf('dueDateOption').xAxis?.axisLabel?.formatter?.('2026-03-01')).toBe('03/01/2026');
-    });
-
-    it('dueCard_germanInterfaceWithEnglishNumbers_followsTheOverride', () => {
-      render();
-
-      setFormats('de', 'en');
-
-      // The interface stays German; every figure in it is English, because the reader said so.
-      expect(plain(optionOf('dueDateOption').tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('€1,234.56');
-    });
-
-    it('dueCard_axisData_staysTheRawIsoKeys', () => {
-      render();
-
-      // The series are indexed by these keys and sorted on them; only the labels are formatted.
-      expect(optionOf('dueDateOption').xAxis?.data).toEqual(['2026-03-01']);
-    });
-
-    it('dueCard_numberFormatSwitchedMidSpec_rebuildsInTheOtherLocale', () => {
-      render();
-      setFormats('de', 'auto');
-      const before = optionOf('dueDateOption');
-      expect(plain(before.tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('1.234,56 €');
-
-      TestBed.inject(FormatService).setNumberFormat('en');
-      fixture.detectChanges();
-
-      // Nothing refetched; only the preference changed. The identity is the load-bearing half:
-      // a formatter closes over the SERVICE, so the old option's callback would already answer in
-      // English if anything called it - and nothing does, because echarts is only handed an option
-      // when this derivation re-runs. See the reports page's own spec for the measurement.
-      const after = optionOf('dueDateOption');
-      expect(after).not.toBe(before);
-      expect(plain(after.tooltip?.valueFormatter?.(1234.56) ?? '')).toBe('€1,234.56');
-    });
-  });
-
-  it('profitCard_dataRefreshed_stillRebuildsTheSlices', () => {
-    render();
-    showProfitTable();
-    expect(host().querySelector('.slice-table')?.textContent).toContain('Widget');
-
-    // The behaviour the imperative version had, pinned: making the options derived must not cost
-    // the rebuild that a refresh already triggered.
-    reports.profitPayload = [
-      { productId: 9, name: 'Sprocket', sku: 'SKU-9', deleted: false, revenue: 10, cost: 4, grossProfit: 6 }
-    ];
-    host().querySelector<HTMLButtonElement>('.dashboard-refresh')?.click();
-    fixture.detectChanges();
-
-    expect(host().querySelector('.slice-table')?.textContent).toContain('Sprocket');
-    expect(host().querySelector('.slice-table')?.textContent).not.toContain('Widget');
-  });
-
-  it('profitCard_tableView_replacesTheChart', () => {
-    render();
-
-    showProfitTable();
-
-    // the two halves never share the card's height, as on the reports page
-    expect(host().querySelector('.chart-profit app-chart')).toBeNull();
-  });
-
-  it('dueCard_chartDefault_doesNotFetchDueSoon', () => {
-    render();
-
-    // the card opens on the chart, and its buckets are a different request entirely
-    expect(reports.dueSoonRequests).toBe(0);
-    expect(host().querySelector('.due-soon-row')).toBeNull();
-  });
-
-  it('dueCard_firstListActivation_fetchesOnceAndRendersLinkedRows', () => {
-    render();
-
-    showDueList();
-
-    expect(reports.dueSoonRequests).toBe(1);
-    // nine rows come back, eight are shown; the rest live behind the reports link
-    const rows = host().querySelectorAll('.due-soon-row');
-    expect(rows.length).toBe(8);
-    expect(rows[0].querySelector('a')?.getAttribute('href')).toBe('/app/invoices/1');
-  });
-
-  it('dueCard_listView_linksOnToTheReportsPage', () => {
-    render();
-
-    showDueList();
-
-    expect(host().querySelector('.due-view-all')?.getAttribute('href')).toBe('/app/reports');
-  });
-
-  it('dueCard_switchBackAndForth_doesNotRefetch', () => {
-    render();
-    showDueList();
-
-    showDueChart();
-    showDueList();
-
-    // toggling is not a reason to re-query; the refresh button is what re-reads them
-    expect(reports.dueSoonRequests).toBe(1);
+    expect(kpiValues(fixture).join('')).not.toContain('—');
+    expect(kpiValues(fixture)[0]).toBe('42');
+    expect(kpiValues(fixture)[2]).toBe('3');
   });
 
   it('refresh_afterListOpened_reReadsTheDueRows', () => {
     render();
-    showDueList();
+    showDueList(fixture);
 
-    host().querySelector<HTMLButtonElement>('.dashboard-refresh')?.click();
+    host(fixture).querySelector<HTMLButtonElement>('.dashboard-refresh')?.click();
     fixture.detectChanges();
 
     // what is on screen must not survive a refresh unchanged
@@ -618,7 +177,7 @@ describe('DashboardComponent', () => {
   it('refresh_listNeverOpened_stillSkipsDueSoon', () => {
     render();
 
-    host().querySelector<HTMLButtonElement>('.dashboard-refresh')?.click();
+    host(fixture).querySelector<HTMLButtonElement>('.dashboard-refresh')?.click();
     fixture.detectChanges();
 
     // the other direction: refresh must not quietly undo the laziness
@@ -637,31 +196,6 @@ describe('DashboardComponent', () => {
     render();
 
     // Below desktop the rows stack, so the charts trade viewport fit for readability.
-    expect(chartHeights()).toEqual(['20rem', '20rem']);
+    expect(chartHeights(fixture)).toEqual(['20rem', '20rem']);
   });
-
-  /* The height each rendered chart was handed, in template order. */
-  function chartHeights(): string[] {
-    return fixture.debugElement
-      .queryAll(By.directive(ChartComponent))
-      .map((chart) => (chart.componentInstance as ChartComponent).height());
-  }
-
-  /* The four KPI values in template order: products, low stock, overdue, loss value. */
-  function kpiValues(): string[] {
-    return Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll('.kpi-card .kpi-value')
-    ).map((element) => (element.textContent ?? '').trim());
-  }
 });
-
-/*
- * The formatting callbacks an option carries. Typed loosely on purpose: it mirrors the parts of
- * echarts' own option shape these specs invoke, and importing its types would tie the spec to a
- * structure only ChartComponent is supposed to know.
- */
-interface FormatProbe {
-  tooltip?: { valueFormatter?: (value: unknown) => string };
-  xAxis?: { data?: string[]; axisLabel?: { formatter?: (value: string | number) => string } };
-  yAxis?: { axisLabel?: { formatter?: (value: number) => string } };
-}
