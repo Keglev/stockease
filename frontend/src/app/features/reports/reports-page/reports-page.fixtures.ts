@@ -492,8 +492,9 @@ export function productRow(id: number): SupplierProduct {
  */
 export function configureReportsPageTestBed(dialog: unknown, download: unknown): ReportsPageStubs {
   // Each file owns its start state: the clear in global-test-setup.ts does not reliably run under
-  // coverage in a shared worker, as documented there. FormatService and LanguageService read storage
-  // at construction, so residue from an earlier file changes what currency and dates render.
+  // coverage in a shared worker, as documented there. FormatService reads storage at construction and
+  // LanguageService reads it when initialize() runs, so residue from an earlier file changes what
+  // currency and dates render.
   localStorage.clear();
   TestBed.resetTestingModule();
   const stubs: ReportsPageStubs = {

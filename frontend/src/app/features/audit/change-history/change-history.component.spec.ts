@@ -126,8 +126,15 @@ describe('ChangeHistoryComponent', () => {
   }
 
   beforeEach(() => {
+    // setUp() initializes a real LanguageService, which resolves the locale from storage before
+    // anything else, so an earlier file's residue would pick the language these rows render in.
+    localStorage.clear();
     TestBed.resetTestingModule();
     audit = new AuditServiceStub();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   it('init_productRoute_queriesProductChangesForThatId', async () => {

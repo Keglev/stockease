@@ -68,6 +68,9 @@ describe('FooterComponent', () => {
   }
 
   beforeEach(() => {
+    // render() initializes a real LanguageService, which resolves the locale from storage before
+    // anything else, so an earlier file's residue would pick the language this footer renders in.
+    localStorage.clear();
     vi.useFakeTimers();
     TestBed.resetTestingModule();
     health = new HealthServiceStub();
@@ -75,6 +78,7 @@ describe('FooterComponent', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    localStorage.clear();
   });
 
   it('render_anyState_showsProductNameAndTagline', async () => {
