@@ -67,8 +67,9 @@ jobs:
       - name: Unit tests with coverage
         # Vitest via the Angular builder; --watch=false is the non-interactive mode.
         # Coverage runs in the same pass rather than a second one: the text reporters print the
-        # per-directory table and the totals straight into this log. No thresholds are configured,
-        # so coverage reports numbers and never fails the build - gating is a later decision.
+        # per-directory table and the totals straight into this log. The thresholds in angular.json
+        # gate this step: they are regression floors set below what the suite achieves, so they
+        # fail the build only when coverage has genuinely fallen away, not on an honest refactor.
         run: npm run test:coverage
 
       - name: Upload coverage report
