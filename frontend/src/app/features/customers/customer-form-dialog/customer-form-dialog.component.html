@@ -1,3 +1,6 @@
+<!-- One dialog for both creating and editing a customer. Only the name is required here, and the
+     address deliberately is not: this is the supplier dialog's layout with the customer register's
+     own contract, so aligning the two would change what the backend accepts, not just the markup. -->
 <h2 mat-dialog-title>
   {{ (isEdit ? 'customers.form.editTitle' : 'customers.form.createTitle') | translate }}
 </h2>

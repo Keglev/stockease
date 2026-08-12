@@ -1,3 +1,7 @@
+<!-- The changes tab's body: two narrowings and an export above the audit table. No matSort is bound
+     anywhere below, and that is the decision rather than an omission - the endpoint returns events
+     newest first, which is the only order a log is read in, so a sortable column would offer to
+     rearrange a sequence whose order is its meaning. -->
 <mat-card class="table-card">
   <mat-card-content>
     @if (hasRows()) {

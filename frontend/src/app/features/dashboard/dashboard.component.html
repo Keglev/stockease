@@ -1,3 +1,7 @@
+<!-- Four headline figures, then the two report visualizations. No chart markup lives here: both
+     visualizations are card components that take finished derivations, so this file is the KPI row
+     and the layout around it and nothing else. The low-stock figure is a button rather than a
+     figure because its detail opens in a dialog instead of a section of its own. -->
 <div class="dashboard-toolbar">
   <h1>{{ 'dashboard.title' | translate }}</h1>
   <button matButton="outlined" type="button" class="dashboard-refresh" (click)="refresh()">

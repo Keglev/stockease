@@ -1,3 +1,6 @@
+<!-- Creating a product: name, SKU and purchase price, and nothing else. There is no quantity field
+     because creating a product books no stock - a new product starts at zero and moves only through
+     recorded stock events, so a quantity accepted here would be a number with nowhere to go. -->
 <h2 mat-dialog-title>{{ 'products.form.createTitle' | translate }}</h2>
 
 <form [formGroup]="form" (ngSubmit)="submit()">

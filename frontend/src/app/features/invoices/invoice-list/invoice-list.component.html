@@ -1,3 +1,7 @@
+<!-- The invoice ledger, newest first as the server returns it. Paid and overdue are chips computed
+     per row, not stored fields: paid is the presence of a timestamp, and overdue is decided by the
+     component comparing date strings rather than by anything on the payload, so no column here can
+     be sorted or filtered on either state. -->
 <div class="invoice-toolbar">
   <h1>{{ 'invoices.title' | translate }}</h1>
   <div class="toolbar-actions">

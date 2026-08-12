@@ -1,3 +1,8 @@
+<!-- The frame every authenticated page renders inside: toolbar, navigation drawer, routed outlet and
+     footer. The drawer's links are written out one by one rather than looped over a route array,
+     because they do not share their active-matching - the dashboard needs an exact match where the
+     rest match by prefix - and each carries the same click handler, which exists to close the drawer
+     on the tiers where it overlays the content instead of sitting beside it. -->
 <mat-toolbar color="primary">
   @if (!isDesktop()) {
     <button
