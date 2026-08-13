@@ -1,7 +1,7 @@
-# StockEase - Size, Style, and Comment Standards (rev 13, 2026-08-13)
+# StockEase - Size, Style, and Comment Standards (rev 14, 2026-08-13)
 
-Supersedes rev 12 (2026-08-13). Changes: a waiver granted for
-`report.service.spec.ts`'s residual length after its scaffolding was extracted.
+Supersedes rev 13 (2026-08-13). Changes: the `build-i18n.mjs` reference figure
+corrected 83 -> 84, under the ruling that a shebang line counts as code.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -85,10 +85,13 @@ its wording excludes one by construction, requiring a script that runs "not by
 CI" and a header stating "why it is not a gate". The two coexist, and a script
 belongs to whichever describes how it is invoked.
 
-REFERENCE INSTANCE: `frontend/tools/build-i18n.mjs` - 83 code lines, WITHIN the
+REFERENCE INSTANCE: `frontend/tools/build-i18n.mjs` - 84 code lines, WITHIN the
 band. It assembles the shipped translation bundles from their authored sources
 and, under `--check`, re-assembles and refuses any difference. Note the
 directory: living under `tools/` does not put a script under the `tools/` row.
+A shebang line COUNTS AS CODE - it is functional rather than explanatory, since
+removing it breaks direct execution (owner-ruled 2026-08-13; this figure read 83
+while that line was excluded).
 
 *[rev 5]* WORKFLOW HEADERS: every workflow file opens with a 2-5 line plain `#`
 prose header stating WHY - what the workflow does that its `name:` key does not
