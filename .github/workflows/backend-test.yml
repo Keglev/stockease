@@ -20,7 +20,6 @@ on:
       - '.github/workflows/docs-pipeline.yml'
       - 'lychee.toml'
       - 'redocly.yaml'
-      - '.github/standards/**'
   pull_request:
     branches: [main]
     # A path may be ignored here ONLY if another workflow gives that PR a
@@ -28,17 +27,15 @@ on:
     # every workflow leaves its PRs with no such check and permanently
     # blocked from merging, so this list is not a matter of taste.
     #
-    # Three workflows earn entries. frontend/** is covered by
+    # Two workflows earn entries. frontend/** is covered by
     # frontend-test.yml. The five docs paths are covered by
     # docs-pr-check.yml, which builds the site and checks its links; they
     # are exactly that workflow's trigger paths and must stay in step with
     # them - redocly.yaml is among them because it configures the lint that
-    # build runs. .github/standards/** is covered by standards-check.yml,
-    # which builds nothing and exists only to carry the required name for a
-    # change that has no build to gate. Everything else falls through to
-    # this job - including README.md and .gitignore, which deliberately
-    # stay here rather than joining the docs list: they are outside docs/,
-    # so the docs build never reads them and would gate them on nothing.
+    # build runs. Everything else falls through to this job - including
+    # README.md and .gitignore, which deliberately stay here rather than
+    # joining the docs list: they are outside docs/, so the docs build
+    # never reads them and would gate them on nothing.
     #
     # docs-pr-check.yml's own file is deliberately absent below, so editing
     # the docs gate runs the backend suite as well as the docs one.
@@ -49,7 +46,6 @@ on:
       - '.github/workflows/docs-pipeline.yml'
       - 'lychee.toml'
       - 'redocly.yaml'
-      - '.github/standards/**'
   workflow_dispatch:
 
 concurrency:

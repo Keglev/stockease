@@ -139,7 +139,7 @@ The commit history and the pull request record are the evidence. Both are public
 
 ## CI/CD
 
-Every pull request runs a required check under one shared job name, so whichever tier a change touches reports under the name branch protection demands. Backend changes run the full suite against real PostgreSQL; frontend changes run lint, an i18n drift check, a production build, and the suite with coverage; documentation changes build the site and run a link checker; a change confined to the internal standards gets a no-op check that carries the required name, because there is no build to gate it on.
+Every pull request runs a required check under one shared job name, so whichever tier a change touches reports under the name branch protection demands. Backend changes run the full suite against real PostgreSQL; frontend changes run lint, an i18n drift check, a production build, and the suite with coverage; documentation changes build the site and run a link checker.
 
 On merge to `main`, the test workflows hand off. The backend deploy triggers a Koyeb redeploy and polls until the service reports healthy. The frontend deploy builds the bundle on the runner and publishes it prebuilt, so what ships is exactly the artifact that passed the gate. The documentation pipeline rebuilds the site and publishes it with whichever coverage reports that run produced.
 
