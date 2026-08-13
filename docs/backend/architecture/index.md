@@ -26,3 +26,5 @@ from invoice lifecycle events, a change audit trail and read-only reporting.
 A solo developer building for technical reviewers: recruiters and engineers
 assessing code quality, architecture reasoning and documentation practice for
 the German market.
+
+[Back to Documentation Home](/stockease/)

@@ -28,3 +28,5 @@ lesende Berichte.
 Ein Solo-Entwickler, der fuer technische Gutachter baut: Recruiter und
 Ingenieure, die Codequalitaet, Architekturbegruendung und
 Dokumentationspraxis fuer den deutschen Markt bewerten.
+
+[Zurueck zur Dokumentations-Startseite](/stockease/)

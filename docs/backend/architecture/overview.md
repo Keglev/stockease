@@ -45,3 +45,5 @@ auditing and reporting in a single Spring Boot deployable.
 - [Full arc42 documentation](index.md) (English) - [Deutsche Fassung](index-de.md)
 - [Domain modules](05-domains/index.md)
 - [Architecture decisions](../../decisions/index.md)
+
+[Back to Documentation Home](/stockease/)
