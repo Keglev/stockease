@@ -2,7 +2,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { environment } from '../../../environments/environment';
 import {
   CashFlowReport,
   CashFlowTimelineBucket,
@@ -15,79 +14,20 @@ import {
   SupplierProduct,
   SupplierProfitReport
 } from '../../core/api/api-models';
+import {
+  BASE_URL,
+  BUCKETS,
+  CASH_FLOW,
+  DUE_SOON,
+  LOSSES,
+  OVERDUE,
+  PROFIT,
+  STOCK,
+  SUMMARY,
+  SUPPLIERS,
+  TIMELINE
+} from './report-service.fixtures';
 import { ReportService } from './report.service';
-
-const BASE_URL = `${environment.apiBaseUrl}/api/reports`;
-
-const PROFIT: ProductProfitReport[] = [
-  { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, revenue: 100, cost: 40, grossProfit: 60 }
-];
-
-const BUCKETS: DueDateBucket[] = [
-  { dueDate: '2026-03-01', invoiceType: 'SALE', invoiceCount: 2, totalValue: 60 }
-];
-
-const LOSSES: LossReport[] = [
-  { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, lostUnits: 2, destroyedUnits: 1, lossValue: 15 }
-];
-
-const OVERDUE: InvoiceDueSummary[] = [
-  {
-    invoiceId: 1,
-    invoiceNumber: 'RE-2026-0001',
-    invoiceType: 'SALE',
-    counterparty: 'Jane Doe',
-    dueDate: '2026-03-01',
-    outstandingValue: 30,
-    daysOverdue: 5
-  }
-];
-
-const SUMMARY: CustomerSummary = {
-  customerId: 9,
-  name: 'Jane Doe',
-  deleted: false,
-  saleInvoiceCount: 3,
-  boughtUnits: 12,
-  boughtValue: 240,
-  returnedUnits: 2,
-  returnedValue: 40
-};
-
-const SUPPLIERS: SupplierProfitReport[] = [
-  { supplierId: 7, name: 'Acme', revenue: 100, cost: 40, grossProfit: 60 }
-];
-
-const DUE_SOON: InvoiceDueSummary[] = [
-  {
-    invoiceId: 9,
-    invoiceNumber: 'RE-2026-0009',
-    invoiceType: 'PURCHASE',
-    counterparty: 'Acme',
-    dueDate: '2026-03-05',
-    outstandingValue: 40,
-    // Null by design on this endpoint: only the overdue query computes the day count.
-    daysOverdue: null
-  }
-];
-
-const CASH_FLOW: CashFlowReport = {
-  inflow: 80,
-  outflow: 30,
-  net: 50,
-  products: [
-    { productId: 3, name: 'Widget', sku: 'SKU-3', deleted: false, inflow: 80, outflow: 30, net: 50 }
-  ]
-};
-
-const TIMELINE: CashFlowTimelineBucket[] = [
-  { month: '2026-02', inflow: 0, outflow: 45, net: -45 },
-  { month: '2026-03', inflow: 80, outflow: 30, net: 50 }
-];
-
-const STOCK: StockStatusReport[] = [
-  { productId: 3, name: 'Widget', sku: 'SKU-3', soldUnits: 4, soldRevenue: 60, inStockUnits: 6, inStockValue: 30 }
-];
 
 /*
  * Every reporting read: which URL each one requests, that the bare list responses are emitted unchanged
@@ -95,6 +35,12 @@ const STOCK: StockStatusReport[] = [
  * when given.
  * Out of scope: how any of it is displayed - reports-page.component.spec.ts and
  * dashboard.component.spec.ts.
+ *
+ * NOT SPLIT, deliberately: every case here is the same shape read against a different endpoint, and the
+ * file changes for exactly one reason - the service's endpoint surface moved. The only split available
+ * would divide by endpoint family, which is the parallel-operation symmetry the standard names as not an
+ * extraction target. The scaffolding left instead, to report-service.fixtures.ts, and the length that
+ * remains is waived in the register rather than carried as an open finding.
  */
 describe('ReportService', () => {
   let service: ReportService;

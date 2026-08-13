@@ -1,8 +1,7 @@
-# StockEase - Size, Style, and Comment Standards (rev 12, 2026-08-13)
+# StockEase - Size, Style, and Comment Standards (rev 13, 2026-08-13)
 
-Supersedes rev 11 (2026-08-12). Changes: a second sanctioned purpose for a
-fixtures module - relieving an above-alarm spec of its scaffolding at a single
-consumer, where the split criteria say the cases themselves must stay together.
+Supersedes rev 12 (2026-08-13). Changes: a waiver granted for
+`report.service.spec.ts`'s residual length after its scaffolding was extracted.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -361,6 +360,12 @@ change.
   better home; trimming it would delete the content the header rule exists to
   preserve. No in-file comment: workflow headers do not carry waiver
   annotations, so this register entry is the record.
+- `frontend/src/app/features/reports/report.service.spec.ts` - 243 code lines vs
+  service-spec alarm >200 (#253, 2026-08-13, owner-ruled). One case per
+  endpoint read in one file is the spec working; a split would divide by endpoint
+  family, which the standard names as not an extraction target. The scaffolding
+  was extracted first (`report-service.fixtures.ts`, 291 -> 243); this waives what
+  the cases themselves weigh. In-file comment present.
 
 **RESOLVED WITHOUT WAIVER:**
 
