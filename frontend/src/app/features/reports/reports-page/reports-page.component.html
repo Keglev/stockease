@@ -111,21 +111,21 @@
     <div class="tab-body">
       <!-- Placed and styled as the other period toggles. Write-offs count on the date they were
            booked, so this reads movement dates like the profit tab rather than payment dates. -->
-      <app-period-toggle [value]="lossPeriod()" (selected)="setLossPeriod($event)" />
+      <app-period-toggle [value]="losses.period()" (selected)="losses.setPeriod($event)" />
 
       <app-losses-card
         [view]="viewOf(3)"
-        [option]="lossOption()"
-        [totals]="lossTotals()"
-        [filter]="lossFilter()"
-        [rows]="filteredLossRows()"
-        [hasRows]="lossRows().length > 0"
-        [columns]="lossColumns"
-        [remarkRows]="lossRemarkRows()"
+        [option]="losses.option()"
+        [totals]="losses.totals()"
+        [filter]="losses.filter()"
+        [rows]="losses.filteredRows()"
+        [hasRows]="losses.rows().length > 0"
+        [columns]="losses.columns"
+        [remarkRows]="losses.remarkRows()"
         (viewChange)="setView(3, $event)"
-        (filterChange)="setLossFilter($event)"
-        (sortChange)="sortLosses($event)"
-        (exportRequested)="exportLosses()"
+        (filterChange)="losses.setFilter($event)"
+        (sortChange)="losses.sortBy($event)"
+        (exportRequested)="losses.export()"
       />
     </div>
   </mat-tab>
@@ -142,9 +142,9 @@
 
       <app-due-dates-card
         [view]="viewOf(4)"
-        [option]="dueOption()"
-        [dueSoonRows]="dueSoonRows()"
-        [overdueRows]="overdueRows()"
+        [option]="due.option()"
+        [dueSoonRows]="due.dueSoonRows()"
+        [overdueRows]="due.overdueRows()"
       />
     </div>
   </mat-tab>
@@ -154,18 +154,18 @@
       <!-- No Chart|Table toggle here, and deliberately: a log is a sequence of individual events,
            and every aggregation that would make a chart of it - changes per day, per field, per
            person - answers a question nobody brought to an audit trail. The table is the report. -->
-      <app-period-toggle [value]="changePeriod()" (selected)="setChangePeriod($event)" />
+      <app-period-toggle [value]="changes.period()" (selected)="changes.setPeriod($event)" />
 
       <app-changes-card
-        [filter]="changeFilter()"
-        [user]="changeUser()"
-        [usernames]="changeUsernames()"
-        [rows]="filteredChangeRows()"
-        [hasRows]="changeRows().length > 0"
-        [columns]="changeColumns"
-        (filterChange)="setChangeFilter($event)"
-        (userChange)="setChangeUser($event)"
-        (exportRequested)="exportChanges()"
+        [filter]="changes.filter()"
+        [user]="changes.user()"
+        [usernames]="changes.usernames()"
+        [rows]="changes.filteredRows()"
+        [hasRows]="changes.rows().length > 0"
+        [columns]="changes.columns"
+        (filterChange)="changes.setFilter($event)"
+        (userChange)="changes.setUser($event)"
+        (exportRequested)="changes.export()"
       />
     </div>
   </mat-tab>

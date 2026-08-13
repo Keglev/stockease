@@ -10,6 +10,8 @@ import {
   productRow
 } from './reports-page.fixtures';
 import { ProfitTabState } from './profit-tab-state';
+import { DueTabState } from './due-tab-state';
+import { LossTabState } from './loss-tab-state';
 import { ReportsPageComponent } from './reports-page.component';
 import { StockTabState } from './stock-tab-state';
 
@@ -189,7 +191,9 @@ describe('ReportsPageComponent', () => {
       const owners: Record<string, () => FormatProbe> = {
         marginOption: () => fixture.debugElement.injector.get(ProfitTabState).marginOption() as FormatProbe,
         profitOption: () => fixture.debugElement.injector.get(ProfitTabState).option() as FormatProbe,
-        stockOption: () => fixture.debugElement.injector.get(StockTabState).option() as FormatProbe
+        stockOption: () => fixture.debugElement.injector.get(StockTabState).option() as FormatProbe,
+        lossOption: () => fixture.debugElement.injector.get(LossTabState).option() as FormatProbe,
+        dueOption: () => fixture.debugElement.injector.get(DueTabState).option() as FormatProbe
       };
       if (owners[name]) {
         return owners[name]();
@@ -466,7 +470,7 @@ describe('ReportsPageComponent', () => {
     expectFailureBanner('lossesByRemark is unavailable.');
     expect(host().querySelector('.loss-remark-table')).toBeNull();
     expect(host().querySelector('.losses-remark-empty')).not.toBeNull();
-    expect((fixture.componentInstance as unknown as { lossRows: () => unknown[] }).lossRows())
+    expect(fixture.debugElement.injector.get(LossTabState).rows())
       .toHaveLength(2);
   });
 

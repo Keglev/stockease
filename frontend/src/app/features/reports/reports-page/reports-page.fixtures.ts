@@ -29,6 +29,9 @@ import { AuditService } from '../../audit/audit.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { ReportService } from '../report.service';
 import { ProfitTabState } from './profit-tab-state';
+import { ChangeTabState } from './change-tab-state';
+import { DueTabState } from './due-tab-state';
+import { LossTabState } from './loss-tab-state';
 import { ReportsPageComponent } from './reports-page.component';
 import { StockTabState } from './stock-tab-state';
 
@@ -593,7 +596,9 @@ export function createReportsPageHelpers(
     const owners: Record<string, () => SeriesProbe | null> = {
       marginOption: () => getFixture().debugElement.injector.get(ProfitTabState).marginOption() as SeriesProbe | null,
       profitOption: () => getFixture().debugElement.injector.get(ProfitTabState).option() as SeriesProbe | null,
-      stockOption: () => getFixture().debugElement.injector.get(StockTabState).option() as SeriesProbe | null
+      stockOption: () => getFixture().debugElement.injector.get(StockTabState).option() as SeriesProbe | null,
+      lossOption: () => getFixture().debugElement.injector.get(LossTabState).option() as SeriesProbe | null,
+      dueOption: () => getFixture().debugElement.injector.get(DueTabState).option() as SeriesProbe | null
     };
     if (owners[name]) {
       return owners[name]();
@@ -635,7 +640,10 @@ export function createReportsPageHelpers(
    */
   async function setFilter(method: string, value: string): Promise<void> {
     const owners: Record<string, (value: string) => void> = {
-      setStockFilter: (next) => getFixture().debugElement.injector.get(StockTabState).setFilter(next)
+      setStockFilter: (next) => getFixture().debugElement.injector.get(StockTabState).setFilter(next),
+      setLossFilter: (next) => getFixture().debugElement.injector.get(LossTabState).setFilter(next),
+      setChangeFilter: (next) => getFixture().debugElement.injector.get(ChangeTabState).setFilter(next),
+      setChangeUser: (next) => getFixture().debugElement.injector.get(ChangeTabState).setUser(next)
     };
     if (owners[method]) {
       owners[method](value);

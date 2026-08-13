@@ -134,9 +134,14 @@ exposes, and they see the move, because the member they name has a new owner.
 
 So the helpers route by name: a name belonging to a converted tab resolves through that
 tab's collaborator, and every other name falls through to the component as before. The
-routing map grows as this sequence proceeds and disappears when it completes. What the
-cases pass never changes, which is what keeps each of them byte-identical while the
-access path follows the member. Where a template binding moves from `profitRows()` to
+routing map grows as this sequence proceeds and disappears when it completes.
+
+What every case ASSERTS never changes - that is the invariant this sequence maintains,
+and it is the one worth stating, because it is what the suite is for. Nearly every case
+body is untouched as well, since the names it passes are unchanged and the reaching is
+done by the shared helpers. The exception is the case that names a member in its own
+body rather than through a helper; there the access expression follows the member and
+nothing else on the line moves. Where a template binding moves from `profitRows()` to
 `profit.rows()`, the spelling changes and the behaviour does not; the same is true of
 the path a spec takes to reach it.
 
