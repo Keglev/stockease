@@ -62,6 +62,13 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
+		<!-- Generates the property metadata IDEs read for the @ConfigurationProperties records;
+		     compile-time only, and optional keeps it out of the runtime artifact. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
 		 <!-- PostgreSQL Driver -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
