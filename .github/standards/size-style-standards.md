@@ -1,10 +1,8 @@
-# StockEase - Size, Style, and Comment Standards (rev 11, 2026-08-12)
+# StockEase - Size, Style, and Comment Standards (rev 12, 2026-08-13)
 
-Supersedes rev 10 (2026-08-12). Changes: a spec storage-isolation rule for
-frontend specs - the three accepted mechanisms and the entry-clear/exit-clear
-asymmetry; and a note that the rev-10 template-header exemplar swap (#241,
-reports-page.component.html and settings.component.html) landed without its own
-rev bump.
+Supersedes rev 11 (2026-08-12). Changes: a second sanctioned purpose for a
+fixtures module - relieving an above-alarm spec of its scaffolding at a single
+consumer, where the split criteria say the cases themselves must stay together.
 
 Internal working standard for refactor missions; it is not published to the
 docs site. Temporary - this file is deleted when the refactoring phases close.
@@ -160,6 +158,17 @@ length carries no signal about cohesion. Membership is governed by the 2+ rule
 already stated for backend fixtures - a helper earns its place when 2+ spec files
 consume it, and a helper consumed by another fixtures member counts as a call
 site. Growth is the module working, not a split trigger.
+
+*[rev 12]* A fixtures module has a SECOND sanctioned purpose, and the 2+ rule does not
+govern it. Where a spec is above its alarm but the split criteria say its cases must
+stay together - each only meaning anything against the state the others build - the
+scaffolding may be extracted to a fixtures module with a SINGLE consumer. What may move
+is what is not a test: stubs, constant payloads, translation dictionaries, shared TestBed
+configuration. What may not move is any `it()`, any assertion, or any helper that decides
+what a case asserts. The spec's own comment records why it was not split, so a later
+reader does not read the single-consumer module as an abandoned share. Extraction that
+leaves the spec still above alarm has not discharged the finding; it is reported, not
+quietly banked.
 
 *[rev 8]* SHELL AND CARD DIVISION OF LABOUR: on a page split into a shell plus
 presentational cards, the SHELL owns data fetching, the error banner, every
