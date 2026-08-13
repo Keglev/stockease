@@ -92,4 +92,14 @@ Alternatives considered and rejected:
 
 ---
 
+*Amendment (2026-08-13): the test tier no longer runs on H2. Tests execute against
+a real PostgreSQL container - `PostgreSQLContainer("postgres:16-alpine")` in
+`AbstractIntegrationTest`, wired by `@ServiceConnection` and reused for the suite -
+so the same dialect, the same DDL and the same Flyway migrations run in tests as in
+production, and `h2` is no longer a dependency of `backend/pom.xml`. The seven H2
+references above describe the decision context as it stood and remain as written;
+the constraint they record - migrations written to be database-agnostic - no longer
+binds, because there is only one database now. The decision to use Flyway, and the
+reason `V3__seed_data.java` is a Java migration, are unchanged.*
+
 [Back to Decisions Index](./index.md)

@@ -141,3 +141,5 @@ the operator make it explicitly, while the live-stock invariant holds absolutely
 Supplier restore symmetry - a recycle bin for suppliers and customers, matching
 the one products already have - is a natural extension and is deliberately left
 for later; nothing here depends on it.
+
+[Back to Decisions Index](index.md)

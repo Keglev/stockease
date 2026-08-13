@@ -63,3 +63,5 @@ glossary are system-level and are documented once, in the backend tree.
 - [Cross-cutting Concepts](08-concepts.md)
 - [Quality Requirements](10-quality-requirements.md)
 - [Architecture decisions](../../decisions/index.md)
+
+[Back to Documentation Home](/stockease/)

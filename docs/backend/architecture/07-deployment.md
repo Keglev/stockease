@@ -45,7 +45,7 @@ gh-pages branch is disposable build output - the site is a pure function of
 ## Health checks
 
 Koyeb probes `GET /actuator/health` on port 8081 - the application's single
-server port (`application.properties:40`), permitted anonymously in
+server port (`server.port` in `application.properties`), permitted anonymously in
 `SecurityConfig` so the probe needs no credentials. The grace period is 240
 seconds, which is generous on purpose: Flyway runs its migrations before the
 port opens, and a probe that gave up sooner would kill a container that was

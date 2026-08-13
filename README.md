@@ -57,13 +57,13 @@ Both screens exist in English and German, light and dark. The full set is on the
 - [x] Change audit trail and read-only reporting
 - [x] Stateless JWT authentication with role-based access control
 - [x] Angular frontend covering every domain area, bilingual EN/DE
-- [x] arc42 architecture documentation for both tiers, plus 37 decision records
+- [x] arc42 architecture documentation for both tiers, plus 39 decision records
 - [x] CI gating both suites, coverage thresholds, and an i18n drift check
+- [x] Reports page decomposed into per-tab state collaborators, bringing it inside its size band
 - [x] Automated deployment for backend, frontend and documentation
 
 **In progress**
 
-- [ ] Reducing the largest frontend page, which carries more derivation than its size band allows
 - [ ] A shared store for the list pages' repeated filter, sort and export behaviour
 
 ## Features
@@ -86,7 +86,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 
 ## Documentation
 
-- **[Architecture site](https://keglev.github.io/stockease/)** - arc42 documentation for both tiers, module reference, and 38 Architecture Decision Records. Backend entry pages are bilingual EN/DE.
+- **[Architecture site](https://keglev.github.io/stockease/)** - arc42 documentation for both tiers, module reference, and 39 Architecture Decision Records. Backend entry pages are bilingual EN/DE.
 - **[Backend API reference](https://keglev.github.io/stockease/backend/api/index.html)** - the REST contract, generated from the OpenAPI specification by Redocly and published by CI. Neither the specification nor a Swagger UI is generated from code; ADR 038 records why.
 - **[OpenAPI specification](docs/backend/api/openapi.yaml)** - the document itself, for readers who want to consume the contract rather than read it: it generates the frontend's types and is what the reference above is built from.
 - **[Backend coverage report](https://keglev.github.io/stockease/backend/coverage/index.html)** - JaCoCo, republished by CI on every run that changes it.
@@ -97,7 +97,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 
 **Backend** - 619 test methods across 113 files, combining unit tests, Spring slices, and integration tests against real PostgreSQL through Testcontainers rather than an in-memory substitute. Module boundaries are verified on every build; a violation fails CI.
 
-**Frontend** - 910 tests across 80 files under Vitest, at 99.29% statement coverage. Component specs assert on rendered output through the real template, and dependencies are substituted at injection seams rather than by mocking modules.
+**Frontend** - 916 tests across 87 files under Vitest, at 99.0% statement coverage. Component specs assert on rendered output through the real template, and dependencies are substituted at injection seams rather than by mocking modules.
 
 Coverage thresholds gate both suites as regression floors set below what the suites achieve, so they fail on genuine loss rather than on an honest refactor. A separate check re-assembles the translation bundles from their authored sources and refuses any difference, which makes a hand-edited artifact impossible to merge.
 
@@ -139,7 +139,7 @@ The commit history and the pull request record are the evidence. Both are public
 
 ## CI/CD
 
-Every pull request runs a required check under one shared job name, so whichever tier a change touches reports under the name branch protection demands. Backend changes run the full suite against real PostgreSQL; frontend changes run lint, an i18n drift check, a production build, and the suite with coverage; documentation changes build the site and run a link checker.
+Every pull request runs a required check under one shared job name, so whichever tier a change touches reports under the name branch protection demands. Backend changes run the full suite against real PostgreSQL; frontend changes run lint, an i18n drift check, a production build, and the suite with coverage; documentation changes build the site and run a link checker; a change confined to the internal standards gets a no-op check that carries the required name, because there is no build to gate it on.
 
 On merge to `main`, the test workflows hand off. The backend deploy triggers a Koyeb redeploy and polls until the service reports healthy. The frontend deploy builds the bundle on the runner and publishes it prebuilt, so what ships is exactly the artifact that passed the gate. The documentation pipeline rebuilds the site and publishes it with whichever coverage reports that run produced.
 
@@ -174,7 +174,6 @@ There is one environment: production. Pull requests get the full check suite and
 
 ## Coming next
 
-- Extracting the reports page's per-tab derivation, the one file materially above its size band.
 - A third shared store for the filter, sort and export behaviour the list pages repeat.
 - Resolving the pending ruling on tests that assert exception-message prose rather than the error contract.
 
