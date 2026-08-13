@@ -1,148 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
-import { Router, provideRouter } from '@angular/router';
+import { Router } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 
-import { PaginatedProducts, ProductResponse } from '../../../core/api/api-models';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ApiError } from '../../../core/api/api-envelope';
+import { PaginatedProducts } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
-import { NotificationService } from '../../../core/notifications/notification.service';
-import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
-import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { ProductCreateDialogComponent } from '../product-create-dialog/product-create-dialog.component';
-import { ProductService } from '../product.service';
 import { ProductListComponent } from './product-list.component';
-
-const TRANSLATIONS = {
-  en: {
-    common: { confirm: 'Confirm', cancel: 'Cancel' },
-    products: {
-      title: 'Products',
-      create: 'New product',
-      actions: 'Product actions',
-      rename: 'Rename',
-      changePrice: 'Change price',
-      history: 'History',
-      columns: {
-        name: 'Name',
-        sku: 'SKU',
-        quantity: 'Quantity',
-        purchasePrice: 'Purchase Price',
-        totalValue: 'Total Value',
-        createdAt: 'Created',
-        status: 'Status',
-        actions: 'Actions'
-      },
-      empty: 'No products found.',
-      loading: 'Loading products…',
-      showDeleted: 'Show deleted',
-      deletedChip: 'Deleted',
-      deletedEmpty: 'No deleted products.',
-      restore: 'Restore',
-      restored: 'Product restored',
-      restoreConflict: 'Cannot restore: a live product already uses this name or SKU.',
-      delete: { action: 'Delete', title: 'Delete product', message: 'Delete "{{name}}"?' }
-    }
-  }
-};
-
-function pageWith(names: string[], totalElements = names.length): PaginatedProducts {
-  return {
-    content: names.map((name, index) => ({
-      id: index + 1,
-      name,
-      sku: `SKU-${index}`,
-      quantity: 10,
-      purchasePrice: 99.5,
-      totalValue: 995,
-      createdAt: '2026-01-02T03:04:00'
-    })),
-    pageNumber: 0,
-    pageSize: 10,
-    totalElements,
-    totalPages: 1
-  };
-}
-
-function deletedProduct(id: number, name: string): ProductResponse {
-  return {
-    id,
-    name,
-    sku: `SKU-${id}`,
-    quantity: 4,
-    purchasePrice: 39,
-    totalValue: 156,
-    createdAt: '2026-01-02T03:04:00'
-  };
-}
-
-class ProductServiceStub {
-  calls: { page: number; size: number }[] = [];
-  response: Observable<PaginatedProducts> = of(pageWith([]));
-  removeCalls: number[] = [];
-  removeResult: Observable<string> = of('Product deleted.');
-  deletedCalls = 0;
-  deletedResult: Observable<ProductResponse[]> = of([deletedProduct(7, 'Retired Bracket')]);
-  restoreCalls: number[] = [];
-  restoreResult: Observable<ProductResponse> = of(deletedProduct(7, 'Retired Bracket'));
-
-  getPagedProducts(page: number, size: number): Observable<PaginatedProducts> {
-    this.calls.push({ page, size });
-    return this.response;
-  }
-
-  remove(id: number): Observable<string> {
-    this.removeCalls.push(id);
-    return this.removeResult;
-  }
-
-  getDeleted(): Observable<ProductResponse[]> {
-    this.deletedCalls += 1;
-    return this.deletedResult;
-  }
-
-  restore(id: number): Observable<ProductResponse> {
-    this.restoreCalls.push(id);
-    return this.restoreResult;
-  }
-}
-
-class NotificationServiceStub {
-  successes: string[] = [];
-  errors: string[] = [];
-
-  success(message: string): void {
-    this.successes.push(message);
-  }
-
-  error(message: string): void {
-    this.errors.push(message);
-  }
-}
+import {
+  configureProductListTestBed,
+  MatDialogStub,
+  menuItem,
+  NotificationServiceStub,
+  openRowMenu as openRowMenuOf,
+  pageWith,
+  ProductServiceStub,
+  host as hostOf
+} from './product-list.fixtures';
 
 /*
- * Stands in for MatDialog. The confirm dialog answers with `confirmed`; the create and edit dialogs
- * answer with `saved`, and every call is recorded so a spec can name which one was opened with what.
- */
-class MatDialogStub {
-  confirmed: boolean | undefined = true;
-  saved: ProductResponse | undefined = undefined;
-  openCalls: { component: unknown; config?: { data?: unknown } }[] = [];
-
-  open(component: unknown, config?: { data?: unknown }) {
-    this.openCalls.push({ component, config });
-    const answer = component === ConfirmDialogComponent ? this.confirmed : this.saved;
-    return { afterClosed: () => of(answer) };
-  }
-}
-
-/*
- * The catalogue: paged rows, the role-gated create, delete and recycle-bin toggle, and the menu items
- * each role may reach. The deleted view is a separate view with its own empty state and no paginator,
- * and restore has its own conflict handling.
- * Out of scope: the dialogs (product-create-dialog and product-edit-dialog specs) and the requests
- * (product.service.spec.ts).
+ * The catalogue: paged rows, the role-gated create and delete, and the menu items each role may
+ * reach.
+ * Out of scope: the recycle bin - the deleted view, its toggle and the restore flow are
+ * product-recycle-bin.spec.ts; the dialogs (product-create-dialog and product-edit-dialog specs)
+ * and the requests (product.service.spec.ts).
  */
 describe('ProductListComponent', () => {
   let fixture: ComponentFixture<ProductListComponent>;
@@ -151,51 +31,22 @@ describe('ProductListComponent', () => {
   let dialog: MatDialogStub;
 
   function host(): HTMLElement {
-    return fixture.nativeElement as HTMLElement;
+    return hostOf(fixture);
   }
 
-  /* The menu renders into an overlay only once its trigger is clicked. */
   async function openRowMenu(rowIndex = 0): Promise<void> {
-    host().querySelectorAll<HTMLButtonElement>('.product-actions')[rowIndex].click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-  }
-
-  function menuItem(selector: string): HTMLButtonElement | null {
-    return document.querySelector<HTMLButtonElement>(selector);
+    await openRowMenuOf(fixture, rowIndex);
   }
 
   async function setUp(
     response: Observable<PaginatedProducts>,
     role: 'ADMIN' | 'USER' = 'ADMIN'
   ): Promise<void> {
-    stub = new ProductServiceStub();
-    stub.response = response;
-    notifications = new NotificationServiceStub();
-    dialog = new MatDialogStub();
-
-    await TestBed.configureTestingModule({
-      imports: [ProductListComponent],
-      providers: [
-        provideRouter([]),
-        provideTestTranslations(TRANSLATIONS),
-        { provide: ProductService, useValue: stub },
-        { provide: NotificationService, useValue: notifications },
-        { provide: MatDialog, useValue: dialog },
-        { provide: AuthService, useValue: { role: () => role } }
-      ]
-    }).compileComponents();
-
-    TestBed.inject(LanguageService).initialize().subscribe();
-
-    fixture = TestBed.createComponent(ProductListComponent);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    ({ fixture, stub, notifications, dialog } = await configureProductListTestBed(response, role));
   }
 
-  beforeEach(() => {
+  afterEach(() => {
     localStorage.clear();
-    TestBed.resetTestingModule();
   });
 
   it('load_serviceReturnsProducts_rendersOneRowPerProduct', async () => {
@@ -439,107 +290,4 @@ describe('ProductListComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
   }
-
-  it('render_userRole_hidesShowDeletedToggle', async () => {
-    await setUp(of(pageWith(['Laptop'])), 'USER');
-
-    // Restoring is administration; a USER must not even be offered the view.
-    expect(host().querySelector('.product-show-deleted')).toBeNull();
-  });
-
-  it('render_adminRole_showsShowDeletedToggle', async () => {
-    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
-
-    expect(host().querySelector('.product-show-deleted')).not.toBeNull();
-  });
-
-  it('toggleDeleted_switchedOn_rendersDeletedRowsWithChipAndRestore', async () => {
-    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
-    // #136: pin the language before asserting on rendered text
-    TestBed.inject(LanguageService).setLanguage('en');
-
-    await toggleDeleted();
-
-    expect(stub.deletedCalls).toBe(1);
-    const rows = host().querySelectorAll('tbody tr');
-    expect(rows.length).toBe(1);
-    expect(host().textContent).toContain('Retired Bracket');
-    expect(rows[0].classList).toContain('product-row-deleted');
-    expect(rows[0].querySelector('.status-deleted')?.textContent).toContain('Deleted');
-    expect(rows[0].querySelector('.product-restore')).not.toBeNull();
-  });
-
-  it('toggleDeleted_switchedOn_hidesThePaginator', async () => {
-    await setUp(of(pageWith(['Laptop'], 100)), 'ADMIN');
-    expect(host().querySelector('mat-paginator')).not.toBeNull();
-
-    await toggleDeleted();
-
-    // The deleted set is unpaged, so a paginator here would state a page count that means nothing.
-    expect(host().querySelector('mat-paginator')).toBeNull();
-  });
-
-  it('toggleDeleted_switchedOff_returnsToTheLivePagedView', async () => {
-    await setUp(of(pageWith(['Laptop'], 100)), 'ADMIN');
-    await toggleDeleted();
-
-    await toggleDeleted();
-
-    expect(host().textContent).toContain('Laptop');
-    expect(host().textContent).not.toContain('Retired Bracket');
-    expect(host().querySelector('mat-paginator')).not.toBeNull();
-  });
-
-  it('restore_succeeds_toastsAndRefreshesBothLists', async () => {
-    await setUp(of(pageWith(['Laptop'], 100)), 'ADMIN');
-    await toggleDeleted();
-    const livesBefore = stub.calls.length;
-
-    host().querySelector<HTMLButtonElement>('.product-restore')?.click();
-    await fixture.whenStable();
-
-    expect(stub.restoreCalls).toEqual([7]);
-    expect(notifications.successes).toEqual(['products.restored']);
-    // both lists move: the product leaves the bin and rejoins the live page behind the toggle
-    expect(stub.deletedCalls).toBe(2);
-    expect(stub.calls.length).toBe(livesBefore + 1);
-  });
-
-  it('restore_rejectedWith409_showsTheConflictNotification', async () => {
-    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
-    await toggleDeleted();
-    stub.restoreResult = throwError(
-      () => new ApiError("Cannot restore: a live product named 'Laptop' already exists.", 409)
-    );
-
-    host().querySelector<HTMLButtonElement>('.product-restore')?.click();
-    await fixture.whenStable();
-
-    // The conflict is actionable, so it gets the translated explanation rather than the raw
-    // backend sentence every other failure falls back to.
-    expect(notifications.errors).toEqual(['products.restoreConflict']);
-  });
-
-  it('restore_rejectedWithOtherStatus_surfacesTheBackendMessage', async () => {
-    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
-    await toggleDeleted();
-    stub.restoreResult = throwError(() => new ApiError('Entity not found: gone.', 404));
-
-    host().querySelector<HTMLButtonElement>('.product-restore')?.click();
-    await fixture.whenStable();
-
-    expect(notifications.errors).toEqual(['Entity not found: gone.']);
-  });
-
-  it('loadDeleted_serviceErrors_stopsTheLoadingBarAndShowsTheError', async () => {
-    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
-    stub.deletedResult = throwError(() => new ApiError('Request failed. Please try again.', 404));
-
-    await toggleDeleted();
-
-    // The Vercel preview runs this branch against a backend without the endpoint, so the failed
-    // fetch must read as an error rather than as a list that never finished loading.
-    expect(host().textContent).toContain('Request failed. Please try again.');
-    expect(host().querySelector('mat-progress-bar')).toBeNull();
-  });
 });
