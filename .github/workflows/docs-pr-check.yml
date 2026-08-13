@@ -26,6 +26,8 @@ on:
       - '.github/scripts/docs/**'
       - '.github/workflows/docs-pipeline.yml'
       - 'lychee.toml'
+      # Configures the redocly lint this build runs, so changing it must run the build.
+      - 'redocly.yaml'
       - '.github/workflows/docs-pr-check.yml'
   workflow_dispatch:
 
