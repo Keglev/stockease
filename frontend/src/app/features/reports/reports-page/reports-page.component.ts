@@ -18,13 +18,10 @@ import {
   LossReport,
   ProductProfitReport,
   StockHistoryPoint,
-  StockStatusReport,
   SupplierProduct,
-  SupplierProfitReport,
   SupplierResponse
 } from '../../../core/api/api-models';
 import { FormatService } from '../../../core/format/format.service';
-import { GaugeBand, createChartContext } from '../../../shared/chart/chart-context';
 import { topNWithRemainder } from '../../../shared/chart/chart-data';
 import { bucketValueAt } from '../../../shared/chart/due-buckets';
 import { ChartFormat } from '../../../shared/chart/chart-format';
@@ -44,6 +41,11 @@ import { ProfitCardComponent } from './profit-card/profit-card.component';
 import { StockCardComponent } from './stock-card/stock-card.component';
 import { SupplierProductPickerComponent } from './supplier-product-picker/supplier-product-picker.component';
 import { ReportView, ReportViewToggleComponent } from './report-view-toggle/report-view-toggle.component';
+import { ProfitTabState } from './profit-tab-state';
+import { ReportChartContext } from './report-chart-context';
+import { ReportStatus } from './report-status';
+import { matchingNameOrSku, periodRange, sortRows } from './report-tab-helpers';
+import { StockTabState } from './stock-tab-state';
 
 const PROFIT_TAB = 0;
 // Cash flow sits second, next to profit: the two answer the paired questions of what the business
@@ -63,8 +65,6 @@ const TAB_COUNT = 7;
 
 /** Sentinel for the changes tab's user select; no account can collide with it. */
 const ALL_USERS = '';
-
-const PERIOD_DAYS: Record<'d30' | 'd90' | 'd180', number> = { d30: 30, d90: 90, d180: 180 };
 
 const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 
@@ -102,9 +102,17 @@ interface PricePoint {
     TranslatePipe
   ],
   templateUrl: './reports-page.component.html',
-  styleUrl: './reports-page.component.scss'
+  styleUrl: './reports-page.component.scss',
+  // Per-tab state, scoped to the page so it is created and discarded with it (ADR 039). The two
+  // shared ones come first because every tab state injects them.
+  providers: [ReportChartContext, ReportStatus, ProfitTabState, StockTabState]
 })
 export class ReportsPageComponent implements OnInit {
+  protected readonly charts = inject(ReportChartContext);
+  protected readonly status = inject(ReportStatus);
+  protected readonly profit = inject(ProfitTabState);
+  protected readonly stock = inject(StockTabState);
+
   private readonly reports = inject(ReportService);
   // Cross-feature, as the dashboard reads the reporting client: the change log belongs to the audit
   // module, and a report over it consumes that module's API rather than copying its endpoint.
@@ -117,9 +125,6 @@ export class ReportsPageComponent implements OnInit {
   private readonly format = inject(FormatService);
   private readonly csv = inject(CsvExportService);
 
-  protected readonly profitColumns = ['name', 'sku', 'revenue', 'cost', 'grossProfit'];
-  protected readonly supplierColumns = ['name', 'revenue', 'cost', 'grossProfit'];
-  protected readonly stockColumns = ['name', 'sku', 'soldUnits', 'soldRevenue', 'inStockUnits', 'inStockValue'];
   protected readonly lossColumns = ['name', 'sku', 'lostUnits', 'destroyedUnits', 'lossValue'];
 
   protected readonly cashFlowColumns = ['name', 'sku', 'inflow', 'outflow', 'net'];
@@ -134,29 +139,6 @@ export class ReportsPageComponent implements OnInit {
   // number the tab already has, and two unread booleans are cheaper than a second numbering.
   private readonly views = signal<ReportView[]>(Array<ReportView>(TAB_COUNT).fill('chart'));
 
-  protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
-
-  protected readonly profitRows = signal<ProductProfitReport[]>([]);
-  protected readonly supplierRows = signal<SupplierProfitReport[]>([]);
-
-  /**
-   * Which column each profit table is sorted by, held apart from the rows themselves.
-   *
-   * <p>The rows above stay in the order the server sent for as long as they are loaded, and the
-   * order on screen is derived from them below. Sorting in place instead - replacing the signal
-   * with a sorted copy - destroys that original order on the first click, so the third click, which
-   * clears the direction, has nothing to return to and leaves the last sorted order standing.
-   */
-  private readonly profitSort = signal<Sort>({ active: '', direction: '' });
-  private readonly supplierSort = signal<Sort>({ active: '', direction: '' });
-
-  protected readonly sortedProfitRows = computed(() => sortRows(this.profitRows(), this.profitSort()));
-
-  protected readonly sortedSupplierRows = computed(() =>
-    sortRows(this.supplierRows(), this.supplierSort())
-  );
-  protected readonly stockRows = signal<StockStatusReport[]>([]);
   protected readonly lossRows = signal<LossReport[]>([]);
   protected readonly lossRemarkRows = signal<LossByRemark[]>([]);
   protected readonly buckets = signal<DueDateBucket[]>([]);
@@ -179,38 +161,11 @@ export class ReportsPageComponent implements OnInit {
     matchingNameOrSku(this.cashFlow()?.products ?? [], this.cashFlowFilter())
   );
 
-  /** The same narrowing on the stock and loss tables; the question a reader asks of a product
-   *  list does not change with which report they are reading. */
-  protected readonly stockFilter = signal('');
   protected readonly lossFilter = signal('');
-
-  protected readonly filteredStockRows = computed(() =>
-    matchingNameOrSku(this.stockRows(), this.stockFilter())
-  );
 
   protected readonly filteredLossRows = computed(() =>
     matchingNameOrSku(this.lossRows(), this.lossFilter())
   );
-
-  /**
-   * The stock tab's headline figures, summed from the rows the tab already loaded.
-   *
-   * <p>Derived rather than fetched, so a single source answers both halves of the tab: a strip and
-   * the table beneath it cannot disagree when the strip is the table added up. The unfiltered rows
-   * on purpose - the strip states what the business holds, which a text box must not appear to
-   * change.
-   */
-  protected readonly stockTotals = computed(() => {
-    const rows = this.stockRows();
-    if (rows.length === 0) {
-      return null;
-    }
-    return {
-      value: rows.reduce((sum, row) => sum + row.inStockValue, 0),
-      units: rows.reduce((sum, row) => sum + row.inStockUnits, 0),
-      products: rows.length
-    };
-  });
 
   /** The losses tab's headline figures, on the same derivation and the same unfiltered basis. */
   protected readonly lossTotals = computed(() => {
@@ -247,7 +202,6 @@ export class ReportsPageComponent implements OnInit {
   // One signal per tab rather than one shared: the two answer different questions, and a period
   // chosen for cash flow is not a period the reader asked profit for.
   protected readonly cashFlowPeriod = signal<ReportPeriod>('all');
-  protected readonly profitPeriod = signal<ReportPeriod>('all');
   protected readonly lossPeriod = signal<ReportPeriod>('all');
   protected readonly changePeriod = signal<ReportPeriod>('all');
   protected readonly analyticsPeriod = signal<ReportPeriod>('all');
@@ -307,13 +261,13 @@ export class ReportsPageComponent implements OnInit {
   protected readonly analyticsStockOption = computed(() =>
     toStockHistoryOption(
       this.stockHistory(),
-      { stock: this.chartContext().stockLevel, sold: this.chartContext().soldUnits },
-      this.chartContext().format
+      { stock: this.charts.context().stockLevel, sold: this.charts.context().soldUnits },
+      this.charts.context().format
     )
   );
 
   protected readonly analyticsPriceOption = computed(() =>
-    toPriceHistoryOption(this.priceHistory(), this.chartContext().format)
+    toPriceHistoryOption(this.priceHistory(), this.charts.context().format)
   );
 
   protected readonly changeRows = signal<ChangeLogEntryResponse[]>([]);
@@ -349,52 +303,16 @@ export class ReportsPageComponent implements OnInit {
     );
   });
 
-  private readonly baseChartContext = createChartContext();
-
-  /**
-   * The shared chart context, widened with the vocabulary only this page's charts use.
-   *
-   * <p>The extra labels name series and legend entries on two tabs rather than anything a chart
-   * elsewhere in the app renders, which is why they are resolved here instead of in the shared
-   * derivation. Spreading the shared one in rather than reading it separately is what lets every
-   * option below take its data, its labels and its formatters from a single read.
-   */
-  private readonly chartContext = computed(() => ({
-    ...this.baseChartContext(),
-    stockLevel: this.translate.instant('reports.analytics.stockLevel') as string,
-    soldUnits: this.translate.instant('reports.analytics.soldUnits') as string,
-    cashFlow: {
-      inflow: this.translate.instant('reports.cashFlow.inflow') as string,
-      outflow: this.translate.instant('reports.cashFlow.outflow') as string,
-      net: this.translate.instant('reports.cashFlow.net') as string
-    }
-  }));
-
-  // Derived, not stored. Each one re-runs when its rows change - which is what the load methods
-  // used to trigger by hand - and when the rendering context above changes, which nothing used to
-  // trigger at all: a language switch left every chart showing the words it was built with.
-  protected readonly marginOption = computed(() =>
-    toMarginOption(this.profitRows(), this.chartContext().gaugeBands, this.chartContext().format)
-  );
-
-  protected readonly profitOption = computed(() =>
-    toProfitOption(this.profitRows(), this.chartContext().other, this.chartContext().format)
-  );
-
-  protected readonly stockOption = computed(() =>
-    toStockOption(this.stockRows(), this.chartContext().other, this.chartContext().format)
-  );
-
   protected readonly lossOption = computed(() =>
-    toLossOption(this.lossRows(), this.chartContext().other, this.chartContext().format)
+    toLossOption(this.lossRows(), this.charts.context().other, this.charts.context().format)
   );
 
   protected readonly dueOption = computed(() =>
-    toDueOption(this.buckets(), this.chartContext().format)
+    toDueOption(this.buckets(), this.charts.context().format)
   );
 
   protected readonly cashFlowOption = computed(() =>
-    toCashFlowOption(this.cashFlowMonths(), this.chartContext().cashFlow, this.chartContext().format)
+    toCashFlowOption(this.cashFlowMonths(), this.charts.context().cashFlow, this.charts.context().format)
   );
 
   // Loading every tab on open would fire eight report queries against aggregate SQL for tabs the
@@ -436,40 +354,6 @@ export class ReportsPageComponent implements OnInit {
     }
   }
 
-  /** Exports the profit table as displayed, without the deleted marker the column renders. */
-  protected exportProfit(): void {
-    this.exportCsv(
-      'profit-products.csv',
-      this.profitColumns,
-      // The sorted view, so the download is in the order the reader is looking at.
-      this.sortedProfitRows().map((row) => [row.name, row.sku, row.revenue, row.cost, row.grossProfit])
-    );
-  }
-
-  protected exportSuppliers(): void {
-    this.exportCsv(
-      'profit-suppliers.csv',
-      this.supplierColumns,
-      this.sortedSupplierRows().map((row) => [row.name, row.revenue, row.cost, row.grossProfit])
-    );
-  }
-
-  protected exportStock(): void {
-    this.exportCsv(
-      'stock-status.csv',
-      this.stockColumns,
-      // The filtered rows, as on the cash-flow tab: the export mirrors what the user is looking at.
-      this.filteredStockRows().map((row) => [
-        row.name,
-        row.sku,
-        row.soldUnits,
-        row.soldRevenue,
-        row.inStockUnits,
-        row.inStockValue
-      ])
-    );
-  }
-
   protected exportLosses(): void {
     this.exportCsv(
       'losses.csv',
@@ -482,10 +366,6 @@ export class ReportsPageComponent implements OnInit {
         row.lossValue
       ])
     );
-  }
-
-  protected setStockFilter(value: string): void {
-    this.stockFilter.set(value);
   }
 
   protected setLossFilter(value: string): void {
@@ -585,17 +465,6 @@ export class ReportsPageComponent implements OnInit {
     this.loadLosses();
   }
 
-  /** Switches the profit window and refetches both profit queries, which share the one period. */
-  protected setProfitPeriod(period: ReportPeriod): void {
-    // Same two guards as the cash-flow toggle: the group emits once with no value while it is
-    // being created, and re-picking the current preset is no reason to go back to the server.
-    if (!PERIODS.includes(period) || period === this.profitPeriod()) {
-      return;
-    }
-    this.profitPeriod.set(period);
-    this.loadProfit();
-  }
-
   /** Switches the cash-flow window and refetches, since the period is a server-side filter. */
   protected setCashFlowPeriod(period: ReportPeriod): void {
     // Two reasons to ignore an emission. The group fires once with no value at all while it is
@@ -624,18 +493,6 @@ export class ReportsPageComponent implements OnInit {
     );
   }
 
-  protected sortProfit(sort: Sort): void {
-    this.profitSort.set(sort);
-  }
-
-  protected sortSuppliers(sort: Sort): void {
-    this.supplierSort.set(sort);
-  }
-
-  protected sortStock(sort: Sort): void {
-    this.stockRows.update((rows) => sortRows(rows, sort));
-  }
-
   protected sortLosses(sort: Sort): void {
     this.lossRows.update((rows) => sortRows(rows, sort));
   }
@@ -643,23 +500,23 @@ export class ReportsPageComponent implements OnInit {
   /** Fetches the row's own detail before opening the dialog, which is a pure presenter. */
   protected openDetail(row: ProductProfitReport): void {
     // The tab's active period, so the dialog never contradicts the table row that opened it.
-    const range = periodRange(this.profitPeriod());
+    const range = periodRange(this.profit.period());
 
     this.reports.profitProductDetail(row.productId, range.from, range.to).subscribe({
       next: (detail) => this.dialog.open(ProfitDetailDialogComponent, { data: detail }),
-      error: (err: Error) => this.error.set(err.message)
+      error: (err: Error) => this.status.error.set(err.message)
     });
   }
 
   private loadTab(index: number): void {
-    this.error.set(null);
-    this.loading.set(true);
+    this.status.error.set(null);
+    this.status.loading.set(true);
 
     switch (index) {
       case CASH_FLOW_TAB:
         return this.loadCashFlow();
       case STOCK_TAB:
-        return this.loadStock();
+        return this.stock.load();
       case LOSSES_TAB:
         return this.loadLosses();
       case DUE_TAB:
@@ -669,45 +526,8 @@ export class ReportsPageComponent implements OnInit {
       case ANALYTICS_TAB:
         return this.loadAnalytics();
       default:
-        return this.loadProfit();
+        return this.profit.load();
     }
-  }
-
-  private loadProfit(): void {
-    this.error.set(null);
-    this.loading.set(true);
-    // Both queries take the same window: a chart filtered to a period beside a supplier table that
-    // was not would be worse than no filter at all.
-    const range = periodRange(this.profitPeriod());
-
-    this.reports.profitProducts(range.from, range.to).subscribe({
-      next: (rows) => {
-        this.profitRows.set(rows);
-        // A re-query answers in the server order, which is what the table showed before this
-        // sorted by derivation rather than in place.
-        this.profitSort.set({ active: '', direction: '' });
-        this.loading.set(false);
-      },
-      error: (err: Error) => this.fail(err)
-    });
-
-    this.reports.profitSuppliers(range.from, range.to).subscribe({
-      next: (rows) => {
-        this.supplierRows.set(rows);
-        this.supplierSort.set({ active: '', direction: '' });
-      },
-      error: (err: Error) => this.fail(err)
-    });
-  }
-
-  private loadStock(): void {
-    this.reports.stockStatus().subscribe({
-      next: (rows) => {
-        this.stockRows.set(rows);
-        this.loading.set(false);
-      },
-      error: (err: Error) => this.fail(err)
-    });
   }
 
   /**
@@ -718,25 +538,25 @@ export class ReportsPageComponent implements OnInit {
    * product nobody had named yet.
    */
   private loadAnalytics(): void {
-    this.error.set(null);
+    this.status.error.set(null);
 
     const productId = this.analyticsShownProductId();
     if (productId === null) {
       // loadTab raises the bar before dispatching, because every other tab fetches something on
       // activation. This is the one tab that can decide it has nothing to fetch, so it has to lower
       // the bar again - otherwise opening it leaves an indeterminate bar running over an idle page.
-      this.loading.set(false);
+      this.status.loading.set(false);
       return;
     }
-    this.loading.set(true);
+    this.status.loading.set(true);
     const range = periodRange(this.analyticsPeriod());
 
     this.reports.stockHistory(productId, range.from, range.to).subscribe({
       next: (points) => {
         this.stockHistory.set(points);
-        this.loading.set(false);
+        this.status.loading.set(false);
       },
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
 
     // The price series comes from the audit trail rather than a reporting endpoint: a price change
@@ -746,13 +566,13 @@ export class ReportsPageComponent implements OnInit {
         const points = toPricePoints(rows, range);
         this.priceHistory.set(points);
       },
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
   }
 
   private loadChanges(): void {
-    this.error.set(null);
-    this.loading.set(true);
+    this.status.error.set(null);
+    this.status.loading.set(true);
     const range = periodRange(this.changePeriod());
 
     this.audit.changes(range.from, range.to).subscribe({
@@ -763,23 +583,23 @@ export class ReportsPageComponent implements OnInit {
         if (!rows.some((row) => row.username === this.changeUser())) {
           this.changeUser.set(ALL_USERS);
         }
-        this.loading.set(false);
+        this.status.loading.set(false);
       },
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
   }
 
   private loadLosses(): void {
-    this.error.set(null);
-    this.loading.set(true);
+    this.status.error.set(null);
+    this.status.loading.set(true);
     const range = periodRange(this.lossPeriod());
 
     this.reports.losses(range.from, range.to).subscribe({
       next: (rows) => {
         this.lossRows.set(rows);
-        this.loading.set(false);
+        this.status.loading.set(false);
       },
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
 
     // The breakdown is a second read of the same window, not a slice of the rows above: the
@@ -791,7 +611,7 @@ export class ReportsPageComponent implements OnInit {
       // failure. Sharing it keeps a doubled message off the screen when the API is simply down.
       error: (err: Error) => {
         this.lossRemarkRows.set([]);
-        this.fail(err);
+        this.status.fail(err);
       }
     });
   }
@@ -800,19 +620,19 @@ export class ReportsPageComponent implements OnInit {
     this.reports.dueDates().subscribe({
       next: (rows) => {
         this.buckets.set(rows);
-        this.loading.set(false);
+        this.status.loading.set(false);
       },
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
 
     this.reports.dueSoon().subscribe({
       next: (rows) => this.dueSoonRows.set(rows),
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
 
     this.reports.overdue().subscribe({
       next: (rows) => this.overdueRows.set(rows),
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
   }
 
@@ -847,8 +667,8 @@ export class ReportsPageComponent implements OnInit {
   }
 
   private loadCashFlow(): void {
-    this.error.set(null);
-    this.loading.set(true);
+    this.status.error.set(null);
+    this.status.loading.set(true);
     const range = periodRange(this.cashFlowPeriod());
     // undefined rather than null so the service leaves the parameter off entirely.
     const productId = this.cashFlowProduct()?.id ?? undefined;
@@ -857,9 +677,9 @@ export class ReportsPageComponent implements OnInit {
       next: (months) => {
         this.cashFlowMonths.set(months);
         // Translated at build time: chart options are snapshots, as everywhere else on this page.
-        this.loading.set(false);
+        this.status.loading.set(false);
       },
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
 
     // Only when the reader has already opened the table; otherwise the first switch fetches it.
@@ -874,7 +694,7 @@ export class ReportsPageComponent implements OnInit {
 
     this.reports.cashFlow(range.from, range.to).subscribe({
       next: (report) => this.cashFlow.set(report),
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.status.fail(err)
     });
   }
 
@@ -894,67 +714,6 @@ export class ReportsPageComponent implements OnInit {
     this.csv.export(filename, columns, rows, keyPrefix);
   }
 
-  /** Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app. */
-  private fail(err: Error): void {
-    this.loading.set(false);
-    this.error.set(err.message);
-  }
-}
-
-/**
- * Builds the overall-margin gauge, or null when there is no revenue to divide by. Returning
- * null rather than a zero gauge keeps a NaN off the dial and lets the template show the empty
- * state instead. Display-only arithmetic over server-authoritative figures, as with the
- * invoice totals.
- */
-function toMarginOption(
-  rows: ProductProfitReport[],
-  bands: readonly GaugeBand[],
-  format: ChartFormat
-): ChartOption | null {
-  const revenue = rows.reduce((sum, row) => sum + row.revenue, 0);
-  if (revenue === 0) {
-    return null;
-  }
-  const profit = rows.reduce((sum, row) => sum + row.grossProfit, 0);
-  const margin = Math.round((profit / revenue) * 1000) / 10;
-
-  return {
-    series: [
-      {
-        type: 'gauge',
-        min: 0,
-        max: 100,
-        // Bands read low-to-high against the same thresholds a reader would apply by eye. The
-        // colours come from the chart context, which is what makes them follow the theme; the
-        // literals and the reason they are sanctioned live there.
-        axisLine: { lineStyle: { width: 14, color: bands.map((band) => [band.upTo, band.color]) } },
-        // The dial still runs 0-100 and its value is still 42.5; only the reading changes, from a
-        // hardcoded '{value}%' to the decimal mark and percent spacing the reader's locale uses.
-        detail: { formatter: (value: number) => format.percent(value), fontSize: 22 },
-        data: [{ value: margin }]
-      }
-    ]
-  };
-}
-
-/**
- * Turns a preset into the ISO bounds the endpoints take, or no bounds at all for the open window.
- * Computed from the browser's date because the presets describe the operator's calendar, and both
- * backends compare against a date rather than a timestamp. Shared by the profit and cash-flow
- * tabs: two copies of this arithmetic would be two chances to drift apart.
- */
-function periodRange(period: ReportPeriod): { from?: string; to?: string } {
-  if (period === 'all') {
-    return {};
-  }
-  const today = new Date();
-  if (period === 'year') {
-    return { from: isoDate(new Date(today.getFullYear(), 0, 1)), to: isoDate(today) };
-  }
-  const start = new Date(today);
-  start.setDate(start.getDate() - PERIOD_DAYS[period]);
-  return { from: isoDate(start), to: isoDate(today) };
 }
 
 /**
@@ -1041,29 +800,6 @@ function toStockHistoryOption(
   };
 }
 
-/**
- * Narrows report rows to those whose name or SKU contains `needle`, ignoring case.
- *
- * <p>One predicate for all three filtered tables. They ask the reader the same question, so three
- * copies would only be three chances for them to start answering it differently.
- */
-function matchingNameOrSku<T extends { name: string; sku: string }>(rows: T[], needle: string): T[] {
-  const term = needle.trim().toLowerCase();
-  if (!term) {
-    return rows;
-  }
-  return rows.filter(
-    (row) => row.name.toLowerCase().includes(term) || row.sku.toLowerCase().includes(term)
-  );
-}
-
-/** Local calendar date in the YYYY-MM-DD shape the API takes; UTC would shift the boundary. */
-function isoDate(value: Date): string {
-  const month = `${value.getMonth() + 1}`.padStart(2, '0');
-  const day = `${value.getDate()}`.padStart(2, '0');
-  return `${value.getFullYear()}-${month}-${day}`;
-}
-
 /** The three translated series names the cash-flow chart labels its legend with. */
 interface CashFlowLabels {
   inflow: string;
@@ -1123,65 +859,6 @@ function toCashFlowOption(
         data: months.map((month) => month.net)
       }
     ]
-  };
-}
-
-/**
- * Plots the ten largest contributors plus the aggregated rest. What separates this page from the
- * dashboard is the exhaustive table behind the toggle, not an unabridged chart, which stopped
- * being readable the moment the inventory outgrew the seeded dataset.
- */
-function toProfitOption(
-  rows: ProductProfitReport[],
-  otherLabel: string,
-  format: ChartFormat
-): ChartOption | null {
-  if (rows.length === 0) {
-    return null;
-  }
-  const ordered = topNWithRemainder(
-    rows.map((row) => ({ name: row.name, value: row.grossProfit })),
-    otherLabel
-  ).sort((a, b) => a.value - b.value);
-
-  return {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      valueFormatter: (value) => format.currency(value as number)
-    },
-    grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
-    xAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
-    yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
-    series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
-  };
-}
-
-function toStockOption(
-  rows: StockStatusReport[],
-  otherLabel: string,
-  format: ChartFormat
-): ChartOption | null {
-  if (rows.length === 0) {
-    return null;
-  }
-  // Reversed because a category axis draws its first entry at the bottom.
-  const ordered = topNWithRemainder(
-    rows.map((row) => ({ name: row.name, value: row.inStockValue })),
-    otherLabel
-  ).reverse();
-
-  return {
-    // inStockValue, not a unit count: this bar is what the stock on hand is worth.
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      valueFormatter: (value) => format.currency(value as number)
-    },
-    grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
-    xAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
-    yAxis: { type: 'category', data: ordered.map((slice) => slice.name) },
-    series: [{ type: 'bar', data: ordered.map((slice) => slice.value) }]
   };
 }
 
@@ -1248,22 +925,4 @@ function toDueOption(buckets: DueDateBucket[], format: ChartFormat): ChartOption
       data: dates.map((date) => bucketValueAt(buckets, date, type))
     }))
   };
-}
-
-/** Sorts in the component rather than through MatTableDataSource, whose MatSort wiring would
- * race the lazily rendered tabs. */
-function sortRows<T>(rows: T[], sort: Sort): T[] {
-  if (!sort.active || sort.direction === '') {
-    return rows;
-  }
-  const factor = sort.direction === 'asc' ? 1 : -1;
-
-  return [...rows].sort((left, right) => {
-    const a = (left as Record<string, unknown>)[sort.active];
-    const b = (right as Record<string, unknown>)[sort.active];
-    if (typeof a === 'number' && typeof b === 'number') {
-      return (a - b) * factor;
-    }
-    return String(a).localeCompare(String(b)) * factor;
-  });
 }
