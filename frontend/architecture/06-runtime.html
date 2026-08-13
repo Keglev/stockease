@@ -218,19 +218,22 @@
         sequenceDiagram
           participant R as Router
           participant P as Reports page
+          participant T as Tab state
           participant S as ReportService
           participant C as Card
 
           R->>P: activate /app/reports (loadComponent)
           P->>P: ngOnInit - activate(profit tab)
-          P->>S: the profit query only
-          S-->>P: rows
-          P->>P: computed - totals, chart option, sorted rows
-          P->>C: inputs
+          P->>T: load()
+          T->>S: the profit query only
+          S-->>T: rows
+          T->>T: computed - totals, chart option, sorted rows
+          P->>C: inputs read from the tab state
           Note over P: opening another tab fetches it once,<br/>then never again
           C->>P: output - view switched to table
-          P->>S: second query, first time only
-          S-->>P: per-product breakdown
+          P->>T: loadProductsIfNeeded()
+          T->>S: second query, first time only
+          S-->>T: per-product breakdown
         </div>
         <p>Reading it in order:</p>
         <ol type="1">
@@ -244,22 +247,24 @@
         alone afterwards. A <code>Set</code> of activated tab indexes is
         the whole mechanism, and an explicit refresh refetches only the
         visible tab.</li>
-        <li><strong>The error banner arms once.</strong> The page holds
-        one <code>loading</code> signal and one <code>error</code>
-        signal for all seven tabs. Every request routes its failure
-        through the same handler, so whichever tab fails raises the same
-        banner in the same place, and no card carries error state of its
-        own.</li>
+        <li><strong>The error banner arms once.</strong> One
+        <code>loading</code> signal and one <code>error</code> signal
+        serve all seven tabs, held by <code>ReportStatus</code> - a
+        collaborator the page provides and every tab state injects. Each
+        tab reports its own failure through it, so whichever tab fails
+        raises the same banner in the same place, and no card carries
+        error state of its own.</li>
         <li><strong>The lazy second fetch.</strong> The cash-flow tab’s
         chart needs a timeline; its table needs a per-product breakdown
         that the chart never shows. The breakdown is therefore not
         fetched when the tab opens. Switching that tab’s view to
-        <code>table</code> triggers it, once - a boolean guards the
-        fetch rather than the rows, so a reader who never opens the
-        table half never pays for the query. Afterwards a period change
-        refetches both, because by then the reader has the table open.
-        The dashboard’s due card uses the same guard for the same
-        reason.</li>
+        <code>table</code> triggers it, once - a boolean inside the tab
+        state guards the fetch rather than the rows, so a reader who
+        never opens the table half never pays for the query. The page
+        decides that a view was switched; the tab state decides whether
+        that means a query. Afterwards a period change refetches both,
+        because by then the reader has the table open. The dashboard’s
+        due card uses the same guard for the same reason.</li>
         </ol>
         <h2 id="switching-language">Switching language</h2>
         <p>The switch is a runtime event, not a reload.
