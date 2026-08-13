@@ -28,7 +28,9 @@ import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { AuditService } from '../../audit/audit.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { ReportService } from '../report.service';
+import { ProfitTabState } from './profit-tab-state';
 import { ReportsPageComponent } from './reports-page.component';
+import { StockTabState } from './stock-tab-state';
 
 /*
  * Payloads, service stubs and page-driving helpers shared by the reports-page specs, held here
@@ -578,8 +580,24 @@ export function createReportsPageHelpers(
     await settle();
   }
 
-  /* Reads a chart option straight off the component; the stub renders nothing to assert on. */
+  /*
+   * Reads a chart option by the name the page has always called it; the stub renders nothing to
+   * assert on.
+   *
+   * <p>A converted tab's option lives on that tab's collaborator rather than on the component
+   * (ADR 039), so the name is routed to its owner and everything else falls through to the
+   * component as before. The map grows as the conversion sequence reaches each tab; the names the
+   * specs pass never change, which is what keeps this a change of access path rather than of test.
+   */
   function optionOf(name: string): SeriesProbe | null {
+    const owners: Record<string, () => SeriesProbe | null> = {
+      marginOption: () => getFixture().debugElement.injector.get(ProfitTabState).marginOption() as SeriesProbe | null,
+      profitOption: () => getFixture().debugElement.injector.get(ProfitTabState).option() as SeriesProbe | null,
+      stockOption: () => getFixture().debugElement.injector.get(StockTabState).option() as SeriesProbe | null
+    };
+    if (owners[name]) {
+      return owners[name]();
+    }
     const probe = getFixture().componentInstance as unknown as Record<string, () => SeriesProbe | null>;
     return probe[name]();
   }
@@ -610,8 +628,20 @@ export function createReportsPageHelpers(
       .componentInstance as TypeaheadComponent<SupplierProduct>;
   }
 
-  /* Types into one of the tabs' filters through the component, the way its input does. */
+  /*
+   * Types into one of the tabs' filters, the way its input does, naming the setter as the page has
+   * always named it. Routed to its owner for the tabs already converted to a collaborator, exactly
+   * as {@link optionOf} routes the chart options.
+   */
   async function setFilter(method: string, value: string): Promise<void> {
+    const owners: Record<string, (value: string) => void> = {
+      setStockFilter: (next) => getFixture().debugElement.injector.get(StockTabState).setFilter(next)
+    };
+    if (owners[method]) {
+      owners[method](value);
+      await settle();
+      return;
+    }
     const target = getFixture().componentInstance as unknown as Record<string, (value: string) => void>;
     target[method](value);
     await settle();

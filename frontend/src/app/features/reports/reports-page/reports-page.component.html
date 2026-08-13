@@ -9,12 +9,12 @@
   </button>
 </div>
 
-@if (loading()) {
+@if (status.loading()) {
   <mat-progress-bar mode="indeterminate" [attr.aria-label]="'reports.loading' | translate" />
 }
 
 <!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
-@if (error(); as message) {
+@if (status.error(); as message) {
   <p class="reports-error" role="alert">{{ message }}</p>
 }
 
@@ -23,22 +23,22 @@
     <div class="tab-body">
       <!-- Placed and styled as the cash-flow tab's, so the same control reads the same way on
            both. Each one re-queries, because the window is a server-side filter. -->
-      <app-period-toggle [value]="profitPeriod()" (selected)="setProfitPeriod($event)" />
+      <app-period-toggle [value]="profit.period()" (selected)="profit.setPeriod($event)" />
 
       <app-report-view-toggle [value]="viewOf(0)" (selected)="setView(0, $event)" />
 
       <app-profit-card
         [view]="viewOf(0)"
-        [marginOption]="marginOption()"
-        [profitOption]="profitOption()"
-        [profitRows]="sortedProfitRows()"
-        [supplierRows]="sortedSupplierRows()"
-        [profitColumns]="profitColumns"
-        [supplierColumns]="supplierColumns"
-        (profitSortChange)="sortProfit($event)"
-        (supplierSortChange)="sortSuppliers($event)"
-        (exportProfitRequested)="exportProfit()"
-        (exportSuppliersRequested)="exportSuppliers()"
+        [marginOption]="profit.marginOption()"
+        [profitOption]="profit.option()"
+        [profitRows]="profit.sortedRows()"
+        [supplierRows]="profit.sortedSupplierRows()"
+        [profitColumns]="profit.columns"
+        [supplierColumns]="profit.supplierColumns"
+        (profitSortChange)="profit.sortBy($event)"
+        (supplierSortChange)="profit.sortSuppliersBy($event)"
+        (exportProfitRequested)="profit.export()"
+        (exportSuppliersRequested)="profit.exportSuppliers()"
         (rowActivated)="openDetail($event)"
       />
     </div>
@@ -93,16 +93,16 @@
     <div class="tab-body">
       <app-stock-card
         [view]="viewOf(2)"
-        [option]="stockOption()"
-        [totals]="stockTotals()"
-        [filter]="stockFilter()"
-        [rows]="filteredStockRows()"
-        [hasRows]="stockRows().length > 0"
-        [columns]="stockColumns"
+        [option]="stock.option()"
+        [totals]="stock.totals()"
+        [filter]="stock.filter()"
+        [rows]="stock.filteredRows()"
+        [hasRows]="stock.rows().length > 0"
+        [columns]="stock.columns"
         (viewChange)="setView(2, $event)"
-        (filterChange)="setStockFilter($event)"
-        (sortChange)="sortStock($event)"
-        (exportRequested)="exportStock()"
+        (filterChange)="stock.setFilter($event)"
+        (sortChange)="stock.sortBy($event)"
+        (exportRequested)="stock.export()"
       />
     </div>
   </mat-tab>

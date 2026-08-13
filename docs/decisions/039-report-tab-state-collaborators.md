@@ -121,13 +121,24 @@ takes cash flow and analytics last, because they are the heaviest and because an
 carries the product-picker coupling, which is the one piece of cross-tab plumbing whose
 ownership has to be decided rather than moved.
 
-Throughout, the reports-page spec suite stays green with zero assertion changes. That
-is the check that the work is a reorganisation and not a redesign: the collaborators
-are internal, they are driven through the same page the specs already render, and a
-case that asserts what a tab shows after a period change cannot tell whether the signal
-it read lives on the component or on a collaborator the component provides. Where a
-template binding moves from `profitRows()` to something like `profit.rows()`, the
-spelling changes and the behaviour does not.
+Throughout, the reports-page spec suite stays green with zero assertion changes and no
+edit to any case body. That is the check that the work is a reorganisation and not a
+redesign.
+
+The invariant is worth stating precisely, because the obvious version of it is not
+true. The suite pins this page's behaviour two ways: through the DOM, which cannot tell
+where a signal lives, and through a small set of helpers that reach a member by NAME on
+the component instance - the chart options a fake engine never renders, a period preset,
+a filter setter. Those named reads are how the suite asserts what no rendered output
+exposes, and they see the move, because the member they name has a new owner.
+
+So the helpers route by name: a name belonging to a converted tab resolves through that
+tab's collaborator, and every other name falls through to the component as before. The
+routing map grows as this sequence proceeds and disappears when it completes. What the
+cases pass never changes, which is what keeps each of them byte-identical while the
+access path follows the member. Where a template binding moves from `profitRows()` to
+`profit.rows()`, the spelling changes and the behaviour does not; the same is true of
+the path a spec takes to reach it.
 
 The page's own file lands within, or close to, its band, and each collaborator is
 measured against the service band it now belongs to. Should any land above its alarm,

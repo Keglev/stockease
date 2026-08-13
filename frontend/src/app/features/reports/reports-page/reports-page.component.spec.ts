@@ -9,7 +9,9 @@ import {
   createReportsPageHelpers,
   productRow
 } from './reports-page.fixtures';
+import { ProfitTabState } from './profit-tab-state';
 import { ReportsPageComponent } from './reports-page.component';
+import { StockTabState } from './stock-tab-state';
 
 /*
  * The reporting page's SHELL: what belongs to the page rather than to any one tab. Tab selection
@@ -176,8 +178,22 @@ describe('ReportsPageComponent', () => {
       fixture.detectChanges();
     }
 
-    /* The callbacks one option hands ECharts, read straight off the component. */
+    /*
+     * The callbacks one option hands ECharts, read by the name the page has always called it.
+     *
+     * <p>A converted tab's option lives on that tab's collaborator rather than on the component
+     * (ADR 039), so the name is routed to its owner; every other name still reads straight off the
+     * component. The names these cases pass are unchanged, which is the point.
+     */
     function formattersOf(name: string): FormatProbe {
+      const owners: Record<string, () => FormatProbe> = {
+        marginOption: () => fixture.debugElement.injector.get(ProfitTabState).marginOption() as FormatProbe,
+        profitOption: () => fixture.debugElement.injector.get(ProfitTabState).option() as FormatProbe,
+        stockOption: () => fixture.debugElement.injector.get(StockTabState).option() as FormatProbe
+      };
+      if (owners[name]) {
+        return owners[name]();
+      }
       const page = fixture.componentInstance as unknown as Record<string, () => FormatProbe>;
       return page[name]();
     }
