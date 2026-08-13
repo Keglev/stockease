@@ -7,6 +7,7 @@ import {
   configureReportsPageTestBed,
   createReportsPageHelpers
 } from './reports-page.fixtures';
+import { LossTabState } from './loss-tab-state';
 import { ReportsPageComponent } from './reports-page.component';
 
 /*
@@ -205,12 +206,16 @@ describe('ReportsPageComponent losses tab', () => {
     expect(host().querySelector('.loss-table .deleted-hint')?.textContent?.trim()).toBe('deleted');
   });
 
-  /* Clicks a loss period preset through the component, the way the toggle group does. */
+  /*
+   * Clicks a loss period preset the way the toggle group does. The handler moved to the tab's own
+   * collaborator (ADR 039), which is where the toggle's binding now reaches too, so this drives
+   * the same code the template drives.
+   */
   async function selectLossPeriod(period: string): Promise<void> {
-    const page = fixture.componentInstance as unknown as {
-      setLossPeriod: (value: string) => void;
+    const losses = fixture.debugElement.injector.get(LossTabState) as unknown as {
+      setPeriod: (value: string) => void;
     };
-    page.setLossPeriod(period);
+    losses.setPeriod(period);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();

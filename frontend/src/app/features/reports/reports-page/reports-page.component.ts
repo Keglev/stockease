@@ -3,27 +3,19 @@ import { Observable, of } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { Sort } from '@angular/material/sort';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
   CashFlowReport,
   CashFlowTimelineBucket,
-  ChangeLogEntryResponse,
   ChangeLogResponse,
-  DueDateBucket,
-  InvoiceDueSummary,
-  LossByRemark,
-  LossReport,
   ProductProfitReport,
   StockHistoryPoint,
   SupplierProduct,
   SupplierResponse
 } from '../../../core/api/api-models';
 import { FormatService } from '../../../core/format/format.service';
-import { topNWithRemainder } from '../../../shared/chart/chart-data';
-import { bucketValueAt } from '../../../shared/chart/due-buckets';
 import { ChartFormat } from '../../../shared/chart/chart-format';
 import { ChartOption } from '../../../shared/chart/chart.component';
 import { CsvExportService } from '../../../shared/csv/csv-export.service';
@@ -41,10 +33,13 @@ import { ProfitCardComponent } from './profit-card/profit-card.component';
 import { StockCardComponent } from './stock-card/stock-card.component';
 import { SupplierProductPickerComponent } from './supplier-product-picker/supplier-product-picker.component';
 import { ReportView, ReportViewToggleComponent } from './report-view-toggle/report-view-toggle.component';
+import { ChangeTabState } from './change-tab-state';
+import { DueTabState } from './due-tab-state';
+import { LossTabState } from './loss-tab-state';
 import { ProfitTabState } from './profit-tab-state';
 import { ReportChartContext } from './report-chart-context';
 import { ReportStatus } from './report-status';
-import { matchingNameOrSku, periodRange, sortRows } from './report-tab-helpers';
+import { matchingNameOrSku, periodRange } from './report-tab-helpers';
 import { StockTabState } from './stock-tab-state';
 
 const PROFIT_TAB = 0;
@@ -62,9 +57,6 @@ const CHANGES_TAB = 5;
 const ANALYTICS_TAB = 6;
 
 const TAB_COUNT = 7;
-
-/** Sentinel for the changes tab's user select; no account can collide with it. */
-const ALL_USERS = '';
 
 const PERIODS: readonly ReportPeriod[] = ['d30', 'd90', 'd180', 'year', 'all'];
 
@@ -105,13 +97,24 @@ interface PricePoint {
   styleUrl: './reports-page.component.scss',
   // Per-tab state, scoped to the page so it is created and discarded with it (ADR 039). The two
   // shared ones come first because every tab state injects them.
-  providers: [ReportChartContext, ReportStatus, ProfitTabState, StockTabState]
+  providers: [
+    ReportChartContext,
+    ReportStatus,
+    ProfitTabState,
+    StockTabState,
+    LossTabState,
+    DueTabState,
+    ChangeTabState
+  ]
 })
 export class ReportsPageComponent implements OnInit {
   protected readonly charts = inject(ReportChartContext);
   protected readonly status = inject(ReportStatus);
   protected readonly profit = inject(ProfitTabState);
   protected readonly stock = inject(StockTabState);
+  protected readonly losses = inject(LossTabState);
+  protected readonly due = inject(DueTabState);
+  protected readonly changes = inject(ChangeTabState);
 
   private readonly reports = inject(ReportService);
   // Cross-feature, as the dashboard reads the reporting client: the change log belongs to the audit
@@ -125,11 +128,7 @@ export class ReportsPageComponent implements OnInit {
   private readonly format = inject(FormatService);
   private readonly csv = inject(CsvExportService);
 
-  protected readonly lossColumns = ['name', 'sku', 'lostUnits', 'destroyedUnits', 'lossValue'];
-
   protected readonly cashFlowColumns = ['name', 'sku', 'inflow', 'outflow', 'net'];
-  protected readonly changeColumns = ['time', 'user', 'product', 'field', 'oldValue', 'newValue'];
-
   protected readonly selectedTab = signal(PROFIT_TAB);
 
   // One entry per tab so a chosen view survives leaving the tab and coming back; charts open
@@ -139,11 +138,6 @@ export class ReportsPageComponent implements OnInit {
   // number the tab already has, and two unread booleans are cheaper than a second numbering.
   private readonly views = signal<ReportView[]>(Array<ReportView>(TAB_COUNT).fill('chart'));
 
-  protected readonly lossRows = signal<LossReport[]>([]);
-  protected readonly lossRemarkRows = signal<LossByRemark[]>([]);
-  protected readonly buckets = signal<DueDateBucket[]>([]);
-  protected readonly dueSoonRows = signal<InvoiceDueSummary[]>([]);
-  protected readonly overdueRows = signal<InvoiceDueSummary[]>([]);
   protected readonly cashFlow = signal<CashFlowReport | null>(null);
   protected readonly cashFlowMonths = signal<CashFlowTimelineBucket[]>([]);
 
@@ -160,25 +154,6 @@ export class ReportsPageComponent implements OnInit {
   protected readonly cashFlowRows = computed(() =>
     matchingNameOrSku(this.cashFlow()?.products ?? [], this.cashFlowFilter())
   );
-
-  protected readonly lossFilter = signal('');
-
-  protected readonly filteredLossRows = computed(() =>
-    matchingNameOrSku(this.lossRows(), this.lossFilter())
-  );
-
-  /** The losses tab's headline figures, on the same derivation and the same unfiltered basis. */
-  protected readonly lossTotals = computed(() => {
-    const rows = this.lossRows();
-    if (rows.length === 0) {
-      return null;
-    }
-    return {
-      value: rows.reduce((sum, row) => sum + row.lossValue, 0),
-      lost: rows.reduce((sum, row) => sum + row.lostUnits, 0),
-      destroyed: rows.reduce((sum, row) => sum + row.destroyedUnits, 0)
-    };
-  });
 
   /**
    * The totals strip, summed from the monthly buckets.
@@ -202,8 +177,6 @@ export class ReportsPageComponent implements OnInit {
   // One signal per tab rather than one shared: the two answer different questions, and a period
   // chosen for cash flow is not a period the reader asked profit for.
   protected readonly cashFlowPeriod = signal<ReportPeriod>('all');
-  protected readonly lossPeriod = signal<ReportPeriod>('all');
-  protected readonly changePeriod = signal<ReportPeriod>('all');
   protected readonly analyticsPeriod = signal<ReportPeriod>('all');
 
   /**
@@ -270,47 +243,6 @@ export class ReportsPageComponent implements OnInit {
     toPriceHistoryOption(this.priceHistory(), this.charts.context().format)
   );
 
-  protected readonly changeRows = signal<ChangeLogEntryResponse[]>([]);
-
-  /**
-   * Narrowing by the person who made the change.
-   *
-   * <p>The options come from the loaded rows rather than from a user directory. A listing of
-   * accounts would be a second endpoint, a second authorization question and a list dominated by
-   * people who have changed nothing - and this demo has two actors. The rows already name everyone
-   * who appears in them, which is exactly the set worth offering.
-   */
-  protected readonly changeUser = signal(ALL_USERS);
-  protected readonly changeFilter = signal('');
-
-  protected readonly changeUsernames = computed(() =>
-    [...new Set(this.changeRows().map((row) => row.username))].sort()
-  );
-
-  protected readonly filteredChangeRows = computed(() => {
-    const user = this.changeUser();
-    const byUser = user === ALL_USERS
-      ? this.changeRows()
-      : this.changeRows().filter((row) => row.username === user);
-    // The row's product is what the text filter reads, so the shared predicate needs it named
-    // the way every other table names it.
-    const needle = this.changeFilter().trim().toLowerCase();
-    if (!needle) {
-      return byUser;
-    }
-    return byUser.filter(
-      (row) => row.productName.toLowerCase().includes(needle) || row.sku.toLowerCase().includes(needle)
-    );
-  });
-
-  protected readonly lossOption = computed(() =>
-    toLossOption(this.lossRows(), this.charts.context().other, this.charts.context().format)
-  );
-
-  protected readonly dueOption = computed(() =>
-    toDueOption(this.buckets(), this.charts.context().format)
-  );
-
   protected readonly cashFlowOption = computed(() =>
     toCashFlowOption(this.cashFlowMonths(), this.charts.context().cashFlow, this.charts.context().format)
   );
@@ -352,32 +284,6 @@ export class ReportsPageComponent implements OnInit {
     if (tab === CASH_FLOW_TAB && view === 'table' && !this.cashFlowProductsLoaded) {
       this.loadCashFlowProducts();
     }
-  }
-
-  protected exportLosses(): void {
-    this.exportCsv(
-      'losses.csv',
-      this.lossColumns,
-      this.filteredLossRows().map((row) => [
-        row.name,
-        row.sku,
-        row.lostUnits,
-        row.destroyedUnits,
-        row.lossValue
-      ])
-    );
-  }
-
-  protected setLossFilter(value: string): void {
-    this.lossFilter.set(value);
-  }
-
-  protected setChangeFilter(value: string): void {
-    this.changeFilter.set(value);
-  }
-
-  protected setChangeUser(value: string): void {
-    this.changeUser.set(value);
   }
 
   /**
@@ -424,47 +330,6 @@ export class ReportsPageComponent implements OnInit {
     }
   }
 
-  /** Switches the changes window and refetches, since the period is a server-side filter. */
-  protected setChangePeriod(period: ReportPeriod): void {
-    // Same two guards as every other preset group on this page.
-    if (!PERIODS.includes(period) || period === this.changePeriod()) {
-      return;
-    }
-    this.changePeriod.set(period);
-    this.loadChanges();
-  }
-
-  protected exportChanges(): void {
-    this.exportCsv(
-      'changes.csv',
-      this.changeColumns,
-      // Every active narrowing at once: the period is already in the data, and the user and text
-      // filters are applied here, so the download says what the screen says.
-      this.filteredChangeRows().map((row) => [
-        // Through the same service the screen's column uses, so the file matches what was on
-        // screen instead of shipping a raw ISO timestamp beside localized numbers.
-        this.format.formatDateTime(row.createdAt),
-        row.username,
-        row.productName,
-        this.translate.instant('audit.field.' + row.field) as string,
-        row.oldValue,
-        row.newValue
-      ]),
-      'reports.changes.columns.'
-    );
-  }
-
-  /** Switches the loss window and refetches, since the period is a server-side filter. */
-  protected setLossPeriod(period: ReportPeriod): void {
-    // Same two guards as the other toggles: the group emits once with no value while it is being
-    // created, and re-picking the current preset is no reason to go back to the server.
-    if (!PERIODS.includes(period) || period === this.lossPeriod()) {
-      return;
-    }
-    this.lossPeriod.set(period);
-    this.loadLosses();
-  }
-
   /** Switches the cash-flow window and refetches, since the period is a server-side filter. */
   protected setCashFlowPeriod(period: ReportPeriod): void {
     // Two reasons to ignore an emission. The group fires once with no value at all while it is
@@ -493,10 +358,6 @@ export class ReportsPageComponent implements OnInit {
     );
   }
 
-  protected sortLosses(sort: Sort): void {
-    this.lossRows.update((rows) => sortRows(rows, sort));
-  }
-
   /** Fetches the row's own detail before opening the dialog, which is a pure presenter. */
   protected openDetail(row: ProductProfitReport): void {
     // The tab's active period, so the dialog never contradicts the table row that opened it.
@@ -518,11 +379,11 @@ export class ReportsPageComponent implements OnInit {
       case STOCK_TAB:
         return this.stock.load();
       case LOSSES_TAB:
-        return this.loadLosses();
+        return this.losses.load();
       case DUE_TAB:
-        return this.loadDue();
+        return this.due.load();
       case CHANGES_TAB:
-        return this.loadChanges();
+        return this.changes.load();
       case ANALYTICS_TAB:
         return this.loadAnalytics();
       default:
@@ -566,72 +427,6 @@ export class ReportsPageComponent implements OnInit {
         const points = toPricePoints(rows, range);
         this.priceHistory.set(points);
       },
-      error: (err: Error) => this.status.fail(err)
-    });
-  }
-
-  private loadChanges(): void {
-    this.status.error.set(null);
-    this.status.loading.set(true);
-    const range = periodRange(this.changePeriod());
-
-    this.audit.changes(range.from, range.to).subscribe({
-      next: (rows) => {
-        this.changeRows.set(rows);
-        // The user options derive from these rows, so a narrower period can retire the account the
-        // select is sitting on; falling back to all beats filtering against a name that is gone.
-        if (!rows.some((row) => row.username === this.changeUser())) {
-          this.changeUser.set(ALL_USERS);
-        }
-        this.status.loading.set(false);
-      },
-      error: (err: Error) => this.status.fail(err)
-    });
-  }
-
-  private loadLosses(): void {
-    this.status.error.set(null);
-    this.status.loading.set(true);
-    const range = periodRange(this.lossPeriod());
-
-    this.reports.losses(range.from, range.to).subscribe({
-      next: (rows) => {
-        this.lossRows.set(rows);
-        this.status.loading.set(false);
-      },
-      error: (err: Error) => this.status.fail(err)
-    });
-
-    // The breakdown is a second read of the same window, not a slice of the rows above: the
-    // per-product response carries no remark, so the grouping cannot be derived client-side.
-    // Fired alongside rather than chained, because neither answer needs the other.
-    this.reports.lossesByRemark(range.from, range.to).subscribe({
-      next: (rows) => this.lossRemarkRows.set(rows),
-      // The tab shows one error line, and it is already the one loadLosses sets on the same
-      // failure. Sharing it keeps a doubled message off the screen when the API is simply down.
-      error: (err: Error) => {
-        this.lossRemarkRows.set([]);
-        this.status.fail(err);
-      }
-    });
-  }
-
-  private loadDue(): void {
-    this.reports.dueDates().subscribe({
-      next: (rows) => {
-        this.buckets.set(rows);
-        this.status.loading.set(false);
-      },
-      error: (err: Error) => this.status.fail(err)
-    });
-
-    this.reports.dueSoon().subscribe({
-      next: (rows) => this.dueSoonRows.set(rows),
-      error: (err: Error) => this.status.fail(err)
-    });
-
-    this.reports.overdue().subscribe({
-      next: (rows) => this.overdueRows.set(rows),
       error: (err: Error) => this.status.fail(err)
     });
   }
@@ -859,70 +654,5 @@ function toCashFlowOption(
         data: months.map((month) => month.net)
       }
     ]
-  };
-}
-
-/**
- * Builds the loss-share pie, or null when nothing has actually been written off. A pie of
- * zero-valued slices draws no arcs at all, so the empty state is the honest rendering.
- */
-function toLossOption(
-  rows: LossReport[],
-  otherLabel: string,
-  format: ChartFormat
-): ChartOption | null {
-  const slices = rows.filter((row) => row.lossValue > 0);
-  if (slices.length === 0) {
-    return null;
-  }
-
-  return {
-    tooltip: { trigger: 'item', valueFormatter: (value) => format.currency(value as number) },
-    legend: { type: 'scroll', bottom: 0 },
-    series: [
-      {
-        type: 'pie',
-        radius: ['35%', '65%'],
-        data: topNWithRemainder(
-          slices.map((row) => ({ name: row.name, value: row.lossValue })),
-          otherLabel
-        )
-      }
-    ]
-  };
-}
-
-/**
- * Builds the due-date area chart with one series per invoice type. Due dates are the only
- * genuine time axis the reporting API offers, which is why this is the page's one line chart.
- */
-function toDueOption(buckets: DueDateBucket[], format: ChartFormat): ChartOption | null {
-  if (buckets.length === 0) {
-    return null;
-  }
-  const dates = [...new Set(buckets.map((bucket) => bucket.dueDate))].sort();
-  const types = [...new Set(buckets.map((bucket) => bucket.invoiceType))].sort();
-
-  return {
-    tooltip: { trigger: 'axis', valueFormatter: (value) => format.currency(value as number) },
-    // The legend sits below the axis rather than floating over it: with containLabel the grid's
-    // bottom inset has to cover the date labels AND the legend row, which the previous 24px did
-    // not, so the two drew on top of each other at both chart heights.
-    legend: { bottom: 0 },
-    grid: { left: 8, right: 24, top: 32, bottom: 48, containLabel: true },
-    // Raw ISO keys as data, the reader's format as labels - the sort above depends on the keys.
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: dates,
-      axisLabel: { formatter: (value: string) => format.date(value) }
-    },
-    yAxis: { type: 'value', axisLabel: { formatter: (value: number) => format.currency(value) } },
-    series: types.map((type) => ({
-      name: type,
-      type: 'line' as const,
-      areaStyle: {},
-      data: dates.map((date) => bucketValueAt(buckets, date, type))
-    }))
   };
 }
