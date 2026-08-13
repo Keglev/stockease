@@ -62,10 +62,6 @@ Both screens exist in English and German, light and dark. The full set is on the
 - [x] Reports page decomposed into per-tab state collaborators, bringing it inside its size band
 - [x] Automated deployment for backend, frontend and documentation
 
-**In progress**
-
-- [ ] A shared store for the list pages' repeated filter, sort and export behaviour
-
 ## Features
 
 - **Products** - master data with SKU and purchase price, soft delete with restore, and a per-product change history.
@@ -175,7 +171,7 @@ There is one environment: production. Pull requests get the full check suite and
 ## Coming next
 
 - A third shared store for the filter, sort and export behaviour the list pages repeat.
-- Resolving the pending ruling on tests that assert exception-message prose rather than the error contract.
+- Deciding whether a test may assert an exception's message text. Several do, which couples them to prose the error contract never promised - the contract is the status and the machine-readable code, and the sentence is display material.
 
 ---
 
