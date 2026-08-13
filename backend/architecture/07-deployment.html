@@ -142,8 +142,8 @@
         can be regenerated wholesale at any time.</p>
         <h2 id="health-checks">Health checks</h2>
         <p>Koyeb probes <code>GET /actuator/health</code> on port 8081 -
-        the application’s single server port
-        (<code>application.properties:40</code>), permitted anonymously
+        the application’s single server port (<code>server.port</code>
+        in <code>application.properties</code>), permitted anonymously
         in <code>SecurityConfig</code> so the probe needs no
         credentials. The grace period is 240 seconds, which is generous
         on purpose: Flyway runs its migrations before the port opens,
