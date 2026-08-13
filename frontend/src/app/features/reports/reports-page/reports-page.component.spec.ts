@@ -10,6 +10,8 @@ import {
   productRow
 } from './reports-page.fixtures';
 import { ProfitTabState } from './profit-tab-state';
+import { AnalyticsTabState } from './analytics-tab-state';
+import { CashFlowTabState } from './cash-flow-tab-state';
 import { DueTabState } from './due-tab-state';
 import { LossTabState } from './loss-tab-state';
 import { ReportsPageComponent } from './reports-page.component';
@@ -183,9 +185,11 @@ describe('ReportsPageComponent', () => {
     /*
      * The callbacks one option hands ECharts, read by the name the page has always called it.
      *
-     * <p>A converted tab's option lives on that tab's collaborator rather than on the component
-     * (ADR 039), so the name is routed to its owner; every other name still reads straight off the
-     * component. The names these cases pass are unchanged, which is the point.
+     * <p>Every tab's option lives on that tab's collaborator rather than on the component
+     * (ADR 039), so the name is routed to its owner. The conversion sequence is complete, so this
+     * map is the suite's named-access surface for the options and the fall-through below answers
+     * only for a name nobody has claimed. The names these cases pass are unchanged, which is the
+     * point.
      */
     function formattersOf(name: string): FormatProbe {
       const owners: Record<string, () => FormatProbe> = {
@@ -193,7 +197,12 @@ describe('ReportsPageComponent', () => {
         profitOption: () => fixture.debugElement.injector.get(ProfitTabState).option() as FormatProbe,
         stockOption: () => fixture.debugElement.injector.get(StockTabState).option() as FormatProbe,
         lossOption: () => fixture.debugElement.injector.get(LossTabState).option() as FormatProbe,
-        dueOption: () => fixture.debugElement.injector.get(DueTabState).option() as FormatProbe
+        dueOption: () => fixture.debugElement.injector.get(DueTabState).option() as FormatProbe,
+        cashFlowOption: () => fixture.debugElement.injector.get(CashFlowTabState).option() as FormatProbe,
+        analyticsStockOption: () =>
+          fixture.debugElement.injector.get(AnalyticsTabState).stockOption() as FormatProbe,
+        analyticsPriceOption: () =>
+          fixture.debugElement.injector.get(AnalyticsTabState).priceOption() as FormatProbe
       };
       if (owners[name]) {
         return owners[name]();

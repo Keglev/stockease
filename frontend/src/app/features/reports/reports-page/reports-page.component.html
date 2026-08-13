@@ -48,7 +48,7 @@
     <div class="tab-body">
       <!-- Presets rather than a date picker is a deliberate scope decision; a custom range is
            backlog. Each one re-queries, because the window is a server-side filter. -->
-      <app-period-toggle [value]="cashFlowPeriod()" (selected)="setCashFlowPeriod($event)" />
+      <app-period-toggle [value]="cashFlow.period()" (selected)="cashFlow.setPeriod($event)" />
 
       <!-- Scopes the TIMELINE and the totals derived from it. The supplier narrows which products
            can be searched and is never sent: cash flow by supplier would be a different report from
@@ -57,16 +57,16 @@
       <div class="search-row">
         <app-supplier-product-picker
           class="cash-flow-picker"
-          [supplierSearch]="searchSuppliers"
-          [productSearch]="searchCashFlowProducts"
-          [supplierLabel]="supplierLabel"
-          [productLabel]="productLabel"
-          [productDisabled]="cashFlowSupplier() === null"
-          (supplierSelected)="setCashFlowSupplier($event)"
-          (productSelected)="setCashFlowProduct($event)"
+          [supplierSearch]="pickers.searchSuppliers"
+          [productSearch]="cashFlow.searchProducts"
+          [supplierLabel]="pickers.supplierLabel"
+          [productLabel]="pickers.productLabel"
+          [productDisabled]="cashFlow.supplier() === null"
+          (supplierSelected)="cashFlow.setSupplier($event)"
+          (productSelected)="cashFlow.setProduct($event)"
         />
         <p class="search-scope">
-          @if (cashFlowProduct(); as product) {
+          @if (cashFlow.product(); as product) {
             {{ product.name }}
           } @else {
             {{ 'reports.cashFlow.allProducts' | translate }}
@@ -76,15 +76,15 @@
 
       <app-cash-flow-card
         [view]="viewOf(1)"
-        [option]="cashFlowOption()"
-        [totals]="cashFlowTotals()"
-        [filter]="cashFlowFilter()"
-        [rows]="cashFlowRows()"
-        [hasRows]="!!cashFlow()?.products?.length"
-        [columns]="cashFlowColumns"
+        [option]="cashFlow.option()"
+        [totals]="cashFlow.totals()"
+        [filter]="cashFlow.filter()"
+        [rows]="cashFlow.rows()"
+        [hasRows]="!!cashFlow.report()?.products?.length"
+        [columns]="cashFlow.columns"
         (viewChange)="setView(1, $event)"
-        (filterChange)="setCashFlowFilter($event)"
-        (exportRequested)="exportCashFlow()"
+        (filterChange)="cashFlow.setFilter($event)"
+        (exportRequested)="cashFlow.export()"
       />
     </div>
   </mat-tab>
@@ -181,31 +181,31 @@
       <div class="search-row">
         <app-supplier-product-picker
           class="analytics-picker"
-          [supplierSearch]="searchSuppliers"
-          [productSearch]="searchAnalyticsProducts"
-          [supplierLabel]="supplierLabel"
-          [productLabel]="productLabel"
-          [productDisabled]="analyticsSupplier() === null"
-          (supplierSelected)="setAnalyticsSupplier($event)"
-          (productSelected)="setAnalyticsProduct($event)"
+          [supplierSearch]="pickers.searchSuppliers"
+          [productSearch]="analytics.searchProducts"
+          [supplierLabel]="pickers.supplierLabel"
+          [productLabel]="pickers.productLabel"
+          [productDisabled]="analytics.supplier() === null"
+          (supplierSelected)="analytics.setSupplier($event)"
+          (productSelected)="analytics.setProduct($event)"
         />
         <button
           matButton="filled"
           type="button"
           class="analytics-show"
-          [disabled]="!canShowAnalytics()"
-          (click)="showAnalytics()"
+          [disabled]="!analytics.canShow()"
+          (click)="analytics.show()"
         >
           {{ 'reports.analytics.show' | translate }}
         </button>
       </div>
 
-      <app-period-toggle [value]="analyticsPeriod()" (selected)="setAnalyticsPeriod($event)" />
+      <app-period-toggle [value]="analytics.period()" (selected)="analytics.setPeriod($event)" />
 
       <app-analytics-card
-        [shown]="analyticsShownProductId() !== null"
-        [priceOption]="analyticsPriceOption()"
-        [stockOption]="analyticsStockOption()"
+        [shown]="analytics.shownProductId() !== null"
+        [priceOption]="analytics.priceOption()"
+        [stockOption]="analytics.stockOption()"
       />
     </div>
   </mat-tab>

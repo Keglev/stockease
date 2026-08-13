@@ -11,6 +11,7 @@ import {
   createReportsPageHelpers,
   productRow
 } from './reports-page.fixtures';
+import { AnalyticsTabState } from './analytics-tab-state';
 import { ReportsPageComponent } from './reports-page.component';
 
 /*
@@ -234,12 +235,16 @@ describe('ReportsPageComponent analytics tab', () => {
     expect(optionOf('analyticsStockOption')).toBeNull();
   });
 
-  /* Clicks an analytics period preset through the component, the way the toggle group does. */
+  /*
+   * Clicks an analytics period preset the way the toggle group does. The handler moved to the
+   * tab's own collaborator (ADR 039), which is where the toggle's binding now reaches too, so this
+   * drives the same code the template drives.
+   */
   async function selectAnalyticsPeriod(period: string): Promise<void> {
-    const page = fixture.componentInstance as unknown as {
-      setAnalyticsPeriod: (value: string) => void;
+    const analytics = fixture.debugElement.injector.get(AnalyticsTabState) as unknown as {
+      setPeriod: (value: string) => void;
     };
-    page.setAnalyticsPeriod(period);
+    analytics.setPeriod(period);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
