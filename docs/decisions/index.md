@@ -50,5 +50,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 036 - Client Token Storage and Its Accepted Threat Model](036-client-token-storage.md) - **[Cross-cutting]**
 - [ADR 037 - Translations Are Authored Per Namespace and Assembled at Build Time](037-i18n-authoring-split.md) - **[Frontend]**
 - [ADR 038 - AI-Assisted Development With Human Decision Authority](038-ai-assisted-development-workflow.md) - **[Cross-cutting]**
+- [ADR 039 - Per-Tab State Collaborators for the Reports Page](039-report-tab-state-collaborators.md) - **[Frontend]**
 
 [Back to Documentation Home](/stockease/)
