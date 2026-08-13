@@ -29,6 +29,9 @@ import { AuditService } from '../../audit/audit.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { ReportService } from '../report.service';
 import { ProfitTabState } from './profit-tab-state';
+import { ReportPeriod } from './period-toggle/period-toggle.component';
+import { AnalyticsTabState } from './analytics-tab-state';
+import { CashFlowTabState } from './cash-flow-tab-state';
 import { ChangeTabState } from './change-tab-state';
 import { DueTabState } from './due-tab-state';
 import { LossTabState } from './loss-tab-state';
@@ -587,10 +590,12 @@ export function createReportsPageHelpers(
    * Reads a chart option by the name the page has always called it; the stub renders nothing to
    * assert on.
    *
-   * <p>A converted tab's option lives on that tab's collaborator rather than on the component
-   * (ADR 039), so the name is routed to its owner and everything else falls through to the
-   * component as before. The map grows as the conversion sequence reaches each tab; the names the
-   * specs pass never change, which is what keeps this a change of access path rather than of test.
+   * <p>Every tab's option lives on that tab's collaborator rather than on the component (ADR 039),
+   * so the name is routed to its owner. The conversion sequence is COMPLETE, so the map routes
+   * every option this page has and the fall-through below is now unreachable by any name in use -
+   * it stays as the honest default for a name nobody has claimed. This map is the suite's
+   * named-access surface: the names the specs pass never changed through the whole sequence, which
+   * is what kept it a change of access path rather than of test.
    */
   function optionOf(name: string): SeriesProbe | null {
     const owners: Record<string, () => SeriesProbe | null> = {
@@ -598,7 +603,13 @@ export function createReportsPageHelpers(
       profitOption: () => getFixture().debugElement.injector.get(ProfitTabState).option() as SeriesProbe | null,
       stockOption: () => getFixture().debugElement.injector.get(StockTabState).option() as SeriesProbe | null,
       lossOption: () => getFixture().debugElement.injector.get(LossTabState).option() as SeriesProbe | null,
-      dueOption: () => getFixture().debugElement.injector.get(DueTabState).option() as SeriesProbe | null
+      dueOption: () => getFixture().debugElement.injector.get(DueTabState).option() as SeriesProbe | null,
+      cashFlowOption: () =>
+        getFixture().debugElement.injector.get(CashFlowTabState).option() as SeriesProbe | null,
+      analyticsStockOption: () =>
+        getFixture().debugElement.injector.get(AnalyticsTabState).stockOption() as SeriesProbe | null,
+      analyticsPriceOption: () =>
+        getFixture().debugElement.injector.get(AnalyticsTabState).priceOption() as SeriesProbe | null
     };
     if (owners[name]) {
       return owners[name]();
@@ -607,7 +618,14 @@ export function createReportsPageHelpers(
     return probe[name]();
   }
 
-  /* Access to the handlers the typeaheads and the Show button call. */
+  /*
+   * Access to the handlers the typeaheads and the Show button call, under the names the page has
+   * always given them.
+   *
+   * <p>Both pickers now belong to their tab's collaborator (ADR 039), so this answers with a facade
+   * over the two rather than with the component. It routes by name for the same reason
+   * {@link optionOf} does, and keeps this the suite's named-access surface for the handlers.
+   */
   function page(): {
     setAnalyticsSupplier: (value: SupplierResponse | null) => void;
     setAnalyticsProduct: (value: SupplierProduct | null) => void;
@@ -616,7 +634,17 @@ export function createReportsPageHelpers(
     setCashFlowSupplier: (value: SupplierResponse | null) => void;
     setCashFlowProduct: (value: SupplierProduct | null) => void;
   } {
-    return getFixture().componentInstance as never;
+    const injector = getFixture().debugElement.injector;
+    const analytics = injector.get(AnalyticsTabState);
+    const cashFlow = injector.get(CashFlowTabState);
+    return {
+      setAnalyticsSupplier: (value) => analytics.setSupplier(value),
+      setAnalyticsProduct: (value) => analytics.setProduct(value),
+      showAnalytics: () => analytics.show(),
+      setAnalyticsPeriod: (value) => analytics.setPeriod(value as ReportPeriod),
+      setCashFlowSupplier: (value) => cashFlow.setSupplier(value),
+      setCashFlowProduct: (value) => cashFlow.setProduct(value)
+    };
   }
 
   /*
@@ -635,15 +663,18 @@ export function createReportsPageHelpers(
 
   /*
    * Types into one of the tabs' filters, the way its input does, naming the setter as the page has
-   * always named it. Routed to its owner for the tabs already converted to a collaborator, exactly
-   * as {@link optionOf} routes the chart options.
+   * always named it. Routed to its owner exactly as {@link optionOf} routes the chart options, and
+   * complete for the same reason: every filter setter on this page now belongs to a collaborator,
+   * so this map is the suite's named-access surface for them.
    */
   async function setFilter(method: string, value: string): Promise<void> {
     const owners: Record<string, (value: string) => void> = {
       setStockFilter: (next) => getFixture().debugElement.injector.get(StockTabState).setFilter(next),
       setLossFilter: (next) => getFixture().debugElement.injector.get(LossTabState).setFilter(next),
       setChangeFilter: (next) => getFixture().debugElement.injector.get(ChangeTabState).setFilter(next),
-      setChangeUser: (next) => getFixture().debugElement.injector.get(ChangeTabState).setUser(next)
+      setChangeUser: (next) => getFixture().debugElement.injector.get(ChangeTabState).setUser(next),
+      setCashFlowFilter: (next) =>
+        getFixture().debugElement.injector.get(CashFlowTabState).setFilter(next)
     };
     if (owners[method]) {
       owners[method](value);

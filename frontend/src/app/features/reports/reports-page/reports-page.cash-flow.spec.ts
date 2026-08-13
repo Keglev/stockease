@@ -6,6 +6,7 @@ import {
   createReportsPageHelpers,
   productRow
 } from './reports-page.fixtures';
+import { CashFlowTabState } from './cash-flow-tab-state';
 import { ReportsPageComponent } from './reports-page.component';
 
 /*
@@ -225,23 +226,31 @@ describe('ReportsPageComponent cash-flow tab', () => {
     expect(reports.supplierProductTerms).toEqual(['wid']);
   });
 
-  /* Types into the cash-flow filter through the component, the way the input does. */
+  /*
+   * Types into the cash-flow filter the way the input does. The handler moved to the tab's own
+   * collaborator (ADR 039), which is where the input's binding now reaches too, so this drives the
+   * same code the template drives.
+   */
   async function setCashFlowFilter(value: string): Promise<void> {
-    const page = fixture.componentInstance as unknown as {
-      setCashFlowFilter: (value: string) => void;
+    const cashFlow = fixture.debugElement.injector.get(CashFlowTabState) as unknown as {
+      setFilter: (value: string) => void;
     };
-    page.setCashFlowFilter(value);
+    cashFlow.setFilter(value);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
   }
 
-  /* Clicks a period preset through the component, the way the toggle group does. */
+  /*
+   * Clicks a period preset the way the toggle group does. The handler moved to the tab's own
+   * collaborator (ADR 039), which is where the toggle's binding now reaches too, so this drives
+   * the same code the template drives.
+   */
   async function selectPeriod(period: string): Promise<void> {
-    const page = fixture.componentInstance as unknown as {
-      setCashFlowPeriod: (value: string) => void;
+    const cashFlow = fixture.debugElement.injector.get(CashFlowTabState) as unknown as {
+      setPeriod: (value: string) => void;
     };
-    page.setCashFlowPeriod(period);
+    cashFlow.setPeriod(period);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
