@@ -72,14 +72,28 @@ declares seven tabs - profit, cash flow, stock, losses, due dates, changes and
 analytics - and imports seven card components, one per tab body, alongside a
 period toggle, a view toggle and a supplier-product picker.
 
-Everything the cards need is computed above them. The page holds one `loading`
-signal and one `error` signal for all seven tabs, so a failure in any tab raises
-the same banner in the same place. Chart options, sorted rows, filtered rows and
-totals are all `computed` on the page and passed down. The stock card is
-representative: its totals, its chart option and its filtered rows all arrive as
-inputs, and its four outputs each answer a decision the page owns - which view
-the tab is on, the filter term the export also reads, the sort that reorders the
-page's row signal, and the download itself, which needs the CSV service.
+Everything the cards need is computed above them, but not by the page. The
+component declares ten providers and binds to them: seven tab states, one per
+tab, plus three collaborators the tabs share (ADR 039). What is left on the page
+itself is the binding - tab activation and first-load, refresh, the view toggles,
+and the profit row's drill-down, which needs the dialog.
+
+Each tab state owns that tab and nothing else: its rows, its filter, its sort,
+its period, its totals, its chart option, its loader and its export.
+`StockTabState` is representative - `rows`, `filter`, `filteredRows`, `totals`,
+`option`, then `load`, `setFilter`, `sortBy` and `export`. The stock card reads
+its inputs from that state and sends three of its four outputs straight back to
+it; the fourth, the view switch, goes to the page, because which half of a tab is
+showing is the page's business rather than the tab's.
+
+Three collaborators are shared because more than one tab reads them and no tab
+owns them.
+`ReportStatus` holds the one `loading` signal and the one `error` signal for all
+seven tabs, so a failure in any tab still raises the same banner in the same
+place, and no card carries error state of its own. `ReportPickerFeed` holds the
+supplier search and the label functions the cash-flow and analytics pickers both
+use; each of those two tabs keeps only the supplier its own product search is
+scoped to. `ReportChartContext` is the third, described below.
 
 One deliberate exception is recorded in the card itself: the stock tab's view
 toggle lives inside the card rather than beside the other tabs' toggles, because
@@ -111,11 +125,21 @@ closed with.
 **Component-scoped collaborators** carry a page concern that is too large for the
 page but has no life outside it. They are `@Injectable()` without
 `providedIn: 'root'`, listed in the component's own `providers`, and so share
-the component's lifetime. `ProductRecycleBin` is the clearest: it is provided by
-the product list, and it writes the page's own `loading` and `error` signals
-through a small host interface rather than holding its own, because one progress
-bar and one banner serve the whole page. `InvoiceDetailActions` and
+the component's lifetime. `ProductRecycleBin` is the clearest small case: it is
+provided by the product list, and it writes the page's own `loading` and `error`
+signals through a small host interface rather than holding its own, because one
+progress bar and one banner serve the whole page. `InvoiceDetailActions` and
 `InvoiceDetailReturns` follow the same pattern on the invoice detail page.
+
+The reports page is the largest use, and shows what the pattern does at scale:
+ten providers, of which seven carry one tab's state each while
+`ReportChartContext`, `ReportStatus` and `ReportPickerFeed` carry what several
+tabs read. Two rules keep that from becoming a bag of services. A collaborator is
+scoped to the component that provides it, so it is created and discarded with the
+page rather than outliving it; and the dependency runs one way - a tab state
+injects the shared three and never the page, which is why the period, sort and
+filter primitives they all use sit in a plain module (`report-tab-helpers.ts`)
+rather than on the component that hosts them.
 
 **The chart context** (`shared/chart/chart-context.ts`) exists to be a
 dependency. A chart option that read a translated label or a formatted number

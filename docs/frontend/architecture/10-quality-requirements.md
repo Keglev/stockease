@@ -78,12 +78,16 @@ what a later one renders - and because Vitest orders files differently on
 different machines, the resulting failure appears on one runner and not another,
 on the same commit.
 
-A global setup file, wired through the builder's `setupFiles` option, clears
-storage before every spec file. A file's own `beforeEach` still runs after it, so
-specs that deliberately seed storage are unaffected: they set their state after
-the slate is wiped, which is the order they already assumed. That setup is a
-safety net rather than the guarantee - a spec that depends on state it did not
-set is still incorrect.
+A global setup file, wired through the builder's `setupFiles` option, is meant to
+clear storage ahead of every spec file, and it is a safety net rather than the
+guarantee - measurably so. Under coverage instrumentation in a shared worker its
+clear was observed running for 31 of 795 tests, while a clear registered inside a
+`describe` ran every time; ADR 038 records that reproduction. Isolation is
+therefore each spec file's own responsibility, discharged by a clear inside a
+`describe`, a per-test setup helper, or a shared fixture whose clear counts for
+every spec consuming it. A file that writes storage also clears on exit, because
+an entry clear protects the file that owns it and only an exit clear protects the
+next one.
 
 ## Naming
 
