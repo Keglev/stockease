@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "HMAC-SHA256 signing secret for issued tokens. Hand-written metadata: this property is read with @Value in JwtUtil rather than bound to a @ConfigurationProperties record, so the configuration processor cannot describe it. Supplied by the environment as JWT_SECRET with deliberately no committed fallback; tests are served by the test classpath's own application.properties."
+    },
+    {
+      "name": "app.cors.allowed-origins",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Origins the API accepts browser requests from, comma-separated and without trailing slashes. Hand-written metadata: this property is read with @Value in SecurityConfig rather than bound to a @ConfigurationProperties record, so the configuration processor cannot describe it. Matched as patterns, which is what lets one entry cover the Vercel preview deployments of this account's project alongside the exact production origins."
+    }
+  ]
+}
