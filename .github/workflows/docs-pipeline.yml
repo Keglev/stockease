@@ -22,6 +22,9 @@ on:
       # entry is what runs it - the two lists move together or the config ships
       # untriggered.
       - 'lychee.toml'
+      # The same rule for the API reference: this file configures the redocly lint
+      # and bundle this build runs, so changing it must run that build.
+      - 'redocly.yaml'
   workflow_dispatch:
 
 permissions:

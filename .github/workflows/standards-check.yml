@@ -1,0 +1,43 @@
+name: Standards Check
+
+# Gives pull requests that touch only the internal standards a check of their own.
+#
+# `.github/standards/` is working material: the size-and-style standard the code is measured
+# against during the refactoring phases. Nothing builds from it and no test reads it, so there is
+# genuinely nothing to gate a change to it on.
+#
+# That would be the end of it, except the required branch-protection check is a *name*,
+# `build-and-test`, not a workflow: a PR with no job reporting under that name can never merge.
+# Before this workflow existed, a standards-only PR earned that name by running the entire backend
+# test suite - twenty-odd minutes of Spring Boot to approve an edit to a Markdown file the
+# application never reads. backend-test.yml now ignores this path, and this job supplies the
+# required name in its place.
+#
+# It checks nothing out and runs nothing, and that is the whole design: a gate that cannot fail is
+# the honest gate for a change that cannot break anything. The paths below and backend-test.yml's
+# paths-ignore are maintained as a pair, as every trigger list in this repository is - a path
+# ignored there and claimed by no workflow here would leave its PRs unmergeable.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/standards/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Report why this check exists
+        run: |
+          echo "Standards-only change: no build to gate."
+          echo "This job exists to supply the required build-and-test check name."
