@@ -110,19 +110,22 @@ The reports page shows the full pattern, including the two-stage lazy fetch.
 sequenceDiagram
   participant R as Router
   participant P as Reports page
+  participant T as Tab state
   participant S as ReportService
   participant C as Card
 
   R->>P: activate /app/reports (loadComponent)
   P->>P: ngOnInit - activate(profit tab)
-  P->>S: the profit query only
-  S-->>P: rows
-  P->>P: computed - totals, chart option, sorted rows
-  P->>C: inputs
+  P->>T: load()
+  T->>S: the profit query only
+  S-->>T: rows
+  T->>T: computed - totals, chart option, sorted rows
+  P->>C: inputs read from the tab state
   Note over P: opening another tab fetches it once,<br/>then never again
   C->>P: output - view switched to table
-  P->>S: second query, first time only
-  S-->>P: per-product breakdown
+  P->>T: loadProductsIfNeeded()
+  T->>S: second query, first time only
+  S-->>T: per-product breakdown
 ```
 
 Reading it in order:
@@ -134,16 +137,18 @@ Reading it in order:
    never open, so each tab fetches on its first activation and is left alone
    afterwards. A `Set` of activated tab indexes is the whole mechanism, and an
    explicit refresh refetches only the visible tab.
-3. **The error banner arms once.** The page holds one `loading` signal and one
-   `error` signal for all seven tabs. Every request routes its failure through
-   the same handler, so whichever tab fails raises the same banner in the same
-   place, and no card carries error state of its own.
+3. **The error banner arms once.** One `loading` signal and one `error` signal
+   serve all seven tabs, held by `ReportStatus` - a collaborator the page
+   provides and every tab state injects. Each tab reports its own failure
+   through it, so whichever tab fails raises the same banner in the same place,
+   and no card carries error state of its own.
 4. **The lazy second fetch.** The cash-flow tab's chart needs a timeline; its
    table needs a per-product breakdown that the chart never shows. The
    breakdown is therefore not fetched when the tab opens. Switching that tab's
-   view to `table` triggers it, once - a boolean guards the fetch rather than
-   the rows, so a reader who never opens the table half never pays for the
-   query. Afterwards a period change refetches both, because by then the reader
+   view to `table` triggers it, once - a boolean inside the tab state guards the
+   fetch rather than the rows, so a reader who never opens the table half never
+   pays for the query. The page decides that a view was switched; the tab state
+   decides whether that means a query. Afterwards a period change refetches both, because by then the reader
    has the table open. The dashboard's due card uses the same guard for the
    same reason.
 
