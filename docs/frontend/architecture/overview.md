@@ -63,10 +63,12 @@ There is no global store. State is held where it is used:
   and health. They are `providedIn: 'root'` and expose signals.
 - **Components** hold their own view state in signals, deriving with `computed`
   rather than recalculating in the template.
-- **Two shared signal stores** carry patterns that repeated often enough to be
+- **Three shared signal stores** carry patterns that repeated often enough to be
   worth naming: `shared/list/list-page-store.ts` for register pages that load a
-  bounded list once and page over it client-side, and
-  `shared/dialog/dialog-submit-store.ts` for dialog submission state.
+  bounded list once and page over it client-side,
+  `shared/list/paged-list-store.ts` for the pages that take one page at a time
+  from the server instead, and `shared/dialog/dialog-submit-store.ts` for dialog
+  submission state.
 
 ## Talking to the backend
 

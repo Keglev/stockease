@@ -113,6 +113,16 @@ a spec hands it a stub directly. Two behaviours are built in: a failed load
 empties the rows rather than leaving stale ones beside an error, and a
 successful load pulls the page index back when the rows behind it are gone.
 
+The pattern has a second instance for the pages whose rows come a page at a time:
+`createPagedListStore` in the same folder, which adds a `totalElements` the
+sibling has no use for, because the paginator's length here is the server's count
+of the whole result rather than something the client can derive from rows it
+holds. Its `onPage` refetches where the sibling recomputes a slice, which is the
+difference the two exist to keep apart rather than branch on. Its `loading` and
+`error` are writable rather than readonly, because on these pages the progress
+bar and the error banner have writers other than the load - the invoice export
+puts its failure in the same banner (ADR 040).
+
 **The dialog-submit store** (`shared/dialog/dialog-submit-store.ts`) is the same
 shape for form dialogs: `createDialogSubmitStore(close)` returns `pending` and
 `errorMessage` signals and a `submit` that runs the save. A failed save keeps the
@@ -156,7 +166,7 @@ a spec provides a stub for the real token. The seams used most are the feature
 services, `NotificationService`, `HealthService`, `AuthService`, `MatDialog` and
 `MatDialogRef`, `BreakpointObserver` for viewport-dependent behaviour, and
 `ThemeService` and `TranslateService` where rendering depends on them. Because
-`core/` services are ordinary root-provided classes and the two stores are
+`core/` services are ordinary root-provided classes and the three stores are
 factories taking callbacks, none of this needs a testing module of its own.
 
 ## Bootstrap
