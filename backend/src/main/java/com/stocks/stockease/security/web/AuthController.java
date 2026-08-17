@@ -3,6 +3,7 @@ package com.stocks.stockease.security.web;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,12 +69,12 @@ public class AuthController {
             String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
             return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", token));
 
-        } catch (UsernameNotFoundException e) {
-            // Generic message prevents user enumeration (do not reveal whether the username exists)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse<>(false, e.getMessage(), null));
-        } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            // Generic message prevents user enumeration (do not reveal which field was wrong)
+        } catch (UsernameNotFoundException | BadCredentialsException e) {
+            // One answer for both, down to the sentence: a caller comparing responses cannot tell a
+            // wrong password from an account that does not exist. Spring's provider already reports
+            // an unknown user as bad credentials, so the lookup above raises this only if that ever
+            // stops being true - which is exactly when the fallback must not be the path that says
+            // which of the two happened.
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(false, "Invalid username or password", null));
         } catch (RuntimeException e) {
