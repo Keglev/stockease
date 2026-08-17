@@ -171,7 +171,6 @@ There is one environment: production. Pull requests get the full check suite and
 ## Coming next
 
 - A third shared store for the filter, sort and export behaviour the list pages repeat.
-- Deciding whether a test may assert an exception's message text. Several do, which couples them to prose the error contract never promised - the contract is the status and the machine-readable code, and the sentence is display material.
 
 ---
 

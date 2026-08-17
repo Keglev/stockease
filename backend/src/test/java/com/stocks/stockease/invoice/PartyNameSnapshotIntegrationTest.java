@@ -29,6 +29,7 @@ import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
 import com.stocks.stockease.shared.EntityInUseException;
+import com.stocks.stockease.shared.ProductDeletedException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 import com.stocks.stockease.support.AbstractIntegrationTest;
@@ -275,9 +276,12 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
         // The whole batch sold, so stock is zero and the product is deletable.
         products.deleteById(item.getId(), admin);
 
+        // Pinned to the subtype, not the parent it would also satisfy: only ProductDeletedException
+        // carries PRODUCT_DELETED into the envelope, so a downgrade to EntityInUseException would
+        // drop the code a client branches on while leaving this status and message untouched.
         assertThatThrownBy(() -> movements.recordMovement(new RecordMovementCommand(item.getId(),
                 MovementReason.RETURN_FROM_CUSTOMER, 2, itemId, null, null), admin))
-                .isInstanceOf(EntityInUseException.class)
+                .isInstanceOf(ProductDeletedException.class)
                 .hasMessage("Cannot register a return for '" + item.getName()
                         + "': the product is deleted. Restore it first, then record the return.");
 
