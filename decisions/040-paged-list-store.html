@@ -8,8 +8,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Decisions ·
-008-documentation-structure · StockEase Docs</title>
+  <title>Decisions · 040-paged-list-store · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -156,58 +155,149 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="adr-008-documentation-structure">ADR 008: Documentation
-        Structure</h1>
-        <p><strong>Status</strong>: Accepted; partially superseded by
-        ADR 017 (decision-log location) <strong>Date</strong>: July 23,
-        2026</p>
+        <h1
+        id="adr-040-two-list-stores-one-for-in-memory-paging-and-one-for-server-paging">ADR
+        040: Two List Stores, One for In-Memory Paging and One for
+        Server Paging</h1>
+        <p><strong>Scope</strong>: [Frontend] <strong>Status</strong>:
+        Accepted <strong>Date</strong>: August 17, 2026</p>
         <hr />
         <h2 id="context">Context</h2>
-        <p>The documentation grew organically into a flat tree of topic
-        folders with an ad-hoc structure, a hand-written HTML template
-        and a bespoke build script. It had no stable place for runtime
-        views or cross-cutting concepts, no German entry point, and its
-        navigation was hardcoded inside the page template. With the
-        frontend moving into this repository, the documentation also
-        needed a backend/frontend split that the flat tree could not
-        express.</p>
+        <p>Four pages in this app are registers: a table, a paginator, a
+        progress bar and an error banner over a list of records. They
+        divide cleanly in two, and the line between them is where their
+        rows come from.</p>
+        <p>The customer and supplier registers fetch their register
+        whole and page over it in memory. They already share
+        <code>createListPageStore</code>, which holds the rows, computes
+        <code>visibleRows</code> as a slice, and clamps the page index
+        after a load so that deleting the last row of the last page does
+        not strand the table on a page that is no longer there.</p>
+        <p>The product catalogue and the invoice ledger ask the server
+        for one page at a time. Each carried its own <code>rows</code>,
+        <code>totalElements</code>, <code>pageIndex</code>,
+        <code>pageSize</code>, <code>loading</code> and
+        <code>error</code>, its own <code>onPage</code> that set the
+        index and size and then reloaded, and its own <code>load</code>
+        that called its paged endpoint and, on failure, emptied the rows
+        and reset the total. Two pages, the same six signals and the
+        same two methods, written twice.</p>
+        <p>The obvious move - point the two paged pages at the store the
+        other two already share - is the one the existing store’s own
+        documentation argues against. It states that its paging is
+        client-side by design, that these registers are bounded master
+        data whose pages cost a round trip to fetch and nothing to
+        slice, and it names the invoice ledger as the case where
+        server-side paging earns its cost and therefore does not use it.
+        That reasoning is still right. What it left open was what the
+        ledger should use instead, and the answer until now was “its own
+        copy of everything”.</p>
         <h2 id="decision">Decision</h2>
-        <p>Adopt <strong>arc42</strong> as the structural standard for
-        architecture documentation, organized as
-        docs/backend/architecture/ (and later frontend/) with numbered
-        sections 02-12, a one-page overview as the entry point, English
-        and German landing pages, and ADRs under 09-decisions/. The
-        presentation layer and build pipeline are ported from a proven
-        sibling project rather than redesigned: markdown renders through
-        themed HTML shells with navigation partials, and the site
-        deploys to GitHub Pages via a dedicated workflow.</p>
-        <h2 id="alternatives-considered">Alternatives considered</h2>
-        <p><strong>Keep the ad-hoc structure.</strong> Rejected: every
-        new topic required a structural decision; readers had no
-        standard map; the German market context makes arc42 - widely
-        used in German engineering organizations - the stronger
-        signal.</p>
-        <p><strong>Diátaxis.</strong> A strong framework for product
-        documentation (tutorials, how-tos, reference, explanation), but
-        this site documents architecture for technical reviewers, not
-        product usage for end users. arc42’s
-        building-blocks/runtime/decisions cut fits that audience
-        directly.</p>
-        <p><strong>Hand-written custom theme.</strong> Rejected:
-        presentation is not the portfolio’s subject. Porting a working
-        theme and pipeline keeps the effort on content.</p>
+        <p><strong>A sibling store, <code>createPagedListStore</code>,
+        alongside the existing one rather than one store with a
+        mode.</strong></p>
+        <p>The two differ in what their central method does.
+        <code>onPage</code> on the in-memory store records the new index
+        and size and lets a computed recompute a slice the page already
+        holds; <code>onPage</code> here records them and goes back to
+        the server, because the rows for the new page are not in hand.
+        That is not a branch inside one method - it is the method.</p>
+        <p>They also differ in what the paginator’s <code>length</code>
+        means. On the in-memory store it is the number of rows the
+        client holds, and the store can count it. Here it is the
+        server’s count of the whole result, which arrives on the
+        response and cannot be derived from anything the client has. So
+        the paged store exposes <code>totalElements</code> and the
+        in-memory one has no such member.</p>
+        <p><strong><code>loading</code> and <code>error</code> are
+        writable here, and stay readonly there.</strong> On the paged
+        pages these two signals are the page’s single progress bar and
+        single error banner, and work other than a page load writes to
+        them. The invoice ledger’s CSV export puts its failure in the
+        same banner rather than introducing a notification channel the
+        page does not otherwise have. The product catalogue hands both
+        signals to a page-level collaborator, whose host interface
+        declares them writable. Exposing them readonly would not make
+        those pages simpler; it would make each of them keep a second
+        flag and a second banner for the same two states, and then
+        decide which of the two the template should believe. The
+        in-memory store has no such callers, so its readonly exposure is
+        correct for its own case and does not change.</p>
+        <p><strong>Page-index clamping is deliberately out of
+        scope.</strong> The in-memory store clamps after a load because
+        it can: it holds every row, so it knows the last page the moment
+        the rows arrive. The paged store cannot answer the same question
+        the same way. It learns the total from the response to a request
+        it has already made, so an out-of-range page has already cost a
+        round trip by the time the store could react, and the reaction
+        would be a second request rather than an adjustment to a slice.
+        Whether the right behaviour is to refetch the last page, to show
+        the empty page the server returned, or to prevent the request
+        from being made at all is a question about server round trips,
+        and none of the pages has yet met the case in practice.
+        Recording it as unanswered is more honest than porting the
+        sibling’s clamp and calling the difference an oversight.</p>
+        <p>The <code>fetch</code> the store takes is a function, not a
+        service, matching the sibling’s reason: the store stays free of
+        any one feature’s API and can be given a stub in a spec. Its
+        response type is structural - <code>content</code> and
+        <code>totalElements</code> - rather than a named API model,
+        because every paged endpoint in this app answers with that shape
+        and naming the models would tie the shared store to the features
+        that use it.</p>
+        <h2 id="alternatives-rejected">Alternatives rejected</h2>
+        <p><strong>One store with a client/server flag.</strong> A
+        single factory taking a mode, branching in <code>onPage</code>
+        and in how it derives the paginator’s length. Rejected because
+        the flag would not simplify a caller: every page knows which
+        kind it is at the moment it constructs the store, so the branch
+        is decided at construction and never varies afterwards. What the
+        flag buys is one import instead of two; what it costs is that
+        both behaviours live in one body, every reader has to work out
+        which half applies to the page in front of them, and the members
+        that exist in only one mode - <code>visibleRows</code>,
+        <code>totalElements</code> - either appear on both or need a
+        union type to keep honest.</p>
+        <p><strong>Extend the existing store to cover both.</strong> Add
+        <code>totalElements</code> and a refetching path to
+        <code>createListPageStore</code>. Rejected for the same reason
+        as the flag, with an additional cost: it changes a store two
+        shipped pages already depend on, so the blast radius covers four
+        pages instead of two, and it would contradict that store’s own
+        documented argument for staying in memory.</p>
+        <p><strong>Leave the duplication.</strong> Two pages, six
+        signals and two methods each. Rejected because the duplication
+        is not incidental - the two copies had already drifted in a way
+        that mattered. Both reset the rows on a failed load; the invoice
+        ledger also reset <code>totalElements</code>, so its paginator
+        stopped offering pages that had nothing behind them, and the
+        product catalogue did not. That is the class of divergence a
+        shared store prevents, and finding it is what made the case for
+        extraction concrete rather than tidy-minded.</p>
         <h2 id="consequences">Consequences</h2>
-        <ul>
-        <li>Architecture content has a fixed home; section fills are
-        mechanical.</li>
-        <li>ADRs live inside the arc42 tree (section 9), migrated
-        append-only.</li>
-        <li>The legacy tree under docs/architecture/ is frozen and will
-        be retired once its remaining content is migrated into the arc42
-        sections.</li>
-        <li>German-language entry pages are first-class, matching the
-        project’s target audience.</li>
-        </ul>
+        <p>The invoice ledger migrates in the pull request that
+        introduces the store, which is what proves the store against a
+        real page. Its whole load path already did what the store does,
+        including the total reset on failure, so the migration changes
+        no behaviour and its spec suite passes with every assertion
+        untouched. The only spec edits are the two places that reach
+        <code>onPage</code> by name on the component instance and now
+        reach it through the store member, which is the same access-path
+        change ADR 039 describes and the same invariant: what a case
+        asserts does not move.</p>
+        <p>The product catalogue is deliberately not migrated in that
+        pull request. It carries a page-level collaborator that holds
+        its own references to <code>loading</code> and
+        <code>error</code>, so its migration has a question to answer
+        that the ledger’s did not, and answering it under the same
+        change that introduces the store would make a failure ambiguous
+        between the two. Until it migrates, the catalogue keeps its own
+        copy of the six members, and the duplication this record exists
+        to remove is half removed - which is visible, and preferable to
+        a migration whose failures could not be attributed.</p>
+        <p><code>DEFAULT_PAGE_SIZE</code> moves into the store, so the
+        two pages stop declaring their own copy of the same
+        constant.</p>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
     </main>
@@ -215,14 +305,16 @@
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#adr-008-documentation-structure"
-      id="toc-adr-008-documentation-structure">ADR 008: Documentation
-      Structure</a>
+      <li><a
+      href="#adr-040-two-list-stores-one-for-in-memory-paging-and-one-for-server-paging"
+      id="toc-adr-040-two-list-stores-one-for-in-memory-paging-and-one-for-server-paging">ADR
+      040: Two List Stores, One for In-Memory Paging and One for Server
+      Paging</a>
       <ul>
       <li><a href="#context" id="toc-context">Context</a></li>
       <li><a href="#decision" id="toc-decision">Decision</a></li>
-      <li><a href="#alternatives-considered"
-      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#alternatives-rejected"
+      id="toc-alternatives-rejected">Alternatives rejected</a></li>
       <li><a href="#consequences"
       id="toc-consequences">Consequences</a></li>
       </ul></li>
