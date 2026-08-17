@@ -93,7 +93,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 
 **Backend** - 619 test methods across 113 files, combining unit tests, Spring slices, and integration tests against real PostgreSQL through Testcontainers rather than an in-memory substitute. Module boundaries are verified on every build; a violation fails CI.
 
-**Frontend** - 916 tests across 87 files under Vitest, at 99.0% statement coverage. Component specs assert on rendered output through the real template, and dependencies are substituted at injection seams rather than by mocking modules.
+**Frontend** - 924 tests across 88 files under Vitest, at 99.0% statement coverage. Component specs assert on rendered output through the real template, and dependencies are substituted at injection seams rather than by mocking modules.
 
 Coverage thresholds gate both suites as regression floors set below what the suites achieve, so they fail on genuine loss rather than on an honest refactor. A separate check re-assembles the translation bundles from their authored sources and refuses any difference, which makes a hand-edited artifact impossible to merge.
 
