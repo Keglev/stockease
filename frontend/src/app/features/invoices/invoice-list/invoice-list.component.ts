@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterLink } from '@angular/router';
@@ -11,11 +11,10 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { InvoiceSummaryResponse } from '../../../core/api/api-models';
 import { FormatService } from '../../../core/format/format.service';
 import { CsvExportService } from '../../../shared/csv/csv-export.service';
+import { createPagedListStore } from '../../../shared/list/paged-list-store';
 import { InvoiceService } from '../invoice.service';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 import { AppDatePipe } from '../../../shared/format/app-date.pipe';
-
-const DEFAULT_PAGE_SIZE = 10;
 
 /**
  * Today as a local calendar date in the same YYYY-MM-DD shape the API sends. Comparing the two as
@@ -74,24 +73,17 @@ export class InvoiceListComponent implements OnInit {
    */
   private readonly exportColumns = [...this.displayedColumns, 'paidAt'];
 
-  protected readonly rows = signal<InvoiceSummaryResponse[]>([]);
-  protected readonly totalElements = signal(0);
-  protected readonly pageIndex = signal(0);
-  protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
-  protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
-  /** The export's own in-flight flag, separate from `loading`: the table is not reloading. */
+  // One request per page. The summary rows carry their own counterparty names, so the page no
+  // longer fetches the whole supplier and customer catalogues to join against.
+  protected readonly list = createPagedListStore<InvoiceSummaryResponse>(
+    (pageIndex, pageSize) => this.invoices.getPagedInvoices(pageIndex, pageSize)
+  );
+
+  /** The export's own in-flight flag, separate from `list.loading`: the table is not reloading. */
   protected readonly exporting = signal(false);
 
   ngOnInit(): void {
-    this.load();
-  }
-
-  /** Server-side paging: every page or size change refetches rather than slicing locally. */
-  protected onPage(event: PageEvent): void {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-    this.load();
+    this.list.load();
   }
 
   /**
@@ -169,7 +161,7 @@ export class InvoiceListComponent implements OnInit {
    */
   protected exportCsv(): void {
     this.exporting.set(true);
-    this.error.set(null);
+    this.list.error.set(null);
 
     this.invoices.getAll().subscribe({
       next: (all) => {
@@ -191,28 +183,7 @@ export class InvoiceListComponent implements OnInit {
       // Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app.
       error: (err: Error) => {
         this.exporting.set(false);
-        this.error.set(err.message);
-      }
-    });
-  }
-
-  private load(): void {
-    this.loading.set(true);
-    this.error.set(null);
-
-    // One request per page. The summary rows carry their own counterparty names, so the page no
-    // longer fetches the whole supplier and customer catalogues to join against.
-    this.invoices.getPagedInvoices(this.pageIndex(), this.pageSize()).subscribe({
-      next: (invoices) => {
-        this.rows.set(invoices.content);
-        this.totalElements.set(invoices.totalElements);
-        this.loading.set(false);
-      },
-      error: (err: Error) => {
-        this.rows.set([]);
-        this.totalElements.set(0);
-        this.error.set(err.message);
-        this.loading.set(false);
+        this.list.error.set(err.message);
       }
     });
   }

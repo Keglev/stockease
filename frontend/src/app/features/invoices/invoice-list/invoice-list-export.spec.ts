@@ -173,8 +173,8 @@ describe('InvoiceListComponent', () => {
       await setUp(many);
       setFormats('en', 'auto');
 
-      const page = fixture.componentInstance as unknown as { onPage: (e: unknown) => void };
-      page.onPage({ pageIndex: 1, pageSize: 10 });
+      const page = fixture.componentInstance as unknown as { list: { onPage: (e: unknown) => void } };
+      page.list.onPage({ pageIndex: 1, pageSize: 10 });
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();

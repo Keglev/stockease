@@ -7,7 +7,7 @@
   <div class="toolbar-actions">
     <!-- Same affordance as each reports tab's: outlined, download icon, hidden while there is
          nothing to export. -->
-    @if (rows().length > 0) {
+    @if (list.rows().length > 0) {
       <button
         matButton="outlined"
         type="button"
@@ -26,17 +26,17 @@
   </div>
 </div>
 
-@if (loading()) {
+@if (list.loading()) {
   <mat-progress-bar mode="indeterminate" [attr.aria-label]="'invoices.loading' | translate" />
 }
 
 <!-- Rendered verbatim: this text comes from the backend, which has no i18n. -->
-@if (error(); as message) {
+@if (list.error(); as message) {
   <p class="invoice-error" role="alert">{{ message }}</p>
 }
 
 <div class="table-scroll">
-  <table mat-table [dataSource]="rows()" class="invoice-table">
+  <table mat-table [dataSource]="list.rows()" class="invoice-table">
     <ng-container matColumnDef="id">
       <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.id' | translate }}</th>
       <td mat-cell *matCellDef="let invoice">{{ invoice.id }}</td>
@@ -96,14 +96,14 @@
   </table>
 </div>
 
-@if (!loading() && !error() && rows().length === 0) {
+@if (!list.loading() && !list.error() && list.rows().length === 0) {
   <p class="invoice-empty">{{ 'invoices.empty' | translate }}</p>
 }
 
 <mat-paginator
-  [length]="totalElements()"
-  [pageIndex]="pageIndex()"
-  [pageSize]="pageSize()"
+  [length]="list.totalElements()"
+  [pageIndex]="list.pageIndex()"
+  [pageSize]="list.pageSize()"
   [pageSizeOptions]="[10, 25, 50]"
-  (page)="onPage($event)"
+  (page)="list.onPage($event)"
 />
