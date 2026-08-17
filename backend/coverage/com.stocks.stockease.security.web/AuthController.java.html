@@ -3,6 +3,7 @@
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,35 +51,35 @@ public class AuthController {
     @PostMapping(&quot;/login&quot;)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-<span class="fc bfc" id="L53" title="All 4 branches covered.">            if (loginRequest.getUsername().isBlank() || loginRequest.getPassword().isBlank()) {</span>
-<span class="fc" id="L54">                return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
-<span class="fc" id="L55">                    .body(new ApiResponse&lt;&gt;(false, &quot;Username and password cannot be blank&quot;, null));</span>
+<span class="fc bfc" id="L54" title="All 4 branches covered.">            if (loginRequest.getUsername().isBlank() || loginRequest.getPassword().isBlank()) {</span>
+<span class="fc" id="L55">                return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L56">                    .body(new ApiResponse&lt;&gt;(false, &quot;Username and password cannot be blank&quot;, null));</span>
             }
 
-<span class="fc" id="L58">            authenticationManager.authenticate(</span>
+<span class="fc" id="L59">            authenticationManager.authenticate(</span>
                 new UsernamePasswordAuthenticationToken(
-<span class="fc" id="L60">                    loginRequest.getUsername(),</span>
-<span class="fc" id="L61">                    loginRequest.getPassword()</span>
+<span class="fc" id="L61">                    loginRequest.getUsername(),</span>
+<span class="fc" id="L62">                    loginRequest.getPassword()</span>
                 )
             );
 
-<span class="fc" id="L65">            User user = userRepository.findByUsername(loginRequest.getUsername())</span>
-<span class="fc" id="L66">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;User not found&quot;));</span>
+<span class="fc" id="L66">            User user = userRepository.findByUsername(loginRequest.getUsername())</span>
+<span class="fc" id="L67">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;User not found&quot;));</span>
 
-<span class="fc" id="L68">            String token = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
-<span class="fc" id="L69">            return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Login successful&quot;, token));</span>
+<span class="fc" id="L69">            String token = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
+<span class="fc" id="L70">            return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Login successful&quot;, token));</span>
 
-<span class="fc" id="L71">        } catch (UsernameNotFoundException e) {</span>
-            // Generic message prevents user enumeration (do not reveal whether the username exists)
-<span class="fc" id="L73">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
-<span class="fc" id="L74">                .body(new ApiResponse&lt;&gt;(false, e.getMessage(), null));</span>
-<span class="fc" id="L75">        } catch (org.springframework.security.authentication.BadCredentialsException e) {</span>
-            // Generic message prevents user enumeration (do not reveal which field was wrong)
-<span class="fc" id="L77">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
-<span class="fc" id="L78">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid username or password&quot;, null));</span>
-<span class="fc" id="L79">        } catch (RuntimeException e) {</span>
-<span class="fc" id="L80">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
-<span class="fc" id="L81">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred&quot;, null));</span>
+<span class="fc" id="L72">        } catch (UsernameNotFoundException | BadCredentialsException e) {</span>
+            // One answer for both, down to the sentence: a caller comparing responses cannot tell a
+            // wrong password from an account that does not exist. Spring's provider already reports
+            // an unknown user as bad credentials, so the lookup above raises this only if that ever
+            // stops being true - which is exactly when the fallback must not be the path that says
+            // which of the two happened.
+<span class="fc" id="L78">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="fc" id="L79">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid username or password&quot;, null));</span>
+<span class="fc" id="L80">        } catch (RuntimeException e) {</span>
+<span class="fc" id="L81">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="fc" id="L82">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred&quot;, null));</span>
         }
     }
 }
