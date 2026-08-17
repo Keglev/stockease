@@ -121,4 +121,14 @@ preferable to a migration whose failures could not be attributed.
 `DEFAULT_PAGE_SIZE` moves into the store, so the two pages stop declaring their own copy
 of the same constant.
 
+## Amendment - 17 August 2026
+
+The closing sentence of Consequences reads as though the constant had already
+left both pages. It describes the end state, not the state this record merged
+in. On the day it merged the constant had moved into the store and the invoice
+ledger had stopped declaring its own copy, while the product catalogue still
+declared one - which follows from the paragraph above it, where the catalogue is
+deliberately left for its own change. The catalogue's copy goes when the
+catalogue migrates.
+
 [Back to Decisions Index](index.md)

@@ -66,10 +66,12 @@ Es gibt keinen globalen Store. Zustand liegt dort, wo er gebraucht wird:
   und Health-Status. Sie sind `providedIn: 'root'` und stellen Signals bereit.
 - **Komponenten** halten ihren eigenen Ansichtszustand in Signals und leiten mit
   `computed` ab, statt im Template neu zu berechnen.
-- **Zwei gemeinsame Signal-Stores** tragen Muster, die haeufig genug auftraten,
+- **Drei gemeinsame Signal-Stores** tragen Muster, die haeufig genug auftraten,
   um benannt zu werden: `shared/list/list-page-store.ts` fuer Registerseiten,
-  die eine begrenzte Liste einmal laden und clientseitig blaettern, sowie
-  `shared/dialog/dialog-submit-store.ts` fuer den Absendezustand von Dialogen.
+  die eine begrenzte Liste einmal laden und clientseitig blaettern,
+  `shared/list/paged-list-store.ts` fuer Seiten, die stattdessen jeweils eine
+  Seite vom Server holen, sowie `shared/dialog/dialog-submit-store.ts` fuer den
+  Absendezustand von Dialogen.
 
 ## Kommunikation mit dem Backend
 

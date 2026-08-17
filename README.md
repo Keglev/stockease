@@ -57,7 +57,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 - [x] Change audit trail and read-only reporting
 - [x] Stateless JWT authentication with role-based access control
 - [x] Angular frontend covering every domain area, bilingual EN/DE
-- [x] arc42 architecture documentation for both tiers, plus 39 decision records
+- [x] arc42 architecture documentation for both tiers, plus 40 decision records
 - [x] CI gating both suites, coverage thresholds, and an i18n drift check
 - [x] Reports page decomposed into per-tab state collaborators, bringing it inside its size band
 - [x] Automated deployment for backend, frontend and documentation
@@ -82,7 +82,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 
 ## Documentation
 
-- **[Architecture site](https://keglev.github.io/stockease/)** - arc42 documentation for both tiers, module reference, and 39 Architecture Decision Records. Backend entry pages are bilingual EN/DE.
+- **[Architecture site](https://keglev.github.io/stockease/)** - arc42 documentation for both tiers, module reference, and 40 Architecture Decision Records. Backend entry pages are bilingual EN/DE.
 - **[Backend API reference](https://keglev.github.io/stockease/backend/api/index.html)** - the REST contract, generated from the OpenAPI specification by Redocly and published by CI. Neither the specification nor a Swagger UI is generated from code; ADR 038 records why.
 - **[OpenAPI specification](docs/backend/api/openapi.yaml)** - the document itself, for readers who want to consume the contract rather than read it: it generates the frontend's types and is what the reference above is built from.
 - **[Backend coverage report](https://keglev.github.io/stockease/backend/coverage/index.html)** - JaCoCo, republished by CI on every run that changes it.
