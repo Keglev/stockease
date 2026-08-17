@@ -22,12 +22,12 @@
   }
 </div>
 
-@if (loading()) {
+@if (list.loading()) {
   <mat-progress-bar mode="indeterminate" [attr.aria-label]="'products.loading' | translate" />
 }
 
 <!-- Rendered verbatim: this text comes from the backend envelope, which has no i18n. -->
-@if (error(); as message) {
+@if (list.error(); as message) {
   <p class="product-error" role="alert">{{ message }}</p>
 }
 
@@ -144,7 +144,7 @@
   </table>
 </div>
 
-@if (!loading() && !error() && visibleRows().length === 0) {
+@if (!list.loading() && !list.error() && visibleRows().length === 0) {
   <p class="product-empty">
     {{ (bin.showDeleted() ? 'products.deletedEmpty' : 'products.empty') | translate }}
   </p>
@@ -154,10 +154,10 @@
      nothing. It returns with the live view. -->
 @if (!bin.showDeleted()) {
   <mat-paginator
-    [length]="totalElements()"
-    [pageIndex]="pageIndex()"
-    [pageSize]="pageSize()"
+    [length]="list.totalElements()"
+    [pageIndex]="list.pageIndex()"
+    [pageSize]="list.pageSize()"
     [pageSizeOptions]="[10, 25, 50]"
-    (page)="onPage($event)"
+    (page)="list.onPage($event)"
   />
 }

@@ -105,7 +105,7 @@ describe('createPagedListStore', () => {
     expect(store.loading()).toBe(true);
   });
 
-  it('error_writtenByTheirOwner_holdsUntilTheNextLoad', () => {
+  it('error_writtenByItsOwner_isVisibleOnTheStore', () => {
     // The page's one banner: the invoice export writes it directly, so it has to be settable from
     // outside the store and survive until a load clears it.
     const store = createPagedListStore(() => of(page(0, 10, 1)));

@@ -38,6 +38,10 @@ describe('ProductListComponent', () => {
     await openRowMenuOf(fixture, rowIndex);
   }
 
+  function rangeLabel(): string {
+    return host().querySelector('.mat-mdc-paginator-range-label')?.textContent?.trim() ?? '';
+  }
+
   async function setUp(
     response: Observable<PaginatedProducts>,
     role: 'ADMIN' | 'USER' = 'ADMIN'
@@ -89,6 +93,24 @@ describe('ProductListComponent', () => {
 
     expect(stub.calls.length).toBe(2);
     expect(stub.calls[1]).toEqual({ page: 1, size: 10 });
+  });
+
+  it('pageChange_requestFails_paginatorStopsCountingRowsThatAreGone', async () => {
+    await setUp(of(pageWith(['Laptop'], 100)));
+    expect(rangeLabel()).toContain('100');
+
+    // A count that outlives the rows it counted misreads the failure for the operator: an error
+    // banner over an empty table, with the paginator still offering ten pages of a hundred
+    // products, says the catalogue is intact and only this page went missing. Nothing is known
+    // about the catalogue after a failed request, and the paginator has to say so.
+    stub.response = throwError(() => new Error('Authentication required.'));
+
+    host().querySelector<HTMLButtonElement>('.mat-mdc-paginator-navigation-next')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(rangeLabel()).toBe('0 of 0');
   });
 
   it('render_adminRole_showsCreateButton', async () => {

@@ -1,10 +1,10 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
@@ -24,12 +24,11 @@ import {
   ProductEditDialogData,
   ProductEditMode
 } from '../product-edit-dialog/product-edit-dialog.component';
+import { createPagedListStore } from '../../../shared/list/paged-list-store';
 import { ProductService } from '../product.service';
 import { ProductRecycleBin } from './product-recycle-bin';
 import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
-
-const DEFAULT_PAGE_SIZE = 10;
 
 /**
  * The product catalogue: a paged list of live products, plus an admin-only view of deleted ones.
@@ -80,12 +79,9 @@ export class ProductListComponent implements OnInit {
     'actions'
   ];
 
-  protected readonly rows = signal<ProductResponse[]>([]);
-  protected readonly totalElements = signal(0);
-  protected readonly pageIndex = signal(0);
-  protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
-  protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
+  protected readonly list = createPagedListStore<ProductResponse>(
+    (pageIndex, pageSize) => this.products.getPagedProducts(pageIndex, pageSize)
+  );
 
   // The composition point: which of the two views the table is showing. It stays here because it
   // is the only member that reads both sides.
@@ -93,26 +89,19 @@ export class ProductListComponent implements OnInit {
     this.bin.showDeleted() ? this.bin.deletedColumns : this.displayedColumns
   );
   protected readonly visibleRows = computed(() =>
-    this.bin.showDeleted() ? this.bin.deletedRows() : this.rows()
+    this.bin.showDeleted() ? this.bin.deletedRows() : this.list.rows()
   );
 
   constructor() {
     this.bin.connect({
-      loading: this.loading,
-      error: this.error,
-      reloadLive: () => this.load()
+      loading: this.list.loading,
+      error: this.list.error,
+      reloadLive: () => this.list.load()
     });
   }
 
   ngOnInit(): void {
-    this.load();
-  }
-
-  /** Server-side paging: every page or size change refetches rather than slicing locally. */
-  protected onPage(event: PageEvent): void {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-    this.load();
+    this.list.load();
   }
 
   protected openCreate(): void {
@@ -122,7 +111,7 @@ export class ProductListComponent implements OnInit {
       .subscribe((created: ProductResponse | undefined) => {
         if (created) {
           this.notifications.success('products.created');
-          this.load();
+          this.list.load();
         }
       });
   }
@@ -138,7 +127,7 @@ export class ProductListComponent implements OnInit {
           this.notifications.success(
             mode === 'price' ? 'products.priceChanged' : 'products.renamed'
           );
-          this.load();
+          this.list.load();
         }
       });
   }
@@ -169,27 +158,9 @@ export class ProductListComponent implements OnInit {
     this.products.remove(product.id).subscribe({
       next: (message) => {
         this.notifications.success(message);
-        this.load();
+        this.list.load();
       },
       error: (err: Error) => this.notifications.error(err.message)
-    });
-  }
-
-  private load(): void {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.products.getPagedProducts(this.pageIndex(), this.pageSize()).subscribe({
-      next: (page) => {
-        this.rows.set(page.content);
-        this.totalElements.set(page.totalElements);
-        this.loading.set(false);
-      },
-      error: (err: Error) => {
-        this.rows.set([]);
-        this.error.set(err.message);
-        this.loading.set(false);
-      }
     });
   }
 }
