@@ -94,7 +94,7 @@ class AuthControllerTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(401);
         assertThat(body.isSuccess()).isFalse();
-        assertThat(body.getMessage()).isEqualTo("User not found");
+        assertThat(body.getMessage()).isEqualTo("Invalid username or password");
     }
 
     @Test
