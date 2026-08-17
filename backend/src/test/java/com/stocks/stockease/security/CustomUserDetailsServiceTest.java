@@ -13,7 +13,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
 
 /**
