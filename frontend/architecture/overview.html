@@ -220,10 +220,12 @@
         <li><strong>Components</strong> hold their own view state in
         signals, deriving with <code>computed</code> rather than
         recalculating in the template.</li>
-        <li><strong>Two shared signal stores</strong> carry patterns
+        <li><strong>Three shared signal stores</strong> carry patterns
         that repeated often enough to be worth naming:
         <code>shared/list/list-page-store.ts</code> for register pages
-        that load a bounded list once and page over it client-side, and
+        that load a bounded list once and page over it client-side,
+        <code>shared/list/paged-list-store.ts</code> for the pages that
+        take one page at a time from the server instead, and
         <code>shared/dialog/dialog-submit-store.ts</code> for dialog
         submission state.</li>
         </ul>

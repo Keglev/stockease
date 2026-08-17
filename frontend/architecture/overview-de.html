@@ -224,12 +224,13 @@
         <li><strong>Komponenten</strong> halten ihren eigenen
         Ansichtszustand in Signals und leiten mit <code>computed</code>
         ab, statt im Template neu zu berechnen.</li>
-        <li><strong>Zwei gemeinsame Signal-Stores</strong> tragen
+        <li><strong>Drei gemeinsame Signal-Stores</strong> tragen
         Muster, die haeufig genug auftraten, um benannt zu werden:
         <code>shared/list/list-page-store.ts</code> fuer Registerseiten,
         die eine begrenzte Liste einmal laden und clientseitig
-        blaettern, sowie
-        <code>shared/dialog/dialog-submit-store.ts</code> fuer den
+        blaettern, <code>shared/list/paged-list-store.ts</code> fuer
+        Seiten, die stattdessen jeweils eine Seite vom Server holen,
+        sowie <code>shared/dialog/dialog-submit-store.ts</code> fuer den
         Absendezustand von Dialogen.</li>
         </ul>
         <h2 id="kommunikation-mit-dem-backend">Kommunikation mit dem

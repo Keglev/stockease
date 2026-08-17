@@ -264,6 +264,19 @@
         rows rather than leaving stale ones beside an error, and a
         successful load pulls the page index back when the rows behind
         it are gone.</p>
+        <p>The pattern has a second instance for the pages whose rows
+        come a page at a time: <code>createPagedListStore</code> in the
+        same folder, which adds a <code>totalElements</code> the sibling
+        has no use for, because the paginator’s length here is the
+        server’s count of the whole result rather than something the
+        client can derive from rows it holds. Its <code>onPage</code>
+        refetches where the sibling recomputes a slice, which is the
+        difference the two exist to keep apart rather than branch on.
+        Its <code>loading</code> and <code>error</code> are writable
+        rather than readonly, because on these pages the progress bar
+        and the error banner have writers other than the load - the
+        invoice export puts its failure in the same banner (ADR
+        040).</p>
         <p><strong>The dialog-submit store</strong>
         (<code>shared/dialog/dialog-submit-store.ts</code>) is the same
         shape for form dialogs:
@@ -323,8 +336,8 @@
         behaviour, and <code>ThemeService</code> and
         <code>TranslateService</code> where rendering depends on them.
         Because <code>core/</code> services are ordinary root-provided
-        classes and the two stores are factories taking callbacks, none
-        of this needs a testing module of its own.</p>
+        classes and the three stores are factories taking callbacks,
+        none of this needs a testing module of its own.</p>
         <h2 id="bootstrap">Bootstrap</h2>
         <p><code>app.config.ts</code> is the single composition root:
         the router with the route table, <code>HttpClient</code> with
