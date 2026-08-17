@@ -277,9 +277,9 @@ describe('InvoiceListComponent', () => {
     await setUp(Array.from({ length: 25 }, (unused, index) => invoice({ id: index + 1 })));
 
     const page = fixture.componentInstance as unknown as {
-      onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void;
+      list: { onPage: (event: { pageIndex: number; pageSize: number; length: number }) => void };
     };
-    page.onPage({ pageIndex: 2, pageSize: 5, length: 25 });
+    page.list.onPage({ pageIndex: 2, pageSize: 5, length: 25 });
     fixture.detectChanges();
     await fixture.whenStable();
 
