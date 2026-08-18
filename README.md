@@ -170,7 +170,7 @@ There is one environment: production. Pull requests get the full check suite and
 
 ## Coming next
 
-- A shared store for the server-paged lists. The customer and supplier registers already share one, but it pages in memory over a register fetched whole; the product catalogue and the invoice ledger each carry their own page index, page size, total and load state, because their pages come from the server one at a time.
+- The frontend renders backend error text verbatim, so a German operator reads English sentences. Closing that means the backend naming each failure with a machine-readable code and the frontend translating from it, which would supersede the two-code stance the current API records.
 
 ---
 
