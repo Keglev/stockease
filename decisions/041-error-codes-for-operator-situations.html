@@ -8,7 +8,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Decisions · 007-modular-monolith · StockEase Docs</title>
+  <title>Decisions ·
+041-error-codes-for-operator-situations · StockEase Docs</title>
 
   <!-- Set the theme before the stylesheet paints, otherwise the page flashes
        the default theme for one frame before the saved choice applies. -->
@@ -156,74 +157,153 @@
 
     <main class="content" id="main">
       <article class="doc-body">
-        <h1 id="adr-007-modular-monolith-with-spring-modulith">ADR 007:
-        Modular Monolith with Spring Modulith</h1>
-        <p><strong>Status</strong>: Accepted <strong>Date</strong>: July
-        23, 2026</p>
+        <h1
+        id="adr-041-error-codes-name-operator-situations-and-the-client-translates-them">ADR
+        041: Error Codes Name Operator Situations, and the Client
+        Translates Them</h1>
+        <p><strong>Scope</strong>: [Cross-cutting]
+        <strong>Status</strong>: Accepted <strong>Date</strong>: August
+        18, 2026</p>
         <hr />
         <h2 id="context">Context</h2>
-        <p>The system has clearly separable domains (product, invoice,
-        movement, audit, reporting) but one database, shared
-        transactions, and free-tier hosting. The question is how to get
-        real boundaries without distributed-system costs.</p>
+        <p>The interface ships in English and German and switches at
+        runtime. Error sentences do not: a German operator reads English
+        whenever something fails. A survey of the whole error path
+        measured where that happens and what stands in the way of fixing
+        it.</p>
+        <p>A backend-origin message can reach the operator on thirteen
+        surfaces - seven page error banners, four dialog inline errors,
+        the login form, and one notification surface reached from eleven
+        components. The HTTP interceptor passes the backend sentence
+        through unchanged, and the pages render it. Several templates
+        say so about themselves: the text comes from the backend, which
+        has no i18n.</p>
+        <p>The exception handler declares eighteen families. Their
+        envelope messages divide three ways: seven pass the exception
+        message through verbatim, two prefix it, and nine author a
+        sentence in the handler and discard the exception one. Only the
+        first nine carry text the project wrote about its own domain;
+        the remaining nine are handler or framework text about
+        protocol-level failures.</p>
+        <p>Those nine families are constructed from seventy places in
+        project code. <strong>Forty-three of the seventy interpolate a
+        runtime value</strong> - a product name, an SKU, a quantity, an
+        invoice number, an identifier - and twenty-seven are fixed
+        literals. That ratio is the most consequential number in the
+        survey, and it rules out the cheap answer before anything else
+        is considered.</p>
+        <p>Two machine codes exist today, PRODUCT_DELETED and
+        INSUFFICIENT_STOCK, and exactly one frontend site branches on
+        them: the return flow on the invoice detail page. One other site
+        substitutes a translated sentence by sniffing HTTP status - the
+        product recycle bin, on 409 - because no code names the
+        situation it needs. Its own comment gives the reason: the
+        backend text names the colliding attribute but is untranslated,
+        and the operator can act on it. That workaround is correct only
+        because the restore endpoint has a single 409 producer. Give it
+        two and the substituted sentence is wrong for one of them,
+        silently. It is this record design, implemented once, without
+        the mechanism that would make it safe.</p>
         <h2 id="decision">Decision</h2>
-        <p><strong>One deployable, enforced modules.</strong> The
-        codebase is organized package-per-module (product, supplier,
-        invoice, movement, audit, customer, security, shared, report,
-        plus config for global infrastructure) under Spring Modulith.
-        Module anatomy: the root package is the exposed API (entities,
-        enums, services, commands, events), repositories live in an
-        internal subpackage, controllers and single-consumer DTOs in a
-        web subpackage. A boundary test verifies the module structure on
-        every build without booting a context - boundaries are law, not
-        convention. A verification lesson is part of this decision’s
-        record: the base package itself is an implicit module and is
-        verified too; there is no exemption-by-location anywhere in the
-        tree.</p>
-        <p><strong>Cross-module communication is calls forward, events
-        backward.</strong> Modules call each other’s exposed services in
-        the natural dependency direction. Where a call would create a
-        cycle - invoice needing movement while movement already calls
-        invoice - the dependency is inverted with an application event:
-        invoice publishes, movement listens. Event payloads never import
-        the consuming module’s types; shared vocabulary is mirrored by
-        name.</p>
-        <p><strong>Listeners are synchronous where atomicity
-        matters.</strong> The invoice-close listener books stock inside
-        the closing transaction: close and bookings commit or roll back
-        together. Deletion vetoes are synchronous listeners pinned to
-        run before all other listeners, throwing inside the deleting
-        transaction to roll it back whole.</p>
-        <p><strong>No message broker.</strong> Kafka was evaluated and
-        deferred: it solves asynchronous messaging between systems,
-        while this is a single deployable with one database where the
-        interesting flows must share a transaction. A broker would add
-        infrastructure the hosting cannot carry and would read as
-        resume-driven design. Adoption triggers are named: multiple
-        deployables, consumers outside the transaction boundary, or
-        event streaming to external systems.</p>
-        <h2 id="alternatives-considered">Alternatives considered</h2>
-        <p><strong>Microservices.</strong> Rejected: distributed
-        transactions or sagas for flows that are naturally atomic,
-        per-service infrastructure the free tier cannot host, and no
-        organizational driver - one developer, one deployment unit.</p>
-        <p><strong>Plain packages without enforcement.</strong>
-        Rejected: unverified boundaries decay silently; the entire value
-        of the module structure is that violations fail the build.</p>
-        <p><strong>Asynchronous module listeners for stock
-        booking.</strong> Rejected for the close flow: booking must be
-        atomic with the close. Asynchronous listening remains available
-        where eventual consistency is acceptable.</p>
+        <p><strong>Codes are added selectively, to situations that reach
+        a screen in normal operation and leave the operator a distinct
+        action.</strong> This is not a new criterion. ApiErrorCodes
+        already states it - a code is warranted where a status alone
+        leaves the client unable to tell apart two situations needing
+        different guidance - and this record applies it across the
+        surveyed families rather than case by case as each arose. The
+        survey found five families meeting it that carry no code today:
+        illegal argument, invalid movement, invoice state, entity in
+        use, and duplicate resource. With the two already coded, seven
+        families are in scope.</p>
+        <p><strong>A code names a SITUATION, not an exception class and
+        not a family.</strong> The families are an implementation detail
+        of where a failure is raised; the operator situation is what a
+        translated sentence has to speak to. A family raised from
+        sixteen places may hold several distinct situations or only one,
+        and the number is a measurement each phase makes before naming
+        anything. This record deliberately does not enumerate the
+        roster: naming codes here, from a survey that counted throw
+        sites rather than situations, would publish a guess as a
+        contract.</p>
+        <p><strong>The error envelope gains an optional params
+        object</strong> - flat, string keys to string values - carrying
+        the runtime values a parameterised sentence interpolates, so the
+        client renders its own translated template with the same values
+        in it. Forty-three of seventy sites need this; without it a code
+        identifies the situation and still cannot produce the
+        sentence.</p>
+        <p><strong>The message field stays exactly as it is, as the
+        universal fallback.</strong> The client translates from the code
+        where it knows one and falls through to the message where it
+        does not. Absent and unknown codes are the same case, which is
+        what the client error type already documents.</p>
+        <p><strong>Delivery is phased, family by family</strong>, each
+        phase measuring its own situations, adding its codes and their
+        translations, and converting the sites that raise them. This
+        record authorises the mechanism and the criterion. It does not
+        authorise a single sweeping change, and nothing here needs to
+        ship at once.</p>
+        <h2 id="alternatives-rejected">Alternatives rejected</h2>
+        <p><strong>Code every family.</strong> Eighteen codes, one per
+        handler. Rejected because most families fail the criterion they
+        would be granted a code under. Several reach no screen in normal
+        operation - they need a hand-built request or a client bug to
+        fire - and translating a sentence no operator sees buys nothing.
+        Others reach a screen and leave the operator nothing to do but
+        read: a 404 says the record is gone, and the catch-all advice is
+        already the whole action. Codes on those are contract surface
+        with no client behind it, and every one of them is a term the
+        API can never quietly change.</p>
+        <p><strong>Message keys instead of codes.</strong> Have the
+        backend send a key and let the client look it up. Rejected on
+        the ratio: <strong>43 of 70 sites are parameterised, and a key
+        without its values cannot render the sentence.</strong> A key
+        plus values is a code plus params with the naming inverted - and
+        inverted the wrong way, because a key hard-codes one client
+        translation namespace into the API contract, where a code names
+        the situation and leaves every client free to phrase it.</p>
+        <p><strong>Translate on the backend.</strong> Rejected on two
+        survey findings. The backend has no i18n by design, so this is a
+        new subsystem, a locale on every request, and a bundle to keep
+        in step with the frontend one. And it would not finish the job:
+        some failures never carry a backend sentence to begin with - the
+        security filter chain and the authentication entry point write
+        their own bodies outside the handler - so the operator would
+        still meet untranslated text on paths the new subsystem never
+        touched.</p>
+        <p><strong>Leave the status-sniffing pattern to spread.</strong>
+        It works today in the one place it is used. Rejected because it
+        is correct by accident: it holds only while its endpoint has a
+        single producer for that status, a condition nothing checks and
+        no test asserts. The second producer breaks it silently, showing
+        a confident sentence about the wrong situation. One instance is
+        a workaround; a pattern is a defect waiting for arithmetic to
+        turn against it.</p>
         <h2 id="consequences">Consequences</h2>
-        <ul>
-        <li>Refactoring toward services later is possible along module
-        seams; today’s cost stays monolith-cheap.</li>
-        <li>The event inversion keeps the module graph acyclic and
-        machine-verified.</li>
-        <li>Synchronous listeners make rollback stories testable through
-        the real event pipeline - a standing test requirement in this
-        codebase.</li>
-        </ul>
+        <p>The ApiErrorCodes documentation argues for exactly two codes
+        and explains why a third would need to earn its place. This
+        record supersedes that stance - the criterion stands, the count
+        does not - and that documentation will be revised by the first
+        implementation phase. Until that phase lands it still reads as
+        written, and a reader meeting it before then should treat this
+        record as the later word.</p>
+        <p>The published OpenAPI error schema gains params when the
+        first phase ships it, and the frontend envelope type gains the
+        matching optional field. Neither changes anything for existing
+        clients: an absent params is the normal case, exactly as an
+        absent code is now.</p>
+        <p>The recycle bin status sniffing becomes replaceable as soon
+        as duplicate resource carries codes. It is the first thing each
+        phase should look for - an existing workaround is evidence the
+        situation was already worth naming.</p>
+        <p>Uncoded failures keep their English sentences, and the
+        documentation keeps saying so. Phased delivery means a period
+        where some errors are translated and others are not, and that is
+        a visible half-state rather than a hidden one. It is preferable
+        to a single change touching seven families, seventy throw sites
+        and every translation bundle at once, where a failure anywhere
+        would be attributable to nothing in particular.</p>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
     </main>
@@ -231,14 +311,16 @@
         <nav class="toc" aria-label="On this page">
       <p class="toc-title">On this page</p>
       <ul>
-      <li><a href="#adr-007-modular-monolith-with-spring-modulith"
-      id="toc-adr-007-modular-monolith-with-spring-modulith">ADR 007:
-      Modular Monolith with Spring Modulith</a>
+      <li><a
+      href="#adr-041-error-codes-name-operator-situations-and-the-client-translates-them"
+      id="toc-adr-041-error-codes-name-operator-situations-and-the-client-translates-them">ADR
+      041: Error Codes Name Operator Situations, and the Client
+      Translates Them</a>
       <ul>
       <li><a href="#context" id="toc-context">Context</a></li>
       <li><a href="#decision" id="toc-decision">Decision</a></li>
-      <li><a href="#alternatives-considered"
-      id="toc-alternatives-considered">Alternatives considered</a></li>
+      <li><a href="#alternatives-rejected"
+      id="toc-alternatives-rejected">Alternatives rejected</a></li>
       <li><a href="#consequences"
       id="toc-consequences">Consequences</a></li>
       </ul></li>
