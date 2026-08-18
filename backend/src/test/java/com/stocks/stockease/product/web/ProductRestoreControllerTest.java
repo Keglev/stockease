@@ -1,5 +1,7 @@
 package com.stocks.stockease.product.web;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import java.util.Map;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
@@ -126,7 +128,8 @@ class ProductRestoreControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void restoreProduct_whenLiveProductHoldsTheName_returns409() throws Exception {
         Mockito.when(productService.restore(eq(1L), any(User.class))).thenThrow(
-                new DuplicateResourceException("Cannot restore: a live product named 'Laptop' already exists."));
+                new DuplicateResourceException("Cannot restore: a live product named 'Laptop' already exists.",
+                        ApiErrorCodes.RESTORE_BLOCKED_BY_NAME, Map.of("name", "Laptop")));
 
         mockMvc.perform(post("/api/products/1/restore").with(csrfToken()))
                 .andExpect(status().isConflict())

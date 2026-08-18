@@ -3,6 +3,7 @@ package com.stocks.stockease.invoice;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,6 +19,7 @@ import com.stocks.stockease.invoice.internal.InvoiceRepository;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.InvoiceStateException;
 import com.stocks.stockease.supplier.Supplier;
@@ -127,7 +129,9 @@ public class InvoiceService {
         // concurrency backstop
         if (invoiceRepository.existsByInvoiceNumber(command.invoiceNumber())) {
             throw new DuplicateResourceException(
-                    "An invoice numbered '" + command.invoiceNumber() + "' already exists.");
+                    "An invoice numbered '" + command.invoiceNumber() + "' already exists.",
+                    ApiErrorCodes.DUPLICATE_INVOICE_NUMBER,
+                    Map.of("invoiceNumber", command.invoiceNumber()));
         }
 
         Invoice invoice = new Invoice();
