@@ -173,4 +173,114 @@ class ErrorEnvelopeCodeIntegrationTest extends AbstractIntegrationTest {
         // @JsonInclude and not a global null-stripping rule that would have changed every response.
         assertThat(body).doesNotContain("code").contains("\"data\":null");
     }
+
+    private String productBody(String name, String sku) {
+        return """
+                {"name":"%s","sku":"%s","purchasePrice":10.0}""".formatted(name, sku);
+    }
+
+    /** A live product holding the given name and SKU, for the collisions below to run into. */
+    private Product live(String name, String sku) {
+        return products.create(name, sku, 10.0);
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void createProduct_nameAlreadyLive_answers409WithTheDuplicateNameCodeAndTheName() throws Exception {
+        String name = "Envelope Dup " + tag();
+        live(name, "DUP-" + N.incrementAndGet());
+
+        mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
+                        .content(productBody(name, "DUP-" + N.incrementAndGet())))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("A product named '" + name + "' already exists."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.DUPLICATE_PRODUCT_NAME))
+                .andExpect(jsonPath("$.params.name").value(name));
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void createProduct_skuAlreadyLive_answers409WithTheDuplicateSkuCodeAndTheSku() throws Exception {
+        String sku = "DUPSKU-" + N.incrementAndGet();
+        live("Envelope Sku " + tag(), sku);
+
+        mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
+                        .content(productBody("Envelope Sku " + tag(), sku)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("A product with SKU '" + sku + "' already exists."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.DUPLICATE_PRODUCT_SKU))
+                .andExpect(jsonPath("$.params.sku").value(sku));
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void restoreProduct_nameTakenByALiveProduct_answers409WithTheRestoreBlockedByNameCode() throws Exception {
+        String name = "Envelope Restore " + tag();
+        Product deleted = live(name, "RSTN-" + N.incrementAndGet());
+        products.deleteById(deleted.getId(), admin);
+        // the name is free once the row is soft-deleted, so a live product can take it and block the way back
+        live(name, "RSTN-" + N.incrementAndGet());
+
+        mockMvc.perform(post("/api/products/" + deleted.getId() + "/restore"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message")
+                        .value("Cannot restore: a live product named '" + name + "' already exists."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.RESTORE_BLOCKED_BY_NAME))
+                .andExpect(jsonPath("$.params.name").value(name));
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void restoreProduct_skuTakenByALiveProduct_answers409WithTheRestoreBlockedBySkuCode() throws Exception {
+        String sku = "RSTS-" + N.incrementAndGet();
+        Product deleted = live("Envelope RestoreSku " + tag(), sku);
+        products.deleteById(deleted.getId(), admin);
+        live("Envelope RestoreSku " + tag(), sku);
+
+        mockMvc.perform(post("/api/products/" + deleted.getId() + "/restore"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message")
+                        .value("Cannot restore: a live product with SKU '" + sku + "' already exists."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.RESTORE_BLOCKED_BY_SKU))
+                .andExpect(jsonPath("$.params.sku").value(sku));
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void createInvoice_numberAlreadyUsed_answers409WithTheDuplicateNumberCodeAndTheNumber() throws Exception {
+        Supplier supplier = suppliers.create("Envelope Dup Supplier " + tag(), null, null, "1 Main St", null);
+        Product item = live("Envelope Dup Line " + tag(), "DUPINV-" + N.incrementAndGet());
+        String number = tag();
+        invoices.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, number, supplier.getId(), null,
+                LocalDate.now().plusDays(30), BigDecimal.ZERO, BigDecimal.ZERO,
+                List.of(new CreateInvoiceCommand.ItemLine(item.getId(), 1, new BigDecimal("10.00")))));
+
+        String body = """
+                {"type":"PURCHASE","invoiceNumber":"%s","supplierId":%d,"dueDate":"%s",
+                 "interestRate":0,"fineValue":0,"items":[{"productId":%d,"quantity":1,"unitPrice":10.00}]}"""
+                .formatted(number, supplier.getId(), LocalDate.now().plusDays(30), item.getId());
+
+        mockMvc.perform(post("/api/invoices").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("An invoice numbered '" + number + "' already exists."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.DUPLICATE_INVOICE_NUMBER))
+                .andExpect(jsonPath("$.params.invoiceNumber").value(number));
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void registerReturn_capExceeded_answers409WithNoParamsFieldAtAll() throws Exception {
+        Sold sold = buyAndSellOut(5);
+
+        // The uncoded 409 again, now for the second optional field. Asserted on the raw JSON for the
+        // same reason the code case is: a path assertion cannot tell an absent key from a null one,
+        // and absent is the claim - params rides with a code and this failure has none.
+        String body = mockMvc.perform(post("/api/returns").contentType(MediaType.APPLICATION_JSON)
+                        .content(returnBody(firstItemId(sold.sale()), sold.item().getId(),
+                                "RETURN_FROM_CUSTOMER", 99)))
+                .andExpect(status().isConflict())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(body).doesNotContain("params");
+    }
 }

@@ -179,6 +179,18 @@ components:
                 is expected to treat an absent or unrecognized value. Never present on a success
                 envelope, and omitted from the JSON rather than sent as null.
               example: PRODUCT_DELETED
+            params:
+              type: object
+              additionalProperties:
+                type: string
+              description: |
+                The runtime values the failure sentence quotes, keyed by name - a product name, an
+                SKU, an invoice number. Present only alongside a code, and only where that code's
+                situation names any; omitted from the JSON rather than sent as null or empty. A
+                client translating from the code reads these to fill its own sentence, because the
+                message is where they otherwise appear and it is not translatable.
+              example:
+                name: Laptop
       description: The envelope as produced by the shared exception handler
 
     ValidationErrorResponse:

@@ -154,15 +154,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles {@link DuplicateResourceException} from unique attribute conflicts and returns a 409 Conflict response.
+     * Handles {@link DuplicateResourceException} from unique attribute conflicts and returns a 409
+     * Conflict carrying the situation code the exception names and the values its message
+     * interpolates.
+     *
+     * <p>The family covers five situations - a taken product name, a taken SKU, either of those
+     * blocking a restore, and a reused invoice number - which share a status and differ in what they
+     * ask the operator to do. The code is what tells them apart, and {@code params} carries the name,
+     * SKU or number the sentence quotes, so a client rendering its own translated text has the value
+     * to put in it (ADR 041).
      *
      * @param ex the caught exception
-     * @return 409 response with the conflict message
+     * @return 409 response with the conflict message, its situation code and its params
      */
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiResponse<String>> handleDuplicateResourceException(DuplicateResourceException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
+                .body(new ApiResponse<>(false, ex.getMessage(), null, ex.getCode(), ex.getParams()));
     }
 
     /**

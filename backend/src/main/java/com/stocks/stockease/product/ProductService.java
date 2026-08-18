@@ -3,6 +3,7 @@ package com.stocks.stockease.product;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
@@ -81,11 +83,13 @@ public class ProductService {
         // service check gives the friendly message, the partial unique index in the database is the
         // concurrency backstop
         if (productRepository.existsByNameIgnoreCase(name)) {
-            throw new DuplicateResourceException("A product named '" + name + "' already exists.");
+            throw new DuplicateResourceException("A product named '" + name + "' already exists.",
+                    ApiErrorCodes.DUPLICATE_PRODUCT_NAME, Map.of("name", name));
         }
         // same split for the SKU: the friendly message here, uq_product_sku from V9 under concurrency
         if (productRepository.existsBySku(sku)) {
-            throw new DuplicateResourceException("A product with SKU '" + sku + "' already exists.");
+            throw new DuplicateResourceException("A product with SKU '" + sku + "' already exists.",
+                    ApiErrorCodes.DUPLICATE_PRODUCT_SKU, Map.of("sku", sku));
         }
         // the entity still takes a quantity so movements can build products at any stock level; this
         // service is the gate that keeps creation at zero
@@ -155,11 +159,13 @@ public class ProductService {
         // concurrency backstop
         if (productRepository.existsByNameIgnoreCase(product.getName())) {
             throw new DuplicateResourceException(
-                    "Cannot restore: a live product named '" + product.getName() + "' already exists.");
+                    "Cannot restore: a live product named '" + product.getName() + "' already exists.",
+                    ApiErrorCodes.RESTORE_BLOCKED_BY_NAME, Map.of("name", product.getName()));
         }
         if (productRepository.existsBySku(product.getSku())) {
             throw new DuplicateResourceException(
-                    "Cannot restore: a live product with SKU '" + product.getSku() + "' already exists.");
+                    "Cannot restore: a live product with SKU '" + product.getSku() + "' already exists.",
+                    ApiErrorCodes.RESTORE_BLOCKED_BY_SKU, Map.of("sku", product.getSku()));
         }
         product.setDeletedAt(null);
         Product saved = productRepository.save(product);
@@ -282,7 +288,8 @@ public class ProductService {
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
         // excluding this product's own row is what lets a rename fix only the capitalization of its own name
         if (productRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
-            throw new DuplicateResourceException("A product named '" + name + "' already exists.");
+            throw new DuplicateResourceException("A product named '" + name + "' already exists.",
+                    ApiErrorCodes.DUPLICATE_PRODUCT_NAME, Map.of("name", name));
         }
         String oldName = product.getName();
         product.setName(name);

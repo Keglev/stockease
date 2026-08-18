@@ -1,5 +1,7 @@
 package com.stocks.stockease.shared.web;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.NoSuchElementException;
@@ -146,7 +148,8 @@ class GlobalExceptionStatusMappingTest {
     @Test
     void handleDuplicateResourceException_returns409WithOriginalMessage() {
         var response = handler.handleDuplicateResourceException(
-                new DuplicateResourceException("A product named 'Widget' already exists."));
+                new DuplicateResourceException("A product named 'Widget' already exists.",
+                        ApiErrorCodes.DUPLICATE_PRODUCT_NAME, Map.of("name", "Widget")));
         ApiResponse<String> body = Objects.requireNonNull(response.getBody());
 
         assertThat(response.getStatusCode().value()).isEqualTo(409);
