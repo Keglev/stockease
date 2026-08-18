@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomAccessDeniedHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.security</a> &gt; <span class="el_source">CustomAccessDeniedHandler.java</span></div><h1>CustomAccessDeniedHandler.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.security;
+
+import java.io.IOException;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.stereotype.Component;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * Handles authorization failures raised in the security filter chain by returning a 403 JSON error
+ * response in the {@code ApiResponse} envelope.
+ *
+ * &lt;p&gt;The envelope is the error contract: every client reads {@code message} for the sentence to show
+ * and treats its absence as nothing to say. A body of a different shape is not a smaller answer, it
+ * is an unreadable one - the frontend interceptor finds no message and substitutes its own generic
+ * text, so whatever the server wrote never reaches the operator.
+ *
+ * &lt;p&gt;This path is latent rather than live. The only rules in the filter chain are the public entries
+ * and a blanket authenticated check, and role decisions live on {@code @PreAuthorize} inside the
+ * dispatcher, where {@code GlobalExceptionHandler} answers them with an envelope of its own. So this
+ * handler fires only if that arrangement changes - a rule moved into the chain, a filter added ahead
+ * of the dispatcher. It exists in envelope shape for that day: a fallback nobody exercises is exactly
+ * the one that must fail into the contract rather than out of it, because there will be no test
+ * failing to say otherwise.
+ */
+@Component
+<span class="fc" id="L30">public class CustomAccessDeniedHandler implements AccessDeniedHandler {</span>
+
+    /**
+     * Writes a 403 Forbidden JSON error response for authenticated requests lacking the required
+     * authority.
+     *
+     * @param request request that triggered the authorization failure
+     * @param response response for writing the error
+     * @param accessDeniedException exception that triggered this handler
+     * @throws IOException if response writing fails
+     */
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response,
+                       AccessDeniedException accessDeniedException) throws IOException {
+<span class="fc" id="L44">        response.setStatus(HttpServletResponse.SC_FORBIDDEN);</span>
+<span class="fc" id="L45">        response.setContentType(&quot;application/json&quot;);</span>
+<span class="fc" id="L46">        response.getWriter()</span>
+<span class="fc" id="L47">                .write(&quot;{\&quot;success\&quot;:false,\&quot;message\&quot;:\&quot;You are not authorized to perform this action.\&quot;,\&quot;data\&quot;:null}&quot;);</span>
+<span class="fc" id="L48">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
