@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.jspecify.annotations.NonNull;
 import org.springframework.web.cors.CorsConfiguration;
@@ -35,6 +35,8 @@ public class SecurityConfig {
 
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
+    private final AccessDeniedHandler customAccessDeniedHandler;
+
     private final List<String> allowedOriginPatterns;
 
     private final List<PublicEndpoint> publicEndpoints;
@@ -44,15 +46,18 @@ public class SecurityConfig {
      *
      * @param jwtFilter validates JWT tokens in request headers
      * @param customAuthenticationEntryPoint sends custom 401 error responses
+     * @param customAccessDeniedHandler sends custom 403 error responses
      * @param allowedOriginPatterns frontend origins permitted to call the API
      * @param publicEndpoints unauthenticated entry points contributed by other modules; empty when none
      *        of them is active
      */
     public SecurityConfig(JwtFilter jwtFilter, AuthenticationEntryPoint customAuthenticationEntryPoint,
+            AccessDeniedHandler customAccessDeniedHandler,
             @Value("${app.cors.allowed-origins}") List<String> allowedOriginPatterns,
             ObjectProvider<PublicEndpoint> publicEndpoints) {
         this.jwtFilter = jwtFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+        this.customAccessDeniedHandler = customAccessDeniedHandler;
         this.allowedOriginPatterns = allowedOriginPatterns;
         // ObjectProvider rather than List injection: with no contributing module active there is no
         // candidate bean at all, and a required List parameter would fail the context start.
@@ -109,11 +114,7 @@ public class SecurityConfig {
             })
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(customAuthenticationEntryPoint)
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpStatus.FORBIDDEN.value());
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"You are not authorized to perform this action.\"}");
-                })
+                .accessDeniedHandler(customAccessDeniedHandler)
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
