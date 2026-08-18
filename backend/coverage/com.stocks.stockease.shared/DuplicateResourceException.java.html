@@ -1,19 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DuplicateResourceException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.shared</a> &gt; <span class="el_source">DuplicateResourceException.java</span></div><h1>DuplicateResourceException.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.shared;
 
+import java.util.Map;
+
 /**
  * Thrown when a live resource already carries the unique attribute a request tries to claim.
  * Product names and SKUs are unique among live rows, so creating, renaming or restoring a product
- * that would collide with an existing one is rejected.
+ * that would collide with an existing one is rejected, as is an invoice reusing a number.
+ *
+ * &lt;p&gt;Every instance names its situation with a code from {@link ApiErrorCodes} and carries the value
+ * its sentence interpolates. There is deliberately no message-only constructor: the family covers
+ * five distinct situations whose advice to the operator differs, and one that arrived uncoded would
+ * be indistinguishable from the others on the wire (ADR 041).
  */
 public class DuplicateResourceException extends RuntimeException {
 
+    private final String code;
+
+    private final transient Map&lt;String, String&gt; params;
+
     /**
-     * Creates the exception with a message naming the conflicting attribute value.
+     * Creates the exception with a message naming the conflicting attribute value, the code naming
+     * its situation, and the values that message interpolates.
      *
      * @param message human-readable description of the conflict
+     * @param code situation identifier from {@link ApiErrorCodes}
+     * @param params values the message interpolates, keyed by name
      */
-    public DuplicateResourceException(String message) {
-<span class="fc" id="L16">        super(message);</span>
-<span class="fc" id="L17">    }</span>
+    public DuplicateResourceException(String message, String code, Map&lt;String, String&gt; params) {
+<span class="fc" id="L30">        super(message);</span>
+<span class="fc" id="L31">        this.code = code;</span>
+        // Stored as null when empty: an empty params is a wire shape nothing should emit, and
+        // collapsing it here keeps params omitted from the JSON exactly as an absent code is.
+<span class="pc bpc" id="L34" title="2 of 4 branches missed.">        this.params = params == null || params.isEmpty() ? null : Map.copyOf(params);</span>
+<span class="fc" id="L35">    }</span>
+
+    /**
+     * Returns the situation identifier the envelope carries.
+     *
+     * @return code from {@link ApiErrorCodes}
+     */
+    public String getCode() {
+<span class="fc" id="L43">        return code;</span>
+    }
+
+    /**
+     * Returns the values the message interpolates, or {@code null} when there are none.
+     *
+     * @return unmodifiable params map, or {@code null}
+     */
+    public Map&lt;String, String&gt; getParams() {
+<span class="fc" id="L52">        return params;</span>
+    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
