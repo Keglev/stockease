@@ -1,3 +1,25 @@
+# Line endings are pinned here rather than left to each machine core.autocrlf.
+#
+# The default puts every text file in LF, in the blob and in the working tree, on
+# every platform. The blobs were already LF throughout - every text file in the
+# index, mvnw.cmd included - so this keeps them that way rather than changing them.
+# What it changes is the checkout: without it a Windows clone writes CRLF into the
+# working tree, and a byte-exact comparison against content written by a tool that
+# emits LF then fails on the line endings alone. A proof anchor bent exactly that
+# way while a test was being verified.
+#
+# *.cmd stays CRLF because Windows batch files require it. Its blob is LF like every
+# other text file here; only its checkout is CRLF, and that behaviour is unchanged.
+#
+# The two narrower LF rules are redundant under the default. They stay as written
+# intent, naming the files where the ending is load-bearing rather than incidental.
+#
+# The binary markers declare what git content detection would conclude anyway, so no
+# heuristic is load-bearing for the images.
+
+* text=auto eol=lf
 /mvnw text eol=lf
 *.cmd text eol=crlf
 .github/scripts/**/*.sh text eol=lf
+*.png binary
+*.ico binary
