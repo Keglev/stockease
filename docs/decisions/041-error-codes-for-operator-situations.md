@@ -1,0 +1,129 @@
+# ADR 041: Error Codes Name Operator Situations, and the Client Translates Them
+
+**Scope**: [Cross-cutting]
+**Status**: Accepted
+**Date**: August 18, 2026
+
+---
+
+## Context
+
+The interface ships in English and German and switches at runtime. Error sentences do
+not: a German operator reads English whenever something fails. A survey of the whole
+error path measured where that happens and what stands in the way of fixing it.
+
+A backend-origin message can reach the operator on thirteen surfaces - seven page error
+banners, four dialog inline errors, the login form, and one notification surface reached
+from eleven components. The HTTP interceptor passes the backend sentence through
+unchanged, and the pages render it. Several templates say so about themselves: the text
+comes from the backend, which has no i18n.
+
+The exception handler declares eighteen families. Their envelope messages divide three
+ways: seven pass the exception message through verbatim, two prefix it, and nine author
+a sentence in the handler and discard the exception one. Only the first nine carry text
+the project wrote about its own domain; the remaining nine are handler or framework text
+about protocol-level failures.
+
+Those nine families are constructed from seventy places in project code. **Forty-three of
+the seventy interpolate a runtime value** - a product name, an SKU, a quantity, an invoice
+number, an identifier - and twenty-seven are fixed literals. That ratio is the most
+consequential number in the survey, and it rules out the cheap answer before anything
+else is considered.
+
+Two machine codes exist today, PRODUCT_DELETED and INSUFFICIENT_STOCK, and exactly one
+frontend site branches on them: the return flow on the invoice detail page. One other
+site substitutes a translated sentence by sniffing HTTP status - the product recycle bin,
+on 409 - because no code names the situation it needs. Its own comment gives the reason:
+the backend text names the colliding attribute but is untranslated, and the operator can
+act on it. That workaround is correct only because the restore endpoint has a single 409
+producer. Give it two and the substituted sentence is wrong for one of them, silently. It
+is this record design, implemented once, without the mechanism that would make it safe.
+
+## Decision
+
+**Codes are added selectively, to situations that reach a screen in normal operation and
+leave the operator a distinct action.** This is not a new criterion. ApiErrorCodes already
+states it - a code is warranted where a status alone leaves the client unable to tell
+apart two situations needing different guidance - and this record applies it across the
+surveyed families rather than case by case as each arose. The survey found five families
+meeting it that carry no code today: illegal argument, invalid movement, invoice state,
+entity in use, and duplicate resource. With the two already coded, seven families are in
+scope.
+
+**A code names a SITUATION, not an exception class and not a family.** The families are an
+implementation detail of where a failure is raised; the operator situation is what a
+translated sentence has to speak to. A family raised from sixteen places may hold several
+distinct situations or only one, and the number is a measurement each phase makes before
+naming anything. This record deliberately does not enumerate the roster: naming codes
+here, from a survey that counted throw sites rather than situations, would publish a guess
+as a contract.
+
+**The error envelope gains an optional params object** - flat, string keys to string
+values - carrying the runtime values a parameterised sentence interpolates, so the client
+renders its own translated template with the same values in it. Forty-three of seventy
+sites need this; without it a code identifies the situation and still cannot produce the
+sentence.
+
+**The message field stays exactly as it is, as the universal fallback.** The client
+translates from the code where it knows one and falls through to the message where it does
+not. Absent and unknown codes are the same case, which is what the client error type
+already documents.
+
+**Delivery is phased, family by family**, each phase measuring its own situations, adding
+its codes and their translations, and converting the sites that raise them. This record
+authorises the mechanism and the criterion. It does not authorise a single sweeping
+change, and nothing here needs to ship at once.
+
+## Alternatives rejected
+
+**Code every family.** Eighteen codes, one per handler. Rejected because most families
+fail the criterion they would be granted a code under. Several reach no screen in normal
+operation - they need a hand-built request or a client bug to fire - and translating a
+sentence no operator sees buys nothing. Others reach a screen and leave the operator
+nothing to do but read: a 404 says the record is gone, and the catch-all advice is already
+the whole action. Codes on those are contract surface with no client behind it, and every
+one of them is a term the API can never quietly change.
+
+**Message keys instead of codes.** Have the backend send a key and let the client look it
+up. Rejected on the ratio: **43 of 70 sites are parameterised, and a key without its values
+cannot render the sentence.** A key plus values is a code plus params with the naming
+inverted - and inverted the wrong way, because a key hard-codes one client translation
+namespace into the API contract, where a code names the situation and leaves every client
+free to phrase it.
+
+**Translate on the backend.** Rejected on two survey findings. The backend has no i18n by
+design, so this is a new subsystem, a locale on every request, and a bundle to keep in step
+with the frontend one. And it would not finish the job: some failures never carry a backend
+sentence to begin with - the security filter chain and the authentication entry point write
+their own bodies outside the handler - so the operator would still meet untranslated text
+on paths the new subsystem never touched.
+
+**Leave the status-sniffing pattern to spread.** It works today in the one place it is
+used. Rejected because it is correct by accident: it holds only while its endpoint has a
+single producer for that status, a condition nothing checks and no test asserts. The second
+producer breaks it silently, showing a confident sentence about the wrong situation. One
+instance is a workaround; a pattern is a defect waiting for arithmetic to turn against it.
+
+## Consequences
+
+The ApiErrorCodes documentation argues for exactly two codes and explains why a third would
+need to earn its place. This record supersedes that stance - the criterion stands, the count
+does not - and that documentation will be revised by the first implementation phase. Until
+that phase lands it still reads as written, and a reader meeting it before then should treat
+this record as the later word.
+
+The published OpenAPI error schema gains params when the first phase ships it, and the
+frontend envelope type gains the matching optional field. Neither changes anything for
+existing clients: an absent params is the normal case, exactly as an absent code is now.
+
+The recycle bin status sniffing becomes replaceable as soon as duplicate resource carries
+codes. It is the first thing each phase should look for - an existing workaround is evidence
+the situation was already worth naming.
+
+Uncoded failures keep their English sentences, and the documentation keeps saying so. Phased
+delivery means a period where some errors are translated and others are not, and that is a
+visible half-state rather than a hidden one. It is preferable to a single change touching
+seven families, seventy throw sites and every translation bundle at once, where a failure
+anywhere would be attributable to nothing in particular.
+
+[Back to Decisions Index](index.md)

@@ -52,5 +52,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 038 - AI-Assisted Development With Human Decision Authority](038-ai-assisted-development-workflow.md) - **[Cross-cutting]**
 - [ADR 039 - Per-Tab State Collaborators for the Reports Page](039-report-tab-state-collaborators.md) - **[Frontend]**
 - [ADR 040 - Two List Stores, One for In-Memory Paging and One for Server Paging](040-paged-list-store.md) - **[Frontend]**
+- [ADR 041 - Error Codes Name Operator Situations, and the Client Translates Them](041-error-codes-for-operator-situations.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)
