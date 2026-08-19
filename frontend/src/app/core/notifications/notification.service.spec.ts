@@ -8,16 +8,14 @@ import { NotificationService } from './notification.service';
 const TRANSLATIONS = {
   en: {
     products: {
-      created: 'Product created.',
-      restoreConflict: 'Cannot restore: a live product already uses this name or SKU.'
+      created: 'Product created.'
     }
   },
   // German carries a distinct string on purpose: with the same text in both dictionaries the
   // language-switch test below would pass whether or not the language was ever consulted.
   de: {
     products: {
-      created: 'Produkt wurde angelegt.',
-      restoreConflict: 'Wiederherstellen nicht möglich.'
+      created: 'Produkt wurde angelegt.'
     }
   }
 };
@@ -71,9 +69,9 @@ describe('NotificationService', () => {
   });
 
   it('error_translationKey_opensSnackBarWithErrorConfig', () => {
-    service.error('products.restoreConflict');
+    service.error('products.created');
 
-    expect(lastCall().message).toBe('Cannot restore: a live product already uses this name or SKU.');
+    expect(lastCall().message).toBe('Product created.');
     // Errors linger longer than successes - 5s against 3s - because they carry something to act on.
     expect(lastCall().config).toEqual({ duration: 5000, panelClass: 'notification-error' });
   });
