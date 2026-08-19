@@ -117,19 +117,52 @@ describe('ProductRecycleBin (through the product list)', () => {
     expect(stub.calls.length).toBe(livesBefore + 1);
   });
 
-  it('restore_rejectedWith409_showsTheConflictNotification', async () => {
+  it('restore_blockedByALiveName_showsTheTranslatedSentenceNamingIt', async () => {
     await setUp(of(pageWith(['Laptop'])), 'ADMIN');
     await toggleDeleted();
+    // Asserted in German: the English translation mirrors the wire sentence, so an English
+    // assertion would pass whether or not the code was translated at all.
+    TestBed.inject(LanguageService).setLanguage('de');
     stub.restoreResult = throwError(
-      () => new ApiError("Cannot restore: a live product named 'Laptop' already exists.", 409)
+      () => new ApiError("Cannot restore: a live product named 'Laptop' already exists.", 409,
+        'RESTORE_BLOCKED_BY_NAME', { name: 'Laptop' })
     );
 
     host().querySelector<HTMLButtonElement>('.product-restore')?.click();
     await fixture.whenStable();
 
-    // The conflict is actionable, so it gets the translated explanation rather than the raw
-    // backend sentence every other failure falls back to.
-    expect(notifications.errors).toEqual(['products.restoreConflict']);
+    // The code says which collision it was and the param says which value, so the operator reads
+    // the specific sentence rather than one covering both attributes.
+    expect(notifications.errors)
+      .toEqual(['Wiederherstellen nicht möglich: Ein aktives Produkt mit dem Namen „Laptop“ existiert bereits.']);
+  });
+
+  it('restore_blockedByALiveSku_showsTheTranslatedSentenceNamingIt', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    await toggleDeleted();
+    TestBed.inject(LanguageService).setLanguage('de');
+    stub.restoreResult = throwError(
+      () => new ApiError("Cannot restore: a live product with SKU 'SKU-1' already exists.", 409,
+        'RESTORE_BLOCKED_BY_SKU', { sku: 'SKU-1' })
+    );
+
+    host().querySelector<HTMLButtonElement>('.product-restore')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.errors)
+      .toEqual(['Wiederherstellen nicht möglich: Ein aktives Produkt mit der Artikelnummer „SKU-1“ existiert bereits.']);
+  });
+
+  it('restore_uncoded409_stillFallsBackToTheBackendSentence', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    await toggleDeleted();
+    // The status alone no longer decides anything: an uncoded conflict reads as any other failure.
+    stub.restoreResult = throwError(() => new ApiError('A conflict with no code.', 409));
+
+    host().querySelector<HTMLButtonElement>('.product-restore')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.errors).toEqual(['A conflict with no code.']);
   });
 
   it('restore_rejectedWithOtherStatus_surfacesTheBackendMessage', async () => {

@@ -563,7 +563,6 @@
     "deletedEmpty": "Keine gelöschten Produkte.",
     "restore": "Wiederherstellen",
     "restored": "Produkt wiederhergestellt",
-    "restoreConflict": "Wiederherstellen nicht möglich: Name oder SKU wird bereits von einem aktiven Produkt verwendet.",
     "delete": {
       "action": "Löschen",
       "title": "Produkt löschen",

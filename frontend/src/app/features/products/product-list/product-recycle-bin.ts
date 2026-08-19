@@ -1,7 +1,7 @@
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { Injectable, WritableSignal, inject, signal } from '@angular/core';
 
 import { ProductResponse } from '../../../core/api/api-models';
-import { ApiError } from '../../../core/api/api-envelope';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { ProductService } from '../product.service';
 
@@ -34,6 +34,7 @@ export interface ProductRecycleBinHost {
 export class ProductRecycleBin {
   private readonly products = inject(ProductService);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
 
   private host!: ProductRecycleBinHost;
 
@@ -68,9 +69,7 @@ export class ProductRecycleBin {
   }
 
   /**
-   * Restores a product. Not destructive, so it runs without a confirmation step. A 409 means a live
-   * product has taken the name or SKU, which needs its own message: the backend's own text names the
-   * colliding attribute but is untranslated, and this is a case the operator can act on.
+   * Restores a product. Not destructive, so it runs without a confirmation step.
    */
   restore(product: ProductResponse): void {
     this.products.restore(product.id).subscribe({
@@ -80,10 +79,11 @@ export class ProductRecycleBin {
         this.loadDeleted();
         this.host.reloadLive();
       },
-      error: (err: Error) => {
-        const isConflict = err instanceof ApiError && err.status === 409;
-        this.notifications.error(isConflict ? 'products.restoreConflict' : err.message);
-      }
+      // The failure now names itself. This once read the status and showed one sentence covering
+      // both collisions, because a 409 was all the wire said; the API names the situation and sends
+      // the colliding value, so the operator is told whether it was the name or the SKU and which
+      // one (ADR 041). Anything uncoded still falls through to the backend's own sentence.
+      error: (err: Error) => this.notifications.error(this.errorMessages.resolve(err))
     });
   }
 

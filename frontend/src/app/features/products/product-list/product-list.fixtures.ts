@@ -49,8 +49,21 @@ export const TRANSLATIONS = {
       deletedEmpty: 'No deleted products.',
       restore: 'Restore',
       restored: 'Product restored',
-      restoreConflict: 'Cannot restore: a live product already uses this name or SKU.',
+      errors: {
+        restoreBlockedByName: "Cannot restore: a live product named '{{name}}' already exists.",
+        restoreBlockedBySku: "Cannot restore: a live product with SKU '{{sku}}' already exists."
+      },
       delete: { action: 'Delete', title: 'Delete product', message: 'Delete "{{name}}"?' }
+    }
+  },
+  // German differs from the wire sentence on purpose: an English assertion would pass whether or
+  // not the code was ever translated, because EN mirrors what the server already sent.
+  de: {
+    products: {
+      errors: {
+        restoreBlockedByName: 'Wiederherstellen nicht möglich: Ein aktives Produkt mit dem Namen „{{name}}“ existiert bereits.',
+        restoreBlockedBySku: 'Wiederherstellen nicht möglich: Ein aktives Produkt mit der Artikelnummer „{{sku}}“ existiert bereits.'
+      }
     }
   }
 };

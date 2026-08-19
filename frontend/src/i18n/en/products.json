@@ -25,7 +25,6 @@
   "deletedEmpty": "No deleted products.",
   "restore": "Restore",
   "restored": "Product restored",
-  "restoreConflict": "Cannot restore: a live product already uses this name or SKU.",
   "delete": {
     "action": "Delete",
     "title": "Delete product",
