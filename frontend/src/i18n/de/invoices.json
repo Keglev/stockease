@@ -90,6 +90,11 @@
     "back": "Zurück zu den Rechnungen"
   },
   "errors": {
-    "duplicateNumber": "Eine Rechnung mit der Nummer „{{invoiceNumber}}“ existiert bereits."
+    "duplicateNumber": "Eine Rechnung mit der Nummer „{{invoiceNumber}}“ existiert bereits.",
+    "notOpenForClose": "Nur offene Rechnungen können geschlossen werden.",
+    "returnRequiresClosed": "Rücksendungen erfordern eine geschlossene Rechnung.",
+    "returnExceedsReturnable": "Die Rücksendung von {{quantity}} überschreitet die verbleibende rücksendbare Menge {{remaining}} für die Rechnungsposition {{itemId}}.",
+    "alreadyPaid": "Die Rechnung ist bereits als bezahlt markiert.",
+    "notOpenForDelete": "Nur offene Rechnungen können gelöscht werden."
   }
 }

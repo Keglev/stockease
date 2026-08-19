@@ -14,7 +14,12 @@ const MESSAGE_KEYS: Readonly<Record<string, string>> = {
   DUPLICATE_PRODUCT_SKU: 'products.errors.duplicateSku',
   RESTORE_BLOCKED_BY_NAME: 'products.errors.restoreBlockedByName',
   RESTORE_BLOCKED_BY_SKU: 'products.errors.restoreBlockedBySku',
-  DUPLICATE_INVOICE_NUMBER: 'invoices.errors.duplicateNumber'
+  DUPLICATE_INVOICE_NUMBER: 'invoices.errors.duplicateNumber',
+  INVOICE_NOT_OPEN_FOR_CLOSE: 'invoices.errors.notOpenForClose',
+  RETURN_REQUIRES_CLOSED_INVOICE: 'invoices.errors.returnRequiresClosed',
+  RETURN_EXCEEDS_RETURNABLE: 'invoices.errors.returnExceedsReturnable',
+  INVOICE_ALREADY_PAID: 'invoices.errors.alreadyPaid',
+  INVOICE_NOT_OPEN_FOR_DELETE: 'invoices.errors.notOpenForDelete'
 };
 
 /** The params each key interpolates, so a response missing one falls through rather than rendering a gap. */
@@ -23,7 +28,8 @@ const REQUIRED_PARAMS: Readonly<Record<string, readonly string[]>> = {
   DUPLICATE_PRODUCT_SKU: ['sku'],
   RESTORE_BLOCKED_BY_NAME: ['name'],
   RESTORE_BLOCKED_BY_SKU: ['sku'],
-  DUPLICATE_INVOICE_NUMBER: ['invoiceNumber']
+  DUPLICATE_INVOICE_NUMBER: ['invoiceNumber'],
+  RETURN_EXCEEDS_RETURNABLE: ['quantity', 'remaining', 'itemId']
 };
 
 /**
