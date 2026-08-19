@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Observable, of, throwError } from 'rxjs';
 
+import { ApiError } from '../../../core/api/api-envelope';
 import { ProductResponse } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
@@ -20,7 +21,13 @@ const TRANSLATIONS = {
         nameRequired: 'Name is required.',
         skuRequired: 'SKU is required.',
         priceInvalid: 'Enter a price greater than 0.'
-      }
+      },
+      errors: { duplicateName: "A product named '{{name}}' already exists." }
+    }
+  },
+  de: {
+    products: {
+      errors: { duplicateName: 'Ein Produkt mit dem Namen „{{name}}“ existiert bereits.' }
     }
   }
 };
@@ -196,6 +203,21 @@ describe('ProductCreateDialogComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'A product with this name already exists.'
     );
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
+  it('submit_duplicateNameRejectedInGerman_showsTheTranslatedSentence', async () => {
+    // The server sentence stays English on the wire; the code and its param are what let the dialog
+    // render German. Asserted through the real template, because the point is what an operator reads.
+    TestBed.inject(LanguageService).setLanguage('de');
+    service.result = throwError(() => new ApiError("A product named 'Laptop' already exists.", 409,
+      'DUPLICATE_PRODUCT_NAME', { name: 'Laptop' }));
+    fillValid();
+
+    await submitForm();
+
+    expect((fixture.nativeElement as HTMLElement).textContent)
+      .toContain('Ein Produkt mit dem Namen „Laptop“ existiert bereits.');
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
 });

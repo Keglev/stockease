@@ -1,3 +1,4 @@
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -52,8 +53,11 @@ export class ProductEditDialogComponent {
     ? 'products.form.priceInvalid'
     : 'products.form.nameRequired';
 
-  protected readonly submitState = createDialogSubmitStore<ProductResponse>((saved) =>
-    this.dialogRef.close(saved)
+  private readonly errorMessages = inject(ErrorMessageService);
+
+  protected readonly submitState = createDialogSubmitStore<ProductResponse>(
+    (saved) => this.dialogRef.close(saved),
+    (error) => this.errorMessages.resolve(error)
   );
 
   protected readonly form = inject(FormBuilder).nonNullable.group({

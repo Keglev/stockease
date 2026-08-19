@@ -1,3 +1,4 @@
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,8 +35,11 @@ export class ProductCreateDialogComponent {
   private readonly dialogRef =
     inject<MatDialogRef<ProductCreateDialogComponent, ProductResponse>>(MatDialogRef);
 
-  protected readonly submitState = createDialogSubmitStore<ProductResponse>((saved) =>
-    this.dialogRef.close(saved)
+  private readonly errorMessages = inject(ErrorMessageService);
+
+  protected readonly submitState = createDialogSubmitStore<ProductResponse>(
+    (saved) => this.dialogRef.close(saved),
+    (error) => this.errorMessages.resolve(error)
   );
 
   // No quantity control: creation is master-data only and books no stock (ADR 018). The SKU is

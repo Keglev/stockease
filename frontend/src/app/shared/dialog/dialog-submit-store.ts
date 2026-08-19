@@ -25,8 +25,16 @@ export interface DialogSubmitStore<T> {
  *
  * Closing is a callback rather than a `MatDialogRef`, which keeps the store clear of Angular
  * Material and lets a spec assert on what it closed with by passing a plain function.
+ *
+ * `resolveMessage` is the same shape of seam: a dialog whose backend names its failures passes the
+ * translator, and one whose failures are uncoded passes nothing and shows the message as before.
+ * The store stays free of both i18n and the error vocabulary, which is why it can be given a plain
+ * function in a spec.
  */
-export function createDialogSubmitStore<T>(close: (result: T) => void): DialogSubmitStore<T> {
+export function createDialogSubmitStore<T>(
+  close: (result: T) => void,
+  resolveMessage: (error: Error) => string = (error) => error.message
+): DialogSubmitStore<T> {
   const pending = signal(false);
   const errorMessage = signal<string | null>(null);
 
@@ -44,7 +52,7 @@ export function createDialogSubmitStore<T>(close: (result: T) => void): DialogSu
       },
       error: (err: Error) => {
         pending.set(false);
-        errorMessage.set(err.message);
+        errorMessage.set(resolveMessage(err));
       }
     });
   }
