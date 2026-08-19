@@ -4,6 +4,7 @@ import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
+import { ApiError } from '../../../core/api/api-envelope';
 import { CustomerResponse, SupplierResponse } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
@@ -513,6 +514,21 @@ describe('InvoiceCreateComponent', () => {
 
     expect(notifications.errors).toEqual(['An invoice requires at least one item.']);
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('submit_duplicateNumberInGerman_notifiesWithTheTranslatedSentence', async () => {
+    // The wire sentence stays English. What reaches the operator is the German one, resolved from
+    // the code and its param before the notification channel ever sees it.
+    TestBed.inject(LanguageService).setLanguage('de');
+    invoices.result = throwError(() => new ApiError("An invoice numbered 'RE-1' already exists.", 409,
+      'DUPLICATE_INVOICE_NUMBER', { invoiceNumber: 'RE-1' }));
+    fillValidSale();
+    await settle();
+
+    submitButton()?.click();
+    await settle();
+
+    expect(notifications.errors).toEqual(['Eine Rechnung mit der Nummer „RE-1“ existiert bereits.']);
   });
 
   it('render_form_offersNoFinancialControls', () => {

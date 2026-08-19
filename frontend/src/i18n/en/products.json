@@ -41,5 +41,11 @@
     "nameRequired": "Name is required.",
     "skuRequired": "SKU is required.",
     "priceInvalid": "Enter a price greater than 0."
+  },
+  "errors": {
+    "duplicateName": "A product named '{{name}}' already exists.",
+    "duplicateSku": "A product with SKU '{{sku}}' already exists.",
+    "restoreBlockedByName": "Cannot restore: a live product named '{{name}}' already exists.",
+    "restoreBlockedBySku": "Cannot restore: a live product with SKU '{{sku}}' already exists."
   }
 }

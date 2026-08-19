@@ -1,3 +1,4 @@
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -62,6 +63,7 @@ export class InvoiceCreateComponent implements OnInit {
   private readonly customers = inject(CustomerService);
   private readonly products = inject(ProductService);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly router = inject(Router);
   private readonly formBuilder = inject(FormBuilder);
 
@@ -174,7 +176,7 @@ export class InvoiceCreateComponent implements OnInit {
       error: (err: Error) => {
         // Stay on the page so the entered lines survive a rejected submission.
         this.pending.set(false);
-        this.notifications.error(err.message);
+        this.notifications.error(this.errorMessages.resolve(err));
       }
     });
   }

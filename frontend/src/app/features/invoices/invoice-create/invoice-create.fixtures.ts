@@ -44,7 +44,13 @@ export const TRANSLATIONS = {
         runningTotal: 'Running total',
         submit: 'Create invoice',
         cancel: 'Cancel'
-      }
+      },
+      errors: { duplicateNumber: "An invoice numbered '{{invoiceNumber}}' already exists." }
+    }
+  },
+  de: {
+    invoices: {
+      errors: { duplicateNumber: 'Eine Rechnung mit der Nummer „{{invoiceNumber}}“ existiert bereits.' }
     }
   }
 };

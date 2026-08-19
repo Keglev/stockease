@@ -88,5 +88,8 @@
     "lineTotal": "Line total",
     "total": "Invoice total",
     "back": "Back to invoices"
+  },
+  "errors": {
+    "duplicateNumber": "An invoice numbered '{{invoiceNumber}}' already exists."
   }
 }

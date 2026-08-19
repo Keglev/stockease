@@ -40,7 +40,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       // Status 0 stands for "never reached the server": a network or CORS failure carries no
       // HTTP status, so no consumer can mistake it for one the backend chose.
       const status = error instanceof HttpErrorResponse ? error.status : 0;
-      return throwError(() => new ApiError(extractMessage(error), status, extractCode(error)));
+      return throwError(() => new ApiError(extractMessage(error), status, extractCode(error), extractParams(error)));
     })
   );
 };
@@ -81,4 +81,31 @@ function extractMessage(error: unknown): string {
     }
   }
   return GENERIC_MESSAGE;
+}
+/**
+ * Reads the envelope's optional params, the values the coded situation's sentence quotes.
+ *
+ * @remarks
+ * Checked as strictly as the code above and for the same reason: a consumer interpolates these into
+ * a translated sentence, so a non-string value would render as "[object Object]" in front of an
+ * operator. Anything that is not a flat object of strings collapses to undefined, which every
+ * consumer already handles - it is the same fall-through an absent code takes.
+ */
+function extractParams(error: unknown): Record<string, string> | undefined {
+  if (!(error instanceof HttpErrorResponse)) {
+    return undefined;
+  }
+  const body: unknown = error.error;
+  if (body === null || typeof body !== 'object') {
+    return undefined;
+  }
+  const params = (body as Partial<ApiErrorEnvelope>).params;
+  if (params === null || typeof params !== 'object' || Array.isArray(params)) {
+    return undefined;
+  }
+  const entries = Object.entries(params);
+  if (entries.length === 0 || entries.some(([, value]) => typeof value !== 'string')) {
+    return undefined;
+  }
+  return Object.fromEntries(entries) as Record<string, string>;
 }

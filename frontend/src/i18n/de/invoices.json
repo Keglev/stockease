@@ -88,5 +88,8 @@
     "lineTotal": "Positionssumme",
     "total": "Rechnungssumme",
     "back": "Zurück zu den Rechnungen"
+  },
+  "errors": {
+    "duplicateNumber": "Eine Rechnung mit der Nummer „{{invoiceNumber}}“ existiert bereits."
   }
 }

@@ -40,6 +40,16 @@ function setUp(): { http: HttpClient; controller: HttpTestingController } {
   };
 }
 
+/* Fails a GET against API_URL with a body given verbatim, for shapes the envelope helper cannot build. */
+function failedRequestWithBody(status: number, body: Record<string, unknown>): Promise<unknown> {
+  const { http, controller } = setUp();
+  const thrown = new Promise<unknown>((resolve) => {
+    http.get(API_URL).subscribe({ error: (error: unknown) => resolve(error) });
+  });
+  controller.expectOne(API_URL).flush(body, { status, statusText: 'Error' });
+  return thrown;
+}
+
 /*
  * Fails a GET against API_URL with the given envelope and status, returning what was thrown.
  * The code is left off the body entirely when not given, which is how most errors arrive.
@@ -213,5 +223,35 @@ describe('errorInterceptor', () => {
     expect((await thrown) as ApiError).toBeInstanceOf(ApiError);
     expect(auth.logoutCalls).toBe(0);
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('intercept_envelopeWithParams_carriesThemOntoTheError', async () => {
+    const error = await failedRequestWithBody(409, {
+      success: false, message: "A product named 'Laptop' already exists.", data: null,
+      code: 'DUPLICATE_PRODUCT_NAME', params: { name: 'Laptop' }
+    });
+
+    // Without this the code names a situation the client cannot render: the sentence it would
+    // translate has a placeholder and nothing to put in it.
+    expect((error as ApiError).params).toEqual({ name: 'Laptop' });
+  });
+
+  it('intercept_envelopeWithoutParams_leavesThemUndefined', async () => {
+    const error = await failedRequestWithBody(409, {
+      success: false, message: 'Product is in use.', data: null
+    });
+
+    expect((error as ApiError).params).toBeUndefined();
+  });
+
+  it('intercept_paramsWithNonStringValue_leavesThemUndefined', async () => {
+    const error = await failedRequestWithBody(409, {
+      success: false, message: 'Odd body.', data: null,
+      code: 'DUPLICATE_PRODUCT_NAME', params: { name: { nested: true } }
+    });
+
+    // A non-string would render as "[object Object]" in front of an operator, so the whole map is
+    // dropped and the server sentence is shown instead.
+    expect((error as ApiError).params).toBeUndefined();
   });
 });

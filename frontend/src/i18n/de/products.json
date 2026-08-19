@@ -41,5 +41,11 @@
     "nameRequired": "Name ist erforderlich.",
     "skuRequired": "Artikelnummer ist erforderlich.",
     "priceInvalid": "Bitte geben Sie einen Preis größer als 0 ein."
+  },
+  "errors": {
+    "duplicateName": "Ein Produkt mit dem Namen „{{name}}“ existiert bereits.",
+    "duplicateSku": "Ein Produkt mit der Artikelnummer „{{sku}}“ existiert bereits.",
+    "restoreBlockedByName": "Wiederherstellen nicht möglich: Ein aktives Produkt mit dem Namen „{{name}}“ existiert bereits.",
+    "restoreBlockedBySku": "Wiederherstellen nicht möglich: Ein aktives Produkt mit der Artikelnummer „{{sku}}“ existiert bereits."
   }
 }
