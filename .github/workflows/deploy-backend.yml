@@ -32,6 +32,17 @@ jobs:
         && github.event.workflow_run.event != 'pull_request')
       || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    # Without this the GitHub default of 360 minutes applies, which is how run
+    # 32271377304 was still "in progress" an hour later against 18-19s for every
+    # healthy run, until someone cancelled it by hand. The scripts now bound their
+    # own requests; this bounds the job even if a step finds a way to hang that
+    # they do not cover, so no run can outlive its own budget again.
+    #
+    # 15 minutes sits just above the poll's worst case: koyeb-wait-healthy.sh gives
+    # up on a 600s wall-clock budget and can be at most one 15s request past it,
+    # leaving roughly four minutes for checkout, the Dockerfile check and the
+    # redeploy POST. It is a backstop, not a target - a healthy deploy is 18-19s.
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
