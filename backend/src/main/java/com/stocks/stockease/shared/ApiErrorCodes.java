@@ -75,6 +75,43 @@ public final class ApiErrorCodes {
      */
     public static final String DUPLICATE_INVOICE_NUMBER = "DUPLICATE_INVOICE_NUMBER";
 
+    /**
+     * A close was refused because the invoice is no longer open. The operator has nothing to fix on
+     * the request: the invoice has already moved on, and its current state is what to look at.
+     */
+    public static final String INVOICE_NOT_OPEN_FOR_CLOSE = "INVOICE_NOT_OPEN_FOR_CLOSE";
+
+    /**
+     * A return was attempted against an invoice that is still open. Units are only returnable once
+     * the invoice is closed, so the operator closes it first and then records the return.
+     *
+     * <p>Latent rather than live: the return endpoint is the only path into this guard, and the
+     * movement service refuses an open invoice earlier on it with its own 400. This code reaches no
+     * wire unless that ordering changes, and exists so the situation is named if it ever does.
+     */
+    public static final String RETURN_REQUIRES_CLOSED_INVOICE = "RETURN_REQUIRES_CLOSED_INVOICE";
+
+    /**
+     * A return asked for more units than the line still has outstanding. The operator lowers the
+     * quantity to what remains, which the params name rather than leaving them to compute it.
+     *
+     * <p>Params: {@code quantity} - units the request tried to return; {@code remaining} - units
+     * still returnable on the line; {@code itemId} - the invoice item the return names.
+     */
+    public static final String RETURN_EXCEEDS_RETURNABLE = "RETURN_EXCEEDS_RETURNABLE";
+
+    /**
+     * A payment was recorded against an invoice already marked paid. Nothing is owed and nothing
+     * needs doing; the operator is looking at an invoice someone has already settled.
+     */
+    public static final String INVOICE_ALREADY_PAID = "INVOICE_ALREADY_PAID";
+
+    /**
+     * A delete was refused because the invoice is no longer open. A closed invoice is corrected by a
+     * return rather than by deletion (ADR 011), which is the operator way forward here.
+     */
+    public static final String INVOICE_NOT_OPEN_FOR_DELETE = "INVOICE_NOT_OPEN_FOR_DELETE";
+
     private ApiErrorCodes() {
     }
 }

@@ -1,5 +1,7 @@
 package com.stocks.stockease.invoice.web;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import java.util.Map;
 import static com.stocks.stockease.invoice.web.InvoiceTestFixtures.csrfToken;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +63,8 @@ class InvoiceDeleteControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void deleteInvoice_whenClosed_returns409() throws Exception {
-        Mockito.doThrow(new InvoiceStateException("Only open invoices can be deleted."))
+        Mockito.doThrow(new InvoiceStateException("Only open invoices can be deleted.",
+                ApiErrorCodes.INVOICE_NOT_OPEN_FOR_DELETE, null))
                 .when(invoiceService).deleteById(1L);
 
         mockMvc.perform(delete("/api/invoices/1").with(csrfToken()))

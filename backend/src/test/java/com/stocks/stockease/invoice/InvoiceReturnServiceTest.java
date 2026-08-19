@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.stocks.stockease.invoice.internal.InvoiceItemRepository;
 import com.stocks.stockease.invoice.internal.InvoiceRepository;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvoiceStateException;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -65,7 +66,12 @@ class InvoiceReturnServiceTest {
 
         assertThatThrownBy(() -> invoiceService.registerReturn(1L, 2))
                 .isInstanceOf(InvoiceStateException.class)
-                .hasMessage("Returns require a closed invoice.");
+                .hasMessage("Returns require a closed invoice.")
+                // The one place this code is proved wired. Its situation is latent behind the movement
+                // service open-invoice guard, which answers first on the only calling path, so no wire
+                // assertion can reach it (ADR 041).
+                .extracting(thrown -> ((InvoiceStateException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.RETURN_REQUIRES_CLOSED_INVOICE);
     }
 
     @Test

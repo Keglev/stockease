@@ -221,7 +221,8 @@ public class InvoiceService {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
         if (invoice.getStatus() != InvoiceStatus.OPEN) {
-            throw new InvoiceStateException("Only open invoices can be closed.");
+            throw new InvoiceStateException("Only open invoices can be closed.",
+                    ApiErrorCodes.INVOICE_NOT_OPEN_FOR_CLOSE, null);
         }
         invoice.setStatus(InvoiceStatus.CLOSED);
         invoice.setClosedBy(user);
@@ -280,15 +281,21 @@ public class InvoiceService {
         InvoiceItem item = invoiceItemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice item with ID " + itemId + " not found."));
         if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {
-            throw new InvoiceStateException("Returns require a closed invoice.");
+            throw new InvoiceStateException("Returns require a closed invoice.",
+                    ApiErrorCodes.RETURN_REQUIRES_CLOSED_INVOICE, null);
         }
         if (quantity <= 0) {
             throw new IllegalArgumentException("Return quantity must be positive.");
         }
         // database CHECK on returned_qty is the backstop for this invariant
-        if (item.getReturnedQty() + quantity > item.getQuantity()) {
+        int remaining = item.getQuantity() - item.getReturnedQty();
+        if (quantity > remaining) {
             throw new InvoiceStateException("Return of " + quantity + " exceeds remaining returnable quantity "
-                    + (item.getQuantity() - item.getReturnedQty()) + " for invoice item " + itemId + ".");
+                    + remaining + " for invoice item " + itemId + ".",
+                    ApiErrorCodes.RETURN_EXCEEDS_RETURNABLE,
+                    Map.of("quantity", String.valueOf(quantity),
+                            "remaining", String.valueOf(remaining),
+                            "itemId", String.valueOf(itemId)));
         }
         item.setReturnedQty(item.getReturnedQty() + quantity);
         InvoiceItem saved = invoiceItemRepository.save(item);
@@ -319,7 +326,8 @@ public class InvoiceService {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
         if (invoice.getPaidAt() != null) {
-            throw new InvoiceStateException("Invoice is already marked as paid.");
+            throw new InvoiceStateException("Invoice is already marked as paid.",
+                    ApiErrorCodes.INVOICE_ALREADY_PAID, null);
         }
         invoice.setPaidAt(LocalDateTime.now());
         return invoiceRepository.save(invoice);
@@ -337,7 +345,8 @@ public class InvoiceService {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
         if (invoice.getStatus() != InvoiceStatus.OPEN) {
-            throw new InvoiceStateException("Only open invoices can be deleted.");
+            throw new InvoiceStateException("Only open invoices can be deleted.",
+                    ApiErrorCodes.INVOICE_NOT_OPEN_FOR_DELETE, null);
         }
         invoiceRepository.delete(invoice);
     }

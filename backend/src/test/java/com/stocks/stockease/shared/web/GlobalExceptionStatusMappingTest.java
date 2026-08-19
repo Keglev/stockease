@@ -126,12 +126,16 @@ class GlobalExceptionStatusMappingTest {
     @Test
     void handleInvoiceStateException_returns409WithOriginalMessage() {
         var response = handler.handleInvoiceStateException(
-                new InvoiceStateException("Only open invoices can be closed."));
+                new InvoiceStateException("Only open invoices can be closed.",
+                        ApiErrorCodes.INVOICE_NOT_OPEN_FOR_CLOSE, null));
         ApiResponse<String> body = Objects.requireNonNull(response.getBody());
 
         assertThat(response.getStatusCode().value()).isEqualTo(409);
         assertThat(body.isSuccess()).isFalse();
         assertThat(body.getMessage()).isEqualTo("Only open invoices can be closed.");
+        // The handler passes the situation code straight through: the family covers five refusals
+        // sharing this status, and the code is the only thing on the envelope that tells them apart.
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.INVOICE_NOT_OPEN_FOR_CLOSE);
     }
 
     @Test
