@@ -2,6 +2,9 @@ package com.stocks.stockease.shared.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -152,16 +155,15 @@ class ErrorEnvelopeCodeIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @WithMockUser(username = TESTER, roles = {"ADMIN"})
-    void registerReturn_capExceeded_answers409WithNoCodeFieldAtAll() throws Exception {
-        Sold sold = buyAndSellOut(5);
-
-        // The third 409 on this same endpoint, and one no client needs to branch on. It must
-        // serialize without a code - and the rest of the envelope must be untouched by the field's
-        // existence, which is the whole claim "optional" makes.
-        String body = mockMvc.perform(post("/api/returns").contentType(MediaType.APPLICATION_JSON)
-                        .content(returnBody(firstItemId(sold.sale()), sold.item().getId(),
-                                "RETURN_FROM_CUSTOMER", 99)))
-                .andExpect(status().isConflict())
+    void getInvoice_unknownId_answers404WithNoCodeFieldAtAll() throws Exception {
+        // The claim is about envelope serialization, not about this status: an optional field must be
+        // an absent key rather than a present null, and data must still serialize as null beside it.
+        // Pinned on a not-found rather than on a conflict because no planned ADR 041 family covers
+        // EntityNotFound, so this guard never has to move again - where the 409 families are being
+        // coded one phase at a time, and this test had to move once already when its old target
+        // gained a code.
+        String body = mockMvc.perform(get("/api/invoices/999999"))
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
@@ -269,18 +271,76 @@ class ErrorEnvelopeCodeIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @WithMockUser(username = TESTER, roles = {"ADMIN"})
-    void registerReturn_capExceeded_answers409WithNoParamsFieldAtAll() throws Exception {
-        Sold sold = buyAndSellOut(5);
-
-        // The uncoded 409 again, now for the second optional field. Asserted on the raw JSON for the
-        // same reason the code case is: a path assertion cannot tell an absent key from a null one,
-        // and absent is the claim - params rides with a code and this failure has none.
-        String body = mockMvc.perform(post("/api/returns").contentType(MediaType.APPLICATION_JSON)
-                        .content(returnBody(firstItemId(sold.sale()), sold.item().getId(),
-                                "RETURN_FROM_CUSTOMER", 99)))
-                .andExpect(status().isConflict())
+    void getInvoice_unknownId_answers404WithNoParamsFieldAtAll() throws Exception {
+        // The same serialization claim for the second optional field, on the same deliberately
+        // uncoded situation: params rides with a code and this failure has none.
+        String body = mockMvc.perform(get("/api/invoices/999999"))
+                .andExpect(status().isNotFound())
                 .andReturn().getResponse().getContentAsString();
 
         assertThat(body).doesNotContain("params");
+    }
+
+    /** A settled purchase, left closed and paid - the state four of the five refusals below need. */
+    private Invoice settledPurchase(int quantity) {
+        Supplier supplier = suppliers.create("Envelope Lifecycle " + tag(), null, null, "1 Main St", null);
+        Product item = live("Envelope Lifecycle Widget " + tag(), "LIFE-" + N.incrementAndGet());
+        Invoice purchase = invoices.createInvoice(new CreateInvoiceCommand(InvoiceType.PURCHASE, tag(),
+                supplier.getId(), null, LocalDate.now().plusDays(30), BigDecimal.ZERO, BigDecimal.ZERO,
+                List.of(new CreateInvoiceCommand.ItemLine(item.getId(), quantity, new BigDecimal("10.00")))));
+        settle(purchase);
+        return purchase;
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void closeInvoice_alreadyClosed_answers409WithTheNotOpenForCloseCode() throws Exception {
+        Invoice closed = settledPurchase(3);
+
+        mockMvc.perform(patch("/api/invoices/" + closed.getId() + "/close"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Only open invoices can be closed."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.INVOICE_NOT_OPEN_FOR_CLOSE));
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void markAsPaid_alreadyPaid_answers409WithTheAlreadyPaidCode() throws Exception {
+        Invoice paid = settledPurchase(3);
+
+        mockMvc.perform(patch("/api/invoices/" + paid.getId() + "/paid"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Invoice is already marked as paid."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.INVOICE_ALREADY_PAID));
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void deleteInvoice_alreadyClosed_answers409WithTheNotOpenForDeleteCode() throws Exception {
+        Invoice closed = settledPurchase(3);
+
+        mockMvc.perform(delete("/api/invoices/" + closed.getId()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Only open invoices can be deleted."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.INVOICE_NOT_OPEN_FOR_DELETE));
+    }
+
+    @Test
+    @WithMockUser(username = TESTER, roles = {"ADMIN"})
+    void registerReturn_moreThanTheLineHasLeft_answers409WithTheExceedsCodeAndTheNumbers() throws Exception {
+        Sold sold = buyAndSellOut(5);
+        long itemId = firstItemId(sold.sale());
+
+        mockMvc.perform(post("/api/returns").contentType(MediaType.APPLICATION_JSON)
+                        .content(returnBody(itemId, sold.item().getId(), "RETURN_FROM_CUSTOMER", 9)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message")
+                        .value("Return of 9 exceeds remaining returnable quantity 5 for invoice item " + itemId + "."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.RETURN_EXCEEDS_RETURNABLE))
+                // The only situation in this family carrying params: a client rendering its own
+                // sentence needs the numbers the server put in its.
+                .andExpect(jsonPath("$.params.quantity").value("9"))
+                .andExpect(jsonPath("$.params.remaining").value("5"))
+                .andExpect(jsonPath("$.params.itemId").value(String.valueOf(itemId)));
     }
 }

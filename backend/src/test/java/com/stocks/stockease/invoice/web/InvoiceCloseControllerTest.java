@@ -1,5 +1,7 @@
 package com.stocks.stockease.invoice.web;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import java.util.Map;
 import static com.stocks.stockease.invoice.web.InvoiceTestFixtures.csrfToken;
 
 import java.util.Optional;
@@ -75,7 +77,8 @@ class InvoiceCloseControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void closeInvoice_whenNotOpen_returns409() throws Exception {
         Mockito.when(invoiceService.close(eq(1L), any(User.class)))
-                .thenThrow(new InvoiceStateException("Only open invoices can be closed."));
+                .thenThrow(new InvoiceStateException("Only open invoices can be closed.",
+                        ApiErrorCodes.INVOICE_NOT_OPEN_FOR_CLOSE, null));
 
         mockMvc.perform(patch("/api/invoices/1/close").with(csrfToken()))
                 .andExpect(status().isConflict())

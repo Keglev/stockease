@@ -1,5 +1,7 @@
 package com.stocks.stockease.invoice.web;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import java.util.Map;
 import static com.stocks.stockease.invoice.web.InvoiceTestFixtures.csrfToken;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +69,8 @@ class InvoicePaidControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void markInvoiceAsPaid_whenAlreadyPaid_returns409() throws Exception {
         Mockito.when(invoiceService.markAsPaid(1L))
-                .thenThrow(new InvoiceStateException("Invoice is already marked as paid."));
+                .thenThrow(new InvoiceStateException("Invoice is already marked as paid.",
+                        ApiErrorCodes.INVOICE_ALREADY_PAID, null));
 
         mockMvc.perform(patch("/api/invoices/1/paid").with(csrfToken()))
                 .andExpect(status().isConflict())

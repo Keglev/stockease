@@ -108,15 +108,24 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles {@link InvoiceStateException} from invoice lifecycle rule violations and returns a 409 Conflict response.
+     * Handles {@link InvoiceStateException} from invoice lifecycle rule violations and returns a 409
+     * Conflict carrying the situation code the exception names and any values its message
+     * interpolates.
+     *
+     * <p>The family covers five refusals - closing or deleting an invoice that is no longer open,
+     * returning against one not yet closed, returning more than a line has outstanding, and paying
+     * one already paid - which share a status and ask the operator for different things. The code is
+     * what tells them apart. Only the returnable-quantity case carries {@code params}, naming the
+     * quantity asked for, what remains and the line, so a client rendering its own translated text
+     * has the numbers to put in it (ADR 041).
      *
      * @param ex the caught exception
-     * @return 409 response with the lifecycle error message
+     * @return 409 response with the lifecycle message, its situation code and any params
      */
     @ExceptionHandler(InvoiceStateException.class)
     public ResponseEntity<ApiResponse<String>> handleInvoiceStateException(InvoiceStateException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
+                .body(new ApiResponse<>(false, ex.getMessage(), null, ex.getCode(), ex.getParams()));
     }
 
     /**

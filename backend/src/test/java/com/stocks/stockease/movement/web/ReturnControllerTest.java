@@ -1,5 +1,7 @@
 package com.stocks.stockease.movement.web;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import java.util.Map;
 import static com.stocks.stockease.movement.web.MovementTestFixtures.applicationJson;
 import static com.stocks.stockease.movement.web.MovementTestFixtures.csrfToken;
 import static com.stocks.stockease.movement.web.MovementTestFixtures.returnBody;
@@ -128,7 +130,9 @@ class ReturnControllerTest {
     void registerReturn_exceedingReturnableQuantity_returns409() throws Exception {
         Mockito.when(stockMovementService.recordMovement(any(RecordMovementCommand.class), any(User.class)))
                 .thenThrow(new InvoiceStateException(
-                        "Return of 2 exceeds remaining returnable quantity 1 for invoice item 4."));
+                        "Return of 2 exceeds remaining returnable quantity 1 for invoice item 4.",
+                        ApiErrorCodes.RETURN_EXCEEDS_RETURNABLE,
+                        Map.of("quantity", "2", "remaining", "1", "itemId", "4")));
 
         performExpecting(409, "Return of 2 exceeds remaining returnable quantity 1 for invoice item 4.");
     }
