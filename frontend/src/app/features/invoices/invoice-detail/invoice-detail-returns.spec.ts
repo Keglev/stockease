@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { ApiError } from '../../../core/api/api-envelope';
+import { LanguageService } from '../../../core/i18n/language.service';
 import {
   configureInvoiceDetailTestBed,
   detail,
@@ -184,9 +186,10 @@ describe('InvoiceDetailReturns (through the detail page)', () => {
 
   it('return_rejectedWith409ButNoCode_fallsBackToTheBackendMessage', async () => {
     page = await configureInvoiceDetailTestBed(of(detail({ status: 'CLOSED' })));
-    // The cap-exceeded conflict, which the API deliberately leaves uncoded. It must take the same
-    // path every other unremarkable failure on this page takes rather than borrowing a message
-    // written for a different situation.
+    // A 409 that arrives with no code at all. The wire sentence is the cap-exceeded one, which now
+    // does carry a code - kept that way on purpose, so the case turns on the absent code and not on
+    // the words. It must take the same path every other unremarkable failure on this page takes
+    // rather than borrowing a message written for a different situation.
     page.movements.result = throwError(
       () =>
         new ApiError(
@@ -200,6 +203,32 @@ describe('InvoiceDetailReturns (through the detail page)', () => {
 
     expect(page.notifications.errors).toEqual([
       'Return of 2 exceeds remaining returnable quantity 1 for invoice item 4.'
+    ]);
+  });
+
+  it('return_rejectedWithExceedsReturnableCode_surfacesTheGermanSentenceWithItsValues', async () => {
+    // The cap-exceeded conflict, uncoded when the case above it was written and coded as of ADR 041
+    // phase 3. This surface has no advice of its own for it, so it takes the resolver layer: the
+    // translated sentence with the server's three values interpolated into it. German, because the
+    // English key mirrors the wire sentence byte for byte and so could not tell the two apart.
+    page = await configureInvoiceDetailTestBed(of(detail({ status: 'CLOSED' })));
+    TestBed.inject(LanguageService).setLanguage('de');
+    page.movements.result = throwError(
+      () =>
+        new ApiError(
+          'Return of 3 exceeds remaining returnable quantity 1 for invoice item 4.',
+          409,
+          'RETURN_EXCEEDS_RETURNABLE',
+          { quantity: '3', remaining: '1', itemId: '4' }
+        )
+    );
+
+    host(page.fixture).querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle(page.fixture);
+
+    expect(page.notifications.errors).toEqual([
+      'Die Rücksendung von 3 überschreitet die verbleibende rücksendbare Menge 1 '
+        + 'für die Rechnungsposition 4.'
     ]);
   });
 

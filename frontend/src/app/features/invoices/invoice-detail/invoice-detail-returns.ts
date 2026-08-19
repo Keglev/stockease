@@ -3,6 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { InvoiceItemResponse, InvoiceResponse } from '../../../core/api/api-models';
 import { ApiError } from '../../../core/api/api-envelope';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { MovementService } from '../../movements/movement.service';
 import {
@@ -37,6 +38,7 @@ export class InvoiceDetailReturns {
   private readonly movements = inject(MovementService);
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
 
   private host!: InvoiceDetailReturnsHost;
 
@@ -121,21 +123,21 @@ export class InvoiceDetailReturns {
    * The code discriminates them; a return whose product is deleted is fixed by restoring it, a
    * return the stock cannot cover is not.
    *
-   * Anything else - no code, an unrecognized one, or a failure that is not an ApiError at all -
-   * falls through to the backend message, which is what every other action on this page does with
-   * a failure it has nothing specific to say about.
+   * Three layers, narrowest first. The two cases above are this surface's own advice, written for
+   * an operator standing on this page, and no other caller of the endpoint would want them. Every
+   * other failure goes to the shared resolver, which translates the situations the API named and
+   * falls back to the backend's own sentence for the rest - an absent code, an unrecognized one,
+   * or a failure that is not an ApiError at all, three cases it already treats alike (ADR 041).
    */
   private returnFailureMessage(err: Error): string {
-    if (!(err instanceof ApiError)) {
-      return err.message;
+    if (err instanceof ApiError) {
+      switch (err.code) {
+        case 'PRODUCT_DELETED':
+          return 'invoices.returnDialog.deletedProduct';
+        case 'INSUFFICIENT_STOCK':
+          return 'invoices.returnDialog.insufficientStock';
+      }
     }
-    switch (err.code) {
-      case 'PRODUCT_DELETED':
-        return 'invoices.returnDialog.deletedProduct';
-      case 'INSUFFICIENT_STOCK':
-        return 'invoices.returnDialog.insufficientStock';
-      default:
-        return err.message;
-    }
+    return this.errorMessages.resolve(err);
   }
 }

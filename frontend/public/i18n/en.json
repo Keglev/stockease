@@ -384,7 +384,12 @@
       "back": "Back to invoices"
     },
     "errors": {
-      "duplicateNumber": "An invoice numbered '{{invoiceNumber}}' already exists."
+      "duplicateNumber": "An invoice numbered '{{invoiceNumber}}' already exists.",
+      "notOpenForClose": "Only open invoices can be closed.",
+      "returnRequiresClosed": "Returns require a closed invoice.",
+      "returnExceedsReturnable": "Return of {{quantity}} exceeds remaining returnable quantity {{remaining}} for invoice item {{itemId}}.",
+      "alreadyPaid": "Invoice is already marked as paid.",
+      "notOpenForDelete": "Only open invoices can be deleted."
     }
   },
   "customers": {

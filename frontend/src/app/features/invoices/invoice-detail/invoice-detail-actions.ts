@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 
 import { InvoiceResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import {
   ConfirmDialogComponent,
@@ -35,7 +36,7 @@ export interface InvoiceDetailActionsHost {
  * that page's lifetime.
  *
  * The coupling is one `connect` call. The page keeps the invoice signal, the shared in-flight flag
- * and the route-derived id, because they are the page's; this collaborator owns the four services
+ * and the route-derived id, because they are the page's; this collaborator owns the five services
  * its own bodies use, including the admin check that only these three guards read.
  */
 @Injectable()
@@ -45,6 +46,7 @@ export class InvoiceDetailActions {
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly errorMessages = inject(ErrorMessageService);
 
   private host!: InvoiceDetailActionsHost;
 
@@ -142,7 +144,7 @@ export class InvoiceDetailActions {
       },
       error: (err: Error) => {
         this.host.working.set(false);
-        this.notifications.error(err.message);
+        this.notifications.error(this.errorMessages.resolve(err));
       }
     });
   }
@@ -170,7 +172,7 @@ export class InvoiceDetailActions {
       },
       error: (err: Error) => {
         this.host.working.set(false);
-        this.notifications.error(err.message);
+        this.notifications.error(this.errorMessages.resolve(err));
         if (refetchOnError) {
           // A failed close rolled back entirely, so nothing changed server-side; re-reading
           // proves that to the user instead of leaving a half-trusted page on screen.

@@ -50,6 +50,28 @@ export const TRANSLATIONS = {
         lineTotal: 'Line total',
         total: 'Invoice total',
         back: 'Back to invoices'
+      },
+      errors: {
+        returnExceedsReturnable:
+          'Return of {{quantity}} exceeds remaining returnable quantity {{remaining}} '
+          + 'for invoice item {{itemId}}.',
+        alreadyPaid: 'Invoice is already marked as paid.'
+      }
+    }
+  },
+  /*
+   * German carries only the error sentences, because they are the only strings these specs assert
+   * after a language switch: a refusal that reads German is the proof the resolver ran, which an
+   * English assertion cannot give when the English key mirrors the wire sentence byte for byte.
+   * Everything else falls back to the English dictionary above, as it does in the shipped app.
+   */
+  de: {
+    invoices: {
+      errors: {
+        returnExceedsReturnable:
+          'Die Rücksendung von {{quantity}} überschreitet die verbleibende '
+          + 'rücksendbare Menge {{remaining}} für die Rechnungsposition {{itemId}}.',
+        alreadyPaid: 'Die Rechnung ist bereits als bezahlt markiert.'
       }
     }
   }

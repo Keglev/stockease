@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
+import { ApiError } from '../../../core/api/api-envelope';
+import { LanguageService } from '../../../core/i18n/language.service';
 import {
   configureInvoiceDetailTestBed,
   detail,
@@ -169,6 +171,23 @@ describe('InvoiceDetailActions (through the detail page)', () => {
 
     // A destructive prompt must state which invoice it is about to act on.
     expect(page.dialog.lastData?.messageParams).toEqual({ number: 'RE-2026-0119' });
+  });
+
+  it('markPaid_rejectedWithAlreadyPaidCode_surfacesTheGermanSentence', async () => {
+    // The lifecycle refusals carry situation codes as of ADR 041 phase 3, and this page routes
+    // them through the shared resolver rather than showing the server's English. German is the
+    // only assertion that can prove it: the English key mirrors the wire sentence byte for byte,
+    // so an English expectation would hold even with the wiring reverted.
+    page = await configureInvoiceDetailTestBed(of(detail({ status: 'CLOSED', paidAt: null })));
+    TestBed.inject(LanguageService).setLanguage('de');
+    page.invoices.paidResult = throwError(
+      () => new ApiError('Invoice is already marked as paid.', 409, 'INVOICE_ALREADY_PAID')
+    );
+
+    host(page.fixture).querySelector<HTMLButtonElement>('.action-paid')?.click();
+    await settle(page.fixture);
+
+    expect(page.notifications.errors).toEqual(['Die Rechnung ist bereits als bezahlt markiert.']);
   });
 
   it('delete_rejected_surfacesMessageAndStaysOnPage', async () => {
