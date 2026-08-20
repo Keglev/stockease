@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<!-- The one page template the docs build wires: build-architecture-docs.sh
+     passes every architecture page and every decision record through it, so
+     the topbar, sidebar and theme handling here are what the whole generated
+     site carries - this comment included, since it ships inside each page.
+     Do not put template syntax in it. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+042-deploy-gate-watches-its-deployment · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Decision-log sidebar, included by the doc templates as a Pandoc partial.
+     The log records backend, frontend and cross-cutting decisions in one
+     sequence (ADR 017), so these pages carry neither tier's navigation: this
+     sidebar IS the index. The active link is marked at runtime by docs.js. Do
+     not put template syntax in this comment - a partial is itself a template.
+
+     MAINTENANCE DUTY: a new ADR is added to docs/decisions/index.md AND to the
+     LAST range group below, in the same pull request that adds the ADR file.
+     When a group would pass roughly twelve entries, start a new range rather
+     than letting one grow: keep the ranges aligned to the numbering, so 033
+     opens an "ADR 033-040" group instead of stretching 021-032. The summary
+     label carries the range, so it changes with the group.
+
+     No open attribute is set here on purpose. Every group ships collapsed and
+     docs.js opens the one holding the current page, which keeps the sidebar
+     short on the index and self-locating on an ADR page.
+
+     The two-entry pointer design in nav-backend.html is deliberate and stays as
+     it is - the central log is reached from the Docs group there. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decision index</a></li>
+  </ul>
+
+  <p class="nav-title">Decisions</p>
+  <details class="nav-group">
+    <summary>ADR 001-010</summary>
+    <ul>
+      <li><a href="/stockease/decisions/001-database-choice.html">001 Database choice</a></li>
+      <li><a href="/stockease/decisions/002-validation-strategy.html">002 Validation strategy</a></li>
+      <li><a href="/stockease/decisions/003-authentication-mechanism.html">003 Authentication mechanism</a></li>
+      <li><a href="/stockease/decisions/004-inventory-domain-model.html">004 Inventory domain model</a></li>
+      <li><a href="/stockease/decisions/005-demo-access.html">005 Demo access without credentials</a></li>
+      <li><a href="/stockease/decisions/006-audit-and-profit-model.html">006 Audit and profit model</a></li>
+      <li><a href="/stockease/decisions/007-modular-monolith.html">007 Modular monolith</a></li>
+      <li><a href="/stockease/decisions/008-documentation-structure.html">008 Documentation structure</a></li>
+      <li><a href="/stockease/decisions/009-sales-invoices-and-customers.html">009 Sales invoices and customers</a></li>
+      <li><a href="/stockease/decisions/010-no-lot-tracking.html">010 Pooled inventory, no lot tracking</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 011-020</summary>
+    <ul>
+      <li><a href="/stockease/decisions/011-merchandise-scope-and-payment.html">011 Merchandise scope and payment</a></li>
+      <li><a href="/stockease/decisions/012-frontend-hosting.html">012 Frontend hosting on a CDN</a></li>
+      <li><a href="/stockease/decisions/013-token-storage.html">013 JWT in localStorage, no refresh</a></li>
+      <li><a href="/stockease/decisions/014-openapi-types-only.html">014 Types-only generation from OpenAPI</a></li>
+      <li><a href="/stockease/decisions/015-runtime-i18n.html">015 Runtime over compile-time i18n</a></li>
+      <li><a href="/stockease/decisions/016-charting-library.html">016 Direct ECharts, not a wrapper</a></li>
+      <li><a href="/stockease/decisions/017-central-decision-log.html">017 Central decision log</a></li>
+      <li><a href="/stockease/decisions/018-product-master-data.html">018 Product creation is master data</a></li>
+      <li><a href="/stockease/decisions/019-last-purchase-price.html">019 Purchase price follows last close</a></li>
+      <li><a href="/stockease/decisions/020-loss-remark.html">020 Losses carry a remark</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 021-032</summary>
+    <ul>
+      <li><a href="/stockease/decisions/021-stock-only-via-invoices.html">021 Stock enters only via invoices</a></li>
+      <li><a href="/stockease/decisions/022-invoice-numbers.html">022 Invoice numbers are operator-set</a></li>
+      <li><a href="/stockease/decisions/023-chart-aggregation-and-csv.html">023 Chart aggregation and CSV export</a></li>
+      <li><a href="/stockease/decisions/024-profit-cogs.html">024 Gross profit as COGS at sale</a></li>
+      <li><a href="/stockease/decisions/025-cash-flow-payment-basis.html">025 Cash flow on a payment basis</a></li>
+      <li><a href="/stockease/decisions/026-low-stock-ever-stocked.html">026 Low stock: ever-stocked only</a></li>
+      <li><a href="/stockease/decisions/027-demo-temporal-spread.html">027 Deterministic demo spread</a></li>
+      <li><a href="/stockease/decisions/028-supplier-traceability-search.html">028 Search-first navigation</a></li>
+      <li><a href="/stockease/decisions/029-help-content-architecture.html">029 Help content as lazy modules</a></li>
+      <li><a href="/stockease/decisions/030-settings-in-local-storage.html">030 Preferences in localStorage</a></li>
+      <li><a href="/stockease/decisions/031-runtime-formatting-via-intl.html">031 Runtime formatting through Intl</a></li>
+      <li><a href="/stockease/decisions/032-client-side-idle-logout.html">032 Idle sign-out is a client concern</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 033-042</summary>
+    <ul>
+      <li><a href="/stockease/decisions/033-invoice-party-name-snapshots.html">033 Invoices snapshot party names</a></li>
+      <li><a href="/stockease/decisions/034-no-password-expiry.html">034 No forced password expiry</a></li>
+      <li><a href="/stockease/decisions/035-search-token-matching-and-browse.html">035 Token search and browse on focus</a></li>
+      <li><a href="/stockease/decisions/036-client-token-storage.html">036 Client token storage and threat model</a></li>
+      <li><a href="/stockease/decisions/037-i18n-authoring-split.html">037 Translations authored per namespace</a></li>
+      <li><a href="/stockease/decisions/038-ai-assisted-development-workflow.html">038 AI-assisted development workflow</a></li>
+      <li><a href="/stockease/decisions/039-report-tab-state-collaborators.html">039 Per-tab state collaborators</a></li>
+      <li><a href="/stockease/decisions/040-paged-list-store.html">040 Two list stores for two paging models</a></li>
+      <li><a href="/stockease/decisions/041-error-codes-for-operator-situations.html">041 Error codes name operator situations</a></li>
+      <li><a href="/stockease/decisions/042-deploy-gate-watches-its-deployment.html">042 The deploy gate watches its deployment</a></li>
+    </ul>
+  </details>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-042-the-deploy-gate-watches-the-deployment-it-triggered">ADR
+        042: The Deploy Gate Watches the Deployment It Triggered</h1>
+        <p><strong>Scope</strong>: [Backend] <strong>Status</strong>:
+        Accepted <strong>Date</strong>: August 20, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The backend release path is one workflow step asking one
+        question: did the thing this commit triggered actually ship? For
+        most of the project’s life the answer it produced was worthless,
+        and the reason was not a bug in the loop but the object the loop
+        was reading.</p>
+        <p><code>koyeb-wait-healthy.sh</code> used to poll the service -
+        <code>GET /v1/services/{id}</code>, reading the service’s own
+        status field - and wait for it to report <code>HEALTHY</code>.
+        Koyeb does not replace a service in place. It builds the new
+        deployment beside the running one, and its own reference states
+        the consequence directly: any currently running deployments for
+        the service continue to run until the new deployment is marked
+        healthy. The service object therefore answers
+        <code>HEALTHY</code> for the entire duration of the build, on
+        behalf of the instance that was already serving before the
+        commit existed.</p>
+        <p>The gate passed on its first request. The script header
+        records the observation that settled it, captured live on 19-20
+        August 2026:</p>
+        <pre><code>[1/60 0s/600s] Service status: HEALTHY</code></pre>
+        <p>printed while the build was still running. Zero seconds
+        elapsed, first attempt, green. Every historic fast deploy - the
+        eighteen-to-nineteen-second runs that made up the entire sibling
+        history of the hour-long run that first drew attention to this
+        workflow - was that same false green: a job reporting success
+        for a condition that was already true before it started. It
+        never measured a build at all.</p>
+        <p>This matters beyond a misleading badge. The gate is what
+        stands between a merge to <code>main</code> and the belief that
+        production has the merged code. A gate that answers about the
+        old instance says nothing about the new one, so a deployment
+        that failed to build would leave <code>main</code> green and
+        production stale, with no signal anywhere that the two had
+        diverged.</p>
+        <p>An earlier round of work had already bounded this poll so it
+        could not hang, after a run sat in progress for an hour. That
+        fixed the hang and left the defect: as the script header puts
+        it, bounding a measurement of the wrong object only makes it
+        fail faster.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>The redeploy reply’s deployment id is captured, and
+        that deployment is polled.</strong></p>
+        <p><code>koyeb-redeploy.sh</code> posts the redeploy, then
+        parses the identifier out of the reply body instead of printing
+        it and discarding it. That id names the deployment <em>this
+        run</em> created, so its status is this run’s answer and nobody
+        else’s. It is published as a step output and consumed by
+        <code>koyeb-wait-healthy.sh</code>, which reads
+        <code>GET /v1/deployments/{id}</code> and takes the deployment’s
+        status.</p>
+        <p>The reply’s shape was verified rather than assumed. Koyeb’s
+        generated Go client declares the redeploy reply with a single
+        <code>deployment</code> field, and the deployment type carries
+        <code>id</code> - <code>koyeb/koyeb-api-client-go</code>,
+        <code>model_redeploy_reply.go</code> and
+        <code>model_deployment.go</code>, the same source that settled
+        the status enum.</p>
+        <p><strong>A missing id fails the step loudly.</strong> An empty
+        id would turn the next request’s URL from a single deployment
+        into a deployment listing, which would quietly resume measuring
+        the wrong object - the precise failure this record exists to
+        end. Both scripts refuse it: the redeploy step errors when the
+        reply carries no id, and the poll step errors when it is handed
+        an empty one rather than falling back to the service.</p>
+        <h2 id="the-status-doctrine">The status doctrine</h2>
+        <p>A deployment status is the gate’s entire verdict, so every
+        value the platform can return is classified deliberately and
+        none is left to a default.</p>
+        <p><strong>Sixteen values, not the twelve that are
+        documented.</strong> The set was taken from Koyeb’s deployments
+        reference page and then cross-checked against the enum in their
+        own generated client, <code>model_deployment_status.go</code>.
+        The two disagree: the reference documents twelve, the client
+        declares sixteen, adding <code>CANCELING</code>,
+        <code>CANCELED</code>, <code>ERRORING</code> and
+        <code>STASHED</code>. The published documentation lags the
+        client, and the enum has already grown once.</p>
+        <p><strong>Shipped</strong> is <code>HEALTHY</code>, and also
+        <code>SLEEPING</code>. The sleeping case is reasoned rather than
+        assumed: Koyeb stops the old deployment only once the new one
+        has been marked healthy, so a deployment can only become the
+        sleeping one by having become the active one first, and a
+        failure ends in <code>ERROR</code> or <code>STOPPED</code> and
+        never in <code>SLEEPING</code>. The service is scale-to-zero, so
+        this is a state a real successful deploy can land in. It gets
+        its own distinct log line rather than sharing the healthy one,
+        deliberately: that reasoning is a claim about the platform, the
+        first live deploy is its empirical check, and a separate line is
+        what would make a contradiction visible instead of silently
+        indistinguishable from an ordinary success. The message is a
+        tripwire, not decoration.</p>
+        <p><strong>Superseded</strong> is <code>CANCELING</code>,
+        <code>CANCELED</code> and <code>STASHED</code> - another
+        deployment overtook this one. This exits non-zero on purpose.
+        The gate answers for <em>this</em> commit; the deployment that
+        displaced it has its own gate, which answers for itself.
+        Reporting success here would attribute someone else’s release to
+        this run.</p>
+        <p><strong>Failed</strong> is <code>ERROR</code>,
+        <code>ERRORING</code>, <code>STOPPING</code>,
+        <code>STOPPED</code>, <code>DEGRADED</code> and
+        <code>UNHEALTHY</code>. These cannot reach healthy, so the step
+        fails immediately and names the status rather than polling out
+        the remaining budget and reporting a timeout that hides the real
+        reason.</p>
+        <p><strong>In flight</strong> is <code>PENDING</code>,
+        <code>PROVISIONING</code>, <code>SCHEDULED</code>,
+        <code>ALLOCATING</code> and <code>STARTING</code> - keep
+        polling.</p>
+        <p><strong>An unrecognised value exits non-zero, naming
+        itself.</strong> There is no wildcard that keeps polling. Since
+        the documented set and the implemented set already disagree and
+        the enum has grown before, a future addition will arrive as a
+        value this script has never seen; the choice is between refusing
+        to guess whether it means progress, and burning the whole budget
+        before reporting a timeout for what was actually a decided
+        outcome. The second is the defect the previous round removed,
+        and a permissive default would reintroduce it through the back
+        door.</p>
+        <p>A failed <em>request</em> is not a status. A dropped
+        connection or a 5xx is recorded as a lost attempt and the loop
+        continues, because under a strict shell an unguarded failure
+        would otherwise end a release over one dropped packet.</p>
+        <h2 id="the-budget">The budget</h2>
+        <p><strong>2100 seconds.</strong> The previous 600 was sized
+        against the eighteen-second figure, which was the false green -
+        it was never a measurement of a build, so the budget derived
+        from it was derived from nothing. The replacement is sized
+        against the platform: Koyeb caps builds at thirty minutes, plus
+        five minutes for the phases that follow the build. A build that
+        exceeds the platform cap turns into <code>ERROR</code>, and the
+        gate should report that real reason rather than give up first
+        and call it a timeout. A gate must not lose its nerve before the
+        platform it is watching does.</p>
+        <p>The ceiling is wall-clock rather than attempts multiplied by
+        interval, so the elapsed figure printed on failure is the time
+        that actually passed rather than an arithmetic estimate.</p>
+        <p><strong>Every request carries its own bound.</strong> The
+        poll’s reads use a ten-second connect timeout and a
+        fifteen-second cap: a status read answers in well under a
+        second, so the cap can never cut a real response, while a
+        black-holed socket costs one attempt instead of the job. The
+        redeploy POST is capped at thirty, twice the poll’s, because it
+        asks Koyeb to accept and enqueue work rather than read a field.
+        That POST is deliberately not retried - retrying a request that
+        may already have been accepted would risk queuing a second
+        deployment, which the poll would then correctly report as having
+        superseded this one.</p>
+        <p><strong>The job timeout sits just above the poll’s worst
+        case</strong> rather than at the platform default of six hours.
+        The budget plus at most one in-flight request leaves roughly two
+        and a half minutes for checkout, the Dockerfile check and the
+        redeploy POST. This bounds the job even if some step finds a way
+        to hang that the scripts do not cover, so no run can outlive its
+        own budget the way the hour-long run did.</p>
+        <h2 id="alternatives-rejected">Alternatives rejected</h2>
+        <p><strong>Harden the service poll.</strong> This was genuinely
+        attempted, and it is what the earlier round of work delivered:
+        bounded requests, a wall-clock ceiling, classified statuses, no
+        unbounded calls. Every one of those improvements was kept. None
+        of them addressed the defect, because the object being measured
+        was still the service, and the service was answering on behalf
+        of the old instance. A correct measurement of the wrong thing is
+        still the wrong answer, delivered more reliably.</p>
+        <p><strong>Use the Koyeb CLI’s
+        <code>services redeploy --wait</code>.</strong> Rejected on
+        dependency grounds rather than on correctness - and worth
+        recording precisely because it is <em>not</em> wrong: the CLI
+        takes the same route this script now takes, resolving the
+        redeploy to a deployment and waiting on that. That agreement is
+        corroboration for the mechanism chosen here. What it would add
+        is a versioned binary to install and pin in the runner for
+        behaviour the two existing scripts already express in terms of
+        the same HTTP API the CLI calls, with the failure taxonomy
+        visible in the repository rather than inside a tool’s release
+        notes.</p>
+        <p><strong>Poll the application’s own health endpoint.</strong>
+        The container health probe answers about whichever instance is
+        serving, which is the original defect restated at a different
+        layer: during a parallel build the old instance answers, and
+        answers correctly. It is the right mechanism for keeping a
+        running service healthy and the wrong one for deciding whether a
+        new deployment shipped.</p>
+        <h2 id="consequences">Consequences</h2>
+        <p>The gate now takes as long as a deploy actually takes, and
+        the fast greens are gone. A run that finishes in seconds is now
+        a signal that something is wrong rather than the norm.</p>
+        <p>A merge to <code>main</code> that fails to build fails
+        visibly, at the step that exists to catch it, naming the status
+        that ended it.</p>
+        <p>The doctrine has a maintenance cost that is accepted
+        deliberately: because unknown statuses fail rather than pass, a
+        future addition to Koyeb’s enum will break the gate rather than
+        be absorbed by it. That is the intended direction of failure. A
+        release gate that guesses at an unfamiliar status is worth less
+        than one that stops and asks, and the failure names the value it
+        did not recognise, so the fix is a one-line classification
+        rather than an investigation.</p>
+        <p>The published architecture record and this script’s own
+        header are now the same story. Section 07 of the backend
+        architecture describes the mechanism and points here for the
+        reasoning.</p>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-042-the-deploy-gate-watches-the-deployment-it-triggered"
+      id="toc-adr-042-the-deploy-gate-watches-the-deployment-it-triggered">ADR
+      042: The Deploy Gate Watches the Deployment It Triggered</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#the-status-doctrine"
+      id="toc-the-status-doctrine">The status doctrine</a></li>
+      <li><a href="#the-budget" id="toc-the-budget">The budget</a></li>
+      <li><a href="#alternatives-rejected"
+      id="toc-alternatives-rejected">Alternatives rejected</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>

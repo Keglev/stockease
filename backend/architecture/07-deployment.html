@@ -131,6 +131,17 @@
         alongside the running one: the service keeps answering healthy
         on behalf of the old instance for as long as the build takes, so
         watching it would pass the gate before the build had begun.</p>
+        <p>Every deployment status resolves to one of three outcomes:
+        shipped (healthy, or asleep on this scale-to-zero service),
+        superseded by a later deployment, or failed. Each of the last
+        two fails the step immediately rather than polling out the
+        clock, and a status the gate does not recognise fails it too,
+        naming the value - there is no fall-through that keeps polling.
+        The budget is 2100 seconds, sized to Koyeb’s thirty-minute build
+        cap plus the phases after it so the gate cannot give up before
+        the platform does, with the job timeout just above it and a
+        wall-clock bound on every request. ADR 042 records the full
+        reasoning.</p>
         <p>A biweekly scheduled run rebuilds even without commits,
         picking up patched base images.</p>
         <h2 id="the-image">The image</h2>
