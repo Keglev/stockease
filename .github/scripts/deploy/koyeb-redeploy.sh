@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Triggers a Koyeb service redeploy via the Koyeb REST API.
+# Triggers a Koyeb service redeploy and publishes the id of the deployment it created.
 #
 # Requires:
 #   KOYEB_API_KEY    – Bearer token (GitHub Secret)
@@ -9,27 +9,41 @@
 #   KOYEB_API_BASE – API root (default: https://app.koyeb.com), so the call can be
 #                    exercised against a local stub without touching the real account
 #
+# Outputs (via $GITHUB_OUTPUT):
+#   deployment_id – consumed by koyeb-wait-healthy.sh as KOYEB_DEPLOYMENT_ID
+#
 # Usage:
 #   run: bash .github/scripts/deploy/koyeb-redeploy.sh
 #
 # ---------------------------------------------------------------------------
-# Why the request is bounded
+# Why the reply body is now read
 #
-# This POST had no wall-clock bound either, and unlike the health poll it has no loop
-# around it: a connection accepted and then black-holed hangs this step with no cap of
-# any kind, which is the shortest path to the hour-long "in progress" run this change
-# exists to prevent (run 32271377304).
+# It used to be printed and thrown away, and the wait step went on to poll the SERVICE
+# - which keeps answering HEALTHY from the old instance while the new deployment
+# builds, so the gate passed before the build had begun. The reply already carries the
+# only identifier that distinguishes this run's deployment from the one already
+# running, so the fix starts here: parse it, and hand it to the poll.
 #
-# --connect-timeout 10 is generous for DNS plus TLS from a GitHub runner.
-# --max-time 30 is deliberately twice the health poll's, because this call does more
-# than read a field: it asks Koyeb to accept and enqueue a deployment. The observed
-# healthy deploy completes end to end in 18-19s, so 30s for the enqueue alone is
-# headroom rather than a limit anything real is expected to approach.
+# The shape is verified, not assumed. koyeb-api-client-go declares RedeployReply with
+# a single field, `deployment`, and Deployment carries `id` - the same source that
+# settled the status enums in #286:
+#   koyeb/koyeb-api-client-go, api/v1/koyeb/model_redeploy_reply.go, model_deployment.go
 #
-# A timeout here fails the step, and should: unlike a poll attempt there is no second
-# chance to fall back on, and retrying a redeploy that may already have been accepted
-# would risk queuing a second deployment. It is reported as its own case so the log
-# says the request never returned, rather than leaving `set -e` to abort with nothing.
+# A missing id fails loudly rather than passing an empty string down the pipeline. An
+# empty id would make the next step's URL a deployment listing instead of a deployment,
+# and the whole point of this change is to stop measuring the wrong object.
+#
+# Why the request is bounded (unchanged from #286)
+#
+# This POST has no loop around it, so an accepted-then-black-holed connection would
+# hang the step with no cap of any kind - the shortest path to the hour-long run
+# 32271377304. --connect-timeout 10 is generous for DNS plus TLS from a runner.
+# --max-time 30 is twice the poll's, because this call asks Koyeb to accept and
+# enqueue a deployment rather than read a field.
+#
+# A timeout here fails the step, and should: there is no second chance to fall back on,
+# and retrying a POST that may already have been accepted would risk queuing a second
+# deployment - which the poll would then report as having superseded this one.
 # ---------------------------------------------------------------------------
 
 set -euo pipefail
@@ -38,6 +52,10 @@ API_BASE="${KOYEB_API_BASE:-https://app.koyeb.com}"
 
 CONNECT_TIMEOUT=10
 MAX_TIME=30
+
+if ! command -v jq >/dev/null 2>&1; then
+  sudo apt-get update -y -q && sudo apt-get install -y -q jq
+fi
 
 echo "Triggering redeploy for service $KOYEB_SERVICE_ID..."
 
@@ -64,6 +82,7 @@ fi
 echo "HTTP status: $HTTP_CODE"
 echo "Response:"
 cat "$RESPONSE_FILE"
+echo
 
 case "$HTTP_CODE" in
   200|201|202) echo "Redeploy triggered successfully." ;;
@@ -72,3 +91,22 @@ case "$HTTP_CODE" in
     exit 1
     ;;
 esac
+
+DEPLOYMENT_ID=$(jq -r '.deployment?.id // empty' "$RESPONSE_FILE" 2>/dev/null || printf '')
+
+if [ -z "$DEPLOYMENT_ID" ]; then
+  echo "ERROR: the redeploy reply carried no .deployment.id, so there is no" >&2
+  echo "deployment to watch. Koyeb accepted the request (HTTP $HTTP_CODE), but" >&2
+  echo "polling cannot proceed without the id - watching the service instead is" >&2
+  echo "the false green this deploy gate exists to end. Reply body above." >&2
+  exit 1
+fi
+
+echo "Deployment id: $DEPLOYMENT_ID"
+
+if [ -n "${GITHUB_OUTPUT:-}" ]; then
+  echo "deployment_id=$DEPLOYMENT_ID" >> "$GITHUB_OUTPUT"
+else
+  # Only reachable outside Actions - the local stub probes run this way.
+  echo "NOTE: GITHUB_OUTPUT is unset; deployment_id not published." >&2
+fi

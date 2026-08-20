@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Polls Koyeb service status until HEALTHY, a terminal status, or the budget expires.
+# Polls the deployment this run triggered until it ships, fails, or the budget expires.
 #
 # Requires:
-#   KOYEB_API_KEY    – Bearer token (GitHub Secret)
-#   KOYEB_SERVICE_ID – Target service identifier (GitHub Secret)
+#   KOYEB_API_KEY       – Bearer token (GitHub Secret)
+#   KOYEB_DEPLOYMENT_ID – the deployment koyeb-redeploy.sh created (step output)
 #
 # Optional env overrides:
-#   POLL_ATTEMPTS  – attempts before giving up (default: 60)
-#   POLL_INTERVAL  – seconds between attempts (default: 10)
+#   POLL_ATTEMPTS  – attempts before giving up (default: 140)
+#   POLL_INTERVAL  – seconds between attempts (default: 15)
 #   POLL_BUDGET    – wall-clock seconds before giving up (default: ATTEMPTS * INTERVAL)
 #   KOYEB_API_BASE – API root (default: https://app.koyeb.com), so the loop can be
 #                    exercised against a local stub without touching the real account
@@ -16,51 +16,74 @@
 #   run: bash .github/scripts/deploy/koyeb-wait-healthy.sh
 #
 # ---------------------------------------------------------------------------
-# Why every request is bounded
+# Why this watches a deployment and not the service
 #
-# Deploy run 32271377304 sat "in progress" for over an hour against 18-19s for every
-# prior run. curl carried no wall-clock bound, so a connection that was accepted and
-# then black-holed stalled INSIDE one iteration: the attempt cap can only fire between
-# attempts, and the loop never reached the next one. An attempt limit is not a time
-# limit unless each attempt is itself bounded.
+# #286 bounded this poll so that it could not hang. It was still asking the wrong
+# object. It read GET /v1/services/{id} -> .service.status, and Koyeb builds the new
+# deployment alongside the running one: "Any currently running Deployments for the
+# Service will continue to run until the new Deployment is marked as healthy." The
+# service therefore answers HEALTHY the whole way through - on behalf of the OLD
+# instance. Observed live on 2026-08-19/20:
 #
-# So every request now carries --connect-timeout 10 and --max-time 15. A healthy status
-# read answers in well under a second, so 15s leaves roughly two orders of magnitude of
-# headroom - loose enough that it can never cut a real response short, tight enough that
-# a dead socket costs one attempt rather than the job. 10s to establish the connection
-# is generous for DNS plus TLS from a GitHub runner.
+#   [1/60 0s/600s] Service status: HEALTHY
 #
-# A request that times out is a failed ATTEMPT, not a failed deploy. curl exiting
-# non-zero is logged and polled through, because the failure this guards against is
-# transient by nature and a single dropped packet must not end a release.
+# printed while the build was still running. The gate passed on the first request and
+# every historic 18-19s "deploy" - the entire sibling history of run 32271377304 -
+# was that same false green: a job reporting success for a condition that was already
+# true before it started. Bounding a measurement of the wrong object only makes it
+# fail faster.
 #
-# The ceiling is wall-clock, not attempts x interval. Counting attempts cannot bound a
-# run once an attempt can stall, which is exactly what the old failure message claimed
-# when it reported ATTEMPTS * INTERVAL seconds. The budget below is real elapsed time,
-# so the number this script prints on failure is the number that actually elapsed.
+# A deployment id names the thing THIS run created, so its status is this run's answer
+# and nobody else's. Koyeb's own CLI takes the same route: `services redeploy --wait`.
 #
-# Terminal statuses
+# Per-request bounds, and what a failed request means
 #
-# Koyeb documents nine service statuses. Polling one that will never reach HEALTHY on
-# its own burns the whole window and then reports a timeout, hiding the actual reason.
-# The set is taken from Koyeb's reference page and cross-checked against the enum in
-# their own generated API client, because a status string guessed wrong is a check that
-# passes for the wrong reason:
-#   https://www.koyeb.com/docs/reference/services
-#   koyeb/koyeb-api-client-go, api/v1/koyeb/model_service_status.go
-#     STARTING HEALTHY DEGRADED UNHEALTHY DELETING DELETED PAUSING PAUSED RESUMING
+# Both carried over from #286 unchanged. --connect-timeout 10 and --max-time 15: a
+# status read answers in well under a second, so 15s can never cut a real response
+# while a black-holed socket costs one attempt instead of the job. A request that
+# fails is a lost ATTEMPT, not a verdict - the loop logs it and polls again, because
+# under `set -euo pipefail` an unguarded curl failure would otherwise end a release
+# over one dropped packet. The ceiling is wall-clock, not attempts x interval, so the
+# elapsed figure printed on failure is the time that actually passed.
 #
-# STARTING and RESUMING are progress and are polled through. The rest cannot become
-# HEALTHY without another deploy, so they exit non-zero naming the status. DEGRADED is
-# among them because Koyeb documents it as "the latest Deployment failed" - precisely
-# the condition this poll exists to catch - accepting that a transient degradation of
-# the already-running deployment will also fail the job rather than be waited out.
+# The budget
+#
+# 600s was sized against the 18-19s figure, which was the false green - it was never a
+# measurement of a build. Koyeb caps builds at 30 minutes, and the one observed true
+# end-to-end (trigger to healthy) ran to several minutes. The default is now 2100s:
+# Koyeb's own 30-minute build ceiling plus 5 minutes for the phases after it, since a
+# build that exceeds the cap turns into ERROR and this script should report that real
+# reason rather than give up first and call it a timeout. A gate must not lose its
+# nerve before the platform it is watching does.
+#
+# Statuses: all sixteen, and no default that keeps polling
+#
+# Taken from Koyeb's reference page and cross-checked against the enum in their own
+# generated client, as in #286:
+#   https://www.koyeb.com/docs/reference/deployments
+#   koyeb/koyeb-api-client-go, api/v1/koyeb/model_deployment_status.go
+#
+# The two disagree, and that is itself the reason for the last branch below: the docs
+# document 12, the client declares 16, adding CANCELING CANCELED ERRORING STASHED. The
+# docs lag the client and the enum has grown once already, so an unrecognised status
+# exits naming itself rather than falling through to "keep polling" - which would burn
+# the whole budget and then report a timeout, the exact defect #286 removed.
+#
+# SLEEPING is success. The old deployment is stopped only once the new one is MARKED
+# HEALTHY, so a deployment can only be the sleeping one by having become the active
+# one first; a failure ends in ERROR or STOPPED, never in SLEEPING. It gets its own
+# message rather than sharing HEALTHY's: the first live deploy is the empirical check
+# on this reasoning, and a distinct line is what would make a contradiction visible.
+#
+# CANCELING, CANCELED and STASHED mean another deployment overtook this one. That is
+# exit 1 on purpose - this gate answers for THIS commit, and the superseding deploy's
+# own gate answers for itself.
 # ---------------------------------------------------------------------------
 
 set -euo pipefail
 
-ATTEMPTS="${POLL_ATTEMPTS:-60}"
-INTERVAL="${POLL_INTERVAL:-10}"
+ATTEMPTS="${POLL_ATTEMPTS:-140}"
+INTERVAL="${POLL_INTERVAL:-15}"
 BUDGET="${POLL_BUDGET:-$((ATTEMPTS * INTERVAL))}"
 API_BASE="${KOYEB_API_BASE:-https://app.koyeb.com}"
 
@@ -73,6 +96,15 @@ if ! command -v jq >/dev/null 2>&1; then
   sudo apt-get update -y -q && sudo apt-get install -y -q jq
 fi
 
+if [ -z "${KOYEB_DEPLOYMENT_ID:-}" ]; then
+  echo "ERROR: KOYEB_DEPLOYMENT_ID is empty. It comes from the redeploy step's" >&2
+  echo "deployment_id output; without it this would fall back to watching the" >&2
+  echo "service, which is the false green this script exists to end." >&2
+  exit 1
+fi
+
+echo "Watching deployment $KOYEB_DEPLOYMENT_ID (budget ${BUDGET}s)."
+
 SECONDS=0
 ATTEMPT=0
 
@@ -83,24 +115,46 @@ while [ "$ATTEMPT" -lt "$ATTEMPTS" ]; do
       --connect-timeout "$CONNECT_TIMEOUT" \
       --max-time "$MAX_TIME" \
       -H "Authorization: Bearer $KOYEB_API_KEY" \
-      "$API_BASE/v1/services/$KOYEB_SERVICE_ID" 2>/dev/null); then
+      "$API_BASE/v1/deployments/$KOYEB_DEPLOYMENT_ID" 2>/dev/null); then
     # A 5xx answers with a body jq cannot read; that is a lost attempt, not a verdict.
-    STATUS=$(printf '%s' "$RESPONSE" | jq -r '.service?.status // "UNKNOWN"' 2>/dev/null \
+    STATUS=$(printf '%s' "$RESPONSE" | jq -r '.deployment?.status // "UNKNOWN"' 2>/dev/null \
       || printf 'UNKNOWN')
   else
     STATUS="REQUEST_FAILED"
   fi
 
-  echo "[$ATTEMPT/$ATTEMPTS ${SECONDS}s/${BUDGET}s] Service status: $STATUS"
+  echo "[$ATTEMPT/$ATTEMPTS ${SECONDS}s/${BUDGET}s] Deployment status: $STATUS"
 
   case "$STATUS" in
-    HEALTHY|READY)
-      echo "Service is $STATUS."
+    HEALTHY)
+      echo "Deployment $KOYEB_DEPLOYMENT_ID is HEALTHY."
       exit 0
       ;;
-    DEGRADED|UNHEALTHY|PAUSING|PAUSED|DELETING|DELETED)
-      echo "ERROR: Service reached terminal status $STATUS, which no amount of further" >&2
-      echo "polling can change. Failing now rather than after the ${BUDGET}s budget." >&2
+    SLEEPING)
+      echo "Deployment went to sleep after shipping - scale-to-zero service;"
+      echo "treated as deployed. It wakes on the first request."
+      exit 0
+      ;;
+    ERROR|ERRORING|STOPPING|STOPPED|DEGRADED|UNHEALTHY)
+      echo "ERROR: deployment $KOYEB_DEPLOYMENT_ID failed (status: $STATUS). It" >&2
+      echo "cannot reach HEALTHY; failing now rather than after ${BUDGET}s." >&2
+      exit 1
+      ;;
+    CANCELING|CANCELED|STASHED)
+      echo "ERROR: deployment $KOYEB_DEPLOYMENT_ID was superseded by another" >&2
+      echo "deployment (status: $STATUS); this run's deployment did not ship." >&2
+      exit 1
+      ;;
+    PENDING|PROVISIONING|SCHEDULED|ALLOCATING|STARTING)
+      : # In flight. Keep polling.
+      ;;
+    REQUEST_FAILED|UNKNOWN)
+      : # A lost attempt, not a status. Keep polling.
+      ;;
+    *)
+      echo "ERROR: deployment $KOYEB_DEPLOYMENT_ID reported $STATUS, which this" >&2
+      echo "build cannot classify. Koyeb's status enum has grown before and their" >&2
+      echo "docs lag their client; refusing to guess whether that is progress." >&2
       exit 1
       ;;
   esac
@@ -114,6 +168,6 @@ done
 # Elapsed can exceed the budget by up to one --max-time, because the check that ends
 # the loop runs between attempts and a stalled request is still an attempt in flight.
 # That overshoot is what the job's timeout-minutes is set above.
-echo "ERROR: Service did not reach HEALTHY. Last status: $STATUS" >&2
+echo "ERROR: deployment $KOYEB_DEPLOYMENT_ID did not ship. Last status: $STATUS" >&2
 echo "(attempts: $ATTEMPT, elapsed: ${SECONDS}s, budget: ${BUDGET}s)." >&2
 exit 1

@@ -38,11 +38,16 @@ jobs:
     # own requests; this bounds the job even if a step finds a way to hang that
     # they do not cover, so no run can outlive its own budget again.
     #
-    # 15 minutes sits just above the poll's worst case: koyeb-wait-healthy.sh gives
-    # up on a 600s wall-clock budget and can be at most one 15s request past it,
-    # leaving roughly four minutes for checkout, the Dockerfile check and the
-    # redeploy POST. It is a backstop, not a target - a healthy deploy is 18-19s.
-    timeout-minutes: 15
+    # 38 minutes sits just above the poll's worst case: koyeb-wait-healthy.sh gives
+    # up on a 2100s (35 minute) wall-clock budget and can be at most one 15s request
+    # past it, leaving roughly two and a half minutes for checkout, the Dockerfile
+    # check and the redeploy POST.
+    #
+    # It was 15, sized against a 600s budget that was itself sized against the 18-19s
+    # "deploys" - which measured the old instance answering while the new one built,
+    # and never timed a build at all. The budget now contains a real one; see the
+    # poll script's header.
+    timeout-minutes: 38
 
     steps:
       - name: Checkout
@@ -57,13 +62,17 @@ jobs:
         run: bash .github/scripts/deploy/validate-dockerfile.sh
 
       - name: Trigger Koyeb redeploy
+        id: redeploy
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
           KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
         run: bash .github/scripts/deploy/koyeb-redeploy.sh
 
-      - name: Wait for service healthy
+      # The deployment id, not the service id: the service keeps answering HEALTHY
+      # from the instance still serving while the new deployment builds, so watching
+      # it passed this gate before the build had started.
+      - name: Wait for deployment healthy
         env:
           KOYEB_API_KEY: ${{ secrets.KOYEB_API_KEY }}
-          KOYEB_SERVICE_ID: ${{ secrets.KOYEB_SERVICE_ID }}
+          KOYEB_DEPLOYMENT_ID: ${{ steps.redeploy.outputs.deployment_id }}
         run: bash .github/scripts/deploy/koyeb-wait-healthy.sh
