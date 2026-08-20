@@ -16,6 +16,7 @@ import com.stocks.stockease.movement.StockMovement;
 import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.UserService;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvalidMovementException;
 
 import jakarta.validation.Valid;
@@ -35,16 +36,16 @@ import lombok.RequiredArgsConstructor;
 public class ReturnController {
 
     /** The two directions a return can run; every other reason belongs to another flow. */
-<span class="fc" id="L38">    private static final Set&lt;MovementReason&gt; RETURN_REASONS =</span>
-<span class="fc" id="L39">            EnumSet.of(MovementReason.RETURN_FROM_CUSTOMER, MovementReason.RETURNED_TO_SUPPLIER);</span>
+<span class="fc" id="L39">    private static final Set&lt;MovementReason&gt; RETURN_REASONS =</span>
+<span class="fc" id="L40">            EnumSet.of(MovementReason.RETURN_FROM_CUSTOMER, MovementReason.RETURNED_TO_SUPPLIER);</span>
 
     private final StockMovementService stockMovementService;
     private final UserService userService;
 
     /** Resolves the authenticated principal to the user recorded against the return. */
     private User currentUser(Principal principal) {
-<span class="fc" id="L46">        return userService.findByUsername(principal.getName())</span>
-<span class="pc" id="L47">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Authenticated user not found.&quot;));</span>
+<span class="fc" id="L47">        return userService.findByUsername(principal.getName())</span>
+<span class="pc" id="L48">                .orElseThrow(() -&gt; new IllegalStateException(&quot;Authenticated user not found.&quot;));</span>
     }
 
     /**
@@ -59,11 +60,12 @@ public class ReturnController {
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;MovementResponse&gt; registerReturn(@Valid @RequestBody RegisterReturnRequest request,
             Principal principal) {
-<span class="fc bfc" id="L62" title="All 2 branches covered.">        if (!RETURN_REASONS.contains(request.reason())) {</span>
-<span class="fc" id="L63">            throw new InvalidMovementException(&quot;This endpoint records returns only.&quot;);</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (!RETURN_REASONS.contains(request.reason())) {</span>
+<span class="fc" id="L64">            throw new InvalidMovementException(&quot;This endpoint records returns only.&quot;,</span>
+                    ApiErrorCodes.MOVEMENT_ENDPOINT_RETURNS_ONLY, null);
         }
-<span class="fc" id="L65">        StockMovement recorded = stockMovementService.recordMovement(request.toCommand(), currentUser(principal));</span>
-<span class="fc" id="L66">        return ResponseEntity.ok(MovementResponse.from(recorded));</span>
+<span class="fc" id="L67">        StockMovement recorded = stockMovementService.recordMovement(request.toCommand(), currentUser(principal));</span>
+<span class="fc" id="L68">        return ResponseEntity.ok(MovementResponse.from(recorded));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
