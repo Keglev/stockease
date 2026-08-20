@@ -232,6 +232,104 @@ describe('InvoiceDetailReturns (through the detail page)', () => {
     ]);
   });
 
+  /*
+   * The movement family reaches this surface too: the return endpoint runs the movement validation
+   * matrix, and four of its wire-reachable refusals answer here (ADR 041 phase 3.4). This surface
+   * has no advice of its own for any of them, so all four take the resolver layer.
+   */
+  it('return_rejectedWithInvoiceOpenCode_surfacesTheGermanSentence', async () => {
+    // The guard that shadows RETURN_REQUIRES_CLOSED_INVOICE: the movement service refuses an open
+    // invoice with its own 400 before the invoice module's 409 for the same state is reached, so
+    // this is the code an operator actually meets and the one that has to read German.
+    page = await configureInvoiceDetailTestBed(of(detail({ status: 'CLOSED' })));
+    TestBed.inject(LanguageService).setLanguage('de');
+    page.movements.result = throwError(
+      () =>
+        new ApiError(
+          'Movements cannot be recorded against an open invoice.',
+          400,
+          'MOVEMENT_INVOICE_OPEN',
+          undefined
+        )
+    );
+
+    host(page.fixture).querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle(page.fixture);
+
+    expect(page.notifications.errors).toEqual([
+      'Bewegungen können nicht gegen eine offene Rechnung erfasst werden.'
+    ]);
+  });
+
+  it('return_rejectedWithTypeMismatchCode_translatesBothEnumTokensIntoTheGermanSentence', async () => {
+    // The enum-param capability end to end (R46). The API sends RETURN_FROM_CUSTOMER and SALE as
+    // raw tokens; what the operator reads is „Kundenrücksendung" and „Verkauf", which is the whole
+    // point - a German sentence with an English shout inside it would read as a bug.
+    page = await configureInvoiceDetailTestBed(of(detail({ status: 'CLOSED' })));
+    TestBed.inject(LanguageService).setLanguage('de');
+    page.movements.result = throwError(
+      () =>
+        new ApiError(
+          'RETURN_FROM_CUSTOMER movements must reference a SALE invoice item.',
+          400,
+          'MOVEMENT_INVOICE_TYPE_MISMATCH',
+          { reason: 'RETURN_FROM_CUSTOMER', requiredType: 'SALE' }
+        )
+    );
+
+    host(page.fixture).querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle(page.fixture);
+
+    expect(page.notifications.errors).toEqual([
+      'Bewegungen vom Typ „Kundenrücksendung“ müssen sich auf eine Rechnungsposition '
+        + 'vom Typ „Verkauf“ beziehen.'
+    ]);
+  });
+
+  it('return_rejectedWithItemProductMismatchCode_interpolatesTheIdIntoTheGermanSentence', async () => {
+    // A value param beside the enum ones: the id is not in the translation table and reaches the
+    // sentence exactly as the server sent it.
+    page = await configureInvoiceDetailTestBed(of(detail({ status: 'CLOSED' })));
+    TestBed.inject(LanguageService).setLanguage('de');
+    page.movements.result = throwError(
+      () =>
+        new ApiError(
+          'Invoice item 4 belongs to a different product.',
+          400,
+          'MOVEMENT_ITEM_PRODUCT_MISMATCH',
+          { invoiceItemId: '4' }
+        )
+    );
+
+    host(page.fixture).querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle(page.fixture);
+
+    expect(page.notifications.errors).toEqual([
+      'Die Rechnungsposition 4 gehört zu einem anderen Produkt.'
+    ]);
+  });
+
+  it('return_rejectedWithEndpointReturnsOnlyCode_surfacesTheGermanSentence', async () => {
+    page = await configureInvoiceDetailTestBed(of(detail({ status: 'CLOSED' })));
+    TestBed.inject(LanguageService).setLanguage('de');
+    page.movements.result = throwError(
+      () =>
+        new ApiError(
+          'This endpoint records returns only.',
+          400,
+          'MOVEMENT_ENDPOINT_RETURNS_ONLY',
+          undefined
+        )
+    );
+
+    host(page.fixture).querySelector<HTMLButtonElement>('.item-return')?.click();
+    await settle(page.fixture);
+
+    expect(page.notifications.errors).toEqual([
+      'Über diesen Endpunkt können nur Rücksendungen erfasst werden.'
+    ]);
+  });
+
   it('return_rejectedWithUnknownCode_fallsBackToTheBackendMessage', async () => {
     page = await configureInvoiceDetailTestBed(of(detail({ status: 'CLOSED' })));
     // Codes are added to responses that previously had none, so a client meets values it has never

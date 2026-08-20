@@ -26,6 +26,10 @@ const TRANSLATIONS = {
       }
     },
     invoices: {
+      type: {
+        PURCHASE: 'Purchase',
+        SALE: 'Sale'
+      },
       errors: {
         duplicateNumber: "An invoice numbered '{{invoiceNumber}}' already exists.",
         notOpenForClose: 'Only open invoices can be closed.',
@@ -35,6 +39,34 @@ const TRANSLATIONS = {
           + 'for invoice item {{itemId}}.',
         alreadyPaid: 'Invoice is already marked as paid.',
         notOpenForDelete: 'Only open invoices can be deleted.'
+      }
+    },
+    movements: {
+      reason: {
+        LOST: 'Lost',
+        DESTROYED: 'Destroyed',
+        PURCHASE: 'Purchase',
+        SOLD: 'Sold',
+        RETURN_FROM_CUSTOMER: 'Customer return',
+        RETURNED_TO_SUPPLIER: 'Returned to supplier'
+      },
+      errors: {
+        endpointReturnsOnly: 'This endpoint records returns only.',
+        reasonNotStandalone:
+          'PURCHASE and SOLD movements exist only through invoice closing; '
+          + 'returns use the return endpoint.',
+        lossRequiresRemark: 'LOST and DESTROYED movements require a remark.',
+        requiresInvoiceItem: '{{reason}} movements require an invoice item.',
+        remarkForbidden:
+          'A remark explains a loss and must not be supplied for {{reason}} movements.',
+        invoiceTypeMismatch:
+          '{{reason}} movements must reference a {{requiredType}} invoice item.',
+        invoiceOpen: 'Movements cannot be recorded against an open invoice.',
+        itemProductMismatch: 'Invoice item {{invoiceItemId}} belongs to a different product.',
+        quantityMismatch:
+          'Movement quantity must equal the invoice item quantity ({{quantity}}).',
+        alreadyRecorded:
+          'A {{reason}} movement already exists for invoice item {{invoiceItemId}}.'
       }
     }
   },
@@ -62,6 +94,10 @@ const TRANSLATIONS = {
       }
     },
     invoices: {
+      type: {
+        PURCHASE: 'Einkauf',
+        SALE: 'Verkauf'
+      },
       errors: {
         duplicateNumber: 'Eine Rechnung mit der Nummer „{{invoiceNumber}}“ existiert bereits.',
         notOpenForClose: 'Nur offene Rechnungen können geschlossen werden.',
@@ -71,6 +107,38 @@ const TRANSLATIONS = {
           + 'rücksendbare Menge {{remaining}} für die Rechnungsposition {{itemId}}.',
         alreadyPaid: 'Die Rechnung ist bereits als bezahlt markiert.',
         notOpenForDelete: 'Nur offene Rechnungen können gelöscht werden.'
+      }
+    },
+    movements: {
+      reason: {
+        LOST: 'Verlust',
+        DESTROYED: 'Zerstört',
+        PURCHASE: 'Einkauf',
+        SOLD: 'Verkauf',
+        RETURN_FROM_CUSTOMER: 'Kundenrücksendung',
+        RETURNED_TO_SUPPLIER: 'Rücksendung an Lieferanten'
+      },
+      errors: {
+        endpointReturnsOnly: 'Über diesen Endpunkt können nur Rücksendungen erfasst werden.',
+        reasonNotStandalone:
+          'Einkaufs- und Verkaufsbewegungen entstehen nur beim Schließen einer Rechnung; '
+          + 'Rücksendungen werden über die Rücksendungsfunktion erfasst.',
+        lossRequiresRemark: 'Verlustbewegungen erfordern einen Vermerk.',
+        requiresInvoiceItem: 'Bewegungen vom Typ „{{reason}}“ erfordern eine Rechnungsposition.',
+        remarkForbidden:
+          'Ein Vermerk erklärt einen Verlust und darf für Bewegungen vom Typ „{{reason}}“ '
+          + 'nicht angegeben werden.',
+        invoiceTypeMismatch:
+          'Bewegungen vom Typ „{{reason}}“ müssen sich auf eine Rechnungsposition vom Typ '
+          + '„{{requiredType}}“ beziehen.',
+        invoiceOpen: 'Bewegungen können nicht gegen eine offene Rechnung erfasst werden.',
+        itemProductMismatch:
+          'Die Rechnungsposition {{invoiceItemId}} gehört zu einem anderen Produkt.',
+        quantityMismatch:
+          'Die Bewegungsmenge muss der Menge der Rechnungsposition ({{quantity}}) entsprechen.',
+        alreadyRecorded:
+          'Für die Rechnungsposition {{invoiceItemId}} existiert bereits eine Bewegung '
+          + 'vom Typ „{{reason}}“.'
       }
     }
   }
@@ -254,5 +322,110 @@ describe('ErrorMessageService', () => {
 
     expect(service.resolve(error))
       .toBe("Cannot delete product 'Widget': 7 units are still in stock.");
+  });
+
+  /*
+   * The movement validation matrix (ADR 041 phase 3.4). German throughout, for the reason the
+   * families above give: the English keys mirror the wire sentences, so an English assertion would
+   * pass whether or not the code was ever mapped.
+   *
+   * Six of the sixteen are wire-reachable and are asserted here as whole sentences. The other ten
+   * are latent by backend design (R45/R47) - mapped so the sentence is ready if a shadow moves, and
+   * exercised here only where they carry a param the mechanism below needs to demonstrate.
+   */
+  it('resolve_movementEndpointReturnsOnly_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('This endpoint records returns only.', 400,
+      'MOVEMENT_ENDPOINT_RETURNS_ONLY', undefined);
+
+    expect(service.resolve(error))
+      .toBe('Über diesen Endpunkt können nur Rücksendungen erfasst werden.');
+  });
+
+  it('resolve_movementReasonNotStandalone_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError(
+      'PURCHASE and SOLD movements exist only through invoice closing; '
+      + 'returns use the return endpoint.', 400, 'MOVEMENT_REASON_NOT_STANDALONE', undefined);
+
+    expect(service.resolve(error)).toBe(
+      'Einkaufs- und Verkaufsbewegungen entstehen nur beim Schließen einer Rechnung; '
+      + 'Rücksendungen werden über die Rücksendungsfunktion erfasst.'
+    );
+  });
+
+  it('resolve_lossRequiresRemark_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('LOST and DESTROYED movements require a remark.', 400,
+      'LOSS_MOVEMENT_REQUIRES_REMARK', undefined);
+
+    expect(service.resolve(error)).toBe('Verlustbewegungen erfordern einen Vermerk.');
+  });
+
+  it('resolve_movementInvoiceOpen_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Movements cannot be recorded against an open invoice.', 400,
+      'MOVEMENT_INVOICE_OPEN', undefined);
+
+    expect(service.resolve(error))
+      .toBe('Bewegungen können nicht gegen eine offene Rechnung erfasst werden.');
+  });
+
+  /*
+   * The enum-param capability (R46). The API sends reason and requiredType as raw tokens -
+   * RETURN_FROM_CUSTOMER, SALE - because the token is the contract and the language is the
+   * client's business. These four cases are the whole of that mechanism.
+   */
+  it('resolve_invoiceTypeMismatch_inGerman_translatesBothEnumTokensBeforeInterpolating', () => {
+    // Both params are enums, and neither may reach the sentence as the shout it arrives as.
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError(
+      'RETURN_FROM_CUSTOMER movements must reference a SALE invoice item.', 400,
+      'MOVEMENT_INVOICE_TYPE_MISMATCH', { reason: 'RETURN_FROM_CUSTOMER', requiredType: 'SALE' });
+
+    expect(service.resolve(error)).toBe(
+      'Bewegungen vom Typ „Kundenrücksendung“ müssen sich auf eine Rechnungsposition '
+      + 'vom Typ „Verkauf“ beziehen.'
+    );
+  });
+
+  it('resolve_itemProductMismatch_inGerman_interpolatesTheIdUntouched', () => {
+    // A value param, not an enum: it is not in the translation table and must arrive verbatim.
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Invoice item 7 belongs to a different product.', 400,
+      'MOVEMENT_ITEM_PRODUCT_MISMATCH', { invoiceItemId: '7' });
+
+    expect(service.resolve(error))
+      .toBe('Die Rechnungsposition 7 gehört zu einem anderen Produkt.');
+  });
+
+  it('resolve_alreadyRecorded_inGerman_translatesTheEnumAndLeavesTheIdAlone', () => {
+    // One sentence carrying both kinds of param, which is the distinction stated as a test.
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('A SOLD movement already exists for invoice item 7.', 400,
+      'MOVEMENT_ALREADY_RECORDED', { reason: 'SOLD', invoiceItemId: '7' });
+
+    expect(service.resolve(error)).toBe(
+      'Für die Rechnungsposition 7 existiert bereits eine Bewegung vom Typ „Verkauf“.'
+    );
+  });
+
+  it('resolve_enumParamWithNoCatalogEntry_fallsBackToTheServerMessage', () => {
+    // A reason this build has no word for. Interpolating the token would put an English shout in
+    // the middle of a German sentence and rendering the key would be worse; English that is merely
+    // English is the least bad of the three.
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('SCRAPPED movements require an invoice item.', 400,
+      'MOVEMENT_REQUIRES_INVOICE_ITEM', { reason: 'SCRAPPED' });
+
+    expect(service.resolve(error)).toBe('SCRAPPED movements require an invoice item.');
+  });
+
+  it('resolve_movementMissingItsRequiredParam_fallsBackToTheServerMessage', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('A SOLD movement already exists for invoice item 7.', 400,
+      'MOVEMENT_ALREADY_RECORDED', { reason: 'SOLD' });
+
+    expect(service.resolve(error)).toBe('A SOLD movement already exists for invoice item 7.');
   });
 });

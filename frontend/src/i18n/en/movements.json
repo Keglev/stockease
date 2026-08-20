@@ -4,7 +4,11 @@
   "reasonLabel": "Reason",
   "reason": {
     "LOST": "Lost",
-    "DESTROYED": "Destroyed"
+    "DESTROYED": "Destroyed",
+    "PURCHASE": "Purchase",
+    "SOLD": "Sold",
+    "RETURN_FROM_CUSTOMER": "Customer return",
+    "RETURNED_TO_SUPPLIER": "Returned to supplier"
   },
   "directionHint": {
     "LOST": "A loss decreases the recorded quantity.",
@@ -23,5 +27,23 @@
     }
   },
   "submit": "Record movement",
-  "recorded": "Stock movement recorded."
+  "recorded": "Stock movement recorded.",
+  "errors": {
+    "endpointReturnsOnly": "This endpoint records returns only.",
+    "reasonNotStandalone": "PURCHASE and SOLD movements exist only through invoice closing; returns use the return endpoint.",
+    "userRequired": "User is required.",
+    "productAndReasonRequired": "Product and reason are required.",
+    "quantityNotPositive": "Quantity must be positive.",
+    "lossCarriesNoInvoiceData": "LOST and DESTROYED movements carry no invoice item or prices.",
+    "lossRequiresRemark": "LOST and DESTROYED movements require a remark.",
+    "requiresInvoiceItem": "{{reason}} movements require an invoice item.",
+    "unitCostDerived": "Unit cost is derived from the invoice item and must not be supplied.",
+    "remarkForbidden": "A remark explains a loss and must not be supplied for {{reason}} movements.",
+    "invoiceTypeMismatch": "{{reason}} movements must reference a {{requiredType}} invoice item.",
+    "invoiceOpen": "Movements cannot be recorded against an open invoice.",
+    "itemProductMismatch": "Invoice item {{invoiceItemId}} belongs to a different product.",
+    "quantityMismatch": "Movement quantity must equal the invoice item quantity ({{quantity}}).",
+    "alreadyRecorded": "A {{reason}} movement already exists for invoice item {{invoiceItemId}}.",
+    "returnRequiresSaleMovement": "A customer return requires the stock movement of the sale it reverses."
+  }
 }
