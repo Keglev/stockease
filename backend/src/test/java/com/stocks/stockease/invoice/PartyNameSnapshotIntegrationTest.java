@@ -3,10 +3,12 @@ package com.stocks.stockease.invoice;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +30,7 @@ import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.ProductDeletedException;
 import com.stocks.stockease.supplier.Supplier;
@@ -304,6 +307,15 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
         assertThatThrownBy(() -> products.deleteById(item.getId(), admin))
                 .isInstanceOf(EntityInUseException.class)
                 .hasMessage("Cannot delete product '" + item.getName() + "': 7 units are still in stock.");
+
+        // The only situation in this family whose params carry more than a name. The quantity is
+        // read once at the throw site and reused by sentence and map, so this pins that they agree:
+        // a client rendering its own sentence gets the same 7 the English one quotes.
+        EntityInUseException ex = catchThrowableOfType(
+                () -> products.deleteById(item.getId(), admin), EntityInUseException.class);
+        assertThat(ex.getCode()).isEqualTo(ApiErrorCodes.PRODUCT_HAS_STOCK);
+        assertThat(ex.getParams())
+                .isEqualTo(Map.of("productName", item.getName(), "quantity", "7"));
 
         writeOffStock(products.findById(item.getId()).orElseThrow());
 

@@ -119,8 +119,14 @@ public class ProductService {
         // no surface shows them and no movement can reach them - inventory that exists only in the
         // ledger. Write the stock off or sell it first; the quantity is then honestly zero (ADR 033).
         if (product.getQuantity() != null && product.getQuantity() != 0) {
+            // Read once and reused by both: the sentence and the params must name the same number,
+            // and re-reading the getter for the map would let them drift apart.
+            Integer quantity = product.getQuantity();
             throw new EntityInUseException("Cannot delete product '" + product.getName() + "': "
-                    + product.getQuantity() + " units are still in stock.");
+                    + quantity + " units are still in stock.",
+                    ApiErrorCodes.PRODUCT_HAS_STOCK,
+                    Map.of("productName", product.getName(),
+                            "quantity", String.valueOf(quantity)));
         }
         // stamped explicitly rather than via repository.deleteById: that marks the entity removed, and the
         // change log row written by the listener may not reference a removed instance. Same soft-delete

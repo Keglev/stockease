@@ -112,6 +112,40 @@ public final class ApiErrorCodes {
      */
     public static final String INVOICE_NOT_OPEN_FOR_DELETE = "INVOICE_NOT_OPEN_FOR_DELETE";
 
+    /**
+     * A supplier deletion was vetoed because open invoices still bill it. The operator settles or
+     * deletes those invoices first; until then the supplier is load-bearing.
+     *
+     * <p>Params: {@code supplierName} - the supplier the veto names.
+     */
+    public static final String SUPPLIER_HAS_OPEN_INVOICES = "SUPPLIER_HAS_OPEN_INVOICES";
+
+    /**
+     * A customer deletion was vetoed because open invoices still bill them. Same remedy as the
+     * supplier veto, on the other party to the invoice.
+     *
+     * <p>Params: {@code customerName} - the customer the veto names.
+     */
+    public static final String CUSTOMER_HAS_OPEN_INVOICES = "CUSTOMER_HAS_OPEN_INVOICES";
+
+    /**
+     * A product deletion was vetoed because the product is a line on an open invoice. The invoice
+     * has to be settled or deleted before the product can go.
+     *
+     * <p>Params: {@code productName} - the product the veto names.
+     */
+    public static final String PRODUCT_ON_OPEN_INVOICE = "PRODUCT_ON_OPEN_INVOICE";
+
+    /**
+     * A product deletion was refused because the product still holds stock. Deleting it would
+     * strand those units where no surface shows them, so they are written off or sold first and the
+     * quantity is honestly zero before the delete (ADR 033).
+     *
+     * <p>Params: {@code productName} - the product the refusal names; {@code quantity} - units
+     * still in stock, so a client need not re-read the product to say how many.
+     */
+    public static final String PRODUCT_HAS_STOCK = "PRODUCT_HAS_STOCK";
+
     private ApiErrorCodes() {
     }
 }

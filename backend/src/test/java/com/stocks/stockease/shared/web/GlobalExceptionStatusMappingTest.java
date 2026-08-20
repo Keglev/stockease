@@ -141,7 +141,8 @@ class GlobalExceptionStatusMappingTest {
     @Test
     void handleEntityInUseException_returns409WithOriginalMessage() {
         var response = handler.handleEntityInUseException(
-                new EntityInUseException("Cannot delete supplier 'Acme': open invoices exist."));
+                new EntityInUseException("Cannot delete supplier 'Acme': open invoices exist.",
+                        ApiErrorCodes.SUPPLIER_HAS_OPEN_INVOICES, Map.of("supplierName", "Acme")));
         ApiResponse<String> body = Objects.requireNonNull(response.getBody());
 
         assertThat(response.getStatusCode().value()).isEqualTo(409);

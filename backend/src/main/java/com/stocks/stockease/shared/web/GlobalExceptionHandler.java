@@ -129,18 +129,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles {@link EntityInUseException} from deletions vetoed by referencing records and returns a 409 Conflict response.
+     * Handles {@link EntityInUseException} from deletions vetoed by referencing records and returns a 409
+     * Conflict carrying the situation code the exception names and the values its message interpolates.
      *
-     * <p>No code: the vetoes reaching here say "something still references this", and a client has
-     * nothing to do with that beyond showing the message, which names the blocking reference.
+     * <p>The family covers four situations - open invoices pinning a supplier, a customer or a
+     * product, and a product still holding stock - and {@code params} carries the party or product
+     * name the sentence quotes, plus the quantity where the refusal counts units.
+     *
+     * <p>This Javadoc previously recorded the opposite as design: no code, on the reasoning that a
+     * client has nothing to do with a veto beyond showing its message. Ruling R44 reversed it. Three
+     * of the four do share one operator remedy - settle the invoice first - so they fail the
+     * distinct-action criterion that governs elsewhere; what outweighed it is that all four are
+     * sentences a client renders in the reader's language, and a code is what lets it (ADR 041).
      *
      * @param ex the caught exception
-     * @return 409 response with the veto message
+     * @return 409 response with the veto message, its code and its params
      */
     @ExceptionHandler(EntityInUseException.class)
     public ResponseEntity<ApiResponse<String>> handleEntityInUseException(EntityInUseException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
+                .body(new ApiResponse<>(false, ex.getMessage(), null, ex.getCode(), ex.getParams()));
     }
 
     /**
@@ -148,10 +156,14 @@ public class GlobalExceptionHandler {
      * soft-deleted, and returns a 409 Conflict carrying {@link ApiErrorCodes#PRODUCT_DELETED}.
      *
      * <p>Declared separately from its parent above because Spring dispatches to the most specific
-     * handler: the status and message are what {@code EntityInUseException} would have produced, and
-     * the code is the whole reason the subtype exists. Without it the return endpoint's two 409s -
-     * this one and {@link InsufficientStockException} - are indistinguishable to a client that must
-     * give opposite advice for each.
+     * handler. It stays declared now that the parent carries codes too: the parent's handler would
+     * emit the same envelope, and the separate declaration is what keeps this situation's code
+     * fixed to the subtype rather than to whatever a call site passed. Without the distinction the
+     * return endpoint's two 409s - this one and {@link InsufficientStockException} - would be
+     * indistinguishable to a client that must give opposite advice for each.
+     *
+     * <p>The code is read from the exception rather than written here as a literal, so the subtype
+     * constructor is the one place it is decided.
      *
      * @param ex the caught exception
      * @return 409 response with the refusal message and the deleted-product code
@@ -159,7 +171,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ProductDeletedException.class)
     public ResponseEntity<ApiResponse<String>> handleProductDeletedException(ProductDeletedException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(false, ex.getMessage(), null, ApiErrorCodes.PRODUCT_DELETED));
+                .body(new ApiResponse<>(false, ex.getMessage(), null, ex.getCode()));
     }
 
     /**
