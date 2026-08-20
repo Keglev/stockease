@@ -16,6 +16,7 @@ import com.stocks.stockease.movement.StockMovement;
 import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.UserService;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvalidMovementException;
 
 import jakarta.validation.Valid;
@@ -63,7 +64,8 @@ public class StockMovementController {
         // purchase or sale that no invoice accounts for
         if (!STANDALONE_REASONS.contains(request.reason())) {
             throw new InvalidMovementException(
-                    "PURCHASE and SOLD movements exist only through invoice closing; returns use the return endpoint.");
+                    "PURCHASE and SOLD movements exist only through invoice closing; returns use the return endpoint.",
+                    ApiErrorCodes.MOVEMENT_REASON_NOT_STANDALONE, null);
         }
         StockMovement recorded = stockMovementService.recordMovement(request.toCommand(), currentUser(principal));
         return ResponseEntity.ok(MovementResponse.from(recorded));

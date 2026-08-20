@@ -19,7 +19,7 @@ import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
 /*
- * Scenario builders shared by the two error-envelope spec files. Every helper writes through the
+ * Scenario builders shared by the three error-envelope spec files. Every helper writes through the
  * domain services rather than the repositories, so each refusal is provoked from state the
  * application could actually have reached.
  *
@@ -32,11 +32,11 @@ import com.stocks.stockease.supplier.SupplierService;
  */
 class ErrorEnvelopeTestFixtures {
 
-    /** The admin both spec files authenticate as; the controller resolves it against a real row. */
+    /** The admin every spec file authenticates as; the controller resolves it against a real row. */
     static final String TESTER = "envelope-tester";
 
     /*
-     * ONE counter for the whole JVM, deliberately static on a class the two spec files share.
+     * ONE counter for the whole JVM, deliberately static on a class all three spec files share.
      * Product names, SKUs and invoice numbers are unique among live rows and these tests commit, so
      * a per-class counter would restart at 1 in each spec file and the second class to run would
      * collide with values the first one committed. Keeping it here is what makes the split safe.
@@ -68,6 +68,19 @@ class ErrorEnvelopeTestFixtures {
         return """
                 {"invoiceItemId":%d,"productId":%d,"reason":"%s","quantity":%d}"""
                 .formatted(invoiceItemId, productId, reason, quantity);
+    }
+
+    /**
+     * A body for the standalone stock-movement endpoint, with no remark.
+     *
+     * <p>The remark is left off rather than made a parameter because the one case here that reaches
+     * this endpoint's own validation is the loss that forgot one; a caller wanting to record a
+     * successful loss would need the field, and no envelope case does.
+     */
+    static String movementBody(long productId, String reason, int quantity) {
+        return """
+                {"productId":%d,"reason":"%s","quantity":%d}"""
+                .formatted(productId, reason, quantity);
     }
 
     void settle(Invoice invoice) {

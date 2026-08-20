@@ -33,6 +33,7 @@ import com.stocks.stockease.movement.RecordMovementCommand;
 import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.UserService;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
 
@@ -177,7 +178,8 @@ class StockMovementControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void recordMovement_whenServiceRejectsMovement_returns400() throws Exception {
         Mockito.when(stockMovementService.recordMovement(any(RecordMovementCommand.class), any(User.class)))
-                .thenThrow(new InvalidMovementException("LOST and DESTROYED movements require a remark."));
+                .thenThrow(new InvalidMovementException("LOST and DESTROYED movements require a remark.",
+                        ApiErrorCodes.LOSS_MOVEMENT_REQUIRES_REMARK, null));
 
         performExpecting(400, "LOST and DESTROYED movements require a remark.");
     }

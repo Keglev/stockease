@@ -96,15 +96,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles {@link InvalidMovementException} from the stock movement validation matrix and returns a 400 Bad Request response.
+     * Handles {@link InvalidMovementException} from the stock movement validation matrix and returns
+     * a 400 Bad Request carrying the situation code the exception names and any values its message
+     * interpolates.
+     *
+     * <p>The matrix has sixteen rules and they all answer 400, so the code is the only thing that
+     * tells them apart - which field is missing, which one the reason forbids, or how the movement
+     * contradicts its invoice line. Six of the sixteen are reachable from the HTTP surface; the rest
+     * guard callers only the service layer can produce, and say so in {@link ApiErrorCodes} (ADR 041,
+     * rulings R45 and R47).
      *
      * @param ex the caught exception
-     * @return 400 response with the rejected movement's error message
+     * @return 400 response with the rejected movement's message, its situation code and any params
      */
     @ExceptionHandler(InvalidMovementException.class)
     public ResponseEntity<ApiResponse<String>> handleInvalidMovementException(InvalidMovementException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
+                .body(new ApiResponse<>(false, ex.getMessage(), null, ex.getCode(), ex.getParams()));
     }
 
     /**
