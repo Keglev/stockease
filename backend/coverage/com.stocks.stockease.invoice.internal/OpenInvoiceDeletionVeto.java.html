@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OpenInvoiceDeletionVeto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.invoice.internal</a> &gt; <span class="el_source">OpenInvoiceDeletionVeto.java</span></div><h1>OpenInvoiceDeletionVeto.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.invoice.internal;
 
+import java.util.Map;
+
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Component;
 import com.stocks.stockease.customer.CustomerDeletedEvent;
 import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.product.ProductChangedEvent;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.supplier.SupplierDeletedEvent;
 
@@ -36,11 +39,13 @@ public class OpenInvoiceDeletionVeto {
      */
     @EventListener
     public void onSupplierDeleted(SupplierDeletedEvent event) {
-<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (invoiceRepository.existsBySupplierIdAndStatus(event.supplierId(), InvoiceStatus.OPEN)) {</span>
-<span class="fc" id="L40">            throw new EntityInUseException(</span>
-<span class="fc" id="L41">                    &quot;Cannot delete supplier '&quot; + event.supplierName() + &quot;': open invoices exist.&quot;);</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (invoiceRepository.existsBySupplierIdAndStatus(event.supplierId(), InvoiceStatus.OPEN)) {</span>
+<span class="fc" id="L43">            throw new EntityInUseException(</span>
+<span class="fc" id="L44">                    &quot;Cannot delete supplier '&quot; + event.supplierName() + &quot;': open invoices exist.&quot;,</span>
+                    ApiErrorCodes.SUPPLIER_HAS_OPEN_INVOICES,
+<span class="fc" id="L46">                    Map.of(&quot;supplierName&quot;, event.supplierName()));</span>
         }
-<span class="fc" id="L43">    }</span>
+<span class="fc" id="L48">    }</span>
 
     /**
      * Vetoes deleting a customer that still has open invoices.
@@ -50,11 +55,13 @@ public class OpenInvoiceDeletionVeto {
      */
     @EventListener
     public void onCustomerDeleted(CustomerDeletedEvent event) {
-<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (invoiceRepository.existsByCustomerIdAndStatus(event.customerId(), InvoiceStatus.OPEN)) {</span>
-<span class="fc" id="L54">            throw new EntityInUseException(</span>
-<span class="fc" id="L55">                    &quot;Cannot delete customer '&quot; + event.customerName() + &quot;': open invoices exist.&quot;);</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (invoiceRepository.existsByCustomerIdAndStatus(event.customerId(), InvoiceStatus.OPEN)) {</span>
+<span class="fc" id="L59">            throw new EntityInUseException(</span>
+<span class="fc" id="L60">                    &quot;Cannot delete customer '&quot; + event.customerName() + &quot;': open invoices exist.&quot;,</span>
+                    ApiErrorCodes.CUSTOMER_HAS_OPEN_INVOICES,
+<span class="fc" id="L62">                    Map.of(&quot;customerName&quot;, event.customerName()));</span>
         }
-<span class="fc" id="L57">    }</span>
+<span class="fc" id="L64">    }</span>
 
     /**
      * Vetoes deleting a product that appears on an open invoice; other product changes are ignored.
@@ -64,14 +71,16 @@ public class OpenInvoiceDeletionVeto {
      */
     @EventListener
     public void onProductChanged(ProductChangedEvent event) {
-<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (event.field() != ProductChangedEvent.Field.DELETED) {</span>
-<span class="fc" id="L68">            return;</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (event.field() != ProductChangedEvent.Field.DELETED) {</span>
+<span class="fc" id="L75">            return;</span>
         }
-<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (invoiceItemRepository.existsByProductIdAndInvoiceStatus(</span>
-<span class="fc" id="L71">                event.product().getId(), InvoiceStatus.OPEN)) {</span>
-<span class="fc" id="L72">            throw new EntityInUseException(&quot;Cannot delete product '&quot; + event.product().getName()</span>
-                    + &quot;': it appears on an open invoice.&quot;);
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (invoiceItemRepository.existsByProductIdAndInvoiceStatus(</span>
+<span class="fc" id="L78">                event.product().getId(), InvoiceStatus.OPEN)) {</span>
+<span class="fc" id="L79">            throw new EntityInUseException(&quot;Cannot delete product '&quot; + event.product().getName()</span>
+                    + &quot;': it appears on an open invoice.&quot;,
+                    ApiErrorCodes.PRODUCT_ON_OPEN_INVOICE,
+<span class="fc" id="L82">                    Map.of(&quot;productName&quot;, event.product().getName()));</span>
         }
-<span class="fc" id="L75">    }</span>
+<span class="fc" id="L84">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
