@@ -31,5 +31,8 @@
     "nameRequired": "Name ist erforderlich.",
     "addressRequired": "Adresse ist erforderlich.",
     "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+  },
+  "errors": {
+    "hasOpenInvoices": "Lieferant '{{supplierName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen."
   }
 }

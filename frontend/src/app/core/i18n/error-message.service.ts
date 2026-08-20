@@ -19,7 +19,11 @@ const MESSAGE_KEYS: Readonly<Record<string, string>> = {
   RETURN_REQUIRES_CLOSED_INVOICE: 'invoices.errors.returnRequiresClosed',
   RETURN_EXCEEDS_RETURNABLE: 'invoices.errors.returnExceedsReturnable',
   INVOICE_ALREADY_PAID: 'invoices.errors.alreadyPaid',
-  INVOICE_NOT_OPEN_FOR_DELETE: 'invoices.errors.notOpenForDelete'
+  INVOICE_NOT_OPEN_FOR_DELETE: 'invoices.errors.notOpenForDelete',
+  SUPPLIER_HAS_OPEN_INVOICES: 'suppliers.errors.hasOpenInvoices',
+  CUSTOMER_HAS_OPEN_INVOICES: 'customers.errors.hasOpenInvoices',
+  PRODUCT_ON_OPEN_INVOICE: 'products.errors.onOpenInvoice',
+  PRODUCT_HAS_STOCK: 'products.errors.hasStock'
 };
 
 /** The params each key interpolates, so a response missing one falls through rather than rendering a gap. */
@@ -29,7 +33,11 @@ const REQUIRED_PARAMS: Readonly<Record<string, readonly string[]>> = {
   RESTORE_BLOCKED_BY_NAME: ['name'],
   RESTORE_BLOCKED_BY_SKU: ['sku'],
   DUPLICATE_INVOICE_NUMBER: ['invoiceNumber'],
-  RETURN_EXCEEDS_RETURNABLE: ['quantity', 'remaining', 'itemId']
+  RETURN_EXCEEDS_RETURNABLE: ['quantity', 'remaining', 'itemId'],
+  SUPPLIER_HAS_OPEN_INVOICES: ['supplierName'],
+  CUSTOMER_HAS_OPEN_INVOICES: ['customerName'],
+  PRODUCT_ON_OPEN_INVOICE: ['productName'],
+  PRODUCT_HAS_STOCK: ['productName', 'quantity']
 };
 
 /**

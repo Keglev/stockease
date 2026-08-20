@@ -14,6 +14,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ProductResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData
@@ -60,6 +61,7 @@ export class ProductListComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly router = inject(Router);
 
   protected readonly bin = inject(ProductRecycleBin);
@@ -160,7 +162,9 @@ export class ProductListComponent implements OnInit {
         this.notifications.success(message);
         this.list.load();
       },
-      error: (err: Error) => this.notifications.error(err.message)
+      // Two coded refusals reach here - the product is on an open invoice, or it still holds
+      // stock - and each asks the operator for something different (ADR 041).
+      error: (err: Error) => this.notifications.error(this.errorMessages.resolve(err))
     });
   }
 }

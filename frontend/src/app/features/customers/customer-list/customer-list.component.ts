@@ -11,6 +11,7 @@ import { CustomerResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { FormatService } from '../../../core/format/format.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import { createListPageStore } from '../../../shared/list/list-page-store';
 import {
@@ -53,6 +54,7 @@ export class CustomerListComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly csv = inject(CsvExportService);
   private readonly format = inject(FormatService);
 
@@ -143,12 +145,13 @@ export class CustomerListComponent implements OnInit {
 
   private remove(customer: CustomerResponse): void {
     this.customers.remove(customer.id).subscribe({
-      // The backend's own message is shown; it explains vetoes such as open invoices.
+      // The open-invoice veto names itself as of ADR 041, so the operator reads it in their own
+      // language; anything uncoded still falls through to the backend's own sentence.
       next: (message) => {
         this.notifications.success(message);
         this.list.load();
       },
-      error: (err: Error) => this.notifications.error(err.message)
+      error: (err: Error) => this.notifications.error(this.errorMessages.resolve(err))
     });
   }
 }

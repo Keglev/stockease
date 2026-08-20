@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { PaginatedProducts } from '../../../core/api/api-models';
+import { ApiError } from '../../../core/api/api-envelope';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { ProductCreateDialogComponent } from '../product-create-dialog/product-create-dialog.component';
 import { ProductListComponent } from './product-list.component';
@@ -304,6 +305,46 @@ describe('ProductListComponent', () => {
     await fixture.whenStable();
 
     expect(notifications.errors).toEqual(['Product cannot be deleted.']);
+  });
+
+  /*
+   * The two coded refusals a delete can meet (ADR 041 phase 3.3). Both are asserted in German and
+   * whole: the English keys mirror the wire sentences byte for byte, so an English expectation
+   * would pass with the resolver call reverted. They are separate cases because the operator is
+   * asked for different things - settle the invoice, or write the stock off first.
+   */
+  it('delete_vetoedByAnOpenInvoice_surfacesTheGermanSentence', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    TestBed.inject(LanguageService).setLanguage('de');
+    dialog.confirmed = true;
+    stub.removeResult = throwError(
+      () => new ApiError("Cannot delete product 'Laptop': it appears on an open invoice.", 409,
+        'PRODUCT_ON_OPEN_INVOICE', { productName: 'Laptop' })
+    );
+
+    await openRowMenu();
+    menuItem('.product-delete')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.errors)
+      .toEqual(["Produkt 'Laptop' kann nicht gelöscht werden: Es steht auf einer offenen Rechnung."]);
+  });
+
+  it('delete_refusedWhileStocked_surfacesTheGermanSentenceWithTheQuantity', async () => {
+    await setUp(of(pageWith(['Laptop'])), 'ADMIN');
+    TestBed.inject(LanguageService).setLanguage('de');
+    dialog.confirmed = true;
+    stub.removeResult = throwError(
+      () => new ApiError("Cannot delete product 'Laptop': 7 units are still in stock.", 409,
+        'PRODUCT_HAS_STOCK', { productName: 'Laptop', quantity: '7' })
+    );
+
+    await openRowMenu();
+    menuItem('.product-delete')?.click();
+    await fixture.whenStable();
+
+    expect(notifications.errors)
+      .toEqual(["Produkt 'Laptop' kann nicht gelöscht werden: 7 Einheiten sind noch auf Lager."]);
   });
 
   /* Flips the "Show deleted" toggle, which only an admin can reach. */

@@ -51,7 +51,9 @@ export const TRANSLATIONS = {
       restored: 'Product restored',
       errors: {
         restoreBlockedByName: "Cannot restore: a live product named '{{name}}' already exists.",
-        restoreBlockedBySku: "Cannot restore: a live product with SKU '{{sku}}' already exists."
+        restoreBlockedBySku: "Cannot restore: a live product with SKU '{{sku}}' already exists.",
+        onOpenInvoice: "Cannot delete product '{{productName}}': it appears on an open invoice.",
+        hasStock: "Cannot delete product '{{productName}}': {{quantity}} units are still in stock."
       },
       delete: { action: 'Delete', title: 'Delete product', message: 'Delete "{{name}}"?' }
     }
@@ -62,7 +64,11 @@ export const TRANSLATIONS = {
     products: {
       errors: {
         restoreBlockedByName: 'Wiederherstellen nicht möglich: Ein aktives Produkt mit dem Namen „{{name}}“ existiert bereits.',
-        restoreBlockedBySku: 'Wiederherstellen nicht möglich: Ein aktives Produkt mit der Artikelnummer „{{sku}}“ existiert bereits.'
+        restoreBlockedBySku: 'Wiederherstellen nicht möglich: Ein aktives Produkt mit der Artikelnummer „{{sku}}“ existiert bereits.',
+        onOpenInvoice:
+          "Produkt '{{productName}}' kann nicht gelöscht werden: Es steht auf einer offenen Rechnung.",
+        hasStock:
+          "Produkt '{{productName}}' kann nicht gelöscht werden: {{quantity}} Einheiten sind noch auf Lager."
       }
     }
   }
