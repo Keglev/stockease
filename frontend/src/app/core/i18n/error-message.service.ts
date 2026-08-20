@@ -23,7 +23,33 @@ const MESSAGE_KEYS: Readonly<Record<string, string>> = {
   SUPPLIER_HAS_OPEN_INVOICES: 'suppliers.errors.hasOpenInvoices',
   CUSTOMER_HAS_OPEN_INVOICES: 'customers.errors.hasOpenInvoices',
   PRODUCT_ON_OPEN_INVOICE: 'products.errors.onOpenInvoice',
-  PRODUCT_HAS_STOCK: 'products.errors.hasStock'
+  PRODUCT_HAS_STOCK: 'products.errors.hasStock',
+  /*
+   * The movement validation matrix, in the order the backend raises it.
+   *
+   * Ten of these sixteen cannot be reached over HTTP and are latent by design. The request records
+   * are narrower than the command the API validates - they carry no unitCost at all - and bean
+   * validation and the two controllers' reason gates catch the rest, so those rules guard a caller
+   * the HTTP surface cannot produce (backend rulings R45 and R47). They are translated anyway, so
+   * the sentence is ready the moment a shadow moves. Do not prune them as dead keys: their being
+   * unreachable today is the recorded decision, not an oversight.
+   */
+  MOVEMENT_ENDPOINT_RETURNS_ONLY: 'movements.errors.endpointReturnsOnly',
+  MOVEMENT_REASON_NOT_STANDALONE: 'movements.errors.reasonNotStandalone',
+  MOVEMENT_USER_REQUIRED: 'movements.errors.userRequired',
+  MOVEMENT_PRODUCT_AND_REASON_REQUIRED: 'movements.errors.productAndReasonRequired',
+  MOVEMENT_QUANTITY_NOT_POSITIVE: 'movements.errors.quantityNotPositive',
+  LOSS_MOVEMENT_CARRIES_NO_INVOICE_DATA: 'movements.errors.lossCarriesNoInvoiceData',
+  LOSS_MOVEMENT_REQUIRES_REMARK: 'movements.errors.lossRequiresRemark',
+  MOVEMENT_REQUIRES_INVOICE_ITEM: 'movements.errors.requiresInvoiceItem',
+  MOVEMENT_UNIT_COST_DERIVED: 'movements.errors.unitCostDerived',
+  MOVEMENT_REMARK_FORBIDDEN: 'movements.errors.remarkForbidden',
+  MOVEMENT_INVOICE_TYPE_MISMATCH: 'movements.errors.invoiceTypeMismatch',
+  MOVEMENT_INVOICE_OPEN: 'movements.errors.invoiceOpen',
+  MOVEMENT_ITEM_PRODUCT_MISMATCH: 'movements.errors.itemProductMismatch',
+  MOVEMENT_QUANTITY_MISMATCH: 'movements.errors.quantityMismatch',
+  MOVEMENT_ALREADY_RECORDED: 'movements.errors.alreadyRecorded',
+  RETURN_REQUIRES_SALE_MOVEMENT: 'movements.errors.returnRequiresSaleMovement'
 };
 
 /** The params each key interpolates, so a response missing one falls through rather than rendering a gap. */
@@ -37,7 +63,33 @@ const REQUIRED_PARAMS: Readonly<Record<string, readonly string[]>> = {
   SUPPLIER_HAS_OPEN_INVOICES: ['supplierName'],
   CUSTOMER_HAS_OPEN_INVOICES: ['customerName'],
   PRODUCT_ON_OPEN_INVOICE: ['productName'],
-  PRODUCT_HAS_STOCK: ['productName', 'quantity']
+  PRODUCT_HAS_STOCK: ['productName', 'quantity'],
+  MOVEMENT_REQUIRES_INVOICE_ITEM: ['reason'],
+  MOVEMENT_REMARK_FORBIDDEN: ['reason'],
+  MOVEMENT_INVOICE_TYPE_MISMATCH: ['reason', 'requiredType'],
+  MOVEMENT_ITEM_PRODUCT_MISMATCH: ['invoiceItemId'],
+  MOVEMENT_QUANTITY_MISMATCH: ['quantity'],
+  MOVEMENT_ALREADY_RECORDED: ['reason', 'invoiceItemId']
+};
+
+/**
+ * The params that arrive as enum tokens rather than as values, and the catalog branch each is
+ * named under.
+ *
+ * @remarks
+ * The API sends `reason` as `RETURN_FROM_CUSTOMER` and `requiredType` as `SALE` - raw tokens, not
+ * prose, and deliberately so: the token is the stable contract and the language it should be read
+ * in is the client's business. A sentence that interpolated one unchanged would be German prose
+ * with an English shout in the middle of it.
+ *
+ * So a param listed here is looked up as `prefix.TOKEN` before the sentence is built. Params that
+ * are not listed - an id, a quantity - are values and interpolate exactly as they arrive.
+ */
+const PARAM_TRANSLATIONS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  MOVEMENT_REQUIRES_INVOICE_ITEM: { reason: 'movements.reason' },
+  MOVEMENT_REMARK_FORBIDDEN: { reason: 'movements.reason' },
+  MOVEMENT_INVOICE_TYPE_MISMATCH: { reason: 'movements.reason', requiredType: 'invoices.type' },
+  MOVEMENT_ALREADY_RECORDED: { reason: 'movements.reason' }
 };
 
 /**
@@ -49,11 +101,13 @@ const REQUIRED_PARAMS: Readonly<Record<string, readonly string[]>> = {
  * always will be: most failures carry no code, and the ones that do were uncoded until recently
  * (ADR 041).
  *
- * Three cases fall through to that message, deliberately treated alike. An absent code is the
+ * Four cases fall through to that message, deliberately treated alike. An absent code is the
  * ordinary failure. An unknown code is a situation the API named after this build shipped - the
  * server's sentence is still correct English, which beats rendering a raw key. Missing params are
  * a coded failure whose values did not arrive, where the translated template would render with a
- * hole in it and the server's sentence already has the value in place.
+ * hole in it and the server's sentence already has the value in place. An enum param whose token
+ * this build has no word for is the same case one level down: the sentence would come out half
+ * translated, which reads worse than English that is merely English.
  */
 @Injectable({ providedIn: 'root' })
 export class ErrorMessageService {
@@ -78,6 +132,50 @@ export class ErrorMessageService {
     if (required.some((name) => params?.[name] === undefined)) {
       return error.message;
     }
-    return this.translate.instant(key, params) as string;
+    const translated = this.translateEnumParams(error.code, params);
+    if (translated === undefined) {
+      return error.message;
+    }
+    return this.translate.instant(key, translated) as string;
+  }
+
+  /**
+   * Replaces enum-token params with their translated words, leaving value params alone.
+   *
+   * @param code the situation code, which decides which params are enums
+   * @param params the params as they arrived
+   * @returns the params to interpolate, or `undefined` when a token has no catalog entry
+   *
+   * @remarks
+   * A token this build has no word for returns `undefined`, which sends the caller to the server's
+   * message - the fourth member of the same family as the three fall-throughs above, and for the
+   * same reason. The alternatives are worse in both directions: interpolating the raw token would
+   * put `RETURNED_TO_SUPPLIER` inside a German sentence, and rendering the missing key would put
+   * `movements.reason.RETURNED_TO_SUPPLIER` there. A half-translated sentence reads as a bug to
+   * the operator; the server's English sentence reads as English.
+   */
+  private translateEnumParams(
+    code: string,
+    params: Readonly<Record<string, string>> | undefined
+  ): Record<string, string> | undefined {
+    const enumParams = PARAM_TRANSLATIONS[code];
+    if (enumParams === undefined || params === undefined) {
+      return { ...params };
+    }
+    const resolved: Record<string, string> = { ...params };
+    for (const [name, prefix] of Object.entries(enumParams)) {
+      const token = params[name];
+      if (token === undefined) {
+        continue;
+      }
+      const paramKey = `${prefix}.${token}`;
+      const word = this.translate.instant(paramKey) as string;
+      // ngx-translate echoes the key back when it has no entry for it; that echo is the miss.
+      if (word === paramKey) {
+        return undefined;
+      }
+      resolved[name] = word;
+    }
+    return resolved;
   }
 }

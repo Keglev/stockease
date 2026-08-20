@@ -57,6 +57,28 @@ export const TRANSLATIONS = {
           + 'for invoice item {{itemId}}.',
         alreadyPaid: 'Invoice is already marked as paid.'
       }
+    },
+    /*
+     * The return endpoint runs the movement validation matrix, so its refusals answer on this page
+     * too. `reason` is here because it is a translation target rather than a label: the API sends
+     * the raw enum token and the resolver looks the word up before building the sentence (R46).
+     */
+    movements: {
+      reason: {
+        LOST: 'Lost',
+        DESTROYED: 'Destroyed',
+        PURCHASE: 'Purchase',
+        SOLD: 'Sold',
+        RETURN_FROM_CUSTOMER: 'Customer return',
+        RETURNED_TO_SUPPLIER: 'Returned to supplier'
+      },
+      errors: {
+        endpointReturnsOnly: 'This endpoint records returns only.',
+        invoiceTypeMismatch:
+          '{{reason}} movements must reference a {{requiredType}} invoice item.',
+        invoiceOpen: 'Movements cannot be recorded against an open invoice.',
+        itemProductMismatch: 'Invoice item {{invoiceItemId}} belongs to a different product.'
+      }
     }
   },
   /*
@@ -67,11 +89,33 @@ export const TRANSLATIONS = {
    */
   de: {
     invoices: {
+      // Not an error sentence, and here anyway: requiredType arrives as the token SALE and is
+      // looked up under this branch, so without it the sentence would read „Sale" in German.
+      type: { PURCHASE: 'Einkauf', SALE: 'Verkauf' },
       errors: {
         returnExceedsReturnable:
           'Die Rücksendung von {{quantity}} überschreitet die verbleibende '
           + 'rücksendbare Menge {{remaining}} für die Rechnungsposition {{itemId}}.',
         alreadyPaid: 'Die Rechnung ist bereits als bezahlt markiert.'
+      }
+    },
+    movements: {
+      reason: {
+        LOST: 'Verlust',
+        DESTROYED: 'Zerstört',
+        PURCHASE: 'Einkauf',
+        SOLD: 'Verkauf',
+        RETURN_FROM_CUSTOMER: 'Kundenrücksendung',
+        RETURNED_TO_SUPPLIER: 'Rücksendung an Lieferanten'
+      },
+      errors: {
+        endpointReturnsOnly: 'Über diesen Endpunkt können nur Rücksendungen erfasst werden.',
+        invoiceTypeMismatch:
+          'Bewegungen vom Typ „{{reason}}“ müssen sich auf eine Rechnungsposition vom Typ '
+          + '„{{requiredType}}“ beziehen.',
+        invoiceOpen: 'Bewegungen können nicht gegen eine offene Rechnung erfasst werden.',
+        itemProductMismatch:
+          'Die Rechnungsposition {{invoiceItemId}} gehört zu einem anderen Produkt.'
       }
     }
   }

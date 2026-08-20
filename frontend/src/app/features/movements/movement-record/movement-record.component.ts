@@ -9,6 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
 import { ProductResponse } from '../../../core/api/api-models';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { productLabel } from '../../products/product-label';
 import { ProductService } from '../../products/product.service';
@@ -46,6 +47,7 @@ export class MovementRecordComponent {
   private readonly movements = inject(MovementService);
   private readonly products = inject(ProductService);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
 
   /** Cleared alongside the form after a successful record, so the field stops naming a done job. */
   private readonly productField = viewChild(TypeaheadComponent);
@@ -111,7 +113,9 @@ export class MovementRecordComponent {
       error: (err: Error) => {
         // Values are preserved so a rejected correction can be adjusted and retried.
         this.pending.set(false);
-        this.notifications.error(err.message);
+        // Through the resolver rather than showing err.message: the movement matrix names its
+        // refusals with codes, and this form can provoke the missing-remark one (ADR 041).
+        this.notifications.error(this.errorMessages.resolve(err));
       }
     });
   }

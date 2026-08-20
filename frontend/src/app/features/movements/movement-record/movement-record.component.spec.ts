@@ -3,6 +3,7 @@ import { AbstractControl, FormGroup } from '@angular/forms';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { Observable, of, throwError } from 'rxjs';
 
+import { ApiError } from '../../../core/api/api-envelope';
 import { MovementResponse, ProductResponse, RecordMovementRequest } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
@@ -36,7 +37,19 @@ const TRANSLATIONS = {
         }
       },
       submit: 'Record movement',
-      recorded: 'Stock movement recorded.'
+      recorded: 'Stock movement recorded.',
+      errors: {
+        lossRequiresRemark: 'LOST and DESTROYED movements require a remark.'
+      }
+    }
+  },
+  // Only what the German assertion below reads. This form's labels are covered in English above;
+  // what needs proving in German is that a coded refusal reaches the operator translated.
+  de: {
+    movements: {
+      errors: {
+        lossRequiresRemark: 'Verlustbewegungen erfordern einen Vermerk.'
+      }
     }
   }
 };
@@ -368,6 +381,29 @@ describe('MovementRecordComponent', () => {
     expect(notifications.errors).toEqual(['Insufficient stock for product Widget.']);
     expect(control('quantity').value).toBe(99);
     expect(control('remark').value).toBe('INTERNAL');
+  });
+
+  it('submit_rejectedWithACodedRefusal_surfacesTheGermanSentence', async () => {
+    // Until ADR 041 phase 3.4 this surface showed err.message, so a German operator read English
+    // whatever the API said. It now goes through the shared resolver like every other surface.
+    // German, because the English key mirrors the wire sentence and could not tell the two apart.
+    TestBed.inject(LanguageService).setLanguage('de');
+    movements.result = throwError(
+      () =>
+        new ApiError(
+          'LOST and DESTROYED movements require a remark.',
+          400,
+          'LOSS_MOVEMENT_REQUIRES_REMARK',
+          undefined
+        )
+    );
+    control('productId').setValue(3);
+    control('remark').setValue('INTERNAL');
+    await settle();
+
+    await submitForm();
+
+    expect(notifications.errors).toEqual(['Verlustbewegungen erfordern einen Vermerk.']);
   });
 
   it('submit_incompleteForm_isDisabled', () => {

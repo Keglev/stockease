@@ -271,7 +271,11 @@
     "reasonLabel": "Grund",
     "reason": {
       "LOST": "Verlust",
-      "DESTROYED": "Zerstört"
+      "DESTROYED": "Zerstört",
+      "PURCHASE": "Einkauf",
+      "SOLD": "Verkauf",
+      "RETURN_FROM_CUSTOMER": "Kundenrücksendung",
+      "RETURNED_TO_SUPPLIER": "Rücksendung an Lieferanten"
     },
     "directionHint": {
       "LOST": "Ein Verlust verringert den erfassten Bestand.",
@@ -290,7 +294,25 @@
       }
     },
     "submit": "Bewegung erfassen",
-    "recorded": "Lagerbewegung wurde erfasst."
+    "recorded": "Lagerbewegung wurde erfasst.",
+    "errors": {
+      "endpointReturnsOnly": "Über diesen Endpunkt können nur Rücksendungen erfasst werden.",
+      "reasonNotStandalone": "Einkaufs- und Verkaufsbewegungen entstehen nur beim Schließen einer Rechnung; Rücksendungen werden über die Rücksendungsfunktion erfasst.",
+      "userRequired": "Ein Benutzer ist erforderlich.",
+      "productAndReasonRequired": "Produkt und Grund sind erforderlich.",
+      "quantityNotPositive": "Die Menge muss positiv sein.",
+      "lossCarriesNoInvoiceData": "Verlustbewegungen dürfen keine Rechnungsposition und keine Preise enthalten.",
+      "lossRequiresRemark": "Verlustbewegungen erfordern einen Vermerk.",
+      "requiresInvoiceItem": "Bewegungen vom Typ „{{reason}}“ erfordern eine Rechnungsposition.",
+      "unitCostDerived": "Der Stückpreis wird aus der Rechnungsposition abgeleitet und darf nicht angegeben werden.",
+      "remarkForbidden": "Ein Vermerk erklärt einen Verlust und darf für Bewegungen vom Typ „{{reason}}“ nicht angegeben werden.",
+      "invoiceTypeMismatch": "Bewegungen vom Typ „{{reason}}“ müssen sich auf eine Rechnungsposition vom Typ „{{requiredType}}“ beziehen.",
+      "invoiceOpen": "Bewegungen können nicht gegen eine offene Rechnung erfasst werden.",
+      "itemProductMismatch": "Die Rechnungsposition {{invoiceItemId}} gehört zu einem anderen Produkt.",
+      "quantityMismatch": "Die Bewegungsmenge muss der Menge der Rechnungsposition ({{quantity}}) entsprechen.",
+      "alreadyRecorded": "Für die Rechnungsposition {{invoiceItemId}} existiert bereits eine Bewegung vom Typ „{{reason}}“.",
+      "returnRequiresSaleMovement": "Eine Kundenrücksendung erfordert die Lagerbewegung des Verkaufs, den sie rückgängig macht."
+    }
   },
   "invoices": {
     "title": "Rechnungen",
