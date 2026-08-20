@@ -16,6 +16,7 @@ import com.stocks.stockease.movement.StockMovement;
 import com.stocks.stockease.movement.StockMovementService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.UserService;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvalidMovementException;
 
 import jakarta.validation.Valid;
@@ -60,7 +61,8 @@ public class ReturnController {
     public ResponseEntity<MovementResponse> registerReturn(@Valid @RequestBody RegisterReturnRequest request,
             Principal principal) {
         if (!RETURN_REASONS.contains(request.reason())) {
-            throw new InvalidMovementException("This endpoint records returns only.");
+            throw new InvalidMovementException("This endpoint records returns only.",
+                    ApiErrorCodes.MOVEMENT_ENDPOINT_RETURNS_ONLY, null);
         }
         StockMovement recorded = stockMovementService.recordMovement(request.toCommand(), currentUser(principal));
         return ResponseEntity.ok(MovementResponse.from(recorded));

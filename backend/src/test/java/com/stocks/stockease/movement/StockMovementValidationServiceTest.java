@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,13 +22,21 @@ import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.invoice.InvoiceType;
 import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvalidMovementException;
 
 import jakarta.persistence.EntityNotFoundException;
 
 /*
- * Contract: which movements are refused, and with which message. Every test here asserts that
- * nothing was booked - the refusal is the behaviour.
+ * Contract: which movements are refused, with which message, and under which situation code. Every
+ * test here asserts that nothing was booked - the refusal is the behaviour.
+ *
+ * This file is also where ten of the matrix's sixteen codes are proved wired at all. Six reach the
+ * HTTP surface and are pinned there, in ErrorEnvelopeMovementIntegrationTest; the other ten guard a
+ * command the request records cannot express - they carry no unitCost, bean validation catches the
+ * missing fields, and the two controllers refuse PURCHASE and SOLD outright - so the service layer
+ * is the only place their code can be observed (ADR 041, rulings R45 and R47). Each latent one names
+ * the guard that shadows it in ApiErrorCodes.
  *
  * The guards fall into three sets: the fields a command must carry at all, the remark rules
  * (a remark explains a loss, so it is mandatory for LOST and DESTROYED and forbidden elsewhere),
@@ -61,7 +70,9 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.LOST, (MovementRemark) null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("LOST and DESTROYED movements require a remark.");
+                .hasMessage("LOST and DESTROYED movements require a remark.")
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.LOSS_MOVEMENT_REQUIRES_REMARK);
     }
 
     @Test
@@ -69,7 +80,10 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.DESTROYED, (MovementRemark) null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("LOST and DESTROYED movements require a remark.");
+                .hasMessage("LOST and DESTROYED movements require a remark.")
+                // the same code as the LOST case above: one situation, reached by either reason
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.LOSS_MOVEMENT_REQUIRES_REMARK);
     }
 
     @Test
@@ -79,7 +93,12 @@ class StockMovementValidationServiceTest {
 
         assertThatThrownBy(() -> stockMovementService.recordMovement(command, user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessageContaining("A remark explains a loss");
+                .hasMessageContaining("A remark explains a loss")
+                // Latent: RegisterReturnRequest declares no remark field, so a client sending one has
+                // it ignored rather than refused. This is the one place the code is proved wired.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode(),
+                        thrown -> ((InvalidMovementException) thrown).getParams())
+                .containsExactly(ApiErrorCodes.MOVEMENT_REMARK_FORBIDDEN, Map.of("reason", "PURCHASE"));
     }
 
     @Test
@@ -87,14 +106,21 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.LOST, 1, null, null), null))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("User is required.");
+                .hasMessage("User is required.")
+                // Latent: both controllers resolve the principal through currentUser(), whose
+                // orElseThrow answers 500 before the service is called with a null user.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.MOVEMENT_USER_REQUIRED);
     }
 
     @Test
     void recordMovement_withNullReason_throwsInvalidMovementException() {
         assertThatThrownBy(() -> stockMovementService.recordMovement(command(null, 1, null, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("Product and reason are required.");
+                .hasMessage("Product and reason are required.")
+                // Latent: @NotNull on productId and reason yields the validation envelope first.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.MOVEMENT_PRODUCT_AND_REASON_REQUIRED);
     }
 
     @Test
@@ -102,7 +128,10 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.LOST, 0, null, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("Quantity must be positive.");
+                .hasMessage("Quantity must be positive.")
+                // Latent: @Positive on quantity yields the validation envelope first.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.MOVEMENT_QUANTITY_NOT_POSITIVE);
     }
 
     @Test
@@ -110,7 +139,11 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.LOST, 1, null, BigDecimal.TEN), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessageContaining("carry no invoice item or prices");
+                .hasMessageContaining("carry no invoice item or prices")
+                // Latent: RecordMovementRequest declares neither field, so a client sending them has
+                // them ignored rather than refused.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.LOSS_MOVEMENT_CARRIES_NO_INVOICE_DATA);
     }
 
     @Test
@@ -118,7 +151,9 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.LOST, 1, ITEM_ID, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessageContaining("carry no invoice item or prices");
+                .hasMessageContaining("carry no invoice item or prices")
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.LOSS_MOVEMENT_CARRIES_NO_INVOICE_DATA);
     }
 
     @Test
@@ -126,7 +161,12 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.PURCHASE, 1, null, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("PURCHASE movements require an invoice item.");
+                .hasMessage("PURCHASE movements require an invoice item.")
+                // Latent: @NotNull invoiceItemId on RegisterReturnRequest yields the validation
+                // envelope first, and the standalone endpoint admits only losses.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode(),
+                        thrown -> ((InvalidMovementException) thrown).getParams())
+                .containsExactly(ApiErrorCodes.MOVEMENT_REQUIRES_INVOICE_ITEM, Map.of("reason", "PURCHASE"));
     }
 
     @Test
@@ -134,7 +174,10 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 1, ITEM_ID, BigDecimal.TEN), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessageContaining("derived from the invoice item");
+                .hasMessageContaining("derived from the invoice item")
+                // Latent: neither request record declares a unitCost field at all.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.MOVEMENT_UNIT_COST_DERIVED);
     }
 
     @Test
@@ -154,7 +197,11 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("SOLD movements must reference a SALE invoice item.");
+                .hasMessage("SOLD movements must reference a SALE invoice item.")
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode(),
+                        thrown -> ((InvalidMovementException) thrown).getParams())
+                .containsExactly(ApiErrorCodes.MOVEMENT_INVOICE_TYPE_MISMATCH,
+                        Map.of("reason", "SOLD", "requiredType", "SALE"));
     }
 
     @Test
@@ -166,7 +213,9 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("Movements cannot be recorded against an open invoice.");
+                .hasMessage("Movements cannot be recorded against an open invoice.")
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.MOVEMENT_INVOICE_OPEN);
     }
 
     @Test
@@ -179,7 +228,11 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("Invoice item 7 belongs to a different product.");
+                .hasMessage("Invoice item 7 belongs to a different product.")
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode(),
+                        thrown -> ((InvalidMovementException) thrown).getParams())
+                .containsExactly(ApiErrorCodes.MOVEMENT_ITEM_PRODUCT_MISMATCH,
+                        Map.of("invoiceItemId", "7"));
     }
 
     @Test
@@ -189,7 +242,12 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.PURCHASE, 3, ITEM_ID, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("Movement quantity must equal the invoice item quantity (5).");
+                .hasMessage("Movement quantity must equal the invoice item quantity (5).")
+                // Latent: both controllers refuse PURCHASE and SOLD outright, so this check runs only
+                // for invoice closing, which builds the command itself.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode(),
+                        thrown -> ((InvalidMovementException) thrown).getParams())
+                .containsExactly(ApiErrorCodes.MOVEMENT_QUANTITY_MISMATCH, Map.of("quantity", "5"));
     }
 
     @Test
@@ -200,6 +258,11 @@ class StockMovementValidationServiceTest {
         assertThatThrownBy(() -> stockMovementService
                 .recordMovement(command(MovementReason.SOLD, 5, ITEM_ID, null), user))
                 .isInstanceOf(InvalidMovementException.class)
-                .hasMessage("A SOLD movement already exists for invoice item 7.");
+                .hasMessage("A SOLD movement already exists for invoice item 7.")
+                // Latent behind the same two controller reason gates as the quantity check above.
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode(),
+                        thrown -> ((InvalidMovementException) thrown).getParams())
+                .containsExactly(ApiErrorCodes.MOVEMENT_ALREADY_RECORDED,
+                        Map.of("reason", "SOLD", "invoiceItemId", "7"));
     }
 }

@@ -6,6 +6,7 @@ import static com.stocks.stockease.movement.MovementTestFixtures.command;
 import static com.stocks.stockease.movement.MovementTestFixtures.item;
 import static com.stocks.stockease.movement.MovementTestFixtures.product;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -29,6 +30,8 @@ import com.stocks.stockease.invoice.InvoiceType;
 import com.stocks.stockease.movement.internal.StockMovementRepository;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.InvalidMovementException;
 
 /*
  * Contract: what a movement DOES once it is allowed - which way stock moves, which prices the
@@ -148,6 +151,24 @@ class StockMovementFlowServiceTest {
         assertThat(saved.getSoldPrice()).isEqualByComparingTo(item.getUnitPrice());
         // copied from the sale rather than re-read from the product, so the reversal is exact
         assertThat(saved.getUnitCost()).isEqualByComparingTo(new BigDecimal("5.00"));
+    }
+
+    @Test
+    void recordMovement_returnFromCustomerWithNoSaleMovement_throwsInvalidMovementException() {
+        stubLinkedFlow(InvoiceType.SALE, 5);
+        stubLiveProduct();
+        // deliberately no stubSaleMovement: the repository finds nothing, which is the one state
+        // this refusal exists for
+
+        assertThatThrownBy(() -> stockMovementService
+                .recordMovement(command(MovementReason.RETURN_FROM_CUSTOMER, 2, ITEM_ID, null), user))
+                .isInstanceOf(InvalidMovementException.class)
+                .hasMessage("A customer return requires the stock movement of the sale it reverses.")
+                // Latent: closing a sale books a SOLD movement for every line and a return needs a
+                // closed invoice to get this far, so a legitimate return always finds one. This is
+                // the one place the code is proved wired (ADR 041).
+                .extracting(thrown -> ((InvalidMovementException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.RETURN_REQUIRES_SALE_MOVEMENT);
     }
 
     @Test

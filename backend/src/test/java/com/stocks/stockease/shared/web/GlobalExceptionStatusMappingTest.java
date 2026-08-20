@@ -113,12 +113,16 @@ class GlobalExceptionStatusMappingTest {
     @Test
     void handleInvalidMovementException_returns400WithOriginalMessage() {
         var response = handler.handleInvalidMovementException(
-                new InvalidMovementException("Quantity must be positive."));
+                new InvalidMovementException("Quantity must be positive.",
+                        ApiErrorCodes.MOVEMENT_QUANTITY_NOT_POSITIVE, null));
         ApiResponse<String> body = Objects.requireNonNull(response.getBody());
 
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(body.isSuccess()).isFalse();
         assertThat(body.getMessage()).isEqualTo("Quantity must be positive.");
+        // The handler passes the situation code straight through: the validation matrix has sixteen
+        // rules all answering 400, and the code is the only thing on the envelope separating them.
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.MOVEMENT_QUANTITY_NOT_POSITIVE);
     }
 
     // --- 409 conflict ---
