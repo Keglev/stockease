@@ -41,5 +41,8 @@
     "city": "City",
     "nameRequired": "Name is required.",
     "emailInvalid": "Enter a valid email address."
+  },
+  "errors": {
+    "hasOpenInvoices": "Cannot delete customer '{{customerName}}': open invoices exist."
   }
 }

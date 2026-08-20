@@ -435,6 +435,9 @@
       "city": "City",
       "nameRequired": "Name is required.",
       "emailInvalid": "Enter a valid email address."
+    },
+    "errors": {
+      "hasOpenInvoices": "Cannot delete customer '{{customerName}}': open invoices exist."
     }
   },
   "suppliers": {
@@ -470,6 +473,9 @@
       "nameRequired": "Name is required.",
       "addressRequired": "Address is required.",
       "emailInvalid": "Enter a valid email address."
+    },
+    "errors": {
+      "hasOpenInvoices": "Cannot delete supplier '{{supplierName}}': open invoices exist."
     }
   },
   "shell": {
@@ -588,7 +594,9 @@
       "duplicateName": "A product named '{{name}}' already exists.",
       "duplicateSku": "A product with SKU '{{sku}}' already exists.",
       "restoreBlockedByName": "Cannot restore: a live product named '{{name}}' already exists.",
-      "restoreBlockedBySku": "Cannot restore: a live product with SKU '{{sku}}' already exists."
+      "restoreBlockedBySku": "Cannot restore: a live product with SKU '{{sku}}' already exists.",
+      "onOpenInvoice": "Cannot delete product '{{productName}}': it appears on an open invoice.",
+      "hasStock": "Cannot delete product '{{productName}}': {{quantity}} units are still in stock."
     }
   }
 }

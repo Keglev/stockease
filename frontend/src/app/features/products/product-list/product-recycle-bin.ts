@@ -99,7 +99,11 @@ export class ProductRecycleBin {
       error: (err: Error) => {
         // the loading bar has to stop on the error path too, or a failed fetch reads as a hung one
         this.deletedRows.set([]);
-        this.host.error.set(err.message);
+        // Through the resolver like every other surface, so the banner is never the one place a
+        // coded failure would still read English. This fetch raises none today - the restore path
+        // above is where the coded refusals arrive - so resolve() returns the backend sentence
+        // unchanged here, and the banner is ready if the endpoint ever names a situation.
+        this.host.error.set(this.errorMessages.resolve(err));
         this.host.loading.set(false);
       }
     });

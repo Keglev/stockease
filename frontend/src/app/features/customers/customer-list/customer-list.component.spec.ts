@@ -5,6 +5,7 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { CustomerResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { FormatService } from '../../../core/format/format.service';
+import { ApiError } from '../../../core/api/api-envelope';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
@@ -33,12 +34,22 @@ const TRANSLATIONS = {
         actions: 'Actions'
       },
       delete: { action: 'Delete customer', title: 'Delete customer', message: 'Delete "{{name}}"?' },
-      summary: { action: 'Summary' }
+      summary: { action: 'Summary' },
+      errors: {
+        hasOpenInvoices: "Cannot delete customer '{{customerName}}': open invoices exist."
+      }
     }
   },
-  // The headers the export writes in a German interface; nothing else here is read twice.
+  // Two things this page renders in a German interface: the headers the export writes, and the
+  // open-invoice veto. The veto sentence is here because it is the only way to prove the delete
+  // path translates at all - the English key mirrors the wire sentence byte for byte, so an
+  // English assertion would hold even with the resolver call reverted.
   de: {
     customers: {
+      errors: {
+        hasOpenInvoices:
+          "Kunde '{{customerName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen."
+      },
       columns: {
         name: 'Name',
         email: 'E-Mail',
@@ -413,6 +424,25 @@ describe('CustomerListComponent', () => {
 
     expect(notifications.errors).toEqual(['Customer has open invoices and cannot be deleted.']);
     expect(notifications.successes).toEqual([]);
+  });
+
+  it('delete_vetoedWithTheOpenInvoiceCode_surfacesTheGermanSentence', async () => {
+    // The veto names itself as of ADR 041, so the operator reads it in their own language rather
+    // than the server's. Asserted in German and whole: the English key mirrors the wire sentence,
+    // so only the German one can tell a translated refusal from an untranslated one.
+    await setUp('ADMIN');
+    TestBed.inject(LanguageService).setLanguage('de');
+    dialog.confirmed = true;
+    customers.removeResult = throwError(
+      () => new ApiError("Cannot delete customer 'Jane Doe': open invoices exist.", 409,
+        'CUSTOMER_HAS_OPEN_INVOICES', { customerName: 'Jane Doe' })
+    );
+
+    deleteButtons()[0].click();
+    await fixture.whenStable();
+
+    expect(notifications.errors)
+      .toEqual(["Kunde 'Jane Doe' kann nicht gelöscht werden: Es existieren offene Rechnungen."]);
   });
 
   it('create_clicked_opensCreateDialogAndAnnouncesTheNewCustomer', async () => {
