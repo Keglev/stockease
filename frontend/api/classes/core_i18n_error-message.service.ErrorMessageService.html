@@ -20,14 +20,16 @@
 returns without knowing which failures are coded. The backend's own message is the fallback and
 always will be: most failures carry no code, and the ones that do were uncoded until recently
 (ADR 041).</p>
-<p>Three cases fall through to that message, deliberately treated alike. An absent code is the
+<p>Four cases fall through to that message, deliberately treated alike. An absent code is the
 ordinary failure. An unknown code is a situation the API named after this build shipped - the
 server's sentence is still correct English, which beats rendering a raw key. Missing params are
 a coded failure whose values did not arrive, where the translated template would render with a
-hole in it and the server's sentence already has the value in place.</p>
+hole in it and the server's sentence already has the value in place. An enum param whose token
+this build has no word for is the same case one level down: the sentence would come out half
+translated, which reads worse than English that is merely English.</p>
 </div></div></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/fb1ed296bc4eae1bcfd3c10fcd58b2bcd56c6edb/frontend/src/app/core/i18n/error-message.service.ts#L59">core/i18n/error-message.service.ts:59</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/ea84e55845aa21b81ed12b2a2206a9918a8d21c8/frontend/src/app/core/i18n/error-message.service.ts#L113">core/i18n/error-message.service.ts:113</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -71,7 +73,7 @@ hole in it and the server's sentence already has the value in place.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><p>the translated sentence when the situation is one this build knows, else the message</p>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/fb1ed296bc4eae1bcfd3c10fcd58b2bcd56c6edb/frontend/src/app/core/i18n/error-message.service.ts#L68">core/i18n/error-message.service.ts:68</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/ea84e55845aa21b81ed12b2a2206a9918a8d21c8/frontend/src/app/core/i18n/error-message.service.ts#L122">core/i18n/error-message.service.ts:122</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
