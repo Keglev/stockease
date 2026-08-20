@@ -138,7 +138,15 @@
 <a name='L73'></a><a href='#L73'>73</a>
 <a name='L74'></a><a href='#L74'>74</a>
 <a name='L75'></a><a href='#L75'>75</a>
-<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -163,6 +171,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -188,8 +200,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">137x</span>
-<span class="cline-any cline-yes">137x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">193x</span>
+<span class="cline-any cline-yes">193x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -198,19 +214,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">28x</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">17x</span>
-<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">28x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Injectable, inject } from '@angular/core';
@@ -234,7 +250,11 @@ const MESSAGE_KEYS: Readonly&lt;Record&lt;string, string&gt;&gt; = {
   RETURN_REQUIRES_CLOSED_INVOICE: 'invoices.errors.returnRequiresClosed',
   RETURN_EXCEEDS_RETURNABLE: 'invoices.errors.returnExceedsReturnable',
   INVOICE_ALREADY_PAID: 'invoices.errors.alreadyPaid',
-  INVOICE_NOT_OPEN_FOR_DELETE: 'invoices.errors.notOpenForDelete'
+  INVOICE_NOT_OPEN_FOR_DELETE: 'invoices.errors.notOpenForDelete',
+  SUPPLIER_HAS_OPEN_INVOICES: 'suppliers.errors.hasOpenInvoices',
+  CUSTOMER_HAS_OPEN_INVOICES: 'customers.errors.hasOpenInvoices',
+  PRODUCT_ON_OPEN_INVOICE: 'products.errors.onOpenInvoice',
+  PRODUCT_HAS_STOCK: 'products.errors.hasStock'
 };
 &nbsp;
 /** The params each key interpolates, so a response missing one falls through rather than rendering a gap. */
@@ -244,7 +264,11 @@ const REQUIRED_PARAMS: Readonly&lt;Record&lt;string, readonly string[]&gt;&gt; =
   RESTORE_BLOCKED_BY_NAME: ['name'],
   RESTORE_BLOCKED_BY_SKU: ['sku'],
   DUPLICATE_INVOICE_NUMBER: ['invoiceNumber'],
-  RETURN_EXCEEDS_RETURNABLE: ['quantity', 'remaining', 'itemId']
+  RETURN_EXCEEDS_RETURNABLE: ['quantity', 'remaining', 'itemId'],
+  SUPPLIER_HAS_OPEN_INVOICES: ['supplierName'],
+  CUSTOMER_HAS_OPEN_INVOICES: ['customerName'],
+  PRODUCT_ON_OPEN_INVOICE: ['productName'],
+  PRODUCT_HAS_STOCK: ['productName', 'quantity']
 };
 &nbsp;
 /**
@@ -295,7 +319,7 @@ export class ErrorMessageService {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-19T16:53:40.210Z
+                at 2026-08-20T11:23:39.270Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
