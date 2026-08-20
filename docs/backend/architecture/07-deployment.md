@@ -20,9 +20,16 @@ One workflow, two jobs. `build-and-test` runs the full suite (Testcontainers
 against real PostgreSQL) and uploads the coverage report as an artifact; it
 is the required status check on every pull request. The `deploy` job runs
 only outside pull requests, gated on the tests: it triggers a redeploy
-through the Koyeb API and polls until the service reports healthy - CI does
-not build or push the image. Koyeb builds the repository's Dockerfile
-itself, so the deployed artifact is always exactly what `main` describes.
+through the Koyeb API, takes the deployment id from the redeploy reply and
+polls that deployment until it reports healthy - CI does not build or push
+the image. Koyeb builds the repository's Dockerfile itself, so the deployed
+artifact is always exactly what `main` describes.
+
+The poll watches the deployment the redeploy triggered rather than the
+service, because Koyeb builds the new deployment alongside the running one:
+the service keeps answering healthy on behalf of the old instance for as
+long as the build takes, so watching it would pass the gate before the
+build had begun.
 
 A biweekly scheduled run rebuilds even without commits, picking up patched
 base images.
