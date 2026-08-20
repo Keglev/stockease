@@ -1,5 +1,7 @@
 package com.stocks.stockease.customer.web;
 
+import java.util.Map;
+
 import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.customer.CustomerService;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.EntityInUseException;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -87,7 +90,8 @@ class CustomerDeleteControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void deleteCustomer_withOpenInvoices_returns409() throws Exception {
-        Mockito.doThrow(new EntityInUseException("Cannot delete customer 'Jane Doe': open invoices exist."))
+        Mockito.doThrow(new EntityInUseException("Cannot delete customer 'Jane Doe': open invoices exist.",
+                ApiErrorCodes.CUSTOMER_HAS_OPEN_INVOICES, Map.of("customerName", "Jane Doe")))
                 .when(customerService).deleteById(1L);
 
         mockMvc.perform(delete("/api/customers/1").with(csrfToken()))

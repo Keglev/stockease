@@ -126,4 +126,28 @@ visible half-state rather than a hidden one. It is preferable to a single change
 seven families, seventy throw sites and every translation bundle at once, where a failure
 anywhere would be attributable to nothing in particular.
 
+## Amendment - 20 August 2026
+
+Ruling R44: the entity-in-use family is coded in full - all four situations, not the
+subset the distinct-action criterion would have selected.
+
+Three of the four are deletion vetoes - a supplier, a customer or a product pinned by an
+open invoice - and they share one operator remedy: settle or delete the invoice first. On
+the criterion this record applies elsewhere, situations that ask the operator for the same
+thing do not each need naming, and those three would have been left uncoded or given one
+shared code. The owner ruled the other way for this family. The criterion answers which
+situations a *client* must tell apart in order to act; it does not answer which sentences a
+client must be able to *render*, and all four of these are sentences an operator reads in
+their own language. Complete German coverage of a family was taken as worth more here than
+the economy of coding only what differs in remedy.
+
+The criterion is not withdrawn. It governs where it governed before; this family is an
+exception made deliberately and recorded as one, so that a later reader meeting four codes
+with three remedies finds the reason rather than an inconsistency.
+
+The handler Javadoc for `EntityInUseException` recorded the opposite as design - "No code",
+on the reasoning that a client has nothing to do with a veto beyond showing its message.
+That claim is superseded and was rewritten in the same pull request, so no reader meets the
+old rationale beside the new behaviour.
+
 [Back to Decisions Index](index.md)

@@ -1,5 +1,7 @@
 package com.stocks.stockease.invoice.internal;
 
+import java.util.Map;
+
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Component;
 import com.stocks.stockease.customer.CustomerDeletedEvent;
 import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.product.ProductChangedEvent;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.supplier.SupplierDeletedEvent;
 
@@ -38,7 +41,9 @@ public class OpenInvoiceDeletionVeto {
     public void onSupplierDeleted(SupplierDeletedEvent event) {
         if (invoiceRepository.existsBySupplierIdAndStatus(event.supplierId(), InvoiceStatus.OPEN)) {
             throw new EntityInUseException(
-                    "Cannot delete supplier '" + event.supplierName() + "': open invoices exist.");
+                    "Cannot delete supplier '" + event.supplierName() + "': open invoices exist.",
+                    ApiErrorCodes.SUPPLIER_HAS_OPEN_INVOICES,
+                    Map.of("supplierName", event.supplierName()));
         }
     }
 
@@ -52,7 +57,9 @@ public class OpenInvoiceDeletionVeto {
     public void onCustomerDeleted(CustomerDeletedEvent event) {
         if (invoiceRepository.existsByCustomerIdAndStatus(event.customerId(), InvoiceStatus.OPEN)) {
             throw new EntityInUseException(
-                    "Cannot delete customer '" + event.customerName() + "': open invoices exist.");
+                    "Cannot delete customer '" + event.customerName() + "': open invoices exist.",
+                    ApiErrorCodes.CUSTOMER_HAS_OPEN_INVOICES,
+                    Map.of("customerName", event.customerName()));
         }
     }
 
@@ -70,7 +77,9 @@ public class OpenInvoiceDeletionVeto {
         if (invoiceItemRepository.existsByProductIdAndInvoiceStatus(
                 event.product().getId(), InvoiceStatus.OPEN)) {
             throw new EntityInUseException("Cannot delete product '" + event.product().getName()
-                    + "': it appears on an open invoice.");
+                    + "': it appears on an open invoice.",
+                    ApiErrorCodes.PRODUCT_ON_OPEN_INVOICE,
+                    Map.of("productName", event.product().getName()));
         }
     }
 }

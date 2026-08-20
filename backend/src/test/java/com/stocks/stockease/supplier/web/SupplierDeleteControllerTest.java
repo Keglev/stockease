@@ -1,5 +1,7 @@
 package com.stocks.stockease.supplier.web;
 
+import java.util.Map;
+
 import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.stocks.stockease.config.test.TestConfig;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.supplier.SupplierService;
 
@@ -87,7 +90,8 @@ class SupplierDeleteControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void deleteSupplier_withOpenInvoices_returns409() throws Exception {
-        Mockito.doThrow(new EntityInUseException("Cannot delete supplier 'Acme': open invoices exist."))
+        Mockito.doThrow(new EntityInUseException("Cannot delete supplier 'Acme': open invoices exist.",
+                ApiErrorCodes.SUPPLIER_HAS_OPEN_INVOICES, Map.of("supplierName", "Acme")))
                 .when(supplierService).deleteById(1L);
 
         mockMvc.perform(delete("/api/suppliers/1").with(csrfToken()))

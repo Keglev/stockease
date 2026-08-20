@@ -1,13 +1,17 @@
 package com.stocks.stockease.invoice.internal;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +23,7 @@ import com.stocks.stockease.invoice.InvoiceStatus;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductChangedEvent;
 import com.stocks.stockease.security.User;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.supplier.SupplierDeletedEvent;
 
@@ -104,5 +109,46 @@ class OpenInvoiceDeletionVetoTest {
 
         verify(invoiceItemRepository, never()).existsByProductIdAndInvoiceStatus(anyLong(), any());
         verify(invoiceRepository, never()).existsBySupplierIdAndStatus(anyLong(), any());
+    }
+    /*
+     * The code and params, pinned apart from the message assertions above. Ruling R44 codes all
+     * four situations in this family even though the three vetoes share one remedy, so what makes
+     * each of them findable on the wire is the constant - not the sentence, which a client that
+     * translates never reads.
+     */
+    @Test
+    void onSupplierDeleted_withOpenInvoices_carriesTheSupplierCodeAndName() {
+        when(invoiceRepository.existsBySupplierIdAndStatus(1L, InvoiceStatus.OPEN)).thenReturn(true);
+
+        EntityInUseException ex = catchThrowableOfType(
+                () -> veto.onSupplierDeleted(new SupplierDeletedEvent(1L, "Acme")),
+                EntityInUseException.class);
+
+        assertThat(ex.getCode()).isEqualTo(ApiErrorCodes.SUPPLIER_HAS_OPEN_INVOICES);
+        assertThat(ex.getParams()).isEqualTo(Map.of("supplierName", "Acme"));
+    }
+
+    @Test
+    void onCustomerDeleted_withOpenInvoices_carriesTheCustomerCodeAndName() {
+        when(invoiceRepository.existsByCustomerIdAndStatus(2L, InvoiceStatus.OPEN)).thenReturn(true);
+
+        EntityInUseException ex = catchThrowableOfType(
+                () -> veto.onCustomerDeleted(new CustomerDeletedEvent(2L, "Jane Doe")),
+                EntityInUseException.class);
+
+        assertThat(ex.getCode()).isEqualTo(ApiErrorCodes.CUSTOMER_HAS_OPEN_INVOICES);
+        assertThat(ex.getParams()).isEqualTo(Map.of("customerName", "Jane Doe"));
+    }
+
+    @Test
+    void onProductChanged_deletedOnOpenInvoice_carriesTheOpenInvoiceCodeAndProductName() {
+        when(invoiceItemRepository.existsByProductIdAndInvoiceStatus(7L, InvoiceStatus.OPEN)).thenReturn(true);
+
+        EntityInUseException ex = catchThrowableOfType(
+                () -> veto.onProductChanged(productEvent(ProductChangedEvent.Field.DELETED)),
+                EntityInUseException.class);
+
+        assertThat(ex.getCode()).isEqualTo(ApiErrorCodes.PRODUCT_ON_OPEN_INVOICE);
+        assertThat(ex.getParams()).isEqualTo(Map.of("productName", "Widget"));
     }
 }
