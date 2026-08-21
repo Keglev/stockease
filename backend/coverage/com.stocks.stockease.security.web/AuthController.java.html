@@ -43,7 +43,8 @@ public class AuthController {
      *
      * @param loginRequest username and password payload
      * @return {@link ApiResponse} wrapping the JWT string on success (HTTP 200),
-     *         or an error message on failure (HTTP 400, 401, or 500)
+     *         or an error message on failure (HTTP 401 or 500; a blank field answers 400 from bean
+     *         validation, before this method runs)
      * @throws org.springframework.security.authentication.BadCredentialsException
      *         if the password does not match — caught and mapped to HTTP 401
      * @throws UsernameNotFoundException if the account does not exist — mapped to HTTP 401
@@ -51,35 +52,37 @@ public class AuthController {
     @PostMapping(&quot;/login&quot;)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-<span class="fc bfc" id="L54" title="All 4 branches covered.">            if (loginRequest.getUsername().isBlank() || loginRequest.getPassword().isBlank()) {</span>
-<span class="fc" id="L55">                return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
-<span class="fc" id="L56">                    .body(new ApiResponse&lt;&gt;(false, &quot;Username and password cannot be blank&quot;, null));</span>
-            }
-
-<span class="fc" id="L59">            authenticationManager.authenticate(</span>
+<span class="fc" id="L55">            authenticationManager.authenticate(</span>
                 new UsernamePasswordAuthenticationToken(
-<span class="fc" id="L61">                    loginRequest.getUsername(),</span>
-<span class="fc" id="L62">                    loginRequest.getPassword()</span>
+<span class="fc" id="L57">                    loginRequest.getUsername(),</span>
+<span class="fc" id="L58">                    loginRequest.getPassword()</span>
                 )
             );
 
-<span class="fc" id="L66">            User user = userRepository.findByUsername(loginRequest.getUsername())</span>
-<span class="fc" id="L67">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;User not found&quot;));</span>
+<span class="fc" id="L62">            User user = userRepository.findByUsername(loginRequest.getUsername())</span>
+<span class="fc" id="L63">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;User not found&quot;));</span>
 
-<span class="fc" id="L69">            String token = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
-<span class="fc" id="L70">            return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Login successful&quot;, token));</span>
+<span class="fc" id="L65">            String token = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
+<span class="fc" id="L66">            return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Login successful&quot;, token));</span>
 
-<span class="fc" id="L72">        } catch (UsernameNotFoundException | BadCredentialsException e) {</span>
+<span class="fc" id="L68">        } catch (UsernameNotFoundException | BadCredentialsException e) {</span>
             // One answer for both, down to the sentence: a caller comparing responses cannot tell a
             // wrong password from an account that does not exist. Spring's provider already reports
             // an unknown user as bad credentials, so the lookup above raises this only if that ever
             // stops being true - which is exactly when the fallback must not be the path that says
             // which of the two happened.
+            //
+            // Stays English: no operator reads it. The frontend login renders its own
+            // login.invalidCredentials key on any 401 and never the body's sentence, so this is API
+            // prose for whoever calls the endpoint directly.
 <span class="fc" id="L78">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
 <span class="fc" id="L79">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid username or password&quot;, null));</span>
 <span class="fc" id="L80">        } catch (RuntimeException e) {</span>
-<span class="fc" id="L81">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
-<span class="fc" id="L82">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred&quot;, null));</span>
+            // Stays English, though the login screen does render it: this is the generic-failure
+            // class, and a code would name a situation with nothing specific to say beyond what the
+            // sentence already says.
+<span class="fc" id="L84">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="fc" id="L85">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred&quot;, null));</span>
         }
     }
 }

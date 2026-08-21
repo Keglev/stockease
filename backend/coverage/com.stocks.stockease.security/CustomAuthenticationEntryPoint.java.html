@@ -31,7 +31,11 @@ import jakarta.servlet.http.HttpServletResponse;
 <span class="fc" id="L31">        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
 <span class="fc" id="L32">        response.setContentType(&quot;application/json&quot;);</span>
         // Generic message prevents username enumeration attacks
-<span class="fc" id="L34">        response.getWriter().write(&quot;{\&quot;success\&quot;:false,\&quot;message\&quot;:\&quot;Authentication required.\&quot;,\&quot;data\&quot;:null}&quot;);</span>
-<span class="fc" id="L35">    }</span>
+        //
+        // Stays English: no operator reads it. The HTTP interceptor answers a 401 by logging out and
+        // redirecting to the login page before any consumer renders a body, so this sentence has no
+        // screen to reach.
+<span class="fc" id="L38">        response.getWriter().write(&quot;{\&quot;success\&quot;:false,\&quot;message\&quot;:\&quot;Authentication required.\&quot;,\&quot;data\&quot;:null}&quot;);</span>
+<span class="fc" id="L39">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

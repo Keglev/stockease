@@ -46,11 +46,14 @@ public class DemoResetController {
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; reset(
             @RequestHeader(name = RESET_TOKEN_HEADER, required = false) String token) {
 <span class="fc bfc" id="L48" title="All 2 branches covered.">        if (!tokenMatches(token)) {</span>
-<span class="fc" id="L49">            return ResponseEntity.status(HttpStatus.FORBIDDEN)</span>
-<span class="fc" id="L50">                    .body(new ApiResponse&lt;&gt;(false, &quot;Invalid or missing demo reset token.&quot;, null));</span>
+            // Stays English: no human reads it. The caller is the CI reset workflow holding a shared
+            // secret, so this sentence is machine prose - it lands in a workflow log, never on a
+            // screen.
+<span class="fc" id="L52">            return ResponseEntity.status(HttpStatus.FORBIDDEN)</span>
+<span class="fc" id="L53">                    .body(new ApiResponse&lt;&gt;(false, &quot;Invalid or missing demo reset token.&quot;, null));</span>
         }
-<span class="fc" id="L52">        demoDataService.resetToBaseline();</span>
-<span class="fc" id="L53">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Demo data reset to the seeded baseline.&quot;, null));</span>
+<span class="fc" id="L55">        demoDataService.resetToBaseline();</span>
+<span class="fc" id="L56">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Demo data reset to the seeded baseline.&quot;, null));</span>
     }
 
     /**
@@ -59,12 +62,12 @@ public class DemoResetController {
      * endpoint, never open it.
      */
     private boolean tokenMatches(String token) {
-<span class="fc" id="L62">        String expected = demoProperties.resetToken();</span>
-<span class="fc bfc" id="L63" title="All 6 branches covered.">        if (token == null || expected == null || expected.isBlank()) {</span>
-<span class="fc" id="L64">            return false;</span>
+<span class="fc" id="L65">        String expected = demoProperties.resetToken();</span>
+<span class="fc bfc" id="L66" title="All 6 branches covered.">        if (token == null || expected == null || expected.isBlank()) {</span>
+<span class="fc" id="L67">            return false;</span>
         }
-<span class="fc" id="L66">        return MessageDigest.isEqual(token.getBytes(StandardCharsets.UTF_8),</span>
-<span class="fc" id="L67">                expected.getBytes(StandardCharsets.UTF_8));</span>
+<span class="fc" id="L69">        return MessageDigest.isEqual(token.getBytes(StandardCharsets.UTF_8),</span>
+<span class="fc" id="L70">                expected.getBytes(StandardCharsets.UTF_8));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

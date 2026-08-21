@@ -54,15 +54,19 @@ public class DemoLoginController {
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; login(@RequestBody DemoLoginRequest request) {
 <span class="fc bfc" id="L55" title="All 2 branches covered.">        String username = request.role() == null ? null : DEMO_ACCOUNTS.get(request.role().toUpperCase(Locale.ROOT));</span>
 <span class="fc bfc" id="L56" title="All 2 branches covered.">        if (username == null) {</span>
-<span class="fc" id="L57">            return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
-<span class="fc" id="L58">                    .body(new ApiResponse&lt;&gt;(false, &quot;Demo role must be ADMIN or USER.&quot;, null));</span>
+            // Stays English: no operator reads it. The landing page is the only caller and sends a
+            // typed role from one of two buttons, so an unknown role cannot be produced from the
+            // UI and this sentence never reaches a screen - it is API prose. The frontend half of
+            // this pin is in landing.component.ts.
+<span class="fc" id="L61">            return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L62">                    .body(new ApiResponse&lt;&gt;(false, &quot;Demo role must be ADMIN or USER.&quot;, null));</span>
         }
-<span class="pc" id="L60">        User user = userService.findByUsername(username).orElseThrow(() -&gt; new IllegalStateException(</span>
+<span class="pc" id="L64">        User user = userService.findByUsername(username).orElseThrow(() -&gt; new IllegalStateException(</span>
                 &quot;Demo user '&quot; + username + &quot;' is missing; it is created by migration, not by seeding.&quot;));
         // the role comes off the row, never off the request: the demo ADMIN is an admin because the
         // migration made it one, not because the token says so
-<span class="fc" id="L64">        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
-<span class="fc" id="L65">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Login successful&quot;, token));</span>
+<span class="fc" id="L68">        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());</span>
+<span class="fc" id="L69">        return ResponseEntity.ok(new ApiResponse&lt;&gt;(true, &quot;Login successful&quot;, token));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
