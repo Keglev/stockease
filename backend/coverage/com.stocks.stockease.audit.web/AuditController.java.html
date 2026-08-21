@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.audit.AuditService;
 import com.stocks.stockease.audit.ChangeLogEntryResponse;
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,7 +41,7 @@ public class AuditController {
     @GetMapping(&quot;/users/{userId}/changes&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;ChangeLogResponse&gt; getChangesByUser(@PathVariable long userId) {
-<span class="fc" id="L42">        return auditService.findChangesByUser(userId).stream().map(ChangeLogResponse::from).toList();</span>
+<span class="fc" id="L44">        return auditService.findChangesByUser(userId).stream().map(ChangeLogResponse::from).toList();</span>
     }
 
     /**
@@ -51,7 +53,7 @@ public class AuditController {
     @GetMapping(&quot;/products/{productId}/changes&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;ChangeLogResponse&gt; getChangesByProduct(@PathVariable long productId) {
-<span class="fc" id="L54">        return auditService.findChangesByProduct(productId).stream().map(ChangeLogResponse::from).toList();</span>
+<span class="fc" id="L56">        return auditService.findChangesByProduct(productId).stream().map(ChangeLogResponse::from).toList();</span>
     }
 
     /**
@@ -60,15 +62,15 @@ public class AuditController {
      * @param from first change date to include, or {@code null} for no lower bound
      * @param to last change date to include, or {@code null} for no upper bound
      * @return the newest changes in the window, capped server-side
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping(&quot;/changes&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;ChangeLogEntryResponse&gt; getChanges(
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
-<span class="fc" id="L70">        validatePeriod(from, to);</span>
-<span class="fc" id="L71">        return auditService.findChanges(from, to);</span>
+<span class="fc" id="L72">        validatePeriod(from, to);</span>
+<span class="fc" id="L73">        return auditService.findChanges(from, to);</span>
     }
 
     /**
@@ -80,9 +82,10 @@ public class AuditController {
      * shared exception handler already gives both the same 400 and the same message.
      */
     private static void validatePeriod(LocalDate from, LocalDate to) {
-<span class="fc bfc" id="L83" title="All 6 branches covered.">        if (from != null &amp;&amp; to != null &amp;&amp; from.isAfter(to)) {</span>
-<span class="fc" id="L84">            throw new IllegalArgumentException(&quot;The start of the period must not be after its end.&quot;);</span>
+<span class="fc bfc" id="L85" title="All 6 branches covered.">        if (from != null &amp;&amp; to != null &amp;&amp; from.isAfter(to)) {</span>
+<span class="fc" id="L86">            throw new InvalidRequestException(&quot;The start of the period must not be after its end.&quot;,</span>
+                    ApiErrorCodes.PERIOD_START_AFTER_END, null);
         }
-<span class="fc" id="L86">    }</span>
+<span class="fc" id="L89">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
