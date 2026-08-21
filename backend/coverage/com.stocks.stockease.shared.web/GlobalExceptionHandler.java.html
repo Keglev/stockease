@@ -302,8 +302,14 @@ import jakarta.validation.ConstraintViolationException;
 <span class="fc" id="L302">                                Collectors.collectingAndThen(Collectors.toList(), messages -&gt; messages.stream()</span>
 <span class="fc" id="L303">                                        .sorted()</span>
 <span class="fc" id="L304">                                        .collect(Collectors.joining(&quot;; &quot;))))));</span>
-<span class="fc" id="L305">        return ResponseEntity.badRequest()</span>
-<span class="fc" id="L306">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors));</span>
+        // The banner carries a code; the sentences in `errors` stay English, and that is the design
+        // rather than an omission. No frontend surface renders them - the HTTP interceptor discards
+        // `data`, and the forms carry their own client-side validators for the same fields - so they
+        // are prose for whoever reads the API directly. Coding them would name situations no
+        // operator meets. The one sentence an operator does meet is the banner (ADR 041).
+<span class="fc" id="L310">        return ResponseEntity.badRequest()</span>
+<span class="fc" id="L311">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
+                        ApiErrorCodes.VALIDATION_FAILED));
     }
 
     /**
@@ -323,9 +329,10 @@ import jakarta.validation.ConstraintViolationException;
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity&lt;ApiResponse&lt;Map&lt;String, String&gt;&gt;&gt; handleMissingRequestParameter(
             MissingServletRequestParameterException ex) {
-<span class="fc" id="L326">        Map&lt;String, String&gt; errors = Map.of(ex.getParameterName(), &quot;required parameter is missing&quot;);</span>
-<span class="fc" id="L327">        return ResponseEntity.badRequest()</span>
-<span class="fc" id="L328">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors));</span>
+<span class="fc" id="L332">        Map&lt;String, String&gt; errors = Map.of(ex.getParameterName(), &quot;required parameter is missing&quot;);</span>
+<span class="fc" id="L333">        return ResponseEntity.badRequest()</span>
+<span class="fc" id="L334">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
+                        ApiErrorCodes.VALIDATION_FAILED));
     }
 
     /**
@@ -337,12 +344,12 @@ import jakarta.validation.ConstraintViolationException;
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleHttpMessageNotReadableException(
             org.springframework.http.converter.HttpMessageNotReadableException ex) {
-<span class="fc" id="L340">        String message = &quot;Invalid or missing request body. Please check your input.&quot;;</span>
-<span class="fc bfc" id="L341" title="All 4 branches covered.">        if (ex.getMessage() != null &amp;&amp; ex.getMessage().contains(&quot;Cannot deserialize&quot;)) {</span>
-<span class="fc" id="L342">            message = &quot;Invalid request format or data type.&quot;;</span>
+<span class="fc" id="L347">        String message = &quot;Invalid or missing request body. Please check your input.&quot;;</span>
+<span class="fc bfc" id="L348" title="All 4 branches covered.">        if (ex.getMessage() != null &amp;&amp; ex.getMessage().contains(&quot;Cannot deserialize&quot;)) {</span>
+<span class="fc" id="L349">            message = &quot;Invalid request format or data type.&quot;;</span>
         }
-<span class="fc" id="L344">        return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
-<span class="fc" id="L345">                .body(new ApiResponse&lt;&gt;(false, message, null));</span>
+<span class="fc" id="L351">        return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L352">                .body(new ApiResponse&lt;&gt;(false, message, null));</span>
     }
 
     /**
@@ -354,24 +361,25 @@ import jakarta.validation.ConstraintViolationException;
     @SuppressWarnings(&quot;preview&quot;) // Switch pattern matching requires Java 21+
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity&lt;ApiResponse&lt;Map&lt;String, String&gt;&gt;&gt; handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
-<span class="fc" id="L357">        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L364">        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();</span>
 
         // Pattern matching with if-else (Java 16+): cleaner than instanceof + cast
-<span class="fc" id="L360">        Throwable cause = ex.getCause();</span>
-<span class="fc bfc" id="L361" title="All 2 branches covered.">        if (cause instanceof ConstraintViolationException constraintViolationException) {</span>
-<span class="fc" id="L362">            constraintViolationException.getConstraintViolations().forEach(violation -&gt;</span>
-<span class="fc" id="L363">                errors.put(violation.getPropertyPath().toString(), violation.getMessage())</span>
+<span class="fc" id="L367">        Throwable cause = ex.getCause();</span>
+<span class="fc bfc" id="L368" title="All 2 branches covered.">        if (cause instanceof ConstraintViolationException constraintViolationException) {</span>
+<span class="fc" id="L369">            constraintViolationException.getConstraintViolations().forEach(violation -&gt;</span>
+<span class="fc" id="L370">                errors.put(violation.getPropertyPath().toString(), violation.getMessage())</span>
             );
-<span class="fc bfc" id="L365" title="All 2 branches covered.">        } else if (cause instanceof BindException bindException) {</span>
-<span class="fc" id="L366">           bindException.getBindingResult().getFieldErrors().forEach(fieldError -&gt;</span>
-<span class="fc" id="L367">                errors.put(fieldError.getField(), fieldError.getDefaultMessage())</span>
+<span class="fc bfc" id="L372" title="All 2 branches covered.">        } else if (cause instanceof BindException bindException) {</span>
+<span class="fc" id="L373">           bindException.getBindingResult().getFieldErrors().forEach(fieldError -&gt;</span>
+<span class="fc" id="L374">                errors.put(fieldError.getField(), fieldError.getDefaultMessage())</span>
            );
         } else {
-<span class="fc" id="L370">           errors.put(&quot;Unknown&quot;, &quot;Unable to extract detailed validation error.&quot;);</span>
+<span class="fc" id="L377">           errors.put(&quot;Unknown&quot;, &quot;Unable to extract detailed validation error.&quot;);</span>
         }
 
-<span class="fc" id="L373">       return ResponseEntity.badRequest()</span>
-<span class="fc" id="L374">           .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors));</span>
+<span class="fc" id="L380">       return ResponseEntity.badRequest()</span>
+<span class="fc" id="L381">           .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
+                   ApiErrorCodes.VALIDATION_FAILED));
     }
 
     /**
@@ -382,8 +390,8 @@ import jakarta.validation.ConstraintViolationException;
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleGeneralException(Exception ex) {
-<span class="fc" id="L385">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
-<span class="fc" id="L386">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
+<span class="fc" id="L393">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="fc" id="L394">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

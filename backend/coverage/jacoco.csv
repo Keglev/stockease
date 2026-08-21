@@ -93,7 +93,7 @@ StockEase,com.stocks.stockease.supplier.web,UpdateSupplierRequest,0,18,0,0,0,1,0
 StockEase,com.stocks.stockease.supplier.web,SupplierController,0,96,0,0,0,15,0,7,0,7
 StockEase,com.stocks.stockease.supplier.web,CreateSupplierRequest,0,18,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.shared.web,HealthController,0,37,0,0,0,9,0,3,0,3
-StockEase,com.stocks.stockease.shared.web,GlobalExceptionHandler,0,321,0,8,0,60,0,27,0,23
+StockEase,com.stocks.stockease.shared.web,GlobalExceptionHandler,0,324,0,8,0,60,0,27,0,23
 StockEase,com.stocks.stockease.supplier,SupplierDeletedEvent,0,9,0,0,0,1,0,1,0,1
 StockEase,com.stocks.stockease.supplier,SupplierService,0,143,0,8,0,30,0,13,0,9
 StockEase,com.stocks.stockease.demo.web,DemoResetController,0,46,0,8,0,10,0,6,0,2
