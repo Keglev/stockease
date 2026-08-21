@@ -302,8 +302,14 @@ public class GlobalExceptionHandler {
                                 Collectors.collectingAndThen(Collectors.toList(), messages -> messages.stream()
                                         .sorted()
                                         .collect(Collectors.joining("; "))))));
+        // The banner carries a code; the sentences in `errors` stay English, and that is the design
+        // rather than an omission. No frontend surface renders them - the HTTP interceptor discards
+        // `data`, and the forms carry their own client-side validators for the same fields - so they
+        // are prose for whoever reads the API directly. Coding them would name situations no
+        // operator meets. The one sentence an operator does meet is the banner (ADR 041).
         return ResponseEntity.badRequest()
-                .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors));
+                .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors,
+                        ApiErrorCodes.VALIDATION_FAILED));
     }
 
     /**
@@ -325,7 +331,8 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException ex) {
         Map<String, String> errors = Map.of(ex.getParameterName(), "required parameter is missing");
         return ResponseEntity.badRequest()
-                .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors));
+                .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors,
+                        ApiErrorCodes.VALIDATION_FAILED));
     }
 
     /**
@@ -371,7 +378,8 @@ public class GlobalExceptionHandler {
         }
 
        return ResponseEntity.badRequest()
-           .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors));
+           .body(new ApiResponse<>(false, "Validation failed for request parameters.", errors,
+                   ApiErrorCodes.VALIDATION_FAILED));
     }
 
     /**

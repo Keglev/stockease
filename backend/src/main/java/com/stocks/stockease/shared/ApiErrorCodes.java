@@ -434,6 +434,25 @@ public final class ApiErrorCodes {
      */
     public static final String SUPPLIER_NAME_AND_ADDRESS_REQUIRED = "SUPPLIER_NAME_AND_ADDRESS_REQUIRED";
 
+    /**
+     * A request was refused before any domain rule ran, because its own shape was wrong: a field a
+     * constraint requires, a query parameter left off, or a value a constraint rejects. The operator
+     * corrects the request itself rather than anything about the business state.
+     *
+     * <p>Emitted by three handlers, which is one situation reached three ways: bean validation on a
+     * request body ({@code handleValidationException}), a missing required query parameter
+     * ({@code handleMissingRequestParameter}), and constraint violations on handler-method arguments
+     * ({@code handleHandlerMethodValidationException}). All three answer with the same sentence, so
+     * one code names them; a client that told them apart would have nothing different to say.
+     *
+     * <p>Carries no params. The envelope's {@code data} keeps its field-to-sentence map exactly as
+     * it was, and those sentences stay English by design: no frontend surface renders them - the
+     * interceptor discards {@code data}, and client-side validators own the form's own messages - so
+     * they are prose for whoever is reading the API directly rather than text an operator meets.
+     * Only the banner above them is coded, because only the banner reaches a screen (ADR 041).
+     */
+    public static final String VALIDATION_FAILED = "VALIDATION_FAILED";
+
     private ApiErrorCodes() {
     }
 }
