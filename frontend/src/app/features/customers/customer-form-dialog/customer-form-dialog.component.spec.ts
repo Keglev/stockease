@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, of, throwError } from 'rxjs';
 
+import { ApiError } from '../../../core/api/api-envelope';
 import { CustomerResponse } from '../../../core/api/api-models';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
@@ -16,7 +17,11 @@ import {
 
 const TRANSLATIONS = {
   en: {
-    common: { cancel: 'Cancel', save: 'Save' },
+    common: {
+      cancel: 'Cancel',
+      save: 'Save',
+      errors: { validationFailed: 'Validation failed. Please check your entries.' }
+    },
     customers: {
       form: {
         createTitle: 'New customer',
@@ -32,6 +37,11 @@ const TRANSLATIONS = {
     }
   },
   de: {
+    common: {
+      errors: {
+        validationFailed: 'Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.'
+      }
+    },
     customers: {
       form: {
         editTitle: 'Kunde bearbeiten',
@@ -211,6 +221,22 @@ describe('CustomerFormDialogComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'A customer with this email already exists.'
     );
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
+  it('submit_validationFailedInGerman_showsTheTranslatedBanner', async () => {
+    // The create endpoint validates the body, so a name this form let through - the required
+    // validator accepts whitespace, @NotBlank does not - comes back coded. Asserted through the
+    // real template, because the point is the sentence an operator reads.
+    TestBed.inject(LanguageService).setLanguage('de');
+    service.result = throwError(() => new ApiError('Validation failed for request parameters.',
+      400, 'VALIDATION_FAILED', undefined));
+    setField(0, '   ');
+
+    await submitForm();
+
+    expect((fixture.nativeElement as HTMLElement).textContent)
+      .toContain('Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.');
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
 

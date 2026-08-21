@@ -20,6 +20,9 @@
       "lastPage": "Last page",
       "range": "{{start}} - {{end}} of {{total}}",
       "rangeEmpty": "0 of {{total}}"
+    },
+    "errors": {
+      "validationFailed": "Validation failed. Please check your entries."
     }
   },
   "landing": {

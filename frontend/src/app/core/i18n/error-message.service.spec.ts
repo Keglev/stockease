@@ -7,6 +7,11 @@ import { ErrorMessageService } from './error-message.service';
 
 const TRANSLATIONS = {
   en: {
+    common: {
+      errors: {
+        validationFailed: 'Validation failed. Please check your entries.'
+      }
+    },
     products: {
       errors: {
         duplicateName: "A product named '{{name}}' already exists.",
@@ -81,6 +86,11 @@ const TRANSLATIONS = {
     }
   },
   de: {
+    common: {
+      errors: {
+        validationFailed: 'Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.'
+      }
+    },
     products: {
       errors: {
         duplicateName: 'Ein Produkt mit dem Namen „{{name}}“ existiert bereits.',
@@ -510,5 +520,20 @@ describe('ErrorMessageService', () => {
       'ITEM_QUANTITY_NOT_POSITIVE', undefined);
 
     expect(service.resolve(error)).toBe('Die Positionsmenge muss positiv sein.');
+  });
+
+  /*
+   * The shape refusal (ADR 041 phase 3.6). One situation the backend reaches three ways, and the
+   * first key this service resolves under common.* rather than under a feature. German again, and
+   * whole-string: the English key mirrors the wire sentence closely enough that an English
+   * assertion would pass whether or not the code was ever mapped.
+   */
+  it('resolve_validationFailed_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Validation failed for request parameters.', 400,
+      'VALIDATION_FAILED', undefined);
+
+    expect(service.resolve(error))
+      .toBe('Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.');
   });
 });

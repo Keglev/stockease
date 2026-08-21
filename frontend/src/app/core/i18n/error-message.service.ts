@@ -75,7 +75,21 @@ const MESSAGE_KEYS: Readonly<Record<string, string>> = {
   RETURN_QUANTITY_NOT_POSITIVE: 'invoices.errors.returnQuantityNotPositive',
   PERIOD_START_AFTER_END: 'reports.errors.periodStartAfterEnd',
   REPORT_DAYS_NOT_POSITIVE: 'reports.errors.reportDaysNotPositive',
-  SUPPLIER_NAME_AND_ADDRESS_REQUIRED: 'suppliers.errors.supplierNameAndAddressRequired'
+  SUPPLIER_NAME_AND_ADDRESS_REQUIRED: 'suppliers.errors.supplierNameAndAddressRequired',
+  /*
+   * The shape refusal: a request turned away before any domain rule ran, because a constraint on
+   * the request itself rejected it. Cross-cutting rather than any feature's, and one situation
+   * reached three ways - bean validation on a request body, a missing required query parameter,
+   * and constraint violations on handler arguments - which is why it is the first common.* key in
+   * this map: it belongs to no feature, so filing it under one would be arbitrary.
+   *
+   * Carries no params - the sentence is fixed - so it appears in neither REQUIRED_PARAMS nor
+   * PARAM_TRANSLATIONS below. The envelope's data field-to-sentence map stays English by design
+   * and is deliberately not translated: the interceptor discards data and the forms carry their
+   * own client-side messages for the same fields, so the banner is the only sentence an operator
+   * meets (see the ApiErrorCodes Javadoc for VALIDATION_FAILED).
+   */
+  VALIDATION_FAILED: 'common.errors.validationFailed'
 };
 
 /** The params each key interpolates, so a response missing one falls through rather than rendering a gap. */
