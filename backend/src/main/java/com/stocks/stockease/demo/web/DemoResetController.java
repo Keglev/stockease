@@ -46,6 +46,9 @@ public class DemoResetController {
     public ResponseEntity<ApiResponse<String>> reset(
             @RequestHeader(name = RESET_TOKEN_HEADER, required = false) String token) {
         if (!tokenMatches(token)) {
+            // Stays English: no human reads it. The caller is the CI reset workflow holding a shared
+            // secret, so this sentence is machine prose - it lands in a workflow log, never on a
+            // screen.
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new ApiResponse<>(false, "Invalid or missing demo reset token.", null));
         }

@@ -43,7 +43,8 @@ public class AuthController {
      *
      * @param loginRequest username and password payload
      * @return {@link ApiResponse} wrapping the JWT string on success (HTTP 200),
-     *         or an error message on failure (HTTP 400, 401, or 500)
+     *         or an error message on failure (HTTP 401 or 500; a blank field answers 400 from bean
+     *         validation, before this method runs)
      * @throws org.springframework.security.authentication.BadCredentialsException
      *         if the password does not match — caught and mapped to HTTP 401
      * @throws UsernameNotFoundException if the account does not exist — mapped to HTTP 401
@@ -51,11 +52,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-            if (loginRequest.getUsername().isBlank() || loginRequest.getPassword().isBlank()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(false, "Username and password cannot be blank", null));
-            }
-
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                     loginRequest.getUsername(),
@@ -75,9 +71,16 @@ public class AuthController {
             // an unknown user as bad credentials, so the lookup above raises this only if that ever
             // stops being true - which is exactly when the fallback must not be the path that says
             // which of the two happened.
+            //
+            // Stays English: no operator reads it. The frontend login renders its own
+            // login.invalidCredentials key on any 401 and never the body's sentence, so this is API
+            // prose for whoever calls the endpoint directly.
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(false, "Invalid username or password", null));
         } catch (RuntimeException e) {
+            // Stays English, though the login screen does render it: this is the generic-failure
+            // class, and a code would name a situation with nothing specific to say beyond what the
+            // sentence already says.
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponse<>(false, "An unexpected error occurred", null));
         }

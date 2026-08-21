@@ -31,6 +31,10 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         // Generic message prevents username enumeration attacks
+        //
+        // Stays English: no operator reads it. The HTTP interceptor answers a 401 by logging out and
+        // redirecting to the login page before any consumer renders a body, so this sentence has no
+        // screen to reach.
         response.getWriter().write("{\"success\":false,\"message\":\"Authentication required.\",\"data\":null}");
     }
 }

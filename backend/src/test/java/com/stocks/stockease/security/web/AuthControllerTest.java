@@ -21,7 +21,13 @@ import com.stocks.stockease.security.User;
 import com.stocks.stockease.security.internal.UserRepository;
 import com.stocks.stockease.security.JwtUtil;
 
-/** Unit tests for {@link AuthController} login endpoint. */
+/**
+ * Unit tests for the {@link AuthController} login endpoint.
+ *
+ * <p>Out of scope: the blank-credentials refusal. It is answered by bean validation before this
+ * method runs, so it cannot be reached by calling the method directly - it is pinned on the wire
+ * in {@link AuthLoginValidationControllerTest}.
+ */
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("null") // Objects.requireNonNull() guarantees non-null at runtime; IDE flow analysis does not track it
 class AuthControllerTest {
@@ -67,20 +73,6 @@ class AuthControllerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(body.isSuccess()).isTrue();
         assertThat(body.getData()).isEqualTo("mockAdminToken");
-    }
-
-    @Test
-    void login_withBlankUsername_returns400() {
-        ResponseEntity<ApiResponse<String>> response = authController.login(buildLoginRequest("", "password"));
-
-        assertThat(response.getStatusCode().value()).isEqualTo(400);
-    }
-
-    @Test
-    void login_withBlankPassword_returns400() {
-        ResponseEntity<ApiResponse<String>> response = authController.login(buildLoginRequest("testuser", ""));
-
-        assertThat(response.getStatusCode().value()).isEqualTo(400);
     }
 
     @Test

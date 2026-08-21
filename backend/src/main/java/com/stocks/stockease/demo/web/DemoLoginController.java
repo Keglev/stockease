@@ -54,6 +54,10 @@ public class DemoLoginController {
     public ResponseEntity<ApiResponse<String>> login(@RequestBody DemoLoginRequest request) {
         String username = request.role() == null ? null : DEMO_ACCOUNTS.get(request.role().toUpperCase(Locale.ROOT));
         if (username == null) {
+            // Stays English: no operator reads it. The landing page is the only caller and sends a
+            // typed role from one of two buttons, so an unknown role cannot be produced from the
+            // UI and this sentence never reaches a screen - it is API prose. The frontend half of
+            // this pin is in landing.component.ts.
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(false, "Demo role must be ADMIN or USER.", null));
         }
