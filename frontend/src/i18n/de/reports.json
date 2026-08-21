@@ -106,5 +106,9 @@
     "stockLevel": "Bestand",
     "soldUnits": "Verkaufte Einheiten",
     "noPriceChanges": "Keine Preisänderungen erfasst."
+  },
+  "errors": {
+    "periodStartAfterEnd": "Der Beginn des Zeitraums darf nicht nach seinem Ende liegen.",
+    "reportDaysNotPositive": "Die Anzahl der Tage muss positiv sein."
   }
 }

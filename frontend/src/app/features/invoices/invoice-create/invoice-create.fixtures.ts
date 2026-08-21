@@ -45,12 +45,20 @@ export const TRANSLATIONS = {
         submit: 'Create invoice',
         cancel: 'Cancel'
       },
-      errors: { duplicateNumber: "An invoice numbered '{{invoiceNumber}}' already exists." }
+      errors: {
+        duplicateNumber: "An invoice numbered '{{invoiceNumber}}' already exists.",
+        purchaseInvoicePartyMismatch: "Purchase invoices require a supplier and no customer.",
+        saleInvoicePartyMismatch: "Sale invoices must not reference a supplier."
+      }
     }
   },
   de: {
     invoices: {
-      errors: { duplicateNumber: 'Eine Rechnung mit der Nummer „{{invoiceNumber}}“ existiert bereits.' }
+      errors: {
+        duplicateNumber: 'Eine Rechnung mit der Nummer „{{invoiceNumber}}“ existiert bereits.',
+        purchaseInvoicePartyMismatch: 'Einkaufsrechnungen erfordern einen Lieferanten und keinen Kunden.',
+        saleInvoicePartyMismatch: 'Verkaufsrechnungen dürfen sich nicht auf einen Lieferanten beziehen.'
+      }
     }
   }
 };

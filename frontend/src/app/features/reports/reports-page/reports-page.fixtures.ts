@@ -166,7 +166,17 @@ export const TRANSLATIONS = {
   // Only what the breakdown needs, in the one language pair the section is read in twice.
   de: {
     charts: { other: 'Sonstige' },
-    reports: { losses: { byRemark: 'Verluste nach Ursache' }, columns: { remark: 'Ursache' } },
+    reports: {
+      losses: { byRemark: 'Verluste nach Ursache' },
+      columns: { remark: 'Ursache' },
+      // The only German strings these specs assert on the banner: a refusal that reads German is
+      // the proof the resolver ran, which an English assertion cannot give when the English key
+      // mirrors the wire sentence byte for byte.
+      errors: {
+        periodStartAfterEnd: 'Der Beginn des Zeitraums darf nicht nach seinem Ende liegen.',
+        reportDaysNotPositive: 'Die Anzahl der Tage muss positiv sein.'
+      }
+    },
     movements: { form: { remarkOption: { EXPIRED: 'Abgelaufen' } } }
   }
 };
@@ -303,9 +313,16 @@ export class AuditServiceStub {
   calls = 0;
   ranges: (string | undefined)[][] = [];
 
+  /* Same purpose as the reporting stub's: a coded refusal cannot be driven by the generic error. */
+  readonly failWith = new Map<string, Error>();
+
   changes(from?: string, to?: string): Observable<ChangeLogEntryResponse[]> {
     this.calls++;
     this.ranges.push([from, to]);
+    const specific = this.failWith.get('changes');
+    if (specific !== undefined) {
+      return throwError(() => specific);
+    }
     return this.failing.has('changes')
       ? throwError(() => new Error('changes is unavailable.'))
       : of(this.changePayload);
@@ -330,9 +347,17 @@ export class ReportServiceStub {
   /* Endpoints that must reject, so each tab's error path can be driven by name. */
   readonly failing = new Set<string>();
 
+  /* The error one endpoint must reject with, where the default generic one will not do - a spec
+     asserting how a coded refusal is rendered needs the code on the error it drives. */
+  readonly failWith = new Map<string, Error>();
+
   /* Rejects when the endpoint is in this stub's own `failing` set, otherwise answers with the
      payload. */
   private answer<T>(endpoint: string, payload: T): Observable<T> {
+    const specific = this.failWith.get(endpoint);
+    if (specific !== undefined) {
+      return throwError(() => specific);
+    }
     return this.failing.has(endpoint)
       ? throwError(() => new Error(`${endpoint} is unavailable.`))
       : of(payload);

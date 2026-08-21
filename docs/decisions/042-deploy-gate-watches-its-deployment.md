@@ -1,5 +1,6 @@
 # ADR 042: The Deploy Gate Watches the Deployment It Triggered
 
+**Scope**: [Backend]
 **Status**: Accepted
 **Date**: August 20, 2026
 

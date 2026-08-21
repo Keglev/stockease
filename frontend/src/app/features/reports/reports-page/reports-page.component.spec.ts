@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { ApiError } from '../../../core/api/api-envelope';
 import { FormatService } from '../../../core/format/format.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import {
@@ -533,6 +534,59 @@ describe('ReportsPageComponent', () => {
     // The report signal stays null, so the table falls back to no rows rather than throwing.
     expect(host().querySelector('.reports-error')?.textContent?.trim()).toBe('cashFlow is unavailable.');
     expect(host().querySelector('.cash-flow-table')).toBeNull();
+  });
+
+  /*
+   * The invalid-request family on this banner (ADR 041 phase 3.5). This page is the single surface
+   * every reporting tab reports through, and - because the changes tab is the only caller of the
+   * audit module's period-bounded endpoint - it is also where the audit controller's own refusal
+   * lands. So both throw sites behind PERIOD_START_AFTER_END are rendered here, which is what makes
+   * the shared code (backend ruling R48) observable from the client at all.
+   *
+   * German, because the English keys mirror the wire sentences byte for byte and an English
+   * assertion would pass whether or not the code was ever mapped.
+   */
+  it('reportingQueryRejectedWithReversedPeriod_showsTheGermanBanner', async () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    reports.failWith.set('stockStatus', new ApiError(
+      'The start of the period must not be after its end.', 400, 'PERIOD_START_AFTER_END', undefined));
+    render();
+    await activateTab(2);
+
+    expectFailureBanner('Der Beginn des Zeitraums darf nicht nach seinem Ende liegen.');
+  });
+
+  it('auditQueryRejectedWithReversedPeriod_showsTheSameGermanBanner', async () => {
+    // The second throw site behind the one code, reached through the audit module rather than the
+    // reporting one. Same sentence, because the situation is the same (R48).
+    TestBed.inject(LanguageService).setLanguage('de');
+    audit.failWith.set('changes', new ApiError(
+      'The start of the period must not be after its end.', 400, 'PERIOD_START_AFTER_END', undefined));
+    render();
+    await activateTab(5);
+
+    expectFailureBanner('Der Beginn des Zeitraums darf nicht nach seinem Ende liegen.');
+  });
+
+  it('dueSoonRejectedWithNonPositiveWindow_showsTheGermanBanner', async () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    reports.failWith.set('dueSoon', new ApiError(
+      'Days must be positive.', 400, 'REPORT_DAYS_NOT_POSITIVE', undefined));
+    render();
+    await activateTab(4);
+
+    expectFailureBanner('Die Anzahl der Tage muss positiv sein.');
+  });
+
+  it('queryRejectedWithNoCode_stillShowsTheBackendSentence', async () => {
+    // The fallback the resolver has always had, pinned on this banner now that it routes through
+    // it: an uncoded failure is the ordinary case and must still read as the server wrote it.
+    TestBed.inject(LanguageService).setLanguage('de');
+    reports.failWith.set('dueSoon', new ApiError('Report unavailable.', 500, undefined, undefined));
+    render();
+    await activateTab(4);
+
+    expectFailureBanner('Report unavailable.');
   });
 
   /* The banner every tab reports a failed load through, and the bar that must stop with it. */
