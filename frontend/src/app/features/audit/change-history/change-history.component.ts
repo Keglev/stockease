@@ -93,7 +93,12 @@ export class ChangeHistoryComponent {
         this.entries.set(rows);
         this.loading.set(false);
       },
-      // Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app.
+      // Surfaced verbatim, and correctly so: both queries this page makes select by an id taken
+      // from the route and accept no filter of any kind. The audit endpoint that does refuse a
+      // reversed period with a code is the period-bounded one, and the reports page's changes tab
+      // is its only caller - not this page. So no coded refusal can arrive here. If this page ever
+      // gains a date filter, route the error through ErrorMessageService.resolve() or it will show
+      // English (ADR 041).
       error: (err: Error) => {
         this.error.set(err.message);
         this.loading.set(false);
