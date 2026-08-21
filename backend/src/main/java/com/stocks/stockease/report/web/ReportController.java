@@ -29,7 +29,9 @@ import com.stocks.stockease.report.StockReportingService;
 import com.stocks.stockease.report.StockStatusReport;
 import com.stocks.stockease.report.SupplierProduct;
 import com.stocks.stockease.report.SupplierProfitReport;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.ApiResponse;
+import com.stocks.stockease.shared.InvalidRequestException;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +69,7 @@ public class ReportController {
      * @param from first booking date to count, or {@code null} for no lower bound
      * @param to last booking date to count, or {@code null} for no upper bound
      * @return one row per product, ordered by product ID
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/profit/products")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -86,7 +88,7 @@ public class ReportController {
      * @param to last booking date to count, or {@code null} for no upper bound
      * @return HTTP 200 with the product's profit row
      * @throws EntityNotFoundException if no such product exists
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/profit/products/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -105,7 +107,7 @@ public class ReportController {
      * @param from first payment date to count, or {@code null} for no lower bound
      * @param to last payment date to count, or {@code null} for no upper bound
      * @return the totals and the per-product breakdown
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/cash-flow")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -128,7 +130,7 @@ public class ReportController {
      * @param productId product to scope the series to, or {@code null} for the whole business
      * @return one bucket per month that moved money, oldest first
      * @throws EntityNotFoundException if {@code productId} names no product
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/cash-flow/timeline")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -177,7 +179,7 @@ public class ReportController {
      * @param to last day to return, or {@code null} for no upper bound
      * @return the product's history within the window, oldest first
      * @throws EntityNotFoundException if no such product exists
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/products/{id}/stock-history")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -194,7 +196,8 @@ public class ReportController {
     /** Rejects a period whose bounds are the wrong way round; either bound alone is always valid. */
     private static void validatePeriod(LocalDate from, LocalDate to) {
         if (from != null && to != null && from.isAfter(to)) {
-            throw new IllegalArgumentException("The start of the period must not be after its end.");
+            throw new InvalidRequestException("The start of the period must not be after its end.",
+                    ApiErrorCodes.PERIOD_START_AFTER_END, null);
         }
     }
 
@@ -204,7 +207,7 @@ public class ReportController {
      * @param from first booking date to count, or {@code null} for no lower bound
      * @param to last booking date to count, or {@code null} for no upper bound
      * @return one row per supplier that has supplied at least one product
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/profit/suppliers")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -247,7 +250,7 @@ public class ReportController {
      * @param from first booking date to count, or {@code null} for no lower bound
      * @param to last booking date to count, or {@code null} for no upper bound
      * @return one row per product with at least one loss movement in the window
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/losses")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -267,7 +270,7 @@ public class ReportController {
      * @param from first booking date to count, or {@code null} for no lower bound
      * @param to last booking date to count, or {@code null} for no upper bound
      * @return one row per remark with at least one loss movement in the window
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/losses/by-remark")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -294,14 +297,15 @@ public class ReportController {
      *
      * @param days size of the window in days from today; defaults to a week
      * @return the matching invoices, ordered by due date
-     * @throws IllegalArgumentException if {@code days} is not positive
+     * @throws InvalidRequestException if {@code days} is not positive
      */
     @GetMapping("/due-soon")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<InvoiceDueSummary> dueSoon(
             @RequestParam(defaultValue = "" + DEFAULT_DUE_SOON_DAYS) int days) {
         if (days < 1) {
-            throw new IllegalArgumentException("Days must be positive.");
+            throw new InvalidRequestException("Days must be positive.",
+                    ApiErrorCodes.REPORT_DAYS_NOT_POSITIVE, null);
         }
         return counterpartyReportingService.dueSoon(days);
     }

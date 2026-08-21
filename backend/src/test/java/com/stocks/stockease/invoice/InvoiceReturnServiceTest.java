@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.stocks.stockease.invoice.internal.InvoiceItemRepository;
 import com.stocks.stockease.invoice.internal.InvoiceRepository;
 import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.InvoiceStateException;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -127,13 +128,15 @@ class InvoiceReturnServiceTest {
     }
 
     @Test
-    void registerReturn_withZeroQuantity_throwsIllegalArgumentException() {
+    void registerReturn_withZeroQuantity_throwsInvalidRequestException() {
         InvoiceItem item = itemWith(5, 0);
         when(invoiceItemRepository.findById(1L)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> invoiceService.registerReturn(1L, 0))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Return quantity must be positive.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Return quantity must be positive.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.RETURN_QUANTITY_NOT_POSITIVE);
     }
 
     @Test

@@ -91,7 +91,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 
 ## Testing and code quality
 
-**Backend** - 644 test methods across 117 files, combining unit tests, Spring slices, and integration tests against real PostgreSQL through Testcontainers rather than an in-memory substitute. Module boundaries are verified on every build; a violation fails CI.
+**Backend** - 651 test methods across 118 files, combining unit tests, Spring slices, and integration tests against real PostgreSQL through Testcontainers rather than an in-memory substitute. Module boundaries are verified on every build; a violation fails CI.
 
 **Frontend** - 968 tests across 89 files under Vitest, at 99.0% statement coverage. Component specs assert on rendered output through the real template, and dependencies are substituted at injection seams rather than by mocking modules.
 

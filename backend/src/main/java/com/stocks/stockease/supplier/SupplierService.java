@@ -7,6 +7,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.SearchLimits;
 import com.stocks.stockease.shared.SearchTerms;
 import com.stocks.stockease.shared.TokenSearchSpec;
@@ -76,7 +78,7 @@ public class SupplierService {
      * @param address supplier postal address; must not be blank
      * @param city supplier city, may be {@code null}
      * @return the persisted supplier including its generated ID
-     * @throws IllegalArgumentException if name or address is missing or blank
+     * @throws InvalidRequestException if name or address is missing or blank
      */
     @Transactional
     public Supplier create(String name, String email, String phone, String address, String city) {
@@ -104,7 +106,7 @@ public class SupplierService {
      * @param city new city, may be {@code null} to clear it
      * @return the updated supplier
      * @throws EntityNotFoundException if no supplier exists with the given ID
-     * @throws IllegalArgumentException if name or address is missing or blank
+     * @throws InvalidRequestException if name or address is missing or blank
      */
     @Transactional
     public Supplier update(long id, String name, String email, String phone, String address, String city) {
@@ -140,7 +142,8 @@ public class SupplierService {
     /** Rejects a missing or blank name or address with the shared message. */
     private static void requireNameAndAddress(String name, String address) {
         if (name == null || name.isBlank() || address == null || address.isBlank()) {
-            throw new IllegalArgumentException("Supplier name and address are required.");
+            throw new InvalidRequestException("Supplier name and address are required.",
+                    ApiErrorCodes.SUPPLIER_NAME_AND_ADDRESS_REQUIRED, null);
         }
     }
 }

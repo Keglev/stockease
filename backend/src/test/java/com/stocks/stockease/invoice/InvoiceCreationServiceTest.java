@@ -20,6 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.stocks.stockease.customer.Customer;
 import com.stocks.stockease.customer.CustomerService;
 import com.stocks.stockease.product.ProductService;
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
@@ -113,52 +115,78 @@ class InvoiceCreationServiceTest {
     }
 
     @Test
-    void createInvoice_withNullType_throwsIllegalArgumentException() {
+    void createInvoice_withNullType_throwsInvalidRequestException() {
         assertThatThrownBy(() -> invoiceService.createInvoice(
                 command(null, null, null, line(3L, 1, BigDecimal.TEN))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Invoice type is required.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Invoice type is required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.INVOICE_TYPE_REQUIRED);
     }
 
     @Test
-    void createInvoice_withNullDueDate_throwsIllegalArgumentException() {
+    void createInvoice_withNullDueDate_throwsInvalidRequestException() {
         CreateInvoiceCommand command = new CreateInvoiceCommand(InvoiceType.SALE, "TST-SVC-3", null, null, null,
                 null, null, List.of(line(3L, 1, BigDecimal.TEN)));
 
         assertThatThrownBy(() -> invoiceService.createInvoice(command))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Due date is required.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Due date is required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.INVOICE_DUE_DATE_REQUIRED);
     }
 
     @Test
-    void createInvoice_withEmptyItems_throwsIllegalArgumentException() {
+    void createInvoice_withEmptyItems_throwsInvalidRequestException() {
         assertThatThrownBy(() -> invoiceService.createInvoice(command(InvoiceType.SALE, null, null)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("An invoice requires at least one item.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("An invoice requires at least one item.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.INVOICE_REQUIRES_ITEM);
     }
 
     @Test
-    void createInvoice_purchaseWithoutSupplier_throwsIllegalArgumentException() {
+    void createInvoice_withBlankInvoiceNumber_throwsInvalidRequestException() {
+        // The service's own check, which the request record's @NotBlank shadows over HTTP. This is
+        // the only seat from which its code can be observed at all (ADR 041, ruling R47).
+        CreateInvoiceCommand command = new CreateInvoiceCommand(InvoiceType.SALE, "  ", null, null,
+                LocalDate.now(), null, null, List.of(line(3L, 1, BigDecimal.TEN)));
+
+        assertThatThrownBy(() -> invoiceService.createInvoice(command))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Invoice number is required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.INVOICE_NUMBER_REQUIRED);
+    }
+
+    @Test
+    void createInvoice_purchaseWithoutSupplier_throwsInvalidRequestException() {
         assertThatThrownBy(() -> invoiceService.createInvoice(
                 command(InvoiceType.PURCHASE, null, null, line(3L, 1, BigDecimal.TEN))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Purchase invoices require a supplier and no customer.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Purchase invoices require a supplier and no customer.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.PURCHASE_INVOICE_PARTY_MISMATCH);
     }
 
     @Test
-    void createInvoice_purchaseWithCustomer_throwsIllegalArgumentException() {
+    void createInvoice_purchaseWithCustomer_throwsInvalidRequestException() {
         assertThatThrownBy(() -> invoiceService.createInvoice(
                 command(InvoiceType.PURCHASE, 2L, 9L, line(3L, 1, BigDecimal.TEN))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Purchase invoices require a supplier and no customer.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Purchase invoices require a supplier and no customer.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.PURCHASE_INVOICE_PARTY_MISMATCH);
     }
 
     @Test
-    void createInvoice_saleWithSupplier_throwsIllegalArgumentException() {
+    void createInvoice_saleWithSupplier_throwsInvalidRequestException() {
         assertThatThrownBy(() -> invoiceService.createInvoice(
                 command(InvoiceType.SALE, 2L, null, line(3L, 1, BigDecimal.TEN))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Sale invoices must not reference a supplier.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Sale invoices must not reference a supplier.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SALE_INVOICE_PARTY_MISMATCH);
     }
 
     @Test
@@ -182,19 +210,23 @@ class InvoiceCreationServiceTest {
     }
 
     @Test
-    void createInvoice_withNonPositiveQuantity_throwsIllegalArgumentException() {
+    void createInvoice_withNonPositiveQuantity_throwsInvalidRequestException() {
         assertThatThrownBy(() -> invoiceService.createInvoice(
                 command(InvoiceType.SALE, null, null, line(3L, 0, BigDecimal.TEN))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Item quantity must be positive.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Item quantity must be positive.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.ITEM_QUANTITY_NOT_POSITIVE);
     }
 
     @Test
-    void createInvoice_withNonPositiveUnitPrice_throwsIllegalArgumentException() {
+    void createInvoice_withNonPositiveUnitPrice_throwsInvalidRequestException() {
         assertThatThrownBy(() -> invoiceService.createInvoice(
                 command(InvoiceType.SALE, null, null, line(3L, 1, BigDecimal.ZERO))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Item unit price must be positive.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Item unit price must be positive.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.ITEM_UNIT_PRICE_NOT_POSITIVE);
     }
 
     @Test
