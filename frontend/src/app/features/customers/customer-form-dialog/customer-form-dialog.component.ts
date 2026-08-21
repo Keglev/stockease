@@ -8,6 +8,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
 import { CustomerResponse } from '../../../core/api/api-models';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { CustomerPayload, CustomerService } from '../customer.service';
 import { createDialogSubmitStore } from '../../../shared/dialog/dialog-submit-store';
 
@@ -43,8 +44,14 @@ export class CustomerFormDialogComponent {
   protected readonly customer = this.data?.customer;
   protected readonly isEdit = this.customer !== undefined;
 
-  protected readonly submitState = createDialogSubmitStore<CustomerResponse>((saved) =>
-    this.dialogRef.close(saved)
+  private readonly errorMessages = inject(ErrorMessageService);
+
+  // Through the resolver rather than showing err.message: the create and update endpoints validate
+  // the body, so a name the client's required validator accepted - whitespace - comes back as
+  // VALIDATION_FAILED, and the banner is a sentence the operator reads (ADR 041).
+  protected readonly submitState = createDialogSubmitStore<CustomerResponse>(
+    (saved) => this.dialogRef.close(saved),
+    (error) => this.errorMessages.resolve(error)
   );
 
   // Edit mode pre-fills from the customer, including the optional fields; a null one becomes the

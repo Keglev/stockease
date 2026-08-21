@@ -8,6 +8,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
 import { SupplierResponse } from '../../../core/api/api-models';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { SupplierPayload, SupplierService } from '../supplier.service';
 import { createDialogSubmitStore } from '../../../shared/dialog/dialog-submit-store';
 
@@ -43,8 +44,14 @@ export class SupplierFormDialogComponent {
   protected readonly supplier = this.data?.supplier;
   protected readonly isEdit = this.supplier !== undefined;
 
-  protected readonly submitState = createDialogSubmitStore<SupplierResponse>((saved) =>
-    this.dialogRef.close(saved)
+  private readonly errorMessages = inject(ErrorMessageService);
+
+  // Through the resolver rather than showing err.message: the create and update endpoints validate
+  // the body, so a blank name or address that the client's required validator let through comes
+  // back as VALIDATION_FAILED, and the banner is a sentence the operator reads (ADR 041).
+  protected readonly submitState = createDialogSubmitStore<SupplierResponse>(
+    (saved) => this.dialogRef.close(saved),
+    (error) => this.errorMessages.resolve(error)
   );
 
   // Edit mode pre-fills from the supplier, including the optional fields; a null one becomes the

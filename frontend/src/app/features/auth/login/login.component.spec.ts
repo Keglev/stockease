@@ -49,7 +49,10 @@ describe('LoginComponent', () => {
         provideRouter([{ path: 'app', children: [] }]),
         provideTestTranslations({
           en: {
-            common: { appName: 'StockEase' },
+            common: {
+              appName: 'StockEase',
+              errors: { validationFailed: 'Validation failed. Please check your entries.' }
+            },
             footer: { tagline: 'Inventory management demo', apiLatency: 'API {{ms}} ms' },
             login: {
               title: 'Sign in to {{app}}',
@@ -107,6 +110,20 @@ describe('LoginComponent', () => {
     await failWith(500, 'An unexpected error occurred.');
 
     expect(text()).toContain('An unexpected error occurred.');
+    controller.verify();
+  });
+
+  it('submit_validationFailed_rendersTheCatalogSentenceNotTheBackendText', async () => {
+    // The login body is validated, so a credential the client let through comes back coded. The
+    // catalog sentence and the wire sentence differ word for word, so this passes only if the
+    // resolver actually replaced one with the other.
+    fillCredentials('alice', 'secret');
+    submitForm();
+
+    await failWith(400, 'Validation failed for request parameters.', 'VALIDATION_FAILED');
+
+    expect(text()).toContain('Validation failed. Please check your entries.');
+    expect(text()).not.toContain('Validation failed for request parameters.');
     controller.verify();
   });
 
@@ -224,11 +241,15 @@ describe('LoginComponent', () => {
     (fixture.nativeElement as HTMLElement).querySelector('form')?.dispatchEvent(new Event('submit'));
   }
 
-  /* Fails the pending login with the given status and backend message, then settles the view. */
-  async function failWith(status: number, message: string): Promise<void> {
+  /*
+   * Fails the pending login with the given status and backend message, then settles the view.
+   * The code is optional because most refusals here carry none - a 401 and a 500 are uncoded -
+   * and an absent one has to reach the component absent rather than as an empty string.
+   */
+  async function failWith(status: number, message: string, code?: string): Promise<void> {
     controller
       .expectOne(LOGIN_URL)
-      .flush({ success: false, message, data: null }, { status, statusText: 'Error' });
+      .flush({ success: false, message, data: null, code }, { status, statusText: 'Error' });
     await fixture.whenStable();
     fixture.detectChanges();
   }

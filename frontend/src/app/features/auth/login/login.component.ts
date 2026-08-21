@@ -10,6 +10,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApiError } from '../../../core/api/api-envelope';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { FooterComponent } from '../../../shared/footer/footer.component';
 import { PublicHeaderComponent } from '../../../shared/public-header/public-header.component';
 
@@ -42,6 +43,7 @@ import { PublicHeaderComponent } from '../../../shared/public-header/public-head
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly errorMessages = inject(ErrorMessageService);
 
   protected readonly pending = signal(false);
 
@@ -79,11 +81,14 @@ export class LoginComponent {
       },
       error: (error: Error) => {
         this.pending.set(false);
-        // Backend messages are English by design. Known cases are translated here at the
-        // consumer; unknown ones pass through honestly rather than being guessed at.
+        // Rejected credentials stay a key: 401 carries no code, and the sentence is this
+        // application's rather than the backend's. Everything else goes through the shared
+        // resolver, which translates the failures the API names - the login body is validated, so a
+        // blank field the client let through comes back as VALIDATION_FAILED - and returns the
+        // server's own English for the ones it does not (ADR 041).
         const rejectedCredentials = error instanceof ApiError && error.status === 401;
         this.errorKey.set(rejectedCredentials ? 'login.invalidCredentials' : null);
-        this.errorMessage.set(rejectedCredentials ? null : error.message);
+        this.errorMessage.set(rejectedCredentials ? null : this.errorMessages.resolve(error));
       }
     });
   }

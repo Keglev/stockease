@@ -19,5 +19,8 @@
     "lastPage": "Letzte Seite",
     "range": "{{start}} - {{end}} von {{total}}",
     "rangeEmpty": "0 von {{total}}"
+  },
+  "errors": {
+    "validationFailed": "Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben."
   }
 }
