@@ -263,6 +263,10 @@
       "stockLevel": "Stock level",
       "soldUnits": "Units sold",
       "noPriceChanges": "No price changes recorded."
+    },
+    "errors": {
+      "periodStartAfterEnd": "The start of the period must not be after its end.",
+      "reportDaysNotPositive": "Days must be positive."
     }
   },
   "movements": {
@@ -411,7 +415,16 @@
       "returnRequiresClosed": "Returns require a closed invoice.",
       "returnExceedsReturnable": "Return of {{quantity}} exceeds remaining returnable quantity {{remaining}} for invoice item {{itemId}}.",
       "alreadyPaid": "Invoice is already marked as paid.",
-      "notOpenForDelete": "Only open invoices can be deleted."
+      "notOpenForDelete": "Only open invoices can be deleted.",
+      "invoiceTypeRequired": "Invoice type is required.",
+      "invoiceDueDateRequired": "Due date is required.",
+      "invoiceRequiresItem": "An invoice requires at least one item.",
+      "invoiceNumberRequired": "Invoice number is required.",
+      "purchaseInvoicePartyMismatch": "Purchase invoices require a supplier and no customer.",
+      "saleInvoicePartyMismatch": "Sale invoices must not reference a supplier.",
+      "itemQuantityNotPositive": "Item quantity must be positive.",
+      "itemUnitPriceNotPositive": "Item unit price must be positive.",
+      "returnQuantityNotPositive": "Return quantity must be positive."
     }
   },
   "customers": {
@@ -497,7 +510,8 @@
       "emailInvalid": "Enter a valid email address."
     },
     "errors": {
-      "hasOpenInvoices": "Cannot delete supplier '{{supplierName}}': open invoices exist."
+      "hasOpenInvoices": "Cannot delete supplier '{{supplierName}}': open invoices exist.",
+      "supplierNameAndAddressRequired": "Supplier name and address are required."
     }
   },
   "shell": {

@@ -95,6 +95,15 @@
     "returnRequiresClosed": "Returns require a closed invoice.",
     "returnExceedsReturnable": "Return of {{quantity}} exceeds remaining returnable quantity {{remaining}} for invoice item {{itemId}}.",
     "alreadyPaid": "Invoice is already marked as paid.",
-    "notOpenForDelete": "Only open invoices can be deleted."
+    "notOpenForDelete": "Only open invoices can be deleted.",
+    "invoiceTypeRequired": "Invoice type is required.",
+    "invoiceDueDateRequired": "Due date is required.",
+    "invoiceRequiresItem": "An invoice requires at least one item.",
+    "invoiceNumberRequired": "Invoice number is required.",
+    "purchaseInvoicePartyMismatch": "Purchase invoices require a supplier and no customer.",
+    "saleInvoicePartyMismatch": "Sale invoices must not reference a supplier.",
+    "itemQuantityNotPositive": "Item quantity must be positive.",
+    "itemUnitPriceNotPositive": "Item unit price must be positive.",
+    "returnQuantityNotPositive": "Return quantity must be positive."
   }
 }

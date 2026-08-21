@@ -33,6 +33,7 @@
     "emailInvalid": "Enter a valid email address."
   },
   "errors": {
-    "hasOpenInvoices": "Cannot delete supplier '{{supplierName}}': open invoices exist."
+    "hasOpenInvoices": "Cannot delete supplier '{{supplierName}}': open invoices exist.",
+    "supplierNameAndAddressRequired": "Supplier name and address are required."
   }
 }

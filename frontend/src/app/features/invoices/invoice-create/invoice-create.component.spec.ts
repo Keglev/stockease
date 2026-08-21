@@ -531,6 +531,43 @@ describe('InvoiceCreateComponent', () => {
     expect(notifications.errors).toEqual(['Eine Rechnung mit der Nummer „RE-1“ existiert bereits.']);
   });
 
+  /*
+   * The two party rules (ADR 041 phase 3.5). They are the only members of the invalid-request
+   * family this form can actually receive: every other invoice rule is declared as a
+   * bean-validation constraint on the request record, so the API answers those with the validation
+   * envelope and the service check behind them is never reached. German, for the reason the
+   * duplicate-number case above gives.
+   */
+  it('submit_purchasePartyMismatchInGerman_notifiesWithTheTranslatedSentence', async () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    invoices.result = throwError(() => new ApiError(
+      'Purchase invoices require a supplier and no customer.', 400,
+      'PURCHASE_INVOICE_PARTY_MISMATCH', undefined));
+    fillValidSale();
+    await settle();
+
+    submitButton()?.click();
+    await settle();
+
+    expect(notifications.errors)
+      .toEqual(['Einkaufsrechnungen erfordern einen Lieferanten und keinen Kunden.']);
+  });
+
+  it('submit_salePartyMismatchInGerman_notifiesWithTheTranslatedSentence', async () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    invoices.result = throwError(() => new ApiError(
+      'Sale invoices must not reference a supplier.', 400,
+      'SALE_INVOICE_PARTY_MISMATCH', undefined));
+    fillValidSale();
+    await settle();
+
+    submitButton()?.click();
+    await settle();
+
+    expect(notifications.errors)
+      .toEqual(['Verkaufsrechnungen dürfen sich nicht auf einen Lieferanten beziehen.']);
+  });
+
   it('render_form_offersNoFinancialControls', () => {
     const text = ((fixture.nativeElement as HTMLElement).textContent ?? '').toLowerCase();
 

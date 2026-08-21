@@ -95,6 +95,15 @@
     "returnRequiresClosed": "Rücksendungen erfordern eine geschlossene Rechnung.",
     "returnExceedsReturnable": "Die Rücksendung von {{quantity}} überschreitet die verbleibende rücksendbare Menge {{remaining}} für die Rechnungsposition {{itemId}}.",
     "alreadyPaid": "Die Rechnung ist bereits als bezahlt markiert.",
-    "notOpenForDelete": "Nur offene Rechnungen können gelöscht werden."
+    "notOpenForDelete": "Nur offene Rechnungen können gelöscht werden.",
+    "invoiceTypeRequired": "Die Rechnungsart ist erforderlich.",
+    "invoiceDueDateRequired": "Das Fälligkeitsdatum ist erforderlich.",
+    "invoiceRequiresItem": "Eine Rechnung erfordert mindestens eine Position.",
+    "invoiceNumberRequired": "Die Rechnungsnummer ist erforderlich.",
+    "purchaseInvoicePartyMismatch": "Einkaufsrechnungen erfordern einen Lieferanten und keinen Kunden.",
+    "saleInvoicePartyMismatch": "Verkaufsrechnungen dürfen sich nicht auf einen Lieferanten beziehen.",
+    "itemQuantityNotPositive": "Die Positionsmenge muss positiv sein.",
+    "itemUnitPriceNotPositive": "Der Stückpreis der Position muss positiv sein.",
+    "returnQuantityNotPositive": "Die Rücksendemenge muss positiv sein."
   }
 }

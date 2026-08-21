@@ -1,4 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 
 /**
  * The one progress bar and the one error line the reports page shows above its tabs.
@@ -10,12 +12,22 @@ import { Injectable, signal } from '@angular/core';
  */
 @Injectable()
 export class ReportStatus {
+  private readonly errorMessages = inject(ErrorMessageService);
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  /** Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app. */
+  /**
+   * Records a failed load as the sentence to show.
+   *
+   * @remarks
+   * Through the shared resolver rather than showing `err.message`. This is the one place every
+   * reports tab reports a failure, so it is also the one place the reporting endpoints' coded
+   * refusals - a reversed period, a non-positive window - become German (ADR 041). Anything the
+   * resolver does not know still falls through to the backend's own sentence, as before.
+   */
   fail(err: Error): void {
     this.loading.set(false);
-    this.error.set(err.message);
+    this.error.set(this.errorMessages.resolve(err));
   }
 }

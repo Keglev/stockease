@@ -49,7 +49,33 @@ const MESSAGE_KEYS: Readonly<Record<string, string>> = {
   MOVEMENT_ITEM_PRODUCT_MISMATCH: 'movements.errors.itemProductMismatch',
   MOVEMENT_QUANTITY_MISMATCH: 'movements.errors.quantityMismatch',
   MOVEMENT_ALREADY_RECORDED: 'movements.errors.alreadyRecorded',
-  RETURN_REQUIRES_SALE_MOVEMENT: 'movements.errors.returnRequiresSaleMovement'
+  RETURN_REQUIRES_SALE_MOVEMENT: 'movements.errors.returnRequiresSaleMovement',
+  /*
+   * The invalid-request family, in the order the backend raises it. Twelve codes over thirteen
+   * throw sites: the reporting and audit controllers restate the same period check independently
+   * and share PERIOD_START_AFTER_END, so one key serves both surfaces (backend ruling R48).
+   *
+   * Eight of the twelve are latent, for the same reason as the movement matrix above: the request
+   * records declare the same rule as a bean-validation constraint, so a client sending the bad
+   * value gets the validation envelope and never reaches the service check behind it. They are
+   * translated anyway (R45, R47) so the sentence is ready if a constraint is ever relaxed. Do not
+   * prune them as dead keys.
+   *
+   * None of the twelve carries params - every sentence in this family is fixed - so none appears
+   * in REQUIRED_PARAMS or PARAM_TRANSLATIONS below.
+   */
+  INVOICE_TYPE_REQUIRED: 'invoices.errors.invoiceTypeRequired',
+  INVOICE_DUE_DATE_REQUIRED: 'invoices.errors.invoiceDueDateRequired',
+  INVOICE_REQUIRES_ITEM: 'invoices.errors.invoiceRequiresItem',
+  INVOICE_NUMBER_REQUIRED: 'invoices.errors.invoiceNumberRequired',
+  PURCHASE_INVOICE_PARTY_MISMATCH: 'invoices.errors.purchaseInvoicePartyMismatch',
+  SALE_INVOICE_PARTY_MISMATCH: 'invoices.errors.saleInvoicePartyMismatch',
+  ITEM_QUANTITY_NOT_POSITIVE: 'invoices.errors.itemQuantityNotPositive',
+  ITEM_UNIT_PRICE_NOT_POSITIVE: 'invoices.errors.itemUnitPriceNotPositive',
+  RETURN_QUANTITY_NOT_POSITIVE: 'invoices.errors.returnQuantityNotPositive',
+  PERIOD_START_AFTER_END: 'reports.errors.periodStartAfterEnd',
+  REPORT_DAYS_NOT_POSITIVE: 'reports.errors.reportDaysNotPositive',
+  SUPPLIER_NAME_AND_ADDRESS_REQUIRED: 'suppliers.errors.supplierNameAndAddressRequired'
 };
 
 /** The params each key interpolates, so a response missing one falls through rather than rendering a gap. */
