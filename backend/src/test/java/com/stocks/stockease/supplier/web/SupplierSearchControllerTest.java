@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.stocks.stockease.config.test.TestConfig;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
@@ -76,6 +77,7 @@ class SupplierSearchControllerTest {
         mockMvc.perform(get("/api/suppliers/search"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.VALIDATION_FAILED))
                 .andExpect(jsonPath("$.data.name").value("required parameter is missing"));
 
         Mockito.verify(supplierService, Mockito.never()).searchByName(Mockito.any());

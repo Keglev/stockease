@@ -21,6 +21,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.ApiResponse;
 
 import jakarta.validation.ConstraintViolation;
@@ -62,6 +63,8 @@ class GlobalExceptionErrorDetailTest {
         assertThat(body.getMessage()).isEqualTo("Validation failed for request parameters.");
         // same envelope shape as the other parameter-validation cases, so clients parse one form
         assertThat(body.getData()).containsExactly(Map.entry("name", "required parameter is missing"));
+        // One code for all three handlers below: the same refusal reached three ways.
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.VALIDATION_FAILED);
     }
 
     @Test
@@ -80,6 +83,7 @@ class GlobalExceptionErrorDetailTest {
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(body.isSuccess()).isFalse();
         assertThat(body.getData()).containsEntry("name", "must not be blank");
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.VALIDATION_FAILED);
     }
 
     @Test
@@ -97,6 +101,7 @@ class GlobalExceptionErrorDetailTest {
         assertThat(body.isSuccess()).isFalse();
         assertThat(body.getMessage()).isEqualTo("Validation failed for request parameters.");
         assertThat(body.getData()).containsEntry("name", "must not be blank; must not be null");
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.VALIDATION_FAILED);
     }
 
     @Test
@@ -160,6 +165,7 @@ class GlobalExceptionErrorDetailTest {
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(body.isSuccess()).isFalse();
         assertThat(body.getData()).containsEntry("quantity", "must be greater than 0");
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.VALIDATION_FAILED);
     }
 
     @Test
@@ -178,6 +184,7 @@ class GlobalExceptionErrorDetailTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(body.getData()).containsEntry("price", "must be positive");
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.VALIDATION_FAILED);
     }
 
     @Test
@@ -191,6 +198,7 @@ class GlobalExceptionErrorDetailTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(body.getData()).containsKey("Unknown");
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.VALIDATION_FAILED);
     }
 
     // --- 500 internal server error ---

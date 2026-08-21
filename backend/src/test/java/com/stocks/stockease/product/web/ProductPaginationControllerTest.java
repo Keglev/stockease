@@ -36,6 +36,7 @@ import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.security.JwtUtil;
+import com.stocks.stockease.shared.ApiErrorCodes;
 
 /** Slice tests for GET /api/products/paged (paginated product queries). */
 @ExtendWith(MockitoExtension.class)
@@ -111,6 +112,7 @@ class ProductPaginationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Validation failed for request parameters."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.VALIDATION_FAILED))
                 .andExpect(jsonPath("$.data.Unknown").value("Unable to extract detailed validation error.")); // error key is not deterministic; fallback message used
     }
 

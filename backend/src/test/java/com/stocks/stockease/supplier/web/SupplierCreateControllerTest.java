@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.stocks.stockease.config.test.TestConfig;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
@@ -87,6 +88,7 @@ class SupplierCreateControllerTest {
                         .with(csrfToken()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed for request parameters."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.VALIDATION_FAILED))
                 .andExpect(jsonPath("$.data.name").value("Supplier name is required."));
 
         Mockito.verify(supplierService, Mockito.never()).create(anyString(), any(), any(), anyString(), any());
