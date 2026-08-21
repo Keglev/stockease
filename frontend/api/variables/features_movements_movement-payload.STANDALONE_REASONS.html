@@ -14,9 +14,20 @@
 <div class="tsd-signature"><span class="tsd-kind-variable">STANDALONE_REASONS</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-keyword">readonly</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">&quot;LOST&quot;</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">&quot;DESTROYED&quot;</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> = ...</span></div>
 <div class="tsd-comment tsd-typography"><p>The two reasons this endpoint accepts. It is a loss ledger: stock never enters through it, so
 there is no incoming reason to offer - new stock arrives by closing a purchase invoice (ADR 021).</p>
-</div><aside class="tsd-sources">
+</div>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-remarks">
+<h4 class="tsd-anchor-link" id="remarks">Remarks<a href="#remarks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>The loss form builds its options from this const, and deliberately not from the
+<code>movements.reason.*</code> catalog. Those two were interchangeable until ADR 041 phase 3.4, which
+completed the catalog to all six reasons so that a coded refusal quoting one could name it in
+the reader's language. Four of those six - PURCHASE, SOLD and the two return directions - are
+exactly what this endpoint refuses with a 400, so a form iterating the catalog would offer the
+operator four choices the backend rejects on submit.</p>
+<p>That this const remains the source of the options is therefore the decision, not an accident of
+how the template was written first.</p>
+</div></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/ea84e55845aa21b81ed12b2a2206a9918a8d21c8/frontend/src/app/features/movements/movement-payload.ts#L7">features/movements/movement-payload.ts:7</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/37ffcb7bc25135319e0d35b2e7f0f3e331e18e0c/frontend/src/app/features/movements/movement-payload.ts#L18">features/movements/movement-payload.ts:18</a></li></ul></aside></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
