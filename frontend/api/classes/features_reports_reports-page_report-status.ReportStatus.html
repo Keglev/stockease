@@ -22,7 +22,7 @@ is what lets a tab collaborator report a failure without a reference back to the
 provides it: the dependency runs one way, from tab to status, and never back.</p>
 </div></div></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/37ffcb7bc25135319e0d35b2e7f0f3e331e18e0c/frontend/src/app/features/reports/reports-page/report-status.ts#L12">features/reports/reports-page/report-status.ts:12</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0bb829ba76d34a562c45f4f7017ea1dc780d6c6a/frontend/src/app/features/reports/reports-page/report-status.ts#L14">features/reports/reports-page/report-status.ts:14</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -58,12 +58,12 @@ provides it: the dependency runs one way, from tab to status, and never back.</p
 <h3 class="tsd-anchor-link" id="error"><code class="tsd-tag">Readonly</code><span>error</span><a href="#error" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">error</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WritableSignal</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/37ffcb7bc25135319e0d35b2e7f0f3e331e18e0c/frontend/src/app/features/reports/reports-page/report-status.ts#L14">features/reports/reports-page/report-status.ts:14</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0bb829ba76d34a562c45f4f7017ea1dc780d6c6a/frontend/src/app/features/reports/reports-page/report-status.ts#L18">features/reports/reports-page/report-status.ts:18</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="loading"><code class="tsd-tag">Readonly</code><span>loading</span><a href="#loading" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">loading</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WritableSignal</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/37ffcb7bc25135319e0d35b2e7f0f3e331e18e0c/frontend/src/app/features/reports/reports-page/report-status.ts#L13">features/reports/reports-page/report-status.ts:13</a></li></ul></aside></section></section></details>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0bb829ba76d34a562c45f4f7017ea1dc780d6c6a/frontend/src/app/features/reports/reports-page/report-status.ts#L17">features/reports/reports-page/report-status.ts:17</a></li></ul></aside></section></section></details>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
 <h2 class="tsd-anchor-link" id="methods-1">Methods<a href="#methods-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
@@ -73,15 +73,22 @@ provides it: the dependency runs one way, from tab to status, and never back.</p
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="fail-1"><span class="tsd-kind-call-signature">fail</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">err</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#fail-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app.</p>
+<div class="tsd-comment tsd-typography"><p>Records a failed load as the sentence to show.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><span class="tsd-kind-parameter">err</span>: <span class="tsd-signature-type">Error</span></span></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+<div class="tsd-comment tsd-typography">
+<div class="tsd-tag-remarks">
+<h4 class="tsd-anchor-link" id="remarks-1">Remarks<a href="#remarks-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Through the shared resolver rather than showing <code>err.message</code>. This is the one place every
+reports tab reports a failure, so it is also the one place the reporting endpoints' coded
+refusals - a reversed period, a non-positive window - become German (ADR 041). Anything the
+resolver does not know still falls through to the backend's own sentence, as before.</p>
+</div></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/37ffcb7bc25135319e0d35b2e7f0f3e331e18e0c/frontend/src/app/features/reports/reports-page/report-status.ts#L17">features/reports/reports-page/report-status.ts:17</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/0bb829ba76d34a562c45f4f7017ea1dc780d6c6a/frontend/src/app/features/reports/reports-page/report-status.ts#L29">features/reports/reports-page/report-status.ts:29</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
