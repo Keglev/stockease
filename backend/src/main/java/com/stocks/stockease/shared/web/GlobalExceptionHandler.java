@@ -24,6 +24,7 @@ import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
+import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.InvoiceStateException;
 import com.stocks.stockease.shared.ProductDeletedException;
 
@@ -84,15 +85,44 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles {@link IllegalArgumentException} from business logic validation and returns a 400 Bad Request response.
+     * Handles {@link IllegalArgumentException} and returns an uncoded 400 Bad Request response.
+     *
+     * <p>Every project throw site that used to land here now raises {@link InvalidRequestException}
+     * instead, which the handler below answers with a code. What remains for this one is the
+     * argument failure raised inside a library the application calls - a situation the project did
+     * not name and has no advice to give about, so there is nothing for a code to identify. It stays
+     * because such a failure is still the caller's fault and 400 is still the honest status; without
+     * it the same request would answer 500 (ADR 041).
      *
      * @param ex the caught exception
-     * @return 400 response with error message
+     * @return 400 response with error message and no code
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<String>> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(false, ex.getMessage(), null));
+    }
+
+    /**
+     * Handles {@link InvalidRequestException} from the domain's own request rules and returns a 400
+     * Bad Request carrying the situation code the exception names.
+     *
+     * <p>Twelve situations across invoice creation, the two period-bound checks, the due-soon window
+     * and the supplier's required fields. They share this status and ask the operator for different
+     * things, so the code is what tells them apart. None of their sentences interpolates a value, so
+     * none carries {@code params} today.
+     *
+     * <p>Declared separately from the {@link IllegalArgumentException} handler above rather than
+     * replacing it: this type is not a subclass, and the two answer different kinds of failure - one
+     * the project named, one a library raised (ADR 041, rulings R45 and R48).
+     *
+     * @param ex the caught exception
+     * @return 400 response with the refusal message and its situation code
+     */
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiResponse<String>> handleInvalidRequestException(InvalidRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(false, ex.getMessage(), null, ex.getCode(), ex.getParams()));
     }
 
     /**

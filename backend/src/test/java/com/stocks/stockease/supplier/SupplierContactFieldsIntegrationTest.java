@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.support.AbstractIntegrationTest;
 
 /**
@@ -99,7 +101,9 @@ class SupplierContactFieldsIntegrationTest extends AbstractIntegrationTest {
         // missing mandatory one.
         assertThatThrownBy(() -> supplierService.update(created.getId(), created.getName(), "keep@example.com", null,
                 "   ", null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Supplier name and address are required.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Supplier name and address are required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SUPPLIER_NAME_AND_ADDRESS_REQUIRED);
     }
 }

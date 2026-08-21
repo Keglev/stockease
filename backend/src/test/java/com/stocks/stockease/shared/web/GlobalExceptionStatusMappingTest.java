@@ -16,6 +16,7 @@ import com.stocks.stockease.shared.DuplicateResourceException;
 import com.stocks.stockease.shared.EntityInUseException;
 import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
+import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.InvoiceStateException;
 
 import io.jsonwebtoken.JwtException;
@@ -102,12 +103,31 @@ class GlobalExceptionStatusMappingTest {
 
     @Test
     void handleIllegalArgumentException_returns400WithOriginalMessage() {
+        // Still live, and deliberately still uncoded. No project throw site raises this type any
+        // more - they all raise InvalidRequestException below - so what reaches here is an argument
+        // failure from inside a library, which names no situation of ours and carries no advice.
         var response = handler.handleIllegalArgumentException(new IllegalArgumentException("price must be positive"));
         ApiResponse<String> body = Objects.requireNonNull(response.getBody());
 
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         assertThat(body.isSuccess()).isFalse();
         assertThat(body.getMessage()).isEqualTo("price must be positive");
+        assertThat(body.getCode()).isNull();
+    }
+
+    @Test
+    void handleInvalidRequestException_returns400WithOriginalMessage() {
+        var response = handler.handleInvalidRequestException(
+                new InvalidRequestException("Invoice type is required.",
+                        ApiErrorCodes.INVOICE_TYPE_REQUIRED, null));
+        ApiResponse<String> body = Objects.requireNonNull(response.getBody());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo("Invoice type is required.");
+        // The code is what separates this family's twelve situations from each other, and separates
+        // all of them from the uncoded library failure above, which shares the status.
+        assertThat(body.getCode()).isEqualTo(ApiErrorCodes.INVOICE_TYPE_REQUIRED);
     }
 
     @Test

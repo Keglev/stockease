@@ -309,6 +309,131 @@ public final class ApiErrorCodes {
      */
     public static final String RETURN_REQUIRES_SALE_MOVEMENT = "RETURN_REQUIRES_SALE_MOVEMENT";
 
+
+    /*
+     * The invalid-request family, in the order the application raises it.
+     *
+     * Eight of these twelve cannot be reached over HTTP: the request records declare the same rule
+     * as a bean-validation constraint, so a client sending the bad value gets the validation
+     * envelope and never reaches the service check behind it. They are coded anyway, on the same
+     * reasoning as the movement matrix (rulings R45 and R47) - the service is callable from more
+     * than the web layer, and the sentence should be ready if a constraint is ever relaxed. Each
+     * one names the constraint that shadows it. Do not prune them as dead codes.
+     */
+
+    /**
+     * An invoice was created without saying whether it records a purchase or a sale. The type fixes
+     * which party the invoice needs and which direction it will book stock in, so nothing about the
+     * document can be settled without it.
+     *
+     * <p>Latent rather than live: {@code @NotNull} on {@code type} in {@code CreateInvoiceRequest}
+     * yields the validation envelope first. The code exists so the situation is named if that
+     * shadow ever moves.
+     */
+    public static final String INVOICE_TYPE_REQUIRED = "INVOICE_TYPE_REQUIRED";
+
+    /**
+     * An invoice was created with no due date. The due date is what the unpaid and overdue reports
+     * are built on, so an invoice without one would be invisible to both.
+     *
+     * <p>Latent rather than live: {@code @NotNull} on {@code dueDate} in
+     * {@code CreateInvoiceRequest} yields the validation envelope first. The code exists so the
+     * situation is named if that shadow ever moves.
+     */
+    public static final String INVOICE_DUE_DATE_REQUIRED = "INVOICE_DUE_DATE_REQUIRED";
+
+    /**
+     * An invoice was created with no lines. Closing an empty invoice would book nothing, so the
+     * document would be a record of no trade at all.
+     *
+     * <p>Latent rather than live: {@code @NotEmpty} on {@code items} in
+     * {@code CreateInvoiceRequest} yields the validation envelope first. The code exists so the
+     * situation is named if that shadow ever moves.
+     */
+    public static final String INVOICE_REQUIRES_ITEM = "INVOICE_REQUIRES_ITEM";
+
+    /**
+     * An invoice was created without a number. The number is the operator's own reference to the
+     * document (ADR 022) and is what a paper trail is reconciled against.
+     *
+     * <p>Latent rather than live: {@code @NotNull} and {@code @NotBlank} on {@code invoiceNumber}
+     * in {@code CreateInvoiceRequest} yield the validation envelope first. The code exists so the
+     * situation is named if that shadow ever moves.
+     */
+    public static final String INVOICE_NUMBER_REQUIRED = "INVOICE_NUMBER_REQUIRED";
+
+    /**
+     * A purchase invoice named a customer, or named no supplier. A purchase is billed by a supplier
+     * and by nobody else, so the operator supplies the supplier and drops the customer.
+     */
+    public static final String PURCHASE_INVOICE_PARTY_MISMATCH = "PURCHASE_INVOICE_PARTY_MISMATCH";
+
+    /**
+     * A sale invoice named a supplier. A sale is billed to a customer, and the supplier field
+     * belongs to the other direction of trade.
+     */
+    public static final String SALE_INVOICE_PARTY_MISMATCH = "SALE_INVOICE_PARTY_MISMATCH";
+
+    /**
+     * An invoice line asked for zero or fewer units. A line is a quantity of something changing
+     * hands, and a non-positive one has nothing to book.
+     *
+     * <p>Latent rather than live: {@code @Positive} on the line's {@code quantity} in
+     * {@code CreateInvoiceRequest.ItemRequest} yields the validation envelope first. The code
+     * exists so the situation is named if that shadow ever moves.
+     */
+    public static final String ITEM_QUANTITY_NOT_POSITIVE = "ITEM_QUANTITY_NOT_POSITIVE";
+
+    /**
+     * An invoice line carried a zero or negative unit price. The line's price becomes the stock's
+     * cost basis when the invoice closes (ADR 019), so a non-positive one would corrupt every
+     * profit figure derived from it.
+     *
+     * <p>Latent rather than live: {@code @Positive} on the line's {@code unitPrice} in
+     * {@code CreateInvoiceRequest.ItemRequest} yields the validation envelope first. The code
+     * exists so the situation is named if that shadow ever moves.
+     */
+    public static final String ITEM_UNIT_PRICE_NOT_POSITIVE = "ITEM_UNIT_PRICE_NOT_POSITIVE";
+
+    /**
+     * A return asked to give back zero or fewer units. The operator states how many units come
+     * back, and that count has to be a real one.
+     *
+     * <p>Latent rather than live, and shadowed twice: {@code @Positive} on {@code quantity} in
+     * {@code RegisterReturnRequest} yields the validation envelope, and the movement service's own
+     * quantity guard would answer before this one even if it did not. The code exists so the
+     * situation is named if either shadow moves.
+     */
+    public static final String RETURN_QUANTITY_NOT_POSITIVE = "RETURN_QUANTITY_NOT_POSITIVE";
+
+    /**
+     * A report or audit query gave a period whose start falls after its end. Either bound alone is
+     * always valid; it is the pair that cannot be satisfied, so the operator swaps them.
+     *
+     * <p>One code for two throw sites, in the reporting controller and the audit controller. The
+     * two modules share no code by design and restate the check independently, but they raise the
+     * same situation and answer with a byte-identical sentence, and a client would have nothing
+     * different to say about them (ruling R48). Should the sentences ever diverge, that is the
+     * moment a second code is minted rather than now.
+     */
+    public static final String PERIOD_START_AFTER_END = "PERIOD_START_AFTER_END";
+
+    /**
+     * The due-soon report was asked for a window of zero or fewer days. The window looks forward
+     * from today, so it has to have a length.
+     */
+    public static final String REPORT_DAYS_NOT_POSITIVE = "REPORT_DAYS_NOT_POSITIVE";
+
+    /**
+     * A supplier was created or updated without a name or without an address. Both identify who the
+     * business buys from, and an invoice's supplier snapshot is taken from them (ADR 033).
+     *
+     * <p>Latent rather than live: {@code @NotBlank} on {@code name} and {@code address} in both
+     * {@code CreateSupplierRequest} and {@code UpdateSupplierRequest} yields the validation
+     * envelope first. The code exists so the situation is named if that shadow ever moves.
+     */
+    public static final String SUPPLIER_NAME_AND_ADDRESS_REQUIRED = "SUPPLIER_NAME_AND_ADDRESS_REQUIRED";
+
     private ApiErrorCodes() {
     }
 }

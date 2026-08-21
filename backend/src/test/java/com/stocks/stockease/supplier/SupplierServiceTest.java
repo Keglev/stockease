@@ -18,6 +18,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -72,34 +74,42 @@ class SupplierServiceTest {
     }
 
     @Test
-    void create_withBlankName_throwsIllegalArgumentException() {
+    void create_withBlankName_throwsInvalidRequestException() {
         assertThatThrownBy(() -> supplierService.create("  ", null, null, "1 Main St", null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Supplier name and address are required.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Supplier name and address are required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SUPPLIER_NAME_AND_ADDRESS_REQUIRED);
         verify(supplierRepository, never()).save(any(Supplier.class));
     }
 
     @Test
-    void create_withBlankAddress_throwsIllegalArgumentException() {
+    void create_withBlankAddress_throwsInvalidRequestException() {
         assertThatThrownBy(() -> supplierService.create("Acme", null, null, null, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Supplier name and address are required.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Supplier name and address are required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SUPPLIER_NAME_AND_ADDRESS_REQUIRED);
     }
 
     @Test
-    void create_withNullName_throwsIllegalArgumentException() {
+    void create_withNullName_throwsInvalidRequestException() {
         // a missing name and a blank one are the same rejection; only the null check reaches this one
         assertThatThrownBy(() -> supplierService.create(null, null, null, "1 Main St", null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Supplier name and address are required.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Supplier name and address are required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SUPPLIER_NAME_AND_ADDRESS_REQUIRED);
         verify(supplierRepository, never()).save(any(Supplier.class));
     }
 
     @Test
-    void create_withWhitespaceAddress_throwsIllegalArgumentException() {
+    void create_withWhitespaceAddress_throwsInvalidRequestException() {
         assertThatThrownBy(() -> supplierService.create("Acme", null, null, "   ", null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Supplier name and address are required.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Supplier name and address are required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SUPPLIER_NAME_AND_ADDRESS_REQUIRED);
         verify(supplierRepository, never()).save(any(Supplier.class));
     }
 
@@ -125,13 +135,15 @@ class SupplierServiceTest {
     }
 
     @Test
-    void update_withBlankName_throwsIllegalArgumentException() {
+    void update_withBlankName_throwsInvalidRequestException() {
         Supplier supplier = supplier(1L, "Acme");
         when(supplierRepository.findById(1L)).thenReturn(Optional.of(supplier));
 
         assertThatThrownBy(() -> supplierService.update(1L, "", null, null, "1 Main St", null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Supplier name and address are required.");
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessage("Supplier name and address are required.")
+                .extracting(thrown -> ((InvalidRequestException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SUPPLIER_NAME_AND_ADDRESS_REQUIRED);
     }
 
     @Test

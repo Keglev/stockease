@@ -83,6 +83,20 @@ class ErrorEnvelopeTestFixtures {
                 .formatted(productId, reason, quantity);
     }
 
+    /**
+     * A create-invoice body with one good line, for the party-rule refusals to run into.
+     *
+     * <p>The party ids are the only thing a caller varies: every other field is valid here on
+     * purpose, so the refusal under test is the one the endpoint reaches rather than whichever
+     * constraint the request record checks first.
+     */
+    static String invoiceBody(String type, Long supplierId, Long customerId, long productId) {
+        return """
+                {"type":"%s","invoiceNumber":"%s","supplierId":%s,"customerId":%s,\
+                "dueDate":"2030-01-01","items":[{"productId":%d,"quantity":2,"unitPrice":10.00}]}"""
+                .formatted(type, tag(), supplierId, customerId, productId);
+    }
+
     void settle(Invoice invoice) {
         invoices.close(invoice.getId(), admin);
         invoices.markAsPaid(invoice.getId());

@@ -21,6 +21,7 @@ import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.DuplicateResourceException;
+import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.InvoiceStateException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
@@ -107,23 +108,27 @@ public class InvoiceService {
      *
      * @param command the invoice and lines to create
      * @return the persisted invoice including its generated ID and items
-     * @throws IllegalArgumentException if a required field is missing, the counterparty does not match the
+     * @throws InvalidRequestException if a required field is missing, the counterparty does not match the
      *         invoice type, or a line has a non-positive quantity or unit price
      * @throws EntityNotFoundException if the supplier, customer or any product does not exist
      */
     @Transactional
     public Invoice createInvoice(CreateInvoiceCommand command) {
         if (command.type() == null) {
-            throw new IllegalArgumentException("Invoice type is required.");
+            throw new InvalidRequestException("Invoice type is required.",
+                    ApiErrorCodes.INVOICE_TYPE_REQUIRED, null);
         }
         if (command.dueDate() == null) {
-            throw new IllegalArgumentException("Due date is required.");
+            throw new InvalidRequestException("Due date is required.",
+                    ApiErrorCodes.INVOICE_DUE_DATE_REQUIRED, null);
         }
         if (command.items() == null || command.items().isEmpty()) {
-            throw new IllegalArgumentException("An invoice requires at least one item.");
+            throw new InvalidRequestException("An invoice requires at least one item.",
+                    ApiErrorCodes.INVOICE_REQUIRES_ITEM, null);
         }
         if (command.invoiceNumber() == null || command.invoiceNumber().isBlank()) {
-            throw new IllegalArgumentException("Invoice number is required.");
+            throw new InvalidRequestException("Invoice number is required.",
+                    ApiErrorCodes.INVOICE_NUMBER_REQUIRED, null);
         }
         // service check gives the friendly message, the partial unique index in the database is the
         // concurrency backstop
@@ -153,7 +158,8 @@ public class InvoiceService {
     private void applyCounterparty(CreateInvoiceCommand command, Invoice invoice) {
         if (command.type() == InvoiceType.PURCHASE) {
             if (command.supplierId() == null || command.customerId() != null) {
-                throw new IllegalArgumentException("Purchase invoices require a supplier and no customer.");
+                throw new InvalidRequestException("Purchase invoices require a supplier and no customer.",
+                        ApiErrorCodes.PURCHASE_INVOICE_PARTY_MISMATCH, null);
             }
             Supplier supplier = supplierService.findById(command.supplierId())
                     .orElseThrow(() -> new EntityNotFoundException(
@@ -166,7 +172,8 @@ public class InvoiceService {
             return;
         }
         if (command.supplierId() != null) {
-            throw new IllegalArgumentException("Sale invoices must not reference a supplier.");
+            throw new InvalidRequestException("Sale invoices must not reference a supplier.",
+                    ApiErrorCodes.SALE_INVOICE_PARTY_MISMATCH, null);
         }
         if (command.customerId() != null) {
             Customer customer = customerService.findById(command.customerId())
@@ -181,10 +188,12 @@ public class InvoiceService {
     /** Validates a line and builds its persistent item. */
     private InvoiceItem buildItem(Invoice invoice, CreateInvoiceCommand.ItemLine line) {
         if (line.quantity() <= 0) {
-            throw new IllegalArgumentException("Item quantity must be positive.");
+            throw new InvalidRequestException("Item quantity must be positive.",
+                    ApiErrorCodes.ITEM_QUANTITY_NOT_POSITIVE, null);
         }
         if (line.unitPrice() == null || line.unitPrice().signum() <= 0) {
-            throw new IllegalArgumentException("Item unit price must be positive.");
+            throw new InvalidRequestException("Item unit price must be positive.",
+                    ApiErrorCodes.ITEM_UNIT_PRICE_NOT_POSITIVE, null);
         }
         Product product = productService.findById(line.productId())
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -272,7 +281,7 @@ public class InvoiceService {
      * @param quantity number of units being returned; must be positive
      * @return the updated invoice item
      * @throws EntityNotFoundException if no invoice item exists with the given ID
-     * @throws IllegalArgumentException if {@code quantity} is not positive
+     * @throws InvalidRequestException if {@code quantity} is not positive
      * @throws InvoiceStateException if the invoice is still open, or if the return would exceed the item's
      *         remaining returnable quantity
      */
@@ -285,7 +294,8 @@ public class InvoiceService {
                     ApiErrorCodes.RETURN_REQUIRES_CLOSED_INVOICE, null);
         }
         if (quantity <= 0) {
-            throw new IllegalArgumentException("Return quantity must be positive.");
+            throw new InvalidRequestException("Return quantity must be positive.",
+                    ApiErrorCodes.RETURN_QUANTITY_NOT_POSITIVE, null);
         }
         // database CHECK on returned_qty is the backstop for this invariant
         int remaining = item.getQuantity() - item.getReturnedQty();

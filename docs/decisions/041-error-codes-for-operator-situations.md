@@ -150,4 +150,34 @@ on the reasoning that a client has nothing to do with a veto beyond showing its 
 That claim is superseded and was rewritten in the same pull request, so no reader meets the
 old rationale beside the new behaviour.
 
+## Amendment - 20 August 2026, phase 3.5
+
+The last of the five surveyed families is coded, and it is the one this record named first:
+illegal argument. It is coded by moving off the JDK type rather than by decorating it. A new
+`InvalidRequestException` carries the code, and all thirteen project throw sites - nine in
+invoice creation and returns, two in the reporting controller, one in the audit controller
+and one in the supplier service - now raise it.
+
+**The JDK's `IllegalArgumentException` handler stays, uncoded.** What reaches it after this
+change is the argument failure raised inside a library the application calls: a situation the
+project never named and has no advice to offer about, so there is nothing for a code to
+identify. It still answers 400, because such a request is still the caller's fault and the
+alternative is a 500 that blames the server. The split is the point - it is what lets a client
+tell a rule this project can explain from one it cannot.
+
+**Ruling R48: twelve codes for thirteen sites.** The reporting controller and the audit
+controller each reject a period whose start falls after its end, restating the check
+independently because the two modules share no code by design. They share one code all the
+same. The situation is identical, the sentence is byte-identical, and a client would have
+nothing different to say about them, so minting two codes would name a duplication in the
+implementation rather than a distinction the operator can act on. Should the two sentences
+ever diverge, that divergence is the moment a second code is minted - and not before.
+
+Reachability was measured rather than assumed, on the protocol ruling R47 established for the
+movement matrix. Four of the twelve reach a client; the other eight declare the same rule as a
+bean-validation constraint on the request record, so the validation envelope answers first and
+the service check behind it is unreachable over HTTP. Those eight are coded anyway, on R45's
+reasoning, and each names its shadowing constraint in `ApiErrorCodes` so a later reader meets
+the decision rather than an apparently dead code.
+
 [Back to Decisions Index](index.md)

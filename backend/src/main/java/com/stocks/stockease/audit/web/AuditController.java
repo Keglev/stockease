@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.stocks.stockease.audit.AuditService;
 import com.stocks.stockease.audit.ChangeLogEntryResponse;
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.InvalidRequestException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,7 +62,7 @@ public class AuditController {
      * @param from first change date to include, or {@code null} for no lower bound
      * @param to last change date to include, or {@code null} for no upper bound
      * @return the newest changes in the window, capped server-side
-     * @throws IllegalArgumentException if {@code from} is after {@code to}
+     * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/changes")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -81,7 +83,8 @@ public class AuditController {
      */
     private static void validatePeriod(LocalDate from, LocalDate to) {
         if (from != null && to != null && from.isAfter(to)) {
-            throw new IllegalArgumentException("The start of the period must not be after its end.");
+            throw new InvalidRequestException("The start of the period must not be after its end.",
+                    ApiErrorCodes.PERIOD_START_AFTER_END, null);
         }
     }
 }
