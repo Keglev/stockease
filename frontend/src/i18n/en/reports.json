@@ -109,6 +109,7 @@
   },
   "errors": {
     "periodStartAfterEnd": "The start of the period must not be after its end.",
-    "reportDaysNotPositive": "Days must be positive."
+    "reportDaysNotPositive": "Days must be positive.",
+    "profitReportNotFound": "No profit report for product with ID {{id}}."
   }
 }

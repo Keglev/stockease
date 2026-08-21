@@ -1,4 +1,7 @@
 import { ComponentFixture } from '@angular/core/testing';
+import { LanguageService } from '../../../core/i18n/language.service';
+import { ApiError } from '../../../core/api/api-envelope';
+import { TestBed } from '@angular/core/testing';
 
 import { ProductProfitReport } from '../../../core/api/api-models';
 import { ProfitDetailDialogComponent } from '../profit-detail-dialog/profit-detail-dialog.component';
@@ -111,6 +114,27 @@ describe('ReportsPageComponent profit tab', () => {
     expect(host().querySelector('.reports-error')?.textContent).toContain(
       'Product with ID 3 not found.'
     );
+    expect(dialog.open).not.toHaveBeenCalled();
+  });
+
+  it('rowClick_detailFetchRefusedInGerman_showsTheTranslatedBanner', async () => {
+    // openDetail used to write err.message straight onto the banner, past the page's own failure
+    // seat. It goes through fail() now, so PROFIT_REPORT_NOT_FOUND reads German (#301). Strong
+    // form: the catalog sentence present and the wire sentence absent.
+    TestBed.inject(LanguageService).setLanguage('de');
+    reports.detailFails = true;
+    reports.detailError = new ApiError(
+      'Entity not found: No profit report for product with ID 42.', 404,
+      'PROFIT_REPORT_NOT_FOUND', { id: '42' });
+    render();
+    await showTable(0);
+
+    host().querySelector<HTMLElement>('.profit-row')?.click();
+    fixture.detectChanges();
+
+    const banner = host().querySelector('.reports-error')?.textContent ?? '';
+    expect(banner).toContain('Für das Produkt mit der ID 42 liegt kein Gewinnbericht vor.');
+    expect(banner).not.toContain('Entity not found: No profit report for product with ID 42.');
     expect(dialog.open).not.toHaveBeenCalled();
   });
 

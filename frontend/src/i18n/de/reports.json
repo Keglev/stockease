@@ -109,6 +109,7 @@
   },
   "errors": {
     "periodStartAfterEnd": "Der Beginn des Zeitraums darf nicht nach seinem Ende liegen.",
-    "reportDaysNotPositive": "Die Anzahl der Tage muss positiv sein."
+    "reportDaysNotPositive": "Die Anzahl der Tage muss positiv sein.",
+    "profitReportNotFound": "Für das Produkt mit der ID {{id}} liegt kein Gewinnbericht vor."
   }
 }

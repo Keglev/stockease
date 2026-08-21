@@ -43,6 +43,7 @@
     "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
   },
   "errors": {
-    "hasOpenInvoices": "Kunde '{{customerName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen."
+    "hasOpenInvoices": "Kunde '{{customerName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen.",
+    "customerNotFound": "Kunde mit der ID {{id}} wurde nicht gefunden."
   }
 }

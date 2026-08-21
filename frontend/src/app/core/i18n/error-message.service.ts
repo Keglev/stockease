@@ -89,7 +89,31 @@ const MESSAGE_KEYS: Readonly<Record<string, string>> = {
    * own client-side messages for the same fields, so the banner is the only sentence an operator
    * meets (see the ApiErrorCodes Javadoc for VALIDATION_FAILED).
    */
-  VALIDATION_FAILED: 'common.errors.validationFailed'
+  VALIDATION_FAILED: 'common.errors.validationFailed',
+  /*
+   * The not-found family, in the order the backend raises it. Seven situations that all answer 404
+   * and read as one sentence apiece, so the code is the only thing separating them: an unknown
+   * product and a product with no profit report are the same status and two different things to
+   * tell the operator - the first means the row is gone, the second means the row is fine and the
+   * period is empty.
+   *
+   * Every member carries the same single param, id, and nothing else. It is the only part of each
+   * sentence that is not fixed prose, which is why all seven appear in REQUIRED_PARAMS below. None
+   * appears in PARAM_TRANSLATIONS: an id is a value, not an enum token, and interpolates exactly as
+   * it arrives.
+   *
+   * No member of this family is latent. All seven were reachable on the first wire probe, because
+   * every one sits behind a lookup by id a client can ask for with an id that is not there - so
+   * unlike the movement and invalid-request families above, there is no dead-key clause to write
+   * here and none of these keys is waiting for a shadow to move.
+   */
+  CUSTOMER_NOT_FOUND: 'customers.errors.customerNotFound',
+  INVOICE_NOT_FOUND: 'invoices.errors.invoiceNotFound',
+  INVOICE_ITEM_NOT_FOUND: 'invoices.errors.invoiceItemNotFound',
+  PRODUCT_NOT_FOUND: 'products.errors.productNotFound',
+  SOFT_DELETED_PRODUCT_NOT_FOUND: 'products.errors.softDeletedProductNotFound',
+  SUPPLIER_NOT_FOUND: 'suppliers.errors.supplierNotFound',
+  PROFIT_REPORT_NOT_FOUND: 'reports.errors.profitReportNotFound'
 };
 
 /** The params each key interpolates, so a response missing one falls through rather than rendering a gap. */
@@ -109,7 +133,14 @@ const REQUIRED_PARAMS: Readonly<Record<string, readonly string[]>> = {
   MOVEMENT_INVOICE_TYPE_MISMATCH: ['reason', 'requiredType'],
   MOVEMENT_ITEM_PRODUCT_MISMATCH: ['invoiceItemId'],
   MOVEMENT_QUANTITY_MISMATCH: ['quantity'],
-  MOVEMENT_ALREADY_RECORDED: ['reason', 'invoiceItemId']
+  MOVEMENT_ALREADY_RECORDED: ['reason', 'invoiceItemId'],
+  CUSTOMER_NOT_FOUND: ['id'],
+  INVOICE_NOT_FOUND: ['id'],
+  INVOICE_ITEM_NOT_FOUND: ['id'],
+  PRODUCT_NOT_FOUND: ['id'],
+  SOFT_DELETED_PRODUCT_NOT_FOUND: ['id'],
+  SUPPLIER_NOT_FOUND: ['id'],
+  PROFIT_REPORT_NOT_FOUND: ['id']
 };
 
 /**

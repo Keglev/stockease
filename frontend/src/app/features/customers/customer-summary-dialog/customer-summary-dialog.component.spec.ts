@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, of, throwError } from 'rxjs';
 
+import { ApiError } from '../../../core/api/api-envelope';
 import { CustomerSummary } from '../../../core/api/api-models';
 import { LANGUAGE_STORAGE_KEY, LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
@@ -14,6 +15,7 @@ const TRANSLATIONS = {
     common: { close: 'Close' },
     reports: { deletedHint: 'deleted' },
     customers: {
+      errors: { customerNotFound: 'Customer with ID {{id}} not found.' },
       summary: {
         action: 'Summary',
         title: 'Customer summary',
@@ -24,6 +26,14 @@ const TRANSLATIONS = {
         returnedValue: 'Return value',
         loading: 'Loading summary…'
       }
+    }
+  },
+  // Only what the failure notification needs: a refusal that reads German is the proof the
+  // resolver ran, which an English assertion cannot give when the English key mirrors the wire
+  // sentence word for word.
+  de: {
+    customers: {
+      errors: { customerNotFound: 'Kunde mit der ID {{id}} wurde nicht gefunden.' }
     }
   }
 };
@@ -148,6 +158,21 @@ describe('CustomerSummaryDialogComponent', () => {
     await setUp();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('.deleted-hint')).toBeNull();
+  });
+
+  it('load_customerNotFoundInGerman_notifiesWithTheTranslatedSentence', async () => {
+    // The dialog reads GET /api/reports/customers/{id}/summary, which names a customer that is
+    // gone as CUSTOMER_NOT_FOUND (#301). Strong form: the catalog sentence present and the wire
+    // sentence absent, so it passes only if the resolver replaced one with the other.
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'de');
+    reports.result = throwError(() => new ApiError(
+      'Entity not found: Customer with ID 9 not found.', 404, 'CUSTOMER_NOT_FOUND', { id: '9' }));
+
+    await setUp();
+
+    expect(notifications.errors).toContain('Kunde mit der ID 9 wurde nicht gefunden.');
+    expect(notifications.errors).not.toContain('Entity not found: Customer with ID 9 not found.');
+    expect(dialogRef.close).toHaveBeenCalled();
   });
 
   it('load_requestFails_notifiesAndClosesDialog', async () => {

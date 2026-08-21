@@ -43,6 +43,7 @@
     "emailInvalid": "Enter a valid email address."
   },
   "errors": {
-    "hasOpenInvoices": "Cannot delete customer '{{customerName}}': open invoices exist."
+    "hasOpenInvoices": "Cannot delete customer '{{customerName}}': open invoices exist.",
+    "customerNotFound": "Customer with ID {{id}} not found."
   }
 }

@@ -34,6 +34,7 @@
   },
   "errors": {
     "hasOpenInvoices": "Lieferant '{{supplierName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen.",
-    "supplierNameAndAddressRequired": "Name und Adresse des Lieferanten sind erforderlich."
+    "supplierNameAndAddressRequired": "Name und Adresse des Lieferanten sind erforderlich.",
+    "supplierNotFound": "Lieferant mit der ID {{id}} wurde nicht gefunden."
   }
 }

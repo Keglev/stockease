@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { CustomerSummary } from '../../../core/api/api-models';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { ReportService } from '../../reports/report.service';
 import { AppCurrencyPipe } from '../../../shared/format/app-currency.pipe';
@@ -29,6 +30,7 @@ export class CustomerSummaryDialogComponent implements OnInit {
   // serving it from the reports controller rather than the customer API.
   private readonly reports = inject(ReportService);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly dialogRef = inject<MatDialogRef<CustomerSummaryDialogComponent>>(MatDialogRef);
 
   private readonly data = inject<CustomerSummaryDialogData>(MAT_DIALOG_DATA);
@@ -50,8 +52,11 @@ export class CustomerSummaryDialogComponent implements OnInit {
         this.summary.set(summary);
       },
       error: (err: Error) => {
+        // Through the resolver rather than showing err.message: this dialog reads
+        // GET /api/reports/customers/{id}/summary, which names a customer that is gone as
+        // CUSTOMER_NOT_FOUND, so a row deleted while the list was open reads German (#301).
         this.loading.set(false);
-        this.notifications.error(err.message);
+        this.notifications.error(this.errorMessages.resolve(err));
         this.dialogRef.close();
       }
     });

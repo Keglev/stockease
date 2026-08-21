@@ -17,18 +17,22 @@ const TRANSLATIONS = {
         duplicateName: "A product named '{{name}}' already exists.",
         duplicateSku: "A product with SKU '{{sku}}' already exists.",
         onOpenInvoice: "Cannot delete product '{{productName}}': it appears on an open invoice.",
-        hasStock: "Cannot delete product '{{productName}}': {{quantity}} units are still in stock."
+        hasStock: "Cannot delete product '{{productName}}': {{quantity}} units are still in stock.",
+        productNotFound: 'Product with ID {{id}} not found.',
+        softDeletedProductNotFound: 'No soft-deleted product with ID {{id}} found.'
       }
     },
     suppliers: {
       errors: {
         hasOpenInvoices: "Cannot delete supplier '{{supplierName}}': open invoices exist.",
-        supplierNameAndAddressRequired: 'Supplier name and address are required.'
+        supplierNameAndAddressRequired: 'Supplier name and address are required.',
+        supplierNotFound: 'Supplier with ID {{id}} not found.'
       }
     },
     customers: {
       errors: {
-        hasOpenInvoices: "Cannot delete customer '{{customerName}}': open invoices exist."
+        hasOpenInvoices: "Cannot delete customer '{{customerName}}': open invoices exist.",
+        customerNotFound: 'Customer with ID {{id}} not found.'
       }
     },
     invoices: {
@@ -47,13 +51,16 @@ const TRANSLATIONS = {
         notOpenForDelete: 'Only open invoices can be deleted.',
         purchaseInvoicePartyMismatch: 'Purchase invoices require a supplier and no customer.',
         saleInvoicePartyMismatch: 'Sale invoices must not reference a supplier.',
-        itemQuantityNotPositive: 'Item quantity must be positive.'
+        itemQuantityNotPositive: 'Item quantity must be positive.',
+        invoiceNotFound: 'Invoice with ID {{id}} not found.',
+        invoiceItemNotFound: 'Invoice item with ID {{id}} not found.'
       }
     },
     reports: {
       errors: {
         periodStartAfterEnd: 'The start of the period must not be after its end.',
-        reportDaysNotPositive: 'Days must be positive.'
+        reportDaysNotPositive: 'Days must be positive.',
+        profitReportNotFound: 'No profit report for product with ID {{id}}.'
       }
     },
     movements: {
@@ -98,20 +105,24 @@ const TRANSLATIONS = {
         onOpenInvoice:
           "Produkt '{{productName}}' kann nicht gelöscht werden: Es steht auf einer offenen Rechnung.",
         hasStock:
-          "Produkt '{{productName}}' kann nicht gelöscht werden: {{quantity}} Einheiten sind noch auf Lager."
+          "Produkt '{{productName}}' kann nicht gelöscht werden: {{quantity}} Einheiten sind noch auf Lager.",
+        productNotFound: 'Produkt mit der ID {{id}} wurde nicht gefunden.',
+        softDeletedProductNotFound: 'Kein gelöschtes Produkt mit der ID {{id}} gefunden.'
       }
     },
     suppliers: {
       errors: {
         hasOpenInvoices:
           "Lieferant '{{supplierName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen.",
-        supplierNameAndAddressRequired: 'Name und Adresse des Lieferanten sind erforderlich.'
+        supplierNameAndAddressRequired: 'Name und Adresse des Lieferanten sind erforderlich.',
+        supplierNotFound: 'Lieferant mit der ID {{id}} wurde nicht gefunden.'
       }
     },
     customers: {
       errors: {
         hasOpenInvoices:
-          "Kunde '{{customerName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen."
+          "Kunde '{{customerName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen.",
+        customerNotFound: 'Kunde mit der ID {{id}} wurde nicht gefunden.'
       }
     },
     invoices: {
@@ -130,13 +141,16 @@ const TRANSLATIONS = {
         notOpenForDelete: 'Nur offene Rechnungen können gelöscht werden.',
         purchaseInvoicePartyMismatch: 'Einkaufsrechnungen erfordern einen Lieferanten und keinen Kunden.',
         saleInvoicePartyMismatch: 'Verkaufsrechnungen dürfen sich nicht auf einen Lieferanten beziehen.',
-        itemQuantityNotPositive: 'Die Positionsmenge muss positiv sein.'
+        itemQuantityNotPositive: 'Die Positionsmenge muss positiv sein.',
+        invoiceNotFound: 'Rechnung mit der ID {{id}} wurde nicht gefunden.',
+        invoiceItemNotFound: 'Rechnungsposition mit der ID {{id}} wurde nicht gefunden.'
       }
     },
     reports: {
       errors: {
         periodStartAfterEnd: 'Der Beginn des Zeitraums darf nicht nach seinem Ende liegen.',
-        reportDaysNotPositive: 'Die Anzahl der Tage muss positiv sein.'
+        reportDaysNotPositive: 'Die Anzahl der Tage muss positiv sein.',
+        profitReportNotFound: 'Für das Produkt mit der ID {{id}} liegt kein Gewinnbericht vor.'
       }
     },
     movements: {
@@ -535,5 +549,79 @@ describe('ErrorMessageService', () => {
 
     expect(service.resolve(error))
       .toBe('Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.');
+  });
+
+  /*
+   * The not-found family (ADR 041's last). Seven codes, one sentence each, and every one asserted
+   * in German and whole: the English keys mirror the wire sentences word for word once the
+   * handler's "Entity not found: " prefix is stripped, so an English assertion would pass whether
+   * or not the code was ever mapped. Nothing in this family is latent - all seven reach the wire -
+   * so every one of them is a situation an operator can actually meet.
+   */
+  it('resolve_customerNotFound_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Entity not found: Customer with ID 42 not found.', 404,
+      'CUSTOMER_NOT_FOUND', { id: '42' });
+
+    expect(service.resolve(error)).toBe('Kunde mit der ID 42 wurde nicht gefunden.');
+  });
+
+  it('resolve_invoiceNotFound_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Entity not found: Invoice with ID 7 not found.', 404,
+      'INVOICE_NOT_FOUND', { id: '7' });
+
+    expect(service.resolve(error)).toBe('Rechnung mit der ID 7 wurde nicht gefunden.');
+  });
+
+  it('resolve_invoiceItemNotFound_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Entity not found: Invoice item with ID 13 not found.', 404,
+      'INVOICE_ITEM_NOT_FOUND', { id: '13' });
+
+    expect(service.resolve(error)).toBe('Rechnungsposition mit der ID 13 wurde nicht gefunden.');
+  });
+
+  it('resolve_productNotFound_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Entity not found: Product with ID 5 not found.', 404,
+      'PRODUCT_NOT_FOUND', { id: '5' });
+
+    expect(service.resolve(error)).toBe('Produkt mit der ID 5 wurde nicht gefunden.');
+  });
+
+  it('resolve_softDeletedProductNotFound_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Entity not found: No soft-deleted product with ID 9 found.', 404,
+      'SOFT_DELETED_PRODUCT_NOT_FOUND', { id: '9' });
+
+    expect(service.resolve(error)).toBe('Kein gelöschtes Produkt mit der ID 9 gefunden.');
+  });
+
+  it('resolve_supplierNotFound_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Entity not found: Supplier with ID 3 not found.', 404,
+      'SUPPLIER_NOT_FOUND', { id: '3' });
+
+    expect(service.resolve(error)).toBe('Lieferant mit der ID 3 wurde nicht gefunden.');
+  });
+
+  it('resolve_profitReportNotFound_inGerman_returnsTheTranslatedSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Entity not found: No profit report for product with ID 42.', 404,
+      'PROFIT_REPORT_NOT_FOUND', { id: '42' });
+
+    expect(service.resolve(error)).toBe('Für das Produkt mit der ID 42 liegt kein Gewinnbericht vor.');
+  });
+
+  it('resolve_notFoundMissingItsId_fallsBackToTheServerMessage', () => {
+    // The family's one param is the only part of the sentence that is not fixed prose, so a
+    // response that lost it would render a hole where the id goes. The server's sentence still has
+    // the value in place, which is why it wins - the same rule the other coded families follow.
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Entity not found: Product with ID 5 not found.', 404,
+      'PRODUCT_NOT_FOUND', undefined);
+
+    expect(service.resolve(error)).toBe('Entity not found: Product with ID 5 not found.');
   });
 });
