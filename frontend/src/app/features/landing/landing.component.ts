@@ -115,7 +115,12 @@ export class LandingComponent {
       },
       error: (error: Error) => {
         this.demoPending.set(false);
-        // Shown verbatim: the text comes from the backend envelope, which has no i18n.
+        // Shown verbatim, and correctly so. This endpoint does carry a body - the role - but it is
+        // whichever of the two buttons was pressed rather than anything typed, and the only refusal
+        // the demo controller authors is an unknown role, which it answers with a 400 it builds
+        // itself carrying no situation code. So nothing coded can reach this handler. Should the
+        // endpoint ever start naming its refusals, route this through ErrorMessageService.resolve()
+        // or it will show English (ADR 041).
         this.notifications.error(error.message);
       }
     });

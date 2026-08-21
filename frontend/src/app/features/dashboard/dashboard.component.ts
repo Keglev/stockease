@@ -182,7 +182,16 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  /** Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app. */
+  /**
+   * Records a failed load as the sentence to show.
+   *
+   * @remarks
+   * Surfaced verbatim, and correctly so: every query behind this handler is either parameterless
+   * or fixed at the call site - the product count asks for one row, the due-soon window takes the
+   * server's own default - so the server has nothing of the reader's to refuse and no coded
+   * refusal can arrive. If a card ever gains a date range or a window size the reader chooses,
+   * route its error through ErrorMessageService.resolve() or it will show English (ADR 041).
+   */
   private fail(err: Error): void {
     this.error.set(err.message);
   }

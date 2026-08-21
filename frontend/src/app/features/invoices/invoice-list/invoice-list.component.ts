@@ -180,7 +180,10 @@ export class InvoiceListComponent implements OnInit {
           this.format.formatDateTime(row.paidAt)
         ]), 'invoices.columns.');
       },
-      // Backend messages have no i18n, so they are surfaced verbatim as elsewhere in the app.
+      // Surfaced verbatim, and correctly so: the export reads GET /api/invoices, which takes no
+      // parameters at all, so the server has nothing of the reader's to refuse and no coded
+      // refusal can arrive here. Should this export ever gain a filter the server validates,
+      // route the error through ErrorMessageService.resolve() or it will show English (ADR 041).
       error: (err: Error) => {
         this.exporting.set(false);
         this.list.error.set(err.message);

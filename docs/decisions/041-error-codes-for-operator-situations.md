@@ -180,4 +180,14 @@ the service check behind it is unreachable over HTTP. Those eight are coded anyw
 reasoning, and each names its shadowing constraint in `ApiErrorCodes` so a later reader meets
 the decision rather than an apparently dead code.
 
+**20 August 2026, on building the client half.** The two controllers that share
+`PERIOD_START_AFTER_END` under R48 turn out to share a surface as well. The reports page's
+changes tab is the only caller of the audit module's period-bounded endpoint, so both throw
+sites reach the reader through the same error banner: one code, one key, one sentence, and one
+place it is rendered. This strengthens the ruling rather than complicating it - a client that
+cannot reach the two situations by different routes could not have said anything different
+about them even if they had been coded apart. It is recorded because the ruling above reads as
+though two surfaces were in play, and a later reader weighing whether to split the code should
+know that splitting it would still produce one rendering.
+
 [Back to Decisions Index](index.md)
