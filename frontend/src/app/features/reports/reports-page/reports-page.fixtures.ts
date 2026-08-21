@@ -174,7 +174,8 @@ export const TRANSLATIONS = {
       // mirrors the wire sentence byte for byte.
       errors: {
         periodStartAfterEnd: 'Der Beginn des Zeitraums darf nicht nach seinem Ende liegen.',
-        reportDaysNotPositive: 'Die Anzahl der Tage muss positiv sein.'
+        reportDaysNotPositive: 'Die Anzahl der Tage muss positiv sein.',
+        profitReportNotFound: 'Für das Produkt mit der ID {{id}} liegt kein Gewinnbericht vor.'
       }
     },
     movements: { form: { remarkOption: { EXPIRED: 'Abgelaufen' } } }
@@ -438,12 +439,13 @@ export class ReportServiceStub {
   /* The row is on screen but its detail fetch fails - a deleted product, or a dropped request. */
   detailFails = false;
 
+  /* The failure to raise when detailFails is set, so a spec can hand it a coded envelope. */
+  detailError: Error = new Error('Product with ID 3 not found.');
+
   profitProductDetail(id: number, from?: string, to?: string): Observable<ProductProfitReport> {
     this.calls.push(`profitProductDetail:${id}`);
     this.profitRanges['detail'].push([from, to]);
-    return this.detailFails
-      ? throwError(() => new Error('Product with ID 3 not found.'))
-      : of(this.detail);
+    return this.detailFails ? throwError(() => this.detailError) : of(this.detail);
   }
 
   stockStatus(): Observable<StockStatusReport[]> {

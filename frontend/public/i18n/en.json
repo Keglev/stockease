@@ -269,7 +269,8 @@
     },
     "errors": {
       "periodStartAfterEnd": "The start of the period must not be after its end.",
-      "reportDaysNotPositive": "Days must be positive."
+      "reportDaysNotPositive": "Days must be positive.",
+      "profitReportNotFound": "No profit report for product with ID {{id}}."
     }
   },
   "movements": {
@@ -427,7 +428,9 @@
       "saleInvoicePartyMismatch": "Sale invoices must not reference a supplier.",
       "itemQuantityNotPositive": "Item quantity must be positive.",
       "itemUnitPriceNotPositive": "Item unit price must be positive.",
-      "returnQuantityNotPositive": "Return quantity must be positive."
+      "returnQuantityNotPositive": "Return quantity must be positive.",
+      "invoiceNotFound": "Invoice with ID {{id}} not found.",
+      "invoiceItemNotFound": "Invoice item with ID {{id}} not found."
     }
   },
   "customers": {
@@ -475,7 +478,8 @@
       "emailInvalid": "Enter a valid email address."
     },
     "errors": {
-      "hasOpenInvoices": "Cannot delete customer '{{customerName}}': open invoices exist."
+      "hasOpenInvoices": "Cannot delete customer '{{customerName}}': open invoices exist.",
+      "customerNotFound": "Customer with ID {{id}} not found."
     }
   },
   "suppliers": {
@@ -514,7 +518,8 @@
     },
     "errors": {
       "hasOpenInvoices": "Cannot delete supplier '{{supplierName}}': open invoices exist.",
-      "supplierNameAndAddressRequired": "Supplier name and address are required."
+      "supplierNameAndAddressRequired": "Supplier name and address are required.",
+      "supplierNotFound": "Supplier with ID {{id}} not found."
     }
   },
   "shell": {
@@ -635,7 +640,9 @@
       "restoreBlockedByName": "Cannot restore: a live product named '{{name}}' already exists.",
       "restoreBlockedBySku": "Cannot restore: a live product with SKU '{{sku}}' already exists.",
       "onOpenInvoice": "Cannot delete product '{{productName}}': it appears on an open invoice.",
-      "hasStock": "Cannot delete product '{{productName}}': {{quantity}} units are still in stock."
+      "hasStock": "Cannot delete product '{{productName}}': {{quantity}} units are still in stock.",
+      "productNotFound": "Product with ID {{id}} not found.",
+      "softDeletedProductNotFound": "No soft-deleted product with ID {{id}} found."
     }
   }
 }

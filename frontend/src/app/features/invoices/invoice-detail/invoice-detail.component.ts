@@ -8,6 +8,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { InvoiceItemResponse, InvoiceResponse } from '../../../core/api/api-models';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { InvoiceService } from '../invoice.service';
 import { InvoiceDetailActions } from './invoice-detail-actions';
@@ -44,6 +45,7 @@ import { AppDatePipe } from '../../../shared/format/app-date.pipe';
 export class InvoiceDetailComponent implements OnInit {
   private readonly invoices = inject(InvoiceService);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -133,9 +135,10 @@ export class InvoiceDetailComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err: Error) => {
-        // The interceptor already mapped the failure; surface it and leave the dead route.
+        // Through the resolver rather than showing err.message: GET /api/invoices/{id} names its
+        // refusals now, so a stale bookmark arrives as INVOICE_NOT_FOUND and reads German (#301).
         this.loading.set(false);
-        this.notifications.error(err.message);
+        this.notifications.error(this.errorMessages.resolve(err));
         void this.router.navigate(['/app/invoices']);
       }
     });

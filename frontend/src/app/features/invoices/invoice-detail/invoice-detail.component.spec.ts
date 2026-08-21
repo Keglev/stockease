@@ -1,4 +1,5 @@
 import { of, throwError } from 'rxjs';
+import { ApiError } from '../../../core/api/api-envelope';
 
 import {
   configureInvoiceDetailTestBed,
@@ -78,6 +79,18 @@ describe('InvoiceDetailComponent', () => {
     expect(host(page.fixture).querySelector('.detail-closed')).not.toBeNull();
     expect(host(page.fixture).querySelector('.detail-paid')).not.toBeNull();
     expect(host(page.fixture).querySelector('.paid-chip')).not.toBeNull();
+  });
+
+  it('load_invoiceNotFoundInGerman_notifiesWithTheTranslatedSentence', async () => {
+    // GET /api/invoices/{id} names its refusals now, so a stale bookmark arrives coded (#301).
+    // Strong form: the catalog sentence present and the wire sentence absent, so this passes only
+    // if the resolver replaced one with the other.
+    page = await configureInvoiceDetailTestBed(throwError(() => new ApiError(
+      'Entity not found: Invoice with ID 1 not found.', 404, 'INVOICE_NOT_FOUND', { id: '1' })), 'ADMIN', 'de');
+
+    expect(page.notifications.errors).toContain('Rechnung mit der ID 1 wurde nicht gefunden.');
+    expect(page.notifications.errors)
+      .not.toContain('Entity not found: Invoice with ID 1 not found.');
   });
 
   it('load_requestFails_notifiesWithInterceptorMessage', async () => {

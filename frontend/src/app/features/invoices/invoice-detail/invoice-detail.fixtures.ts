@@ -96,7 +96,8 @@ export const TRANSLATIONS = {
         returnExceedsReturnable:
           'Die Rücksendung von {{quantity}} überschreitet die verbleibende '
           + 'rücksendbare Menge {{remaining}} für die Rechnungsposition {{itemId}}.',
-        alreadyPaid: 'Die Rechnung ist bereits als bezahlt markiert.'
+        alreadyPaid: 'Die Rechnung ist bereits als bezahlt markiert.',
+        invoiceNotFound: 'Rechnung mit der ID {{id}} wurde nicht gefunden.'
       }
     },
     movements: {
@@ -249,7 +250,8 @@ export interface InvoiceDetailHarness {
  */
 export async function configureInvoiceDetailTestBed(
   response: Observable<InvoiceResponse>,
-  role: 'ADMIN' | 'USER' = 'ADMIN'
+  role: 'ADMIN' | 'USER' = 'ADMIN',
+  language: 'en' | 'de' = 'en'
 ): Promise<InvoiceDetailHarness> {
   // The entry clear for all three consumers of this fixture, which is how each of them meets the
   // storage-isolation rule without repeating it.
@@ -279,7 +281,13 @@ export async function configureInvoiceDetailTestBed(
     ]
   }).compileComponents();
 
-  TestBed.inject(LanguageService).initialize().subscribe();
+  const languageService = TestBed.inject(LanguageService);
+  languageService.initialize().subscribe();
+  // Set after initialize(), which resolves from the storage this fixture just cleared: a German
+  // case needs the language in place before the component's own load reports its failure.
+  if (language !== 'en') {
+    languageService.setLanguage(language);
+  }
 
   const fixture = TestBed.createComponent(InvoiceDetailComponent);
   fixture.detectChanges();

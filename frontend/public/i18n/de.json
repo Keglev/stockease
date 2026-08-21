@@ -269,7 +269,8 @@
     },
     "errors": {
       "periodStartAfterEnd": "Der Beginn des Zeitraums darf nicht nach seinem Ende liegen.",
-      "reportDaysNotPositive": "Die Anzahl der Tage muss positiv sein."
+      "reportDaysNotPositive": "Die Anzahl der Tage muss positiv sein.",
+      "profitReportNotFound": "Für das Produkt mit der ID {{id}} liegt kein Gewinnbericht vor."
     }
   },
   "movements": {
@@ -427,7 +428,9 @@
       "saleInvoicePartyMismatch": "Verkaufsrechnungen dürfen sich nicht auf einen Lieferanten beziehen.",
       "itemQuantityNotPositive": "Die Positionsmenge muss positiv sein.",
       "itemUnitPriceNotPositive": "Der Stückpreis der Position muss positiv sein.",
-      "returnQuantityNotPositive": "Die Rücksendemenge muss positiv sein."
+      "returnQuantityNotPositive": "Die Rücksendemenge muss positiv sein.",
+      "invoiceNotFound": "Rechnung mit der ID {{id}} wurde nicht gefunden.",
+      "invoiceItemNotFound": "Rechnungsposition mit der ID {{id}} wurde nicht gefunden."
     }
   },
   "customers": {
@@ -475,7 +478,8 @@
       "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
     },
     "errors": {
-      "hasOpenInvoices": "Kunde '{{customerName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen."
+      "hasOpenInvoices": "Kunde '{{customerName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen.",
+      "customerNotFound": "Kunde mit der ID {{id}} wurde nicht gefunden."
     }
   },
   "suppliers": {
@@ -514,7 +518,8 @@
     },
     "errors": {
       "hasOpenInvoices": "Lieferant '{{supplierName}}' kann nicht gelöscht werden: Es existieren offene Rechnungen.",
-      "supplierNameAndAddressRequired": "Name und Adresse des Lieferanten sind erforderlich."
+      "supplierNameAndAddressRequired": "Name und Adresse des Lieferanten sind erforderlich.",
+      "supplierNotFound": "Lieferant mit der ID {{id}} wurde nicht gefunden."
     }
   },
   "shell": {
@@ -635,7 +640,9 @@
       "restoreBlockedByName": "Wiederherstellen nicht möglich: Ein aktives Produkt mit dem Namen „{{name}}“ existiert bereits.",
       "restoreBlockedBySku": "Wiederherstellen nicht möglich: Ein aktives Produkt mit der Artikelnummer „{{sku}}“ existiert bereits.",
       "onOpenInvoice": "Produkt '{{productName}}' kann nicht gelöscht werden: Es steht auf einer offenen Rechnung.",
-      "hasStock": "Produkt '{{productName}}' kann nicht gelöscht werden: {{quantity}} Einheiten sind noch auf Lager."
+      "hasStock": "Produkt '{{productName}}' kann nicht gelöscht werden: {{quantity}} Einheiten sind noch auf Lager.",
+      "productNotFound": "Produkt mit der ID {{id}} wurde nicht gefunden.",
+      "softDeletedProductNotFound": "Kein gelöschtes Produkt mit der ID {{id}} gefunden."
     }
   }
 }

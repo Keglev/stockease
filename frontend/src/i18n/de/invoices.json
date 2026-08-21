@@ -104,6 +104,8 @@
     "saleInvoicePartyMismatch": "Verkaufsrechnungen dürfen sich nicht auf einen Lieferanten beziehen.",
     "itemQuantityNotPositive": "Die Positionsmenge muss positiv sein.",
     "itemUnitPriceNotPositive": "Der Stückpreis der Position muss positiv sein.",
-    "returnQuantityNotPositive": "Die Rücksendemenge muss positiv sein."
+    "returnQuantityNotPositive": "Die Rücksendemenge muss positiv sein.",
+    "invoiceNotFound": "Rechnung mit der ID {{id}} wurde nicht gefunden.",
+    "invoiceItemNotFound": "Rechnungsposition mit der ID {{id}} wurde nicht gefunden."
   }
 }

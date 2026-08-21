@@ -156,7 +156,10 @@ export class ReportsPageComponent implements OnInit {
 
     this.reports.profitProductDetail(row.productId, range.from, range.to).subscribe({
       next: (detail) => this.dialog.open(ProfitDetailDialogComponent, { data: detail }),
-      error: (err: Error) => this.status.error.set(err.message)
+      // Through the page's single failure seat, which fail()'s own doc names and every tab
+      // already uses: the detail endpoint names its refusals now, so a row that went away between
+      // the table and the click reads German (#301).
+      error: (err: Error) => this.status.fail(err)
     });
   }
 

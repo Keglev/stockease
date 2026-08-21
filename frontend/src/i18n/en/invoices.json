@@ -104,6 +104,8 @@
     "saleInvoicePartyMismatch": "Sale invoices must not reference a supplier.",
     "itemQuantityNotPositive": "Item quantity must be positive.",
     "itemUnitPriceNotPositive": "Item unit price must be positive.",
-    "returnQuantityNotPositive": "Return quantity must be positive."
+    "returnQuantityNotPositive": "Return quantity must be positive.",
+    "invoiceNotFound": "Invoice with ID {{id}} not found.",
+    "invoiceItemNotFound": "Invoice item with ID {{id}} not found."
   }
 }

@@ -47,6 +47,8 @@
     "restoreBlockedByName": "Cannot restore: a live product named '{{name}}' already exists.",
     "restoreBlockedBySku": "Cannot restore: a live product with SKU '{{sku}}' already exists.",
     "onOpenInvoice": "Cannot delete product '{{productName}}': it appears on an open invoice.",
-    "hasStock": "Cannot delete product '{{productName}}': {{quantity}} units are still in stock."
+    "hasStock": "Cannot delete product '{{productName}}': {{quantity}} units are still in stock.",
+    "productNotFound": "Product with ID {{id}} not found.",
+    "softDeletedProductNotFound": "No soft-deleted product with ID {{id}} found."
   }
 }
