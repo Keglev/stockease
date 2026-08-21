@@ -1,5 +1,7 @@
 package com.stocks.stockease.report.web;
 
+import java.util.Map;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.report.CashFlowReport;
 import com.stocks.stockease.report.CashFlowReportingService;
 import com.stocks.stockease.report.CashFlowTimelineBucket;
@@ -33,7 +36,6 @@ import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.ApiResponse;
 import com.stocks.stockease.shared.InvalidRequestException;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -87,7 +89,7 @@ public class ReportController {
      * @param from first booking date to count, or {@code null} for no lower bound
      * @param to last booking date to count, or {@code null} for no upper bound
      * @return HTTP 200 with the product's profit row
-     * @throws EntityNotFoundException if no such product exists
+     * @throws MissingEntityException if no such product exists
      * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/profit/products/{id}")
@@ -97,7 +99,9 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate to) {
         validatePeriod(from, to);
         ProductProfitReport report = profitReportingService.profitForProduct(id, from, to)
-                .orElseThrow(() -> new EntityNotFoundException("No profit report for product with ID " + id + "."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "No profit report for product with ID " + id + ".",
+                        ApiErrorCodes.PROFIT_REPORT_NOT_FOUND, Map.of("id", String.valueOf(id))));
         return ResponseEntity.ok(new ApiResponse<>(true, "Product profit fetched successfully", report));
     }
 
@@ -129,7 +133,7 @@ public class ReportController {
      * @param to last payment date to count, or {@code null} for no upper bound
      * @param productId product to scope the series to, or {@code null} for the whole business
      * @return one bucket per month that moved money, oldest first
-     * @throws EntityNotFoundException if {@code productId} names no product
+     * @throws MissingEntityException if {@code productId} names no product
      * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/cash-flow/timeline")
@@ -143,7 +147,9 @@ public class ReportController {
         // product that moved no money and a product that does not exist are different answers, and
         // only the second is the caller's mistake.
         if (productId != null && !stockReportingService.productExists(productId)) {
-            throw new EntityNotFoundException("Product with ID " + productId + " not found.");
+            throw new MissingEntityException(
+                    "Product with ID " + productId + " not found.",
+                    ApiErrorCodes.PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(productId)));
         }
         return cashFlowReportingService.cashFlowTimeline(from, to, productId);
     }
@@ -162,13 +168,15 @@ public class ReportController {
      * @param id supplier identifier
      * @param name search term (substring, case-insensitive)
      * @return HTTP 200 with the supplier's matching products, empty if none match
-     * @throws EntityNotFoundException if no live supplier exists with the given ID
+     * @throws MissingEntityException if no live supplier exists with the given ID
      */
     @GetMapping("/suppliers/{id}/products/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<SupplierProduct> supplierProducts(@PathVariable long id, @RequestParam String name) {
         return counterpartyReportingService.supplierProducts(id, name)
-                .orElseThrow(() -> new EntityNotFoundException("Supplier with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Supplier with ID " + id + " not found.",
+                        ApiErrorCodes.SUPPLIER_NOT_FOUND, Map.of("id", String.valueOf(id))));
     }
 
     /**
@@ -178,7 +186,7 @@ public class ReportController {
      * @param from first day to return, or {@code null} for no lower bound
      * @param to last day to return, or {@code null} for no upper bound
      * @return the product's history within the window, oldest first
-     * @throws EntityNotFoundException if no such product exists
+     * @throws MissingEntityException if no such product exists
      * @throws InvalidRequestException if {@code from} is after {@code to}
      */
     @GetMapping("/products/{id}/stock-history")
@@ -190,7 +198,9 @@ public class ReportController {
         // An empty optional means no such product; an empty list means one that never moved. Only
         // the first is a 404 - a product nobody has traded yet has a real, empty history.
         return stockReportingService.stockHistory(id, from, to)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Product with ID " + id + " not found.",
+                        ApiErrorCodes.PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(id))));
     }
 
     /** Rejects a period whose bounds are the wrong way round; either bound alone is always valid. */
@@ -223,13 +233,15 @@ public class ReportController {
      *
      * @param id customer identifier
      * @return HTTP 200 with the customer's summary, zero-filled if it has no booked sales
-     * @throws EntityNotFoundException if no such customer exists
+     * @throws MissingEntityException if no such customer exists
      */
     @GetMapping("/customers/{id}/summary")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<CustomerSummary>> customerSummary(@PathVariable long id) {
         CustomerSummary summary = counterpartyReportingService.customerSummary(id)
-                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Customer with ID " + id + " not found.",
+                        ApiErrorCodes.CUSTOMER_NOT_FOUND, Map.of("id", String.valueOf(id))));
         return ResponseEntity.ok(new ApiResponse<>(true, "Customer summary fetched successfully", summary));
     }
 

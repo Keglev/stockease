@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.ProductService;
 import com.stocks.stockease.security.User;
@@ -71,7 +72,10 @@ class ProductDeleteControllerTest {
         mockMvc.perform(delete("/api/products/1").with(csrfToken()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Cannot delete. Product with ID 1 does not exist."));
+                // Was a third sentence for one situation; converged on the canonical one (ruling 4a).
+                .andExpect(jsonPath("$.message").value("Entity not found: Product with ID 1 not found."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.PRODUCT_NOT_FOUND))
+                .andExpect(jsonPath("$.params.id").value("1"));
 
         Mockito.verify(productService, Mockito.times(1)).deleteById(eq(1L), any(User.class));
     }

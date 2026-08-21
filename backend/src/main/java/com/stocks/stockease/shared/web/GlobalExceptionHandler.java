@@ -26,12 +26,14 @@ import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
 import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.InvoiceStateException;
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.shared.ProductDeletedException;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 
-// SIZE WAIVER (2026-08-07): 150 code lines vs the exception-advice alarm of >100. WAIVED: the
+// SIZE WAIVER (2026-08-07, refreshed 2026-08-21): 166 code lines (non-blank, non-comment) vs
+// the exception-advice alarm of >100. WAIVED: the
 // "status mapping only in GlobalExceptionHandler" rule concentrates status mapping here by design,
 // so the length is the rule working, not a missing split. Splitting would decentralize the one
 // concern the rule centralizes.
@@ -45,6 +47,14 @@ public class GlobalExceptionHandler {
     /**
      * Handles {@link NoSuchElementException} thrown by collection operations and returns a 404 Not Found response.
      *
+     * <p>No project throw site reaches this: {@code src/main} raises it nowhere, and the one bare
+     * {@code Optional.get()} in the codebase is guarded by an {@code isEmpty()} check above it. It
+     * stays as the library fallback - a collection or stream operation inside a library the
+     * application calls can still raise it, and 404 is still the honest status for "the thing you
+     * asked for is not there". Uncoded for the same reason the {@link EntityNotFoundException}
+     * handler below is: a failure the project did not name has no situation for a code to identify
+     * (#295's JDK-IllegalArgumentException precedent, ADR 041).
+     *
      * @param ex the caught exception
      * @return 404 response with error details
      */
@@ -55,10 +65,43 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles {@link EntityNotFoundException} from JPA queries on non-existent records and returns a 404 Not Found response.
+     * Handles {@link MissingEntityException} from the project's own not-found situations and returns
+     * a 404 Not Found carrying the situation code the exception names and the id its message quotes.
+     *
+     * <p>Seven situations over twenty-six throw sites - an unknown customer, invoice, invoice item,
+     * product, supplier or profit report, and a restore that found no soft-deleted product. They all
+     * answer 404 and read as one English sentence apiece, so the code is the only thing that tells a
+     * client which of them happened and what to say about it. Every one carries {@code id}.
+     *
+     * <p>Declared above the {@link EntityNotFoundException} handler and matched in preference to it:
+     * {@link MissingEntityException} is a subclass, and Spring dispatches to the most specific
+     * handler for the thrown type - the same arrangement {@link ProductDeletedException} has with
+     * {@link EntityInUseException}. The prefix is kept identical to the parent's, so the sentence on
+     * the wire does not change for any of the migrated sites (ADR 041, ruling 1a).
      *
      * @param ex the caught exception
-     * @return 404 response with error details
+     * @return 404 response with the not-found message, its situation code and its id
+     */
+    @ExceptionHandler(MissingEntityException.class)
+    public ResponseEntity<ApiResponse<String>> handleMissingEntityException(MissingEntityException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, "Entity not found: " + ex.getMessage(), null,
+                        ex.getCode(), ex.getParams()));
+    }
+
+    /**
+     * Handles {@link EntityNotFoundException} from JPA queries on non-existent records and returns a 404 Not Found response.
+     *
+     * <p>Every project throw site that used to land here now raises {@link MissingEntityException}
+     * instead, which the handler above answers with a code. What remains for this one is a not-found
+     * raised by JPA itself - a lazy reference resolved against a row that is gone, say - which the
+     * project did not name and has nothing specific to say about, so there is nothing for a code to
+     * identify. It stays because 404 is still the honest status; without it the same request would
+     * answer 500. Same split, and same reasoning, as the {@link IllegalArgumentException} handler
+     * kept beside {@link InvalidRequestException} in #295 (ADR 041).
+     *
+     * @param ex the caught exception
+     * @return 404 response with error details and no code
      */
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ApiResponse<String>> handleEntityNotFoundException(EntityNotFoundException ex) {
@@ -271,6 +314,12 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles {@link org.springframework.security.authentication.BadCredentialsException} for failed login attempts and returns a 401 Unauthorized response.
+     *
+     * <p>Nothing reaches it today: the only place the application authenticates is
+     * {@code AuthController.login}, which catches this exception inline and builds its own 401. It
+     * stays as defence in depth - a second authenticating surface that forgot to catch would answer
+     * 500 with a stack trace rather than 401 - and uncoded, because the sentence it produces is the
+     * one no operator reads anyway (see the pin at that catch, #300).
      *
      * @param ex the caught exception
      * @return 401 response with generic auth error

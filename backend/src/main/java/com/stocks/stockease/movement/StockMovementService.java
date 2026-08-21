@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.invoice.InvoiceItem;
 import com.stocks.stockease.invoice.InvoiceService;
 import com.stocks.stockease.invoice.InvoiceStatus;
@@ -20,7 +21,6 @@ import com.stocks.stockease.shared.InsufficientStockException;
 import com.stocks.stockease.shared.InvalidMovementException;
 import com.stocks.stockease.shared.ProductDeletedException;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -54,7 +54,7 @@ public class StockMovementService {
      * @return the persisted movement
      * @throws InvalidMovementException if a required field is missing, a field is supplied that the reason
      *         forbids, or the movement contradicts or duplicates its invoice item
-     * @throws EntityNotFoundException if the referenced invoice item or product does not exist
+     * @throws MissingEntityException if the referenced invoice item or product does not exist
      * @throws InsufficientStockException if the movement would drive the product's stock negative
      */
     @Transactional
@@ -153,8 +153,9 @@ public class StockMovementService {
     /** Loads the linked invoice item and checks it matches the movement's invoice type and product. */
     private InvoiceItem loadAndValidateItem(RecordMovementCommand command, MovementReason reason) {
         InvoiceItem item = invoiceService.findItemById(command.invoiceItemId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Invoice item with ID " + command.invoiceItemId() + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Invoice item with ID " + command.invoiceItemId() + " not found.",
+                        ApiErrorCodes.INVOICE_ITEM_NOT_FOUND, Map.of("id", String.valueOf(command.invoiceItemId()))));
         InvoiceType requiredType = reason == MovementReason.PURCHASE || reason == MovementReason.RETURNED_TO_SUPPLIER
                 ? InvoiceType.PURCHASE
                 : InvoiceType.SALE;

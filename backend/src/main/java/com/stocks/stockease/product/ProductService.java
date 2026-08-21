@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.ApiErrorCodes;
@@ -22,7 +23,6 @@ import com.stocks.stockease.shared.SearchLimits;
 import com.stocks.stockease.shared.SearchTerms;
 import com.stocks.stockease.shared.TokenSearchSpec;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -154,13 +154,15 @@ public class ProductService {
      * @param id product identifier
      * @param user user performing the restore
      * @return the restored product
-     * @throws EntityNotFoundException if no soft-deleted product exists with the given ID
+     * @throws MissingEntityException if no soft-deleted product exists with the given ID
      * @throws DuplicateResourceException if a live product already carries the same name or SKU
      */
     @Transactional
     public Product restore(long id, User user) {
         Product product = productRepository.findDeletedById(id)
-                .orElseThrow(() -> new EntityNotFoundException("No soft-deleted product with ID " + id + " found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "No soft-deleted product with ID " + id + " found.",
+                        ApiErrorCodes.SOFT_DELETED_PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(id))));
         // live rows only - @SQLRestriction scopes both exists queries; the partial unique indexes are the
         // concurrency backstop
         if (productRepository.existsByNameIgnoreCase(product.getName())) {
@@ -236,14 +238,16 @@ public class ProductService {
      * @param id product identifier
      * @param delta signed number of units to add to the current quantity
      * @return the updated product
-     * @throws EntityNotFoundException if no product exists with the given ID
+     * @throws MissingEntityException if no product exists with the given ID
      * @throws InsufficientStockException if the adjustment would drive the quantity below zero
      */
     @Transactional
     public Product adjustQuantity(long id, int delta) {
         // pessimistic lock serializes concurrent adjustments so the negative-stock check cannot race
         Product product = productRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Product with ID " + id + " not found.",
+                        ApiErrorCodes.PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(id))));
         int newQuantity = product.getQuantity() + delta;
         if (newQuantity < 0) {
             throw new InsufficientStockException("Adjustment of " + delta + " would result in negative stock for product "
@@ -260,12 +264,14 @@ public class ProductService {
      * @param purchasePrice new purchase price
      * @param user user making the change
      * @return the updated product
-     * @throws EntityNotFoundException if no product exists with the given ID
+     * @throws MissingEntityException if no product exists with the given ID
      */
     @Transactional
     public Product updatePrice(long id, BigDecimal purchasePrice, User user) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Product with ID " + id + " not found.",
+                        ApiErrorCodes.PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(id))));
         BigDecimal oldPrice = product.getPurchasePrice();
         product.setPurchasePrice(purchasePrice);
         Product saved = productRepository.save(product);
@@ -285,13 +291,15 @@ public class ProductService {
      * @param name new name; must not duplicate another live product's name, ignoring case
      * @param user user making the change
      * @return the updated product
-     * @throws EntityNotFoundException if no product exists with the given ID
+     * @throws MissingEntityException if no product exists with the given ID
      * @throws DuplicateResourceException if a different live product already carries that name
      */
     @Transactional
     public Product updateName(long id, String name, User user) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Product with ID " + id + " not found.",
+                        ApiErrorCodes.PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(id))));
         // excluding this product's own row is what lets a rename fix only the capitalization of its own name
         if (productRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
             throw new DuplicateResourceException("A product named '" + name + "' already exists.",

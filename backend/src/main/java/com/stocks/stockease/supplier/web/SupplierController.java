@@ -1,5 +1,7 @@
 package com.stocks.stockease.supplier.web;
 
+import java.util.Map;
+
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -14,11 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.shared.ApiResponse;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -69,13 +72,15 @@ public class SupplierController {
      *
      * @param id supplier identifier
      * @return HTTP 200 with the supplier
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<SupplierResponse>> getSupplierById(@PathVariable long id) {
         Supplier supplier = supplierService.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Supplier with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Supplier with ID " + id + " not found.",
+                        ApiErrorCodes.SUPPLIER_NOT_FOUND, Map.of("id", String.valueOf(id))));
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Supplier fetched successfully", SupplierResponse.from(supplier)));
     }
@@ -100,7 +105,7 @@ public class SupplierController {
      * @param id supplier identifier
      * @param request new supplier fields (name, address)
      * @return HTTP 200 with the updated supplier
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -117,7 +122,7 @@ public class SupplierController {
      *
      * @param id supplier identifier to delete
      * @return HTTP 200 on success
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

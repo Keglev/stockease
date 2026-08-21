@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
@@ -130,8 +131,12 @@ class SupplierServiceTest {
         when(supplierRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> supplierService.update(1L, "Acme", null, null, "1 Main St", null))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("Supplier with ID 1 not found.");
+                // The subtype, not the parent: the parent still answers uncoded for a not-found JPA
+                // raises, and asserting it here would pass whether or not this site was migrated.
+                .isInstanceOf(MissingEntityException.class)
+                .hasMessage("Supplier with ID 1 not found.")
+                .extracting(thrown -> ((MissingEntityException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SUPPLIER_NOT_FOUND);
     }
 
     @Test

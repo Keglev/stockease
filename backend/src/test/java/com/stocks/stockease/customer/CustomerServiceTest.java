@@ -18,6 +18,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import com.stocks.stockease.shared.MissingEntityException;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.customer.internal.CustomerRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -121,8 +123,12 @@ class CustomerServiceTest {
         when(customerRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> customerService.update(1L, "Jane Roe", null, null, null, null))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("Customer with ID 1 not found.");
+                // The subtype, not the parent: the parent still answers uncoded for a not-found JPA
+                // raises, and asserting it here would pass whether or not this site was migrated.
+                .isInstanceOf(MissingEntityException.class)
+                .hasMessage("Customer with ID 1 not found.")
+                .extracting(thrown -> ((MissingEntityException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.CUSTOMER_NOT_FOUND);
         verify(customerRepository, never()).save(any(Customer.class));
     }
 
