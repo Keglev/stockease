@@ -1,5 +1,7 @@
 package com.stocks.stockease.supplier;
 
+import java.util.Map;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -7,6 +9,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.SearchLimits;
@@ -14,7 +17,6 @@ import com.stocks.stockease.shared.SearchTerms;
 import com.stocks.stockease.shared.TokenSearchSpec;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -105,13 +107,15 @@ public class SupplierService {
      * @param address new postal address; must not be blank
      * @param city new city, may be {@code null} to clear it
      * @return the updated supplier
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      * @throws InvalidRequestException if name or address is missing or blank
      */
     @Transactional
     public Supplier update(long id, String name, String email, String phone, String address, String city) {
         Supplier supplier = supplierRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Supplier with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Supplier with ID " + id + " not found.",
+                        ApiErrorCodes.SUPPLIER_NOT_FOUND, Map.of("id", String.valueOf(id))));
         requireNameAndAddress(name, address);
         supplier.setName(name);
         supplier.setEmail(email);
@@ -125,14 +129,16 @@ public class SupplierService {
      * Soft-deletes a supplier, unless a listener vetoes the deletion.
      *
      * @param id supplier identifier
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      * @throws com.stocks.stockease.shared.EntityInUseException if a listener vetoes the deletion, for
      *         instance because open invoices still reference the supplier
      */
     @Transactional
     public void deleteById(long id) {
         Supplier supplier = supplierRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Supplier with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Supplier with ID " + id + " not found.",
+                        ApiErrorCodes.SUPPLIER_NOT_FOUND, Map.of("id", String.valueOf(id))));
         // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
         // rolls back the transaction
         eventPublisher.publishEvent(new SupplierDeletedEvent(supplier.getId(), supplier.getName()));

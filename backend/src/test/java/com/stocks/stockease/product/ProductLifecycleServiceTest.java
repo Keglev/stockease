@@ -17,6 +17,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.stocks.stockease.shared.MissingEntityException;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.DuplicateResourceException;
@@ -178,7 +180,11 @@ class ProductLifecycleServiceTest {
         when(productRepository.findDeletedById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.restore(1L, user))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("No soft-deleted product with ID 1 found.");
+                // The subtype, not the parent: the parent still answers uncoded for a not-found JPA
+                // raises, and asserting it here would pass whether or not this site was migrated.
+                .isInstanceOf(MissingEntityException.class)
+                .hasMessage("No soft-deleted product with ID 1 found.")
+                .extracting(thrown -> ((MissingEntityException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.SOFT_DELETED_PRODUCT_NOT_FOUND);
     }
 }

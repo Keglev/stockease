@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.ApiResponse;
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.shared.PaginatedResponse;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
@@ -123,11 +125,16 @@ public class ProductController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<ProductResponse>> getProductById(@PathVariable long id) {
-        return productService.findById(id)
-                .map(product -> ResponseEntity.ok(
-                        new ApiResponse<>(true, "Product fetched successfully", ProductResponse.from(product))))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(false, "The product with ID " + id + " does not exist.", null)));
+        // orElseThrow rather than the inline 404 this used to build: the sentence it wrote was its
+        // own ("The product with ID 7 does not exist."), so the same situation read two ways
+        // depending on which endpoint you hit. It now raises the family's exception and answers the
+        // canonical sentence with PRODUCT_NOT_FOUND, like every other product lookup (ruling 4a).
+        Product product = productService.findById(id)
+                .orElseThrow(() -> new MissingEntityException(
+                        "Product with ID " + id + " not found.",
+                        ApiErrorCodes.PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(id))));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Product fetched successfully", ProductResponse.from(product)));
     }
 
     /**
@@ -163,8 +170,12 @@ public class ProductController {
     public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable long id, Principal principal) {
         log.info("Entering deleteProduct method with ID: {}", id);
         if (!productService.deleteById(id, currentUser(principal))) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, "Cannot delete. Product with ID " + id + " does not exist.", null));
+            // Same convergence as the fetch above: the inline sentence here was a third form of the
+            // one situation ("Cannot delete. Product with ID 7 does not exist."). One situation, one
+            // sentence, one code (ruling 4a).
+            throw new MissingEntityException(
+                    "Product with ID " + id + " not found.",
+                    ApiErrorCodes.PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(id)));
         }
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Product with ID " + id + " has been successfully deleted.", null)

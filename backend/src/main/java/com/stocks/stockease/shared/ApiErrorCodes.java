@@ -453,6 +453,97 @@ public final class ApiErrorCodes {
      */
     public static final String VALIDATION_FAILED = "VALIDATION_FAILED";
 
+    /**
+     * A request named a customer id no customer row carries. The operator picked a stale bookmark
+     * or a row somebody else deleted, and the remedy is to go back to the list.
+     *
+     * <p>Sentence: {@code "Customer with ID <id> not found."} Carries {@code id}.
+     *
+     * <p>Five throw sites over one situation: {@code CustomerService.update} and
+     * {@code CustomerService.delete}, {@code CustomerController.getCustomerById},
+     * {@code InvoiceService} when a sale invoice names its customer, and
+     * {@code ReportController.customerSummary}. All five answer with a byte-identical sentence and
+     * a client would have nothing different to say about them (ruling R48).
+     */
+    public static final String CUSTOMER_NOT_FOUND = "CUSTOMER_NOT_FOUND";
+
+    /**
+     * A request named an invoice id no invoice row carries.
+     *
+     * <p>Sentence: {@code "Invoice with ID <id> not found."} Carries {@code id}.
+     *
+     * <p>Four throw sites: {@code InvoiceService.close}, {@code InvoiceService.markPaid} and
+     * {@code InvoiceService.delete}, plus {@code InvoiceController.getInvoiceById}. One situation,
+     * one sentence (R48).
+     */
+    public static final String INVOICE_NOT_FOUND = "INVOICE_NOT_FOUND";
+
+    /**
+     * A request named an invoice-item id no line carries. Distinct from the invoice above: the
+     * document may well exist while the line inside it does not.
+     *
+     * <p>Sentence: {@code "Invoice item with ID <id> not found."} Carries {@code id}.
+     *
+     * <p>Two throw sites in two modules - {@code InvoiceService.registerReturn} and
+     * {@code StockMovementService.loadAndValidateItem}. The modules share no code by design and
+     * look the line up independently, but they raise the same situation with a byte-identical
+     * sentence, so one code serves both surfaces (ruling R48).
+     */
+    public static final String INVOICE_ITEM_NOT_FOUND = "INVOICE_ITEM_NOT_FOUND";
+
+    /**
+     * A request named a product id no live product row carries.
+     *
+     * <p>Sentence: {@code "Product with ID <id> not found."} Carries {@code id}.
+     *
+     * <p>Six throw sites, the largest member of the family: {@code ProductService.updateName},
+     * {@code ProductService.updatePrice} and {@code ProductService.adjustQuantity},
+     * {@code InvoiceService.buildItem} when a line names its product,
+     * {@code ReportController.profitProductDetail} and {@code ReportController.stockHistory}.
+     *
+     * <p>Two further sites answer with this code and this sentence after ADR 041's not-found pass:
+     * {@code ProductController.getProductById} and {@code ProductController.deleteProduct}, which
+     * used to build their own 404 inline with sentences of their own ("The product with ID 7 does
+     * not exist.", "Cannot delete. Product with ID 7 does not exist."). Those two sentences are
+     * gone; the endpoints now answer the canonical one, which is the only wire text this family's
+     * coding changed (ruling 4a).
+     */
+    public static final String PRODUCT_NOT_FOUND = "PRODUCT_NOT_FOUND";
+
+    /**
+     * A restore named an id that is not a soft-deleted product. Deliberately distinct from
+     * {@link #PRODUCT_NOT_FOUND}: the operator is looking in the recycle bin, and "no product" and
+     * "no deleted product" send them to different places - the second means it may well be live.
+     *
+     * <p>Sentence: {@code "No soft-deleted product with ID <id> found."} Carries {@code id}.
+     *
+     * <p>One throw site: {@code ProductService.restoreById}.
+     */
+    public static final String SOFT_DELETED_PRODUCT_NOT_FOUND = "SOFT_DELETED_PRODUCT_NOT_FOUND";
+
+    /**
+     * A request named a supplier id no supplier row carries.
+     *
+     * <p>Sentence: {@code "Supplier with ID <id> not found."} Carries {@code id}.
+     *
+     * <p>Five throw sites: {@code SupplierService.update} and {@code SupplierService.delete},
+     * {@code SupplierController.getSupplierById}, {@code InvoiceService} when a purchase invoice
+     * names its supplier, and {@code ReportController.supplierSummary}. One situation (R48).
+     */
+    public static final String SUPPLIER_NOT_FOUND = "SUPPLIER_NOT_FOUND";
+
+    /**
+     * A profit report was asked for a product that has none. Distinct from
+     * {@link #PRODUCT_NOT_FOUND} because the product may exist perfectly well and simply have no
+     * sales in the period - the operator changes the period, not the product.
+     *
+     * <p>Sentence: {@code "No profit report for product with ID <id>."} Carries {@code id}.
+     *
+     * <p>One throw site: {@code ReportController.profitProductDetail}, on the report lookup rather
+     * than on the product lookup beside it.
+     */
+    public static final String PROFIT_REPORT_NOT_FOUND = "PROFIT_REPORT_NOT_FOUND";
+
     private ApiErrorCodes() {
     }
 }

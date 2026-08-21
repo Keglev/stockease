@@ -1,5 +1,7 @@
 package com.stocks.stockease.customer.web;
 
+import java.util.Map;
+
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -13,11 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.customer.Customer;
 import com.stocks.stockease.customer.CustomerService;
 import com.stocks.stockease.shared.ApiResponse;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -50,13 +53,15 @@ public class CustomerController {
      *
      * @param id customer identifier
      * @return HTTP 200 with the customer
-     * @throws EntityNotFoundException if no customer exists with the given ID
+     * @throws MissingEntityException if no customer exists with the given ID
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<CustomerResponse>> getCustomerById(@PathVariable long id) {
         Customer customer = customerService.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Customer with ID " + id + " not found.",
+                        ApiErrorCodes.CUSTOMER_NOT_FOUND, Map.of("id", String.valueOf(id))));
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Customer fetched successfully", CustomerResponse.from(customer)));
     }
@@ -81,7 +86,7 @@ public class CustomerController {
      * @param id customer identifier
      * @param request new customer fields (name, email, phone, address, city)
      * @return HTTP 200 with the updated customer
-     * @throws EntityNotFoundException if no customer exists with the given ID
+     * @throws MissingEntityException if no customer exists with the given ID
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -98,7 +103,7 @@ public class CustomerController {
      *
      * @param id customer identifier to delete
      * @return HTTP 200 on success
-     * @throws EntityNotFoundException if no customer exists with the given ID
+     * @throws MissingEntityException if no customer exists with the given ID
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

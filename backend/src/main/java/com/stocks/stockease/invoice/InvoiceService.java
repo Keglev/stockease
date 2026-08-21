@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.customer.Customer;
 import com.stocks.stockease.customer.CustomerService;
 import com.stocks.stockease.invoice.internal.InvoiceItemRepository;
@@ -26,7 +27,6 @@ import com.stocks.stockease.shared.InvoiceStateException;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -110,7 +110,7 @@ public class InvoiceService {
      * @return the persisted invoice including its generated ID and items
      * @throws InvalidRequestException if a required field is missing, the counterparty does not match the
      *         invoice type, or a line has a non-positive quantity or unit price
-     * @throws EntityNotFoundException if the supplier, customer or any product does not exist
+     * @throws MissingEntityException if the supplier, customer or any product does not exist
      */
     @Transactional
     public Invoice createInvoice(CreateInvoiceCommand command) {
@@ -162,8 +162,9 @@ public class InvoiceService {
                         ApiErrorCodes.PURCHASE_INVOICE_PARTY_MISMATCH, null);
             }
             Supplier supplier = supplierService.findById(command.supplierId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Supplier with ID " + command.supplierId() + " not found."));
+                    .orElseThrow(() -> new MissingEntityException(
+                            "Supplier with ID " + command.supplierId() + " not found.",
+                            ApiErrorCodes.SUPPLIER_NOT_FOUND, Map.of("id", String.valueOf(command.supplierId()))));
             invoice.setSupplier(supplier);
             // The snapshot is taken here and nowhere else: this is the moment the document names its
             // party, and an invoice is immutable afterwards (ADR 033).
@@ -177,8 +178,9 @@ public class InvoiceService {
         }
         if (command.customerId() != null) {
             Customer customer = customerService.findById(command.customerId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Customer with ID " + command.customerId() + " not found."));
+                    .orElseThrow(() -> new MissingEntityException(
+                            "Customer with ID " + command.customerId() + " not found.",
+                            ApiErrorCodes.CUSTOMER_NOT_FOUND, Map.of("id", String.valueOf(command.customerId()))));
             invoice.setCustomer(customer);
             invoice.setCustomerName(customer.getName());
             invoice.setCustomerId(customer.getId());
@@ -196,8 +198,9 @@ public class InvoiceService {
                     ApiErrorCodes.ITEM_UNIT_PRICE_NOT_POSITIVE, null);
         }
         Product product = productService.findById(line.productId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Product with ID " + line.productId() + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Product with ID " + line.productId() + " not found.",
+                        ApiErrorCodes.PRODUCT_NOT_FOUND, Map.of("id", String.valueOf(line.productId()))));
 
         InvoiceItem item = new InvoiceItem();
         item.setInvoice(invoice);
@@ -222,13 +225,15 @@ public class InvoiceService {
      * @param invoiceId invoice identifier
      * @param user user closing the invoice
      * @return the closed invoice
-     * @throws EntityNotFoundException if no invoice exists with the given ID
+     * @throws MissingEntityException if no invoice exists with the given ID
      * @throws InvoiceStateException if the invoice is not open, or if booking its stock movements fails
      */
     @Transactional
     public Invoice close(long invoiceId, User user) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Invoice with ID " + invoiceId + " not found.",
+                        ApiErrorCodes.INVOICE_NOT_FOUND, Map.of("id", String.valueOf(invoiceId))));
         if (invoice.getStatus() != InvoiceStatus.OPEN) {
             throw new InvoiceStateException("Only open invoices can be closed.",
                     ApiErrorCodes.INVOICE_NOT_OPEN_FOR_CLOSE, null);
@@ -280,7 +285,7 @@ public class InvoiceService {
      * @param itemId invoice item identifier
      * @param quantity number of units being returned; must be positive
      * @return the updated invoice item
-     * @throws EntityNotFoundException if no invoice item exists with the given ID
+     * @throws MissingEntityException if no invoice item exists with the given ID
      * @throws InvalidRequestException if {@code quantity} is not positive
      * @throws InvoiceStateException if the invoice is still open, or if the return would exceed the item's
      *         remaining returnable quantity
@@ -288,7 +293,9 @@ public class InvoiceService {
     @Transactional
     public InvoiceItem registerReturn(long itemId, int quantity) {
         InvoiceItem item = invoiceItemRepository.findById(itemId)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice item with ID " + itemId + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Invoice item with ID " + itemId + " not found.",
+                        ApiErrorCodes.INVOICE_ITEM_NOT_FOUND, Map.of("id", String.valueOf(itemId))));
         if (item.getInvoice().getStatus() == InvoiceStatus.OPEN) {
             throw new InvoiceStateException("Returns require a closed invoice.",
                     ApiErrorCodes.RETURN_REQUIRES_CLOSED_INVOICE, null);
@@ -328,13 +335,15 @@ public class InvoiceService {
      *
      * @param invoiceId invoice identifier
      * @return the paid invoice
-     * @throws EntityNotFoundException if no invoice exists with the given ID
+     * @throws MissingEntityException if no invoice exists with the given ID
      * @throws InvoiceStateException if the invoice is already marked as paid
      */
     @Transactional
     public Invoice markAsPaid(long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Invoice with ID " + invoiceId + " not found.",
+                        ApiErrorCodes.INVOICE_NOT_FOUND, Map.of("id", String.valueOf(invoiceId))));
         if (invoice.getPaidAt() != null) {
             throw new InvoiceStateException("Invoice is already marked as paid.",
                     ApiErrorCodes.INVOICE_ALREADY_PAID, null);
@@ -347,13 +356,15 @@ public class InvoiceService {
      * Deletes an open invoice; the entity's soft-delete mapping applies.
      *
      * @param invoiceId invoice identifier
-     * @throws EntityNotFoundException if no invoice exists with the given ID
+     * @throws MissingEntityException if no invoice exists with the given ID
      * @throws InvoiceStateException if the invoice is not open
      */
     @Transactional
     public void deleteById(long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Invoice with ID " + invoiceId + " not found.",
+                        ApiErrorCodes.INVOICE_NOT_FOUND, Map.of("id", String.valueOf(invoiceId))));
         if (invoice.getStatus() != InvoiceStatus.OPEN) {
             throw new InvoiceStateException("Only open invoices can be deleted.",
                     ApiErrorCodes.INVOICE_NOT_OPEN_FOR_DELETE, null);

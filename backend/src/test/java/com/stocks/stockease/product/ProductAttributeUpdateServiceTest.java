@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import com.stocks.stockease.shared.MissingEntityException;
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.DuplicateResourceException;
@@ -108,8 +110,12 @@ class ProductAttributeUpdateServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.updatePrice(1L, BigDecimal.TEN, user))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("Product with ID 1 not found.");
+                // The subtype, not the parent: the parent still answers uncoded for a not-found JPA
+                // raises, and asserting it here would pass whether or not this site was migrated.
+                .isInstanceOf(MissingEntityException.class)
+                .hasMessage("Product with ID 1 not found.")
+                .extracting(thrown -> ((MissingEntityException) thrown).getCode())
+                .isEqualTo(ApiErrorCodes.PRODUCT_NOT_FOUND);
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.stocks.stockease.invoice.web;
 
+import java.util.Map;
+
 import java.security.Principal;
 import java.util.List;
 
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.invoice.Invoice;
 import com.stocks.stockease.invoice.InvoiceService;
 import com.stocks.stockease.security.User;
@@ -25,7 +29,6 @@ import com.stocks.stockease.security.UserService;
 import com.stocks.stockease.shared.ApiResponse;
 import com.stocks.stockease.shared.PaginatedResponse;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -92,13 +95,15 @@ public class InvoiceController {
      *
      * @param id invoice identifier
      * @return HTTP 200 with the invoice detail
-     * @throws EntityNotFoundException if no invoice exists with the given ID
+     * @throws MissingEntityException if no invoice exists with the given ID
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<InvoiceResponse>> getInvoiceById(@PathVariable long id) {
         Invoice invoice = invoiceService.findDetailById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Invoice with ID " + id + " not found.",
+                        ApiErrorCodes.INVOICE_NOT_FOUND, Map.of("id", String.valueOf(id))));
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Invoice fetched successfully", InvoiceResponse.from(invoice)));
     }

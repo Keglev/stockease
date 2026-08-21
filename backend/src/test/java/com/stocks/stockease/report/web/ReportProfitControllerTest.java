@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.report.ProductProfitReport;
 import com.stocks.stockease.report.CashFlowReportingService;
@@ -146,7 +147,11 @@ class ReportProfitControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message")
-                        .value("Entity not found: No profit report for product with ID 9."));
+                        .value("Entity not found: No profit report for product with ID 9."))
+                // The controller is this code's only throw site, so the slice is where the
+                // situation is pinned rather than a service test.
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.PROFIT_REPORT_NOT_FOUND))
+                .andExpect(jsonPath("$.params.id").value("9"));
     }
 
     @Test

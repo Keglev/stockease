@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.config.test.TestConfig;
 import com.stocks.stockease.product.Product;
 import com.stocks.stockease.product.ProductService;
@@ -105,7 +106,11 @@ class ProductFetchControllerTest {
         mockMvc.perform(get("/api/products/999").with(userWithRole(username, role)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("The product with ID 999 does not exist."))
+                // The endpoint built this 404 itself and wrote its own sentence; it now raises the
+                // family's exception and answers the canonical one, coded (ruling 4a).
+                .andExpect(jsonPath("$.message").value("Entity not found: Product with ID 999 not found."))
+                .andExpect(jsonPath("$.code").value(ApiErrorCodes.PRODUCT_NOT_FOUND))
+                .andExpect(jsonPath("$.params.id").value("999"))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 

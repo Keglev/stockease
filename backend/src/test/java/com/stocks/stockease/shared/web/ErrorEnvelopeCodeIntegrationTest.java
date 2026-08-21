@@ -81,29 +81,6 @@ class ErrorEnvelopeCodeIntegrationTest extends AbstractIntegrationTest {
         admin = fixtures.admin;
     }
 
-    @Test
-    @WithMockUser(username = TESTER, roles = {"ADMIN"})
-    void getInvoice_unknownId_answers404WithNoCodeFieldAtAll() throws Exception {
-        // The claim is about envelope serialization, not about this status: an optional field must be
-        // an absent key rather than a present null, and data must still serialize as null beside it.
-        // Pinned on a not-found rather than on a conflict because no planned ADR 041 family covers
-        // EntityNotFound, so this guard never has to move again - where the 409 families are being
-        // coded one phase at a time, and this test had to move once already when its old target
-        // gained a code.
-        String body = mockMvc.perform(get("/api/invoices/999999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.data").value(nullValue()))
-                .andReturn().getResponse().getContentAsString();
-
-        // Asserted on the raw JSON, not through jsonPath: a path assertion cannot tell an absent key
-        // from one present with a null value, and that distinction is exactly what is being claimed.
-        // data is null and still serialized, so this also shows the omission is the field's own
-        // @JsonInclude and not a global null-stripping rule that would have changed every response.
-        assertThat(body).doesNotContain("code").contains("\"data\":null");
-    }
-
     private String productBody(String name, String sku) {
         return """
                 {"name":"%s","sku":"%s","purchasePrice":10.0}""".formatted(name, sku);
@@ -190,18 +167,6 @@ class ErrorEnvelopeCodeIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.message").value("An invoice numbered '" + number + "' already exists."))
                 .andExpect(jsonPath("$.code").value(ApiErrorCodes.DUPLICATE_INVOICE_NUMBER))
                 .andExpect(jsonPath("$.params.invoiceNumber").value(number));
-    }
-
-    @Test
-    @WithMockUser(username = TESTER, roles = {"ADMIN"})
-    void getInvoice_unknownId_answers404WithNoParamsFieldAtAll() throws Exception {
-        // The same serialization claim for the second optional field, on the same deliberately
-        // uncoded situation: params rides with a code and this failure has none.
-        String body = mockMvc.perform(get("/api/invoices/999999"))
-                .andExpect(status().isNotFound())
-                .andReturn().getResponse().getContentAsString();
-
-        assertThat(body).doesNotContain("params");
     }
 
     @Test

@@ -166,4 +166,57 @@ class DemoLoginIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Demo role must be ADMIN or USER."));
     }
+
+    /*
+     * The two envelope-serialization guards (R42), riding this refusal.
+     *
+     * The claim is about how the envelope serializes an optional field, not about this endpoint: an
+     * absent code must be an absent key rather than a key present with null, and the same for
+     * params, while data must still serialize as null beside them. Any uncoded failure can carry
+     * the claim; what it needs is a target that stays uncoded.
+     *
+     * This is their second seat. They rode the invoice unknown-id 404 until ADR 041 coded the
+     * not-found family, on the reasoning that no planned family covered it - which held until this
+     * one did. The demo role refusal is the new target: the demo module is not part of the
+     * application an operator uses, and its sentences are prose for a caller hitting the API
+     * directly rather than text a screen renders.
+     *
+     * The standing cost, stated rather than assumed: should the demo module ever be coded too,
+     * these two move a third time. That is the price of pinning a serialization claim to a live
+     * refusal instead of to a fabricated one, and it is paid knowingly.
+     *
+     * They live here rather than beside their ErrorEnvelope siblings because the demo controllers
+     * are only registered when app.demo.enabled is true, which the shared test profile leaves
+     * false. Enabling it on the sibling class would fork it away from the context its three
+     * siblings share; this class already pays for a demo-enabled context, so the guards ride it.
+     */
+    @Test
+    void login_unknownRole_answers400WithNoCodeFieldAtAll() throws Exception {
+        String body = mockMvc.perform(post("/api/demo/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"NOPE\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").exists())
+                .andReturn().getResponse().getContentAsString();
+
+        // Asserted on the raw JSON, not through jsonPath: a path assertion cannot tell an absent key
+        // from one present with a null value, and that distinction is exactly what is being claimed.
+        // data is null and still serialized, so this also shows the omission is the field's own
+        // @JsonInclude and not a global null-stripping rule that would have changed every response.
+        assertThat(body).doesNotContain("code").contains("\"data\":null");
+    }
+
+    @Test
+    void login_unknownRole_answers400WithNoParamsFieldAtAll() throws Exception {
+        // The same serialization claim for the second optional field: params rides with a code and
+        // this failure has none.
+        String body = mockMvc.perform(post("/api/demo/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"NOPE\"}"))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(body).doesNotContain("params");
+    }
 }

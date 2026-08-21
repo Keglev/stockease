@@ -1,5 +1,7 @@
 package com.stocks.stockease.customer;
 
+import java.util.Map;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -7,9 +9,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.customer.internal.CustomerRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -85,12 +88,14 @@ public class CustomerService {
      * @param address new postal address, may be {@code null} to clear it
      * @param city new city, may be {@code null} to clear it
      * @return the updated customer
-     * @throws EntityNotFoundException if no customer exists with the given ID
+     * @throws MissingEntityException if no customer exists with the given ID
      */
     @Transactional
     public Customer update(long id, String name, String email, String phone, String address, String city) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Customer with ID " + id + " not found.",
+                        ApiErrorCodes.CUSTOMER_NOT_FOUND, Map.of("id", String.valueOf(id))));
         customer.setName(name);
         customer.setEmail(email);
         customer.setPhone(phone);
@@ -103,14 +108,16 @@ public class CustomerService {
      * Soft-deletes a customer, unless a listener vetoes the deletion.
      *
      * @param id customer identifier
-     * @throws EntityNotFoundException if no customer exists with the given ID
+     * @throws MissingEntityException if no customer exists with the given ID
      * @throws com.stocks.stockease.shared.EntityInUseException if a listener vetoes the deletion, for
      *         instance because open invoices still reference the customer
      */
     @Transactional
     public void deleteById(long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + id + " not found."));
+                .orElseThrow(() -> new MissingEntityException(
+                        "Customer with ID " + id + " not found.",
+                        ApiErrorCodes.CUSTOMER_NOT_FOUND, Map.of("id", String.valueOf(id))));
         // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
         // rolls back the transaction
         eventPublisher.publishEvent(new CustomerDeletedEvent(customer.getId(), customer.getName()));
