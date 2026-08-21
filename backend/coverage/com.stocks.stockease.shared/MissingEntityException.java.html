@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MissingEntityException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.shared</a> &gt; <span class="el_source">MissingEntityException.java</span></div><h1>MissingEntityException.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.shared;
+
+import java.util.Map;
+
+import jakarta.persistence.EntityNotFoundException;
+
+/**
+ * Thrown when a request names a record that is not there.
+ * The family covers seven situations - an unknown customer, invoice, invoice item, product,
+ * supplier or profit report, and a restore that found no soft-deleted product - which answer 404
+ * and differ only in what the operator was looking for.
+ *
+ * &lt;p&gt;Every instance names its situation with a code from {@link ApiErrorCodes}, and every code in
+ * this family carries the same single param: {@code id}, the identifier the caller asked for and
+ * the one value each sentence interpolates. A client that renders these in the reader's language
+ * needs it, because the id is the only part of the sentence that is not fixed prose.
+ *
+ * &lt;p&gt;A subclass of {@link EntityNotFoundException} rather than a sibling of it, which is the whole
+ * point of the type. The parent stays exactly what it was - the honest uncoded fallback for a
+ * not-found raised by JPA itself, where there is no situation of ours to name - and the handler
+ * for it stays too. Because this is a subclass, Spring dispatches an instance of it to the more
+ * specific handler and gets the code, while every existing assertion written against the parent
+ * type remains true: a test asserting {@code isInstanceOf(EntityNotFoundException.class)} still
+ * passes, because an instance of this type is one. Nothing had to be rewritten to be told apart.
+ *
+ * &lt;p&gt;Same shape as the other coded families - {@link InvalidRequestException},
+ * {@link EntityInUseException} - down to the constructor and the transient params. There is
+ * deliberately no message-only constructor: an uncoded member would be indistinguishable on the
+ * wire from a not-found JPA raised, which is the one distinction this type exists to make
+ * (ADR 041).
+ */
+public class MissingEntityException extends EntityNotFoundException {
+
+    private final String code;
+
+    private final transient Map&lt;String, String&gt; params;
+
+    /**
+     * Creates the exception with a message naming what was not found, the code naming its
+     * situation, and the values that message interpolates.
+     *
+     * @param message human-readable description of what is missing
+     * @param code situation identifier from {@link ApiErrorCodes}
+     * @param params values the message interpolates, keyed by name; every situation in this family
+     *        carries {@code id}
+     */
+    public MissingEntityException(String message, String code, Map&lt;String, String&gt; params) {
+<span class="fc" id="L48">        super(message);</span>
+<span class="fc" id="L49">        this.code = code;</span>
+        // Stored as null when empty: an empty params is a wire shape nothing should emit, and
+        // collapsing it here keeps params omitted from the JSON exactly as an absent code is.
+<span class="pc bpc" id="L52" title="2 of 4 branches missed.">        this.params = params == null || params.isEmpty() ? null : Map.copyOf(params);</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Returns the situation identifier the envelope carries.
+     *
+     * @return code from {@link ApiErrorCodes}
+     */
+    public String getCode() {
+<span class="fc" id="L61">        return code;</span>
+    }
+
+    /**
+     * Returns the values the message interpolates, or {@code null} when there are none.
+     *
+     * @return unmodifiable params map, or {@code null}
+     */
+    public Map&lt;String, String&gt; getParams() {
+<span class="fc" id="L70">        return params;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

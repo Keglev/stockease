@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SupplierController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.supplier.web</a> &gt; <span class="el_source">SupplierController.java</span></div><h1>SupplierController.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.supplier.web;
 
+import java.util.Map;
+
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -14,11 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.shared.ApiResponse;
 import com.stocks.stockease.supplier.Supplier;
 import com.stocks.stockease.supplier.SupplierService;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -43,7 +46,7 @@ public class SupplierController {
     @GetMapping
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;SupplierResponse&gt; getAllSuppliers() {
-<span class="fc" id="L46">        return supplierService.findAll().stream().map(SupplierResponse::from).toList();</span>
+<span class="fc" id="L49">        return supplierService.findAll().stream().map(SupplierResponse::from).toList();</span>
     }
 
     /**
@@ -61,7 +64,7 @@ public class SupplierController {
     @GetMapping(&quot;/search&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public List&lt;SupplierResponse&gt; searchSuppliersByName(@RequestParam String name) {
-<span class="fc" id="L64">        return supplierService.searchByName(name).stream().map(SupplierResponse::from).toList();</span>
+<span class="fc" id="L67">        return supplierService.searchByName(name).stream().map(SupplierResponse::from).toList();</span>
     }
 
     /**
@@ -69,15 +72,17 @@ public class SupplierController {
      *
      * @param id supplier identifier
      * @return HTTP 200 with the supplier
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      */
     @GetMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;SupplierResponse&gt;&gt; getSupplierById(@PathVariable long id) {
-<span class="fc" id="L77">        Supplier supplier = supplierService.findById(id)</span>
-<span class="fc" id="L78">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L79">        return ResponseEntity.ok(</span>
-<span class="fc" id="L80">                new ApiResponse&lt;&gt;(true, &quot;Supplier fetched successfully&quot;, SupplierResponse.from(supplier)));</span>
+<span class="fc" id="L80">        Supplier supplier = supplierService.findById(id)</span>
+<span class="fc" id="L81">                .orElseThrow(() -&gt; new MissingEntityException(</span>
+                        &quot;Supplier with ID &quot; + id + &quot; not found.&quot;,
+<span class="fc" id="L83">                        ApiErrorCodes.SUPPLIER_NOT_FOUND, Map.of(&quot;id&quot;, String.valueOf(id))));</span>
+<span class="fc" id="L84">        return ResponseEntity.ok(</span>
+<span class="fc" id="L85">                new ApiResponse&lt;&gt;(true, &quot;Supplier fetched successfully&quot;, SupplierResponse.from(supplier)));</span>
     }
 
     /**
@@ -89,9 +94,9 @@ public class SupplierController {
     @PostMapping
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;SupplierResponse&gt; createSupplier(@Valid @RequestBody CreateSupplierRequest request) {
-<span class="fc" id="L92">        Supplier saved = supplierService.create(request.name(), request.email(), request.phone(),</span>
-<span class="fc" id="L93">                request.address(), request.city());</span>
-<span class="fc" id="L94">        return ResponseEntity.ok(SupplierResponse.from(saved));</span>
+<span class="fc" id="L97">        Supplier saved = supplierService.create(request.name(), request.email(), request.phone(),</span>
+<span class="fc" id="L98">                request.address(), request.city());</span>
+<span class="fc" id="L99">        return ResponseEntity.ok(SupplierResponse.from(saved));</span>
     }
 
     /**
@@ -100,16 +105,16 @@ public class SupplierController {
      * @param id supplier identifier
      * @param request new supplier fields (name, address)
      * @return HTTP 200 with the updated supplier
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      */
     @PutMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasAnyRole('ADMIN', 'USER')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;SupplierResponse&gt;&gt; updateSupplier(@PathVariable long id,
             @Valid @RequestBody UpdateSupplierRequest request) {
-<span class="fc" id="L109">        Supplier updated = supplierService.update(id, request.name(), request.email(), request.phone(),</span>
-<span class="fc" id="L110">                request.address(), request.city());</span>
-<span class="fc" id="L111">        return ResponseEntity.ok(</span>
-<span class="fc" id="L112">                new ApiResponse&lt;&gt;(true, &quot;Supplier updated successfully&quot;, SupplierResponse.from(updated)));</span>
+<span class="fc" id="L114">        Supplier updated = supplierService.update(id, request.name(), request.email(), request.phone(),</span>
+<span class="fc" id="L115">                request.address(), request.city());</span>
+<span class="fc" id="L116">        return ResponseEntity.ok(</span>
+<span class="fc" id="L117">                new ApiResponse&lt;&gt;(true, &quot;Supplier updated successfully&quot;, SupplierResponse.from(updated)));</span>
     }
 
     /**
@@ -117,13 +122,13 @@ public class SupplierController {
      *
      * @param id supplier identifier to delete
      * @return HTTP 200 on success
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      */
     @DeleteMapping(&quot;/{id}&quot;)
     @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; deleteSupplier(@PathVariable long id) {
-<span class="fc" id="L125">        supplierService.deleteById(id);</span>
-<span class="fc" id="L126">        return ResponseEntity.ok(</span>
+<span class="fc" id="L130">        supplierService.deleteById(id);</span>
+<span class="fc" id="L131">        return ResponseEntity.ok(</span>
                 new ApiResponse&lt;&gt;(true, &quot;Supplier with ID &quot; + id + &quot; has been successfully deleted.&quot;, null));
     }
 }

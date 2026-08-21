@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomerService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.customer</a> &gt; <span class="el_source">CustomerService.java</span></div><h1>CustomerService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.customer;
 
+import java.util.Map;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -7,9 +9,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.ApiErrorCodes;
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.customer.internal.CustomerRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -31,7 +34,7 @@ public class CustomerService {
      * @return the customer, or empty if none exists with that ID
      */
     public Optional&lt;Customer&gt; findById(long id) {
-<span class="fc" id="L34">        return customerRepository.findById(id);</span>
+<span class="fc" id="L37">        return customerRepository.findById(id);</span>
     }
 
     /**
@@ -40,7 +43,7 @@ public class CustomerService {
      * @return list of all customers that have not been soft-deleted
      */
     public List&lt;Customer&gt; findAll() {
-<span class="fc" id="L43">        return customerRepository.findAll();</span>
+<span class="fc" id="L46">        return customerRepository.findAll();</span>
     }
 
     /**
@@ -55,13 +58,13 @@ public class CustomerService {
      */
     @Transactional
     public Customer create(String name, String email, String phone, String address, String city) {
-<span class="fc" id="L58">        Customer customer = new Customer();</span>
-<span class="fc" id="L59">        customer.setName(name);</span>
-<span class="fc" id="L60">        customer.setEmail(email);</span>
-<span class="fc" id="L61">        customer.setPhone(phone);</span>
-<span class="fc" id="L62">        customer.setAddress(address);</span>
-<span class="fc" id="L63">        customer.setCity(city);</span>
-<span class="fc" id="L64">        return customerRepository.save(customer);</span>
+<span class="fc" id="L61">        Customer customer = new Customer();</span>
+<span class="fc" id="L62">        customer.setName(name);</span>
+<span class="fc" id="L63">        customer.setEmail(email);</span>
+<span class="fc" id="L64">        customer.setPhone(phone);</span>
+<span class="fc" id="L65">        customer.setAddress(address);</span>
+<span class="fc" id="L66">        customer.setCity(city);</span>
+<span class="fc" id="L67">        return customerRepository.save(customer);</span>
     }
 
     /**
@@ -85,36 +88,40 @@ public class CustomerService {
      * @param address new postal address, may be {@code null} to clear it
      * @param city new city, may be {@code null} to clear it
      * @return the updated customer
-     * @throws EntityNotFoundException if no customer exists with the given ID
+     * @throws MissingEntityException if no customer exists with the given ID
      */
     @Transactional
     public Customer update(long id, String name, String email, String phone, String address, String city) {
-<span class="fc" id="L92">        Customer customer = customerRepository.findById(id)</span>
-<span class="fc" id="L93">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L94">        customer.setName(name);</span>
-<span class="fc" id="L95">        customer.setEmail(email);</span>
-<span class="fc" id="L96">        customer.setPhone(phone);</span>
-<span class="fc" id="L97">        customer.setAddress(address);</span>
-<span class="fc" id="L98">        customer.setCity(city);</span>
-<span class="fc" id="L99">        return customerRepository.save(customer);</span>
+<span class="fc" id="L95">        Customer customer = customerRepository.findById(id)</span>
+<span class="fc" id="L96">                .orElseThrow(() -&gt; new MissingEntityException(</span>
+                        &quot;Customer with ID &quot; + id + &quot; not found.&quot;,
+<span class="fc" id="L98">                        ApiErrorCodes.CUSTOMER_NOT_FOUND, Map.of(&quot;id&quot;, String.valueOf(id))));</span>
+<span class="fc" id="L99">        customer.setName(name);</span>
+<span class="fc" id="L100">        customer.setEmail(email);</span>
+<span class="fc" id="L101">        customer.setPhone(phone);</span>
+<span class="fc" id="L102">        customer.setAddress(address);</span>
+<span class="fc" id="L103">        customer.setCity(city);</span>
+<span class="fc" id="L104">        return customerRepository.save(customer);</span>
     }
 
     /**
      * Soft-deletes a customer, unless a listener vetoes the deletion.
      *
      * @param id customer identifier
-     * @throws EntityNotFoundException if no customer exists with the given ID
+     * @throws MissingEntityException if no customer exists with the given ID
      * @throws com.stocks.stockease.shared.EntityInUseException if a listener vetoes the deletion, for
      *         instance because open invoices still reference the customer
      */
     @Transactional
     public void deleteById(long id) {
-<span class="fc" id="L112">        Customer customer = customerRepository.findById(id)</span>
-<span class="fc" id="L113">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Customer with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L117">        Customer customer = customerRepository.findById(id)</span>
+<span class="fc" id="L118">                .orElseThrow(() -&gt; new MissingEntityException(</span>
+                        &quot;Customer with ID &quot; + id + &quot; not found.&quot;,
+<span class="fc" id="L120">                        ApiErrorCodes.CUSTOMER_NOT_FOUND, Map.of(&quot;id&quot;, String.valueOf(id))));</span>
         // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
         // rolls back the transaction
-<span class="fc" id="L116">        eventPublisher.publishEvent(new CustomerDeletedEvent(customer.getId(), customer.getName()));</span>
-<span class="fc" id="L117">        customerRepository.delete(customer);</span>
-<span class="fc" id="L118">    }</span>
+<span class="fc" id="L123">        eventPublisher.publishEvent(new CustomerDeletedEvent(customer.getId(), customer.getName()));</span>
+<span class="fc" id="L124">        customerRepository.delete(customer);</span>
+<span class="fc" id="L125">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

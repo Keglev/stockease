@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SupplierService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">StockEase</a> &gt; <a href="index.source.html" class="el_package">com.stocks.stockease.supplier</a> &gt; <span class="el_source">SupplierService.java</span></div><h1>SupplierService.java</h1><pre class="source lang-java linenums">package com.stocks.stockease.supplier;
 
+import java.util.Map;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -7,6 +9,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.stocks.stockease.shared.MissingEntityException;
 import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.SearchLimits;
@@ -14,7 +17,6 @@ import com.stocks.stockease.shared.SearchTerms;
 import com.stocks.stockease.shared.TokenSearchSpec;
 import com.stocks.stockease.supplier.internal.SupplierRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -36,7 +38,7 @@ public class SupplierService {
      * @return the supplier, or empty if none exists with that ID
      */
     public Optional&lt;Supplier&gt; findById(long id) {
-<span class="fc" id="L39">        return supplierRepository.findById(id);</span>
+<span class="fc" id="L41">        return supplierRepository.findById(id);</span>
     }
 
     /**
@@ -45,7 +47,7 @@ public class SupplierService {
      * @return list of all suppliers that have not been soft-deleted
      */
     public List&lt;Supplier&gt; findAll() {
-<span class="fc" id="L48">        return supplierRepository.findAll();</span>
+<span class="fc" id="L50">        return supplierRepository.findAll();</span>
     }
 
     /**
@@ -64,9 +66,9 @@ public class SupplierService {
      * @return matching suppliers, alphabetical, at most {@link SearchLimits#TYPEAHEAD_LIMIT} of them
      */
     public List&lt;Supplier&gt; searchByName(String term) {
-<span class="fc" id="L67">        return supplierRepository.findAll(</span>
-<span class="fc" id="L68">                TokenSearchSpec.&lt;Supplier&gt;matchingAllTokens(SearchTerms.tokenize(term), &quot;name&quot;),</span>
-<span class="fc" id="L69">                TokenSearchSpec.capped(&quot;name&quot;)).getContent();</span>
+<span class="fc" id="L69">        return supplierRepository.findAll(</span>
+<span class="fc" id="L70">                TokenSearchSpec.&lt;Supplier&gt;matchingAllTokens(SearchTerms.tokenize(term), &quot;name&quot;),</span>
+<span class="fc" id="L71">                TokenSearchSpec.capped(&quot;name&quot;)).getContent();</span>
     }
 
     /**
@@ -82,14 +84,14 @@ public class SupplierService {
      */
     @Transactional
     public Supplier create(String name, String email, String phone, String address, String city) {
-<span class="fc" id="L85">        requireNameAndAddress(name, address);</span>
-<span class="fc" id="L86">        Supplier supplier = new Supplier();</span>
-<span class="fc" id="L87">        supplier.setName(name);</span>
-<span class="fc" id="L88">        supplier.setEmail(email);</span>
-<span class="fc" id="L89">        supplier.setPhone(phone);</span>
-<span class="fc" id="L90">        supplier.setAddress(address);</span>
-<span class="fc" id="L91">        supplier.setCity(city);</span>
-<span class="fc" id="L92">        return supplierRepository.save(supplier);</span>
+<span class="fc" id="L87">        requireNameAndAddress(name, address);</span>
+<span class="fc" id="L88">        Supplier supplier = new Supplier();</span>
+<span class="fc" id="L89">        supplier.setName(name);</span>
+<span class="fc" id="L90">        supplier.setEmail(email);</span>
+<span class="fc" id="L91">        supplier.setPhone(phone);</span>
+<span class="fc" id="L92">        supplier.setAddress(address);</span>
+<span class="fc" id="L93">        supplier.setCity(city);</span>
+<span class="fc" id="L94">        return supplierRepository.save(supplier);</span>
     }
 
     /**
@@ -105,46 +107,50 @@ public class SupplierService {
      * @param address new postal address; must not be blank
      * @param city new city, may be {@code null} to clear it
      * @return the updated supplier
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      * @throws InvalidRequestException if name or address is missing or blank
      */
     @Transactional
     public Supplier update(long id, String name, String email, String phone, String address, String city) {
-<span class="fc" id="L113">        Supplier supplier = supplierRepository.findById(id)</span>
-<span class="fc" id="L114">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
-<span class="fc" id="L115">        requireNameAndAddress(name, address);</span>
-<span class="fc" id="L116">        supplier.setName(name);</span>
-<span class="fc" id="L117">        supplier.setEmail(email);</span>
-<span class="fc" id="L118">        supplier.setPhone(phone);</span>
-<span class="fc" id="L119">        supplier.setAddress(address);</span>
-<span class="fc" id="L120">        supplier.setCity(city);</span>
-<span class="fc" id="L121">        return supplierRepository.save(supplier);</span>
+<span class="fc" id="L115">        Supplier supplier = supplierRepository.findById(id)</span>
+<span class="fc" id="L116">                .orElseThrow(() -&gt; new MissingEntityException(</span>
+                        &quot;Supplier with ID &quot; + id + &quot; not found.&quot;,
+<span class="fc" id="L118">                        ApiErrorCodes.SUPPLIER_NOT_FOUND, Map.of(&quot;id&quot;, String.valueOf(id))));</span>
+<span class="fc" id="L119">        requireNameAndAddress(name, address);</span>
+<span class="fc" id="L120">        supplier.setName(name);</span>
+<span class="fc" id="L121">        supplier.setEmail(email);</span>
+<span class="fc" id="L122">        supplier.setPhone(phone);</span>
+<span class="fc" id="L123">        supplier.setAddress(address);</span>
+<span class="fc" id="L124">        supplier.setCity(city);</span>
+<span class="fc" id="L125">        return supplierRepository.save(supplier);</span>
     }
 
     /**
      * Soft-deletes a supplier, unless a listener vetoes the deletion.
      *
      * @param id supplier identifier
-     * @throws EntityNotFoundException if no supplier exists with the given ID
+     * @throws MissingEntityException if no supplier exists with the given ID
      * @throws com.stocks.stockease.shared.EntityInUseException if a listener vetoes the deletion, for
      *         instance because open invoices still reference the supplier
      */
     @Transactional
     public void deleteById(long id) {
-<span class="fc" id="L134">        Supplier supplier = supplierRepository.findById(id)</span>
-<span class="fc" id="L135">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Supplier with ID &quot; + id + &quot; not found.&quot;));</span>
+<span class="fc" id="L138">        Supplier supplier = supplierRepository.findById(id)</span>
+<span class="fc" id="L139">                .orElseThrow(() -&gt; new MissingEntityException(</span>
+                        &quot;Supplier with ID &quot; + id + &quot; not found.&quot;,
+<span class="fc" id="L141">                        ApiErrorCodes.SUPPLIER_NOT_FOUND, Map.of(&quot;id&quot;, String.valueOf(id))));</span>
         // the event fires first so open-invoice vetoes abort before any state changes; a veto exception
         // rolls back the transaction
-<span class="fc" id="L138">        eventPublisher.publishEvent(new SupplierDeletedEvent(supplier.getId(), supplier.getName()));</span>
-<span class="fc" id="L139">        supplierRepository.delete(supplier);</span>
-<span class="fc" id="L140">    }</span>
+<span class="fc" id="L144">        eventPublisher.publishEvent(new SupplierDeletedEvent(supplier.getId(), supplier.getName()));</span>
+<span class="fc" id="L145">        supplierRepository.delete(supplier);</span>
+<span class="fc" id="L146">    }</span>
 
     /** Rejects a missing or blank name or address with the shared message. */
     private static void requireNameAndAddress(String name, String address) {
-<span class="fc bfc" id="L144" title="All 8 branches covered.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
-<span class="fc" id="L145">            throw new InvalidRequestException(&quot;Supplier name and address are required.&quot;,</span>
+<span class="fc bfc" id="L150" title="All 8 branches covered.">        if (name == null || name.isBlank() || address == null || address.isBlank()) {</span>
+<span class="fc" id="L151">            throw new InvalidRequestException(&quot;Supplier name and address are required.&quot;,</span>
                     ApiErrorCodes.SUPPLIER_NAME_AND_ADDRESS_REQUIRED, null);
         }
-<span class="fc" id="L148">    }</span>
+<span class="fc" id="L154">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
