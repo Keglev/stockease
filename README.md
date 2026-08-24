@@ -33,7 +33,6 @@ The backend is a modular monolith with boundaries enforced by a test on every bu
 9. [CI/CD](#cicd)
 10. [Available scripts](#available-scripts)
 11. [Deployment](#deployment)
-12. [Coming next](#coming-next)
 
 ## Screenshots
 
@@ -57,9 +56,9 @@ Both screens exist in English and German, light and dark. The full set is on the
 - [x] Change audit trail and read-only reporting
 - [x] Stateless JWT authentication with role-based access control
 - [x] Angular frontend covering every domain area, bilingual EN/DE
-- [x] arc42 architecture documentation for both tiers, plus 40 decision records
+- [x] arc42 architecture documentation for both tiers, plus 42 decision records
 - [x] CI gating both suites, coverage thresholds, and an i18n drift check
-- [x] Reports page decomposed into per-tab state collaborators, bringing it inside its size band
+- [x] Every operator-facing refusal carries a machine-readable code and renders in the reader's language - 50 codes across 7 exception families (ADR 041)
 - [x] Automated deployment for backend, frontend and documentation
 
 ## Features
@@ -74,8 +73,8 @@ Both screens exist in English and German, light and dark. The full set is on the
 
 ## Security
 
-- **Stateless JWT** signed with HMAC-SHA256, two-hour expiry, no server-side session.
-- **Role-based access control** with two roles, enforced by 49 method-level authorization checks across 52 endpoints rather than by URL patterns alone.
+- **Stateless JWT** signed with HMAC-SHA256, two-hour expiry, chosen to bound the window in which a role changed in the database can outlive the token that was minted from the old one, no server-side session.
+- **Role-based access control** with two roles, enforced by 48 method-level authorization checks across 52 endpoints rather than by URL patterns alone.
 - **BCrypt** password hashing; the seeded administrator was removed by migration once demo accounts existed.
 - **A written threat model.** Token storage in the browser is a decision with its exposure stated, its risks accepted for a demo whose data resets weekly, and the production path documented - see the decision record on client token storage.
 - **Idle sign-out** after 30 minutes with a warning, landing on the same destination a server-side rejection uses.
@@ -104,6 +103,8 @@ This project is developed with AI assistance, in a division of labour worth stat
 Two tools are used. A chat-based model acts as architect and reviewer: it is where designs are argued, alternatives rejected, and specifications written. An editor-integrated agent executes code changes against those written specifications and reports back what it did and where it deviated.
 
 Every architecture and domain decision is the owner's. The owner writes the standards the code is held to, reviews every diff, and merges every pull request. The agent implements to a specification and does not decide scope; where the specification turns out to be wrong about the code, it stops and says so rather than forcing the change.
+
+That clause is exercised, not decorative. PR #309 restored three applied migrations after an edit to their comments broke Flyway's checksum validation in production; PR #310's CI guard had to be rewritten when its proof turned out to have run in a full clone where the runner's shallow one fails; PR #312 shipped four corrections instead of five because the fifth figure the specification supplied did not survive re-measurement. Each is in the pull request record with the stop and the reason.
 
 The controls are what make this verifiable rather than a claim. Every change arrives as a reviewed pull request. CI gates the full suite and coverage thresholds on both tiers, so a regression cannot be merged. A new test is not trusted until it has been observed to fail for the right reason. Existing test assertions are not changed as a side effect of other work; changing one is its own decision, recorded as such.
 
@@ -169,10 +170,6 @@ There is one environment: production. Pull requests get the full check suite and
 - **Frontend** - static bundle on Vercel's CDN, with a rewrite that lets client-side routing survive a direct visit to a deep link.
 - **Database** - PostgreSQL on Supabase, its schema owned by 23 Flyway migrations (V1-V23) with Hibernate in validate-only mode.
 - **Documentation** - GitHub Pages, published from a build artifact rather than a committed site.
-
-## Coming next
-
-- The frontend renders backend error text verbatim, so a German operator reads English sentences. Closing that means the backend naming each failure with a machine-readable code and the frontend translating from it, which would supersede the two-code stance the current API records.
 
 ---
 
