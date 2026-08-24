@@ -291,6 +291,22 @@ public class GlobalExceptionHandler {
     /**
      * Handles {@link AccessDeniedException} from Spring Security authorization failures and returns a 403 Forbidden response.
      *
+     * <p>This is the live authorization seat: every {@code @PreAuthorize} denial in the application
+     * lands here. Its sibling in the filter chain, {@code CustomAccessDeniedHandler}, answers a
+     * decision the chain would make and the chain makes none, so it stays latent.
+     *
+     * <p>Stays English, and carries no code: no operator reaches it through the UI. Every
+     * ADMIN-only endpoint has its action gated in the frontend on the signed-in role, so a user
+     * without the role is never offered the button that would call it - the refusal is a sentence
+     * about a request the UI does not let them make. The gate reads the role from the token the
+     * server minted from that user's own row, which is the row the server re-reads to authorize the
+     * call, so the two agree for as long as the row does; a role changed underneath a live token is
+     * the one way they can part, and re-authenticating settles it.
+     *
+     * <p>So the sentence is API prose for whoever calls the endpoint directly - a script, or a
+     * client of ours that has not gated its own actions - rather than text an operator meets
+     * (ADR 041).
+     *
      * @param ex the caught exception
      * @return 403 response with permission error
      */
