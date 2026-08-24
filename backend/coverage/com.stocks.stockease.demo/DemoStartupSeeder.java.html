@@ -14,8 +14,8 @@ import lombok.RequiredArgsConstructor;
  *
  * &lt;p&gt;A fresh deployment must never present an empty demo: the first visitor would meet blank
  * dashboards and conclude the application does nothing. An emptiness check rather than an
- * unconditional reset is what makes a restart harmless - a running demo keeps whatever the day's
- * visitors have done to it until the nightly reset.
+ * unconditional reset is what makes a restart harmless - a running demo keeps whatever its
+ * visitors have done to it until the next weekly reset.
  */
 @Component
 @ConditionalOnDemoMode
