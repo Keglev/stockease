@@ -32,7 +32,7 @@ public class DemoConfiguration {
 
     /**
      * Opens the demo reset to unauthenticated callers; the endpoint authenticates the caller itself,
-     * by shared token rather than by JWT, because the nightly scheduler holds no user account.
+     * by shared token rather than by JWT, because the weekly scheduler holds no user account.
      *
      * @return the exemption for {@code POST /api/demo/reset}
      */

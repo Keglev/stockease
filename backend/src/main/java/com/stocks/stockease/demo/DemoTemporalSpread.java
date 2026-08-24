@@ -42,7 +42,7 @@ public class DemoTemporalSpread {
      * movements that close booked, and the price changes it wrote.
      *
      * <p>Fixed values, never generated: the demo baseline is a contract that has to reproduce
-     * identically on every nightly reset, and a randomised spread would make "what the demo shows"
+     * identically on every reset, and a randomised spread would make "what the demo shows"
      * unanswerable. This table is the single place the shape of the history is tuned.
      *
      * <p>Three constraints shape the numbers, and any edit has to keep all three:
@@ -51,14 +51,24 @@ public class DemoTemporalSpread {
      *       offset of every purchase stocking the products it sells, so no product is sold before the
      *       invoice that first put it on the shelf. The tightest of these is AR-2026-0004 and
      *       AR-2026-0005, both bounded by RE-2026-0163 at 96.</li>
-     *   <li><b>All three period bands are populated.</b> Three closed invoices book movements inside
-     *       30 days, four more inside 90, and everything falls inside 180 - so the profit presets
-     *       return visibly different result sets rather than three copies of one answer.</li>
-     *   <li><b>Paid dates land in all three bands too.</b> Cash flow filters on the payment date, not
-     *       the booking date (ADR 025), so the presets there only differ if the settlements are spread
-     *       as well: WP-2026-0091 and the two settled sales inside 30 days, 2026/RH/00934 between 30
-     *       and 90, 2026/RH/00891 and AR-2026-0003 older than 90.</li>
+     *   <li><b>All three period bands are populated at reset.</b> At reset, three closed invoices
+     *       book movements inside 30 days, four more inside 90, and everything falls inside 180 - so
+     *       the profit presets return visibly different result sets rather than three copies of one
+     *       answer.</li>
+     *   <li><b>Paid dates land in all three bands too, at reset.</b> Cash flow filters on the payment
+     *       date, not the booking date (ADR 025), so the presets there only differ if the settlements
+     *       are spread as well: WP-2026-0091 and the two settled sales inside 30 days, 2026/RH/00934
+     *       between 30 and 90, 2026/RH/00891 and AR-2026-0003 older than 90.</li>
      * </ul>
+     *
+     * <p>Both band claims are stated as of the reset because the offsets are fixed and the reset is
+     * weekly (ADR 005): every date here ages by up to seven more days before the next one. Two
+     * invoices cross a boundary late in the week - WP-2026-0091 at 24 leaves the 30-day band, and
+     * AR-2026-0004 at 88 leaves the 90-day band - so the 30-day cash-flow set thins from three
+     * settlements to two. No band empties, and the outer bound holds: the oldest offset is 168,
+     * which reaches 175 and stays inside 180. That last figure is also the limit on the cadence -
+     * a fortnight of drift would push the oldest invoice past 180 and out of the reports entirely,
+     * so stretching the schedule further means re-tuning this table rather than only the cron.
      *
      * <p>The two OPEN invoices carry offsets like the rest, but book no movements - an open invoice
      * books nothing (ADR 021) - so they only move their own creation date.

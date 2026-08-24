@@ -161,7 +161,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
         id: 'data',
         heading: 'Demo data and reset',
         paragraphs: [
-          'The demo contains realistic sample data spread over the past months, so time-based reports show meaningful history. All demo data is reset every night at 03:00 UTC; feel free to change anything.'
+          'The demo contains realistic sample data spread over the past months, so time-based reports show meaningful history. All demo data is reset every Monday at 03:00 UTC; feel free to change anything.'
         ]
       },
       {

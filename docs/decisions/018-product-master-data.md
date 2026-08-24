@@ -87,4 +87,11 @@ a message an operator can act on, mirroring what the name check already does.
   uniqueness already exists from V9, and the deployed data is the demo
   baseline, which the nightly reset (ADR 005) replaces wholesale.
 
+## Amendment - 24 August 2026
+
+The demo reset is weekly as of this date - Mondays at 03:00 UTC - not nightly
+(ADR 005). The reference to the nightly reset replacing the deployed baseline
+reads weekly. The reasoning above is unaffected; only the interval changes.
+See ADR 005's amendment of the same date for the ground and the accepted cost.
+
 [Back to Decisions Index](index.md)

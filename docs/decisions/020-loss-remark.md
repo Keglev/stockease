@@ -83,4 +83,11 @@ splits one question across two lists for no gain.
 - Adding a taxonomy member is a migration-free enum change plus two translation
   keys. Removing one is not, and should be treated as the breaking change it is.
 
+## Amendment - 24 August 2026
+
+The demo reset is weekly as of this date - Mondays at 03:00 UTC - not nightly
+(ADR 005). The reference to the nightly reset replacing the demo baseline reads
+weekly. The reasoning above is unaffected; only the interval changes. See ADR
+005's amendment of the same date for the ground and the accepted cost.
+
 [Back to Decisions Index](index.md)

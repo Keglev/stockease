@@ -111,6 +111,6 @@ live in GitHub Actions secrets and appear nowhere in the repository.
 
 There is one: production. Pull requests get the full check suite and no
 deployment. There is no staging tier, which is the same free-tier constraint the
-backend accepts, for a portfolio system whose data resets nightly.
+backend accepts, for a portfolio system whose data resets weekly.
 
 [Back to Introduction and Goals](index.md)

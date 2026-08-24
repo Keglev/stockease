@@ -36,7 +36,7 @@ const TRANSLATIONS = {
         title: 'Try the demo',
         tryAdmin: 'Try as Admin',
         tryUser: 'Try as User',
-        resetNotice: 'Demo data - resets nightly at 03:00 UTC'
+        resetNotice: 'Demo data - resets Mondays at 03:00 UTC'
       },
       loginCta: 'Login',
       screenshots: {
@@ -68,7 +68,7 @@ const TRANSLATIONS = {
         docs: 'Read the architecture docs',
         source: 'View source on GitHub'
       },
-      cta: { title: 'See it with real data', text: 'The demo resets nightly.' }
+      cta: { title: 'See it with real data', text: 'The demo resets every Monday.' }
     }
   },
   de: {
@@ -298,7 +298,7 @@ describe('LandingComponent', () => {
     expect(demoButton('admin')?.textContent?.trim()).toBe('Try as Admin');
     expect(demoButton('user')?.textContent?.trim()).toBe('Try as User');
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'Demo data - resets nightly at 03:00 UTC'
+      'Demo data - resets Mondays at 03:00 UTC'
     );
   });
 

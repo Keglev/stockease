@@ -92,4 +92,11 @@ dead code that reads as a live rule.
   system with real history this decision would need a different migration -
   most likely retaining the rows behind a retired-value mapping.
 
+## Amendment - 24 August 2026
+
+The demo reset is weekly as of this date - Mondays at 03:00 UTC - not nightly
+(ADR 005). The reference to the nightly reset replacing the demo baseline reads
+weekly. The reasoning above is unaffected; only the interval changes. See ADR
+005's amendment of the same date for the ground and the accepted cost.
+
 [Back to Decisions Index](index.md)

@@ -70,14 +70,14 @@ Both screens exist in English and German, light and dark. The full set is on the
 - **Stock movements** - an append-only ledger. Stock enters only by closing a purchase invoice; losses are recorded with a reason from a fixed taxonomy.
 - **Reports** - profit by product and supplier, cash flow on a payment basis, stock value and history, losses by remark, due dates and overdue exposure, and a change log. Every table exports to CSV in the reader's own number format.
 - **Bilingual interface** - English and German, switched at runtime without a reload, with dates and currency formatted per reader preference.
-- **Demo access** - one-click entry as administrator or user, against data that resets nightly.
+- **Demo access** - one-click entry as administrator or user, against data that resets weekly.
 
 ## Security
 
 - **Stateless JWT** signed with HMAC-SHA256, two-hour expiry, no server-side session.
 - **Role-based access control** with two roles, enforced by 49 method-level authorization checks across 52 endpoints rather than by URL patterns alone.
 - **BCrypt** password hashing; the seeded administrator was removed by migration once demo accounts existed.
-- **A written threat model.** Token storage in the browser is a decision with its exposure stated, its risks accepted for a demo whose data resets nightly, and the production path documented - see the decision record on client token storage.
+- **A written threat model.** Token storage in the browser is a decision with its exposure stated, its risks accepted for a demo whose data resets weekly, and the production path documented - see the decision record on client token storage.
 - **Idle sign-out** after 30 minutes with a warning, landing on the same destination a server-side rejection uses.
 
 ## Documentation
@@ -161,7 +161,7 @@ Documentation, from the repository root:
 
 ## Deployment
 
-There is one environment: production. Pull requests get the full check suite and no deployment; there is no staging tier, which is an accepted free-tier constraint for a system whose data resets nightly.
+There is one environment: production. Pull requests get the full check suite and no deployment; there is no staging tier, which is an accepted free-tier constraint for a system whose data resets weekly.
 
 - **Backend** - Docker image built by Koyeb from the repository's Dockerfile, fronted by a health probe.
 - **Frontend** - static bundle on Vercel's CDN, with a rewrite that lets client-side routing survive a direct visit to a deep link.

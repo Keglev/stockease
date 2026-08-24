@@ -35,7 +35,7 @@ const TRANSLATIONS = {
       logout: 'Log out',
       openNavigation: 'Open navigation',
       demoBadge: 'DEMO',
-      demoTooltip: 'Demo system - data resets nightly',
+      demoTooltip: 'Demo system - data resets weekly',
       role: { ADMIN: 'Administrator', USER: 'User' },
       idleWarning: 'You will be signed out in 2 minutes.',
       idleStay: 'Stay signed in'
@@ -360,7 +360,7 @@ describe('ShellComponent', () => {
     await setUp(true);
 
     expect(demoBadge()?.textContent?.trim()).toBe('DEMO');
-    expect(demoBadge()?.getAttribute('title')).toBe('Demo system - data resets nightly');
+    expect(demoBadge()?.getAttribute('title')).toBe('Demo system - data resets weekly');
   });
 
   it('render_demoFlagDisabled_omitsBadgeEntirely', async () => {

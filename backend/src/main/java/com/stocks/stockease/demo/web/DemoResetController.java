@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * REST controller for restoring the demo baseline.
  *
- * <p>Authenticated by a shared token rather than by JWT: the caller is the nightly scheduler, which
+ * <p>Authenticated by a shared token rather than by JWT: the caller is the weekly scheduler, which
  * holds no user account. The endpoint exists only while {@code app.demo.enabled} is true, so a normal
  * deployment has no reset surface to protect at all.
  */

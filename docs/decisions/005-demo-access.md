@@ -100,6 +100,39 @@ survives until the nightly reset and no longer. That is a feature of the demo,
 not a limitation of it - but it does mean the demo is not a place to keep
 anything.
 
+## Amendment - 24 August 2026
+
+The reset runs weekly, Mondays at 03:00 UTC (`cron: "0 3 * * 1"`), not nightly.
+Every statement above that gives the cadence as nightly - the seeded baseline
+restored by a nightly reset, the data described as nightly-restored, and a
+visitor's work surviving "until the nightly reset" - reads weekly as of this
+date. The hour is unchanged and unchanged for the same reason: 03:00 UTC is past
+midnight in every European timezone the demo is shown in.
+
+What this costs is the property the nightly cadence was buying. A visitor's
+edits now persist up to seven days rather than until the next morning, and the
+demo can look lived-in between resets - products renamed, invoices closed, stock
+moved by whoever passed through. That is accepted rather than regretted: the
+demo is a portfolio artefact shown deliberately, not a service with an
+expectation of pristine state at an arbitrary hour.
+
+The manual `workflow_dispatch` path is promoted accordingly. It was the recovery
+path for a failed scheduled run; it is now the primary reset, taken by hand
+before the demo is shown to anyone. The schedule is the floor that keeps the
+baseline from drifting indefinitely, not the mechanism the demo's presentability
+depends on.
+
+One consequence reaches the seeded data itself. The temporal spread (ADR 027)
+backdates each seeded invoice by a fixed number of days from the reset moment,
+so between resets every date ages by up to seven more days. Two invoices cross a
+period boundary late in the week - WP-2026-0091 leaves the 30-day band and
+AR-2026-0004 leaves the 90-day band - which thins the 30-day cash-flow set from
+three settlements to two. No band empties and the outer 180-day bound holds, the
+oldest offset reaching 175. That bound is also the cadence limit: a fortnightly
+schedule would push the oldest invoice past 180 and out of the reports, so
+stretching the cadence further is a change to the seed table and not only to the
+cron.
+
 ---
 
 [Back to Decisions Index](index.md)

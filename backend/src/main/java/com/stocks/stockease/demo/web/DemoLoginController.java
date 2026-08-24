@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
  * <p>Passwordless, role-scoped issuance is the demo-access decision of ADR 005: publishing shared
  * credentials on a landing page invites abuse and adds friction, so the demo hands out a token
  * instead. It exists only under {@code app.demo.enabled} and the data behind it is disposable by
- * design - the nightly reset restores the baseline whatever a visitor did with the token.
+ * design - the weekly reset restores the baseline whatever a visitor did with the token.
  *
  * <p>The accounts are real rows created by migration (V10, V15) and carry their roles genuinely, so
  * authorization behaves exactly as it does for any other user. The response is deliberately identical

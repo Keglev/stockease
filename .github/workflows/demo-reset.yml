@@ -1,18 +1,23 @@
 name: Demo Reset
 
 # Restores the seeded demo baseline (ADR 005) by calling the backend's
-# token-protected reset endpoint. Whatever a visitor did to the demo during the
-# day is ephemeral by design; this job is what makes that true.
+# token-protected reset endpoint. Whatever a visitor did to the demo is ephemeral
+# by design; this job is what makes that true. Weekly, so "ephemeral" means within
+# the week rather than by morning: a visitor's edits can stand for up to seven
+# days, and the demo is meant to look lived-in between resets.
 
 on:
   schedule:
     # 03:00 UTC is the agreed reset time: past midnight in every European
     # timezone the demo is shown in, so a reset never lands mid-visit, and well
     # clear of the deploy workflows.
-    - cron: "0 3 * * *"
-  # Manual dispatch is the recovery path when a nightly run fails - the repo
-  # dispatches rather than re-running, so the run reflects current main. It is
-  # also how the FIRST baseline seed gets triggered, before any schedule fires.
+    - cron: "0 3 * * 1"
+  # Manual dispatch is the primary path now rather than a fallback. With a week
+  # between scheduled runs, the reset that matters is the one taken before showing
+  # the demo, and this is it. It remains the recovery path when a scheduled run
+  # fails - the repo dispatches rather than re-running, so the run reflects current
+  # main - and it is still how the FIRST baseline seed gets triggered, before any
+  # schedule fires.
   workflow_dispatch:
 
 concurrency:
