@@ -18,12 +18,12 @@ import { Observable } from 'rxjs';
 import { CustomerResponse, ProductResponse, SupplierResponse } from '../../../core/api/api-models';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { integerOnly } from '../../../shared/forms/integer-only.validator';
+import { productLabel } from '../../../shared/typeahead/product-label';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
 import { CustomerService } from '../../customers/customer.service';
 // Deliberate cross-feature import: the price rule is identical here, so it is reused rather
 // than copied, keeping one definition of "a price must be greater than zero".
 import { positivePrice } from '../../products/positive-price.validator';
-import { productLabel } from '../../products/product-label';
 import { ProductService } from '../../products/product.service';
 import { SupplierService } from '../../suppliers/supplier.service';
 import { InvoiceType, buildCreateInvoiceRequest } from '../invoice-payload';

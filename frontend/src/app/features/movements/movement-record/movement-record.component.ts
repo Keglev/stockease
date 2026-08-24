@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 import { ProductResponse } from '../../../core/api/api-models';
 import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
-import { productLabel } from '../../products/product-label';
+import { productLabel } from '../../../shared/typeahead/product-label';
 import { ProductService } from '../../products/product.service';
 import { integerOnly } from '../../../shared/forms/integer-only.validator';
 import { TypeaheadComponent } from '../../../shared/typeahead/typeahead.component';
