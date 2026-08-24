@@ -212,6 +212,15 @@
         the alternative to adopt is the httpOnly cookie with CSRF
         protection described above.</li>
         </ul>
+        <h2 id="amendment---24-august-2026">Amendment - 24 August
+        2026</h2>
+        <p>The token’s lifetime is now two hours rather than ten. Both
+        statements above that give it as ten - the context describing
+        the JWT’s lifetime, and the consequence naming that expiry as
+        the only revocation mechanism - read two hours as of this date.
+        The revocation reasoning is unchanged: expiry is still the only
+        mechanism, and it now arrives sooner. See ADR 032’s amendment of
+        the same date for the ground.</p>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
     </main>
@@ -229,6 +238,9 @@
       id="toc-alternatives-considered">Alternatives considered</a></li>
       <li><a href="#consequences"
       id="toc-consequences">Consequences</a></li>
+      <li><a href="#amendment---24-august-2026"
+      id="toc-amendment---24-august-2026">Amendment - 24 August
+      2026</a></li>
       </ul></li>
       </ul>
     </nav>

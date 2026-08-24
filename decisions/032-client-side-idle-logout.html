@@ -279,6 +279,43 @@
         Changing the policy is changing those two numbers, not the logic
         around them.</li>
         </ul>
+        <h2 id="amendment---24-august-2026">Amendment - 24 August
+        2026</h2>
+        <p>The token lifetime is now two hours
+        (<code>EXPIRATION_TIME = 1000 * 60 * 60 * 2</code>). The
+        ten-hour figure this record states above, and the reasoning that
+        “ten hours is chosen to cover a working day”, are
+        superseded.</p>
+        <p>The ground is safety rather than convenience. The
+        access-denied seat in <code>GlobalExceptionHandler</code> names
+        the one way the UI and the server can disagree about a role: a
+        role changed in the database underneath a live token, where the
+        UI still offers an admin action from the token’s claim while the
+        server refuses it from the row. The application offers no path
+        that changes a role - the only assignment is the
+        <code>User</code> constructor, and the seed migration writes SQL
+        outside any application path - so the divergence takes
+        deliberate out-of-band intervention. The token lifetime is what
+        bounds how long it can last once it happens, and ten hours was a
+        long time to leave that open.</p>
+        <p>What this costs is stated plainly, because it is the thing
+        the original figure was protecting: a working shift now meets
+        the expiry several times rather than once at its end, and each
+        time an operator signs in again. The experience at expiry is
+        unchanged - the 401 interceptor delivers them to the login
+        screen with the expired-session notice, which is the same tested
+        flow this record already described.</p>
+        <p>The rejected alternative above is revisited, not reversed.
+        What it rejected was a shorter hard lifetime <em>instead of</em>
+        an idle timer, and that rejection stands entirely: a lifetime
+        cannot see a user who has walked away from an unlocked screen,
+        which is what idle detection is for, and both mechanisms remain
+        in place and independent. <code>IDLE_TIMEOUT_MS</code> and
+        <code>IDLE_WARNING_MS</code> are untouched. What does not
+        survive is the figure the rejection reasoned with - the claim
+        that ten hours is the right hard limit because it covers a
+        working day. Covering a working day is no longer the property
+        the limit is chosen for.</p>
         <p><a href="index.html">Back to Decisions Index</a></p>
       </article>
     </main>
@@ -297,6 +334,9 @@
       id="toc-alternatives-considered">Alternatives considered</a></li>
       <li><a href="#consequences"
       id="toc-consequences">Consequences</a></li>
+      <li><a href="#amendment---24-august-2026"
+      id="toc-amendment---24-august-2026">Amendment - 24 August
+      2026</a></li>
       </ul></li>
       </ul>
     </nav>

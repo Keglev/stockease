@@ -268,6 +268,17 @@
         <li>Environment variable injection for JWT secret —
         implemented</li>
         </ul>
+        <h2 id="amendment---24-august-2026">Amendment - 24 August
+        2026</h2>
+        <p>The token lifetime is now two hours:
+        <code>EXPIRATION_TIME = 7200000</code> ms. This supersedes the
+        10-hour expiry stated in the decision above and the consequence
+        recording tokens as expiring after 10 hours with
+        <code>EXPIRATION_TIME = 36000000</code>. Nothing else about the
+        mechanism changes - HS256 signing, the role claim in the
+        payload, and validation through <code>JwtFilter</code> are as
+        recorded. See ADR 032’s amendment of the same date for the
+        ground.</p>
         <hr />
         <p><a href="./index.html">Back to Decisions Index</a></p>
       </article>
@@ -305,6 +316,9 @@
       id="toc-security-constraints">Security Constraints</a></li>
       <li><a href="#implementation-status"
       id="toc-implementation-status">Implementation Status</a></li>
+      <li><a href="#amendment---24-august-2026"
+      id="toc-amendment---24-august-2026">Amendment - 24 August
+      2026</a></li>
       </ul></li>
       </ul>
     </nav>
