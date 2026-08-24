@@ -6,8 +6,8 @@ ALTER TABLE invoice ADD COLUMN invoice_number VARCHAR(64);
 
 -- Backfill: these rows predate the field, so no real document number can be recovered for them.
 -- 'INV-' || id is unique by construction and obviously synthetic, which is the honest thing for a
--- number nobody assigned. The deployed database is the demo baseline, which the weekly reset
--- replaces wholesale with properly numbered invoices, so these values live at most a week.
+-- number nobody assigned. The deployed database is the demo baseline, which the nightly reset
+-- replaces wholesale with properly numbered invoices, so these values live at most a day.
 UPDATE invoice SET invoice_number = 'INV-' || id WHERE invoice_number IS NULL;
 
 ALTER TABLE invoice ALTER COLUMN invoice_number SET NOT NULL;

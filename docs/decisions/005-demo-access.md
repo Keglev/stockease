@@ -133,6 +133,33 @@ schedule would push the oldest invoice past 180 and out of the reports, so
 stretching the cadence further is a change to the seed table and not only to the
 cron.
 
+## Amendment - 24 August 2026, migration comments
+
+Three migration files still say "nightly" in their comments: V17
+(`add_movement_remark`), V18 (`remove_new_product_movements`) and V19
+(`add_invoice_number`), each describing the deployed data as a demo baseline the
+nightly reset replaces wholesale. They were edited to say weekly along with
+everything else, and the edit was reverted.
+
+The reason is Flyway. These three are applied migrations, and Flyway's checksum
+covers the whole file, comments included. Changing a comment in an applied
+migration changes its checksum, `validate` refuses the mismatch, and the
+application does not start - which is what happened: the deployment carrying
+those edits ended in ERROR before serving a request. Applied migrations are
+immutable in their bytes, not merely in their statements.
+
+So those three comments stay as written, and stay wrong about the cadence. They
+are historical text describing what was true when the migration was authored,
+and this record is where the correction lives instead. The ruling is unchanged
+and is stated above: the demo resets weekly, Mondays at 03:00 UTC. A reader who
+meets "nightly" in V17, V18 or V19 should read it as the note it is - a comment
+frozen by the checksum that protects the schema - and not as a live claim about
+the schedule.
+
+Nothing was configured around this. No `repair`, no `validate` relaxation, no
+ignore rule: the checksum did exactly what it exists to do, and the right answer
+was to put the bytes back.
+
 ---
 
 [Back to Decisions Index](index.md)
