@@ -7,7 +7,7 @@
   "demo": {
     "tryAdmin": "Try as Admin",
     "tryUser": "Try as User",
-    "resetNotice": "Demo data - resets nightly at 03:00 UTC"
+    "resetNotice": "Demo data - resets Mondays at 03:00 UTC"
   },
   "loginCta": "Login",
   "screenshots": {
@@ -49,7 +49,7 @@
     "title": "How it works",
     "one": {
       "title": "Open the demo",
-      "text": "One click as admin or user - seeded data, reset nightly."
+      "text": "One click as admin or user - seeded data, reset weekly."
     },
     "two": {
       "title": "Run stock through invoices",
@@ -68,6 +68,6 @@
   },
   "cta": {
     "title": "See it with real data",
-    "text": "The demo runs against the live API and resets nightly - nothing you click is permanent."
+    "text": "The demo runs against the live API and resets every Monday - nothing you click is permanent."
   }
 }

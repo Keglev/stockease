@@ -100,4 +100,12 @@ nobody wants to answer about a colour scheme.
   preference at once, rather than one preference growing a server side of its
   own while the others keep theirs local.
 
+## Amendment - 24 August 2026
+
+The demo reset is weekly as of this date - Mondays at 03:00 UTC - not nightly
+(ADR 005). Both references to the nightly reset - the one it would wipe a theme
+along with, and the consequence that the reset does not touch stored preferences
+- read weekly. The reasoning above is unaffected; only the interval changes.
+See ADR 005's amendment of the same date for the ground and the accepted cost.
+
 [Back to Decisions Index](index.md)

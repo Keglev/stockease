@@ -129,4 +129,30 @@ populate.
   work.** The same endpoints return the same shapes over better-distributed
   data.
 
+## Amendment - 24 August 2026
+
+The reset is weekly as of this date (ADR 005), not nightly, and the wipe this
+record describes now runs on Mondays. The spread mechanism is unchanged: fixed
+offsets, applied from the reset moment.
+
+The invariant this record turns on - all three period bands populated - survives
+the change, and the margin is worth stating. Between resets every seeded date
+ages
+by up to seven days. Two invoices cross a boundary at the end of the week:
+WP-2026-0091 at 24 days reaches 31 and leaves the 30-day band, and AR-2026-0004
+at
+88 reaches 95 and leaves the 90-day band, which also thins the 30-day cash-flow
+set
+from three settlements to two. Every band still holds members throughout the
+week,
+so the presets keep returning visibly different result sets, which is what the
+invariant exists to guarantee.
+
+The margin on the outer bound is twelve days: the oldest offset is 168 and
+reaches
+175 against a 180-day limit. That is what makes weekly safe and fortnightly not
+-
+at a fortnight the oldest invoice falls out of the reports altogether, and the
+offset table would have to be re-tuned rather than the cron alone.
+
 [Back to Decisions Index](index.md)

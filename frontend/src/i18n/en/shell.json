@@ -2,7 +2,7 @@
   "logout": "Log out",
   "openNavigation": "Open navigation",
   "demoBadge": "DEMO",
-  "demoTooltip": "Demo system - data resets nightly",
+  "demoTooltip": "Demo system - data resets weekly",
   "role": {
     "ADMIN": "Administrator",
     "USER": "User"

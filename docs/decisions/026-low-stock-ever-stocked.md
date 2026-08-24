@@ -82,4 +82,13 @@ apart.
   This decision changes *which* products the question is asked about, not the
   question.
 
+## Amendment - 24 August 2026
+
+The demo reset is weekly as of this date - Mondays at 03:00 UTC - not nightly
+(ADR 005). Products stocked by hand now appear in the alert between weekly
+resets rather than nightly ones, which widens the window this record describes
+without changing what it describes. The reasoning above is unaffected; only the
+interval changes. See ADR 005's amendment of the same date for the ground and
+the accepted cost.
+
 [Back to Decisions Index](index.md)

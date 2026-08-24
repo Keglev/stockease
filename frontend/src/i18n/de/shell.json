@@ -2,7 +2,7 @@
   "logout": "Abmelden",
   "openNavigation": "Navigation öffnen",
   "demoBadge": "DEMO",
-  "demoTooltip": "Demosystem - Daten werden nächtlich zurückgesetzt",
+  "demoTooltip": "Demosystem - Daten werden wöchentlich zurückgesetzt",
   "role": {
     "ADMIN": "Administrator",
     "USER": "Benutzer"

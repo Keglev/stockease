@@ -179,4 +179,12 @@ useful for a fifth as long. Nothing about the storage decision, the absence of a
 refresh token, or the conditions under which a cookie transport would be adopted
 is affected. See ADR 032's amendment of the same date for the ground.
 
+## Amendment - 24 August 2026
+
+The demo reset is weekly as of this date - Mondays at 03:00 UTC - not nightly
+(ADR 005). Both references to data reset nightly read weekly. The containment
+argument is unchanged: the demo data remains seeded, disposable and of no value
+to an attacker. The reasoning above is unaffected; only the interval changes.
+See ADR 005's amendment of the same date for the ground and the accepted cost.
+
 [Back to Decisions Index](index.md)

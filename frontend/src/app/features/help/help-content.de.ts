@@ -160,7 +160,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
         id: 'data',
         heading: 'Demodaten und Zurücksetzen',
         paragraphs: [
-          'Die Demo enthält realistische Beispieldaten, verteilt über die vergangenen Monate, damit zeitbezogene Berichte eine aussagekräftige Historie zeigen. Alle Demodaten werden jede Nacht um 03:00 UTC zurückgesetzt; Sie können also alles gefahrlos ausprobieren.'
+          'Die Demo enthält realistische Beispieldaten, verteilt über die vergangenen Monate, damit zeitbezogene Berichte eine aussagekräftige Historie zeigen. Alle Demodaten werden jeden Montag um 03:00 UTC zurückgesetzt; Sie können also alles gefahrlos ausprobieren.'
         ]
       },
       {

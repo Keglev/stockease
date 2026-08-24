@@ -7,7 +7,7 @@
   "demo": {
     "tryAdmin": "Als Admin testen",
     "tryUser": "Als Benutzer testen",
-    "resetNotice": "Demodaten - werden nächtlich um 03:00 UTC zurückgesetzt"
+    "resetNotice": "Demodaten - werden montags um 03:00 UTC zurückgesetzt"
   },
   "loginCta": "Anmelden",
   "screenshots": {
@@ -49,7 +49,7 @@
     "title": "So funktioniert es",
     "one": {
       "title": "Demo öffnen",
-      "text": "Ein Klick als Admin oder Benutzer - mit Beispieldaten, täglich zurückgesetzt."
+      "text": "Ein Klick als Admin oder Benutzer - mit Beispieldaten, wöchentlich zurückgesetzt."
     },
     "two": {
       "title": "Bestand über Rechnungen führen",
@@ -68,6 +68,6 @@
   },
   "cta": {
     "title": "Mit echten Daten ansehen",
-    "text": "Die Demo läuft gegen die Live-API und wird täglich zurückgesetzt - kein Klick ist von Dauer."
+    "text": "Die Demo läuft gegen die Live-API und wird jeden Montag zurückgesetzt - kein Klick ist von Dauer."
   }
 }
