@@ -6,7 +6,7 @@ import { CustomerResponse } from '../../../core/api/api-models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { FormatService } from '../../../core/format/format.service';
 import { ApiError } from '../../../core/api/api-envelope';
-import { LanguageService } from '../../../core/i18n/language.service';
+import { LANGUAGE_STORAGE_KEY, LanguageService } from '../../../core/i18n/language.service';
 import { NotificationService } from '../../../core/notifications/notification.service';
 import { CSV_DOWNLOADER } from '../../../shared/csv/csv-export';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
@@ -17,7 +17,12 @@ import { CustomerListComponent } from './customer-list.component';
 
 const TRANSLATIONS = {
   en: {
-    common: { confirm: 'Confirm', cancel: 'Cancel', exportCsv: 'Export CSV' },
+    common: {
+      confirm: 'Confirm',
+      cancel: 'Cancel',
+      exportCsv: 'Export CSV',
+      errors: { serverError: 'A server error occurred. Please try again later.' }
+    },
     customers: {
       title: 'Customers',
       create: 'New customer',
@@ -45,6 +50,7 @@ const TRANSLATIONS = {
   // path translates at all - the English key mirrors the wire sentence byte for byte, so an
   // English assertion would hold even with the resolver call reverted.
   de: {
+    common: { errors: { serverError: 'Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.' } },
     customers: {
       errors: {
         hasOpenInvoices:
@@ -466,6 +472,19 @@ describe('CustomerListComponent', () => {
     await fixture.whenStable();
 
     expect(notifications.successes).toEqual([]);
+  });
+
+  it('load_serverErrorInGerman_rendersTheCatalogSentenceNotTheWireSentence', async () => {
+    // The store renders through the resolver now, so an uncoded 5xx is the application's own
+    // sentence rather than the server's prose about itself. German, matching the coded-refusal
+    // case above; strong form, and the two sentences share no wording.
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'de');
+    await setUpWith(() => throwError(
+      () => new ApiError('Customers are unavailable.', 500, undefined, undefined)));
+
+    const banner = host().querySelector('.customer-error')?.textContent?.trim();
+    expect(banner).toBe('Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
+    expect(banner).not.toBe('Customers are unavailable.');
   });
 
   it('load_serviceErrors_rendersBackendMessageAndEmptiesTheTable', async () => {

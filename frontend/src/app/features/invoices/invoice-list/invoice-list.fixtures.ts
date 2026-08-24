@@ -23,7 +23,7 @@ import { InvoiceListComponent } from './invoice-list.component';
  */
 export const TRANSLATIONS = {
   en: {
-    common: { exportCsv: 'Export CSV' },
+    common: { exportCsv: 'Export CSV', errors: { serverError: 'A server error occurred. Please try again later.' } },
     invoices: {
       title: 'Invoices',
       empty: 'No invoices found.',

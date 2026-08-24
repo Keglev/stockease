@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, Subject, throwError } from 'rxjs';
 
+import { ApiError } from '../../../core/api/api-envelope';
 import { InvoiceSummaryResponse, PaginatedInvoices } from '../../../core/api/api-models';
 import { FormatService } from '../../../core/format/format.service';
 import { LanguageService } from '../../../core/i18n/language.service';
@@ -224,6 +225,23 @@ describe('InvoiceListComponent', () => {
       expect(download).not.toHaveBeenCalled();
       // And the button comes back, so a transient failure does not retire the export.
       expect(exportButton().disabled).toBe(false);
+    });
+
+    it('export_serverError_showsTheCatalogSentenceNotTheWireSentence', async () => {
+      // The export's own seat, separate from the load path above: it writes the same banner but
+      // through its own handler, which routes the failure through the resolver now. Strong form -
+      // the catalog sentence present, the wire sentence absent, the two sharing no wording.
+      await setUp(LEDGER);
+      invoiceService.unpagedResult = () => throwError(
+        () => new ApiError('Invoices are unavailable.', 500, undefined, undefined));
+
+      exportButton().click();
+      fixture.detectChanges();
+
+      const banner = host().querySelector('.invoice-error')?.textContent?.trim();
+      expect(banner).toBe('A server error occurred. Please try again later.');
+      expect(banner).not.toBe('Invoices are unavailable.');
+      expect(download).not.toHaveBeenCalled();
     });
 
     it('exportButton_emptyLedger_isAbsent', async () => {

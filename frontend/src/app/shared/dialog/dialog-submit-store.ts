@@ -29,7 +29,9 @@ export interface DialogSubmitStore<T> {
  * `resolveMessage` is the same shape of seam: a dialog whose backend names its failures passes the
  * translator, and one whose failures are uncoded passes nothing and shows the message as before.
  * The store stays free of both i18n and the error vocabulary, which is why it can be given a plain
- * function in a spec.
+ * function in a spec. The default is the spec seam rather than a production one: a dialog that
+ * ships should pass the translator, so that what its operator reads is a sentence in their own
+ * language wherever the API offers one.
  */
 export function createDialogSubmitStore<T>(
   close: (result: T) => void,

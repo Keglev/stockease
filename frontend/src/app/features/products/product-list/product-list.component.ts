@@ -82,7 +82,8 @@ export class ProductListComponent implements OnInit {
   ];
 
   protected readonly list = createPagedListStore<ProductResponse>(
-    (pageIndex, pageSize) => this.products.getPagedProducts(pageIndex, pageSize)
+    (pageIndex, pageSize) => this.products.getPagedProducts(pageIndex, pageSize),
+    (err) => this.errorMessages.resolve(err)
   );
 
   // The composition point: which of the two views the table is showing. It stays here because it

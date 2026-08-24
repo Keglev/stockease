@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { AuthService, UserRole } from '../../core/auth/auth.service';
 import { DOCUMENTATION_URL, REPOSITORY_URL } from '../../core/config/external-links';
+import { ErrorMessageService } from '../../core/i18n/error-message.service';
 import { LanguageService } from '../../core/i18n/language.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { ThemeService } from '../../core/theme/theme.service';
@@ -57,6 +58,7 @@ export class LandingComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly notifications = inject(NotificationService);
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly language = inject(LanguageService);
   private readonly theme = inject(ThemeService);
 
@@ -115,13 +117,14 @@ export class LandingComponent {
       },
       error: (error: Error) => {
         this.demoPending.set(false);
-        // Shown verbatim, and correctly so. This endpoint does carry a body - the role - but it is
-        // whichever of the two buttons was pressed rather than anything typed, and the only refusal
-        // the demo controller authors is an unknown role, which it answers with a 400 it builds
-        // itself carrying no situation code. So nothing coded can reach this handler. Should the
-        // endpoint ever start naming its refusals, route this through ErrorMessageService.resolve()
-        // or it will show English (ADR 041).
-        this.notifications.error(error.message);
+        // Through the resolver, which changes nothing below 500 and everything at it. This
+        // endpoint does carry a body - the role - but it is whichever of the two buttons was
+        // pressed rather than anything typed, and the only refusal the demo controller authors is
+        // an unknown role, which it answers with a 400 it builds itself carrying no situation code.
+        // So nothing coded can reach this handler, and an uncoded non-5xx comes back out of the
+        // resolver as the server wrote it. What the resolver does own is the uncoded 5xx, which now
+        // reads in the visitor's language instead of as English prose about the server (ADR 041).
+        this.notifications.error(this.errorMessages.resolve(error));
       }
     });
   }

@@ -11,6 +11,7 @@ import {
   InvoiceServiceStub
 } from './invoice-list.fixtures';
 import { InvoiceListComponent } from './invoice-list.component';
+import { ApiError } from '../../../core/api/api-envelope';
 
 /*
  * The ledger: pagination against the backend's own order, the counterparty read from the row's snapshot
@@ -221,6 +222,17 @@ describe('InvoiceListComponent', () => {
     await fixture.whenStable();
 
     expect(navigate).toHaveBeenCalledWith(['/app/invoices', 7]);
+  });
+
+  it('load_serverError_rendersTheCatalogSentenceNotTheWireSentence', async () => {
+    // The paged store renders through the resolver now. Strong form: the catalog sentence present,
+    // the wire sentence absent, and the two share no wording, so this cannot pass by coincidence.
+    await setUp([invoice({ id: 1 })], () => throwError(
+      () => new ApiError('Ledger is unavailable.', 500, undefined, undefined)));
+
+    const banner = host().querySelector('.invoice-error')?.textContent?.trim();
+    expect(banner).toBe('A server error occurred. Please try again later.');
+    expect(banner).not.toBe('Ledger is unavailable.');
   });
 
   it('load_serviceErrors_rendersBackendMessageAndEmptiesTheTable', async () => {

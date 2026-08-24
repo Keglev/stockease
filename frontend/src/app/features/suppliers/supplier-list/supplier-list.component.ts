@@ -67,7 +67,10 @@ export class SupplierListComponent implements OnInit {
    */
   private readonly exportColumns = ['name', 'email', 'phone', 'address', 'city', 'createdAt'];
 
-  protected readonly list = createListPageStore<SupplierResponse>(() => this.suppliers.getAll());
+  protected readonly list = createListPageStore<SupplierResponse>(
+    () => this.suppliers.getAll(),
+    (err) => this.errorMessages.resolve(err)
+  );
 
   // The actions column always renders: Edit is available to every user, only Delete is gated.
   // Address is deliberately absent, matching the customer list: it is the longest field either

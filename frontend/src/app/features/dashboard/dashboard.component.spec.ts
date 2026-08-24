@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { ApiError } from '../../core/api/api-envelope';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
 import { DashboardComponent } from './dashboard.component';
 import {
@@ -107,6 +108,17 @@ describe('DashboardComponent', () => {
     expect(products.lowStockCalls).toBe(1);
     expect(dialog.openCalls).toHaveLength(1);
     expect(dialog.openCalls[0].config?.data).toEqual({ products: [WIDGET] });
+  });
+
+  it('load_serverError_showsTheCatalogSentenceNotTheWireSentence', () => {
+    // The fail() seat routes through the resolver now. Strong form: the catalog sentence present,
+    // the wire sentence absent, and the two share no wording.
+    products.pagedFailure = new ApiError('Dashboard is unavailable.', 500, undefined, undefined);
+    render();
+
+    const banner = textOf(fixture, '.dashboard-error').trim();
+    expect(banner).toBe('A server error occurred. Please try again later.');
+    expect(banner).not.toBe('Dashboard is unavailable.');
   });
 
   it('kpiLowStock_errorState_staysInert', () => {

@@ -10,6 +10,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { InvoiceSummaryResponse } from '../../../core/api/api-models';
 import { FormatService } from '../../../core/format/format.service';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { CsvExportService } from '../../../shared/csv/csv-export.service';
 import { createPagedListStore } from '../../../shared/list/paged-list-store';
 import { InvoiceService } from '../invoice.service';
@@ -52,6 +53,7 @@ export class InvoiceListComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly csv = inject(CsvExportService);
+  private readonly errorMessages = inject(ErrorMessageService);
   private readonly format = inject(FormatService);
 
   protected readonly displayedColumns = [
@@ -76,7 +78,8 @@ export class InvoiceListComponent implements OnInit {
   // One request per page. The summary rows carry their own counterparty names, so the page no
   // longer fetches the whole supplier and customer catalogues to join against.
   protected readonly list = createPagedListStore<InvoiceSummaryResponse>(
-    (pageIndex, pageSize) => this.invoices.getPagedInvoices(pageIndex, pageSize)
+    (pageIndex, pageSize) => this.invoices.getPagedInvoices(pageIndex, pageSize),
+    (err) => this.errorMessages.resolve(err)
   );
 
   /** The export's own in-flight flag, separate from `list.loading`: the table is not reloading. */
@@ -180,13 +183,15 @@ export class InvoiceListComponent implements OnInit {
           this.format.formatDateTime(row.paidAt)
         ]), 'invoices.columns.');
       },
-      // Surfaced verbatim, and correctly so: the export reads GET /api/invoices, which takes no
-      // parameters at all, so the server has nothing of the reader's to refuse and no coded
-      // refusal can arrive here. Should this export ever gain a filter the server validates,
-      // route the error through ErrorMessageService.resolve() or it will show English (ADR 041).
+      // Through the resolver, which changes nothing below 500 and everything at it. The export
+      // reads GET /api/invoices, which takes no parameters at all, so the server has nothing of
+      // the reader's to refuse and no coded refusal can arrive here - and an uncoded non-5xx comes
+      // back out of the resolver as the server wrote it. What the resolver does own is the uncoded
+      // 5xx, which now reads in the operator's language instead of as English prose about the
+      // server (ADR 041).
       error: (err: Error) => {
         this.exporting.set(false);
-        this.list.error.set(err.message);
+        this.list.error.set(this.errorMessages.resolve(err));
       }
     });
   }

@@ -34,8 +34,18 @@ export interface ListPageStore<T> {
  *
  * The caller supplies `fetch` rather than a service, so the store stays free of any one feature's
  * API and can be given a stub directly in a spec.
+ *
+ * `resolveMessage` turns a failure into the sentence to show. It is required rather than
+ * defaulted, and deliberately so: a default that rendered `err.message` would work everywhere and
+ * be wrong on any page whose endpoint names its refusals, which is how surfaces were found showing
+ * English after their endpoints gained codes. Requiring it makes the choice visible at every call
+ * site. The type is a plain function, so the store stays free of i18n and of the error vocabulary
+ * and a spec can hand it any function at all.
  */
-export function createListPageStore<T>(fetch: () => Observable<T[]>): ListPageStore<T> {
+export function createListPageStore<T>(
+  fetch: () => Observable<T[]>,
+  resolveMessage: (error: Error) => string
+): ListPageStore<T> {
   const rows = signal<T[]>([]);
   const pageIndex = signal(0);
   const pageSize = signal(DEFAULT_PAGE_SIZE);
@@ -66,7 +76,7 @@ export function createListPageStore<T>(fetch: () => Observable<T[]>): ListPageSt
       },
       error: (err: Error) => {
         rows.set([]);
-        error.set(err.message);
+        error.set(resolveMessage(err));
         loading.set(false);
       }
     });

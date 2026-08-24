@@ -10,6 +10,7 @@ import { ThemeService } from '../../core/theme/theme.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { LandingComponent } from './landing.component';
+import { ApiError } from '../../core/api/api-envelope';
 
 /* The rendered result once {{app}} is interpolated from common.appName. */
 const DESCRIPTION = 'StockEase is an inventory management application for small businesses.';
@@ -22,7 +23,11 @@ const TOKEN_ENVELOPE: ApiEnvelope<string> = {
 
 const TRANSLATIONS = {
   en: {
-    common: { appName: 'StockEase', language: 'Language' },
+    common: {
+      appName: 'StockEase',
+      language: 'Language',
+      errors: { serverError: 'A server error occurred. Please try again later.' }
+    },
     footer: { tagline: 'Inventory management demo', apiLatency: 'API {{ms}} ms' },
     landing: {
       description: '{{app}} is an inventory management application for small businesses.',
@@ -337,6 +342,19 @@ describe('LandingComponent', () => {
     await fixture.whenStable();
 
     expect(auth.calls).toEqual(['USER']);
+  });
+
+  it('demoLogin_serverError_notifiesWithTheCatalogSentenceNotTheWireSentence', async () => {
+    // The demo notification routes through the resolver now. Strong form: the catalog sentence
+    // present, the wire sentence absent, and the two share no wording.
+    auth.result = throwError(() => new ApiError('Demo mode is off.', 500, undefined, undefined));
+
+    demoButton('admin')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(notifications.errors).toEqual(['A server error occurred. Please try again later.']);
+    expect(notifications.errors).not.toContain('Demo mode is off.');
   });
 
   it('demoLogin_rejected_notifiesAndReEnablesBothButtons', async () => {

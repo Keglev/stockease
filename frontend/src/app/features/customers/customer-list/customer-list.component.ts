@@ -69,7 +69,10 @@ export class CustomerListComponent implements OnInit {
   // Delete is gated. Address stays off the table and on the dialog, matching the supplier list.
   protected readonly displayedColumns = ['name', 'email', 'phone', 'city', 'createdAt', 'actions'];
 
-  protected readonly list = createListPageStore<CustomerResponse>(() => this.customers.getAll());
+  protected readonly list = createListPageStore<CustomerResponse>(
+    () => this.customers.getAll(),
+    (err) => this.errorMessages.resolve(err)
+  );
 
   ngOnInit(): void {
     this.list.load();
