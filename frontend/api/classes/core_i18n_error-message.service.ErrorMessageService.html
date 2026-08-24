@@ -27,9 +27,21 @@ a coded failure whose values did not arrive, where the translated template would
 hole in it and the server's sentence already has the value in place. An enum param whose token
 this build has no word for is the same case one level down: the sentence would come out half
 translated, which reads worse than English that is merely English.</p>
+<p>One case does not fall through without a code: an uncoded failure whose status is 5xx, which
+resolves to SERVER_ERROR_KEY. It is carved out of the first of those four rather than
+added beside them, because the reasoning that makes the server's sentence the better answer
+stops holding here. Elsewhere that sentence says something specific the operator can act on and
+this build merely has no translation for it; a 5xx says the server broke, which is the same
+thing however it is worded and nothing the operator can do anything about. Translating it costs
+no information and is the only way that reader sees their own language.</p>
+<p>Narrow on purpose, and the exclusions are ruled rather than incidental. A coded 5xx takes the
+code path, because a server failure the API bothered to name has something specific to say. An
+unknown code keeps falling through at any status, 5xx included: the API named a situation this
+build has no word for, and the server's sentence about that situation beats a generic sentence
+about servers. A non-ApiError never had a status to judge.</p>
 </div></div></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/4358d0761d038ba37b96f0f9497c25bb25ec158d/frontend/src/app/core/i18n/error-message.service.ts#L184">core/i18n/error-message.service.ts:184</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/f5190bef033d88df4e3981b364cc698dbf32810b/frontend/src/app/core/i18n/error-message.service.ts#L213">core/i18n/error-message.service.ts:213</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -73,7 +85,7 @@ translated, which reads worse than English that is merely English.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><p>the translated sentence when the situation is one this build knows, else the message</p>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/4358d0761d038ba37b96f0f9497c25bb25ec158d/frontend/src/app/core/i18n/error-message.service.ts#L193">core/i18n/error-message.service.ts:193</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/f5190bef033d88df4e3981b364cc698dbf32810b/frontend/src/app/core/i18n/error-message.service.ts#L222">core/i18n/error-message.service.ts:222</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
