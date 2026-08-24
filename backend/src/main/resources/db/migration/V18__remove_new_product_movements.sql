@@ -10,7 +10,7 @@
 -- it points at product, app_user and invoice_item, and no table points back at it.
 --
 -- Deleting history is acceptable here only because this data is demo-ephemeral: the deployed
--- database is the demo baseline, which the weekly reset (ADR 005) replaces wholesale, and the
+-- database is the demo baseline, which the nightly reset (ADR 005) replaces wholesale, and the
 -- reseeded baseline books its opening stock through closed purchase invoices instead.
 
 DELETE FROM stock_movement WHERE reason = 'NEW_PRODUCT';

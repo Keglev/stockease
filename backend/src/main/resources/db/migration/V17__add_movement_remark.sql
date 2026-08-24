@@ -9,8 +9,8 @@ ALTER TABLE stock_movement ADD COLUMN movement_remark VARCHAR(32);
 -- Backfill before the constraint exists, or it would reject the very rows it is being added for.
 -- Production rows predate the taxonomy, so no remark can be recovered for them: INTERNAL is the
 -- neutral member of the taxonomy, honest about saying nothing more than "a loss inside the
--- business". The deployed data is the demo baseline, which the weekly reset replaces wholesale,
--- so these values survive at most one week.
+-- business". The deployed data is the demo baseline, which the nightly reset replaces wholesale,
+-- so these values survive at most one day.
 UPDATE stock_movement SET movement_remark = 'INTERNAL' WHERE reason IN ('LOST', 'DESTROYED');
 
 -- Boolean equality rather than two constraints: the left side is true exactly when the reason
