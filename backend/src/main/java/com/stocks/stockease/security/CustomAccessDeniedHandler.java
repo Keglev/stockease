@@ -18,13 +18,18 @@ import jakarta.servlet.http.HttpServletResponse;
  * is an unreadable one - the frontend interceptor finds no message and substitutes its own generic
  * text, so whatever the server wrote never reaches the operator.
  *
- * <p>This path is latent rather than live. The only rules in the filter chain are the public entries
- * and a blanket authenticated check, and role decisions live on {@code @PreAuthorize} inside the
- * dispatcher, where {@code GlobalExceptionHandler} answers them with an envelope of its own. So this
- * handler fires only if that arrangement changes - a rule moved into the chain, a filter added ahead
- * of the dispatcher. It exists in envelope shape for that day: a fallback nobody exercises is exactly
- * the one that must fail into the contract rather than out of it, because there will be no test
- * failing to say otherwise.
+ * <p>This path is latent rather than live, and the chain is what makes it so. Its authorization
+ * rules are, in full: {@code permitAll} on the health endpoints, on the login POST and on whatever
+ * public endpoints an active module contributes, then a blanket {@code anyRequest().authenticated()}.
+ * There is not one role rule among them, and CSRF is disabled, so no authorization decision the
+ * chain makes can raise {@code AccessDeniedException} on any path this build serves. Role decisions
+ * live on {@code @PreAuthorize} inside the dispatcher instead, where {@code GlobalExceptionHandler}
+ * answers them with an envelope of its own.
+ *
+ * <p>So this handler fires only if that arrangement changes - a role rule moved into the chain, a
+ * filter added ahead of the dispatcher. It exists in envelope shape for that day: a fallback nobody
+ * exercises is exactly the one that must fail into the contract rather than out of it, because there
+ * will be no test failing to say otherwise.
  */
 @Component
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
