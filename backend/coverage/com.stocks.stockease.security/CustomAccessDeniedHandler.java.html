@@ -18,16 +18,21 @@ import jakarta.servlet.http.HttpServletResponse;
  * is an unreadable one - the frontend interceptor finds no message and substitutes its own generic
  * text, so whatever the server wrote never reaches the operator.
  *
- * &lt;p&gt;This path is latent rather than live. The only rules in the filter chain are the public entries
- * and a blanket authenticated check, and role decisions live on {@code @PreAuthorize} inside the
- * dispatcher, where {@code GlobalExceptionHandler} answers them with an envelope of its own. So this
- * handler fires only if that arrangement changes - a rule moved into the chain, a filter added ahead
- * of the dispatcher. It exists in envelope shape for that day: a fallback nobody exercises is exactly
- * the one that must fail into the contract rather than out of it, because there will be no test
- * failing to say otherwise.
+ * &lt;p&gt;This path is latent rather than live, and the chain is what makes it so. Its authorization
+ * rules are, in full: {@code permitAll} on the health endpoints, on the login POST and on whatever
+ * public endpoints an active module contributes, then a blanket {@code anyRequest().authenticated()}.
+ * There is not one role rule among them, and CSRF is disabled, so no authorization decision the
+ * chain makes can raise {@code AccessDeniedException} on any path this build serves. Role decisions
+ * live on {@code @PreAuthorize} inside the dispatcher instead, where {@code GlobalExceptionHandler}
+ * answers them with an envelope of its own.
+ *
+ * &lt;p&gt;So this handler fires only if that arrangement changes - a role rule moved into the chain, a
+ * filter added ahead of the dispatcher. It exists in envelope shape for that day: a fallback nobody
+ * exercises is exactly the one that must fail into the contract rather than out of it, because there
+ * will be no test failing to say otherwise.
  */
 @Component
-<span class="fc" id="L30">public class CustomAccessDeniedHandler implements AccessDeniedHandler {</span>
+<span class="fc" id="L35">public class CustomAccessDeniedHandler implements AccessDeniedHandler {</span>
 
     /**
      * Writes a 403 Forbidden JSON error response for authenticated requests lacking the required
@@ -41,10 +46,10 @@ import jakarta.servlet.http.HttpServletResponse;
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
-<span class="fc" id="L44">        response.setStatus(HttpServletResponse.SC_FORBIDDEN);</span>
-<span class="fc" id="L45">        response.setContentType(&quot;application/json&quot;);</span>
-<span class="fc" id="L46">        response.getWriter()</span>
-<span class="fc" id="L47">                .write(&quot;{\&quot;success\&quot;:false,\&quot;message\&quot;:\&quot;You are not authorized to perform this action.\&quot;,\&quot;data\&quot;:null}&quot;);</span>
-<span class="fc" id="L48">    }</span>
+<span class="fc" id="L49">        response.setStatus(HttpServletResponse.SC_FORBIDDEN);</span>
+<span class="fc" id="L50">        response.setContentType(&quot;application/json&quot;);</span>
+<span class="fc" id="L51">        response.getWriter()</span>
+<span class="fc" id="L52">                .write(&quot;{\&quot;success\&quot;:false,\&quot;message\&quot;:\&quot;You are not authorized to perform this action.\&quot;,\&quot;data\&quot;:null}&quot;);</span>
+<span class="fc" id="L53">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

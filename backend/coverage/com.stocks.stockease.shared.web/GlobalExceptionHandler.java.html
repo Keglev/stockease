@@ -291,13 +291,29 @@ import jakarta.validation.ConstraintViolationException;
     /**
      * Handles {@link AccessDeniedException} from Spring Security authorization failures and returns a 403 Forbidden response.
      *
+     * &lt;p&gt;This is the live authorization seat: every {@code @PreAuthorize} denial in the application
+     * lands here. Its sibling in the filter chain, {@code CustomAccessDeniedHandler}, answers a
+     * decision the chain would make and the chain makes none, so it stays latent.
+     *
+     * &lt;p&gt;Stays English, and carries no code: no operator reaches it through the UI. Every
+     * ADMIN-only endpoint has its action gated in the frontend on the signed-in role, so a user
+     * without the role is never offered the button that would call it - the refusal is a sentence
+     * about a request the UI does not let them make. The gate reads the role from the token the
+     * server minted from that user's own row, which is the row the server re-reads to authorize the
+     * call, so the two agree for as long as the row does; a role changed underneath a live token is
+     * the one way they can part, and re-authenticating settles it.
+     *
+     * &lt;p&gt;So the sentence is API prose for whoever calls the endpoint directly - a script, or a
+     * client of ours that has not gated its own actions - rather than text an operator meets
+     * (ADR 041).
+     *
      * @param ex the caught exception
      * @return 403 response with permission error
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleAccessDeniedException(AccessDeniedException ex) {
-<span class="fc" id="L299">        return ResponseEntity.status(HttpStatus.FORBIDDEN)</span>
-<span class="fc" id="L300">                .body(new ApiResponse&lt;&gt;(false, &quot;You do not have permission to access this resource.&quot;, null));</span>
+<span class="fc" id="L315">        return ResponseEntity.status(HttpStatus.FORBIDDEN)</span>
+<span class="fc" id="L316">                .body(new ApiResponse&lt;&gt;(false, &quot;You do not have permission to access this resource.&quot;, null));</span>
     }
 
     /**
@@ -308,8 +324,8 @@ import jakarta.validation.ConstraintViolationException;
      */
     @ExceptionHandler(io.jsonwebtoken.JwtException.class)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleJwtException(io.jsonwebtoken.JwtException ex) {
-<span class="fc" id="L311">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
-<span class="fc" id="L312">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid or expired token.&quot;, null));</span>
+<span class="fc" id="L327">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="fc" id="L328">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid or expired token.&quot;, null));</span>
     }
 
     /**
@@ -327,8 +343,8 @@ import jakarta.validation.ConstraintViolationException;
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleBadCredentialsException(
             org.springframework.security.authentication.BadCredentialsException ex) {
-<span class="fc" id="L330">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
-<span class="fc" id="L331">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid username or password&quot;, null));</span>
+<span class="fc" id="L346">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="fc" id="L347">                .body(new ApiResponse&lt;&gt;(false, &quot;Invalid username or password&quot;, null));</span>
     }
 
     /**
@@ -343,21 +359,21 @@ import jakarta.validation.ConstraintViolationException;
         // grouped rather than collected into a map directly: one field can carry several violations, and
         // a plain toMap has no merge function, so it would throw and cost the client the whole envelope.
         // Sorting makes the joined value independent of the order constraints happen to be evaluated in.
-<span class="fc" id="L346">        Map&lt;String, String&gt; errors = ex.getBindingResult()</span>
-<span class="fc" id="L347">                .getFieldErrors()</span>
-<span class="fc" id="L348">                .stream()</span>
-<span class="fc" id="L349">                .collect(Collectors.groupingBy(FieldError::getField, TreeMap::new,</span>
-<span class="fc" id="L350">                        Collectors.mapping(FieldError::getDefaultMessage,</span>
-<span class="fc" id="L351">                                Collectors.collectingAndThen(Collectors.toList(), messages -&gt; messages.stream()</span>
-<span class="fc" id="L352">                                        .sorted()</span>
-<span class="fc" id="L353">                                        .collect(Collectors.joining(&quot;; &quot;))))));</span>
+<span class="fc" id="L362">        Map&lt;String, String&gt; errors = ex.getBindingResult()</span>
+<span class="fc" id="L363">                .getFieldErrors()</span>
+<span class="fc" id="L364">                .stream()</span>
+<span class="fc" id="L365">                .collect(Collectors.groupingBy(FieldError::getField, TreeMap::new,</span>
+<span class="fc" id="L366">                        Collectors.mapping(FieldError::getDefaultMessage,</span>
+<span class="fc" id="L367">                                Collectors.collectingAndThen(Collectors.toList(), messages -&gt; messages.stream()</span>
+<span class="fc" id="L368">                                        .sorted()</span>
+<span class="fc" id="L369">                                        .collect(Collectors.joining(&quot;; &quot;))))));</span>
         // The banner carries a code; the sentences in `errors` stay English, and that is the design
         // rather than an omission. No frontend surface renders them - the HTTP interceptor discards
         // `data`, and the forms carry their own client-side validators for the same fields - so they
         // are prose for whoever reads the API directly. Coding them would name situations no
         // operator meets. The one sentence an operator does meet is the banner (ADR 041).
-<span class="fc" id="L359">        return ResponseEntity.badRequest()</span>
-<span class="fc" id="L360">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
+<span class="fc" id="L375">        return ResponseEntity.badRequest()</span>
+<span class="fc" id="L376">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
                         ApiErrorCodes.VALIDATION_FAILED));
     }
 
@@ -378,9 +394,9 @@ import jakarta.validation.ConstraintViolationException;
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity&lt;ApiResponse&lt;Map&lt;String, String&gt;&gt;&gt; handleMissingRequestParameter(
             MissingServletRequestParameterException ex) {
-<span class="fc" id="L381">        Map&lt;String, String&gt; errors = Map.of(ex.getParameterName(), &quot;required parameter is missing&quot;);</span>
-<span class="fc" id="L382">        return ResponseEntity.badRequest()</span>
-<span class="fc" id="L383">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
+<span class="fc" id="L397">        Map&lt;String, String&gt; errors = Map.of(ex.getParameterName(), &quot;required parameter is missing&quot;);</span>
+<span class="fc" id="L398">        return ResponseEntity.badRequest()</span>
+<span class="fc" id="L399">                .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
                         ApiErrorCodes.VALIDATION_FAILED));
     }
 
@@ -393,12 +409,12 @@ import jakarta.validation.ConstraintViolationException;
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleHttpMessageNotReadableException(
             org.springframework.http.converter.HttpMessageNotReadableException ex) {
-<span class="fc" id="L396">        String message = &quot;Invalid or missing request body. Please check your input.&quot;;</span>
-<span class="fc bfc" id="L397" title="All 4 branches covered.">        if (ex.getMessage() != null &amp;&amp; ex.getMessage().contains(&quot;Cannot deserialize&quot;)) {</span>
-<span class="fc" id="L398">            message = &quot;Invalid request format or data type.&quot;;</span>
+<span class="fc" id="L412">        String message = &quot;Invalid or missing request body. Please check your input.&quot;;</span>
+<span class="fc bfc" id="L413" title="All 4 branches covered.">        if (ex.getMessage() != null &amp;&amp; ex.getMessage().contains(&quot;Cannot deserialize&quot;)) {</span>
+<span class="fc" id="L414">            message = &quot;Invalid request format or data type.&quot;;</span>
         }
-<span class="fc" id="L400">        return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
-<span class="fc" id="L401">                .body(new ApiResponse&lt;&gt;(false, message, null));</span>
+<span class="fc" id="L416">        return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L417">                .body(new ApiResponse&lt;&gt;(false, message, null));</span>
     }
 
     /**
@@ -410,24 +426,24 @@ import jakarta.validation.ConstraintViolationException;
     @SuppressWarnings(&quot;preview&quot;) // Switch pattern matching requires Java 21+
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity&lt;ApiResponse&lt;Map&lt;String, String&gt;&gt;&gt; handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
-<span class="fc" id="L413">        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L429">        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();</span>
 
         // Pattern matching with if-else (Java 16+): cleaner than instanceof + cast
-<span class="fc" id="L416">        Throwable cause = ex.getCause();</span>
-<span class="fc bfc" id="L417" title="All 2 branches covered.">        if (cause instanceof ConstraintViolationException constraintViolationException) {</span>
-<span class="fc" id="L418">            constraintViolationException.getConstraintViolations().forEach(violation -&gt;</span>
-<span class="fc" id="L419">                errors.put(violation.getPropertyPath().toString(), violation.getMessage())</span>
+<span class="fc" id="L432">        Throwable cause = ex.getCause();</span>
+<span class="fc bfc" id="L433" title="All 2 branches covered.">        if (cause instanceof ConstraintViolationException constraintViolationException) {</span>
+<span class="fc" id="L434">            constraintViolationException.getConstraintViolations().forEach(violation -&gt;</span>
+<span class="fc" id="L435">                errors.put(violation.getPropertyPath().toString(), violation.getMessage())</span>
             );
-<span class="fc bfc" id="L421" title="All 2 branches covered.">        } else if (cause instanceof BindException bindException) {</span>
-<span class="fc" id="L422">           bindException.getBindingResult().getFieldErrors().forEach(fieldError -&gt;</span>
-<span class="fc" id="L423">                errors.put(fieldError.getField(), fieldError.getDefaultMessage())</span>
+<span class="fc bfc" id="L437" title="All 2 branches covered.">        } else if (cause instanceof BindException bindException) {</span>
+<span class="fc" id="L438">           bindException.getBindingResult().getFieldErrors().forEach(fieldError -&gt;</span>
+<span class="fc" id="L439">                errors.put(fieldError.getField(), fieldError.getDefaultMessage())</span>
            );
         } else {
-<span class="fc" id="L426">           errors.put(&quot;Unknown&quot;, &quot;Unable to extract detailed validation error.&quot;);</span>
+<span class="fc" id="L442">           errors.put(&quot;Unknown&quot;, &quot;Unable to extract detailed validation error.&quot;);</span>
         }
 
-<span class="fc" id="L429">       return ResponseEntity.badRequest()</span>
-<span class="fc" id="L430">           .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
+<span class="fc" id="L445">       return ResponseEntity.badRequest()</span>
+<span class="fc" id="L446">           .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
                    ApiErrorCodes.VALIDATION_FAILED));
     }
 
@@ -439,8 +455,8 @@ import jakarta.validation.ConstraintViolationException;
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleGeneralException(Exception ex) {
-<span class="fc" id="L442">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
-<span class="fc" id="L443">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
+<span class="fc" id="L458">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="fc" id="L459">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
