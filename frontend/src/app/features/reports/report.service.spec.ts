@@ -40,7 +40,8 @@ import { ReportService } from './report.service';
  * file changes for exactly one reason - the service's endpoint surface moved. The only split available
  * would divide by endpoint family, which is the parallel-operation symmetry the standard names as not an
  * extraction target. The scaffolding left instead, to report-service.fixtures.ts, and the length that
- * remains is waived in the register rather than carried as an open finding.
+ * remains is waived here, in this comment, rather than carried as an open finding - the size
+ * standard and its register were retired in #266 and in-file comments are the sole record.
  */
 describe('ReportService', () => {
   let service: ReportService;

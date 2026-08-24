@@ -108,8 +108,10 @@ describe('LoginComponent', () => {
 
   it('submit_serverError_rendersTheCatalogSentenceNotTheBackendText', async () => {
     // A 5xx the API did not name now reads as the application's own generic sentence rather than
-    // as the server's prose about itself. The wire sentence below shares no wording with the
-    // catalog one, so this passes only if the resolver actually replaced it.
+    // as the server's prose about itself. The wire sentence below and the catalog one share the
+    // words 'error occurred', so containment of the catalog sentence alone would not prove
+    // replacement; the pair of assertions - catalog present, wire absent - is what carries the
+    // proof.
     fillCredentials('alice', 'secret');
     submitForm();
 
