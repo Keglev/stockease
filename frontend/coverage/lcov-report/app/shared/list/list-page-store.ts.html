@@ -153,7 +153,17 @@
 <a name='L88'></a><a href='#L88'>88</a>
 <a name='L89'></a><a href='#L89'>89</a>
 <a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -191,15 +201,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">55x</span>
-<span class="cline-any cline-yes">55x</span>
-<span class="cline-any cline-yes">55x</span>
-<span class="cline-any cline-yes">55x</span>
-<span class="cline-any cline-yes">55x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">55x</span>
-<span class="cline-any cline-yes">58x</span>
-<span class="cline-any cline-yes">58x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">59x</span>
+<span class="cline-any cline-yes">59x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -210,19 +230,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">66x</span>
-<span class="cline-any cline-yes">66x</span>
+<span class="cline-any cline-yes">68x</span>
+<span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">66x</span>
+<span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -232,7 +252,7 @@
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">55x</span>
+<span class="cline-any cline-yes">57x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -279,8 +299,18 @@ export interface ListPageStore&lt;T&gt; {
  *
  * The caller supplies `fetch` rather than a service, so the store stays free of any one feature's
  * API and can be given a stub directly in a spec.
+ *
+ * `resolveMessage` turns a failure into the sentence to show. It is required rather than
+ * defaulted, and deliberately so: a default that rendered `err.message` would work everywhere and
+ * be wrong on any page whose endpoint names its refusals, which is how surfaces were found showing
+ * English after their endpoints gained codes. Requiring it makes the choice visible at every call
+ * site. The type is a plain function, so the store stays free of i18n and of the error vocabulary
+ * and a spec can hand it any function at all.
  */
-export function createListPageStore&lt;T&gt;(fetch: () =&gt; Observable&lt;T[]&gt;): ListPageStore&lt;T&gt; {
+export function createListPageStore&lt;T&gt;(
+  fetch: () =&gt; Observable&lt;T[]&gt;,
+  resolveMessage: (error: Error) =&gt; string
+): ListPageStore&lt;T&gt; {
   const rows = signal&lt;T[]&gt;([]);
   const pageIndex = signal(0);
   const pageSize = signal(DEFAULT_PAGE_SIZE);
@@ -311,7 +341,7 @@ export function createListPageStore&lt;T&gt;(fetch: () =&gt; Observable&lt;T[]&g
       },
       error: (err: Error) =&gt; {
         rows.set([]);
-        error.set(err.message);
+        error.set(resolveMessage(err));
         loading.set(false);
       }
     });
@@ -340,7 +370,7 @@ export function createListPageStore&lt;T&gt;(fetch: () =&gt; Observable&lt;T[]&g
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-24T10:26:51.873Z
+                at 2026-08-24T10:59:26.821Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

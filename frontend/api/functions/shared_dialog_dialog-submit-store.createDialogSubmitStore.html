@@ -45,10 +45,12 @@ Material and lets a spec assert on what it closed with by passing a plain functi
 <p><code>resolveMessage</code> is the same shape of seam: a dialog whose backend names its failures passes the
 translator, and one whose failures are uncoded passes nothing and shows the message as before.
 The store stays free of both i18n and the error vocabulary, which is why it can be given a plain
-function in a spec.</p>
+function in a spec. The default is the spec seam rather than a production one: a dialog that
+ships should pass the translator, so that what its operator reads is a sentence in their own
+language wherever the API offers one.</p>
 </div></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Keglev/stockease/blob/9770e9efe5cf39ac7fed03f10bbb02d3e26889de/frontend/src/app/shared/dialog/dialog-submit-store.ts#L34">shared/dialog/dialog-submit-store.ts:34</a></li></ul></aside></div></li></ul></section></div>
+<li>Defined in <a href="https://github.com/Keglev/stockease/blob/e9c7fd4e40957201ca59d16de2aff48aa9c59629/frontend/src/app/shared/dialog/dialog-submit-store.ts#L36">shared/dialog/dialog-submit-store.ts:36</a></li></ul></aside></div></li></ul></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
