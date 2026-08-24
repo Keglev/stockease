@@ -16,12 +16,12 @@ import io.jsonwebtoken.security.Keys;
 
 /**
  * Handles JWT token generation, validation, and claims extraction.
- * Uses HMAC-SHA256 signing with a 10-hour expiration window.
+ * Uses HMAC-SHA256 signing with a 2-hour expiration window.
  */
 @Component
 public class JwtUtil {
 
-    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
+    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 2;
 
     /** Authority prefix used by the persisted role values; never surfaced in the token claim. */
     private static final String ROLE_PREFIX = "ROLE_";

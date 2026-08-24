@@ -74,7 +74,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 
 ## Security
 
-- **Stateless JWT** signed with HMAC-SHA256, ten-hour expiry, no server-side session.
+- **Stateless JWT** signed with HMAC-SHA256, two-hour expiry, no server-side session.
 - **Role-based access control** with two roles, enforced by 49 method-level authorization checks across 52 endpoints rather than by URL patterns alone.
 - **BCrypt** password hashing; the seeded administrator was removed by migration once demo accounts existed.
 - **A written threat model.** Token storage in the browser is a decision with its exposure stated, its risks accepted for a demo whose data resets nightly, and the production path documented - see the decision record on client token storage.

@@ -106,4 +106,36 @@ lost with it. Two minutes is time to finish a sentence and click.
 - **Two constants carry the design**, `IDLE_TIMEOUT_MS` and `IDLE_WARNING_MS`.
   Changing the policy is changing those two numbers, not the logic around them.
 
+## Amendment - 24 August 2026
+
+The token lifetime is now two hours (`EXPIRATION_TIME = 1000 * 60 * 60 * 2`). The
+ten-hour figure this record states above, and the reasoning that "ten hours is
+chosen to cover a working day", are superseded.
+
+The ground is safety rather than convenience. The access-denied seat in
+`GlobalExceptionHandler` names the one way the UI and the server can disagree
+about a role: a role changed in the database underneath a live token, where the
+UI still offers an admin action from the token's claim while the server refuses
+it from the row. The application offers no path that changes a role - the only
+assignment is the `User` constructor, and the seed migration writes SQL outside
+any application path - so the divergence takes deliberate out-of-band
+intervention. The token lifetime is what bounds how long it can last once it
+happens, and ten hours was a long time to leave that open.
+
+What this costs is stated plainly, because it is the thing the original figure
+was protecting: a working shift now meets the expiry several times rather than
+once at its end, and each time an operator signs in again. The experience at
+expiry is unchanged - the 401 interceptor delivers them to the login screen with
+the expired-session notice, which is the same tested flow this record already
+described.
+
+The rejected alternative above is revisited, not reversed. What it rejected was
+a shorter hard lifetime *instead of* an idle timer, and that rejection stands
+entirely: a lifetime cannot see a user who has walked away from an unlocked
+screen, which is what idle detection is for, and both mechanisms remain in place
+and independent. `IDLE_TIMEOUT_MS` and `IDLE_WARNING_MS` are untouched. What
+does not survive is the figure the rejection reasoned with - the claim that ten
+hours is the right hard limit because it covers a working day. Covering a working
+day is no longer the property the limit is chosen for.
+
 [Back to Decisions Index](index.md)

@@ -164,4 +164,19 @@ mid-task, which is why the idle timer carries that concern instead.
   together: whoever adopts cookie transport must re-enable it in the same
   change.
 
+## Amendment - 24 August 2026
+
+The containment boundary this record reasons from is now two hours rather than
+ten: `JwtUtil` issues the token with `EXPIRATION_TIME = 1000 * 60 * 60 * 2`.
+Every statement above that gives the boundary as ten hours - the lifetime in the
+context, "the token's ten-hour expiry is the containment boundary", the stolen
+token living out "the remainder of its ten hours", and the expiry named as the
+only true revocation mechanism - reads two hours as of this date.
+
+The reasoning is unchanged and tightens with the figure. A token readable by
+script on the page is contained by how long it stays useful, and it now stays
+useful for a fifth as long. Nothing about the storage decision, the absence of a
+refresh token, or the conditions under which a cookie transport would be adopted
+is affected. See ADR 032's amendment of the same date for the ground.
+
 [Back to Decisions Index](index.md)

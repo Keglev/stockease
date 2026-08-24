@@ -47,4 +47,11 @@ exposed, the response is an immediate change of that password and, where the
 signing secret is implicated, a rotation of it - a deliberate action on
 evidence, which is exactly what the periodic version is not.
 
+## Amendment - 24 August 2026
+
+The token lifetime referred to above is now two hours rather than ten. The
+argument is unaffected and slightly strengthened: credentials are bounded by
+revocation rather than by expiry, and the bound this record leans on has tightened.
+See ADR 032's amendment of the same date for the ground.
+
 [Back to Decisions Index](index.md)

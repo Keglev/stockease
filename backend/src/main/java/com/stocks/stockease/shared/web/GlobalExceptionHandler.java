@@ -303,6 +303,12 @@ public class GlobalExceptionHandler {
      * call, so the two agree for as long as the row does; a role changed underneath a live token is
      * the one way they can part, and re-authenticating settles it.
      *
+     * <p>That parting takes a deliberate act outside the application. Nothing here changes a role:
+     * the only assignment is the {@code User} constructor, and no endpoint mutates it, so a role
+     * moves only by someone writing to the database directly. The token lifetime is what bounds how
+     * long the UI can go on offering an action the server has begun to refuse - which is why that
+     * lifetime is a safety figure and not only a convenience one.
+     *
      * <p>So the sentence is API prose for whoever calls the endpoint directly - a script, or a
      * client of ours that has not gated its own actions - rather than text an operator meets
      * (ADR 041).
