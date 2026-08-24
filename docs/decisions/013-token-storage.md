@@ -50,4 +50,13 @@ decision, and it is the more valuable credential.
   customer or pricing data reopens it, and the alternative to adopt is the
   httpOnly cookie with CSRF protection described above.
 
+## Amendment - 24 August 2026
+
+The token's lifetime is now two hours rather than ten. Both statements above that
+give it as ten - the context describing the JWT's lifetime, and the consequence
+naming that expiry as the only revocation mechanism - read two hours as of this
+date. The revocation reasoning is unchanged: expiry is still the only mechanism,
+and it now arrives sooner. See ADR 032's amendment of the same date for the
+ground.
+
 [Back to Decisions Index](index.md)

@@ -74,6 +74,15 @@ Passwords are hashed with BCrypt (cost factor 10) before storage. The JWT secret
 - BCrypt password encoding (cost factor 10) — implemented
 - Environment variable injection for JWT secret — implemented
 
+## Amendment - 24 August 2026
+
+The token lifetime is now two hours: `EXPIRATION_TIME = 7200000` ms. This
+supersedes the 10-hour expiry stated in the decision above and the consequence
+recording tokens as expiring after 10 hours with `EXPIRATION_TIME = 36000000`.
+Nothing else about the mechanism changes - HS256 signing, the role claim in the
+payload, and validation through `JwtFilter` are as recorded. See ADR 032's
+amendment of the same date for the ground.
+
 ---
 
 [Back to Decisions Index](./index.md)
