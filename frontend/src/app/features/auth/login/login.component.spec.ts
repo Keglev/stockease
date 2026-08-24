@@ -51,7 +51,10 @@ describe('LoginComponent', () => {
           en: {
             common: {
               appName: 'StockEase',
-              errors: { validationFailed: 'Validation failed. Please check your entries.' }
+              errors: {
+                validationFailed: 'Validation failed. Please check your entries.',
+                serverError: 'A server error occurred. Please try again later.'
+              }
             },
             footer: { tagline: 'Inventory management demo', apiLatency: 'API {{ms}} ms' },
             login: {
@@ -103,13 +106,17 @@ describe('LoginComponent', () => {
     controller.verify();
   });
 
-  it('submit_serverError_rendersTheBackendMessageVerbatim', async () => {
+  it('submit_serverError_rendersTheCatalogSentenceNotTheBackendText', async () => {
+    // A 5xx the API did not name now reads as the application's own generic sentence rather than
+    // as the server's prose about itself. The wire sentence below shares no wording with the
+    // catalog one, so this passes only if the resolver actually replaced it.
     fillCredentials('alice', 'secret');
     submitForm();
 
     await failWith(500, 'An unexpected error occurred.');
 
-    expect(text()).toContain('An unexpected error occurred.');
+    expect(text()).toContain('A server error occurred. Please try again later.');
+    expect(text()).not.toContain('An unexpected error occurred.');
     controller.verify();
   });
 

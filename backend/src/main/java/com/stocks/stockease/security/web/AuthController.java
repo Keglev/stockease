@@ -78,9 +78,13 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(false, "Invalid username or password", null));
         } catch (RuntimeException e) {
-            // Stays English, though the login screen does render it: this is the generic-failure
-            // class, and a code would name a situation with nothing specific to say beyond what the
-            // sentence already says.
+            // Stays English on the wire, and carries no code: this is the
+            // generic-failure class, and a code would name a situation with
+            // nothing specific to say beyond what the sentence already says.
+            // What an operator sees is the frontend's own translated generic
+            // sentence - resolve() maps any uncoded 5xx to its serverError
+            // catalog key - so this prose is for whoever calls the endpoint
+            // directly.
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponse<>(false, "An unexpected error occurred", null));
         }

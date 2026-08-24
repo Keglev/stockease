@@ -22,7 +22,8 @@
       "rangeEmpty": "0 von {{total}}"
     },
     "errors": {
-      "validationFailed": "Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben."
+      "validationFailed": "Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.",
+      "serverError": "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut."
     }
   },
   "landing": {

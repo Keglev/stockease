@@ -9,7 +9,8 @@ const TRANSLATIONS = {
   en: {
     common: {
       errors: {
-        validationFailed: 'Validation failed. Please check your entries.'
+        validationFailed: 'Validation failed. Please check your entries.',
+        serverError: 'A server error occurred. Please try again later.'
       }
     },
     products: {
@@ -95,7 +96,8 @@ const TRANSLATIONS = {
   de: {
     common: {
       errors: {
-        validationFailed: 'Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.'
+        validationFailed: 'Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.',
+        serverError: 'Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.'
       }
     },
     products: {
@@ -612,6 +614,46 @@ describe('ErrorMessageService', () => {
       'PROFIT_REPORT_NOT_FOUND', { id: '42' });
 
     expect(service.resolve(error)).toBe('Für das Produkt mit der ID 42 liegt kein Gewinnbericht vor.');
+  });
+
+  /*
+   * The generic server failure: the one sentence this service picks without the API having named a
+   * situation. Asserted against the stub catalog entry rather than a literal, so these cases pin
+   * that the branch resolves the key - not what today's copy happens to say.
+   */
+  it('resolve_uncodedServerError_returnsTheTranslatedGenericSentence', () => {
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('An unexpected error occurred', 500, undefined, undefined);
+
+    expect(service.resolve(error)).toBe(TRANSLATIONS.de.common.errors.serverError);
+  });
+
+  it('resolve_uncoded503_returnsTheSameGenericSentence', () => {
+    // The boundary is "at or above 500", not "is 500": a gateway or an overloaded upstream answers
+    // 502 and 503, and those are the same failure to the operator as the one the app raised itself.
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('Service unavailable.', 503, undefined, undefined);
+
+    expect(service.resolve(error)).toBe(TRANSLATIONS.de.common.errors.serverError);
+  });
+
+  it('resolve_uncodedClientError_stillFallsBackToTheServerMessage', () => {
+    // Below the boundary nothing changed: an uncoded 4xx says something specific about what the
+    // caller sent, and the server's sentence is the only place that specific thing exists.
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('That page is gone.', 404, undefined, undefined);
+
+    expect(service.resolve(error)).toBe('That page is gone.');
+  });
+
+  it('resolve_unknownCodeAtServerError_stillFallsBackToTheServerMessage', () => {
+    // The deliberate exclusion: a 5xx the API named with a code this build does not know keeps the
+    // server's sentence, because that sentence is about the named situation rather than about
+    // servers in general. Ruled, not an oversight.
+    TestBed.inject(LanguageService).setLanguage('de');
+    const error = new ApiError('The ledger rejected the write.', 500, 'CODE_FROM_THE_FUTURE', undefined);
+
+    expect(service.resolve(error)).toBe('The ledger rejected the write.');
   });
 
   it('resolve_notFoundMissingItsId_fallsBackToTheServerMessage', () => {

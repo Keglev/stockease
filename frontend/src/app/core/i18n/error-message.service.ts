@@ -116,6 +116,21 @@ const MESSAGE_KEYS: Readonly<Record<string, string>> = {
   PROFIT_REPORT_NOT_FOUND: 'reports.errors.profitReportNotFound'
 };
 
+/**
+ * The sentence for a server failure the API did not name.
+ *
+ * @remarks
+ * Not an entry in {@link MESSAGE_KEYS}, and it cannot be one: that map is keyed by the code the API
+ * sends, and this case is defined by the absence of a code. It is the one sentence this service
+ * chooses on its own rather than because the backend named a situation - which it can only do here
+ * because a 5xx means the same thing whatever raised it, and the server's own words for it are
+ * prose about the server rather than anything the operator can act on.
+ */
+const SERVER_ERROR_KEY = 'common.errors.serverError';
+
+/** The status at and above which a failure is the server's own rather than anything the caller sent. */
+const SERVER_ERROR_STATUS = 500;
+
 /** The params each key interpolates, so a response missing one falls through rather than rendering a gap. */
 const REQUIRED_PARAMS: Readonly<Record<string, readonly string[]>> = {
   DUPLICATE_PRODUCT_NAME: ['name'],
@@ -179,6 +194,20 @@ const PARAM_TRANSLATIONS: Readonly<Record<string, Readonly<Record<string, string
  * hole in it and the server's sentence already has the value in place. An enum param whose token
  * this build has no word for is the same case one level down: the sentence would come out half
  * translated, which reads worse than English that is merely English.
+ *
+ * One case does not fall through without a code: an uncoded failure whose status is 5xx, which
+ * resolves to {@link SERVER_ERROR_KEY}. It is carved out of the first of those four rather than
+ * added beside them, because the reasoning that makes the server's sentence the better answer
+ * stops holding here. Elsewhere that sentence says something specific the operator can act on and
+ * this build merely has no translation for it; a 5xx says the server broke, which is the same
+ * thing however it is worded and nothing the operator can do anything about. Translating it costs
+ * no information and is the only way that reader sees their own language.
+ *
+ * Narrow on purpose, and the exclusions are ruled rather than incidental. A coded 5xx takes the
+ * code path, because a server failure the API bothered to name has something specific to say. An
+ * unknown code keeps falling through at any status, 5xx included: the API named a situation this
+ * build has no word for, and the server's sentence about that situation beats a generic sentence
+ * about servers. A non-ApiError never had a status to judge.
  */
 @Injectable({ providedIn: 'root' })
 export class ErrorMessageService {
@@ -191,8 +220,17 @@ export class ErrorMessageService {
    * @returns the translated sentence when the situation is one this build knows, else the message
    */
   resolve(error: Error): string {
-    if (!(error instanceof ApiError) || error.code === undefined) {
+    if (!(error instanceof ApiError)) {
       return error.message;
+    }
+    if (error.code === undefined) {
+      // Split from the instanceof check above so this one case can be told apart: an uncoded 5xx
+      // is the generic server failure and has its own sentence. Every other uncoded failure - a
+      // 4xx the API did not name, a status 0 the interceptor uses for "never reached the server" -
+      // still reads as the server wrote it.
+      return error.status >= SERVER_ERROR_STATUS
+        ? (this.translate.instant(SERVER_ERROR_KEY) as string)
+        : error.message;
     }
     const key = MESSAGE_KEYS[error.code];
     if (key === undefined) {

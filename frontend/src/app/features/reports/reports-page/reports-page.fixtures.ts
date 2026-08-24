@@ -178,6 +178,9 @@ export const TRANSLATIONS = {
         profitReportNotFound: 'Für das Produkt mit der ID {{id}} liegt kein Gewinnbericht vor.'
       }
     },
+    common: {
+      errors: { serverError: 'Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.' }
+    },
     movements: { form: { remarkOption: { EXPIRED: 'Abgelaufen' } } }
   }
 };
