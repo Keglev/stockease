@@ -42,9 +42,17 @@ export interface PagedListStore<T> {
  * total before it can decide where to land, and the total only arrives with the response that the
  * out-of-range request already returned - so the correct behaviour is a question about refetching,
  * not a slice adjustment (ADR 040).
+ *
+ * `resolveMessage` turns a failure into the sentence to show. It is required rather than
+ * defaulted, and deliberately so: a default that rendered `err.message` would work everywhere and
+ * be wrong on any page whose endpoint names its refusals, which is how surfaces were found showing
+ * English after their endpoints gained codes. Requiring it makes the choice visible at every call
+ * site. The type is a plain function, so the store stays free of i18n and of the error vocabulary
+ * and a spec can hand it any function at all.
  */
 export function createPagedListStore<T>(
-  fetch: (pageIndex: number, pageSize: number) => Observable<{ content: T[]; totalElements: number }>
+  fetch: (pageIndex: number, pageSize: number) => Observable<{ content: T[]; totalElements: number }>,
+  resolveMessage: (error: Error) => string
 ): PagedListStore<T> {
   const rows = signal<T[]>([]);
   const totalElements = signal(0);
@@ -69,7 +77,7 @@ export function createPagedListStore<T>(
       error: (err: Error) => {
         rows.set([]);
         totalElements.set(0);
-        error.set(err.message);
+        error.set(resolveMessage(err));
         loading.set(false);
       }
     });

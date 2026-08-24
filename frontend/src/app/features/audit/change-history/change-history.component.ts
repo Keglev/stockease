@@ -6,6 +6,7 @@ import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { ChangeLogResponse } from '../../../core/api/api-models';
+import { ErrorMessageService } from '../../../core/i18n/error-message.service';
 import { AuditService } from '../audit.service';
 import { AppDateTimePipe } from '../../../shared/format/app-date-time.pipe';
 
@@ -34,6 +35,7 @@ export class ChangeHistoryComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly audit = inject(AuditService);
+  private readonly errorMessages = inject(ErrorMessageService);
 
   protected readonly mode = signal<HistoryMode>('product');
   protected readonly targetId = signal(0);
@@ -93,14 +95,15 @@ export class ChangeHistoryComponent {
         this.entries.set(rows);
         this.loading.set(false);
       },
-      // Surfaced verbatim, and correctly so: both queries this page makes select by an id taken
-      // from the route and accept no filter of any kind. The audit endpoint that does refuse a
-      // reversed period with a code is the period-bounded one, and the reports page's changes tab
-      // is its only caller - not this page. So no coded refusal can arrive here. If this page ever
-      // gains a date filter, route the error through ErrorMessageService.resolve() or it will show
-      // English (ADR 041).
+      // Through the resolver, which changes nothing below 500 and everything at it. Both queries
+      // this page makes select by an id taken from the route and accept no filter of any kind. The
+      // audit endpoint that does refuse a reversed period with a code is the period-bounded one,
+      // and the reports page's changes tab is its only caller - not this page. So no coded refusal
+      // can arrive here, and an uncoded non-5xx comes back out of the resolver as the server wrote
+      // it. What the resolver does own is the uncoded 5xx, which now reads in the operator's
+      // language instead of as English prose about the server (ADR 041).
       error: (err: Error) => {
-        this.error.set(err.message);
+        this.error.set(this.errorMessages.resolve(err));
         this.loading.set(false);
       }
     });

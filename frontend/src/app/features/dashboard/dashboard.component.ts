@@ -8,6 +8,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
 
 import { DueDateBucket, InvoiceDueSummary, ProductResponse } from '../../core/api/api-models';
+import { ErrorMessageService } from '../../core/i18n/error-message.service';
 import { DESKTOP_MEDIA_QUERY } from '../../core/layout/layout';
 import { ProductService } from '../products/product.service';
 // Deliberate cross-feature import: the reporting endpoints have one client, and the reports
@@ -54,6 +55,7 @@ export class DashboardComponent implements OnInit {
   private readonly products = inject(ProductService);
   private readonly dialog = inject(MatDialog);
   private readonly breakpoints = inject(BreakpointObserver);
+  private readonly errorMessages = inject(ErrorMessageService);
 
   private readonly isDesktop = toSignal(
     this.breakpoints.observe(DESKTOP_MEDIA_QUERY).pipe(map((state) => state.matches)),
@@ -186,13 +188,14 @@ export class DashboardComponent implements OnInit {
    * Records a failed load as the sentence to show.
    *
    * @remarks
-   * Surfaced verbatim, and correctly so: every query behind this handler is either parameterless
-   * or fixed at the call site - the product count asks for one row, the due-soon window takes the
-   * server's own default - so the server has nothing of the reader's to refuse and no coded
-   * refusal can arrive. If a card ever gains a date range or a window size the reader chooses,
-   * route its error through ErrorMessageService.resolve() or it will show English (ADR 041).
+   * Through the resolver, which changes nothing below 500 and everything at it. Every query
+   * behind this handler is either parameterless or fixed at the call site - the product count asks
+   * for one row, the due-soon window takes the server's own default - so the server has nothing of
+   * the reader's to refuse and no coded refusal can arrive, and an uncoded non-5xx comes back out
+   * of the resolver as the server wrote it. What the resolver does own is the uncoded 5xx, which
+   * now reads in the operator's language instead of as English prose about the server (ADR 041).
    */
   private fail(err: Error): void {
-    this.error.set(err.message);
+    this.error.set(this.errorMessages.resolve(err));
   }
 }

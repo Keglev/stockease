@@ -53,6 +53,7 @@ export const TRANSLATIONS = {
   en: {
     charts: { other: 'Other' },
     reports: { view: { chart: 'Chart', table: 'Table' }, columns: { name: 'Name', grossProfit: 'Gross profit' } },
+    common: { errors: { serverError: 'A server error occurred. Please try again later.' } },
     dashboard: {
       title: 'Dashboard',
       refresh: 'Refresh',

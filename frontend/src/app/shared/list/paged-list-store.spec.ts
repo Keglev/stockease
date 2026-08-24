@@ -2,6 +2,13 @@ import { Observable, of, throwError } from 'rxjs';
 
 import { createPagedListStore } from './paged-list-store';
 
+/*
+ * The store takes a resolveMessage seam rather than rendering err.message itself, so these specs
+ * hand it the identity of that seam: every case below is about paging and load state, and a
+ * passthrough keeps their assertions about the message exactly what they were.
+ */
+const passthrough = (err: Error): string => err.message;
+
 /* Builds one server page of the given size, numbered from the row the page starts at, so which
  * page a request asked for is readable in the assertions. */
 function page(pageIndex: number, pageSize: number, totalElements: number) {
@@ -22,7 +29,7 @@ function page(pageIndex: number, pageSize: number, totalElements: number) {
  */
 describe('createPagedListStore', () => {
   it('load_success_populatesRowsAndTotalAndClearsLoadingAndError', () => {
-    const store = createPagedListStore(() => of(page(0, 10, 3)));
+    const store = createPagedListStore(() => of(page(0, 10, 3)), passthrough);
 
     store.load();
 
@@ -40,7 +47,7 @@ describe('createPagedListStore', () => {
     let fail = false;
     const store = createPagedListStore(() => (fail
       ? throwError(() => new Error('Backend unreachable'))
-      : of(page(0, 10, 12))));
+      : of(page(0, 10, 12))), passthrough);
     store.load();
 
     fail = true;
@@ -52,11 +59,26 @@ describe('createPagedListStore', () => {
     expect(store.loading()).toBe(false);
   });
 
+  it('load_failure_reportsWhatResolveMessageReturnsRatherThanTheRawMessage', () => {
+    // The seam is the point: the store must render what its caller's resolver returns, not the
+    // error's own text. Marker strings rather than real sentences, because the claim is about
+    // which of the two the store reaches for and not about any wording.
+    const store = createPagedListStore(
+      () => throwError(() => new Error('RAW-MESSAGE')),
+      () => 'RESOLVED-MESSAGE'
+    );
+
+    store.load();
+
+    expect(store.error()).toBe('RESOLVED-MESSAGE');
+    expect(store.error()).not.toBe('RAW-MESSAGE');
+  });
+
   it('load_afterAFailure_clearsTheMessageOnTheNextAttempt', () => {
     let fail = true;
     const store = createPagedListStore(() => (fail
       ? throwError(() => new Error('Backend unreachable'))
-      : of(page(0, 10, 2))));
+      : of(page(0, 10, 2))), passthrough);
     store.load();
 
     fail = false;
@@ -71,7 +93,7 @@ describe('createPagedListStore', () => {
     const store = createPagedListStore((pageIndex, pageSize) => {
       asked.push({ pageIndex, pageSize });
       return of(page(pageIndex, pageSize, 12));
-    });
+    }, passthrough);
     store.load();
 
     store.onPage({ pageIndex: 1, pageSize: 10, length: 12 });
@@ -85,7 +107,7 @@ describe('createPagedListStore', () => {
     const store = createPagedListStore((pageIndex, pageSize) => {
       asked.push({ pageIndex, pageSize });
       return of(page(pageIndex, pageSize, 12));
-    });
+    }, passthrough);
 
     store.onPage({ pageIndex: 0, pageSize: 25, length: 12 });
 
@@ -98,7 +120,7 @@ describe('createPagedListStore', () => {
     // The progress bar is bound to this, so a request that never answers must still read as busy.
     const store = createPagedListStore(() => new Observable<{ content: number[]; totalElements: number }>(
       () => undefined
-    ));
+    ), passthrough);
 
     store.load();
 
@@ -108,7 +130,7 @@ describe('createPagedListStore', () => {
   it('error_writtenByItsOwner_isVisibleOnTheStore', () => {
     // The page's one banner: the invoice export writes it directly, so it has to be settable from
     // outside the store and survive until a load clears it.
-    const store = createPagedListStore(() => of(page(0, 10, 1)));
+    const store = createPagedListStore(() => of(page(0, 10, 1)), passthrough);
 
     store.error.set('Export failed');
 

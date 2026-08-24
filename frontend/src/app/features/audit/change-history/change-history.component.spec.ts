@@ -7,9 +7,11 @@ import { LanguageService } from '../../../core/i18n/language.service';
 import { provideTestTranslations } from '../../../testing/i18n-testing';
 import { AuditService } from '../audit.service';
 import { ChangeHistoryComponent } from './change-history.component';
+import { ApiError } from '../../../core/api/api-envelope';
 
 const TRANSLATIONS = {
   en: {
+    common: { errors: { serverError: 'A server error occurred. Please try again later.' } },
     audit: {
       productTitle: 'Change history - product #{{id}}',
       userTitle: 'Changes by user #{{id}}',
@@ -242,6 +244,18 @@ describe('ChangeHistoryComponent', () => {
 
     // nothing behind this page, so "back" has to mean somewhere rather than nowhere
     expect(navigate).toHaveBeenCalledWith(['/app/products']);
+  });
+
+  it('load_serverError_rendersTheCatalogSentenceNotTheWireSentence', async () => {
+    // The banner routes through the resolver now. Strong form: the catalog sentence present, the
+    // wire sentence absent, and the two share no wording.
+    audit.productSource = () => throwError(
+      () => new ApiError('Change history is unavailable.', 500, undefined, undefined));
+    await setUp({ productId: '3' });
+
+    const banner = host().querySelector('.audit-error')?.textContent?.trim();
+    expect(banner).toBe('A server error occurred. Please try again later.');
+    expect(banner).not.toBe('Change history is unavailable.');
   });
 
   it('load_serviceErrors_rendersBackendMessageAndNoTimeline', async () => {
