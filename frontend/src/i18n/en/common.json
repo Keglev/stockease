@@ -21,6 +21,7 @@
     "rangeEmpty": "0 of {{total}}"
   },
   "errors": {
-    "validationFailed": "Validation failed. Please check your entries."
+    "validationFailed": "Validation failed. Please check your entries.",
+    "serverError": "A server error occurred. Please try again later."
   }
 }

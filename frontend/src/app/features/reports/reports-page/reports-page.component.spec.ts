@@ -578,11 +578,26 @@ describe('ReportsPageComponent', () => {
     expectFailureBanner('Die Anzahl der Tage muss positiv sein.');
   });
 
-  it('queryRejectedWithNoCode_stillShowsTheBackendSentence', async () => {
-    // The fallback the resolver has always had, pinned on this banner now that it routes through
-    // it: an uncoded failure is the ordinary case and must still read as the server wrote it.
+  it('queryRejectedWithNoCodeAtServerError_showsTheTranslatedGenericSentence', async () => {
+    // An uncoded 5xx is the one uncoded failure that does not read as the server wrote it: the
+    // server's words for "the server broke" say nothing the operator can act on, so the
+    // application's own sentence says it in their language instead. Strong form - the catalog
+    // sentence present, the wire sentence absent, and the two share no wording.
     TestBed.inject(LanguageService).setLanguage('de');
     reports.failWith.set('dueSoon', new ApiError('Report unavailable.', 500, undefined, undefined));
+    render();
+    await activateTab(4);
+
+    expectFailureBanner('Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
+    expect(host().querySelector('.reports-error')?.textContent).not.toContain('Report unavailable.');
+  });
+
+  it('queryRejectedWithNoCodeBelowServerError_stillShowsTheBackendSentence', async () => {
+    // The fall-through the resolver has always had, kept pinned on this banner at the status where
+    // it still applies: an uncoded 4xx says something specific about the request, and the server's
+    // sentence is the only place that specific thing exists.
+    TestBed.inject(LanguageService).setLanguage('de');
+    reports.failWith.set('dueSoon', new ApiError('Report unavailable.', 400, undefined, undefined));
     render();
     await activateTab(4);
 
