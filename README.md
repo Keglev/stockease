@@ -137,6 +137,8 @@ The commit history and the pull request record are the evidence. Both are public
 
 Every pull request runs a required check under one shared job name, so whichever tier a change touches reports under the name branch protection demands. Backend changes run the full suite against real PostgreSQL; frontend changes run lint, an i18n drift check, a production build, and the suite with coverage; documentation changes build the site and run a link checker.
 
+The backend check also refuses any pull request that modifies, deletes or renames a migration the base branch already carries. Flyway checksums each migration over the whole file, comments included, and validates those checksums at startup against what it recorded when the migration ran - so editing an applied migration, even only its comments, stops the application booting. New migrations are always allowed; changing an old one is the thing that has to be caught before merge rather than at deploy.
+
 On merge to `main`, the test workflows hand off. The backend deploy triggers a Koyeb redeploy and polls until the service reports healthy. The frontend deploy builds the bundle on the runner and publishes it prebuilt, so what ships is exactly the artifact that passed the gate. The documentation pipeline rebuilds the site and publishes it with whichever coverage reports that run produced.
 
 ## Available scripts
