@@ -63,6 +63,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Check applied migrations are unchanged
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash .github/scripts/shared/check-migrations-immutable.sh
+
       - name: Detect project root
         run: bash .github/scripts/shared/detect-maven-project.sh
 
