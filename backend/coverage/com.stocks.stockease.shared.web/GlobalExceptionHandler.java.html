@@ -429,27 +429,26 @@ import jakarta.validation.ConstraintViolationException;
      * @param ex the caught exception
      * @return 400 response with constraint violation details
      */
-    @SuppressWarnings(&quot;preview&quot;) // Switch pattern matching requires Java 21+
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity&lt;ApiResponse&lt;Map&lt;String, String&gt;&gt;&gt; handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
-<span class="fc" id="L435">        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L434">        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();</span>
 
         // Pattern matching with if-else (Java 16+): cleaner than instanceof + cast
-<span class="fc" id="L438">        Throwable cause = ex.getCause();</span>
-<span class="fc bfc" id="L439" title="All 2 branches covered.">        if (cause instanceof ConstraintViolationException constraintViolationException) {</span>
-<span class="fc" id="L440">            constraintViolationException.getConstraintViolations().forEach(violation -&gt;</span>
-<span class="fc" id="L441">                errors.put(violation.getPropertyPath().toString(), violation.getMessage())</span>
+<span class="fc" id="L437">        Throwable cause = ex.getCause();</span>
+<span class="fc bfc" id="L438" title="All 2 branches covered.">        if (cause instanceof ConstraintViolationException constraintViolationException) {</span>
+<span class="fc" id="L439">            constraintViolationException.getConstraintViolations().forEach(violation -&gt;</span>
+<span class="fc" id="L440">                errors.put(violation.getPropertyPath().toString(), violation.getMessage())</span>
             );
-<span class="fc bfc" id="L443" title="All 2 branches covered.">        } else if (cause instanceof BindException bindException) {</span>
-<span class="fc" id="L444">           bindException.getBindingResult().getFieldErrors().forEach(fieldError -&gt;</span>
-<span class="fc" id="L445">                errors.put(fieldError.getField(), fieldError.getDefaultMessage())</span>
+<span class="fc bfc" id="L442" title="All 2 branches covered.">        } else if (cause instanceof BindException bindException) {</span>
+<span class="fc" id="L443">           bindException.getBindingResult().getFieldErrors().forEach(fieldError -&gt;</span>
+<span class="fc" id="L444">                errors.put(fieldError.getField(), fieldError.getDefaultMessage())</span>
            );
         } else {
-<span class="fc" id="L448">           errors.put(&quot;Unknown&quot;, &quot;Unable to extract detailed validation error.&quot;);</span>
+<span class="fc" id="L447">           errors.put(&quot;Unknown&quot;, &quot;Unable to extract detailed validation error.&quot;);</span>
         }
 
-<span class="fc" id="L451">       return ResponseEntity.badRequest()</span>
-<span class="fc" id="L452">           .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
+<span class="fc" id="L450">       return ResponseEntity.badRequest()</span>
+<span class="fc" id="L451">           .body(new ApiResponse&lt;&gt;(false, &quot;Validation failed for request parameters.&quot;, errors,</span>
                    ApiErrorCodes.VALIDATION_FAILED));
     }
 
@@ -461,8 +460,8 @@ import jakarta.validation.ConstraintViolationException;
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity&lt;ApiResponse&lt;String&gt;&gt; handleGeneralException(Exception ex) {
-<span class="fc" id="L464">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
-<span class="fc" id="L465">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
+<span class="fc" id="L463">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="fc" id="L464">                .body(new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred. Please try again later.&quot;, null));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
