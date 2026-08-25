@@ -503,7 +503,32 @@ button:focus-visible {
   border-width: 2px;
   background: #1a2f4a;
   box-shadow: 0 4px 24px color-mix(in srgb, var(--accent) 30%, transparent);
-}/* =============================================================================
+}
+
+/* --- Project overview ------------------------------------------------------
+   Prose block between hero and card grid on index.html / index-de.html. */
+.intro {
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: 0 0 1rem;
+  border-top: 1px solid var(--border);
+}
+.intro h2 {
+  font-size: 1.35rem;
+  color: var(--heading);
+  margin: 2rem 0 1rem;
+}
+.intro h3 {
+  font-size: 1rem;
+  color: var(--heading);
+  margin: 1.25rem 0 0.25rem;
+}
+.intro p {
+  margin: 0 0 0.75rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+/* =============================================================================
    StockEase Docs — Content
    Typography for Markdown rendered into .doc-body by the Pandoc pipeline.
    Scoped to .doc-body so it never reaches the surrounding chrome.
