@@ -73,20 +73,30 @@
     <section class="intro" id="project">
       <h2>Project overview</h2>
 
-      <h3>What it is</h3>
-      <p>A bilingual inventory system for small businesses: products, suppliers, stock movements, invoices, reports. Java 21 and Spring Boot on the backend, Angular on the frontend, PostgreSQL. It runs in production at <a href="https://bestandskontrolle.vercel.app">bestandskontrolle.vercel.app</a> with a passwordless demo login.</p>
+      <div>
+        <h3>What it is</h3>
+        <p>A bilingual inventory system for small businesses: products, suppliers, stock movements, invoices, reports. Java 21 and Spring Boot on the backend, Angular on the frontend, PostgreSQL. It runs in production at <a href="https://bestandskontrolle.vercel.app">bestandskontrolle.vercel.app</a> with a passwordless demo login.</p>
+      </div>
 
-      <h3>Where it comes from</h3>
-      <p>The business rules come from my working experience in manufacturing: no movement below zero stock, revenue only on paid invoices, low-stock alerts only for items ever stocked. Each rule is a decision I made and justified in 42 architecture decision records.</p>
+      <div>
+        <h3>Where it comes from</h3>
+        <p>The business rules come from my working experience in manufacturing: no movement below zero stock, revenue only on paid invoices, low-stock alerts only for items ever stocked. Each rule is a decision I made and justified in 42 architecture decision records.</p>
+      </div>
 
-      <h3>How it was built</h3>
-      <p>Three roles, kept apart. A chat model designs and reviews: alternatives are weighed and specifications written there. An editor-integrated agent implements those specifications and reports what it did and where it deviated. Every domain and architecture decision is mine; I review every diff and merge every pull request. Where a specification turns out to be wrong about the code, the agent stops rather than forcing the change.</p>
+      <div>
+        <h3>How it was built</h3>
+        <p>Three roles, kept apart. A chat model designs and reviews: alternatives are weighed and specifications written there. An editor-integrated agent implements those specifications and reports what it did and where it deviated. Every domain and architecture decision is mine; I review every diff and merge every pull request. Where a specification turns out to be wrong about the code, the agent stops rather than forcing the change.</p>
+      </div>
 
-      <h3>Why that is verifiable</h3>
-      <p>Every change is a reviewed pull request. CI runs the full suite with coverage thresholds on both tiers; a regression cannot be merged. A new test is not trusted until it has failed for the right reason. Applied database migrations are immutable, comments included; a CI step enforces this after a comment edit once broke production startup. The history is public; each pull request states what was verified, what was measured, and what was left undone.</p>
+      <div>
+        <h3>Why that is verifiable</h3>
+        <p>Every change is a reviewed pull request. CI runs the full suite with coverage thresholds on both tiers; a regression cannot be merged. A new test is not trusted until it has failed for the right reason. Applied database migrations are immutable, comments included; a CI step enforces this after a comment edit once broke production startup. The history is public; each pull request states what was verified, what was measured, and what was left undone.</p>
+      </div>
 
-      <h3>What you can see in two minutes</h3>
-      <p>The <a href="https://bestandskontrolle.vercel.app">demo</a> (pick a role, no password). The <a href="/stockease/decisions/index.html">decision log</a>. The <a href="https://github.com/Keglev/stockease/pulls?q=is%3Apr+is%3Amerged">pull request record</a>, especially #309 and #310.</p>
+      <div>
+        <h3>What you can see in two minutes</h3>
+        <p>The <a href="https://bestandskontrolle.vercel.app">demo</a> (pick a role, no password). The <a href="/stockease/decisions/index.html">decision log</a>. The <a href="https://github.com/Keglev/stockease/pulls?q=is%3Apr+is%3Amerged">pull request record</a>, especially #309 and #310.</p>
+      </div>
     </section>
 
     <div class="card-grid">

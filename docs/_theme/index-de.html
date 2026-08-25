@@ -73,20 +73,30 @@
     <section class="intro" id="projekt">
       <h2>Projektvorstellung</h2>
 
-      <h3>Was es ist</h3>
-      <p>Eine zweisprachige Warenwirtschaft für kleine Betriebe: Produkte, Lieferanten, Lagerbewegungen, Rechnungen, Berichte. Java 21 und Spring Boot im Backend, Angular im Frontend, PostgreSQL. Die Anwendung läuft produktiv unter <a href="https://bestandskontrolle.vercel.app">bestandskontrolle.vercel.app</a>; ein Demo-Zugang ohne Passwort ist vorhanden.</p>
+      <div>
+        <h3>Was es ist</h3>
+        <p>Eine zweisprachige Warenwirtschaft für kleine Betriebe: Produkte, Lieferanten, Lagerbewegungen, Rechnungen, Berichte. Java 21 und Spring Boot im Backend, Angular im Frontend, PostgreSQL. Die Anwendung läuft produktiv unter <a href="https://bestandskontrolle.vercel.app">bestandskontrolle.vercel.app</a>; ein Demo-Zugang ohne Passwort ist vorhanden.</p>
+      </div>
 
-      <h3>Woher es kommt</h3>
-      <p>Die Fachregeln stammen aus meiner Berufserfahrung in der Fertigung: keine Buchung unter Bestand null, Umsatz nur auf gezahlte Rechnungen, Warnung nur für jemals bevorratete Artikel. Jede dieser Regeln ist eine Entscheidung, die ich getroffen und in 42 Architekturentscheidungen begründet habe.</p>
+      <div>
+        <h3>Woher es kommt</h3>
+        <p>Die Fachregeln stammen aus meiner Berufserfahrung in der Fertigung: keine Buchung unter Bestand null, Umsatz nur auf gezahlte Rechnungen, Warnung nur für jemals bevorratete Artikel. Jede dieser Regeln ist eine Entscheidung, die ich getroffen und in 42 Architekturentscheidungen begründet habe.</p>
+      </div>
 
-      <h3>Wie gearbeitet wurde</h3>
-      <p>Drei Rollen, klar getrennt. Ein Chat-Modell entwirft und begutachtet: dort werden Alternativen abgewogen und Spezifikationen geschrieben. Ein in den Editor integrierter Agent setzt diese Spezifikationen um und meldet, was er getan hat und wo er abgewichen ist. Alle fachlichen und architektonischen Entscheidungen treffe ich; ich prüfe jeden Diff und führe jeden Pull Request zusammen. Weicht die Spezifikation vom tatsächlichen Code ab, hält der Agent an, statt den Code zu verbiegen.</p>
+      <div>
+        <h3>Wie gearbeitet wurde</h3>
+        <p>Drei Rollen, klar getrennt. Ein Chat-Modell entwirft und begutachtet: dort werden Alternativen abgewogen und Spezifikationen geschrieben. Ein in den Editor integrierter Agent setzt diese Spezifikationen um und meldet, was er getan hat und wo er abgewichen ist. Alle fachlichen und architektonischen Entscheidungen treffe ich; ich prüfe jeden Diff und führe jeden Pull Request zusammen. Weicht die Spezifikation vom tatsächlichen Code ab, hält der Agent an, statt den Code zu verbiegen.</p>
+      </div>
 
-      <h3>Warum das belegbar ist</h3>
-      <p>Jede Änderung ist ein geprüfter Pull Request. Die CI führt die vollständige Testsuite mit Abdeckungsschwellen auf beiden Ebenen aus; eine Regression kann nicht zusammengeführt werden. Ein neuer Test gilt erst als vertrauenswürdig, wenn er aus dem richtigen Grund fehlgeschlagen ist. Angewendete Datenbankmigrationen sind unveränderlich, auch in ihren Kommentaren; ein CI-Schritt erzwingt das, nachdem ein Kommentar-Edit einmal den Produktivstart gebrochen hatte. Die Historie ist öffentlich; jeder Pull Request nennt, was geprüft, was gemessen und was offen gelassen wurde.</p>
+      <div>
+        <h3>Warum das belegbar ist</h3>
+        <p>Jede Änderung ist ein geprüfter Pull Request. Die CI führt die vollständige Testsuite mit Abdeckungsschwellen auf beiden Ebenen aus; eine Regression kann nicht zusammengeführt werden. Ein neuer Test gilt erst als vertrauenswürdig, wenn er aus dem richtigen Grund fehlgeschlagen ist. Angewendete Datenbankmigrationen sind unveränderlich, auch in ihren Kommentaren; ein CI-Schritt erzwingt das, nachdem ein Kommentar-Edit einmal den Produktivstart gebrochen hatte. Die Historie ist öffentlich; jeder Pull Request nennt, was geprüft, was gemessen und was offen gelassen wurde.</p>
+      </div>
 
-      <h3>Was Sie in zwei Minuten sehen können</h3>
-      <p>Die <a href="https://bestandskontrolle.vercel.app">Demo</a> (Rolle wählen, ohne Passwort). Das <a href="/stockease/decisions/index.html">Entscheidungsprotokoll</a>. Den <a href="https://github.com/Keglev/stockease/pulls?q=is%3Apr+is%3Amerged">Pull-Request-Verlauf</a>, insbesondere #309 und #310.</p>
+      <div>
+        <h3>Was Sie in zwei Minuten sehen können</h3>
+        <p>Die <a href="https://bestandskontrolle.vercel.app">Demo</a> (Rolle wählen, ohne Passwort). Das <a href="/stockease/decisions/index.html">Entscheidungsprotokoll</a>. Den <a href="https://github.com/Keglev/stockease/pulls?q=is%3Apr+is%3Amerged">Pull-Request-Verlauf</a>, insbesondere #309 und #310.</p>
+      </div>
     </section>
 
     <div class="card-grid">
