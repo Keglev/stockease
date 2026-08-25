@@ -27,4 +27,22 @@ A solo developer building for technical reviewers: recruiters and engineers
 assessing code quality, architecture reasoning and documentation practice for
 the German market.
 
+## Documentation map
+
+- [Backend Architecture](overview.md) (English) -
+  [Deutsche Fassung](overview-de.md)
+- [Constraints](02-constraints.md)
+- [System Context](03-context.md)
+- [Solution Strategy](04-solution-strategy.md)
+- [Building Blocks](05-building-blocks.md)
+- [Domain Modules](05-domains/index.md)
+- [Runtime View](06-runtime.md)
+- [Deployment View](07-deployment.md)
+- [Cross-cutting Concepts](08-concepts.md)
+- [Architecture Decisions](09-decisions/index.md)
+- [Quality Requirements](10-quality-requirements.md)
+- [Risks and Technical Debt](11-risks-technical-debt.md)
+- [Glossary](12-glossary.md)
+- [Architecture decisions](../../decisions/index.md)
+
 [Back to Documentation Home](/stockease/)

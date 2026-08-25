@@ -9,6 +9,8 @@ name: Deploy Backend
 # The deployment id rather than the service id, because the service answers HEALTHY
 # on behalf of the instance still serving while the new deployment builds beside it -
 # see the poll script's header and ADR 042.
+#
+# Header waived above the five-line rule: every line here is a WHY a reader cannot recover from the steps below.
 
 on:
   workflow_run:

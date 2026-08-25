@@ -29,4 +29,22 @@ Ein Solo-Entwickler, der fuer technische Gutachter baut: Recruiter und
 Ingenieure, die Codequalitaet, Architekturbegruendung und
 Dokumentationspraxis fuer den deutschen Markt bewerten.
 
+## Dokumentationsuebersicht
+
+- [Backend-Architektur](overview-de.md) -
+  [English version](overview.md)
+- [Constraints](02-constraints.md) (EN)
+- [System Context](03-context.md) (EN)
+- [Solution Strategy](04-solution-strategy.md) (EN)
+- [Building Blocks](05-building-blocks.md) (EN)
+- [Domain Modules](05-domains/index.md) (EN)
+- [Runtime View](06-runtime.md) (EN)
+- [Deployment View](07-deployment.md) (EN)
+- [Cross-cutting Concepts](08-concepts.md) (EN)
+- [Architecture Decisions](09-decisions/index.md) (EN)
+- [Quality Requirements](10-quality-requirements.md) (EN)
+- [Risks and Technical Debt](11-risks-technical-debt.md) (EN)
+- [Glossary](12-glossary.md) (EN)
+- [Architecture decisions](../../decisions/index.md) (EN)
+
 [Zurueck zur Dokumentations-Startseite](/stockease/)

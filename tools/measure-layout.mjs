@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// =============================================================================
 // measure-layout.mjs — measures horizontal overflow and resolved theme colours
 // in headless Chrome, so a claim about layout in a PR body is a number rather
 // than a screenshot impression.
@@ -21,7 +20,6 @@
 //
 // The --token it seeds is a rendering key, not a credential: it is unsigned,
 // the backend would reject it, and every /api/** call is stubbed anyway.
-// =============================================================================
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
