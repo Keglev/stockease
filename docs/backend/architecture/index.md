@@ -39,10 +39,10 @@ the German market.
 - [Runtime View](06-runtime.md)
 - [Deployment View](07-deployment.md)
 - [Cross-cutting Concepts](08-concepts.md)
-- [Architecture Decisions](09-decisions/index.md)
+- [Architecture Decisions (arc42 chapter)](09-decisions/index.md)
 - [Quality Requirements](10-quality-requirements.md)
 - [Risks and Technical Debt](11-risks-technical-debt.md)
 - [Glossary](12-glossary.md)
-- [Architecture decisions](../../decisions/index.md)
+- [Decision log](../../decisions/index.md)
 
 [Back to Documentation Home](/stockease/)
