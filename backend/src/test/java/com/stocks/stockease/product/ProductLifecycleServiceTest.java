@@ -23,7 +23,6 @@ import com.stocks.stockease.product.internal.ProductRepository;
 import com.stocks.stockease.security.User;
 import com.stocks.stockease.shared.DuplicateResourceException;
 
-import jakarta.persistence.EntityNotFoundException;
 
 /*
  * Contract: a product's existence - create, deleteById and restore. These three are specified

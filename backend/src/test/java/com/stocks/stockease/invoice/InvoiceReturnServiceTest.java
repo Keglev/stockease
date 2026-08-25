@@ -23,7 +23,6 @@ import com.stocks.stockease.shared.ApiErrorCodes;
 import com.stocks.stockease.shared.InvalidRequestException;
 import com.stocks.stockease.shared.InvoiceStateException;
 
-import jakarta.persistence.EntityNotFoundException;
 
 /*
  * Contract: InvoiceService.registerReturn - the guards on returning units (the parent invoice
