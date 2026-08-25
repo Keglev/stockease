@@ -33,6 +33,7 @@ The backend is a modular monolith with boundaries enforced by a test on every bu
 9. [CI/CD](#cicd)
 10. [Available scripts](#available-scripts)
 11. [Deployment](#deployment)
+12. [License](#license)
 
 ## Screenshots
 
@@ -171,6 +172,10 @@ There is one environment: production. Pull requests get the full check suite and
 - **Frontend** - static bundle on Vercel's CDN, with a rewrite that lets client-side routing survive a direct visit to a deep link.
 - **Database** - PostgreSQL on Supabase, its schema owned by 23 Flyway migrations (V1-V23) with Hibernate in validate-only mode.
 - **Documentation** - GitHub Pages, published from a build artifact rather than a committed site.
+
+## License
+
+Released under the MIT License. See [LICENSE](LICENSE).
 
 ---
 
