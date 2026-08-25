@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatPaginatorIntl } from '@angular/material/paginator';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBar, MatSnackBarRef, TextOnlySnackBar } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -13,6 +14,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { IdleLogoutService } from '../../core/auth/idle-logout.service';
 import { DEMO_MODE } from '../../core/config/demo-mode';
+import { LocalizedPaginatorIntl } from '../../core/i18n/localized-paginator-intl';
 import { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from '../../core/layout/layout';
 import { FooterComponent } from '../footer/footer.component';
 import { LanguageToggleComponent } from '../language-toggle/language-toggle.component';
@@ -42,6 +44,11 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
     RouterOutlet,
     TranslatePipe
   ],
+  // Provided here rather than in app.config: MatPaginatorIntl reaches Material's paginator entry
+  // point, which pulls select, forms, form-field and tooltip - ~328 kB that the initial bundle
+  // does not otherwise need. This component is lazily loaded and every paginator renders inside
+  // its outlet, so the subtree loads with the shell instead of at bootstrap.
+  providers: [{ provide: MatPaginatorIntl, useClass: LocalizedPaginatorIntl }],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss'
 })

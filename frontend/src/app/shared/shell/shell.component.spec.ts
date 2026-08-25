@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { MatPaginatorIntl } from '@angular/material/paginator';
 import { MatSidenav } from '@angular/material/sidenav';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter, Router } from '@angular/router';
@@ -13,6 +14,7 @@ import { AuthService, TOKEN_STORAGE_KEY } from '../../core/auth/auth.service';
 import { IdleLogoutService } from '../../core/auth/idle-logout.service';
 import { DEMO_MODE } from '../../core/config/demo-mode';
 import { LanguageService } from '../../core/i18n/language.service';
+import { LocalizedPaginatorIntl } from '../../core/i18n/localized-paginator-intl';
 import { PHONE_MEDIA_QUERY } from '../../core/layout/layout';
 import { BreakpointObserverStub } from '../../testing/breakpoint-testing';
 import { provideTestTranslations } from '../../testing/i18n-testing';
@@ -567,5 +569,17 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
 
     expect(navigate).toHaveBeenCalledWith(['/logout']);
+  });
+
+  it('shellInjector_always_providesTheLocalisedPaginatorLabels', async () => {
+    await setUp();
+
+    // This provider sits on the shell rather than in app.config so that Material's paginator
+    // entry point stays out of the initial bundle - moved back up, the bundle silently regrows by
+    // ~328 kB. It has to resolve from the shell's own injector, because every paginator in the
+    // application renders inside this outlet and nothing above the shell provides it any more.
+    expect(fixture.debugElement.injector.get(MatPaginatorIntl)).toBeInstanceOf(
+      LocalizedPaginatorIntl
+    );
   });
 });
