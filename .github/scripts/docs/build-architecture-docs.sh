@@ -7,7 +7,8 @@
 # written by build-docs.sh before this script is called.
 # Prerequisites: pandoc
 # =============================================================================
-# SIZE WAIVER: 76 code lines vs the ~70 shell target. One conversion concern at
+# SIZE WAIVER: 77 code lines (non-blank, non-comment; the shebang counts as code per the
+# 2026-08-13 ruling) vs the ~70 shell target. One conversion concern at
 # one abstraction level - no split criterion applies; splitting would separate
 # two pandoc passes that share their filter, nav metadata, and failure mode.
 set -euo pipefail

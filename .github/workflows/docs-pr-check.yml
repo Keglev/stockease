@@ -17,6 +17,8 @@ name: Docs PR Check
 #
 # This workflow's own file is deliberately NOT ignored by backend-test.yml. Editing the docs gate
 # should run both checks, because getting it wrong is how the repository loses its ability to merge.
+#
+# Header waived above the five-line rule: every line here is a WHY a reader cannot recover from the steps below.
 
 on:
   pull_request:
