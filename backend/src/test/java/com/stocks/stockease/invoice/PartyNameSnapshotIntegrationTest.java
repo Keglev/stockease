@@ -311,8 +311,8 @@ class PartyNameSnapshotIntegrationTest extends AbstractIntegrationTest {
         // The only situation in this family whose params carry more than a name. The quantity is
         // read once at the throw site and reused by sentence and map, so this pins that they agree:
         // a client rendering its own sentence gets the same 7 the English one quotes.
-        EntityInUseException ex = catchThrowableOfType(
-                () -> products.deleteById(item.getId(), admin), EntityInUseException.class);
+        EntityInUseException ex = catchThrowableOfType(EntityInUseException.class,
+                () -> products.deleteById(item.getId(), admin));
         assertThat(ex.getCode()).isEqualTo(ApiErrorCodes.PRODUCT_HAS_STOCK);
         assertThat(ex.getParams())
                 .isEqualTo(Map.of("productName", item.getName(), "quantity", "7"));

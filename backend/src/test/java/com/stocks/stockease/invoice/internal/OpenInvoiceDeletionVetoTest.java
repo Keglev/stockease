@@ -120,9 +120,8 @@ class OpenInvoiceDeletionVetoTest {
     void onSupplierDeleted_withOpenInvoices_carriesTheSupplierCodeAndName() {
         when(invoiceRepository.existsBySupplierIdAndStatus(1L, InvoiceStatus.OPEN)).thenReturn(true);
 
-        EntityInUseException ex = catchThrowableOfType(
-                () -> veto.onSupplierDeleted(new SupplierDeletedEvent(1L, "Acme")),
-                EntityInUseException.class);
+        EntityInUseException ex = catchThrowableOfType(EntityInUseException.class,
+                () -> veto.onSupplierDeleted(new SupplierDeletedEvent(1L, "Acme")));
 
         assertThat(ex.getCode()).isEqualTo(ApiErrorCodes.SUPPLIER_HAS_OPEN_INVOICES);
         assertThat(ex.getParams()).isEqualTo(Map.of("supplierName", "Acme"));
@@ -132,9 +131,8 @@ class OpenInvoiceDeletionVetoTest {
     void onCustomerDeleted_withOpenInvoices_carriesTheCustomerCodeAndName() {
         when(invoiceRepository.existsByCustomerIdAndStatus(2L, InvoiceStatus.OPEN)).thenReturn(true);
 
-        EntityInUseException ex = catchThrowableOfType(
-                () -> veto.onCustomerDeleted(new CustomerDeletedEvent(2L, "Jane Doe")),
-                EntityInUseException.class);
+        EntityInUseException ex = catchThrowableOfType(EntityInUseException.class,
+                () -> veto.onCustomerDeleted(new CustomerDeletedEvent(2L, "Jane Doe")));
 
         assertThat(ex.getCode()).isEqualTo(ApiErrorCodes.CUSTOMER_HAS_OPEN_INVOICES);
         assertThat(ex.getParams()).isEqualTo(Map.of("customerName", "Jane Doe"));
@@ -144,9 +142,8 @@ class OpenInvoiceDeletionVetoTest {
     void onProductChanged_deletedOnOpenInvoice_carriesTheOpenInvoiceCodeAndProductName() {
         when(invoiceItemRepository.existsByProductIdAndInvoiceStatus(7L, InvoiceStatus.OPEN)).thenReturn(true);
 
-        EntityInUseException ex = catchThrowableOfType(
-                () -> veto.onProductChanged(productEvent(ProductChangedEvent.Field.DELETED)),
-                EntityInUseException.class);
+        EntityInUseException ex = catchThrowableOfType(EntityInUseException.class,
+                () -> veto.onProductChanged(productEvent(ProductChangedEvent.Field.DELETED)));
 
         assertThat(ex.getCode()).isEqualTo(ApiErrorCodes.PRODUCT_ON_OPEN_INVOICE);
         assertThat(ex.getParams()).isEqualTo(Map.of("productName", "Widget"));

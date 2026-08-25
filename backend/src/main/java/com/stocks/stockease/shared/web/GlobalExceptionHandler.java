@@ -429,7 +429,6 @@ public class GlobalExceptionHandler {
      * @param ex the caught exception
      * @return 400 response with constraint violation details
      */
-    @SuppressWarnings("preview") // Switch pattern matching requires Java 21+
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
         Map<String, String> errors = new HashMap<>();

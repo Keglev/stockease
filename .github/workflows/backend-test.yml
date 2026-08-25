@@ -79,9 +79,6 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Make mvnw executable
-        run: chmod +x "$PROJECT_DIR/mvnw"
-
       - name: Run tests
         working-directory: ${{ env.PROJECT_DIR }}
         run: ./mvnw -B -ntp test
