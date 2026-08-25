@@ -87,6 +87,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 - **[Backend coverage report](https://keglev.github.io/stockease/backend/coverage/index.html)** - JaCoCo, republished by CI on every run that changes it.
 - **[Frontend coverage report](https://keglev.github.io/stockease/frontend/coverage/index.html)** - Vitest with V8 instrumentation.
 - **[Frontend API reference](https://keglev.github.io/stockease/frontend/api/index.html)** - TypeDoc over the Angular sources.
+- [Frontend source tree](frontend/README.md) - how `core/`, `shared/`, `features/` and the i18n sources are laid out.
 
 ## Testing and code quality
 

@@ -6,7 +6,7 @@ Aenderungsprotokollierung und Berichte in einer einzigen Spring-Boot-Anwendung.
 
 > **Dies ist eine einseitige Zusammenfassung.** Die strukturierte
 > arc42-Dokumentation - Einfuehrung und Ziele, Randbedingungen, Kontext,
-> Bausteine, Laufzeitsicht, Verteilung, Konzepte, Entscheidungen, Qualitaet,
+> Bausteinsicht, Laufzeitsicht, Verteilung, Querschnittliche Konzepte, Entscheidungen, Qualitaet,
 > Risiken und Glossar - beginnt in der
 > [vollstaendigen Architekturdokumentation](index-de.md).
 
