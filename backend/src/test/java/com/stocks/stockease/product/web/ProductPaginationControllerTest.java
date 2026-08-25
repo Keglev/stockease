@@ -116,7 +116,7 @@ class ProductPaginationControllerTest {
                 .andExpect(jsonPath("$.data.Unknown").value("Unable to extract detailed validation error.")); // error key is not deterministic; fallback message used
     }
 
-    @SuppressWarnings("null")
+    @SuppressWarnings("null") // any(clazz) returns null by Mockito contract; the @NonNull return type is the test's promise to the compiler, not the stub's
     private static <T> @NonNull T anyNonNull(Class<T> clazz) {
         return any(clazz);
     }
