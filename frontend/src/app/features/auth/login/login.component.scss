@@ -54,3 +54,14 @@ form {
   margin: 0 0 0.75rem;
   color: var(--mat-sys-on-surface-variant);
 }
+
+// A fixed slot rather than a conditional one: the button already spans the form, so its width was
+// never going to jump, but without a reserved box the label would slide sideways the moment the
+// spinner appeared. Sized to the spinner's own diameter so the two agree.
+.submit-spinner {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}

@@ -173,6 +173,29 @@ describe('LoginComponent', () => {
     controller.verify();
   });
 
+  it('submit_requestInFlight_showsASpinnerInTheButtonUntilTheResponseArrives', async () => {
+    const spinner = () => (fixture.nativeElement as HTMLElement).querySelector('mat-spinner');
+    fillCredentials('alice', 'secret');
+
+    // Nothing in flight yet, so the reserved slot is empty.
+    expect(spinner()).toBeNull();
+
+    submitForm();
+    fixture.detectChanges();
+
+    // The request is open and unanswered at this point: this is the window the spinner exists for,
+    // and the only one in which the assertion means anything.
+    const request = controller.expectOne(LOGIN_URL);
+    expect(spinner()).not.toBeNull();
+
+    request.flush({ success: true, message: 'ok', data: validToken() });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(spinner()).toBeNull();
+    controller.verify();
+  });
+
   it('render_default_showsTheSharedPublicHeaderInsteadOfFloatingToggles', () => {
     const host = fixture.nativeElement as HTMLElement;
 

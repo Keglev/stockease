@@ -61,7 +61,16 @@
             <p class="login-error" role="alert">{{ message }}</p>
           }
 
+          <!-- The spinner slot is always in the layout and only its contents change, so the label
+               sits in the same place whether or not a request is in flight. aria-hidden because
+               the label already swaps to "submitting" and announces the state in words; a second
+               progressbar role here would only repeat it. -->
           <button matButton="filled" type="submit" [disabled]="pending()">
+            <span class="submit-spinner" aria-hidden="true">
+              @if (pending()) {
+                <mat-spinner diameter="18" />
+              }
+            </span>
             {{ (pending() ? 'login.submitting' : 'login.submit') | translate }}
           </button>
         </form>
