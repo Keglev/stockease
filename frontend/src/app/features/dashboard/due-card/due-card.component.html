@@ -1,4 +1,4 @@
-<mat-card class="chart-card chart-due-dates">
+<mat-card class="chart-card chart-due-dates" [attr.aria-busy]="loading() ? 'true' : null">
   <mat-card-content>
     <div class="card-heading">
       <h2 class="section-title">{{ 'dashboard.charts.dueDates' | translate }}</h2>
@@ -14,7 +14,15 @@
     </div>
 
     @if (dueView() === 'chart') {
-      @if (dueDateOption(); as option) {
+      @if (loading()) {
+        <!-- The chart's own height, handed down rather than restated: a placeholder shorter than
+             what replaces it would drop the card and the whole row when the data lands. -->
+        <span
+          class="skeleton skeleton-chart"
+          aria-hidden="true"
+          [style.height]="chartHeight()"
+        ></span>
+      } @else if (dueDateOption(); as option) {
         <app-chart [option]="option" [height]="chartHeight()" />
       }
     } @else {

@@ -43,6 +43,15 @@ export class DueCardComponent {
   readonly dueSoonRows = input<InvoiceDueSummary[]>([]);
   readonly chartHeight = input.required<string>();
 
+  /**
+   * Whether the source behind this card is still in flight.
+   *
+   * <p>Distinct from a null payload, which is what the card already had: null is "nothing to draw"
+   * and covers a load that failed just as well as one still running, and the card cannot tell the
+   * two apart. The dashboard owns the request and therefore owns the answer.
+   */
+  readonly loading = input(false);
+
   /** Announces the switch so the dashboard can load the list the first time it is opened. */
   readonly viewChange = output<CardView>();
 

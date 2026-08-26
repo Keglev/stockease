@@ -1,4 +1,7 @@
 @use '../../../styles/breakpoints' as bp;
+@use '../../../styles/skeleton' as skeleton;
+
+@include skeleton.skeleton;
 
 :host {
   display: block;

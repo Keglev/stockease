@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
 import {
   DueDateBucket,
@@ -165,14 +165,22 @@ export class ReportServiceStub {
   calls = 0;
   profitPayload: ProductProfitReport[] = PROFIT;
 
+  /*
+   * Set by holdDashboardSources to keep a source in flight. Null by default, so every spec that
+   * does not ask for it keeps the synchronous answer it was written against.
+   */
+  profitGate: Subject<ProductProfitReport[]> | null = null;
+  dueDatesGate: Subject<DueDateBucket[]> | null = null;
+  overdueGate: Subject<InvoiceDueSummary[]> | null = null;
+
   profitProducts(): Observable<ProductProfitReport[]> {
     this.calls += 1;
-    return of(this.profitPayload);
+    return this.profitGate ?? of(this.profitPayload);
   }
 
   dueDates(): Observable<DueDateBucket[]> {
     this.calls += 1;
-    return of(BUCKETS);
+    return this.dueDatesGate ?? of(BUCKETS);
   }
 
   /* Still offered, and deliberately counted: the dashboard must no longer ask for it. */
@@ -186,7 +194,7 @@ export class ReportServiceStub {
 
   overdue(): Observable<InvoiceDueSummary[]> {
     this.calls += 1;
-    return of(OVERDUE);
+    return this.overdueGate ?? of(OVERDUE);
   }
 
   /* Counted separately: the due list must fetch these only when it is actually opened. */
@@ -206,13 +214,20 @@ export class ProductServiceStub {
   /* Set to make the paged call fail, which is what puts the component into its error state. */
   pagedFailure: Error | null = null;
 
+  /* As on the report stub: null unless a spec asks for the source to be held open. */
+  pagedGate: Subject<PaginatedProducts> | null = null;
+  lowStockGate: Subject<ProductResponse[]> | null = null;
+
   getPagedProducts(): Observable<PaginatedProducts> {
+    if (this.pagedGate) {
+      return this.pagedGate;
+    }
     return this.pagedFailure ? throwError(() => this.pagedFailure) : of(PAGE);
   }
 
   lowStock(): Observable<ProductResponse[]> {
     this.lowStockCalls++;
-    return of(this.lowStockRows);
+    return this.lowStockGate ?? of(this.lowStockRows);
   }
 }
 
@@ -356,4 +371,83 @@ export function chartHeights(fixture: ComponentFixture<DashboardComponent>): str
   return fixture.debugElement
     .queryAll(By.directive(ChartComponent))
     .map((chart) => (chart.componentInstance as ChartComponent).height());
+}
+
+/** The five sources held open by holdDashboardSources, each released or failed on demand. */
+export interface DashboardGates {
+  releaseProducts(): void;
+  releaseLowStock(): void;
+  releaseOverdue(): void;
+  releaseProfit(): void;
+  releaseDueDates(): void;
+  failProducts(error: Error): void;
+}
+
+/**
+ * Replaces every dashboard source with a subject that answers only when it is released.
+ *
+ * <p>The stubs answer synchronously by default, which means a rendered dashboard has already
+ * finished loading by the time a spec can look at it - the loading state would be unobservable.
+ * Holding the sources open is what makes the interval between the request and the answer long
+ * enough to assert on, and releasing them one at a time is what shows that each figure waits on
+ * its own request rather than on the slowest of the five.
+ *
+ * <p>Must be called before the component is created, since the subscriptions happen in ngOnInit.
+ */
+export function holdDashboardSources(stubs: DashboardStubs): DashboardGates {
+  const products = new Subject<PaginatedProducts>();
+  const lowStock = new Subject<ProductResponse[]>();
+  const overdue = new Subject<InvoiceDueSummary[]>();
+  const profit = new Subject<ProductProfitReport[]>();
+  const dueDates = new Subject<DueDateBucket[]>();
+
+  stubs.products.pagedGate = products;
+  stubs.products.lowStockGate = lowStock;
+  stubs.reports.overdueGate = overdue;
+  stubs.reports.profitGate = profit;
+  stubs.reports.dueDatesGate = dueDates;
+
+  return {
+    releaseProducts: () => {
+      products.next(PAGE);
+      products.complete();
+    },
+    releaseLowStock: () => {
+      lowStock.next(stubs.products.lowStockRows);
+      lowStock.complete();
+    },
+    releaseOverdue: () => {
+      overdue.next(OVERDUE);
+      overdue.complete();
+    },
+    releaseProfit: () => {
+      profit.next(stubs.reports.profitPayload);
+      profit.complete();
+    },
+    releaseDueDates: () => {
+      dueDates.next(BUCKETS);
+      dueDates.complete();
+    },
+    failProducts: (error: Error) => products.error(error)
+  };
+}
+
+/* The placeholders currently on screen, by the card each one stands in. */
+export function skeletons(fixture: ComponentFixture<DashboardComponent>): string[] {
+  return Array.from(host(fixture).querySelectorAll('.skeleton')).map(
+    (element) => element.className
+  );
+}
+
+/* Whether one card carries a placeholder, addressed the way a reader meets it - by its card. */
+export function hasSkeleton(
+  fixture: ComponentFixture<DashboardComponent>,
+  card: string
+): boolean {
+  return host(fixture).querySelector(`${card} .skeleton`) !== null;
+}
+
+/* Whether one card announces itself as still loading to a screen reader. */
+export function isBusy(fixture: ComponentFixture<DashboardComponent>, card: string): boolean {
+  return host(fixture).querySelector(card)?.getAttribute('aria-busy') === 'true';
 }

@@ -14,23 +14,45 @@
   <p class="dashboard-error" role="alert">{{ message }}</p>
 }
 
-<!-- While the load failed, every KPI shows an em dash. A zero here is indistinguishable from a real
-     zero, and the signals still hold their defaults, so rendering them would present "no data" as
-     data - the exact reading a user takes from a dashboard full of zeros. -->
+<!-- Three states per figure, in the order they can occur: the request is out, the request lost, the
+     request answered. The placeholder comes first because during the load the other two are both
+     lies - the signals still hold their zero defaults, and a zero here is indistinguishable from a
+     real zero, which presents "not yet known" as data. The dash is the failed load and stays
+     exactly as it was; what it no longer has to cover is the wait.
+
+     aria-hidden on the placeholder and aria-busy on the card: the shape is decoration and has
+     nothing to read out, while the card announces that its content is still being fetched. -->
 <div class="kpi-row">
-  <mat-card class="kpi-card kpi-products">
+  <mat-card class="kpi-card kpi-products" [attr.aria-busy]="loadingProducts() ? 'true' : null">
     <mat-card-content>
       <p class="kpi-label">{{ 'dashboard.kpi.products' | translate }}</p>
-      <p class="kpi-value">{{ error() ? '—' : totalProducts() }}</p>
+      <p class="kpi-value">
+        @if (loadingProducts()) {
+          <span class="skeleton skeleton-kpi" aria-hidden="true"></span>
+        } @else if (error()) {
+          —
+        } @else {
+          {{ totalProducts() }}
+        }
+      </p>
     </mat-card-content>
   </mat-card>
 
   <!-- A real button, not a card with a click handler: the list behind it has to be reachable by
        keyboard and announced as an action, which only button semantics give for free. Inert under
-       error, because the em dash means the rows were never loaded - there is nothing to open. -->
-  <mat-card class="kpi-card kpi-low-stock" [class.kpi-actionable]="!error()">
+       error, because the em dash means the rows were never loaded - there is nothing to open. The
+       load branches the same way and for the same reason: the rows have not arrived yet, so the
+       control that opens them is not offered rather than offered over an empty list. -->
+  <mat-card
+    class="kpi-card kpi-low-stock"
+    [class.kpi-actionable]="!error() && !loadingLowStock()"
+    [attr.aria-busy]="loadingLowStock() ? 'true' : null"
+  >
     <mat-card-content>
-      @if (error()) {
+      @if (loadingLowStock()) {
+        <p class="kpi-label">{{ 'dashboard.kpi.lowStock' | translate }}</p>
+        <p class="kpi-value"><span class="skeleton skeleton-kpi" aria-hidden="true"></span></p>
+      } @else if (error()) {
         <p class="kpi-label">{{ 'dashboard.kpi.lowStock' | translate }}</p>
         <p class="kpi-value">—</p>
       } @else {
@@ -47,34 +69,55 @@
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="kpi-card kpi-overdue">
+  <mat-card class="kpi-card kpi-overdue" [attr.aria-busy]="loadingOverdue() ? 'true' : null">
     <mat-card-content>
       <p class="kpi-label">{{ 'dashboard.kpi.overdue' | translate }}</p>
-      <p class="kpi-value">{{ error() ? '—' : overdueCount() }}</p>
+      <p class="kpi-value">
+        @if (loadingOverdue()) {
+          <span class="skeleton skeleton-kpi" aria-hidden="true"></span>
+        } @else if (error()) {
+          —
+        } @else {
+          {{ overdueCount() }}
+        }
+      </p>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="kpi-card kpi-gross-profit">
+  <mat-card class="kpi-card kpi-gross-profit" [attr.aria-busy]="loadingProfit() ? 'true' : null">
     <mat-card-content>
       <p class="kpi-label">{{ 'dashboard.kpi.grossProfit' | translate }}</p>
       <p
         class="kpi-value"
-        [class.kpi-negative]="!error() && grossProfit() < 0"
+        [class.kpi-negative]="!error() && !loadingProfit() && grossProfit() < 0"
       >
-        {{ error() ? '—' : (grossProfit() | appCurrency) }}
+        @if (loadingProfit()) {
+          <span class="skeleton skeleton-kpi" aria-hidden="true"></span>
+        } @else if (error()) {
+          —
+        } @else {
+          {{ grossProfit() | appCurrency }}
+        }
       </p>
     </mat-card-content>
   </mat-card>
 </div>
 
 
+<!-- Each card takes its own source's flag rather than a shared one, so the chart that answered first
+     draws while the other is still a placeholder. -->
 <div class="chart-row">
-  <app-profit-card [data]="profitData()" [chartHeight]="chartHeight()" />
+  <app-profit-card
+    [data]="profitData()"
+    [chartHeight]="chartHeight()"
+    [loading]="loadingProfit()"
+  />
 
   <app-due-card
     [buckets]="dueBuckets()"
     [dueSoonRows]="dueSoonRows()"
     [chartHeight]="chartHeight()"
+    [loading]="loadingDueDates()"
     (viewChange)="onDueViewChange($event)"
   />
 </div>

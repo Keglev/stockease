@@ -13,7 +13,11 @@ import {
   PROFIT,
   ProductServiceStub,
   ReportServiceStub,
+  hasSkeleton,
+  holdDashboardSources,
+  isBusy,
   showDueList,
+  skeletons,
   textOf,
   WIDGET
 } from './dashboard.fixtures';
@@ -201,6 +205,100 @@ describe('DashboardComponent', () => {
 
     // the gross-profit KPI comes from rows the chart already needed, so this request is gone
     expect(reports.lossRequests).toBe(0);
+  });
+
+  /*
+   * The loading state. Every source is held open, so the page can be read at the moment it has
+   * asked for everything and been told nothing - the interval a reader actually meets, and the one
+   * the page used to fill with four zeros and two collapsed cards.
+   */
+  it('load_requestsInFlight_showsAPlaceholderInEveryCard', () => {
+    holdDashboardSources({ reports, products, health, dialog, breakpoints });
+    render();
+
+    // four figures and both charts, and nothing else on the page grew one
+    expect(skeletons(fixture)).toHaveLength(6);
+    expect(hasSkeleton(fixture, '.kpi-products')).toBe(true);
+    expect(hasSkeleton(fixture, '.kpi-low-stock')).toBe(true);
+    expect(hasSkeleton(fixture, '.kpi-overdue')).toBe(true);
+    expect(hasSkeleton(fixture, '.kpi-gross-profit')).toBe(true);
+    expect(hasSkeleton(fixture, '.chart-profit')).toBe(true);
+    expect(hasSkeleton(fixture, '.chart-due-dates')).toBe(true);
+  });
+
+  it('load_requestsInFlight_showsNoZerosAndNoDashes', () => {
+    holdDashboardSources({ reports, products, health, dialog, breakpoints });
+    render();
+
+    // The whole point: a figure that is not known yet is not written down as a figure. A zero here
+    // is indistinguishable from a real zero, and the dash means the load failed.
+    const values = kpiValues(fixture).join(' ');
+    expect(values).not.toContain('0');
+    expect(values).not.toContain('—');
+  });
+
+  it('load_requestsInFlight_marksEachCardBusyForScreenReaders', () => {
+    holdDashboardSources({ reports, products, health, dialog, breakpoints });
+    render();
+
+    // The placeholder is aria-hidden decoration, so without this the wait is silent to a reader
+    // who cannot see the shimmer.
+    expect(isBusy(fixture, '.kpi-products')).toBe(true);
+    expect(isBusy(fixture, '.chart-profit')).toBe(true);
+    expect(isBusy(fixture, '.chart-due-dates')).toBe(true);
+  });
+
+  it('load_oneSourceAnswers_clearsOnlyThatCardsPlaceholder', () => {
+    const gates = holdDashboardSources({ reports, products, health, dialog, breakpoints });
+    render();
+
+    gates.releaseProducts();
+    fixture.detectChanges();
+
+    // One flag per request, which is what lets the fast source render while the slow one waits.
+    expect(hasSkeleton(fixture, '.kpi-products')).toBe(false);
+    expect(textOf(fixture, '.kpi-products .kpi-value').trim()).toBe('42');
+    expect(isBusy(fixture, '.kpi-products')).toBe(false);
+    expect(hasSkeleton(fixture, '.kpi-overdue')).toBe(true);
+  });
+
+  it('load_everySourceAnswers_leavesNoPlaceholderAndRendersEveryFigure', () => {
+    const gates = holdDashboardSources({ reports, products, health, dialog, breakpoints });
+    render();
+
+    gates.releaseProducts();
+    gates.releaseLowStock();
+    gates.releaseOverdue();
+    gates.releaseProfit();
+    gates.releaseDueDates();
+    fixture.detectChanges();
+
+    expect(skeletons(fixture)).toEqual([]);
+    expect(kpiValues(fixture)).toEqual(['42', '1', '3', '€85.00']);
+    // and the charts are back, which is what the chart placeholder was standing in for
+    expect(chartHeights(fixture)).toEqual(['15rem', '15rem']);
+  });
+
+  it('load_sourceFails_replacesThePlaceholderWithTheDashRatherThanLeavingItSpinning', () => {
+    const gates = holdDashboardSources({ reports, products, health, dialog, breakpoints });
+    render();
+    expect(hasSkeleton(fixture, '.kpi-products')).toBe(true);
+
+    gates.failProducts(new ApiError('Dashboard is unavailable.', 500, undefined, undefined));
+    fixture.detectChanges();
+
+    // A placeholder over a request that already lost promises a figure that is never coming.
+    expect(hasSkeleton(fixture, '.kpi-products')).toBe(false);
+    expect(isBusy(fixture, '.kpi-products')).toBe(false);
+    expect(textOf(fixture, '.kpi-products .kpi-value').trim()).toBe('—');
+  });
+
+  it('load_answered_showsNoPlaceholderAtAll', () => {
+    // The sources answer synchronously here, so this is the ordinary render every other spec sees:
+    // the placeholders must be gone by the time the page is first readable.
+    render();
+
+    expect(skeletons(fixture)).toEqual([]);
   });
 
   it('chartHeight_handsetViewport_usesTallerCharts', () => {

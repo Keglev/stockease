@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -88,6 +88,20 @@ export class DashboardComponent implements OnInit {
   // testing the array would re-request on every switch back to a list that is correctly empty.
   private dueSoonLoaded = false;
 
+  // One flag per request rather than one for the page: the five sources answer independently, so a
+  // single flag would hold every figure behind the slowest of them and undo the point of fanning
+  // them out. The profit flag covers two surfaces - the gross-profit KPI and the profit chart both
+  // come out of the one profitProducts call - because a flag names a request, not a widget.
+  //
+  // The due-soon rows have no flag: they are fetched only once the due card has been switched to its
+  // list, they are not on screen during the initial load this state exists for, and the card that
+  // shows them decides for itself when to ask.
+  protected readonly loadingProducts = signal(false);
+  protected readonly loadingLowStock = signal(false);
+  protected readonly loadingOverdue = signal(false);
+  protected readonly loadingProfit = signal(false);
+  protected readonly loadingDueDates = signal(false);
+
   protected readonly error = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -123,21 +137,39 @@ export class DashboardComponent implements OnInit {
   private load(): void {
     this.error.set(null);
 
+    // Raised together before the first subscribe rather than one at a time beside each: a source
+    // that answers from cache completes inside its own subscribe call, and a flag set afterwards
+    // would be set on a request that had already finished and never come down again.
+    this.loadingProducts.set(true);
+    this.loadingLowStock.set(true);
+    this.loadingOverdue.set(true);
+    this.loadingProfit.set(true);
+    this.loadingDueDates.set(true);
+
     // A one-row page is the cheapest total-product count the API offers: totalElements counts
     // the whole table while the payload carries a single product.
     this.products.getPagedProducts(0, 1).subscribe({
-      next: (page) => this.totalProducts.set(page.totalElements),
-      error: (err: Error) => this.fail(err)
+      next: (page) => {
+        this.totalProducts.set(page.totalElements);
+        this.loadingProducts.set(false);
+      },
+      error: (err: Error) => this.fail(err, this.loadingProducts)
     });
 
     this.products.lowStock().subscribe({
-      next: (rows) => this.lowStock.set(rows),
-      error: (err: Error) => this.fail(err)
+      next: (rows) => {
+        this.lowStock.set(rows);
+        this.loadingLowStock.set(false);
+      },
+      error: (err: Error) => this.fail(err, this.loadingLowStock)
     });
 
     this.reports.overdue().subscribe({
-      next: (rows) => this.overdueCount.set(rows.length),
-      error: (err: Error) => this.fail(err)
+      next: (rows) => {
+        this.overdueCount.set(rows.length);
+        this.loadingOverdue.set(false);
+      },
+      error: (err: Error) => this.fail(err, this.loadingOverdue)
     });
 
     this.reports.profitProducts().subscribe({
@@ -147,13 +179,17 @@ export class DashboardComponent implements OnInit {
         // business, and display-only arithmetic over server-authoritative numbers is the precedent
         // the invoice totals set.
         this.grossProfit.set(rows.reduce((sum, row) => sum + row.grossProfit, 0));
+        this.loadingProfit.set(false);
       },
-      error: (err: Error) => this.fail(err)
+      error: (err: Error) => this.fail(err, this.loadingProfit)
     });
 
     this.reports.dueDates().subscribe({
-      next: (buckets) => this.dueBuckets.set(buckets),
-      error: (err: Error) => this.fail(err)
+      next: (buckets) => {
+        this.dueBuckets.set(buckets);
+        this.loadingDueDates.set(false);
+      },
+      error: (err: Error) => this.fail(err, this.loadingDueDates)
     });
 
     // Only once the list has actually been opened: refresh re-reads what is on screen, while
@@ -185,7 +221,9 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Records a failed load as the sentence to show.
+   * Records a failed load as the sentence to show, and lowers the flag of the request that failed.
+   *
+   * @param loading the source flag to clear; omitted by the due-soon load, which has none
    *
    * @remarks
    * Through the resolver, which changes nothing below 500 and everything at it. Every query
@@ -195,7 +233,11 @@ export class DashboardComponent implements OnInit {
    * of the resolver as the server wrote it. What the resolver does own is the uncoded 5xx, which
    * now reads in the operator's language instead of as English prose about the server (ADR 041).
    */
-  private fail(err: Error): void {
+  private fail(err: Error, loading?: WritableSignal<boolean>): void {
+    // Cleared on the failure too, not only on the answer: a skeleton left spinning over a request
+    // that already lost would promise a figure that is never coming, which is the one reading worse
+    // than the dash.
+    loading?.set(false);
     this.error.set(this.errorMessages.resolve(err));
   }
 }

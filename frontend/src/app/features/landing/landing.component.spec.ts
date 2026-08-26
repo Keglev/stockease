@@ -69,12 +69,18 @@ const TRANSLATIONS = {
         source: 'View source on GitHub'
       },
       cta: { title: 'See it with real data', text: 'The demo resets every Monday.' }
-    }
+    },
+    // The login namespace, because the demo buttons borrow its submitting label rather than
+    // carrying one of their own - the wait is the same wait and a second key would be the same
+    // sentence written twice.
+    login: { submitting: 'Signing in…' }
   },
   de: {
     common: { appName: 'Bestandskontrolle', language: 'Sprache' },
+    login: { submitting: 'Anmeldung läuft…' },
     landing: {
       loginCta: 'Anmelden',
+      demo: { tryAdmin: 'Als Admin testen', tryUser: 'Als Benutzer testen' },
       screenshots: {
         title: 'Ein Blick in die Anwendung',
         dashboard: 'Dashboard mit Kennzahlen und Diagrammen',
@@ -367,6 +373,91 @@ describe('LandingComponent', () => {
     expect(notifications.errors).toEqual(['Demo mode is off.']);
     expect(demoButton('admin')?.disabled).toBe(false);
     expect(demoButton('user')?.disabled).toBe(false);
+  });
+
+  /* Every demo button on the page, hero pair plus the closing CTA's repeat. */
+  function demoButtons(): HTMLButtonElement[] {
+    return Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+        '.landing-demo-actions button'
+      )
+    );
+  }
+
+  it('demoLogin_inFlight_showsASpinnerAndTheSubmittingLabelOnEveryDemoButton', () => {
+    // Never completes, so the click leaves the page in its pending state for the assertion.
+    auth.result = new Subject<ApiEnvelope<string>>();
+
+    demoButton('admin')?.click();
+    fixture.detectChanges();
+
+    // All three, not only the one pressed: one flag covers them all, so all three are disabled and
+    // a button greyed out with its original label still reads as broken rather than as busy.
+    const buttons = demoButtons();
+    expect(buttons).toHaveLength(3);
+    expect(buttons.every((button) => button.querySelector('mat-spinner') !== null)).toBe(true);
+    expect(buttons.every((button) => (button.textContent ?? '').includes('Signing in…'))).toBe(
+      true
+    );
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Try as Admin');
+  });
+
+  it('demoLogin_pending_keepsTheSpinnerSlotReservedSoTheLabelDoesNotSlide', () => {
+    // The slot is in the layout before the click as well as after it; only its contents change.
+    // Without it the label jumps sideways the moment the spinner appears.
+    expect(demoButtons().every((button) => button.querySelector('.demo-spinner') !== null)).toBe(
+      true
+    );
+    expect(demoButtons()[0].querySelector('mat-spinner')).toBeNull();
+
+    auth.result = new Subject<ApiEnvelope<string>>();
+    demoButton('admin')?.click();
+    fixture.detectChanges();
+
+    expect(demoButtons().every((button) => button.querySelector('.demo-spinner') !== null)).toBe(
+      true
+    );
+  });
+
+  it('demoLogin_pending_hidesTheSpinnerFromScreenReadersAndLeavesTheMeaningToTheLabel', () => {
+    auth.result = new Subject<ApiEnvelope<string>>();
+
+    demoButton('admin')?.click();
+    fixture.detectChanges();
+
+    // The label already says the page is signing in; a progressbar role beside it would only
+    // repeat that in a second voice.
+    const slot = demoButton('admin')?.querySelector('.demo-spinner');
+    expect(slot?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('demoLogin_rejected_restoresTheOriginalLabelsAndRemovesTheSpinners', async () => {
+    auth.result = throwError(() => new Error('Demo mode is off.'));
+
+    demoButton('admin')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The other direction, so the assertions above cannot pass on markup that is always there.
+    expect(demoButtons().every((button) => button.querySelector('mat-spinner') === null)).toBe(
+      true
+    );
+    expect(demoButton('admin')?.textContent?.trim()).toBe('Try as Admin');
+    expect(demoButton('user')?.textContent?.trim()).toBe('Try as User');
+  });
+
+  it('demoLogin_inFlightInGerman_showsTheGermanSubmittingLabel', async () => {
+    // The key is reused from the login form rather than added, and an English assertion cannot
+    // tell a translated label from a hard-coded one. German is what proves the reuse translates.
+    await choose('de', 'light');
+    expect(demoButton('admin')?.textContent?.trim()).toBe('Als Admin testen');
+
+    auth.result = new Subject<ApiEnvelope<string>>();
+    demoButton('admin')?.click();
+    fixture.detectChanges();
+
+    expect(demoButton('admin')?.textContent?.trim()).toBe('Anmeldung läuft…');
   });
 
   it('demoLogin_inFlight_disablesBothButtons', () => {
