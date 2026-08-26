@@ -99,7 +99,23 @@ jobs:
           node-version: '24'
 
       - name: Install ReDoc CLI
-        run: npm install -g @redocly/cli
+        # Pinned and retried because an unpinned network install is two failure modes wearing one
+        # line. On 2026-08-26 commit 7590908 ran this workflow three times; one run died here with
+        # `npm error code ETIMEDOUT` reaching the registry while the other two installed the same
+        # package fine, so a green docs site depended on which minute the job started. The retries
+        # absorb that. The pin covers the other mode: without it every run silently takes whatever
+        # upstream published last, so a breaking release arrives mid-pipeline instead of as a
+        # deliberate bump somebody reviewed. Bump the version here on purpose.
+        #
+        # `redocly --version` is the proof, not decoration: the loop cannot fail the step by
+        # itself - three exhausted attempts just fall out of it - so the step passes only if the
+        # binary is actually there to answer.
+        run: |
+          for attempt in 1 2 3; do
+            npm install -g @redocly/cli@2.48.0 && break
+            echo "attempt $attempt failed"; sleep 15
+          done
+          redocly --version
 
       - name: Install Pandoc
         run: sudo apt-get update -qq && sudo apt-get install -y pandoc
