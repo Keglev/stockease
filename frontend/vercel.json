@@ -4,6 +4,15 @@
   ],
   "headers": [
     {
+      "source": "/(main|chunk|styles|polyfills)-([A-Za-z0-9_-]+)\\.(js|css)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         {

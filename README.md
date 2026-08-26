@@ -57,7 +57,7 @@ Both screens exist in English and German, light and dark. The full set is on the
 - [x] Change audit trail and read-only reporting
 - [x] Stateless JWT authentication with role-based access control
 - [x] Angular frontend covering every domain area, bilingual EN/DE
-- [x] arc42 architecture documentation for both tiers, plus 42 decision records
+- [x] arc42 architecture documentation for both tiers, plus 43 decision records
 - [x] CI gating both suites, coverage thresholds, and an i18n drift check
 - [x] Every operator-facing refusal carries a machine-readable code and renders in the reader's language - 50 codes across 7 exception families (ADR 041)
 - [x] Automated deployment for backend, frontend and documentation
@@ -92,9 +92,9 @@ Both screens exist in English and German, light and dark. The full set is on the
 
 ## Testing and code quality
 
-**Backend** - 657 test methods across 120 files, combining unit tests, Spring slices, and integration tests against real PostgreSQL through Testcontainers rather than an in-memory substitute. Module boundaries are verified on every build; a violation fails CI.
+**Backend** - 658 test methods across 120 files, combining unit tests, Spring slices, and integration tests against real PostgreSQL through Testcontainers rather than an in-memory substitute. Module boundaries are verified on every build; a violation fails CI.
 
-**Frontend** - 1012 tests across 95 files under Vitest, at 99.0% statement coverage. Component specs assert on rendered output through the real template, and dependencies are substituted at injection seams rather than by mocking modules.
+**Frontend** - 1033 tests across 95 files under Vitest, at 99.1% statement coverage. Component specs assert on rendered output through the real template, and dependencies are substituted at injection seams rather than by mocking modules.
 
 Coverage thresholds gate both suites as regression floors set below what the suites achieve, so they fail on genuine loss rather than on an honest refactor. A separate check re-assembles the translation bundles from their authored sources and refuses any difference, which makes a hand-edited artifact impossible to merge.
 
