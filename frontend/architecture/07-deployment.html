@@ -165,6 +165,22 @@
         that is not an asset to <code>index.html</code>, which is what
         makes client-side routing work on a direct visit to a deep
         link.</p>
+        <p><code>vercel.json</code> also sets two cache policies, split
+        by whether a filename identifies its own contents (ADR 043):
+        hashed build output - <code>main-*</code>, <code>chunk-*</code>,
+        <code>styles-*</code> - is served <code>immutable</code> for a
+        year, which cannot go stale because a changed file is a
+        different URL, while <code>/assets/</code> is edge-cached for a
+        year and browser-cached for one day, the short browser lifetime
+        being necessary precisely because those filenames are
+        <em>not</em> fingerprinted. <code>index.html</code> is
+        deliberately left on the platform default and revalidates on
+        every load, since it is the file that names which hashed bundle
+        to fetch. A check after the production build
+        (<code>frontend/scripts/check-vercel-cache-rules.mjs</code>)
+        fails CI unless every emitted file matches the immutable rule,
+        because an earlier draft of that rule missed a third of the
+        chunks without anything going red.</p>
         <h2 id="documentation-delivery">Documentation delivery</h2>
         <p>The docs site is built by <code>Docs Pipeline</code> and
         published by <code>Deploy Docs to GitHub Pages</code>; the

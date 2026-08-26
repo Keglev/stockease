@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<!-- The one page template the docs build wires: build-architecture-docs.sh
+     passes every architecture page and every decision record through it, so
+     the topbar, sidebar and theme handling here are what the whole generated
+     site carries - this comment included, since it ships inside each page.
+     Do not put template syntax in it. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decisions ·
+043-delivery-and-perceived-latency · StockEase Docs</title>
+
+  <!-- Set the theme before the stylesheet paints, otherwise the page flashes
+       the default theme for one frame before the saved choice applies. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stockease-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/stockease/assets/docs.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-btn" aria-label="Toggle navigation">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="/stockease/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7" /><path d="M12 11v10" />
+        </svg>
+        StockEase Docs
+      </a>
+
+      <div class="topbar-tools">
+        <!-- Client-side search input is added in the dedicated search pass. -->
+        <span class="lang-switch">
+          <a href="/stockease/" aria-current="true">EN</a>
+          <a href="/stockease/index-de.html">DE</a>
+        </span>
+        <button class="theme-toggle" aria-label="Toggle light or dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Decision-log sidebar, included by the doc templates as a Pandoc partial.
+     The log records backend, frontend and cross-cutting decisions in one
+     sequence (ADR 017), so these pages carry neither tier's navigation: this
+     sidebar IS the index. The active link is marked at runtime by docs.js. Do
+     not put template syntax in this comment - a partial is itself a template.
+
+     MAINTENANCE DUTY: a new ADR is added to docs/decisions/index.md AND to the
+     LAST range group below, in the same pull request that adds the ADR file.
+     When a group would pass roughly twelve entries, start a new range rather
+     than letting one grow: keep the ranges aligned to the numbering, so 033
+     opens an "ADR 033-040" group instead of stretching 021-032. The summary
+     label carries the range, so it changes with the group.
+
+     No open attribute is set here on purpose. Every group ships collapsed and
+     docs.js opens the one holding the current page, which keeps the sidebar
+     short on the index and self-locating on an ADR page.
+
+     The two-entry pointer design in nav-backend.html is deliberate and stays as
+     it is - the central log is reached from the Docs group there. -->
+<aside class="sidebar">
+  <p class="nav-title">Docs</p>
+  <ul>
+    <li><a href="/stockease/">Docs home</a></li>
+    <li><a href="/stockease/decisions/index.html">Decision index</a></li>
+  </ul>
+
+  <p class="nav-title">Decisions</p>
+  <details class="nav-group">
+    <summary>ADR 001-010</summary>
+    <ul>
+      <li><a href="/stockease/decisions/001-database-choice.html">001 Database choice</a></li>
+      <li><a href="/stockease/decisions/002-validation-strategy.html">002 Validation strategy</a></li>
+      <li><a href="/stockease/decisions/003-authentication-mechanism.html">003 Authentication mechanism</a></li>
+      <li><a href="/stockease/decisions/004-inventory-domain-model.html">004 Inventory domain model</a></li>
+      <li><a href="/stockease/decisions/005-demo-access.html">005 Demo access without credentials</a></li>
+      <li><a href="/stockease/decisions/006-audit-and-profit-model.html">006 Audit and profit model</a></li>
+      <li><a href="/stockease/decisions/007-modular-monolith.html">007 Modular monolith</a></li>
+      <li><a href="/stockease/decisions/008-documentation-structure.html">008 Documentation structure</a></li>
+      <li><a href="/stockease/decisions/009-sales-invoices-and-customers.html">009 Sales invoices and customers</a></li>
+      <li><a href="/stockease/decisions/010-no-lot-tracking.html">010 Pooled inventory, no lot tracking</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 011-020</summary>
+    <ul>
+      <li><a href="/stockease/decisions/011-merchandise-scope-and-payment.html">011 Merchandise scope and payment</a></li>
+      <li><a href="/stockease/decisions/012-frontend-hosting.html">012 Frontend hosting on a CDN</a></li>
+      <li><a href="/stockease/decisions/013-token-storage.html">013 JWT in localStorage, no refresh</a></li>
+      <li><a href="/stockease/decisions/014-openapi-types-only.html">014 Types-only generation from OpenAPI</a></li>
+      <li><a href="/stockease/decisions/015-runtime-i18n.html">015 Runtime over compile-time i18n</a></li>
+      <li><a href="/stockease/decisions/016-charting-library.html">016 Direct ECharts, not a wrapper</a></li>
+      <li><a href="/stockease/decisions/017-central-decision-log.html">017 Central decision log</a></li>
+      <li><a href="/stockease/decisions/018-product-master-data.html">018 Product creation is master data</a></li>
+      <li><a href="/stockease/decisions/019-last-purchase-price.html">019 Purchase price follows last close</a></li>
+      <li><a href="/stockease/decisions/020-loss-remark.html">020 Losses carry a remark</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 021-032</summary>
+    <ul>
+      <li><a href="/stockease/decisions/021-stock-only-via-invoices.html">021 Stock enters only via invoices</a></li>
+      <li><a href="/stockease/decisions/022-invoice-numbers.html">022 Invoice numbers are operator-set</a></li>
+      <li><a href="/stockease/decisions/023-chart-aggregation-and-csv.html">023 Chart aggregation and CSV export</a></li>
+      <li><a href="/stockease/decisions/024-profit-cogs.html">024 Gross profit as COGS at sale</a></li>
+      <li><a href="/stockease/decisions/025-cash-flow-payment-basis.html">025 Cash flow on a payment basis</a></li>
+      <li><a href="/stockease/decisions/026-low-stock-ever-stocked.html">026 Low stock: ever-stocked only</a></li>
+      <li><a href="/stockease/decisions/027-demo-temporal-spread.html">027 Deterministic demo spread</a></li>
+      <li><a href="/stockease/decisions/028-supplier-traceability-search.html">028 Search-first navigation</a></li>
+      <li><a href="/stockease/decisions/029-help-content-architecture.html">029 Help content as lazy modules</a></li>
+      <li><a href="/stockease/decisions/030-settings-in-local-storage.html">030 Preferences in localStorage</a></li>
+      <li><a href="/stockease/decisions/031-runtime-formatting-via-intl.html">031 Runtime formatting through Intl</a></li>
+      <li><a href="/stockease/decisions/032-client-side-idle-logout.html">032 Idle sign-out is a client concern</a></li>
+    </ul>
+  </details>
+
+  <details class="nav-group">
+    <summary>ADR 033-042</summary>
+    <ul>
+      <li><a href="/stockease/decisions/033-invoice-party-name-snapshots.html">033 Invoices snapshot party names</a></li>
+      <li><a href="/stockease/decisions/034-no-password-expiry.html">034 No forced password expiry</a></li>
+      <li><a href="/stockease/decisions/035-search-token-matching-and-browse.html">035 Token search and browse on focus</a></li>
+      <li><a href="/stockease/decisions/036-client-token-storage.html">036 Client token storage and threat model</a></li>
+      <li><a href="/stockease/decisions/037-i18n-authoring-split.html">037 Translations authored per namespace</a></li>
+      <li><a href="/stockease/decisions/038-ai-assisted-development-workflow.html">038 AI-assisted development workflow</a></li>
+      <li><a href="/stockease/decisions/039-report-tab-state-collaborators.html">039 Per-tab state collaborators</a></li>
+      <li><a href="/stockease/decisions/040-paged-list-store.html">040 Two list stores for two paging models</a></li>
+      <li><a href="/stockease/decisions/041-error-codes-for-operator-situations.html">041 Error codes name operator situations</a></li>
+      <li><a href="/stockease/decisions/042-deploy-gate-watches-its-deployment.html">042 The deploy gate watches its deployment</a></li>
+    </ul>
+  </details>
+</aside>
+
+    <main class="content" id="main">
+      <article class="doc-body">
+        <h1
+        id="adr-043-delivery-and-perceived-latency-are-designed-not-left-to-the-network">ADR
+        043: Delivery and Perceived Latency Are Designed, Not Left to
+        the Network</h1>
+        <p><strong>Scope</strong>: [Cross-cutting]
+        <strong>Status</strong>: Accepted <strong>Date</strong>: August
+        26, 2026</p>
+        <hr />
+        <h2 id="context">Context</h2>
+        <p>The application was fast in every measurement the project had
+        been taking, and slow in the one it had not. The test suites are
+        green, the bundles are within budget, the backend answers its
+        queries quickly. What nobody had measured was the interval a
+        visitor actually experiences: from pressing a button to seeing
+        something true on screen.</p>
+        <p>Network logs taken on 26 August 2026 measured it. Four
+        figures:</p>
+        <p><strong>First login: 1.16 s.</strong> Not the request - the
+        request is a fraction of that. The rest is the initial bundle
+        arriving before any route can render.</p>
+        <p><strong>A landing screenshot: 2.88 s, cold edge.</strong> The
+        landing page’s argument is that the application is genuinely
+        translated and genuinely themed: press a toggle and watch it
+        change. A toggle swaps four full-page screenshots at once.
+        Against a cold edge that demonstration played out as four empty
+        frames - the page failing to prove the one thing it exists to
+        prove.</p>
+        <p><strong>A hashed stylesheet: 3.21 s to revalidate.</strong>
+        The file’s name contains its content hash, so its content cannot
+        change without its name changing. It was nevertheless served
+        with <code>max-age=0, must-revalidate</code>, and so was
+        re-checked on every load. Three seconds spent asking whether a
+        file that cannot have changed had changed.</p>
+        <p><strong>Fourteen round trips where seven would do.</strong>
+        Every authenticated request carries an
+        <code>Authorization</code> header, so none of them is a simple
+        request, so each was preceded by a CORS preflight. The server
+        sent no <code>Access-Control-Max-Age</code>, and Chrome’s
+        default preflight cache is five seconds - shorter than a
+        dashboard load. Every request paid for its own preflight, twice
+        over the wire for one answer.</p>
+        <p>None of these is a bug. Each is a default that was never
+        chosen: a preloading strategy not set, a cache header not
+        written, a max-age not sent, a loading state not drawn. Taken
+        individually each looks too small to be worth a decision record.
+        Taken together they were the difference between an application
+        that feels quick and one that feels broken, and the reason they
+        went unmeasured for so long is precisely that no single one of
+        them was anybody’s job.</p>
+        <p>There is a second half to the finding, and it is not about
+        speed at all. During those same intervals the interface actively
+        lied. The dashboard’s signals hold <code>0</code> until their
+        responses land, so the first thing a user saw after login was a
+        complete dashboard reporting zero products, zero overdue
+        invoices and zero profit. A zero is indistinguishable from a
+        real zero. The page did not look like it was loading; it looked
+        like a business with nothing in it. The demo buttons had the
+        same shape of problem: greyed out with their original label,
+        which reads as a control that is not going to work rather than
+        one that is busy.</p>
+        <h2 id="decision">Decision</h2>
+        <p><strong>Delivery and perceived latency are treated as one
+        design surface, and the whole surface is addressed
+        together.</strong> The individual changes are small and would
+        not each carry a record; what is being recorded is that they are
+        one decision, taken once, with a shared rationale.</p>
+        <p><strong>The initial bundle is cut, then the rest is fetched
+        before it is needed.</strong> Angular Material’s paginator
+        labels were being pulled into the initial bundle by a root-level
+        provider; moving that provision to the shell route halved it -
+        661.75 kB to 333.30 kB (#322). With the initial payload small,
+        <code>PreloadAllModules</code> then fetches the remaining route
+        chunks in the background after the first render (#324), so the
+        first navigation inside the application costs no download.</p>
+        <p><strong>Preflights are cached.</strong> The backend sends
+        <code>Access-Control-Max-Age: 3600</code> (#325), which
+        collapses the fourteen round trips back to seven. One hour
+        rather than longer because Chrome caps preflight caching at two
+        hours regardless of what is sent, so a larger number would be a
+        claim the browser ignores.</p>
+        <p><strong>Waiting is drawn honestly.</strong> The login and
+        demo buttons carry a spinner in a reserved slot and a label that
+        says the request is in flight, and the demo buttons hold that
+        state until the router has actually replaced the page rather
+        than clearing it when the token arrives (#324, #326, #327). The
+        dashboard holds one loading flag per request - not one for the
+        page - and renders a placeholder wherever a figure will land, so
+        a figure that is not yet known is never written down as a figure
+        (#326). Placeholders are <code>aria-hidden</code> and the cards
+        carry <code>aria-busy</code>, so the state is announced in words
+        rather than in a shimmer; under
+        <code>prefers-reduced-motion: reduce</code> the animation is
+        dropped and the plain block remains.</p>
+        <p><strong>Static files are cached according to whether their
+        names identify their contents.</strong> Assets under
+        <code>/assets/</code> are edge-cached for a year and
+        browser-cached for one day (#327): the long edge lifetime is
+        safe because Vercel purges its cache on every deployment, and
+        the short browser lifetime is necessary because those filenames
+        are <em>not</em> fingerprinted -
+        <code>dashboard-en-dark.png</code> is the same URL forever.
+        Hashed build output - <code>main-*</code>, <code>chunk-*</code>,
+        <code>styles-*</code> - is served <code>immutable</code> for a
+        year (this record), which is safe for the opposite reason: the
+        hash <em>is</em> in the filename, so a changed file is a
+        different URL and a stale response is impossible by
+        construction.</p>
+        <p><strong>The immutable rule is enforced by a build check
+        rather than by reading it.</strong> Its first draft matched an
+        eight-character hash, which silently missed the 26 of 67 files
+        Angular emits with a nine-character one and left roughly a third
+        of the JavaScript revalidating on every load;
+        <code>frontend/scripts/check-vercel-cache-rules.mjs</code> now
+        runs after the production build in CI and fails it unless every
+        emitted file matches the rule.</p>
+        <p><strong>The off-screen screenshots are warmed at
+        idle.</strong> The twelve landing screenshots that are not on
+        screen are fetched in a <code>requestIdleCallback</code> after
+        first render, the current language’s other theme first (#327).
+        The bytes are the same bytes; this only decides whether they are
+        paid for while the visitor is reading or while they are waiting.
+        Skipped entirely under <code>prefers-reduced-data</code>,
+        because speculative fetching is exactly what that setting asks
+        not to happen.</p>
+        <h2 id="alternatives-rejected">Alternatives rejected</h2>
+        <p><strong>A custom preloading strategy instead of
+        <code>PreloadAllModules</code>.</strong> The obvious refinement
+        is to preload only the routes a given role can reach, or only
+        those reached from the current page. It was rejected on the
+        arithmetic: after the paginator fix the entire remaining route
+        payload is around 300 kB, fetched at idle after the first
+        render, on a connection that is otherwise doing nothing. A
+        selective strategy is a policy object, a decision about what
+        counts as likely, and a thing to keep correct as routes are
+        added - all to avoid downloading a few hundred kilobytes that
+        nobody is waiting for. The cheaper answer is better here, and it
+        stops being better only if the route payload grows by an order
+        of magnitude.</p>
+        <p><strong>A single page-level loading flag on the
+        dashboard.</strong> One flag is less code than five and would
+        have been a smaller diff. It was rejected because it holds every
+        figure behind the slowest request: the product count, which
+        answers immediately, would sit behind the profit report, which
+        does not. That is a slower page presented as a simpler
+        implementation. Five flags cost four extra lines and let each
+        figure render when its own answer arrives.</p>
+        <p><strong>A dashboard summary endpoint - deferred, and the next
+        lever.</strong> The dashboard makes five requests because it
+        reads five sources. One endpoint returning one composed payload
+        would make it one request, and would do more for first-paint
+        than everything in this record combined - the preflight cache
+        halves the round trips, but a summary endpoint removes four of
+        them outright. It is deferred rather than rejected because it is
+        a backend design change and not a delivery setting: a new module
+        boundary, a composed DTO, a decision about whether the
+        composition belongs in a reporting module or a dashboard one,
+        and a second place where the meaning of “low stock” is defined.
+        That is a design conversation, and it does not belong inside a
+        change whose other parts are cache headers. <strong>It is named
+        here as the next lever precisely so that the cheap wins in this
+        record are not mistaken for having finished the
+        job.</strong></p>
+        <h2 id="consequences">Consequences</h2>
+        <p><strong>What got faster.</strong> The initial bundle halved,
+        so first render happens sooner on every visit. Authenticated
+        pages make half the round trips they did. Hashed build files are
+        fetched once and then never revalidated, which removes the 3.21
+        s stylesheet check from every repeat visit entirely. Landing
+        screenshots are served from the edge and the off-screen ones are
+        already in cache when a toggle is pressed, so the page’s own
+        demonstration now happens at the speed of a repaint.</p>
+        <p><strong>What did not get faster, and will not.</strong> The
+        backend is one region. A request from outside Frankfurt pays
+        roughly 300 ms of round trip before the server has done
+        anything, and nothing in this record touches that; it is a
+        hosting decision, not a delivery one. Halving the
+        <em>number</em> of round trips is the whole of what was
+        available, and it has been taken. The remaining lever on that
+        axis is the summary endpoint above, which reduces the count
+        further - a multi-region backend, which would reduce the cost of
+        each, is not on the table at this project’s scale.</p>
+        <p><strong>What is honest rather than fast.</strong> The pending
+        buttons and the dashboard placeholders make no request quicker.
+        A visitor waits exactly as long as before; they are simply told
+        the truth about it, instead of reading a greyed-out button as
+        broken or a screen of zeros as a business with no stock. This
+        distinction is worth keeping visible: it would be easy, later,
+        to point at these placeholders as though they were a performance
+        change and stop looking for real ones.</p>
+        <p><strong>The prefetch has a limit worth knowing.</strong>
+        <code>requestIdleCallback</code> measures main-thread idleness,
+        not network idleness, so on a slow connection the twelve warmed
+        screenshots compete with the four on screen rather than politely
+        following them. It is still far better than fetching them at
+        toggle time. If it proves to matter, the fix is to gate the idle
+        callback on the hero image’s <code>load</code> event rather than
+        on first render.</p>
+        <p><strong>A standing maintenance cost, accepted.</strong> The
+        cache rule is now coupled to Angular’s output naming. That
+        coupling was already there and simply unenforced; the build
+        check makes it visible, which means a future change to how
+        Angular names its chunks will fail CI rather than quietly
+        un-cache part of the application. That is the intended direction
+        of failure, and the failure names the files it could not
+        match.</p>
+        <p><a href="index.html">Back to Decisions Index</a></p>
+      </article>
+    </main>
+
+        <nav class="toc" aria-label="On this page">
+      <p class="toc-title">On this page</p>
+      <ul>
+      <li><a
+      href="#adr-043-delivery-and-perceived-latency-are-designed-not-left-to-the-network"
+      id="toc-adr-043-delivery-and-perceived-latency-are-designed-not-left-to-the-network">ADR
+      043: Delivery and Perceived Latency Are Designed, Not Left to the
+      Network</a>
+      <ul>
+      <li><a href="#context" id="toc-context">Context</a></li>
+      <li><a href="#decision" id="toc-decision">Decision</a></li>
+      <li><a href="#alternatives-rejected"
+      id="toc-alternatives-rejected">Alternatives rejected</a></li>
+      <li><a href="#consequences"
+      id="toc-consequences">Consequences</a></li>
+      </ul></li>
+      </ul>
+    </nav>
+      </div>
+
+  <footer class="footer">
+    StockEase · Generated by Docs Pipeline
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/stockease/assets/docs.js"></script>
+</body>
+</html>
