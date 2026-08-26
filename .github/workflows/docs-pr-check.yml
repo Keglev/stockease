@@ -65,7 +65,20 @@ jobs:
           node-version: '24'
 
       - name: Install ReDoc CLI
-        run: npm install -g @redocly/cli
+        # Pinned and retried for the reason docs-pipeline.yml carries at its own copy of this step:
+        # an unpinned network install failed there on 2026-08-26 for one of three runs of commit
+        # 7590908 with `npm error code ETIMEDOUT`, while the other two installed fine. The same
+        # install runs here on every docs PR, so it has the same blip to absorb and the same
+        # unreviewed-upstream-release problem to close. The two must be bumped together.
+        #
+        # `redocly --version` is the proof: three exhausted attempts fall out of the loop without
+        # failing it, so only the version call can tell the step the binary is missing.
+        run: |
+          for attempt in 1 2 3; do
+            npm install -g @redocly/cli@2.48.0 && break
+            echo "attempt $attempt failed"; sleep 15
+          done
+          redocly --version
 
       - name: Install Pandoc
         run: sudo apt-get update -qq && sudo apt-get install -y pandoc
