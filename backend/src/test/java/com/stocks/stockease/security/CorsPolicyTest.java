@@ -59,6 +59,16 @@ class CorsPolicyTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void preflight_successful_isCacheableForAnHour() throws Exception {
+        mockMvc.perform(options("/api/reports/overdue")
+                        .header("Origin", "https://bestandskontrolle.vercel.app")
+                        .header("Access-Control-Request-Method", "GET")
+                        .header("Access-Control-Request-Headers", "Authorization"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Max-Age", "3600"));
+    }
+
+    @Test
     void preflight_unknownOrigin_rejected() throws Exception {
         mockMvc.perform(options("/api/invoices/1/close")
                         .header("Origin", "https://evil.example.com")
