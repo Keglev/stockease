@@ -9,7 +9,7 @@ import { LanguageService } from '../../core/i18n/language.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
-import { LandingComponent } from './landing.component';
+import { LandingComponent, screenshotPrefetchOrder } from './landing.component';
 import { ApiError } from '../../core/api/api-envelope';
 
 /* The rendered result once {{app}} is interpolated from common.appName. */
@@ -163,6 +163,16 @@ describe('LandingComponent', () => {
     fixture = TestBed.createComponent(LandingComponent);
     fixture.detectChanges();
     await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    // The prefetch specs fake timers and stub the Image constructor to observe the idle callback.
+    // Left standing, either would follow this file's later specs into tests that never asked for
+    // them, so both are handed back here rather than at the end of the spec that took them.
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    localStorage.clear();
   });
 
   it('render_defaultLanguage_showsTranslatedDescription', () => {
@@ -460,6 +470,31 @@ describe('LandingComponent', () => {
     expect(demoButton('admin')?.textContent?.trim()).toBe('Anmeldung läuft…');
   });
 
+  it('demoLogin_navigationSucceeded_holdsThePendingStateInsteadOfFlashingTheLabelBack', async () => {
+    demoButton('admin')?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The token has arrived and the navigation has resolved, but this page is only on its way out
+    // - the shell still has a route to load and a guard to run before it paints. Clearing the flag
+    // on the response is what put an enabled "Try as Admin" on screen for that whole interval.
+    expect(demoButton('admin')?.disabled).toBe(true);
+    expect(demoButton('admin')?.textContent?.trim()).toBe('Signing in…');
+  });
+
+  it('demoLogin_navigationRefused_reEnablesTheButtons', async () => {
+    // A guard that turns the navigation away resolves false, and the visitor is still here - so
+    // the buttons have to come back rather than stay pending forever over a page that never left.
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(false);
+
+    demoButton('admin')?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(demoButton('admin')?.disabled).toBe(false);
+    expect(demoButton('admin')?.textContent?.trim()).toBe('Try as Admin');
+  });
+
   it('demoLogin_inFlight_disablesBothButtons', () => {
     // Never completes, so the click leaves the component in its pending state for the assertion.
     auth.result = new Subject<ApiEnvelope<string>>();
@@ -469,5 +504,85 @@ describe('LandingComponent', () => {
 
     expect(demoButton('admin')?.disabled).toBe(true);
     expect(demoButton('user')?.disabled).toBe(true);
+  });
+
+  /*
+   * The screenshot prefetch. Sixteen assets exist and four are on screen; the other twelve are
+   * one toggle away, and on a cold edge one of them measured 2.88 s - long enough that the page's
+   * own demonstration of being translated and themed played out as empty frames.
+   */
+  it('prefetchOrder_anyPair_listsTheTwelveOffScreenShotsAndNoneOfTheFour', () => {
+    const order = screenshotPrefetchOrder('en', 'light');
+
+    // The four on screen are the one set that must NOT be in here: they are already being fetched
+    // by the img tags, and asking for them again is the one request that buys nothing.
+    expect(order).toHaveLength(12);
+    expect(order).not.toContain('/assets/landing/dashboard-en-light.png');
+    expect(order.some((src) => src.endsWith('-en-light.png'))).toBe(false);
+    // Sixteen minus four, each named once.
+    expect(new Set(order).size).toBe(12);
+  });
+
+  it('prefetchOrder_anyPair_warmsThisLanguagesOtherThemeFirst', () => {
+    const order = screenshotPrefetchOrder('de', 'dark');
+
+    // Both toggles sit side by side in the header, so the order is a bet on which is pressed
+    // first: a reader who has already chosen German is likelier to try the other theme than to
+    // change their mind about the language.
+    expect(order.slice(0, 4)).toEqual([
+      '/assets/landing/dashboard-de-light.png',
+      '/assets/landing/profit-de-light.png',
+      '/assets/landing/cashflow-de-light.png',
+      '/assets/landing/duedates-de-light.png'
+    ]);
+    // then the other language, in the theme they are reading in, before its other theme
+    expect(order.slice(4, 8).every((src) => src.endsWith('-en-dark.png'))).toBe(true);
+    expect(order.slice(8).every((src) => src.endsWith('-en-light.png'))).toBe(true);
+  });
+
+  /*
+   * Builds a second landing under faked timers so the idle fallback can be advanced. jsdom
+   * implements no requestIdleCallback, so the setTimeout path is the one under test here - which
+   * is also the path every browser without the callback takes.
+   */
+  async function renderAndIdle(): Promise<string[]> {
+    const requested: string[] = [];
+    class ImageStub {
+      set src(value: string) {
+        requested.push(value);
+      }
+    }
+    vi.stubGlobal('Image', ImageStub);
+    vi.useFakeTimers();
+
+    const idleFixture = TestBed.createComponent(LandingComponent);
+    idleFixture.detectChanges();
+    vi.advanceTimersByTime(2000);
+
+    return requested;
+  }
+
+  it('render_afterIdle_prefetchesTheTwelveOffScreenScreenshots', async () => {
+    const requested = await renderAndIdle();
+
+    expect(requested).toEqual(screenshotPrefetchOrder('en', 'light'));
+    expect(requested).toHaveLength(12);
+    // and nothing from the set already on screen
+    expect(requested.some((src) => src.endsWith('-en-light.png'))).toBe(false);
+  });
+
+  it('render_reducedData_prefetchesNothing', async () => {
+    // Speculative fetching is precisely what the setting asks not to happen, and twelve full-page
+    // PNGs is a poor thing to spend a metered connection on.
+    // Stubbed rather than spied: jsdom implements no matchMedia at all, which is also why the
+    // component calls it optionally instead of assuming it is there.
+    vi.stubGlobal('matchMedia', () => ({
+      media: '(prefers-reduced-data: reduce)',
+      matches: true
+    }));
+
+    const requested = await renderAndIdle();
+
+    expect(requested).toEqual([]);
   });
 });

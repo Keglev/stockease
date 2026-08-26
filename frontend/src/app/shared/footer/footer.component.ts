@@ -9,6 +9,17 @@ import { HealthProbe, HealthService } from '../../core/health/health.service';
 const HEALTH_POLL_MS = 30_000;
 
 /**
+ * How long the first probe waits.
+ *
+ * <p>It used to be zero, which put it in the same instant as the dashboard's five data requests -
+ * six calls racing for the connection pool on the one render where the page has nothing to show
+ * yet. This is a footer indicator, and nothing on screen is waiting on it: it can spend five
+ * seconds saying nothing and lose no information the reader would have acted on. The dot renders
+ * in its unknown state until then, which is what it is.
+ */
+const HEALTH_FIRST_PROBE_MS = 5_000;
+
+/**
  * App-wide footer used by both the authenticated shell and the public pages: product identity,
  * outward links and a compact API health indicator. It polls health on its own timer because it
  * is on screen everywhere, where the dashboard's health card exists on one page only.
@@ -33,7 +44,7 @@ export class FooterComponent {
     // The dashboard card and this indicator deliberately share the service, not the
     // subscription: the footer must keep probing on every page, and a subscription owned by
     // the dashboard would stop the moment the user navigated away from it.
-    timer(0, HEALTH_POLL_MS)
+    timer(HEALTH_FIRST_PROBE_MS, HEALTH_POLL_MS)
       .pipe(
         switchMap(() => this.health.check()),
         takeUntilDestroyed()

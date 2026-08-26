@@ -6,6 +6,10 @@ import { LanguageService } from '../../core/i18n/language.service';
 import { provideTestTranslations } from '../../testing/i18n-testing';
 import { FooterComponent } from './footer.component';
 
+/* Mirrors HEALTH_FIRST_PROBE_MS in the component: the first probe is held out of the opening
+   second, so nothing here sees a reading until this much time has passed. */
+const FIRST_PROBE_MS = 5_000;
+
 const TRANSLATIONS = {
   en: {
     common: { appName: 'Bestandskontrolle' },
@@ -50,7 +54,7 @@ describe('FooterComponent', () => {
    * The app is zoneless, so fakeAsync is unavailable and vitest's timers stand in for the
    * poll's rxjs timer. They must be faked before the component subscribes.
    */
-  async function render(): Promise<void> {
+  async function render(advanceMs: number = FIRST_PROBE_MS): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [FooterComponent],
       providers: [
@@ -63,7 +67,8 @@ describe('FooterComponent', () => {
 
     fixture = TestBed.createComponent(FooterComponent);
     fixture.detectChanges();
-    vi.advanceTimersByTime(0);
+    // Far enough for the first probe to have landed, unless a spec asks to look before it.
+    vi.advanceTimersByTime(advanceMs);
     fixture.detectChanges();
   }
 
@@ -112,6 +117,22 @@ describe('FooterComponent', () => {
 
     expect(textOf('.footer-down')).toBe('API unavailable');
     expect(host().querySelector('.footer-dot-up')).toBeNull();
+  });
+
+  it('healthIndicator_firstRender_holdsTheProbeOutOfTheOpeningSecond', async () => {
+    await render(0);
+
+    // The dashboard fires five data requests on the same render this footer first appears on.
+    // The dot is not worth a sixth connection competing with them for the figures the reader is
+    // actually waiting to see.
+    expect(health.calls).toBe(0);
+
+    vi.advanceTimersByTime(FIRST_PROBE_MS - 1);
+    expect(health.calls).toBe(0);
+
+    // and it does still fire - a delay, not a removal
+    vi.advanceTimersByTime(1);
+    expect(health.calls).toBe(1);
   });
 
   it('healthIndicator_pollInterval_reprobesAndUpdates', async () => {
