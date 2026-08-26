@@ -64,6 +64,15 @@ jobs:
       - name: Type-check and build (production)
         run: npx ng build --configuration production
 
+      - name: Check the immutable cache rule covers every hashed file
+        # Immediately after the build, because it reads that build's real filenames. The rule in
+        # vercel.json grants a one-year immutable cache to hashed output, and its first draft
+        # matched an eight-character hash - which silently missed the 26 of 67 chunks Angular
+        # emits with a nine-character one, leaving a third of the JavaScript revalidating on
+        # every load. Nothing failed then; the files were simply not covered. This makes the
+        # next change in Angular's naming a red build instead of a quiet regression.
+        run: node scripts/check-vercel-cache-rules.mjs
+
       - name: Unit tests with coverage
         # Vitest via the Angular builder; --watch=false is the non-interactive mode.
         # Coverage runs in the same pass rather than a second one: the text reporters print the

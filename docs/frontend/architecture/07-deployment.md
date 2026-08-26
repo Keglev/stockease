@@ -60,6 +60,18 @@ The application is a static bundle on a CDN rather than a served application
 (ADR 012). A rewrite rule sends every path that is not an asset to `index.html`,
 which is what makes client-side routing work on a direct visit to a deep link.
 
+`vercel.json` also sets two cache policies, split by whether a filename
+identifies its own contents (ADR 043): hashed build output - `main-*`, `chunk-*`,
+`styles-*` - is served `immutable` for a year, which cannot go stale because a
+changed file is a different URL, while `/assets/` is edge-cached for a year and
+browser-cached for one day, the short browser lifetime being necessary precisely
+because those filenames are *not* fingerprinted. `index.html` is deliberately
+left on the platform default and revalidates on every load, since it is the file
+that names which hashed bundle to fetch. A check after the production build
+(`frontend/scripts/check-vercel-cache-rules.mjs`) fails CI unless every emitted
+file matches the immutable rule, because an earlier draft of that rule missed a
+third of the chunks without anything going red.
+
 ## Documentation delivery
 
 The docs site is built by `Docs Pipeline` and published by `Deploy Docs to

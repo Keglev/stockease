@@ -128,6 +128,35 @@ Consumers branching on a code must treat "absent" and "a value I do not
 recognise" as the same case, because the API adds codes to responses that
 previously carried none.
 
+## Loading states
+
+A request in flight is drawn, not left to the reader to infer. Two mechanisms
+cover it, and both exist because the alternative was an interface that said
+something false while it waited (ADR 043).
+
+Buttons that submit carry a spinner in a slot that is always present in the
+layout, so the label does not slide sideways when the spinner appears, and the
+label itself changes to say the request is running. The slot is `aria-hidden`
+and the label carries the meaning, because a progressbar role beside a label
+that already reads "signing in" only says it twice. The demo buttons hold that
+state until the router has replaced the page rather than clearing it when the
+response lands: the token arriving and the next screen painting are not the same
+instant, and a button that re-enables between them reads as one that failed.
+
+Figures that are still loading render a skeleton placeholder rather than the
+signal's default. The distinction that matters is that a zero is
+indistinguishable from a real zero: a dashboard whose signals still hold their
+defaults presents "not yet known" as data, which is how a page that is working
+correctly comes to look like a business with no stock. Each request owns its own
+flag rather than the page owning one, so a figure appears as soon as its own
+answer does instead of waiting for the slowest of them. The placeholder is
+`aria-hidden` decoration and the card carries `aria-busy`, which is what makes
+the wait legible to a reader who cannot see the shimmer.
+
+Under `prefers-reduced-motion: reduce` the shimmer animation is dropped and the
+plain block remains. The block is what says "loading"; the movement is
+decoration on a wait the reader cannot shorten, and it is the part that goes.
+
 ## Notifications and confirmation
 
 Two shared mechanisms keep transient feedback and destructive prompts uniform.

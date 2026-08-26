@@ -54,5 +54,6 @@ with the tier it decides for: **[Backend]**, **[Frontend]** or
 - [ADR 040 - Two List Stores, One for In-Memory Paging and One for Server Paging](040-paged-list-store.md) - **[Frontend]**
 - [ADR 041 - Error Codes Name Operator Situations, and the Client Translates Them](041-error-codes-for-operator-situations.md) - **[Cross-cutting]**
 - [ADR 042 - The Deploy Gate Watches the Deployment It Triggered](042-deploy-gate-watches-its-deployment.md) - **[Backend]**
+- [ADR 043 - Delivery and Perceived Latency Are Designed, Not Left to the Network](043-delivery-and-perceived-latency.md) - **[Cross-cutting]**
 
 [Back to Documentation Home](/stockease/)
