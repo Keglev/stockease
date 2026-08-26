@@ -311,3 +311,19 @@
 .landing-cta .landing-demo-actions {
   justify-content: center;
 }
+
+// The login submit button's spinner slot, repeated here rather than shared: component styles are
+// encapsulated, so `.submit-spinner` declared in login.component.scss cannot reach this template
+// and the class name would buy nothing but the illusion of one rule. A local name that says which
+// buttons it belongs to is the honest version of a rule that has to be written out either way.
+//
+// Fixed rather than conditional, for the reason the login slot is: the box is reserved whether or
+// not a request is in flight, so the label stays put instead of sliding sideways the moment the
+// spinner appears. Sized to the spinner's own diameter so the two agree.
+.demo-spinner {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}

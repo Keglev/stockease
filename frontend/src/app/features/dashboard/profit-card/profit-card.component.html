@@ -2,7 +2,7 @@
      Both halves read one derivation rather than each ranking the source separately, which is what
      keeps the remainder bucket's translated name following a language switch instead of freezing in
      whichever language the dashboard was opened in. -->
-<mat-card class="chart-card chart-profit">
+<mat-card class="chart-card chart-profit" [attr.aria-busy]="loading() ? 'true' : null">
   <mat-card-content>
     <div class="card-heading">
       <h2 class="section-title">{{ 'dashboard.charts.profitByProduct' | translate }}</h2>
@@ -18,7 +18,15 @@
     </div>
 
     @if (profitView() === 'chart') {
-      @if (profitOption(); as option) {
+      @if (loading()) {
+        <!-- The chart's own height, handed down rather than restated: a placeholder shorter than
+             what replaces it would drop the card and the whole row when the data lands. -->
+        <span
+          class="skeleton skeleton-chart"
+          aria-hidden="true"
+          [style.height]="chartHeight()"
+        ></span>
+      } @else if (profitOption(); as option) {
         <app-chart [option]="option" [height]="chartHeight()" />
       }
     } @else {

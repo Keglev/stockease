@@ -1,3 +1,7 @@
+@use '../../../../styles/skeleton' as skeleton;
+
+@include skeleton.skeleton;
+
 // display: contents so the card below stays the grid item of .chart-row, as it was
 // when this markup lived in the dashboard template.
 :host {

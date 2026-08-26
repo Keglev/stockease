@@ -26,7 +26,12 @@
             [disabled]="demoPending()"
             (click)="enterDemo('ADMIN')"
           >
-            {{ 'landing.demo.tryAdmin' | translate }}
+            <span class="demo-spinner" aria-hidden="true">
+              @if (demoPending()) {
+                <mat-spinner diameter="18" />
+              }
+            </span>
+            {{ (demoPending() ? 'login.submitting' : 'landing.demo.tryAdmin') | translate }}
           </button>
           <button
             matButton="outlined"
@@ -35,7 +40,12 @@
             [disabled]="demoPending()"
             (click)="enterDemo('USER')"
           >
-            {{ 'landing.demo.tryUser' | translate }}
+            <span class="demo-spinner" aria-hidden="true">
+              @if (demoPending()) {
+                <mat-spinner diameter="18" />
+              }
+            </span>
+            {{ (demoPending() ? 'login.submitting' : 'landing.demo.tryUser') | translate }}
           </button>
         </div>
 
@@ -167,7 +177,12 @@
           [disabled]="demoPending()"
           (click)="enterDemo('ADMIN')"
         >
-          {{ 'landing.demo.tryAdmin' | translate }}
+          <span class="demo-spinner" aria-hidden="true">
+            @if (demoPending()) {
+              <mat-spinner diameter="18" />
+            }
+          </span>
+          {{ (demoPending() ? 'login.submitting' : 'landing.demo.tryAdmin') | translate }}
         </button>
         <a matButton="filled" routerLink="/login">{{ 'landing.loginCta' | translate }}</a>
       </div>

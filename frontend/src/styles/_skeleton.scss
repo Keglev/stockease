@@ -1,0 +1,66 @@
+// Loading placeholders, shared by the dashboard and the two chart cards it hosts.
+//
+// A partial rather than a rule in dashboard.component.scss, and the reason is encapsulation rather
+// than taste: the chart skeletons render inside profit-card and due-card, whose stylesheets cannot
+// see the dashboard's. A single `.skeleton` declared upstairs would simply not reach them, so the
+// choice was between a shared partial and the same block written out three times. The status chips
+// and the table scroll established the pattern for exactly this.
+//
+// The base tone is the sidebar hover token the dashboard already uses for its actionable KPI, so a
+// placeholder reads as the same family of surface the card is drawn on rather than as a new grey.
+// The travelling band is mixed from the on-surface-variant role instead of a second surface token:
+// the surface roles sit close together by design and a band built from one is invisible in dark
+// mode, while the on-role is guaranteed to contrast with the surface in both schemes.
+@mixin skeleton {
+  .skeleton {
+    display: block;
+    border-radius: 4px;
+    background-color: var(--mat-sys-surface-container-highest);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--mat-sys-on-surface-variant) 14%, transparent) 50%,
+      transparent 100%
+    );
+    // Twice the box, so the band can travel the whole width and leave again.
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: skeleton-shimmer 1.5s linear infinite;
+  }
+
+  // Sized in em against the KPI's own headline font rather than in pixels, so it keeps matching the
+  // line it stands in if the type scale is ever retuned. Centred in the line box so the paragraph
+  // is exactly as tall as it is with a figure in it and the row does not shift when the value
+  // arrives.
+  .skeleton-kpi {
+    display: inline-block;
+    width: 4ch;
+    height: 1em;
+    vertical-align: middle;
+  }
+
+  // No height here: the chart's height is decided per breakpoint by the dashboard and handed to the
+  // card, so the placeholder is given the same value inline rather than guessing a second one that
+  // could drift from it.
+  .skeleton-chart {
+    width: 100%;
+  }
+
+  // The shimmer is decoration on a wait the reader cannot shorten; under a reduced-motion setting
+  // the plain block still says "loading" and the movement is what has to go.
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton {
+      animation: none;
+    }
+  }
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: -100% 0;
+  }
+
+  to {
+    background-position: 200% 0;
+  }
+}
