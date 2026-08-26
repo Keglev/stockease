@@ -137,6 +137,9 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
         config.setAllowCredentials(true);
+        // Browsers cache a successful preflight for this long (Chrome caps at 2 h); without it Chrome
+        // re-preflights every authorized request after 5 s, doubling round trips on each page.
+        config.setMaxAge(3600L);
         return config;
     }
 
