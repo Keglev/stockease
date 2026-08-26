@@ -137,7 +137,10 @@ public class SecurityConfig {
 <span class="fc" id="L137">        config.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));</span>
 <span class="fc" id="L138">        config.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Cache-Control&quot;, &quot;Content-Type&quot;));</span>
 <span class="fc" id="L139">        config.setAllowCredentials(true);</span>
-<span class="fc" id="L140">        return config;</span>
+        // Browsers cache a successful preflight for this long (Chrome caps at 2 h); without it Chrome
+        // re-preflights every authorized request after 5 s, doubling round trips on each page.
+<span class="fc" id="L142">        config.setMaxAge(3600L);</span>
+<span class="fc" id="L143">        return config;</span>
     }
 
     /**
@@ -146,9 +149,9 @@ public class SecurityConfig {
      * @return URL-based CORS configuration source applied to all paths
      */
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
-<span class="fc" id="L149">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
-<span class="fc" id="L150">        source.registerCorsConfiguration(&quot;/**&quot;, corsConfiguration());</span>
-<span class="fc" id="L151">        return source;</span>
+<span class="fc" id="L152">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
+<span class="fc" id="L153">        source.registerCorsConfiguration(&quot;/**&quot;, corsConfiguration());</span>
+<span class="fc" id="L154">        return source;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
