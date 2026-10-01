@@ -18,8 +18,8 @@ StockEase,com.stocks.stockease.shared,ApiResponse,0,34,0,0,0,11,0,3,0,3
 StockEase,com.stocks.stockease.shared,TokenSearchSpec,0,60,0,0,0,10,0,7,0,7
 StockEase,com.stocks.stockease.shared,SearchTerms,0,13,1,3,0,3,1,2,0,1
 StockEase,com.stocks.stockease.shared,DuplicateResourceException,2,22,2,2,0,6,2,3,0,3
-StockEase,com.stocks.stockease.shared,ProductDeletedException,0,6,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,InvalidMovementException,0,24,1,3,0,6,1,4,0,3
+StockEase,com.stocks.stockease.shared,ProductDeletedException,0,6,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,PaginatedResponse,0,23,0,0,0,7,0,1,0,1
 StockEase,com.stocks.stockease.shared,InsufficientStockException,0,4,0,0,0,2,0,1,0,1
 StockEase,com.stocks.stockease.shared,MissingEntityException,2,22,2,2,0,6,2,3,0,3
